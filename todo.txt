@@ -1,0 +1,14 @@
+__Encounter__
+x item drops enter inventory
+x monsters attack on action interval
+x actions give xp 
+x damage based on player skill
+damange and action interval based on player weapon/tool
+guarunteed drop tables
+    expamle: 100% bones, 50% cois
+    need to roll on multiple tables
+
+
+__Skills__
+x xp counter
+x calculate level from xp and static xp tables
