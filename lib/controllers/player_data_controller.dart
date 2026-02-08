@@ -157,6 +157,7 @@ class PlayerDataController extends ChangeNotifier {
     print("explore called in PlayerDataController");
     final entity = _zoneController.discoverEntity(_d.currentZoneId);
     _d.zones.addEntities(getCurrentZone(), entity.id, entity.count);
+    saveAppData();
     notifyListeners();
   }
 

@@ -68,6 +68,7 @@ flutter:
     - assets/icons/entities/
     - assets/images/
     - assets/images/entities/
+    - assets/images/zones/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

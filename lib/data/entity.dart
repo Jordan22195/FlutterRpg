@@ -173,6 +173,7 @@ class EntityController {
   /// If no icon is configured, returns null.
   static ImageProvider? imageProviderFor(dynamic objectId) {
     final asset = iconAssetFor(objectId);
+    print("Resolving image for $objectId: asset=$asset");
     return asset != null ? AssetImage(asset) : null;
   }
 }

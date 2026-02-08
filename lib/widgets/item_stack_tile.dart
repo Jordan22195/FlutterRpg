@@ -52,6 +52,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolvedImage = _resolveImage();
+    print("resolved image for $id: $resolvedImage");
 
     final child = SizedBox(
       width: size,
@@ -100,6 +101,7 @@ class _IconOrFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("IconOrFallback: building with imageProvider=$imageProvider");
     if (imageProvider == null) {
       return const Center(child: Icon(Icons.help_outline));
     }

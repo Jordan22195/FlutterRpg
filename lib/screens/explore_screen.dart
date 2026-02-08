@@ -1,7 +1,12 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
+import 'package:rpg/data/entity.dart';
+import 'package:rpg/data/zone_location.dart';
 import 'package:rpg/screens/crafting_screen.dart';
+import 'package:rpg/widgets/item_stack_tile.dart';
 
 import '../controllers/player_data_controller.dart';
 import '../data/zone.dart';
@@ -16,6 +21,33 @@ class ExploreScreen extends StatefulWidget {
 
   @override
   State<ExploreScreen> createState() => _ExploreScreenState();
+}
+
+Widget buildObjectCard<T extends Enum>(
+  T id,
+  int count,
+  Function() navigationCallback,
+) {
+  return Card(
+    child: InkWell(
+      onTap: () => navigationCallback(),
+      borderRadius: BorderRadius.circular(12), // match Card shape
+      child: SizedBox(
+        width: double.infinity,
+        height: 60,
+        child: Padding(
+          padding: const EdgeInsets.all(1),
+          child: Row(
+            children: [
+              ItemStackTile(size: 56, count: count, id: id),
+              const SizedBox(width: 12),
+              Text(id.toString()),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _ExploreScreenState extends State<ExploreScreen>
@@ -50,11 +82,38 @@ class _ExploreScreenState extends State<ExploreScreen>
     super.dispose();
   }
 
+  void navigateToEncounter(Entities id, PlayerDataController controller) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => EncounterScreen(entityId: id)))
+        .then((_) {
+          EncounterController.instance.endEncounter();
+
+          print(
+            "return from encounter screen re-binding explore action button",
+          );
+          if (!mounted) return;
+          controller.actionTimingController.stopNowSilently();
+          bindActionButton();
+        });
+  }
+
+  void navigateToCrafting(Skills skill, PlayerDataController controller) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => CraftingScreen(skill: skill)))
+        .then((_) {
+          print("return from crafting screen re-binding explore action button");
+          if (!mounted) return;
+          controller.actionTimingController.stopNowSilently();
+          bindActionButton();
+        });
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<PlayerDataController>();
     final entities = controller.getZoneEntities();
     final locations = controller.getZoneLocations();
+    final media = MediaQuery.of(context);
     context
         .watch<EncounterController>(); // Rebuild when encounter state changes.
 
@@ -83,6 +142,14 @@ class _ExploreScreenState extends State<ExploreScreen>
             ),
           ),
 
+          SizedBox(
+            width: double.infinity,
+            height: 200,
+            child: Image.asset(
+              'assets/images/zones/forest.png',
+              fit: BoxFit.cover,
+            ),
+          ),
           // Progress bars
           Padding(
             padding: const EdgeInsets.all(12),
@@ -106,44 +173,45 @@ class _ExploreScreenState extends State<ExploreScreen>
             ),
           ),
 
-          // Location list
-          Expanded(
-            child: ListView.builder(
-              itemCount: locations.length,
-              itemBuilder: (context, i) {
-                final e = locations[i];
-                return Card(
-                  child: ListTile(
-                    title: Text(e.name.toString()),
-                    onTap: () {
-                      Navigator.of(context)
-                          .push(
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  CraftingScreen(skill: Skills.BLACKSMITHING),
-                            ),
-                          )
-                          .then((_) {
-                            print(
-                              "return from crafting screen, re-binding explore action button",
-                            );
-                            if (!mounted) {
-                              print(
-                                "not mounted, not binding explore action button",
-                              );
-                              return;
-                            }
-                            controller.actionTimingController.stopNowSilently();
-                            setState(() {
-                              bindActionButton();
-                            });
-                          });
-                    },
-                  ),
-                );
-              },
-            ),
+          // Location list (resizable + still scrollable)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Approximate per-row height (Card + padding). Keep in sync with buildObjectCard.
+              const rowExtent = 72.0;
+
+              // Cap the list so it doesn't eat the screen; it can scroll once it hits this.
+              final maxHeight = min(constraints.maxHeight * 0.35, 260.0);
+
+              // Grow with content but clamp to maxHeight; shrink to fit if few items.
+              final desiredHeight = min(
+                locations.length * rowExtent,
+                maxHeight,
+              );
+
+              // If there are no locations, avoid reserving space.
+              if (locations.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              return SizedBox(
+                height: desiredHeight,
+                child: ListView.builder(
+                  itemCount: locations.length,
+                  itemExtent: rowExtent,
+                  itemBuilder: (context, i) {
+                    final id = locations[i];
+                    return buildObjectCard(
+                      id,
+                      0,
+                      () =>
+                          navigateToCrafting(Skills.BLACKSMITHING, controller),
+                    );
+                  },
+                ),
+              );
+            },
           ),
+          const Divider(),
 
           // Entity list
           Expanded(
@@ -151,29 +219,10 @@ class _ExploreScreenState extends State<ExploreScreen>
               itemCount: entities.length,
               itemBuilder: (context, i) {
                 final e = entities[i];
-                return Card(
-                  child: ListTile(
-                    title: Text(e.id.toString()),
-                    trailing: Text('x${e.count}'),
-                    onTap: () {
-                      Navigator.of(context)
-                          .push(
-                            MaterialPageRoute(
-                              builder: (_) => EncounterScreen(entityId: e.id),
-                            ),
-                          )
-                          .then((_) {
-                            EncounterController.instance.endEncounter();
-
-                            print(
-                              "return from encounter screen re-binding explore action button",
-                            );
-                            if (!mounted) return;
-                            controller.actionTimingController.stopNowSilently();
-                            bindActionButton();
-                          });
-                    },
-                  ),
+                return buildObjectCard(
+                  e.id,
+                  e.count,
+                  () => navigateToEncounter(e.id, controller),
                 );
               },
             ),
