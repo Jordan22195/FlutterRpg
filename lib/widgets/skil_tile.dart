@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/controllers/player_data_controller.dart';
+import 'package:rpg/data/skill.dart';
+import 'package:rpg/widgets/item_stack_tile.dart';
+import '../widgets/icon_renderer.dart';
+import '../screens/skill_detail_screen.dart';
 
 class SkillTile extends StatelessWidget {
   const SkillTile({
+    required this.id,
     super.key,
-    required this.title,
-    required this.progress, // 0..1
-    this.icon,
-    this.assetImagePath,
-    required this.onTap,
-    this.size = 92,
-    this.strokeWidth = 16,
+    this.size = 86,
+    this.strokeWidth = 10,
   });
 
-  final String title;
-  final double progress; // 0..1
-  final IconData? icon;
-  final String? assetImagePath;
-  final VoidCallback onTap;
+  final Skills id;
 
   final double size;
   final double strokeWidth;
@@ -24,24 +21,20 @@ class SkillTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final progress = SkillController.instance
+        .getSkill(id)
+        .percentProgressToLevelUp();
     final p = progress.clamp(0.0, 1.0);
 
-    final centerChild = (assetImagePath != null)
-        ? Image.asset(
-            assetImagePath!,
-            width: size * 0.42,
-            height: size * 0.42,
-            fit: BoxFit.contain,
-          )
-        : Icon(
-            icon ?? Icons.auto_awesome,
-            size: size * 0.42,
-            color: scheme.onSurface,
-          );
+    final centerChild = IconRenderer(id: id, size: size * 0.60);
 
     return InkWell(
       borderRadius: BorderRadius.circular(16),
-      onTap: onTap,
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => SkillDetailScreen(skillId: id)),
+        );
+      },
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Column(
@@ -64,8 +57,8 @@ class SkillTile extends StatelessWidget {
 
                   // Center icon/image (slightly smaller so it doesn't swallow ring)
                   Container(
-                    width: size * 0.60,
-                    height: size * 0.60,
+                    width: size * 0.45,
+                    height: size * 0.45,
                     decoration: BoxDecoration(
                       color: scheme.surface,
                       shape: BoxShape.circle,
@@ -77,14 +70,17 @@ class SkillTile extends StatelessWidget {
                       ],
                     ),
                     alignment: Alignment.center,
-                    child: centerChild,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: centerChild,
+                    ),
                   ),
                 ],
               ),
             ),
             //  const SizedBox(height: 8),
             Text(
-              title,
+              SkillController.instance.getSkill(id).name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge,

@@ -1,4 +1,8 @@
+import 'dart:math';
+
 import 'package:rpg/data/ObjectStack.dart';
+import 'package:rpg/data/armor_equipment.dart';
+import '../data/item.dart';
 
 import 'item.dart';
 
@@ -6,6 +10,25 @@ class Inventory {
   Map<Items, int> itemMap = {};
 
   Inventory({required this.itemMap});
+
+  List<Items> getItemsListForEquipmentSlot(ArmorSlots slot) {
+    // This is a placeholder implementation. You can replace it with actual logic based on your game's design.
+    List<Items> itemsForSlot = [];
+    for (MapEntry entry in itemMap.entries) {
+      final def = ItemController.definitionFor(entry.key);
+      print(
+        "Checking item ${entry.key} for slot ${slot.name}: definition is ${def.runtimeType}",
+      );
+      if (def is EquipmentItemDefition && def.armorSlot == slot) {
+        itemsForSlot.add(entry.key);
+      }
+    }
+    return itemsForSlot;
+  }
+
+  int countOf(Items id) {
+    return itemMap[id] ?? 0;
+  }
 
   void addOtherInventory(Inventory otherInv) {
     final iList = otherInv.getObjectStackList();
@@ -57,9 +80,9 @@ class Inventory {
   Map<String, dynamic> toJson() {
     return {
       'items': itemMap.map(
-        (key, value) => MapEntry(
+        (key, count) => MapEntry(
           key.name, // enum → string
-          value,
+          count,
         ),
       ),
     };

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utilities/image_resolver.dart';
+import '../controllers/crafting_controller.dart';
 
 class ItemStackTile<T extends Enum> extends StatelessWidget {
   const ItemStackTile({
@@ -52,7 +53,6 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resolvedImage = _resolveImage();
-    print("resolved image for $id: $resolvedImage");
 
     final child = SizedBox(
       width: size,
@@ -101,7 +101,6 @@ class _IconOrFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("IconOrFallback: building with imageProvider=$imageProvider");
     if (imageProvider == null) {
       return const Center(child: Icon(Icons.help_outline));
     }
@@ -126,7 +125,7 @@ class _CountBadge extends StatelessWidget {
     if (count <= 1) return const SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.75),
         borderRadius: BorderRadius.circular(8),
@@ -135,7 +134,7 @@ class _CountBadge extends StatelessWidget {
         '$count',
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 12,
+          fontSize: 9,
           fontWeight: FontWeight.w700,
         ),
       ),

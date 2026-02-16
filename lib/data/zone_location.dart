@@ -1,41 +1,120 @@
-enum ZoneLocationType { ANVIL, INN, SHOP, FISHING }
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
+import 'package:rpg/data/entity.dart';
+import 'package:rpg/data/skill.dart';
+import 'package:rpg/data/item.dart';
+import '../utilities/image_resolver.dart';
+
+enum ZoneLocationId { NULL, ANVIL, INN, SHOP, POND_1, CAMPFIRE }
 
 class ZoneLocation {
   final String name;
-  final ZoneLocationType type;
+  final String iconAsset;
+  final ZoneLocationId id;
+  final Enum typeForIcon;
 
-  _getIconAssetForType(ZoneLocationType type) {
-    switch (type) {
-      case ZoneLocationType.ANVIL:
-        return 'assets/icons/anvil.png';
-      case ZoneLocationType.INN:
-        return 'assets/icons/inn.png';
-      case ZoneLocationType.SHOP:
-        return 'assets/icons/shop.png';
-      case ZoneLocationType.FISHING:
-        return 'assets/icons/fishing.png';
-    }
-  }
+  ZoneLocation({
+    required this.id,
+    required this.name,
+    required this.iconAsset,
+    required this.typeForIcon,
+  });
+}
 
-  ZoneLocation({required this.name, required this.type});
+class CraftingLocation extends ZoneLocation {
+  final Skills craftingSkill;
 
-  factory ZoneLocation.fromJson(Map<String, dynamic> json) {
-    return ZoneLocation(
-      name: json['name'] as String,
-      type: ZoneLocationType.values.firstWhere(
-        (e) => e.toString() == 'ZoneLocationType.${json['type']}',
-        orElse: () =>
-            throw ArgumentError('Invalid ZoneLocationType: ${json['type']}'),
-      ),
-    );
+  CraftingLocation({
+    required super.name,
+    required super.iconAsset,
+    required super.id,
+    required this.craftingSkill,
+  }) : super(typeForIcon: craftingSkill);
+}
+
+// location exists while campfire buff is active, and disappears when buff expires. Icon is based on the fire item used to create the buff.
+class CampfireLocation extends CraftingLocation {
+  Items fireId;
+  CampfireLocation({required super.id, required this.fireId})
+    : super(
+        name: ItemController.definitionFor(fireId)?.name ?? "Error",
+        craftingSkill: Skills.COOKING,
+        iconAsset:
+            ItemController.definitionFor(fireId)?.iconAsset ??
+            'assets/icons/campfire.png',
+      );
+}
+
+class FishingLocation extends ZoneLocation {
+  final Entities fishingSpotEntity;
+
+  FishingLocation({
+    required super.name,
+    required super.id,
+    required this.fishingSpotEntity,
+  }) : super(
+         typeForIcon: Skills.FISHING,
+         iconAsset:
+             EntityController.definitionFor(fishingSpotEntity)?.iconAsset ??
+             'assets/icons/anvil.png',
+       ) {
+    print("object created with icon ${iconAsset}");
   }
 }
 
 class ZoneLocationController {
-  static final List<ZoneLocation> locations = [
-    ZoneLocation(name: 'Anvil', type: ZoneLocationType.ANVIL),
-    ZoneLocation(name: 'Inn', type: ZoneLocationType.INN),
-    ZoneLocation(name: 'Shop', type: ZoneLocationType.SHOP),
-    ZoneLocation(name: 'Fishing Spot', type: ZoneLocationType.FISHING),
-  ];
+  static Map<ZoneLocationId, ZoneLocation> locations = {
+    ZoneLocationId.ANVIL: CraftingLocation(
+      craftingSkill: Skills.BLACKSMITHING,
+      name: 'Anvil',
+      id: ZoneLocationId.ANVIL,
+      iconAsset: 'assets/icons/anvil.png',
+    ),
+
+    ZoneLocationId.POND_1: FishingLocation(
+      fishingSpotEntity: Entities.TRANQUIL_POND,
+      id: ZoneLocationId.POND_1,
+      name: 'Tranquil Pond',
+    ),
+
+    ZoneLocationId.CAMPFIRE: CampfireLocation(
+      id: ZoneLocationId.CAMPFIRE,
+      fireId: Items.BASIC_CAMPFIRE,
+    ),
+  };
+
+  static ZoneLocation definitionFor(ZoneLocationId id) {
+    return locations[id] ??
+        ZoneLocation(
+          id: ZoneLocationId.NULL,
+          name: "",
+          iconAsset: "",
+          typeForIcon: ZoneLocationId.NULL,
+        );
+  }
+
+  static void init() {
+    // Register the image resolver for Items.
+    EnumImageProviderLookup.register<ZoneLocationId>(
+      ZoneLocationController.imageProviderFor,
+    );
+  }
+
+  static ImageProvider? imageProviderFor(dynamic objectId) {
+    {
+      if (objectId is! ZoneLocationId) {
+        return null;
+      }
+      final location =
+          locations[objectId] ??
+          ZoneLocation(
+            id: ZoneLocationId.NULL,
+            name: "",
+            iconAsset: "",
+            typeForIcon: ZoneLocationId.NULL,
+          );
+      return AssetImage(location.iconAsset);
+    }
+  }
 }

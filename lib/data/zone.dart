@@ -7,14 +7,13 @@ enum Zones { TUTORIAL_FARM, STARTING_FOREST, CHALLENGING_MOUNTAIN, NULL }
 class Zone {
   final Zones id;
   final String name;
-  final List<ZoneLocationType> permanentLocations;
+  final List<ZoneLocationId> permanentLocations;
   final List<WeightedDropTableEntry<Entities>> discoverableEntities;
-  final WeightedDropTable entityTable;
 
   Zone({
     required this.id,
     required this.name,
     required this.discoverableEntities,
     required this.permanentLocations,
-  }) : entityTable = WeightedDropTable<Entities>(items: discoverableEntities);
+  });
 }

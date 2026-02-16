@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/data/ObjectStack.dart';
-import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import '../controllers/player_data_controller.dart';
 import 'package:provider/provider.dart';
 import '../data/entity.dart';
-import '../data/zone.dart';
 import '../controllers/encounter_controller.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/primary_button.dart';
 import '../data/skill.dart';
 import '../widgets/skil_tile.dart';
 import '../screens/skill_detail_screen.dart';
-import '../data/item.dart';
+import '../widgets/icon_renderer.dart';
+import '../widgets/fading_number.dart';
 
 class EncounterScreen extends StatefulWidget {
   const EncounterScreen({super.key, required this.entityId});
@@ -27,6 +25,7 @@ class _EncounterScreenState extends State<EncounterScreen>
     with TickerProviderStateMixin {
   // Cache the provider so dispose() doesn't do ancestor lookup via context.
   late final PlayerDataController _playerController;
+  int playerDamage = 0;
   bool _initializing = true;
 
   @override
@@ -46,6 +45,8 @@ class _EncounterScreenState extends State<EncounterScreen>
         if (!mounted) return;
         setState(() {
           EncounterController.instance.doPlayerEncounterAction();
+          playerDamage = EncounterController.instance.lastPlayerDamage;
+          print("Player dealt $playerDamage damage");
         });
       };
       EncounterController.instance.initEncounter(widget.entityId);
@@ -71,19 +72,7 @@ class _EncounterScreenState extends State<EncounterScreen>
     PlayerDataController controller,
     Skills skillId,
   ) {
-    return SkillTile(
-      title: skillId.name,
-      progress: controller.getSkill(skillId).percentProgressToLevelUp(),
-      icon: Icons.sports_martial_arts,
-      size: 70,
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => SkillDetailScreen(skillId: skillId),
-          ),
-        );
-      },
-    );
+    return SkillTile(id: skillId);
   }
 
   Widget buildEncounterProgressBars(PlayerDataController controller) {
@@ -133,6 +122,94 @@ class _EncounterScreenState extends State<EncounterScreen>
     );
   }
 
+  Widget buildPlayerStatStack(PlayerDataController controller) {
+    double fontSize = 14;
+    double iconSize = 20;
+    final skillId = EncounterController.instance.getEncounterSkillType();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            IconRenderer(id: Skills.HITPOINTS, size: iconSize),
+            SizedBox(width: 4),
+            Text(
+              controller.getStatTotal(Skills.HITPOINTS).toString(),
+              style: TextStyle(fontSize: fontSize),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            IconRenderer(id: Skills.DEFENCE, size: iconSize),
+            SizedBox(width: 4),
+            Text(
+              controller.getStatTotal(Skills.DEFENCE).toString(),
+              style: TextStyle(fontSize: fontSize),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            IconRenderer(id: skillId, size: iconSize),
+            SizedBox(width: 4),
+            Text(
+              controller.getStatTotal(skillId).toString(),
+              style: TextStyle(fontSize: fontSize),
+            ),
+          ],
+        ),
+
+        // Add more stats here, e.g. mana, stamina, etc.
+      ],
+    );
+  }
+
+  Widget buildEntityStatStack(PlayerDataController controller) {
+    double fontSize = 14;
+    double iconSize = 20;
+    final skillId = EncounterController.instance.getEncounterSkillType();
+    final entity = EncounterController.instance.getEntity();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            IconRenderer(id: Skills.HITPOINTS, size: iconSize),
+            SizedBox(width: 4),
+            Text(
+              entity.hitpoints.toString(),
+              style: TextStyle(fontSize: fontSize),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            IconRenderer(id: Skills.DEFENCE, size: iconSize),
+            SizedBox(width: 4),
+            Text(
+              entity.defence.toString(),
+              style: TextStyle(fontSize: fontSize),
+            ),
+          ],
+        ),
+        if (entity is CombatEntity)
+          Row(
+            children: [
+              IconRenderer(id: Skills.ATTACK, size: iconSize),
+              SizedBox(width: 4),
+              Text(
+                entity.attack.toString(),
+                style: TextStyle(fontSize: fontSize),
+              ),
+            ],
+          ),
+
+        // Add more stats here, e.g. mana, stamina, etc.
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<PlayerDataController>();
@@ -146,8 +223,16 @@ class _EncounterScreenState extends State<EncounterScreen>
 
     final enemy = EncounterController.instance.getEntity();
 
+    final _fadeKey = GlobalKey<FadingNumberState>();
+
+    // ...
+
+    // whenever you want to show+fade (even if count didn’t change):
+    _fadeKey.currentState?.replay();
+
     return Scaffold(
       appBar: AppBar(
+        title: enemy.name != null ? Text(enemy.name) : null,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Padding(
@@ -164,22 +249,47 @@ class _EncounterScreenState extends State<EncounterScreen>
           children: [
             Row(
               children: [
-                if (EncounterController.instance.isCombatEntity())
-                  Text('Player HP: ${controller.data?.hitpoints}'),
-                Spacer(),
-                ItemStackTile(
-                  size: 160,
-                  count: EncounterController.instance.getEntityCount(),
-                  id: enemy.id,
+                // Left: Player stats (left-justified)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: buildPlayerStatStack(controller),
                 ),
-                Text(
-                  'Enemy HP: ${EncounterController.instance.getEntity().hitpoints}',
+
+                // Center: Item stack tile (always centered)
+                Expanded(
+                  child: Center(
+                    child: ItemStackTile(
+                      size: 200,
+                      count: EncounterController.instance.getEntityCount(),
+                      id: enemy.id,
+                    ),
+                  ),
                 ),
-                Spacer(),
+
+                // Right side: Fading number centered between tile and entity stats,
+                // and entity stats right-aligned
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Fading number centered in remaining space before stats
+                    Center(
+                      child: FadingNumber(
+                        key: _fadeKey,
+                        number: playerDamage,
+                        color: Colors.amber,
+                      ),
+                    ),
+
+                    // Entity stats right-aligned
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: buildEntityStatStack(controller),
+                    ),
+                  ],
+                ),
               ],
             ),
-
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             Row(
               children: [
@@ -193,9 +303,6 @@ class _EncounterScreenState extends State<EncounterScreen>
                 SizedBox(width: 50),
               ],
             ),
-            const SizedBox(height: 12),
-
-            Row(children: [SizedBox(width: 50), Icon(Icons.gavel), Spacer()]),
 
             const SizedBox(height: 16),
             Divider(),
@@ -230,10 +337,11 @@ class _EncounterScreenState extends State<EncounterScreen>
                 ],
               ),
             ),
-
+            Spacer(),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(0),
               child: MomentumPrimaryButton(
+                enabled: true,
                 label: controller.getActionString(),
                 controller: controller.actionTimingController,
               ),

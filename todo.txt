@@ -1,14 +1,13 @@
-__Encounter__
-x item drops enter inventory
-x monsters attack on action interval
-x actions give xp 
-x damage based on player skill
-damange and action interval based on player weapon/tool
-guarunteed drop tables
-    expamle: 100% bones, 50% cois
-    need to roll on multiple tables
+what do you get from skills. they unlock recipies, entiies, and items,
 
+recipies - level requirement attribute
+entities like ore and wood - level requirement
+    - fishing locations will have a level requirement, not the fish
 
-__Skills__
-x xp counter
-x calculate level from xp and static xp tables
+items - equiping items will have a requirement. high attack unlocks new stuff. 
+defense unlocks armor. 
+eqipable items will have level requirement. 
+
+make a timer widget that subscribes to the buff timer so the etirety of player data controller ins't refreshing at 2hz. 
+
+eitehr make a new buff icon or add a conditional to the item stack tile for the buff instead of counter

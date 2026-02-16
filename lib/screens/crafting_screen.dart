@@ -4,14 +4,18 @@ import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/item.dart';
 import 'package:rpg/data/skill.dart';
+import 'package:rpg/data/zone_location.dart';
 import 'package:rpg/widgets/fill_bar.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
+import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';
+import 'package:rpg/widgets/skil_tile.dart';
 
 class CraftingScreen extends StatefulWidget {
-  const CraftingScreen({super.key, required this.skill});
+  CraftingScreen({super.key, required this.skill, required this.imageId});
   final Skills skill;
+  final Enum imageId;
 
   @override
   State<CraftingScreen> createState() => _CraftingScreenState();
@@ -21,6 +25,53 @@ class _CraftingScreenState extends State<CraftingScreen>
     with TickerProviderStateMixin {
   final crafting = CraftingController.instance;
   PlayerDataController? _player;
+  bool _initializing = true;
+
+  Widget buildProgressBars(PlayerDataController controller) {
+    const double speedBarPadding = 120;
+    final timing = controller.actionTimingControllerOrNull;
+
+    if (_initializing || timing == null) {
+      // Build can run before async init finishes. Show placeholders.
+      return Column(
+        children: [
+          const FillBar(value: 0),
+          const SizedBox(height: 8),
+          Row(
+            children: const [
+              SizedBox(width: speedBarPadding),
+              Expanded(child: FillBar(value: 0)),
+              SizedBox(width: speedBarPadding),
+            ],
+          ),
+        ],
+      );
+    }
+    return Column(
+      children: [
+        AnimatedBuilder(
+          animation: timing,
+          builder: (_, __) => FillBar(value: timing.actionProgress),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            const SizedBox(width: speedBarPadding),
+            Expanded(
+              child: AnimatedBuilder(
+                animation: timing,
+                builder: (_, __) => FillBar(
+                  value: timing.speed,
+                  foregroundColor: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+            ),
+            const SizedBox(width: speedBarPadding),
+          ],
+        ),
+      ],
+    );
+  }
 
   @override
   void initState() {
@@ -44,7 +95,10 @@ class _CraftingScreenState extends State<CraftingScreen>
           crafting.craftOnce();
         });
       };
-
+      if (!mounted) return;
+      setState(() {
+        _initializing = false;
+      });
       setState(() {});
     });
   }
@@ -64,64 +118,58 @@ class _CraftingScreenState extends State<CraftingScreen>
     super.dispose();
   }
 
-  void _showRecipePicker(BuildContext context) {
+  void _showRecipePicker(
+    BuildContext context,
+    PlayerDataController playerDataController,
+  ) {
     final recipes = crafting.getVisibleRecipesForActiveSkill();
-
-    showModalBottomSheet(
+    print("Showing recipe picker with ${recipes.length} recipes");
+    showDialog(
       context: context,
-      builder: (_) {
-        return SafeArea(
-          child: ListView.builder(
-            itemCount: recipes.length,
-            itemBuilder: (ctx, i) {
-              final r = recipes[i];
-              final craftable = crafting.craftableCount(r);
-              final reqText = r.inputs.entries
-                  .map((e) => '${e.value}× ${e.key.name}')
-                  .join(', ');
-
-              return ListTile(
-                leading: _recipeIcon(r.output.id),
-                title: Text(r.name),
-                subtitle: Text('$reqText • can make: $craftable'),
-                onTap: () {
-                  crafting.selectRecipe(r);
-                  Navigator.of(ctx).pop();
-                  setState(() {});
-                },
-              );
-            },
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Select Recipe'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: recipes.length,
+              itemBuilder: (context, i) {
+                final r = recipes[i];
+                return RecipeCard(
+                  inventory: playerDataController.data!.inventory,
+                  recipeId: r.id,
+                  onTap: () {
+                    crafting.selectRecipe(r);
+                    Navigator.of(ctx).pop();
+                    setState(() {});
+                  },
+                );
+              },
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Close'),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _recipeIcon(Items itemId) {
-    // Use your existing asset convention if you have one.
-    // If you already have an item icon asset path system, swap this out.
-    return SizedBox(
-      width: 48,
-      height: 48,
-      child: Image.asset(
-        'assets/items/placeholder.png',
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Icon(Icons.construction, size: 32),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final player = context.watch<PlayerDataController>();
+    final playerDataController = context.watch<PlayerDataController>();
 
-    if (player.isLoading) {
+    if (playerDataController.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    if (player.error != null) {
+    if (playerDataController.error != null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Crafting')),
-        body: Center(child: Text('Error: ${player.error}')),
+        body: Center(child: Text('Error: ${playerDataController.error}')),
       );
     }
 
@@ -132,17 +180,10 @@ class _CraftingScreenState extends State<CraftingScreen>
       appBar: AppBar(
         title: Text(widget.skill.name),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
+          preferredSize: const Size.fromHeight(48),
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: AnimatedBuilder(
-              animation: player.actionTimingControllerOrNull ?? player,
-              builder: (_, __) {
-                final ctrl = player.actionTimingControllerOrNull;
-                final value = ctrl?.actionProgress ?? 0.0;
-                return FillBar(value: value);
-              },
-            ),
+            child: buildProgressBars(playerDataController),
           ),
         ),
       ),
@@ -150,156 +191,30 @@ class _CraftingScreenState extends State<CraftingScreen>
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Current craft icon + picker
-            GestureDetector(
-              onTap: () => _showRecipePicker(context),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      if (active != null) _recipeIcon(active.output.id),
-                      if (active == null)
-                        const Icon(Icons.lock_outline, size: 40),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          active?.name ?? 'No recipes unlocked yet',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                      const Icon(Icons.arrow_drop_down),
-                    ],
-                  ),
-                ),
-              ),
+            ItemStackTile(size: 160, count: 0, id: widget.imageId),
+            SizedBox(height: 12),
+
+            SkillTile(id: widget.skill),
+
+            RecipeCard(
+              maxCraftable: false,
+              inventory: playerDataController.data!.inventory,
+              recipeId: active?.id ?? '',
+              onTap: () => _showRecipePicker(context, playerDataController),
             ),
 
             const SizedBox(height: 12),
-
-            // Inputs row (show required inputs + how many you have)
-            if (active != null)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.input),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            for (final entry in active.inputs.entries)
-                              _InputChip(
-                                itemId: entry.key,
-                                need: entry.value,
-                                have: crafting.getPlayerCount(entry.key),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            const SizedBox(height: 12),
-
-            // Output preview + craftable count
-            if (active != null)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.output),
-                      const SizedBox(width: 12),
-                      _recipeIcon(active.output.id),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Makes: ${active.output.count}× ${active.output.id}\n'
-                          'You can make: ${crafting.craftableCount(active)}',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-            const SizedBox(height: 16),
-
-            // Optional: show inventory snapshot (like encounter drops)
-            // You can remove this if you don't want it.
-            Card(
-              child: SizedBox(
-                height: 90,
-                child: InventoryGrid(
-                  items: player.data!.inventory.getObjectStackList(),
-                ),
-              ),
-            ),
-
-            const Spacer(),
-
+            Spacer(),
             Padding(
               padding: const EdgeInsets.all(12),
               child: MomentumPrimaryButton(
-                label: canCraft
-                    ? 'Craft'
-                    : (active == null ? 'No recipe' : 'Missing materials'),
-                controller:
-                    player.actionTimingControllerOrNull ??
-                    // If timing isn’t initialized yet, disable interaction by
-                    // giving the button a dummy controller? If your button
-                    // requires a real controller, you can guard above.
-                    player.actionTimingController,
+                enabled: canCraft,
+                label: "Craft",
+                controller: playerDataController.actionTimingController,
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _InputChip extends StatelessWidget {
-  const _InputChip({
-    required this.itemId,
-    required this.need,
-    required this.have,
-  });
-
-  final Items itemId;
-  final int need;
-  final int have;
-
-  @override
-  Widget build(BuildContext context) {
-    final ok = have >= need;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ok ? Colors.green : Colors.red, width: 1.5),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 28,
-            height: 28,
-            child: Image.asset(
-              'assets/items/placeholder.png',
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const Icon(Icons.circle, size: 16),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text('$have / $need'),
-        ],
       ),
     );
   }

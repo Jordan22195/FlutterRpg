@@ -1,6 +1,7 @@
 import 'package:rpg/data/inventory.dart';
 
 import 'item.dart';
+import 'skill.dart';
 
 enum ArmorSlots {
   HEAD,
@@ -69,6 +70,22 @@ class ArmorEquipment {
     }
 
     return equipment;
+  }
+
+  int getStatTotal(Skills skill) {
+    int total = 0;
+    for (final itemId in armorEquipment.values) {
+      if (itemId == Items.NULL) continue;
+      final item = ItemController.buildItem(itemId);
+      if (item is EquipmentItem) {
+        total += item.skillBonus[skill] ?? 0;
+      }
+    }
+    return total;
+  }
+
+  Items getItemInSlot(ArmorSlots slot) {
+    return armorEquipment[slot] ?? Items.NULL;
   }
 
   void unequipItem(ArmorSlots slot, Inventory inv) {

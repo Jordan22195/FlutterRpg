@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/interval_runner.dart';
 import 'package:rpg/controllers/momentum_loop_controller.dart';
 import 'package:rpg/controllers/zone_controller.dart';
@@ -20,6 +21,7 @@ import '../data/item.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/foundation.dart';
 
 class PlayerDataController extends ChangeNotifier {
   ZoneController _zoneController = ZoneController();
@@ -92,19 +94,20 @@ class PlayerDataController extends ChangeNotifier {
     EncounterController.instance.playerDataController = this;
     ItemController.init();
     EntityController.init();
+    ZoneLocationController.init();
+    SkillController.init();
+    BuffController.instance.init(this);
+  }
+
+  void refresh() {
+    print("player data controller refresh");
+    notifyListeners();
   }
 
   PlayerData _createNewPlayerData() {
     return PlayerData(
       currentZoneId: Zones.TUTORIAL_FARM,
-      skills: {
-        Skills.HITPOINTS: Skill(name: "Hitpoints", xp: 0),
-        Skills.WOODCUTTING: Skill(name: "Woodcutting", xp: 0),
-        Skills.MINING: Skill(name: "Mining", xp: 0),
-        Skills.ATTACK: Skill(name: "Attack", xp: 0),
-        Skills.DEFENCE: Skill(name: "Defence", xp: 0),
-        Skills.FIREMAKING: Skill(name: "Firemaking", xp: 0),
-      },
+
       inventory: Inventory(itemMap: {}),
       gear: ArmorEquipment(),
       zones: ZoneState(discoveredEntities: {}),
@@ -133,6 +136,13 @@ class PlayerDataController extends ChangeNotifier {
     _fileManager.saveAppData(_d.toJson());
   }
 
+  int getStatTotal(Skills skill) {
+    int skillStat = SkillController.instance.getSkill(skill).getLevel();
+    int gearStat = _d.gear.getStatTotal(skill);
+    final total = skillStat + gearStat;
+    return total;
+  }
+
   Zones getCurrentZone() {
     return _d.currentZoneId;
   }
@@ -141,7 +151,7 @@ class PlayerDataController extends ChangeNotifier {
     return _d.zones.getEntityList(getCurrentZone());
   }
 
-  List<ZoneLocationType> getZoneLocations() {
+  List<ZoneLocationId> getZoneLocations() {
     return ZoneController.getZoneLocations(getCurrentZone());
   }
 
@@ -150,7 +160,7 @@ class PlayerDataController extends ChangeNotifier {
   }
 
   int getPlayerSkillStatTotal(Skills skill) {
-    return _d.skills[skill]?.getLevel() ?? 1;
+    return SkillController.instance.getSkill(skill).getLevel();
   }
 
   void explore() {
@@ -158,15 +168,6 @@ class PlayerDataController extends ChangeNotifier {
     final entity = _zoneController.discoverEntity(_d.currentZoneId);
     _d.zones.addEntities(getCurrentZone(), entity.id, entity.count);
     saveAppData();
-    notifyListeners();
-  }
-
-  Skill getSkill(Skills id) {
-    return data?.skills[id] ?? Skill(name: "Error", xp: 1);
-  }
-
-  void addXp(Skills skill, int xp) {
-    _d.skills[skill]?.addXp(xp);
     notifyListeners();
   }
 
@@ -178,7 +179,9 @@ class PlayerDataController extends ChangeNotifier {
   IntervalRunner intervalRunner = IntervalRunner();
 
   void playerDeath() {
-    _d.hitpoints = _d.skills[Skills.HITPOINTS]!.getLevel();
+    _d.hitpoints = SkillController.instance
+        .getSkill(Skills.HITPOINTS)
+        .getLevel();
 
     _d.zones.clearEntities();
   }
@@ -188,6 +191,7 @@ class PlayerDataController extends ChangeNotifier {
       EncounterController.instance.encounterItemDrops,
     );
     EncounterController.instance.encounterItemDrops.clear();
+    saveAppData();
   }
 
   String getActionString() {

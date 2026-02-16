@@ -2,51 +2,42 @@ import 'dart:math';
 import '../data/ObjectStack.dart';
 
 class WeightedDropTableEntry<T> {
-  final T item;
+  final T id;
   final int count;
-  final double weight;
+  double weight;
 
-  const WeightedDropTableEntry({
-    required this.item,
+  WeightedDropTableEntry({
+    required this.id,
     this.count = 1,
     required this.weight,
   });
 }
 
-class WeightedDropTable<T> {
-  final List<WeightedDropTableEntry<T>> entries;
-  final List<double> _prefix; // cumulative weights
-  final double _total;
-  final Random _rng;
-
-  WeightedDropTable({
-    required List<WeightedDropTableEntry<T>> items,
+class WeightedDropTable {
+  static ObjectStack<T> roll<T>(
+    List<WeightedDropTableEntry<T>> entries, {
     Random? rng,
-  }) : assert(items.isNotEmpty, 'WeightedDropTable got an empty items list'),
-       entries = List.unmodifiable(items),
-       _rng = rng ?? Random(),
-       _prefix = _buildPrefix<T>(items),
-       _total = _buildPrefix<T>(items).last; // (see note below)
-  // ^ We'll remove the duplicate build in the next snippet.
+  }) {
+    assert(entries.isNotEmpty, 'WeightedDropTable got an empty items list');
 
-  static List<double> _buildPrefix<T>(List<WeightedDropTableEntry<T>> weights) {
-    double sum = 0;
+    final random = rng ?? Random();
+
+    double total = 0;
     final prefix = <double>[];
-    for (final w in weights) {
-      if (w.weight <= 0) {
-        throw ArgumentError('All weights must be > 0. Got weight=${w.weight}');
-      }
-      sum += w.weight;
-      prefix.add(sum);
-    }
-    return prefix;
-  }
 
-  ObjectStack<T> roll() {
-    final r = _rng.nextDouble() * _total;
-    final idx = _lowerBound(_prefix, r);
-    final e = entries[idx];
-    return ObjectStack<T>(id: e.item, count: e.count);
+    for (final e in entries) {
+      if (e.weight <= 0) {
+        throw ArgumentError('All weights must be > 0. Got weight=${e.weight}');
+      }
+      total += e.weight;
+      prefix.add(total);
+    }
+
+    final r = random.nextDouble() * total;
+    final idx = _lowerBound(prefix, r);
+    final selected = entries[idx];
+
+    return ObjectStack<T>(id: selected.id, count: selected.count);
   }
 
   static int _lowerBound(List<double> prefix, double value) {

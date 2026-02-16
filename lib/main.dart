@@ -3,6 +3,7 @@ import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:provider/provider.dart';
 import 'screens/main_shell.dart';
 import 'controllers/encounter_controller.dart';
+import 'package:rpg/controllers/crafting_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,10 @@ Future<void> main() async {
             encounterController!.playerDataController = playerData;
             return encounterController;
           },
+        ),
+
+        ChangeNotifierProvider<CraftingController>(
+          create: (_) => CraftingController(),
         ),
       ],
       child: const MyApp(),

@@ -13,27 +13,14 @@ class SkillsScreen extends StatelessWidget {
     PlayerDataController controller,
     Skills skillId,
   ) {
-    return SkillTile(
-      title: skillId.name,
-      progress: controller.getSkill(skillId).percentProgressToLevelUp(),
-      icon: Icons.sports_martial_arts,
-      size: 70,
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => SkillDetailScreen(skillId: skillId),
-          ),
-        );
-      },
-    );
+    return SkillTile(id: skillId);
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<PlayerDataController>();
-    final skills = controller.data?.skills; // Map<Skills, Skill>
 
-    final list = skills?.entries.toList() ?? [];
+    final list = Skills.values.toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Skills')),
@@ -41,20 +28,14 @@ class SkillsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 3,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
+          mainAxisSpacing: 1,
+          crossAxisSpacing: 1,
         ),
-        itemCount: list?.length,
+        itemCount: Skills.values.length,
         itemBuilder: (context, i) {
-          final entry = list?[i];
-          final skillEnum = entry?.key;
-          final skill = entry?.value;
+          final id = list[i];
 
-          return buildSkillTile(
-            context,
-            controller,
-            skillEnum ?? Skills.ATTACK,
-          );
+          return buildSkillTile(context, controller, id ?? Skills.ATTACK);
         },
       ),
     );

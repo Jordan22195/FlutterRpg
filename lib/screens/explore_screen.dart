@@ -2,7 +2,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
+import 'package:rpg/controllers/zone_controller.dart';
 import 'package:rpg/data/entity.dart';
 import 'package:rpg/data/zone_location.dart';
 import 'package:rpg/screens/crafting_screen.dart';
@@ -13,6 +15,7 @@ import '../data/zone.dart';
 import '../data/skill.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/primary_button.dart';
+import '../widgets/explore_card.dart';
 import 'encounter_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -21,33 +24,6 @@ class ExploreScreen extends StatefulWidget {
 
   @override
   State<ExploreScreen> createState() => _ExploreScreenState();
-}
-
-Widget buildObjectCard<T extends Enum>(
-  T id,
-  int count,
-  Function() navigationCallback,
-) {
-  return Card(
-    child: InkWell(
-      onTap: () => navigationCallback(),
-      borderRadius: BorderRadius.circular(12), // match Card shape
-      child: SizedBox(
-        width: double.infinity,
-        height: 60,
-        child: Padding(
-          padding: const EdgeInsets.all(1),
-          child: Row(
-            children: [
-              ItemStackTile(size: 56, count: count, id: id),
-              const SizedBox(width: 12),
-              Text(id.toString()),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
 }
 
 class _ExploreScreenState extends State<ExploreScreen>
@@ -97,9 +73,17 @@ class _ExploreScreenState extends State<ExploreScreen>
         });
   }
 
-  void navigateToCrafting(Skills skill, PlayerDataController controller) {
+  void navigateToCrafting(
+    Skills skill,
+    PlayerDataController controller,
+    Enum locationId,
+  ) {
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => CraftingScreen(skill: skill)))
+        .push(
+          MaterialPageRoute(
+            builder: (_) => CraftingScreen(skill: skill, imageId: locationId),
+          ),
+        )
         .then((_) {
           print("return from crafting screen re-binding explore action button");
           if (!mounted) return;
@@ -108,12 +92,23 @@ class _ExploreScreenState extends State<ExploreScreen>
         });
   }
 
+  void navigateToLocation(
+    ZoneLocation location,
+    PlayerDataController controller,
+  ) {
+    if (location is CraftingLocation) {
+      navigateToCrafting(location.craftingSkill, controller, location.id);
+    }
+    if (location is FishingLocation) {
+      navigateToEncounter(location.fishingSpotEntity, controller);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<PlayerDataController>();
     final entities = controller.getZoneEntities();
     final locations = controller.getZoneLocations();
-    final media = MediaQuery.of(context);
     context
         .watch<EncounterController>(); // Rebuild when encounter state changes.
 
@@ -133,7 +128,8 @@ class _ExploreScreenState extends State<ExploreScreen>
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    widget.zoneId.name,
+                    ZoneController.getZone(widget.zoneId)?.name ??
+                        "Unknown Zone",
                     style: Theme.of(context).textTheme.titleLarge,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -173,7 +169,7 @@ class _ExploreScreenState extends State<ExploreScreen>
             ),
           ),
 
-          // Location list (resizable + still scrollable)
+          // Location list
           LayoutBuilder(
             builder: (context, constraints) {
               // Approximate per-row height (Card + padding). Keep in sync with buildObjectCard.
@@ -193,6 +189,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                 return const SizedBox.shrink();
               }
 
+              // location list
               return SizedBox(
                 height: desiredHeight,
                 child: ListView.builder(
@@ -200,11 +197,18 @@ class _ExploreScreenState extends State<ExploreScreen>
                   itemExtent: rowExtent,
                   itemBuilder: (context, i) {
                     final id = locations[i];
-                    return buildObjectCard(
-                      id,
-                      0,
-                      () =>
-                          navigateToCrafting(Skills.BLACKSMITHING, controller),
+
+                    final loc = ZoneLocationController.definitionFor(id);
+                    return ObjectCard(
+                      key: ValueKey(id),
+
+                      id: id,
+                      count: 1,
+                      onTap: () => navigateToLocation(loc, controller),
+                      typeId: loc.typeForIcon,
+                      expirationTime: id == ZoneLocationId.CAMPFIRE
+                          ? BuffController.instance.campfireBuff.expirationTime
+                          : null,
                     );
                   },
                 ),
@@ -219,23 +223,50 @@ class _ExploreScreenState extends State<ExploreScreen>
               itemCount: entities.length,
               itemBuilder: (context, i) {
                 final e = entities[i];
-                return buildObjectCard(
-                  e.id,
-                  e.count,
-                  () => navigateToEncounter(e.id, controller),
+                return ObjectCard(
+                  key: ValueKey(e.id),
+                  id: e.id,
+                  count: e.count,
+                  onTap: () => navigateToEncounter(e.id, controller),
+                  typeId:
+                      EntityController.definitionFor(e.id)?.entityType ??
+                      Skills.NULL,
                 );
               },
             ),
           ),
 
-          // Bottom action button (sits above the shell bottom nav automatically)
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: MomentumPrimaryButton(
-              label: "Explore",
-              controller: controller.actionTimingController,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(1),
+
+                child: TextButton(
+                  onPressed: () => navigateToCrafting(
+                    Skills.FIREMAKING,
+                    controller,
+                    Skills.FIREMAKING,
+                  ),
+                  child: ItemStackTile(
+                    size: 56,
+                    count: 0,
+                    id: Skills.FIREMAKING,
+                  ),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: MomentumPrimaryButton(
+                  enabled: true,
+                  label: "Explore",
+                  controller: controller.actionTimingController,
+                ),
+              ),
+            ],
           ),
+
+          // Bottom action button (sits above the shell bottom nav automatically)
         ],
       ),
     );

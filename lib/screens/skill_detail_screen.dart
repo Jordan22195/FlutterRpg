@@ -11,7 +11,7 @@ class SkillDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<PlayerDataController>();
-    final skill = controller.getSkill(skillId);
+    final skill = SkillController.instance.getSkill(skillId);
     return Scaffold(
       appBar: AppBar(title: Text(skillId.name)),
       body: Padding(

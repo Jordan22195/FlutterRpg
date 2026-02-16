@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/controllers/crafting_controller.dart';
 import '../controllers/player_data_controller.dart';
 import 'package:provider/provider.dart';
 import '../widgets/inventory_grid.dart';
-import '../data/skill.dart';
-import '../screens/skill_detail_screen.dart';
 
 class InventoryScreen extends StatelessWidget {
   const InventoryScreen({super.key});
@@ -11,6 +10,7 @@ class InventoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<PlayerDataController>();
+    final craftingController = context.watch<CraftingController>();
     final items = controller.data?.inventory.getObjectStackList() ?? [];
 
     return Scaffold(

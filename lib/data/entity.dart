@@ -5,7 +5,7 @@ import 'item.dart';
 import '../controllers/weighted_drop_table.dart';
 import '../utilities/image_resolver.dart';
 
-enum Entities { NULL, TREE, GOBLIN, COPPER }
+enum Entities { NULL, TREE, GOBLIN, COPPER, TRANQUIL_POND, RIVER, LAKE, OCEAN }
 
 class Entity {
   final Entities id;
@@ -44,7 +44,6 @@ class EntityDefinition {
   final int defence;
   final int hitpoints;
   final List<WeightedDropTableEntry<Items>> itemDrops;
-  final WeightedDropTable<Items> dropTable;
   final String? iconAsset;
 
   EntityDefinition({
@@ -54,7 +53,7 @@ class EntityDefinition {
     required this.hitpoints,
     required this.itemDrops,
     this.iconAsset,
-  }) : dropTable = WeightedDropTable<Items>(items: itemDrops);
+  });
 
   Entity toEntity(Entities id) => Entity(
     id: id,
@@ -100,6 +99,7 @@ class EntityController {
   }
 
   static final _defs = <Entities, EntityDefinition>{
+    // WOODCUTTING
     Entities.TREE: EntityDefinition(
       name: "Tree",
       iconAsset: "assets/images/entities/tree.png",
@@ -107,8 +107,10 @@ class EntityController {
       entityType: Skills.WOODCUTTING,
       defence: 1,
       hitpoints: 10,
-      itemDrops: [WeightedDropTableEntry<Items>(item: Items.LOGS, weight: 1)],
+      itemDrops: [WeightedDropTableEntry<Items>(id: Items.LOGS, weight: 1)],
     ),
+
+    // COMBAT
     Entities.GOBLIN: CombatEntityDefinition(
       name: "Goblin",
       iconAsset: "assets/images/entities/goblin.png",
@@ -118,8 +120,10 @@ class EntityController {
       hitpoints: 10,
       attack: 2,
       attackInterval: 2.0,
-      itemDrops: [WeightedDropTableEntry<Items>(item: Items.COINS, weight: 1)],
+      itemDrops: [WeightedDropTableEntry<Items>(id: Items.COINS, weight: 1)],
     ),
+
+    // MINING
     Entities.COPPER: EntityDefinition(
       name: "Copper Vein",
       iconAsset: "assets/images/entities/copper.png",
@@ -128,7 +132,60 @@ class EntityController {
       defence: 1,
       hitpoints: 10,
       itemDrops: [
-        WeightedDropTableEntry<Items>(item: Items.COPPER_ORE, weight: 1),
+        WeightedDropTableEntry<Items>(id: Items.COPPER_ORE, weight: 1),
+      ],
+    ),
+    // FISHING
+    Entities.TRANQUIL_POND: EntityDefinition(
+      name: "Pond",
+      iconAsset: "assets/images/entities/tranquil_pond.png",
+
+      entityType: Skills.FISHING,
+      defence: 1,
+      hitpoints: 10,
+      itemDrops: [
+        WeightedDropTableEntry<Items>(id: Items.MINNOW, weight: 1),
+        WeightedDropTableEntry<Items>(id: Items.CARP, weight: 0.5),
+        WeightedDropTableEntry(id: Items.BLUEGILL, weight: .25),
+      ],
+    ),
+    Entities.RIVER: EntityDefinition(
+      name: "River",
+      iconAsset: "assets/images/entities/river.png",
+
+      entityType: Skills.FISHING,
+      defence: 1,
+      hitpoints: 10,
+      itemDrops: [
+        WeightedDropTableEntry<Items>(id: Items.PIKE, weight: 1),
+        WeightedDropTableEntry(id: Items.SALMON, weight: .5),
+        WeightedDropTableEntry(id: Items.TROUT, weight: .25),
+      ],
+    ),
+    Entities.LAKE: EntityDefinition(
+      name: "Lake",
+      iconAsset: "assets/images/entities/lake.png",
+
+      entityType: Skills.FISHING,
+      defence: 1,
+      hitpoints: 10,
+      itemDrops: [
+        WeightedDropTableEntry<Items>(id: Items.WHITEFISH, weight: 1),
+        WeightedDropTableEntry(id: Items.BASS, weight: .5),
+        WeightedDropTableEntry(id: Items.WHITEFISH, weight: .25),
+      ],
+    ),
+    Entities.OCEAN: EntityDefinition(
+      name: "Ocean",
+      iconAsset: "assets/images/entities/ocean.png",
+
+      entityType: Skills.FISHING,
+      defence: 1,
+      hitpoints: 10,
+      itemDrops: [
+        WeightedDropTableEntry<Items>(id: Items.TUNA, weight: 1),
+        WeightedDropTableEntry(id: Items.SWORDFISH, weight: .5),
+        WeightedDropTableEntry(id: Items.SHARK, weight: .25),
       ],
     ),
   };
@@ -153,10 +210,8 @@ class EntityController {
       return ObjectStack(id: Items.NULL, count: 0);
     }
 
-    final result = _defs[id]?.dropTable.roll();
-    if (result == null) {
-      return ObjectStack(id: Items.NULL, count: 0);
-    }
+    final result = WeightedDropTable.roll(_defs[id]!.itemDrops);
+
     return result;
   }
 
@@ -173,7 +228,6 @@ class EntityController {
   /// If no icon is configured, returns null.
   static ImageProvider? imageProviderFor(dynamic objectId) {
     final asset = iconAssetFor(objectId);
-    print("Resolving image for $objectId: asset=$asset");
     return asset != null ? AssetImage(asset) : null;
   }
 }

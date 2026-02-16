@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 
 class PlayerData {
   final Zones currentZoneId;
-  final Map<Skills, Skill> skills;
   final Inventory inventory;
   final ArmorEquipment gear;
   final ZoneState zones;
@@ -16,24 +15,17 @@ class PlayerData {
 
   PlayerData({
     required this.currentZoneId,
-    required this.skills,
     required this.inventory,
     required this.gear,
     required this.zones,
   });
 
   Map<String, dynamic> toJson() {
+    print("PlayerData toJson");
     return {
       'currentZoneId': currentZoneId.name, // enum → string
       'hitpoints': hitpoints,
-
-      'skills': skills.map(
-        (key, value) => MapEntry(
-          key.name, // Skills enum → string
-          value.toJson(), // Skill → json
-        ),
-      ),
-
+      'skills': SkillController.instance.toJson(),
       'inventory': inventory.toJson(),
       'gear': gear.toJson(),
       'explorationStatus': zones.toJson(),
@@ -41,6 +33,7 @@ class PlayerData {
   }
 
   factory PlayerData.fromJson(Map<String, dynamic> json) {
+    print("PlayerData fromJson");
     // --- Helpers ---
     T _enumFromName<T extends Enum>(
       List<T> values,
@@ -72,15 +65,6 @@ class PlayerData {
     // Choose a sensible fallback zone. If you have Zones.NULL, use it instead.
     final Zones defaultZone = Zones.STARTING_FOREST;
 
-    // Build a default skill set so you always have every skill.
-    Map<Skills, Skill> defaultSkills() {
-      final map = <Skills, Skill>{};
-      for (final s in Skills.values) {
-        map[s] = Skill(name: s.name, xp: 1);
-      }
-      return map;
-    }
-
     final Inventory defaultInventory = Inventory(itemMap: {});
     final ArmorEquipment defaultGear = ArmorEquipment();
     final ZoneState defaultExploration = ZoneState(discoveredEntities: {});
@@ -99,32 +83,13 @@ class PlayerData {
     }
 
     // Skills: load what exists, fill the rest with defaults
-    final skillsOut = defaultSkills();
-    try {
-      final rawSkills = _asMap(json['skills']);
-      for (final entry in rawSkills.entries) {
-        final skillEnum = _enumFromName(
-          Skills.values,
-          entry.key,
-          fallback: Skills.HITPOINTS,
-        );
-
-        // Each value should be a Map for Skill.fromJson
-        final skillJson = _asMap(entry.value);
-        try {
-          skillsOut[skillEnum] = Skill.fromJson(skillJson);
-        } catch (e) {
-          debugPrint('PlayerData.fromJson: bad skill ${entry.key}: $e');
-          // keep default for that skill
-        }
-      }
-    } catch (e) {
-      debugPrint('PlayerData.fromJson: skills parse failed: $e');
-    }
+    final skillsJson = _asMap(json['skills']);
+    SkillController.instance.fromJson(skillsJson);
 
     Inventory inv;
     try {
       final invJson = _asMap(json['inventory']);
+
       inv = invJson.isEmpty ? defaultInventory : Inventory.fromJson(invJson);
     } catch (e) {
       debugPrint('PlayerData.fromJson: inventory parse failed: $e');
@@ -154,7 +119,6 @@ class PlayerData {
     // Build the object
     final player = PlayerData(
       currentZoneId: zoneId,
-      skills: skillsOut,
       inventory: inv,
       gear: gear,
       zones: exploration,

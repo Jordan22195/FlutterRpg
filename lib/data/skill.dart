@@ -1,23 +1,31 @@
 import 'dart:ffi';
 import 'dart:math' as Math;
+import 'dart:ui';
+import 'package:flutter/widgets.dart';
+import '../utilities/image_resolver.dart';
 
 enum Skills {
-  HITPOINTS, // health
-  ATTACK, // melee attack
-  RANGED, // ranged attack
-  MAGIC, // magic attack
-  DEFENCE, // damage reduction
-  WOODCUTTING, // cut down trees for logs
-  FIREMAKING, // build fires for buffs and cooking
-  MINING, // mine for ore and gems
-  LEATHERWORKING, // make leather armor for ranging
-  BLACKSMITHING, // make metal armor and weapons for melee
-  TAILORING, // make cloth armor for magic
-  ENCHANTING, // enhance gear
-  JEWELCRAFTING, // make jeweley items
-  FLETCHING, // make ranged weapons and staves?
-  FISHING,
-  COOKING,
+  // COMBAT
+  HITPOINTS, // health - entity
+  ATTACK, // melee attack - entity accuracy and damage
+  RANGED, // ranged attack - not sure how this will be used yet
+  MAGIC, // magic attack - not sure how this will be used yet
+  DEFENCE, // damage reduction - entity
+  // GATHERING
+  WOODCUTTING, // cut down trees for logs - entity encounter
+  MINING, // mine for ore and gems - entity encounter
+  FISHING, // catch fish for cooking - entity encounter
+  FORAGING, // gather herbs for alchemy - entity encounter - higher level let you find more stuff while exploring
+  // Crafting
+  FIREMAKING, // build fires for buffs and cooking - crafting without location
+  LEATHERWORKING, // make leather armor for ranging - crafting at leatherworking station
+  BLACKSMITHING, // make metal armor and weapons for melee - crafting at blacksmith station
+  TAILORING, // make cloth armor for magic - crafting at loom
+  ENCHANTING, // enhance gear - crafting at enchanting station with gear and enchantment materials
+  JEWELCRAFTING, // make jeweley items - crafting at jeweling station with gems and metal bars
+  FLETCHING, // make ranged weapons and staves - crafting at fletching station with logs
+  COOKING, // cook food for healing and buffs - crafting at fire
+  ALCHEMY, // make potions for buffs and healing - crafting at alchemy station with herbs and water
   NULL,
 }
 
@@ -100,10 +108,123 @@ class Skill {
   }
 
   Map<String, dynamic> toJson() {
+    print("tojson $name $xp");
     return {'name': name, 'xp': xp};
   }
 
   factory Skill.fromJson(Map<String, dynamic> json) {
+    print("fromjson ${json['name']} ${json['xp']}");
     return Skill(name: json['name'] as String, xp: json['xp'] as int);
+  }
+}
+
+class SkillController extends ChangeNotifier {
+  SkillController._internal();
+  static final SkillController instance = SkillController._internal();
+
+  static final Map<Skills, Skill> _skills = {};
+
+  Map<String, dynamic> toJson() {
+    print("skillcontroller tojson");
+    final map = <String, dynamic>{};
+    _skills.forEach((key, value) {
+      map[key.name] = value.toJson();
+    });
+    return map;
+  }
+
+  void fromJson(Map<String, dynamic> json) {
+    print("skillcontroller fromjson with keys ${json.keys}");
+    // Start from a known-good default set so missing keys don't leave holes.
+    _skills..clear();
+
+    for (final skill in Skills.values) {
+      if (skill != Skills.NULL) {
+        _skills[skill] = Skill(name: skill.name, xp: 0);
+      }
+    }
+
+    // Overlay any persisted values.
+    json.forEach((key, value) {
+      print("processing skill key $key with value $value");
+      final skillEnum = Skills.values.firstWhere(
+        (e) => e.name == key,
+        orElse: () => Skills.NULL,
+      );
+
+      if (skillEnum == Skills.NULL) return;
+
+      // jsonDecode often produces Map<dynamic, dynamic>; normalize before parsing.
+      print("parsing skill $key with value $value");
+      if (value is Map) {
+        final map = Map<String, dynamic>.from(value as Map);
+        _skills[skillEnum] = Skill.fromJson(map);
+      }
+    });
+
+    notifyListeners();
+  }
+
+  static void init() {
+    for (var skill in Skills.values) {
+      if (skill != Skills.NULL) {
+        _skills[skill] = Skill(name: skill.name, xp: 0);
+      }
+    }
+    EnumImageProviderLookup.register<Skills>(SkillController.imageProviderFor);
+  }
+
+  Skill getSkill(Skills id) {
+    return _skills[id] ?? Skill(name: "Error", xp: 1);
+  }
+
+  void addXp(Skills skill, int xp) {
+    _skills[skill]?.addXp(xp);
+  }
+
+  static ImageProvider? imageProviderFor(dynamic objectId) {
+    {
+      if (objectId is! Skills) {
+        throw ArgumentError('Expected Skills, got ${objectId.runtimeType}');
+      }
+      switch (objectId) {
+        case Skills.ATTACK:
+          return AssetImage('assets/icons/skills/attack.png');
+        case Skills.DEFENCE:
+          return AssetImage('assets/icons/skills/defence.png');
+        case Skills.HITPOINTS:
+          return AssetImage('assets/icons/skills/hp.png');
+        case Skills.RANGED:
+          return AssetImage('assets/icons/skills/ranged.png');
+        case Skills.MAGIC:
+          return AssetImage('assets/icons/skills/magic.png');
+        case Skills.WOODCUTTING:
+          return AssetImage('assets/icons/skills/woodcutting.png');
+        case Skills.FIREMAKING:
+          return AssetImage('assets/icons/skills/firemaking.png');
+        case Skills.MINING:
+          return AssetImage('assets/icons/skills/mining.png');
+        case Skills.LEATHERWORKING:
+          return AssetImage('assets/icons/skills/leatherworking.png');
+        case Skills.BLACKSMITHING:
+          return AssetImage('assets/icons/skills/blacksmithing.png');
+        case Skills.TAILORING:
+          return AssetImage('assets/icons/skills/tailoring.png');
+        case Skills.ENCHANTING:
+          return AssetImage('assets/icons/skills/enchanting.png');
+        case Skills.JEWELCRAFTING:
+          return AssetImage('assets/icons/skills/jewelcrafting.png');
+        case Skills.FLETCHING:
+          return AssetImage('assets/icons/skills/fletching.png');
+        case Skills.FISHING:
+          return AssetImage('assets/icons/skills/fishing.png');
+        case Skills.COOKING:
+          return AssetImage('assets/icons/skills/cooking.png');
+        case Skills.NULL:
+          return null;
+        default:
+          return null;
+      }
+    }
   }
 }
