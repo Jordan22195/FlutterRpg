@@ -58,11 +58,11 @@ class ZoneController {
       return;
     }
     if (!zone.permanentLocations.contains(ZoneLocationId.CAMPFIRE)) {
-      print("Campfire does not exist in zone ${zone.name}.");
       return;
     }
 
     zone.permanentLocations.remove(ZoneLocationId.CAMPFIRE);
+    PlayerDataController.instance.refresh();
   }
 
   static void addCampfireToCurrentZone(Item fireItem) {
@@ -72,7 +72,6 @@ class ZoneController {
       return;
     }
     if (zone.permanentLocations.contains(ZoneLocationId.CAMPFIRE)) {
-      print("Campfire already exists in zone ${zone.name}.");
       return;
     }
 
@@ -85,6 +84,7 @@ class ZoneController {
             .fireId =
         fireItem.id;
     zone.permanentLocations.add(ZoneLocationId.CAMPFIRE);
+    PlayerDataController.instance.refresh();
   }
 
   static List<ZoneLocationId> getZoneLocations(Zones zoneId) {

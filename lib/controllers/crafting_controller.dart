@@ -55,9 +55,8 @@ class CraftingController extends ChangeNotifier {
       if (entry.id == Items.BURNT_FOOD) {
         final burnChance = calculateBurnChance(
           level: _getSkillLevel(Skills.COOKING),
-          difficultyScale:
-              recipe.levelRequirement
-                  as double, // Adjust based on recipe difficulty if needed
+          difficultyScale: recipe.levelRequirement
+              .toDouble(), // Adjust based on recipe difficulty if needed
         );
         entry.weight =
             burnChance; // Higher burnChance means more likely to get burnt food
@@ -445,7 +444,7 @@ class CraftingController extends ChangeNotifier {
     final xp = r.xp;
     SkillController.instance.getSkill(r.skill).addXp(xp);
 
-    playerDataController.saveAppData();
+    playerDataController.refresh();
     notifyListeners();
   }
 

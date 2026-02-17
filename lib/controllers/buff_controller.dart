@@ -7,14 +7,11 @@ import '../controllers/zone_controller.dart';
 
 /// Singleton controller that owns all active buffs and notifies listeners
 /// when their remaining durations change.
-class BuffController {
+class BuffController extends ChangeNotifier {
   // ---- Singleton boilerplate ----
   static final BuffController instance = BuffController._internal();
   BuffController._internal() {
-    _timer = Timer.periodic(
-      const Duration(milliseconds: 500),
-      (_) => _onTick(),
-    );
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
     print("buff controller constructor");
   }
 
@@ -43,8 +40,17 @@ class BuffController {
   /// Set/refresh the campfire buff.
   /// If the same buff is already active, extends its duration.
   void setCampfireBuff(BuffItem buff) {
+    print(
+      "Setting campfire buff: ${buff.name} with duration ${buff.duration.inSeconds} seconds.",
+    );
     if (_campfireBuff.id == buff.id) {
-      _campfireBuff.expirationTime.add(buff.duration);
+      print("Current Expiration Time: ${_campfireBuff.expirationTime}");
+      _campfireBuff.expirationTime = _campfireBuff.expirationTime.add(
+        buff.duration,
+      );
+      print(
+        "Extended campfire buff: ${buff.name}. New expiration time: ${_campfireBuff.expirationTime}.",
+      );
       return;
     }
 
@@ -58,11 +64,16 @@ class BuffController {
   /// If it already exists, extends its duration.
   void addBuff(BuffItem buff) {
     if (_activeBuffs.containsKey(buff.id)) {
-      _activeBuffs[buff.id]?.expirationTime.add(buff.duration);
+      final existing = _activeBuffs[buff.id];
+      if (existing != null) {
+        existing.expirationTime = existing.expirationTime.add(buff.duration);
+      }
       return;
     }
     _activeBuffs[buff.id] = buff;
-    print("Added buff: ${buff.name}. Duration: ${buff.duration} seconds.");
+    print(
+      "Added buff: ${buff.name}. Duration: ${buff.duration.inSeconds} seconds.",
+    );
   }
 
   /// Optionally remove a buff early.
@@ -71,8 +82,6 @@ class BuffController {
   }
 
   void _onTick() {
-    print("Buff Controller on tick ");
-
     // Decrement campfire buff.
     // If it just expired, normalize the ID to NULL (keeps the name).
     if (_campfireBuff.expirationTime.isBefore(DateTime.now())) {
@@ -108,9 +117,6 @@ class BuffController {
     }
 
     // Always notify once per tick so UI countdowns update.
-    if (controller != null) {
-      controller?.refresh();
-    }
-    print("Buff Controller on tick refresh");
+    notifyListeners();
   }
 }

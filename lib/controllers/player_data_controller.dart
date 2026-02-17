@@ -29,6 +29,8 @@ class PlayerDataController extends ChangeNotifier {
   late final FileManager _fileManager;
   bool _encounterActive = false;
 
+  static late PlayerDataController instance;
+
   PlayerData? _data;
   bool _isLoading = true;
   String? _error;
@@ -97,10 +99,12 @@ class PlayerDataController extends ChangeNotifier {
     ZoneLocationController.init();
     SkillController.init();
     BuffController.instance.init(this);
+    instance = this;
   }
 
   void refresh() {
     print("player data controller refresh");
+    saveAppData();
     notifyListeners();
   }
 

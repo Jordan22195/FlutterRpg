@@ -20,7 +20,6 @@ class GearScreen extends StatelessWidget {
       body: ListView(
         children: ArmorSlots.values.map((slot) {
           Items itemId = gear?.armorEquipment[slot] ?? Items.NULL;
-          print("Slot: ${slot.name}, Item ID: $itemId");
           return ListTile(
             title: Text(slot.name),
             trailing: ItemStackTile(id: itemId, count: 1, size: 32),

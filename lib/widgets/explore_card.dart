@@ -5,6 +5,7 @@ import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import '../data/skill.dart';
 import '../utilities/util.dart';
+import 'countdown_timer.dart';
 
 class ObjectCard<T extends Enum> extends StatefulWidget {
   ObjectCard({
@@ -126,11 +127,9 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
                     ItemStackTile(size: 56, count: widget.count, id: widget.id),
                     const SizedBox(width: 12),
                     Text(_cardText()),
-                    const Spacer(),
-                    const SizedBox(width: 8),
-                    if (widget.expirationTime != null) Icon(Icons.timer),
+                    Spacer(),
                     if (widget.expirationTime != null)
-                      Text(Util.formatRemainingTime(widget.expirationTime!)),
+                      CountdownTimer(expirationTime: widget.expirationTime!),
                     IconRenderer(size: 45, id: widget.typeId),
                   ],
                 ),

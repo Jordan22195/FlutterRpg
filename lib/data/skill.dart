@@ -108,7 +108,6 @@ class Skill {
   }
 
   Map<String, dynamic> toJson() {
-    print("tojson $name $xp");
     return {'name': name, 'xp': xp};
   }
 

@@ -532,9 +532,7 @@ class ItemController {
   }
 
   static ItemDefinition? definitionFor(Items objectId) {
-    print("Looking up definition for objectId: $objectId");
     final ret = _defs[objectId];
-    print("Definition lookup result for $objectId: ${ret?.name ?? 'null'}");
     return ret;
   }
 
