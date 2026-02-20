@@ -1,6 +1,4 @@
-import 'dart:ffi';
-import 'dart:math' as Math;
-import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/widgets.dart';
 import '../utilities/image_resolver.dart';
 
@@ -42,8 +40,6 @@ class Skill {
 
     // Maxed (level 99 if table is 99)
     if (curLevel >= xpTable.length - 1) return 1.0;
-
-    final nextLevel = (curLevel + 1);
 
     final curLvlXp = xpTable[curLevel];
     final nextLvlXp = nextLevelXp();
@@ -92,7 +88,7 @@ class Skill {
 
     for (int level = 1; level <= maxLevel; level++) {
       table[level] = points;
-      points += ((level + 300 * Math.pow(2, level / 7)) / 4).floor();
+      points += ((level + 300 * pow(2, level / 7)) / 4).floor();
     }
 
     return table;

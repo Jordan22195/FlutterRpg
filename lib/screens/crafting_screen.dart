@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
-import 'package:rpg/data/item.dart';
 import 'package:rpg/data/skill.dart';
-import 'package:rpg/data/zone_location.dart';
-import 'package:rpg/widgets/fill_bar.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/recipe_card.dart';
@@ -27,52 +24,6 @@ class _CraftingScreenState extends State<CraftingScreen>
   PlayerDataController? _player;
   bool _initializing = true;
 
-  Widget buildProgressBars(PlayerDataController controller) {
-    const double speedBarPadding = 120;
-    final timing = controller.actionTimingControllerOrNull;
-
-    if (_initializing || timing == null) {
-      // Build can run before async init finishes. Show placeholders.
-      return Column(
-        children: [
-          const FillBar(value: 0),
-          const SizedBox(height: 8),
-          Row(
-            children: const [
-              SizedBox(width: speedBarPadding),
-              Expanded(child: FillBar(value: 0)),
-              SizedBox(width: speedBarPadding),
-            ],
-          ),
-        ],
-      );
-    }
-    return Column(
-      children: [
-        AnimatedBuilder(
-          animation: timing,
-          builder: (_, __) => FillBar(value: timing.actionProgress),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const SizedBox(width: speedBarPadding),
-            Expanded(
-              child: AnimatedBuilder(
-                animation: timing,
-                builder: (_, __) => FillBar(
-                  value: timing.speed,
-                  foregroundColor: Theme.of(context).colorScheme.secondary,
-                ),
-              ),
-            ),
-            const SizedBox(width: speedBarPadding),
-          ],
-        ),
-      ],
-    );
-  }
-
   @override
   void initState() {
     super.initState();
@@ -86,8 +37,24 @@ class _CraftingScreenState extends State<CraftingScreen>
       // Bind controller references
       crafting.initForSkill(skill: widget.skill, controller: c);
 
+      setState(() {
+        _initializing = false;
+      });
+    });
+  }
+
+  void bindActionButton() {
+    Future.microtask(() async {
+      final c = context.read<PlayerDataController>();
+      _player = c;
+      await c.ensureLoaded();
+      if (!mounted) return;
+
+      // Bind controller references
+      crafting.initForSkill(skill: widget.skill, controller: c);
+
       // Hook into timing loop (same idea as encounter)
-      c.initActionTiming(this);
+      //c.initActionTiming(this);
       if (!mounted) return;
       c.actionTimingController.onFire = () {
         if (!mounted) return;
@@ -105,16 +72,6 @@ class _CraftingScreenState extends State<CraftingScreen>
 
   @override
   void dispose() {
-    // Don’t touch inherited widgets in dispose; use cached controller reference.
-    final p = _player;
-    final timing = p?.actionTimingControllerOrNull;
-
-    // Prevent any late ticks from trying to call setState after this widget unmounts.
-    if (timing != null) {
-      //timing.onFire = () => {};
-      timing.stopNowSilently();
-    }
-
     super.dispose();
   }
 
@@ -176,21 +133,30 @@ class _CraftingScreenState extends State<CraftingScreen>
     final active = crafting.activeRecipe;
     final canCraft = (active != null) && crafting.canCraftActive();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.skill.name),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: buildProgressBars(playerDataController),
-          ),
-        ),
-      ),
-      body: Padding(
+    return SafeArea(
+      child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      CraftingController.instance.activeSkill.name ?? "Error",
+                      style: Theme.of(context).textTheme.titleLarge,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             ItemStackTile(size: 160, count: 0, id: widget.imageId),
             SizedBox(height: 12),
 
@@ -203,15 +169,52 @@ class _CraftingScreenState extends State<CraftingScreen>
               onTap: () => _showRecipePicker(context, playerDataController),
             ),
 
+            Card(
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 80,
+                    child: InventoryGrid(
+                      items: CraftingController.instance.craftedItems
+                          .getObjectStackList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 12),
             Spacer(),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: MomentumPrimaryButton(
-                enabled: canCraft,
-                label: "Craft",
-                controller: playerDataController.actionTimingController,
-              ),
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: MomentumPrimaryButton(
+                    enabled: canCraft,
+                    label: "Craft",
+                    controller: playerDataController.actionTimingController,
+                    onFireFunction: () {
+                      print("CraftingScreen: Craft button fired!");
+                      crafting.craftOnce();
+                    },
+                  ),
+                ),
+                SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(1),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: TextButton(
+                    child: Text("Stop"),
+                    onPressed: () {
+                      PlayerDataController.instance.actionTimingController
+                          .stopNow();
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),

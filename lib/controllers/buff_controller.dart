@@ -3,16 +3,17 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/item.dart';
+import 'package:rpg/data/skill.dart';
 import '../controllers/zone_controller.dart';
 
 /// Singleton controller that owns all active buffs and notifies listeners
 /// when their remaining durations change.
 class BuffController extends ChangeNotifier {
   // ---- Singleton boilerplate ----
+
   static final BuffController instance = BuffController._internal();
   BuffController._internal() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
-    print("buff controller constructor");
+    Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
   }
 
   static PlayerDataController? controller;
@@ -21,7 +22,18 @@ class BuffController extends ChangeNotifier {
     controller = cont;
   }
 
-  Timer? _timer;
+  int getBuffedStatTotal(Skills id) {
+    int total = 0;
+    for (final buff in _activeBuffs.values) {
+      if (buff.skillBonus.containsKey(id)) {
+        total += buff.skillBonus[id] ?? 0;
+      }
+    }
+    if (_campfireBuff.skillBonus.containsKey(id)) {
+      total += _campfireBuff.skillBonus[id] ?? 0;
+    }
+    return total;
+  }
 
   // ---- Buff state ----
   final Map<Items, BuffItem> _activeBuffs = {};
@@ -40,22 +52,15 @@ class BuffController extends ChangeNotifier {
   /// Set/refresh the campfire buff.
   /// If the same buff is already active, extends its duration.
   void setCampfireBuff(BuffItem buff) {
-    print(
-      "Setting campfire buff: ${buff.name} with duration ${buff.duration.inSeconds} seconds.",
-    );
     if (_campfireBuff.id == buff.id) {
-      print("Current Expiration Time: ${_campfireBuff.expirationTime}");
       _campfireBuff.expirationTime = _campfireBuff.expirationTime.add(
         buff.duration,
-      );
-      print(
-        "Extended campfire buff: ${buff.name}. New expiration time: ${_campfireBuff.expirationTime}.",
       );
       return;
     }
 
     _campfireBuff = buff;
-    print(
+    debugPrint(
       "Set campfire buff: ${buff.name}. Duration: ${buff.duration.inSeconds} seconds.",
     );
   }
@@ -71,7 +76,7 @@ class BuffController extends ChangeNotifier {
       return;
     }
     _activeBuffs[buff.id] = buff;
-    print(
+    debugPrint(
       "Added buff: ${buff.name}. Duration: ${buff.duration.inSeconds} seconds.",
     );
   }
@@ -87,7 +92,7 @@ class BuffController extends ChangeNotifier {
     if (_campfireBuff.expirationTime.isBefore(DateTime.now())) {
       _campfireBuff = BuffItem(
         id: Items.NULL,
-        skillBonus: _campfireBuff.skillBonus,
+        skillBonus: {},
         value: _campfireBuff.value,
         name: _campfireBuff.name,
         duration: Duration.zero,

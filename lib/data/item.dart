@@ -1,6 +1,5 @@
 import 'armor_equipment.dart';
 import 'skill.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import '../utilities/image_resolver.dart';
 
@@ -147,12 +146,14 @@ class ItemDefinition {
 }
 
 class FoodItemDefinition extends ItemDefinition {
-  int healAmount;
+  int restoreAmount;
+  Skills restoreSkill;
 
   FoodItemDefinition({
     required super.name,
     required super.value,
-    required this.healAmount,
+    required this.restoreAmount,
+    this.restoreSkill = Skills.HITPOINTS,
     super.description,
     super.iconAsset,
     super.xpValue,
@@ -231,6 +232,7 @@ class WeaponItemDefition extends EquipmentItemDefition {
     super.iconAsset,
   });
 
+  @override
   WeaponItem toItem(Items id) => WeaponItem(
     id: id,
     name: name,
@@ -363,84 +365,84 @@ class ItemController {
     Items.COOKED_MINNOW: FoodItemDefinition(
       name: "Cooked Minnow",
       value: 2,
-      healAmount: 1,
+      restoreAmount: 1,
       xpValue: 10,
       iconAsset: "assets/icons/items/cooked_minnow.png",
     ),
     Items.COOKED_CARP: FoodItemDefinition(
       name: "Cooked Carp",
       value: 4,
-      healAmount: 2,
+      restoreAmount: 2,
       xpValue: 20,
       iconAsset: "assets/icons/items/cooked_carp.png",
     ),
     Items.COOKED_BLUEGILL: FoodItemDefinition(
       name: "Cooked Bluegill",
       value: 6,
-      healAmount: 3,
+      restoreAmount: 3,
       xpValue: 30,
       iconAsset: "assets/icons/items/cooked_bluegill.png",
     ),
     Items.COOKED_TROUT: FoodItemDefinition(
       name: "Cooked Trout",
       value: 10,
-      healAmount: 5,
+      restoreAmount: 5,
       xpValue: 50,
       iconAsset: "assets/icons/items/cooked_trout.png",
     ),
     Items.COOKED_PIKE: FoodItemDefinition(
       name: "Cooked Pike",
       value: 14,
-      healAmount: 7,
+      restoreAmount: 7,
       xpValue: 70,
       iconAsset: "assets/icons/items/cooked_pike.png",
     ),
     Items.COOKED_SALMON: FoodItemDefinition(
       name: "Cooked Salmon",
       value: 20,
-      healAmount: 12,
+      restoreAmount: 12,
       xpValue: 100,
       iconAsset: "assets/icons/items/cooked_salmon.png",
     ),
     Items.COOKED_CATFISH: FoodItemDefinition(
       name: "Cooked Catfish",
       value: 30,
-      healAmount: 15,
+      restoreAmount: 15,
       xpValue: 150,
       iconAsset: "assets/icons/items/cooked_catfish.png",
     ),
     Items.COOKED_BASS: FoodItemDefinition(
       name: "Cooked Bass",
       value: 40,
-      healAmount: 20,
+      restoreAmount: 20,
       xpValue: 200,
       iconAsset: "assets/icons/items/cooked_bass.png",
     ),
     Items.COOKED_WHITEFISH: FoodItemDefinition(
       name: "Cooked Whitefish",
       value: 50,
-      healAmount: 22,
+      restoreAmount: 22,
       xpValue: 250,
       iconAsset: "assets/icons/items/cooked_whitefish.png",
     ),
     Items.COOKED_TUNA: FoodItemDefinition(
       name: "Cooked Tuna",
       value: 60,
-      healAmount: 25,
+      restoreAmount: 25,
       xpValue: 300,
       iconAsset: "assets/icons/items/cooked_tuna.png",
     ),
     Items.COOKED_SWORDFISH: FoodItemDefinition(
       name: "Cooked Swordfish",
       value: 100,
-      healAmount: 30,
+      restoreAmount: 30,
       xpValue: 500,
       iconAsset: "assets/icons/items/cooked_swordfish.png",
     ),
     Items.COOKED_SHARK: FoodItemDefinition(
       name: "Cooked Shark",
       value: 200,
-      healAmount: 35,
+      restoreAmount: 35,
       xpValue: 1000,
       iconAsset: "assets/icons/items/cooked_shark.png",
     ),
@@ -498,7 +500,7 @@ class ItemController {
 
     //weapons
     Items.COPPER_AXE: WeaponItemDefition(
-      armorSlot: ArmorSlots.WEAPON_1H,
+      armorSlot: ArmorSlots.TOOL,
       name: "Bronze Axe",
       value: 10,
       skillBonus: {Skills.ATTACK: 2, Skills.WOODCUTTING: 5},
@@ -506,7 +508,7 @@ class ItemController {
       iconAsset: "assets/icons/items/copper_axe.png",
     ),
     Items.COPPER_PICKAXE: WeaponItemDefition(
-      armorSlot: ArmorSlots.WEAPON_1H,
+      armorSlot: ArmorSlots.TOOL,
       name: "Bronze Pickaxe",
       value: 10,
       skillBonus: {Skills.ATTACK: 2, Skills.MINING: 5},

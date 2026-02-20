@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/controllers/weighted_drop_table.dart';
-import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/inventory.dart';
 import 'package:rpg/data/item.dart';
 import 'package:rpg/data/skill.dart';
@@ -39,7 +38,7 @@ class CraftingController extends ChangeNotifier {
   CraftingController._internal();
   static final CraftingController instance = CraftingController._internal();
 
-  CraftingController() {}
+  CraftingController();
 
   late PlayerDataController playerDataController;
 
@@ -48,6 +47,8 @@ class CraftingController extends ChangeNotifier {
   CraftingRecipe? _activeRecipe;
 
   CraftingRecipe? get activeRecipe => _activeRecipe;
+
+  Inventory craftedItems = Inventory(itemMap: {});
 
   void setBurntFoodWeight(String recipeId) {
     final recipe = recipeById(recipeId);
@@ -354,8 +355,6 @@ class CraftingController extends ChangeNotifier {
   }
 
   List<CraftingRecipe> getVisibleRecipesForActiveSkill() {
-    final level = _getSkillLevel(activeSkill);
-    // Per your requirement: locked recipes are hidden.
     return _recipes.where((r) => r.skill == activeSkill).toList();
   }
 
@@ -363,6 +362,7 @@ class CraftingController extends ChangeNotifier {
     required Skills skill,
     required PlayerDataController controller,
   }) {
+    craftedItems.clear();
     playerDataController = controller;
     activeSkill = skill;
 
@@ -474,14 +474,14 @@ class CraftingController extends ChangeNotifier {
       return SkillController.instance.getSkill(skill).getLevel();
     } catch (_) {
       // fallback: if getSkill isn’t available for non-combat skills yet
-      final d = playerDataController.data;
       final s = SkillController.instance.getSkill(skill);
-      return s?.getLevel() ?? 1;
+      return s.getLevel();
     }
   }
 
   void _addItems(Items id, int count) {
     _inventory.addItems(id, count);
+    craftedItems.addItems(id, count);
   }
 
   void _removeItems(Items id, int count) {

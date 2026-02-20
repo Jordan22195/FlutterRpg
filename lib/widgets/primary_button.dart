@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../controllers/momentum_loop_controller.dart';
 
@@ -7,12 +9,14 @@ class MomentumPrimaryButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.controller,
+    required this.onFireFunction,
   });
 
+  final FutureOr<void> Function() onFireFunction;
   final bool enabled;
   final String label;
   final MomentumLoopController controller;
-
+  // if not bound, then reg
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -20,7 +24,12 @@ class MomentumPrimaryButton extends StatelessWidget {
       builder: (context, _) {
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
-          onTapDown: (_) => {if (enabled) controller.pressDown()},
+          onTapDown: (_) {
+            if (enabled) {
+              controller.onFire = onFireFunction;
+              controller.pressDown();
+            }
+          },
           onTapUp: (_) => controller.pressUp(),
           onTapCancel: controller.cancel,
           child: Container(

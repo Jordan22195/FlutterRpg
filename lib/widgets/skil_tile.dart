@@ -6,12 +6,8 @@ import '../widgets/icon_renderer.dart';
 import '../screens/skill_detail_screen.dart';
 
 class SkillTile extends StatelessWidget {
-  const SkillTile({
-    required this.id,
-    super.key,
-    this.size = 86,
-    this.strokeWidth = 10,
-  });
+  const SkillTile({required this.id, super.key, this.size = 100})
+    : strokeWidth = size * 0.2;
 
   final Skills id;
 
@@ -29,7 +25,7 @@ class SkillTile extends StatelessWidget {
     final centerChild = IconRenderer(id: id, size: size * 0.60);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(210),
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => SkillDetailScreen(skillId: id)),
@@ -72,20 +68,59 @@ class SkillTile extends StatelessWidget {
                     alignment: Alignment.center,
                     child: Padding(
                       padding: const EdgeInsets.all(4),
-                      child: centerChild,
+                      child: Stack(
+                        children: [
+                          centerChild,
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: _CountBadge(
+                              count: SkillController.instance
+                                  .getSkill(id)
+                                  .getLevel(),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
             //  const SizedBox(height: 8),
-            Text(
+            /*    Text(
               SkillController.instance.getSkill(id).name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.labelLarge,
             ),
+            */
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CountBadge extends StatelessWidget {
+  const _CountBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        '$count',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          //fontWeight: FontWeight.bold,
         ),
       ),
     );

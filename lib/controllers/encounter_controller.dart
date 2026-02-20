@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/entity.dart';
@@ -9,58 +9,48 @@ import 'package:rpg/data/item.dart';
 import 'package:rpg/data/skill.dart';
 import '../data/zone.dart';
 
-class EncounterController extends ChangeNotifier {
-  EncounterController._internal();
-  static final EncounterController instance = EncounterController._internal();
-  EncounterController() {}
-  late PlayerDataController playerDataController;
-  int lastPlayerDamage = 0;
-  bool isActive = false;
-  Entities activeEntityId = Entities.NULL;
-  Inventory encounterItemDrops = Inventory(itemMap: {});
-  Entity _entity = Entity(
-    id: Entities.NULL,
-    name: "null",
-    entityType: Skills.ATTACK,
-    defence: 0,
-    hitpoints: 1,
-  );
-
-  Entity getEntity() {
-    return _entity;
+class EntityEncounter {
+  EntityEncounter({required this.entityId})
+    : entity = EntityController.buildEntity(entityId) {
+    init();
   }
 
-  double getHealtPercent() {
-    if (getEntity().maxHitPoints <= 0) return 0.0;
-    return (getEntity().hitpoints / getEntity().maxHitPoints).clamp(0.0, 1.0);
+  final Entities entityId;
+  Inventory itemDrops = Inventory(itemMap: {});
+  int lastPlayerDamage = 0;
+  bool isActive = false;
+  bool respawning = false;
+  Entity entity;
+  late PlayerDataController playerController;
+  late EncounterController encounterController;
+
+  void init() {
+    playerController = PlayerDataController.instance;
+    encounterController = EncounterController.instance;
+  }
+
+  double getHealthPercent() {
+    if (entity.maxHitPoints <= 0) return 0.0;
+    return (entity.hitpoints / entity.maxHitPoints).clamp(0.0, 1.0);
   }
 
   Skills getEncounterSkillType() {
-    return _entity.entityType;
+    return entity.entityType;
   }
 
   void endEcnounter() {
     isActive = false;
-    playerDataController.actionTimingController.stopNow();
-  }
-
-  void initEncounter(Entities id) {
-    activeEntityId = id;
-    _entity = EntityController.buildEntity(id);
-
-    encounterItemDrops.clear();
-    isActive = false;
-    print("init encounter with ${_entity.name}");
-    notifyListeners();
+    playerController.actionTimingController.stopNow();
+    playerController.refresh();
   }
 
   int getEntityCount() {
     if (getEncounterSkillType() == Skills.FISHING) {
       return 1;
     }
-    return playerDataController.getEntityCount(
-      playerDataController.data?.currentZoneId ?? Zones.NULL,
-      activeEntityId,
+    return playerController.getEntityCount(
+      playerController.data?.currentZoneId ?? Zones.NULL,
+      entityId,
     );
   }
 
@@ -72,10 +62,159 @@ class EncounterController extends ChangeNotifier {
     isActive = true;
   }
 
+  bool isDead() {
+    return entity.hitpoints <= 0;
+  }
+
   void endEncounter() {
     isActive = false;
-    activeEntityId = Entities.NULL;
-    encounterItemDrops.clear();
+    itemDrops.clear();
+  }
+
+  void doFishingAction() {
+    int playerSkillStatTotal = playerController.getStatTotal(Skills.FISHING);
+
+    int encounterDefence = entity.defence;
+    int dmg = encounterController.calculateAttackDamage(
+      attackerAttack: playerSkillStatTotal,
+      defenderDefense: encounterDefence,
+      defenderHp: entity.hitpoints,
+    );
+
+    if (dmg == 0) {
+      print("no fish caught");
+      return;
+    }
+
+    final fishDrop = rollLoot();
+    final def = ItemController.definitionFor(fishDrop.id);
+    applyExp(def?.xpValue ?? 0);
+    playerController.refresh();
+  }
+
+  Future<void> _handleRespawn() async {
+    respawning = true;
+    playerController.refresh();
+
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    entity.hitpoints = entity.maxHitPoints;
+
+    respawning = false;
+    playerController.refresh();
+  }
+
+  void doPlayerEncounterAction() {
+    if (isActive == false) {
+      startEncounter(entityId);
+    }
+    if (isActive == false) {
+      print(
+        "error - tried to do encounter action while encounter is not active",
+      );
+      return;
+    }
+
+    final skillType = getEncounterSkillType();
+
+    if (skillType == Skills.FISHING) {
+      doFishingAction();
+      return;
+    }
+
+    int playerSkillStatTotal = playerController.getStatTotal(skillType);
+
+    int encounterDefence = entity.defence;
+    int dmg = encounterController.calculateAttackDamage(
+      attackerAttack: playerSkillStatTotal,
+      defenderDefense: encounterDefence,
+      defenderHp: entity.hitpoints,
+    );
+    lastPlayerDamage = dmg;
+    entity.hitpoints -= dmg;
+
+    applyExp(dmg);
+    if (isDead()) {
+      rollLoot();
+
+      playerController.decrimentEntity(
+        playerController.data?.currentZoneId ?? Zones.NULL,
+        entityId,
+      );
+      //respawn with full hp if there are more of this entity to encounter, otherwise end encounter
+      if (getEntityCount() > 0) {
+        _handleRespawn();
+      } else {
+        endEcnounter();
+      }
+    }
+    playerController.refresh();
+  }
+
+  bool isCombatEntity() {
+    return (entity is CombatEntity);
+  } // non-combat entities don't attack
+
+  void applyExp(int damage) {
+    final skillType = getEncounterSkillType();
+    int xp = damage * 2;
+    SkillController.instance.getSkill(skillType).addXp(xp);
+    if (skillType == Skills.ATTACK) {
+      SkillController.instance.getSkill(Skills.HITPOINTS).addXp(xp);
+    }
+  }
+
+  ObjectStack<dynamic> rollLoot() {
+    final items = EntityController.entityDropTableRoll(entityId);
+    print(items);
+    itemDrops.addItems(items.id, items.count);
+    PlayerDataController.instance.addItemToInventory(items);
+    print(itemDrops.getObjectStackList()[0].count);
+    return items;
+  }
+
+  void entityAttack() {
+    int attack = 0;
+    if (isCombatEntity()) {
+      attack = (entity as CombatEntity).attack;
+    }
+    int damageDone = encounterController.calculateAttackDamage(
+      attackerAttack: attack,
+      defenderDefense: playerController.getStatTotal(Skills.DEFENCE),
+      defenderHp: playerController.data?.hitpoints ?? 0,
+    );
+    playerController.data?.hitpoints = max(
+      0,
+      (playerController.data?.hitpoints ?? 0) - damageDone,
+    );
+  }
+}
+
+class EncounterController {
+  EncounterController._internal();
+  static final EncounterController instance = EncounterController._internal();
+  EncounterController() {}
+  Items equipedPickaxe = Items.NULL;
+  Items equipedAxe = Items.NULL;
+  Items equipedFood = Items.NULL;
+  late PlayerDataController playerController;
+
+  void init() {
+    playerController = PlayerDataController.instance;
+  }
+
+  int getEquipedPickaxeBonus() {
+    if (equipedPickaxe == Items.NULL) return 0;
+    return (ItemController.definitionFor(equipedPickaxe) as WeaponItemDefition)
+            .skillBonus[Skills.MINING] ??
+        0;
+  }
+
+  int getEquipedAxeBonus() {
+    if (equipedAxe == Items.NULL) return 0;
+    return (ItemController.definitionFor(equipedAxe) as WeaponItemDefition)
+            .skillBonus[Skills.WOODCUTTING] ??
+        0;
   }
 
   double chanceToHit(
@@ -129,10 +268,7 @@ class EncounterController extends ChangeNotifier {
     return 1 + r.nextInt(maxHit);
   }
 
-  // For reporting / tooltips:
-  double averageDamageFromMaxHit(int maxHit) => (maxHit + 1) / 2.0;
-
-  int resolveAttack({
+  int calculateAttackDamage({
     required int attackerAttack,
     required int defenderDefense,
     required int defenderHp,
@@ -160,131 +296,28 @@ class EncounterController extends ChangeNotifier {
 
     if (damage > defenderHp) {
       damage = defenderHp;
-      print('Overkill! Damage: $damage | HP: $defenderHp → 0');
     }
 
-    final newHp = max(0, defenderHp - damage);
-
-    print('Hit! Damage: $damage | HP: $defenderHp → $newHp');
     return damage;
   }
 
-  void doFishingAction() {
-    int playerSkillStatTotal = playerDataController.getPlayerSkillStatTotal(
-      Skills.FISHING,
-    );
-
-    int encounterDefence = _entity.defence;
-    int dmg = resolveAttack(
-      attackerAttack: playerSkillStatTotal,
-      defenderDefense: encounterDefence,
-      defenderHp: _entity.hitpoints,
-    );
-    lastPlayerDamage = dmg;
-
-    if (dmg == 0) {
-      print("no fish caught");
+  void eatSingleEquipedFood() {
+    if (equipedFood == Items.NULL ||
+        playerController.data?.inventory.countOf(equipedFood) == 0) {
+      print("no food equiped");
       return;
     }
-
-    final fishDrop = rollLoot();
-    print(fishDrop.id);
-    final def = ItemController.definitionFor(fishDrop.id);
-    print("caught ${def?.name} x${fishDrop.count} worth ${def?.xpValue} xp");
-    applyExp(def?.xpValue ?? 0);
-    playerDataController.refresh();
-  }
-
-  void doPlayerEncounterAction() {
-    if (isActive == false) {
-      startEncounter(activeEntityId);
-    }
-    if (isActive == false) {
-      print(
-        "error - tried to do encounter action while encounter is not active",
-      );
-      return;
-    }
-
-    final skillType = getEncounterSkillType();
-
-    if (skillType == Skills.FISHING) {
-      doFishingAction();
-      return;
-    }
-
-    int playerSkillStatTotal = playerDataController.getPlayerSkillStatTotal(
-      skillType,
+    final def = ItemController.definitionFor(equipedFood) as FoodItemDefinition;
+    final healAmount = def.restoreAmount;
+    playerController.data?.hitpoints = min(
+      playerController.getStatTotal(Skills.HITPOINTS),
+      (playerController.data?.hitpoints ?? 0) + healAmount,
     );
-
-    int encounterDefence = _entity.defence;
-    int dmg = resolveAttack(
-      attackerAttack: playerSkillStatTotal,
-      defenderDefense: encounterDefence,
-      defenderHp: _entity.hitpoints,
-    );
-    lastPlayerDamage = dmg;
-    _entity.hitpoints -= dmg;
-
-    applyExp(dmg);
-    if (isDead()) {
-      print("entity died");
-      rollLoot();
-
-      playerDataController.decrimentEntity(
-        playerDataController.data?.currentZoneId ?? Zones.NULL,
-        activeEntityId,
-      );
-      if (getEntityCount() > 0) {
-        _entity.hitpoints = _entity.maxHitPoints;
-      } else {
-        endEcnounter();
-      }
+    PlayerDataController.instance.data?.inventory.removeItems(equipedFood, 1);
+    if (PlayerDataController.instance.data?.inventory.countOf(equipedFood) ==
+        0) {
+      equipedFood = Items.NULL;
     }
-    notifyListeners();
-    playerDataController.saveAppData();
-  }
-
-  bool isCombatEntity() {
-    final e = _entity;
-    print("${e.id} is combt entity : ${e is CombatEntity}");
-
-    return (e is CombatEntity); // non-combat entities don't attack
-  }
-
-  void applyExp(int damage) {
-    final skillType = getEncounterSkillType();
-    int xp = damage * 2;
-    print("xp $skillType $xp");
-    SkillController.instance.getSkill(skillType).addXp(xp);
-    if (skillType == Skills.ATTACK) {
-      SkillController.instance.getSkill(Skills.HITPOINTS).addXp(xp);
-    }
-  }
-
-  void entityAttack() {
-    int attack = 0;
-    if (isCombatEntity()) {
-      attack = (_entity as CombatEntity).attack;
-    }
-    int damageDone = resolveAttack(
-      attackerAttack: attack,
-      defenderDefense: playerDataController.getPlayerSkillStatTotal(
-        Skills.DEFENCE,
-      ),
-      defenderHp: playerDataController.data?.hitpoints ?? 0,
-    );
-  }
-
-  bool isDead() {
-    return _entity.hitpoints <= 0;
-  }
-
-  ObjectStack<dynamic> rollLoot() {
-    final items = EntityController.entityDropTableRoll(activeEntityId);
-    print(items);
-    encounterItemDrops.addItems(items.id, items.count);
-    print(encounterItemDrops.getObjectStackList()[0].count);
-    return items;
+    playerController.refresh();
   }
 }

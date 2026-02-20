@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/data/item.dart';
+import 'package:rpg/widgets/icon_renderer.dart';
 import '../utilities/image_resolver.dart';
 import '../controllers/crafting_controller.dart';
+import '../data/skill.dart';
+import '../widgets/countdown_timer.dart';
 
 class ItemStackTile<T extends Enum> extends StatelessWidget {
   const ItemStackTile({
@@ -9,9 +13,11 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     this.id,
     required this.count,
     this.onTap,
-    this.showInfoDialogOnTap = false,
+    this.showInfoDialogOnTap = true,
     this.title,
     this.description,
+    this.isTimerStackTile = false,
+    this.expirationTime,
   });
 
   final double size;
@@ -20,6 +26,8 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   final T? id;
 
   final int count;
+  final DateTime? expirationTime;
+  final bool isTimerStackTile;
 
   final VoidCallback? onTap;
 
@@ -28,14 +36,65 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   final String? description;
 
   void _showInfoDialog(BuildContext context) {
+    final itemDef =
+        ItemController.definitionFor(id as Items) ??
+        ItemDefinition(name: "error", value: -1);
     showDialog<void>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(title ?? 'Item'),
-        content: Text(description ?? 'No description.'),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(itemDef.name),
+        content: SizedBox(
+          height: 300,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IconRenderer(size: size * 2, id: id as Items),
+              Text(itemDef.description ?? "No description available."),
+              Row(
+                children: [
+                  IconRenderer(size: 40, id: Items.COINS),
+                  Text("${itemDef.value}"),
+                ],
+              ),
+              if (itemDef is BuffItemDefinition)
+                Row(
+                  children: [
+                    Icon(Icons.timer),
+                    Text("${itemDef.duration.inSeconds}s"),
+                  ],
+                ),
+              if (itemDef is EquipmentItemDefition)
+                Text("Slot: ${itemDef.armorSlot}"),
+              if (itemDef is EquipmentItemDefition)
+                for (var stat in itemDef.skillBonus.entries)
+                  Row(
+                    children: [
+                      IconRenderer(size: 40, id: stat.key),
+                      Text("${stat.value}"),
+                    ],
+                  ),
+
+              if (itemDef is BuffItemDefinition)
+                for (var stat in itemDef.skillBonus.entries)
+                  Row(
+                    children: [
+                      IconRenderer(size: 40, id: stat.key),
+                      Text("${stat.value}"),
+                    ],
+                  ),
+              if (itemDef is FoodItemDefinition)
+                Row(
+                  children: [
+                    IconRenderer(size: 40, id: Skills.HITPOINTS),
+                    Text("+${itemDef.restoreAmount}"),
+                  ],
+                ),
+            ],
+          ),
+        ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Close'),
           ),
         ],
@@ -79,7 +138,17 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
           ),
 
           // Count badge
-          Positioned(right: 4, bottom: 4, child: _CountBadge(count: count)),
+          if (isTimerStackTile)
+            Positioned(
+              right: 4,
+              bottom: 4,
+              child: CountdownTimer(
+                expirationTime: expirationTime!,
+                size: .25 * size,
+              ),
+            )
+          else
+            Positioned(right: 4, bottom: 4, child: _CountBadge(count: count)),
         ],
       ),
     );

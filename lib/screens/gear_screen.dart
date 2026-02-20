@@ -22,7 +22,7 @@ class GearScreen extends StatelessWidget {
           Items itemId = gear?.armorEquipment[slot] ?? Items.NULL;
           return ListTile(
             title: Text(slot.name),
-            trailing: ItemStackTile(id: itemId, count: 1, size: 32),
+            trailing: ItemStackTile(id: itemId, count: 1, size: 56),
             onTap: () {
               final list = controller.data!.inventory
                   .getItemsListForEquipmentSlot(slot);

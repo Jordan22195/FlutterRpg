@@ -5,8 +5,8 @@ import '../data/zone.dart';
 import '../data/entity.dart';
 import 'weighted_drop_table.dart';
 import '../data/ObjectStack.dart';
-import '../data/zone_location.dart';
 import '../data/item.dart';
+import 'package:flutter/material.dart';
 
 class ZoneController {
   static final Map<Zones, Zone> _zones = {};
@@ -54,7 +54,7 @@ class ZoneController {
   static void removeCampfireFromCurrentZone() {
     final zone = _zones[activeZone];
     if (zone == null) {
-      print("Error: Zone with id $activeZone not found.");
+      debugPrint("Error: Zone with id $activeZone not found.");
       return;
     }
     if (!zone.permanentLocations.contains(ZoneLocationId.CAMPFIRE)) {
@@ -68,17 +68,13 @@ class ZoneController {
   static void addCampfireToCurrentZone(Item fireItem) {
     final zone = _zones[activeZone];
     if (zone == null) {
-      print("Error: Zone with id $activeZone not found.");
+      debugPrint("Error: Zone with id $activeZone not found.");
       return;
     }
     if (zone.permanentLocations.contains(ZoneLocationId.CAMPFIRE)) {
       return;
     }
 
-    final campfireLocation = CampfireLocation(
-      id: ZoneLocationId.CAMPFIRE,
-      fireId: fireItem.id,
-    );
     (ZoneLocationController.locations[ZoneLocationId.CAMPFIRE]
                 as CampfireLocation)
             .fireId =
@@ -96,7 +92,7 @@ class ZoneController {
   }
 
   ObjectStack discoverEntity(Zones zoneId) {
-    print("discover entity");
+    debugPrint("discover entity");
     if (_zones[zoneId] == null) {
       return ObjectStack(id: Entities.NULL, count: 0);
     }

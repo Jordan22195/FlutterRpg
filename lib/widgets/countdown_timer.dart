@@ -6,10 +6,11 @@ import 'package:flutter/material.dart';
 /// This widget manages its own 1Hz tick so it can update the display without
 /// requiring a Provider above it.
 class CountdownTimer extends StatefulWidget {
-  const CountdownTimer({super.key, required this.expirationTime});
+  CountdownTimer({super.key, required this.expirationTime, this.size = 16});
 
   /// The time at which the countdown ends.
   final DateTime expirationTime;
+  double size;
 
   @override
   State<CountdownTimer> createState() => _CountdownTimerState();
@@ -48,15 +49,14 @@ class _CountdownTimerState extends State<CountdownTimer> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final remaining = widget.expirationTime.difference(now);
-
     final remainingText = _formatRemaining(remaining);
-
+    double size = widget.size;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.schedule, size: 16),
-        const SizedBox(width: 6),
-        Text(remainingText, style: Theme.of(context).textTheme.bodySmall),
+        Icon(Icons.schedule, size: size),
+        SizedBox(width: 6),
+        Text(remainingText, style: TextStyle(fontSize: size * 0.8)),
       ],
     );
   }
@@ -66,18 +66,21 @@ class _CountdownTimerState extends State<CountdownTimer> {
       return '0s';
     }
 
-    // Show as mm:ss under 1 hour, otherwise hh:mm:ss.
-    final totalSeconds = remaining.inSeconds;
-    final hours = totalSeconds ~/ 3600;
-    final minutes = (totalSeconds % 3600) ~/ 60;
-    final seconds = totalSeconds % 60;
+    if (remaining.isNegative) {
+      return "0s";
+    }
 
-    String two(int v) => v.toString().padLeft(2, '0');
+    final hours = remaining.inHours;
+    final minutes = remaining.inMinutes % 60;
+    final seconds = remaining.inSeconds % 60;
 
     if (hours > 0) {
-      return '${two(hours)}:${two(minutes)}:${two(seconds)}';
+      return "${hours}h";
+    } else if (minutes > 0) {
+      return "${minutes}m";
+    } else {
+      return "${seconds}s";
     }
-    return '${two(minutes)}:${two(seconds)}';
   }
 }
 

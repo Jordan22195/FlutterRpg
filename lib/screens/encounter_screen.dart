@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/data/armor_equipment.dart';
+import 'package:rpg/data/item.dart';
+import 'package:rpg/widgets/buff_row.dart';
+import 'package:rpg/widgets/equipment_picker.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
+import 'package:rpg/widgets/progress_bars.dart';
 import '../controllers/player_data_controller.dart';
 import 'package:provider/provider.dart';
 import '../data/entity.dart';
@@ -9,13 +14,12 @@ import '../widgets/fill_bar.dart';
 import '../widgets/primary_button.dart';
 import '../data/skill.dart';
 import '../widgets/skil_tile.dart';
-import '../screens/skill_detail_screen.dart';
 import '../widgets/icon_renderer.dart';
 import '../widgets/fading_number.dart';
 
 class EncounterScreen extends StatefulWidget {
-  const EncounterScreen({super.key, required this.entityId});
-  final Entities entityId;
+  const EncounterScreen({super.key, required this.encounter});
+  final EntityEncounter encounter;
 
   @override
   State<EncounterScreen> createState() => _EncounterScreenState();
@@ -33,23 +37,11 @@ class _EncounterScreenState extends State<EncounterScreen>
     super.initState();
     _playerController = context.read<PlayerDataController>();
 
-    print("EncounterScreen: initState for ${widget.entityId}");
-
     Future.microtask(() async {
       final c = _playerController;
       await c.ensureLoaded();
       if (!mounted) return;
 
-      c.initActionTiming(this);
-      c.actionTimingController.onFire = () {
-        if (!mounted) return;
-        setState(() {
-          EncounterController.instance.doPlayerEncounterAction();
-          playerDamage = EncounterController.instance.lastPlayerDamage;
-          print("Player dealt $playerDamage damage");
-        });
-      };
-      EncounterController.instance.initEncounter(widget.entityId);
       if (!mounted) return;
       setState(() {
         _initializing = false;
@@ -57,75 +49,10 @@ class _EncounterScreenState extends State<EncounterScreen>
     });
   }
 
-  @override
-  void dispose() {
-    print("dispose EncounterScreen for ${widget.entityId}");
-    _playerController.actionTimingControllerOrNull?.stopNowSilently();
-    //_playerController.actionTimingControllerOrNull?.onFire = () {};
-    EncounterController.instance.endEncounter();
-
-    super.dispose();
-  }
-
-  Widget buildSkillTile(
-    BuildContext context,
-    PlayerDataController controller,
-    Skills skillId,
-  ) {
-    return SkillTile(id: skillId);
-  }
-
-  Widget buildEncounterProgressBars(PlayerDataController controller) {
-    const double speedBarPadding = 120;
-    final timing = controller.actionTimingControllerOrNull;
-
-    if (_initializing || timing == null) {
-      // Build can run before async init finishes. Show placeholders.
-      return Column(
-        children: [
-          const FillBar(value: 0),
-          const SizedBox(height: 8),
-          Row(
-            children: const [
-              SizedBox(width: speedBarPadding),
-              Expanded(child: FillBar(value: 0)),
-              SizedBox(width: speedBarPadding),
-            ],
-          ),
-        ],
-      );
-    }
-
-    return Column(
-      children: [
-        AnimatedBuilder(
-          animation: timing,
-          builder: (_, __) => FillBar(value: timing.actionProgress),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const SizedBox(width: speedBarPadding),
-            Expanded(
-              child: AnimatedBuilder(
-                animation: timing,
-                builder: (_, __) => FillBar(
-                  value: timing.speed,
-                  foregroundColor: Theme.of(context).colorScheme.secondary,
-                ),
-              ),
-            ),
-            const SizedBox(width: speedBarPadding),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget buildPlayerStatStack(PlayerDataController controller) {
     double fontSize = 14;
     double iconSize = 20;
-    final skillId = EncounterController.instance.getEncounterSkillType();
+    final skillId = widget.encounter.getEncounterSkillType();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -168,19 +95,21 @@ class _EncounterScreenState extends State<EncounterScreen>
   Widget buildEntityStatStack(PlayerDataController controller) {
     double fontSize = 14;
     double iconSize = 20;
-    final skillId = EncounterController.instance.getEncounterSkillType();
-    final entity = EncounterController.instance.getEntity();
+    final skillId = widget.encounter.getEncounterSkillType();
+    final entity = widget.encounter.entity;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            IconRenderer(id: Skills.HITPOINTS, size: iconSize),
-            SizedBox(width: 4),
-            Text(
-              entity.hitpoints.toString(),
-              style: TextStyle(fontSize: fontSize),
-            ),
+            if (skillId != Skills.FISHING)
+              IconRenderer(id: Skills.HITPOINTS, size: iconSize),
+            if (skillId != Skills.FISHING) SizedBox(width: 4),
+            if (skillId != Skills.FISHING)
+              Text(
+                entity.hitpoints.toString(),
+                style: TextStyle(fontSize: fontSize),
+              ),
           ],
         ),
         Row(
@@ -221,32 +150,43 @@ class _EncounterScreenState extends State<EncounterScreen>
       );
     }
 
-    final enemy = EncounterController.instance.getEntity();
+    final encounter = widget.encounter;
+    final entity = widget.encounter.entity;
+    final entityCount = widget.encounter.getEntityCount();
+    final healthPercent = widget.encounter.getHealthPercent();
+    final skillType = widget.encounter.getEncounterSkillType();
 
-    final _fadeKey = GlobalKey<FadingNumberState>();
+    final fadeKey = GlobalKey<FadingNumberState>();
 
     // ...
 
     // whenever you want to show+fade (even if count didn’t change):
-    _fadeKey.currentState?.replay();
+    fadeKey.currentState?.replay();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: enemy.name != null ? Text(enemy.name) : null,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: buildEncounterProgressBars(controller),
-          ),
-        ),
-        //title: Text('Encounter: ${Encoutner.getEntity().name}'),
-      ),
-
-      body: Padding(
+    return SafeArea(
+      child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      entity.name,
+                      style: Theme.of(context).textTheme.titleLarge,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Row(
               children: [
                 // Left: Player stats (left-justified)
@@ -258,11 +198,25 @@ class _EncounterScreenState extends State<EncounterScreen>
                 // Center: Item stack tile (always centered)
                 Expanded(
                   child: Center(
-                    child: ItemStackTile(
-                      size: 200,
-                      count: EncounterController.instance.getEntityCount(),
-                      id: enemy.id,
-                    ),
+                    child: encounter.respawning
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              SizedBox(
+                                width: 200,
+                                height: 200,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: 10),
+                            ],
+                          )
+                        : ItemStackTile(
+                            size: 200,
+                            count: entityCount,
+                            id: entity.id,
+                          ),
                   ),
                 ),
 
@@ -274,7 +228,7 @@ class _EncounterScreenState extends State<EncounterScreen>
                     // Fading number centered in remaining space before stats
                     Center(
                       child: FadingNumber(
-                        key: _fadeKey,
+                        key: fadeKey,
                         number: playerDamage,
                         color: Colors.amber,
                       ),
@@ -295,56 +249,131 @@ class _EncounterScreenState extends State<EncounterScreen>
               children: [
                 SizedBox(width: 50),
                 Expanded(
-                  child: FillBar(
-                    value: EncounterController.instance.getHealtPercent(),
-                    foregroundColor: Theme.of(context).colorScheme.tertiary,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(end: healthPercent),
+                    duration: const Duration(milliseconds: 100),
+                    builder: (context, animatedValue, child) {
+                      return FillBar(
+                        value: animatedValue,
+                        foregroundColor: Theme.of(context).colorScheme.tertiary,
+                      );
+                    },
                   ),
                 ),
                 SizedBox(width: 50),
               ],
             ),
+            const SizedBox(height: 8),
+
+            Row(
+              children: [
+                if (skillType == Skills.WOODCUTTING)
+                  ItemStackTile(
+                    size: 56,
+                    count: 1,
+                    id: EncounterController.instance.equipedAxe,
+                    onTap: () =>
+                        EquipmentPicker.build(context, ArmorSlots.TOOL, (id) {
+                          EncounterController.instance.equipedAxe = id;
+                          setState(() {});
+                        }, skillFilter: Skills.WOODCUTTING),
+                  ),
+                if (skillType == Skills.MINING)
+                  ItemStackTile(
+                    size: 56,
+                    count: 1,
+                    id: EncounterController.instance.equipedPickaxe,
+                    onTap: () =>
+                        EquipmentPicker.build(context, ArmorSlots.TOOL, (id) {
+                          EncounterController.instance.equipedPickaxe = id;
+                          setState(() {});
+                        }, skillFilter: Skills.MINING),
+                  ),
+                if (encounter.isCombatEntity())
+                  ItemStackTile(
+                    size: 56,
+                    count: PlayerDataController.instance.data!.inventory
+                        .countOf(EncounterController.instance.equipedFood),
+                    id: EncounterController.instance.equipedFood,
+                    onTap: () {
+                      FoodPicker.build(context, (id) {
+                        EncounterController.instance.equipedFood = id;
+                        setState(() {});
+                      });
+                    },
+                  ),
+
+                const SizedBox(width: 8),
+
+                Expanded(child: BuffRow()),
+              ],
+            ),
 
             const SizedBox(height: 16),
             Divider(),
-            buildSkillTile(
-              context,
-              controller,
-              EncounterController.instance.getEncounterSkillType(),
-            ),
+            SkillTile(id: skillType),
 
             Card(
               child: Column(
                 children: [
-                  TextButton(
-                    onPressed: () => setState(() {
-                      controller.takeEncounterItems();
-                    }),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 1,
-                      ),
-                    ),
-                    child: Text("Take"),
-                  ),
                   SizedBox(
                     height: 80,
                     child: InventoryGrid(
-                      items: EncounterController.instance.encounterItemDrops
-                          .getObjectStackList(),
+                      items: encounter.itemDrops.getObjectStackList(),
                     ),
                   ),
                 ],
               ),
             ),
             Spacer(),
-            Padding(
-              padding: const EdgeInsets.all(0),
-              child: MomentumPrimaryButton(
-                enabled: true,
-                label: controller.getActionString(),
-                controller: controller.actionTimingController,
-              ),
+
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(0),
+                  child: MomentumPrimaryButton(
+                    enabled: true,
+                    label: controller.getActionString(skillType),
+                    controller: controller.actionTimingController,
+                    onFireFunction: () {
+                      ProgressBars.iconId = encounter.entityId;
+                      ProgressBars.iconCount = encounter.getEntityCount();
+                      ProgressBars.iconIsTimer = false;
+                      encounter.doPlayerEncounterAction();
+                    },
+                  ),
+                ),
+                SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(1),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: TextButton(
+                    child: Text("Eat"),
+                    onPressed: () {
+                      EncounterController.instance.eatSingleEquipedFood();
+                      setState(() {});
+                    },
+                  ),
+                ),
+                SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.all(1),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: TextButton(
+                    child: Text("Stop"),
+                    onPressed: () {
+                      ProgressBars.iconId = Items.NULL;
+                      encounter.endEcnounter();
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),

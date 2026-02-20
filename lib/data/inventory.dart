@@ -1,22 +1,55 @@
-import 'dart:math';
-
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/armor_equipment.dart';
 import '../data/item.dart';
-
-import 'item.dart';
+import '../data/skill.dart';
+import 'package:flutter/material.dart';
 
 class Inventory {
   Map<Items, int> itemMap = {};
 
   Inventory({required this.itemMap});
 
+  // get list of food items sorted by healing amount
+  List<Items> getFoodItemsSortedByHealing() {
+    List<Items> foodItems = [];
+    for (MapEntry entry in itemMap.entries) {
+      final def = ItemController.definitionFor(entry.key);
+      if (def is FoodItemDefinition) {
+        foodItems.add(entry.key);
+      }
+    }
+    foodItems.sort((a, b) {
+      final defA = ItemController.definitionFor(a) as FoodItemDefinition;
+      final defB = ItemController.definitionFor(b) as FoodItemDefinition;
+      return defB.restoreAmount.compareTo(defA.restoreAmount);
+    });
+    return foodItems;
+  }
+
+  // get item id list for gear slot that has a bonus for the given skill
+  List<Items> getItemListForSlotAndSkill(ArmorSlots slot, Skills skill) {
+    // This is a placeholder implementation. You can replace it with actual logic based on your game's design.
+    List<Items> itemsForSlotAndSkill = [];
+    for (MapEntry entry in itemMap.entries) {
+      final def = ItemController.definitionFor(entry.key);
+      debugPrint(
+        "Checking item ${entry.key} for slot ${slot.name} and skill ${skill.name}: definition is ${def.runtimeType}",
+      );
+      if (def is EquipmentItemDefition &&
+          def.armorSlot == slot &&
+          def.skillBonus.containsKey(skill)) {
+        itemsForSlotAndSkill.add(entry.key);
+      }
+    }
+    return itemsForSlotAndSkill;
+  }
+
   List<Items> getItemsListForEquipmentSlot(ArmorSlots slot) {
     // This is a placeholder implementation. You can replace it with actual logic based on your game's design.
     List<Items> itemsForSlot = [];
     for (MapEntry entry in itemMap.entries) {
       final def = ItemController.definitionFor(entry.key);
-      print(
+      debugPrint(
         "Checking item ${entry.key} for slot ${slot.name}: definition is ${def.runtimeType}",
       );
       if (def is EquipmentItemDefition && def.armorSlot == slot) {
@@ -66,9 +99,6 @@ class Inventory {
 
   String getString() {
     final buffer = StringBuffer();
-    if (itemMap == null) {
-      return "";
-    }
 
     for (final entry in itemMap.entries) {
       buffer.writeln('${entry.key} : ${entry.value}');

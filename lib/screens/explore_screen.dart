@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/buff_controller.dart';
@@ -13,7 +11,6 @@ import 'package:rpg/widgets/item_stack_tile.dart';
 import '../controllers/player_data_controller.dart';
 import '../data/zone.dart';
 import '../data/skill.dart';
-import '../widgets/fill_bar.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/explore_card.dart';
 import 'encounter_screen.dart';
@@ -28,48 +25,21 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen>
     with TickerProviderStateMixin {
-  void bindActionButton() {
-    print("binding explore action button for ${widget.zoneId}");
-    final c = context.read<PlayerDataController>();
-
-    c.initActionTiming(this);
-    c.actionTimingController.onFire = () {
-      print("ExploreScreen: action button fired for ${widget.zoneId}");
-      if (!mounted) {
-        print(
-          "errr: ExploreScreen: action button fired but not mounted for ${widget.zoneId}",
-        );
-        return;
-      }
-      setState(() {
-        c.explore();
-      });
-    };
-  }
-
-  void initState() {
-    print("ExploreScreen: initState for ${widget.zoneId}");
-    super.initState();
-    bindActionButton();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
-  void navigateToEncounter(Entities id, PlayerDataController controller) {
+  void navigateToEncounter(Entities id) {
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => EncounterScreen(entityId: id)))
+        .push(
+          MaterialPageRoute(
+            builder: (_) => EncounterScreen(
+              encounter: PlayerDataController.instance.data!.zones
+                  .getEntityEncounter(
+                    PlayerDataController.instance.getCurrentZone(),
+                    id,
+                  ),
+            ),
+          ),
+        )
         .then((_) {
-          EncounterController.instance.endEncounter();
-
-          print(
-            "return from encounter screen re-binding explore action button",
-          );
-          if (!mounted) return;
-          controller.actionTimingController.stopNowSilently();
-          bindActionButton();
+          print("return from encounter screen.");
         });
   }
 
@@ -85,10 +55,7 @@ class _ExploreScreenState extends State<ExploreScreen>
           ),
         )
         .then((_) {
-          print("return from crafting screen re-binding explore action button");
-          if (!mounted) return;
-          controller.actionTimingController.stopNowSilently();
-          bindActionButton();
+          print("return from crafting screen.");
         });
   }
 
@@ -100,7 +67,7 @@ class _ExploreScreenState extends State<ExploreScreen>
       navigateToCrafting(location.craftingSkill, controller, location.id);
     }
     if (location is FishingLocation) {
-      navigateToEncounter(location.fishingSpotEntity, controller);
+      navigateToEncounter(location.fishingSpotEntity);
     }
   }
 
@@ -109,8 +76,6 @@ class _ExploreScreenState extends State<ExploreScreen>
     final controller = context.watch<PlayerDataController>();
     final entities = controller.getZoneEntities();
     final locations = controller.getZoneLocations();
-    context
-        .watch<EncounterController>(); // Rebuild when encounter state changes.
 
     // IMPORTANT: no Scaffold here — MainShell owns the Scaffold + BottomNav.
     return SafeArea(
@@ -146,88 +111,45 @@ class _ExploreScreenState extends State<ExploreScreen>
               fit: BoxFit.cover,
             ),
           ),
-          // Progress bars
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                AnimatedBuilder(
-                  animation: controller.actionTimingController,
-                  builder: (_, __) => FillBar(
-                    value: controller.actionTimingController.actionProgress,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                AnimatedBuilder(
-                  animation: controller.actionTimingController,
-                  builder: (_, __) => FillBar(
-                    value: controller.actionTimingController.speed,
-                    foregroundColor: Theme.of(context).colorScheme.secondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
 
-          // Location list
-          LayoutBuilder(
-            builder: (context, constraints) {
-              // Approximate per-row height (Card + padding). Keep in sync with buildObjectCard.
-              const rowExtent = 72.0;
-
-              // Cap the list so it doesn't eat the screen; it can scroll once it hits this.
-              final maxHeight = min(constraints.maxHeight * 0.35, 260.0);
-
-              // Grow with content but clamp to maxHeight; shrink to fit if few items.
-              final desiredHeight = min(
-                locations.length * rowExtent,
-                maxHeight,
-              );
-
-              // If there are no locations, avoid reserving space.
-              if (locations.isEmpty) {
-                return const SizedBox.shrink();
-              }
-
-              // location list
-              return SizedBox(
-                height: desiredHeight,
-                child: ListView.builder(
-                  itemCount: locations.length,
-                  itemExtent: rowExtent,
-                  itemBuilder: (context, i) {
-                    final id = locations[i];
-
-                    final loc = ZoneLocationController.definitionFor(id);
-                    return ObjectCard(
-                      key: ValueKey(id),
-
-                      id: id,
-                      count: 1,
-                      onTap: () => navigateToLocation(loc, controller),
-                      typeId: loc.typeForIcon,
-                      expirationTime: id == ZoneLocationId.CAMPFIRE
-                          ? BuffController.instance.campfireBuff.expirationTime
-                          : null,
-                    );
-                  },
-                ),
-              );
-            },
-          ),
-          const Divider(),
-
-          // Entity list
+          // Combined Location + Entity list
           Expanded(
             child: ListView.builder(
-              itemCount: entities.length,
-              itemBuilder: (context, i) {
-                final e = entities[i];
+              itemCount: locations.isEmpty
+                  ? entities.length
+                  : (locations.length + 1 + entities.length),
+              itemBuilder: (context, index) {
+                // Locations first
+                if (index < locations.length) {
+                  final id = locations[index];
+                  final loc = ZoneLocationController.definitionFor(id);
+                  return ObjectCard(
+                    key: ValueKey(id),
+                    id: id,
+                    count: 1,
+                    onTap: () => navigateToLocation(loc, controller),
+                    typeId: loc.typeForIcon,
+                    expirationTime: id == ZoneLocationId.CAMPFIRE
+                        ? BuffController.instance.campfireBuff.expirationTime
+                        : null,
+                  );
+                }
+
+                // Divider between sections (only if there are locations)
+                if (!locations.isEmpty && index == locations.length) {
+                  return const Divider();
+                }
+
+                // Entities after divider (or immediately if no locations)
+                final entityIndex = locations.isEmpty
+                    ? index
+                    : index - locations.length - 1;
+                final e = entities[entityIndex];
                 return ObjectCard(
                   key: ValueKey(e.id),
                   id: e.id,
                   count: e.count,
-                  onTap: () => navigateToEncounter(e.id, controller),
+                  onTap: () => navigateToEncounter(e.id),
                   typeId:
                       EntityController.definitionFor(e.id)?.entityType ??
                       Skills.NULL,
@@ -251,6 +173,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                     size: 56,
                     count: 0,
                     id: Skills.FIREMAKING,
+                    showInfoDialogOnTap: false,
                   ),
                 ),
               ),
@@ -261,6 +184,27 @@ class _ExploreScreenState extends State<ExploreScreen>
                   enabled: true,
                   label: "Explore",
                   controller: controller.actionTimingController,
+                  onFireFunction: () {
+                    print(
+                      "ExploreScreen: action button fired for ${widget.zoneId}",
+                    );
+                    PlayerDataController.instance.explore();
+                  },
+                ),
+              ),
+              SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(1),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: TextButton(
+                  child: Text("Stop"),
+                  onPressed: () {
+                    PlayerDataController.instance.actionTimingController
+                        .stopNow();
+                  },
                 ),
               ),
             ],

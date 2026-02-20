@@ -12,15 +12,11 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider<PlayerDataController>(
-          create: (_) => PlayerDataController(),
-        ),
-
-        ChangeNotifierProxyProvider<PlayerDataController, EncounterController>(
-          create: (_) => EncounterController.instance,
-          update: (_, playerData, encounterController) {
-            encounterController!.playerDataController = playerData;
-            return encounterController;
-          },
+          create: (_) =>
+              PlayerDataController()
+                ..ensureLoaded().catchError((e, st) {
+                  print("Error loading player data: $e\n$st");
+                }),
         ),
 
         ChangeNotifierProvider<CraftingController>(
@@ -38,6 +34,8 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    PlayerDataController();
+
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData.dark(),
@@ -64,6 +62,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    PlayerDataController controller = context.watch<PlayerDataController>();
+    if (PlayerDataController.instance.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     return MainShell();
   }
 }

@@ -6,6 +6,7 @@ import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import '../data/skill.dart';
 import '../controllers/crafting_controller.dart';
+import '../controllers/buff_controller.dart';
 
 class RecipeCard extends StatelessWidget {
   RecipeCard({
@@ -62,6 +63,19 @@ class RecipeCard extends StatelessWidget {
                       : CraftingController.instance.getPlayerCount(
                           output.first.id,
                         ),
+                  // Only show timer for firemaking recipes that are currently active
+                  isTimerStackTile:
+                      recipe.skill == Skills.FIREMAKING &&
+                          BuffController.instance.campfireBuff.id ==
+                              recipe.output.first.id
+                      ? true
+                      : false,
+                  expirationTime:
+                      recipe.skill == Skills.FIREMAKING &&
+                          BuffController.instance.campfireBuff.id ==
+                              recipe.output.first.id
+                      ? BuffController.instance.campfireBuff.expirationTime
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 const Icon(Icons.arrow_back, size: 18),

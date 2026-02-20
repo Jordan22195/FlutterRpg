@@ -1,10 +1,13 @@
+import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/data/ObjectStack.dart';
+import 'package:flutter/material.dart';
 
 import 'zone.dart';
 import 'entity.dart';
 
 class ZoneState {
   Map<Zones, Map<Entities, int>> discoveredEntities;
+  Map<Zones, Map<Entities, EntityEncounter>> entityEncounters = {};
 
   ZoneState({required this.discoveredEntities});
 
@@ -56,6 +59,32 @@ class ZoneState {
       list.add(e);
     }
     return list;
+  }
+
+  EntityEncounter getEntityEncounter(Zones zoneId, Entities entityId) {
+    final zoneEncounters = entityEncounters[zoneId];
+    if (zoneEncounters == null) {
+      final e = EntityEncounter(entityId: entityId);
+      entityEncounters[zoneId] = {entityId: e};
+      debugPrint(
+        "No zone found. creating new encounter for $entityId in $zoneId with hp ${e.entity.hitpoints} and max hp ${e.entity.maxHitPoints}",
+      );
+      return e;
+    }
+
+    final encounter = zoneEncounters[entityId];
+    if (encounter == null) {
+      final e = EntityEncounter(entityId: entityId);
+      entityEncounters[zoneId]![entityId] = e;
+      debugPrint(
+        "no encounter found. creating new encounter for $entityId in $zoneId with hp ${e.entity.hitpoints} and max hp ${e.entity.maxHitPoints}",
+      );
+      return e;
+    }
+    debugPrint(
+      "returning existing encounter for $entityId in $zoneId with hp ${encounter.entity.hitpoints} and max hp ",
+    );
+    return encounter;
   }
 
   int getEntityCount(Zones zoneId, Entities entityId) {

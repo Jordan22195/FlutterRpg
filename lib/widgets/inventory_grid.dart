@@ -12,7 +12,7 @@ class InventoryGrid extends StatelessWidget {
     this.tileSize = 56,
     this.spacing = 10,
     this.onItemTap,
-    this.showInfoDialogOnTap = false,
+    this.showInfoDialogOnTap = true,
     this.titleForItem,
     this.descriptionForItem,
   });

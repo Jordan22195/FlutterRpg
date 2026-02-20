@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/interval_runner.dart';
 import 'package:rpg/controllers/momentum_loop_controller.dart';
@@ -19,15 +17,13 @@ import '../data/skill.dart';
 import '../data/item.dart';
 
 import 'package:flutter/foundation.dart';
-import 'package:provider/provider.dart';
+
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/foundation.dart';
 
 class PlayerDataController extends ChangeNotifier {
-  ZoneController _zoneController = ZoneController();
+  final ZoneController _zoneController = ZoneController();
 
   late final FileManager _fileManager;
-  bool _encounterActive = false;
 
   static late PlayerDataController instance;
 
@@ -74,7 +70,9 @@ class PlayerDataController extends ChangeNotifier {
   void initActionTiming(TickerProvider vsync) {
     // If it already exists, just rebind vsync (important when routes change)
     if (_actionTimingController == null) {
-      print("building new MomentumLoopController for PlayerDataController");
+      debugPrint(
+        "building new MomentumLoopController for PlayerDataController",
+      );
       _actionTimingController = MomentumLoopController(
         vsync: vsync,
         onFire: () {},
@@ -92,18 +90,19 @@ class PlayerDataController extends ChangeNotifier {
   }
 
   PlayerDataController() {
+    instance = this;
+
     _loadFuture = _load();
-    EncounterController.instance.playerDataController = this;
     ItemController.init();
     EntityController.init();
     ZoneLocationController.init();
     SkillController.init();
     BuffController.instance.init(this);
-    instance = this;
+    EncounterController.instance.init();
   }
 
   void refresh() {
-    print("player data controller refresh");
+    debugPrint("player data controller refresh");
     saveAppData();
     notifyListeners();
   }
@@ -143,7 +142,16 @@ class PlayerDataController extends ChangeNotifier {
   int getStatTotal(Skills skill) {
     int skillStat = SkillController.instance.getSkill(skill).getLevel();
     int gearStat = _d.gear.getStatTotal(skill);
-    final total = skillStat + gearStat;
+    if (skill == Skills.WOODCUTTING) {
+      gearStat += EncounterController.instance.getEquipedAxeBonus();
+    }
+    if (skill == Skills.MINING) {
+      gearStat += EncounterController.instance.getEquipedPickaxeBonus();
+    }
+
+    final buffedStats = BuffController.instance.getBuffedStatTotal(skill);
+
+    final total = skillStat + gearStat + buffedStats;
     return total;
   }
 
@@ -163,12 +171,12 @@ class PlayerDataController extends ChangeNotifier {
     return _d.zones.getEntityCount(zoneId, entityId);
   }
 
-  int getPlayerSkillStatTotal(Skills skill) {
+  int getPlayerSkillStat(Skills skill) {
     return SkillController.instance.getSkill(skill).getLevel();
   }
 
   void explore() {
-    print("explore called in PlayerDataController");
+    debugPrint("explore called in PlayerDataController");
     final entity = _zoneController.discoverEntity(_d.currentZoneId);
     _d.zones.addEntities(getCurrentZone(), entity.id, entity.count);
     saveAppData();
@@ -186,20 +194,16 @@ class PlayerDataController extends ChangeNotifier {
     _d.hitpoints = SkillController.instance
         .getSkill(Skills.HITPOINTS)
         .getLevel();
-
-    _d.zones.clearEntities();
   }
 
-  void takeEncounterItems() {
-    _data?.inventory.addOtherInventory(
-      EncounterController.instance.encounterItemDrops,
-    );
-    EncounterController.instance.encounterItemDrops.clear();
+  void addItemToInventory(ObjectStack item) {
+    _d.inventory.addItems(item.id, item.count);
     saveAppData();
+    notifyListeners();
   }
 
-  String getActionString() {
-    switch (EncounterController.instance.getEncounterSkillType()) {
+  String getActionString(Skills skill) {
+    switch (skill) {
       case Skills.ATTACK:
         return "Attack";
       case Skills.FIREMAKING:

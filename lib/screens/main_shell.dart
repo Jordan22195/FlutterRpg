@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/controllers/player_data_controller.dart';
 
 import 'gear_screen.dart';
 import 'inventory_screen.dart';
 import 'map_screen.dart';
 import 'skills_screen.dart';
+import '../widgets/progress_bars.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -12,12 +14,19 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
   int index = 0;
 
   final _navKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
 
   NavigatorState get _currentNavigator => _navKeys[index].currentState!;
+
+  @override
+  void initState() {
+    print("MainShell: initState");
+    super.initState();
+    PlayerDataController.instance.initActionTiming(this);
+  }
 
   Future<bool> _onWillPop() async {
     if (_currentNavigator.canPop()) {
@@ -42,6 +51,7 @@ class _MainShellState extends State<MainShell> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
+        appBar: AppBar(title: ProgressBars()),
         body: IndexedStack(
           index: index,
           children: [

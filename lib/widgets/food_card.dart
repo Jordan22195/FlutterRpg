@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/item.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
-class EquipmentCard extends StatelessWidget {
-  EquipmentCard({
+class FoodCard extends StatelessWidget {
+  FoodCard({
     super.key,
     required this.id,
     required this.onTap,
@@ -20,11 +21,7 @@ class EquipmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print("Building EquipmentCard for item ID: $id");
-    final item = ItemController.buildItem(id) as EquipmentItem?;
-    double actionInterval = 0;
-    if (item is WeaponItem) {
-      actionInterval = item.actionInterval.inSeconds.toDouble();
-    }
+    final item = ItemController.definitionFor(id) as FoodItemDefinition?;
 
     if (item == null) {
       return Card(
@@ -35,7 +32,8 @@ class EquipmentCard extends StatelessWidget {
       );
     }
 
-    final stats = item.skillBonus;
+    int stats = item.restoreAmount ?? -1;
+    final skill = item.restoreSkill;
 
     return Card(
       child: InkWell(
@@ -49,7 +47,13 @@ class EquipmentCard extends StatelessWidget {
             child: Row(
               children: [
                 // Icon (left)
-                ItemStackTile(size: 52, id: item.id, count: 1),
+                ItemStackTile(
+                  size: 52,
+                  id: id,
+                  count: PlayerDataController.instance.data!.inventory.countOf(
+                    id,
+                  ),
+                ),
 
                 // Stats (right)
                 Expanded(
@@ -59,31 +63,17 @@ class EquipmentCard extends StatelessWidget {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          for (final entry in stats.entries) ...[
-                            IconRenderer(size: 16, id: entry.key),
-                            Text(
-                              "${entry.value}",
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            const SizedBox(width: 2),
-                          ],
+                          IconRenderer(size: 16, id: skill),
+                          Text(
+                            "+${stats}",
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          const SizedBox(width: 2),
                         ],
                       ),
                     ),
                   ),
                 ),
-
-                if (actionInterval > 0) ...[
-                  const SizedBox(width: 8),
-                  Icon(Icons.timer, size: 16, color: Colors.grey),
-                  Text(
-                    "${actionInterval.toStringAsFixed(1)}s",
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
               ],
             ),
           ),

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -45,7 +44,7 @@ class MomentumLoopController extends ChangeNotifier {
 
   Duration get currentInterval => _lerpInterval(_momentum);
   void rebindVsync(TickerProvider vsync) {
-    print("MomentumLoopController: rebindVsync called");
+    debugPrint("MomentumLoopController: rebindVsync called");
     final wasRunning = _running;
 
     // Stop old ticker
@@ -160,16 +159,13 @@ class MomentumLoopController extends ChangeNotifier {
   void _tryFire() {
     if (_actionInFlight) return;
     _actionInFlight = true;
-    print(
-      this.hashCode.toString() +
-          ": firing action with momentum ${_momentum.toStringAsFixed(2)}",
-    );
+    debugPrint(": firing action with momentum ${_momentum.toStringAsFixed(2)}");
     Future.sync(onFire).whenComplete(() => _actionInFlight = false);
   }
 
   @override
   void dispose() {
-    print("MomentumLoopController: dispose called");
+    debugPrint("MomentumLoopController: dispose called");
     _ticker.dispose();
     super.dispose();
   }

@@ -124,7 +124,12 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
                 padding: const EdgeInsets.all(1),
                 child: Row(
                   children: [
-                    ItemStackTile(size: 56, count: widget.count, id: widget.id),
+                    ItemStackTile(
+                      size: 56,
+                      count: widget.count,
+                      id: widget.id,
+                      showInfoDialogOnTap: false,
+                    ),
                     const SizedBox(width: 12),
                     Text(_cardText()),
                     Spacer(),

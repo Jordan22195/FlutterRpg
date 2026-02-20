@@ -17,6 +17,7 @@ enum ArmorSlots {
   WEAPON_1H,
   WEAPON_2H,
   OFFHAND,
+  TOOL,
 }
 
 class ArmorEquipment {
