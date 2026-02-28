@@ -1,16 +1,26 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+import 'player_data_controller.dart';
+import '../data/skill.dart';
+import 'dart:math';
+
+// primary button sets the on fire function and max interval in the controller.
+// the primary button triggers startIfNeeded which starts the ticker.
+// all the speed controls are done in _onTick which triggers every frame.
+//
+// start with max interval
+// min interval is calculated based on maxInterval / maxSpeedMuitipier
+// current SpeedMultiplier = currentSpeedPercent * (maxSpeedMuitipier - 1) + 1
+// current interval = maxInterval / current speed miltiplier
 
 class MomentumLoopController extends ChangeNotifier {
   MomentumLoopController({
     required TickerProvider vsync,
     required this.onFire,
-    this.maxInterval = const Duration(seconds: 2),
-    this.minInterval = const Duration(seconds: 1),
-    this.accelPerSecond = 0.5,
-    this.decelPerSecond = 0.6,
-    this.autocontinueThreshold = 0.25,
+    this.maxInterval = const Duration(seconds: 5),
+    this.accelPerSecond = 0.25,
+    this.decelPerSecond = 0.5,
   }) {
     _ticker = vsync.createTicker(_onTick);
   }
@@ -18,20 +28,19 @@ class MomentumLoopController extends ChangeNotifier {
   FutureOr<void> Function() onFire;
 
   Duration maxInterval;
-  Duration minInterval;
 
   double accelPerSecond;
   double decelPerSecond;
-  final double autocontinueThreshold;
 
   late Ticker _ticker;
+  bool speedLocked = false;
 
   bool _holding = false;
   bool _running = false;
   bool _actionInFlight = false;
 
-  double _momentum = 0.0; // 0..1
-  double _progress = 0.0; // 0..1
+  double _speedPercent = 0.0; // 0..1
+  double _actionProgress = 0.0; // 0..1
 
   Duration _lastElapsed = Duration.zero;
 
@@ -39,10 +48,21 @@ class MomentumLoopController extends ChangeNotifier {
   bool get isHolding => _holding;
   bool get isRunning => _running;
 
-  double get speed => _momentum; // momentum/speed bar
-  double get actionProgress => _progress; // action bar
+  // updated in onTick
+  double get percentMaxSpeed => _speedPercent; // momentum/speed bar
+  double get actionProgress => _actionProgress; // action bar
 
-  Duration get currentInterval => _lerpInterval(_momentum);
+  double get actionsPerSecond {
+    final intervalSec = getCurrentActionDuration().inMicroseconds / 1e6;
+    if (intervalSec == 0) return 0;
+    return 1 / intervalSec;
+  }
+
+  /// Returns the current speed multiplier relative to the max interval.
+  double getCurrentSpeedMultiplier() {
+    return percentMaxSpeed * (getMaxSpeed() - 1) + 1;
+  }
+
   void rebindVsync(TickerProvider vsync) {
     debugPrint("MomentumLoopController: rebindVsync called");
     final wasRunning = _running;
@@ -95,32 +115,35 @@ class MomentumLoopController extends ChangeNotifier {
   void _stopInternal({required bool notify}) {
     _ticker.stop();
     _running = false;
-    _progress = 0.0;
-    _momentum = 0.0;
+    _actionProgress = 0.0;
+    _speedPercent = 0.0;
     _lastElapsed = Duration.zero;
+    speedLocked = false;
     if (notify) notifyListeners();
   }
 
   void _startIfNeeded() {
     if (_running) return;
     _running = true;
-    if (_momentum == 0.0) _momentum = 0.08; // nudge for responsiveness
     _lastElapsed = Duration.zero;
     _ticker.start();
   }
 
-  Duration _lerpInterval(double t) {
-    final maxMs = maxInterval.inMilliseconds.toDouble();
-    final minMs = minInterval.inMilliseconds.toDouble();
-    final ms = maxMs + (minMs - maxMs) * t;
-    return Duration(
-      milliseconds: ms.round().clamp(
-        minInterval.inMilliseconds,
-        maxInterval.inMilliseconds,
-      ),
-    );
+  double getMaxSpeed() {
+    return 10.0;
+    return 1 + (PlayerDataController.instance.getStatTotal(Skills.SPEED) * .1);
   }
 
+  Duration getCurrentActionDuration() {
+    final ms = maxInterval.inMilliseconds / getCurrentSpeedMultiplier();
+
+    return Duration(milliseconds: ms.round());
+  }
+
+  // increase speed percent based on acceleration values
+  // icriment action progress based on time elapsed and current action interval
+  // if action progress is 100% fire the action
+  // drain stamina and apply xp based on speed mulitplier
   void _onTick(Duration elapsed) {
     final dt = (_lastElapsed == Duration.zero)
         ? 0.0
@@ -129,28 +152,50 @@ class MomentumLoopController extends ChangeNotifier {
 
     if (dt <= 0) return;
 
-    // momentum update
-    if (_holding) {
-      _momentum = (_momentum + accelPerSecond * dt).clamp(0.0, 1.0);
-    } else {
-      _momentum = (_momentum - decelPerSecond * dt).clamp(0.0, 1.0);
-    }
-
-    final shouldAutoContinue = _momentum >= autocontinueThreshold;
-
-    // if not holding and no momentum, stop at cycle boundary
-    if (!_holding && !shouldAutoContinue && _progress <= 0.0001) {
-      stopNow();
-      return;
+    if (!speedLocked) {
+      // momentum update
+      if (_holding && PlayerDataController.instance.getStaminaPercent() > 0) {
+        _speedPercent = (_speedPercent + accelPerSecond * dt).clamp(0.0, 1.0);
+      } else {
+        _speedPercent = (_speedPercent - decelPerSecond * dt).clamp(0.0, 1.0);
+      }
     }
 
     // progress advance based on interval
-    final intervalSec = currentInterval.inMicroseconds / 1e6;
-    _progress += dt / intervalSec;
-
-    if (_progress >= 1.0) {
-      _progress = _progress % 1.0;
+    // icriment action progress based on time elapsed and current action interval
+    final intervalSec = getCurrentActionDuration().inMicroseconds / 1e6;
+    _actionProgress += dt / intervalSec;
+    if (_actionProgress >= 1.0) {
+      _actionProgress = _actionProgress % 1.0;
       _tryFire();
+    }
+
+    final speed = getCurrentSpeedMultiplier();
+    final econLevel = PlayerDataController.instance.getStatTotal(
+      Skills.ECONOMY,
+    );
+    final exploreLevel = PlayerDataController.instance.getStatTotal(
+      Skills.EXPLORATION,
+    );
+    final sustainableSpeed = 1 + 0.05 * (econLevel - 1); // * (exploreLevel);
+
+    double staminaCost = 0;
+    if (speed > sustainableSpeed) {
+      staminaCost = 1 * dt;
+      // dt * k * (speed - sustainableSpeed);
+    }
+    PlayerDataController.instance.drainStamina(staminaCost.toDouble());
+    if (speed > 1) {
+      final staminaXp = dt * 10;
+      SkillController.instance.addXp(Skills.STAMINA, staminaXp);
+    }
+
+    final speedXp = (speed - 1) * 100 * dt;
+    SkillController.instance.addXp(Skills.SPEED, speedXp);
+
+    if (staminaCost > 0) {
+      final econXp = dt * 10.0;
+      SkillController.instance.addXp(Skills.ECONOMY, econXp);
     }
 
     notifyListeners();
@@ -159,7 +204,10 @@ class MomentumLoopController extends ChangeNotifier {
   void _tryFire() {
     if (_actionInFlight) return;
     _actionInFlight = true;
-    debugPrint(": firing action with momentum ${_momentum.toStringAsFixed(2)}");
+    debugPrint(
+      ": firing action with momentum ${_speedPercent.toStringAsFixed(2)} "
+      "(${actionsPerSecond.toStringAsFixed(2)} actions/sec)",
+    );
     Future.sync(onFire).whenComplete(() => _actionInFlight = false);
   }
 

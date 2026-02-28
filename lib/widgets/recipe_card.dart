@@ -1,12 +1,48 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/data/entity.dart';
 import 'package:rpg/data/inventory.dart';
-import 'package:rpg/data/zone_location.dart';
-import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import '../data/skill.dart';
+import '../data/item.dart';
 import '../controllers/crafting_controller.dart';
 import '../controllers/buff_controller.dart';
+
+class RecipeOutputTile extends StatelessWidget {
+  RecipeOutputTile({
+    super.key,
+    required this.recipeId,
+    this.maxCraftable = false,
+  });
+  String recipeId;
+  final bool maxCraftable;
+
+  @override
+  Widget build(BuildContext context) {
+    final crafting = CraftingController.instance;
+    final recipe = crafting.recipeById(recipeId);
+    if (recipe == null) {
+      return ItemStackTile(size: 1, count: 1, id: Items.NULL);
+    }
+    final output = recipe.output;
+    return ItemStackTile(
+      size: 52,
+      id: output.first.id,
+      count: maxCraftable
+          ? CraftingController.instance.calcMaxNumberCraftsForRecipe(recipeId)
+          : CraftingController.instance.getPlayerCount(output.first.id),
+      // Only show timer for firemaking recipes that are currently active
+      isTimerStackTile:
+          recipe.skill == Skills.FIREMAKING &&
+              BuffController.instance.campfireBuff.id == recipe.output.first.id
+          ? true
+          : false,
+      expirationTime:
+          recipe.skill == Skills.FIREMAKING &&
+              BuffController.instance.campfireBuff.id == recipe.output.first.id
+          ? BuffController.instance.campfireBuff.expirationTime
+          : null,
+    );
+  }
+}
 
 class RecipeCard extends StatelessWidget {
   RecipeCard({
@@ -54,28 +90,9 @@ class RecipeCard extends StatelessWidget {
             child: Row(
               children: [
                 // Output (left)
-                ItemStackTile(
-                  size: 52,
-                  id: output.first.id,
-                  count: maxCraftable
-                      ? CraftingController.instance
-                            .calcMaxNumberCraftsForRecipe(recipeId)
-                      : CraftingController.instance.getPlayerCount(
-                          output.first.id,
-                        ),
-                  // Only show timer for firemaking recipes that are currently active
-                  isTimerStackTile:
-                      recipe.skill == Skills.FIREMAKING &&
-                          BuffController.instance.campfireBuff.id ==
-                              recipe.output.first.id
-                      ? true
-                      : false,
-                  expirationTime:
-                      recipe.skill == Skills.FIREMAKING &&
-                          BuffController.instance.campfireBuff.id ==
-                              recipe.output.first.id
-                      ? BuffController.instance.campfireBuff.expirationTime
-                      : null,
+                RecipeOutputTile(
+                  recipeId: recipeId,
+                  maxCraftable: maxCraftable,
                 ),
                 const SizedBox(width: 12),
                 const Icon(Icons.arrow_back, size: 18),

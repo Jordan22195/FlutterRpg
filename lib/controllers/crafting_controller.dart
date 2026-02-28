@@ -21,7 +21,7 @@ class CraftingRecipe {
     required this.xp,
   });
 
-  final int xp;
+  final double xp;
   final String id;
   final String name;
   final Skills skill;

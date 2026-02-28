@@ -148,6 +148,7 @@ class EntityEncounter {
         endEcnounter();
       }
     }
+    playerController.data?.stamina--;
     playerController.refresh();
   }
 
@@ -157,7 +158,7 @@ class EntityEncounter {
 
   void applyExp(int damage) {
     final skillType = getEncounterSkillType();
-    int xp = damage * 2;
+    double xp = damage * 2;
     SkillController.instance.getSkill(skillType).addXp(xp);
     if (skillType == Skills.ATTACK) {
       SkillController.instance.getSkill(Skills.HITPOINTS).addXp(xp);

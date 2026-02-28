@@ -155,6 +155,7 @@ class _EncounterScreenState extends State<EncounterScreen>
     final entityCount = widget.encounter.getEntityCount();
     final healthPercent = widget.encounter.getHealthPercent();
     final skillType = widget.encounter.getEncounterSkillType();
+    playerDamage = widget.encounter.lastPlayerDamage;
 
     final fadeKey = GlobalKey<FadingNumberState>();
 
@@ -245,24 +246,28 @@ class _EncounterScreenState extends State<EncounterScreen>
             ),
             const SizedBox(height: 8),
 
-            Row(
-              children: [
-                SizedBox(width: 50),
-                Expanded(
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween<double>(end: healthPercent),
-                    duration: const Duration(milliseconds: 100),
-                    builder: (context, animatedValue, child) {
-                      return FillBar(
-                        value: animatedValue,
-                        foregroundColor: Theme.of(context).colorScheme.tertiary,
-                      );
-                    },
+            //entity hp bar
+            if (skillType != Skills.FISHING)
+              Row(
+                children: [
+                  SizedBox(width: 50),
+                  Expanded(
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween<double>(end: healthPercent),
+                      duration: const Duration(milliseconds: 100),
+                      builder: (context, animatedValue, child) {
+                        return FillBar(
+                          value: animatedValue,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.tertiary,
+                        );
+                      },
+                    ),
                   ),
-                ),
-                SizedBox(width: 50),
-              ],
-            ),
+                  SizedBox(width: 50),
+                ],
+              ),
             const SizedBox(height: 8),
 
             Row(
@@ -332,15 +337,18 @@ class _EncounterScreenState extends State<EncounterScreen>
                 Padding(
                   padding: const EdgeInsets.all(0),
                   child: MomentumPrimaryButton(
+                    maxInterval: Duration(seconds: 2),
                     enabled: true,
                     label: controller.getActionString(skillType),
                     controller: controller.actionTimingController,
                     onFireFunction: () {
-                      ProgressBars.iconId = encounter.entityId;
-                      ProgressBars.iconCount = encounter.getEntityCount();
-                      ProgressBars.iconIsTimer = false;
                       encounter.doPlayerEncounterAction();
                     },
+                    appBarTile: ItemStackTile(
+                      size: 200,
+                      count: entityCount,
+                      id: entity.id,
+                    ),
                   ),
                 ),
                 SizedBox(width: 8),

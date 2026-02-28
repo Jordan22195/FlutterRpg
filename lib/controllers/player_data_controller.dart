@@ -17,8 +17,10 @@ import '../data/skill.dart';
 import '../data/item.dart';
 
 import 'package:flutter/foundation.dart';
-
+import 'dart:math';
 import 'package:flutter/scheduler.dart';
+
+enum actvityType { exploring, encounter, crafting }
 
 class PlayerDataController extends ChangeNotifier {
   final ZoneController _zoneController = ZoneController();
@@ -52,6 +54,10 @@ class PlayerDataController extends ChangeNotifier {
   MomentumLoopController? _actionTimingController;
 
   bool get isActionTimingReady => _actionTimingController != null;
+
+  void setActionTiminingController(MomentumLoopController c) {
+    _actionTimingController = c;
+  }
 
   MomentumLoopController get actionTimingController {
     final c = _actionTimingController;
@@ -113,7 +119,7 @@ class PlayerDataController extends ChangeNotifier {
 
       inventory: Inventory(itemMap: {}),
       gear: ArmorEquipment(),
-      zones: ZoneState(discoveredEntities: {}),
+      zones: ExploreController(discoveredEntities: {}),
     );
   }
 
@@ -139,6 +145,27 @@ class PlayerDataController extends ChangeNotifier {
     _fileManager.saveAppData(_d.toJson());
   }
 
+  void drainStamina(double drain) {
+    if (drain > data!.stamina) {
+      drain = data?.stamina ?? 0;
+    }
+    data?.stamina -= drain;
+    SkillController.instance.addXp(Skills.STAMINA, drain * 5);
+  }
+
+  double getStaminaPercent() {
+    final s = data?.stamina ?? 0;
+    return (s / getMaxStamina());
+  }
+
+  void restoreStaminaToFull() {
+    data?.stamina = getMaxStamina();
+  }
+
+  double getMaxStamina() {
+    return getStatTotal(Skills.STAMINA) * 10;
+  }
+
   int getStatTotal(Skills skill) {
     int skillStat = SkillController.instance.getSkill(skill).getLevel();
     int gearStat = _d.gear.getStatTotal(skill);
@@ -153,6 +180,10 @@ class PlayerDataController extends ChangeNotifier {
 
     final total = skillStat + gearStat + buffedStats;
     return total;
+  }
+
+  void setCurrentZone(Zones id) {
+    _d.currentZoneId = id;
   }
 
   Zones getCurrentZone() {
@@ -179,8 +210,18 @@ class PlayerDataController extends ChangeNotifier {
     debugPrint("explore called in PlayerDataController");
     final entity = _zoneController.discoverEntity(_d.currentZoneId);
     _d.zones.addEntities(getCurrentZone(), entity.id, entity.count);
+
     saveAppData();
     notifyListeners();
+  }
+
+  actvityType currentActivity = actvityType.exploring;
+  EntityEncounter? currentEncounter;
+  void setActiveActivity(actvityType) {
+    currentActivity = actvityType;
+    // if exploring , set zone id
+    // if encounter set encounter instance
+    // if crafting set crafting instance
   }
 
   void decrimentEntity(Zones zoneId, Entities entityId) {

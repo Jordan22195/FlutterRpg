@@ -4,6 +4,7 @@ import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/zone_controller.dart';
 import 'package:rpg/data/entity.dart';
+import 'package:rpg/data/exploration_state.dart';
 import 'package:rpg/data/zone_location.dart';
 import 'package:rpg/screens/crafting_screen.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
@@ -16,8 +17,7 @@ import '../widgets/explore_card.dart';
 import 'encounter_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
-  const ExploreScreen({super.key, required this.zoneId});
-  final Zones zoneId;
+  const ExploreScreen({super.key});
 
   @override
   State<ExploreScreen> createState() => _ExploreScreenState();
@@ -76,6 +76,7 @@ class _ExploreScreenState extends State<ExploreScreen>
     final controller = context.watch<PlayerDataController>();
     final entities = controller.getZoneEntities();
     final locations = controller.getZoneLocations();
+    final zoneId = controller.getCurrentZone();
 
     // IMPORTANT: no Scaffold here — MainShell owns the Scaffold + BottomNav.
     return SafeArea(
@@ -93,8 +94,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    ZoneController.getZone(widget.zoneId)?.name ??
-                        "Unknown Zone",
+                    ZoneController.getZone(zoneId)?.name ?? "Unknown Zone",
                     style: Theme.of(context).textTheme.titleLarge,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -122,6 +122,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                 // Locations first
                 if (index < locations.length) {
                   final id = locations[index];
+
                   final loc = ZoneLocationController.definitionFor(id);
                   return ObjectCard(
                     key: ValueKey(id),
@@ -145,6 +146,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                     ? index
                     : index - locations.length - 1;
                 final e = entities[entityIndex];
+
                 return ObjectCard(
                   key: ValueKey(e.id),
                   id: e.id,
@@ -160,15 +162,19 @@ class _ExploreScreenState extends State<ExploreScreen>
 
           Row(
             children: [
+              // Firemaking button
               Container(
                 padding: const EdgeInsets.all(1),
 
                 child: TextButton(
-                  onPressed: () => navigateToCrafting(
-                    Skills.FIREMAKING,
-                    controller,
-                    Skills.FIREMAKING,
-                  ),
+                  onPressed: () {
+                    PlayerDataController.instance.restoreStaminaToFull();
+                    navigateToCrafting(
+                      Skills.FIREMAKING,
+                      controller,
+                      Skills.FIREMAKING,
+                    );
+                  },
                   child: ItemStackTile(
                     size: 56,
                     count: 0,
@@ -178,21 +184,26 @@ class _ExploreScreenState extends State<ExploreScreen>
                 ),
               ),
 
+              // primary action button
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: MomentumPrimaryButton(
+                  maxInterval: ExploreController.instance.maxInterval(),
                   enabled: true,
                   label: "Explore",
                   controller: controller.actionTimingController,
                   onFireFunction: () {
-                    print(
-                      "ExploreScreen: action button fired for ${widget.zoneId}",
-                    );
                     PlayerDataController.instance.explore();
                   },
+                  appBarTile: ItemStackTile(
+                    size: 1,
+                    count: 1,
+                    id: Skills.EXPLORATION,
+                  ),
                 ),
               ),
               SizedBox(width: 8),
+              // stop action button
               Container(
                 padding: const EdgeInsets.all(1),
                 decoration: BoxDecoration(

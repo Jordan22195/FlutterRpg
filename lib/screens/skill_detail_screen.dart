@@ -12,6 +12,8 @@ class SkillDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.watch<PlayerDataController>();
     final skill = SkillController.instance.getSkill(skillId);
+    double levelProgress = skill.percentProgressToLevelUp() * 100;
+    levelProgress = levelProgress.roundToDouble();
     return Scaffold(
       appBar: AppBar(title: Text(skillId.name)),
       body: Padding(
@@ -20,10 +22,10 @@ class SkillDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("Level : ${skill.getLevel()}"),
-            Text("Total Xp : ${skill.xp}"),
-            Text("Next Level Xp : ${skill.nextLevelXp()}"),
-            Text("Xp for next level : ${skill.xpToLevelUp()}"),
-            Text("Level Progress: ${skill.percentProgressToLevelUp()}"),
+            Text("Total Xp : ${skill.xp.round()}"),
+            Text("Next Level Xp : ${skill.nextLevelXp().round()}"),
+            Text("Xp for next level : ${skill.xpToLevelUp().round()}"),
+            Text("Level Progress: ${levelProgress}"),
           ],
         ),
       ),

@@ -8,6 +8,7 @@ import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/skil_tile.dart';
+import '../controllers/buff_controller.dart';
 
 class CraftingScreen extends StatefulWidget {
   CraftingScreen({super.key, required this.skill, required this.imageId});
@@ -130,8 +131,8 @@ class _CraftingScreenState extends State<CraftingScreen>
       );
     }
 
-    final active = crafting.activeRecipe;
-    final canCraft = (active != null) && crafting.canCraftActive();
+    final activeRecipe = crafting.activeRecipe;
+    final canCraft = (activeRecipe != null) && crafting.canCraftActive();
 
     return SafeArea(
       child: Padding(
@@ -165,7 +166,7 @@ class _CraftingScreenState extends State<CraftingScreen>
             RecipeCard(
               maxCraftable: false,
               inventory: playerDataController.data!.inventory,
-              recipeId: active?.id ?? '',
+              recipeId: activeRecipe?.id ?? '',
               onTap: () => _showRecipePicker(context, playerDataController),
             ),
 
@@ -190,6 +191,7 @@ class _CraftingScreenState extends State<CraftingScreen>
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: MomentumPrimaryButton(
+                    maxInterval: Duration(seconds: 2),
                     enabled: canCraft,
                     label: "Craft",
                     controller: playerDataController.actionTimingController,
@@ -197,6 +199,26 @@ class _CraftingScreenState extends State<CraftingScreen>
                       print("CraftingScreen: Craft button fired!");
                       crafting.craftOnce();
                     },
+                    appBarTile: ItemStackTile(
+                      size: 52,
+                      id: activeRecipe?.output.first.id,
+                      count: CraftingController.instance.getPlayerCount(
+                        activeRecipe?.output.first.id,
+                      ),
+                      // Only show timer for firemaking recipes that are currently active
+                      isTimerStackTile:
+                          activeRecipe?.skill == Skills.FIREMAKING &&
+                              BuffController.instance.campfireBuff.id ==
+                                  activeRecipe?.output.first.id
+                          ? true
+                          : false,
+                      expirationTime:
+                          activeRecipe?.skill == Skills.FIREMAKING &&
+                              BuffController.instance.campfireBuff.id ==
+                                  activeRecipe?.output.first.id
+                          ? BuffController.instance.campfireBuff.expirationTime
+                          : null,
+                    ),
                   ),
                 ),
                 SizedBox(width: 8),

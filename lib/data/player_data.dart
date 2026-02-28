@@ -7,11 +7,12 @@ import 'exploration_state.dart';
 import 'package:flutter/material.dart';
 
 class PlayerData {
-  final Zones currentZoneId;
+  Zones currentZoneId;
   final Inventory inventory;
   final ArmorEquipment gear;
-  final ZoneState zones;
+  final ExploreController zones;
   int hitpoints = 10;
+  double stamina = 0;
 
   PlayerData({
     required this.currentZoneId,
@@ -67,7 +68,9 @@ class PlayerData {
 
     final Inventory defaultInventory = Inventory(itemMap: {});
     final ArmorEquipment defaultGear = ArmorEquipment();
-    final ZoneState defaultExploration = ZoneState(discoveredEntities: {});
+    final ExploreController defaultExploration = ExploreController(
+      discoveredEntities: {},
+    );
 
     // --- Parse fields safely ---
     Zones zoneId;
@@ -105,12 +108,12 @@ class PlayerData {
       gear = defaultGear;
     }
 
-    ZoneState exploration;
+    ExploreController exploration;
     try {
       final expJson = _asMap(json['explorationStatus']);
       exploration = expJson.isEmpty
           ? defaultExploration
-          : ZoneState.fromJson(expJson);
+          : ExploreController.fromJson(expJson);
     } catch (e) {
       debugPrint('PlayerData.fromJson: explorationStatus parse failed: $e');
       exploration = defaultExploration;

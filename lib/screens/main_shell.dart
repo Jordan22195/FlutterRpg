@@ -25,7 +25,6 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
   void initState() {
     print("MainShell: initState");
     super.initState();
-    PlayerDataController.instance.initActionTiming(this);
   }
 
   Future<bool> _onWillPop() async {

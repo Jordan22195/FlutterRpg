@@ -3,7 +3,14 @@ import 'package:flutter/widgets.dart';
 import '../utilities/image_resolver.dart';
 
 enum Skills {
+  STAMINA, // each point increaes stamina bar by 10.
+  // each point of stam spent is 1xp
+  SPEED, // each point increases max speed (reduces min action interval) by a percent
+  // actions done at near top speed give xp
+  ECONOMY, //increases speed threasold where stamina drain starts
+  //actions done near threshold give xp
   // COMBAT
+  EXPLORATION,
   HITPOINTS, // health - entity
   ATTACK, // melee attack - entity accuracy and damage
   RANGED, // ranged attack - not sure how this will be used yet
@@ -29,9 +36,9 @@ enum Skills {
 
 class Skill {
   final String name;
-  int xp;
+  double xp;
 
-  final List<int> xpTable = Skill._buildXpTable(99);
+  final List<double> xpTable = Skill._buildXpTable(99);
 
   Skill({required this.name, required this.xp});
 
@@ -52,7 +59,7 @@ class Skill {
     return (intoLevel / span).clamp(0.0, 1.0);
   }
 
-  int nextLevelXp() {
+  double nextLevelXp() {
     final curLevel = getLevel();
 
     // Maxed (level 99 if table is 99)
@@ -61,7 +68,7 @@ class Skill {
     return xpTable[curLevel + 1];
   }
 
-  int xpToLevelUp() {
+  double xpToLevelUp() {
     final level = getLevel();
     final nextLevel = (level + 1).clamp(1, xpTable.length - 1);
 
@@ -77,14 +84,13 @@ class Skill {
     return getLevelFromXp(xp);
   }
 
-  void addXp(int xp) {
-    print("addxp $name $xp");
+  void addXp(double xp) {
     this.xp += xp;
   }
 
-  static List<int> _buildXpTable(int maxLevel) {
-    final table = List<int>.filled(maxLevel + 1, 0);
-    int points = 0;
+  static List<double> _buildXpTable(int maxLevel) {
+    final table = List<double>.filled(maxLevel + 1, 0);
+    double points = 0;
 
     for (int level = 1; level <= maxLevel; level++) {
       table[level] = points;
@@ -94,7 +100,7 @@ class Skill {
     return table;
   }
 
-  int getLevelFromXp(int xp) {
+  int getLevelFromXp(double xp) {
     for (int level = 1; level < xpTable.length; level++) {
       if (xp < xpTable[level]) {
         return level - 1;
@@ -109,7 +115,7 @@ class Skill {
 
   factory Skill.fromJson(Map<String, dynamic> json) {
     print("fromjson ${json['name']} ${json['xp']}");
-    return Skill(name: json['name'] as String, xp: json['xp'] as int);
+    return Skill(name: json['name'] as String, xp: json['xp'] as double);
   }
 }
 
@@ -173,7 +179,7 @@ class SkillController extends ChangeNotifier {
     return _skills[id] ?? Skill(name: "Error", xp: 1);
   }
 
-  void addXp(Skills skill, int xp) {
+  void addXp(Skills skill, double xp) {
     _skills[skill]?.addXp(xp);
   }
 
@@ -183,6 +189,12 @@ class SkillController extends ChangeNotifier {
         throw ArgumentError('Expected Skills, got ${objectId.runtimeType}');
       }
       switch (objectId) {
+        case Skills.ECONOMY:
+          return AssetImage('assets/icons/skills/economy.png');
+        case Skills.SPEED:
+          return AssetImage('assets/icons/skills/speed.png');
+        case Skills.STAMINA:
+          return AssetImage('assets/icons/skills/stamina.png');
         case Skills.ATTACK:
           return AssetImage('assets/icons/skills/attack.png');
         case Skills.DEFENCE:

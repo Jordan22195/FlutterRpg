@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/controllers/momentum_loop_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:provider/provider.dart';
 import 'screens/main_shell.dart';
@@ -34,8 +35,6 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    PlayerDataController();
-
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData.dark(),
@@ -55,9 +54,24 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
+  late final MomentumLoopController _momentum;
+
   @override
   void initState() {
     super.initState();
+
+    _momentum = MomentumLoopController(
+      vsync: this,
+      onFire: () {
+        // TODO: wire this to whatever "fire" should do in your game.
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _momentum.dispose();
+    super.dispose();
   }
 
   @override
@@ -66,6 +80,10 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     if (PlayerDataController.instance.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    return MainShell();
+    PlayerDataController.instance.setActionTiminingController(_momentum);
+    return ChangeNotifierProvider<MomentumLoopController>.value(
+      value: _momentum,
+      child: MainShell(),
+    );
   }
 }

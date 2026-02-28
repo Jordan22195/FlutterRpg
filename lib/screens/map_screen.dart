@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/controllers/player_data_controller.dart';
 import 'explore_screen.dart';
 import '../data/zone.dart';
 
@@ -30,14 +31,14 @@ class MapScreen extends StatelessWidget {
             top: 220,
             child: ElevatedButton(
               onPressed: () {
+                PlayerDataController.instance.setCurrentZone(
+                  Zones.STARTING_FOREST,
+                );
                 // This pushes onto the MAP TAB's nested navigator,
                 // so switching tabs and coming back returns to ExploreScreen.
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        ExploreScreen(zoneId: Zones.STARTING_FOREST),
-                  ),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => ExploreScreen()));
               },
               child: const Text('Forest'),
             ),

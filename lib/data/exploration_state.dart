@@ -1,15 +1,29 @@
 import 'package:rpg/controllers/encounter_controller.dart';
+import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:flutter/material.dart';
 
 import 'zone.dart';
+import 'skill.dart';
 import 'entity.dart';
 
-class ZoneState {
+class ExploreController {
   Map<Zones, Map<Entities, int>> discoveredEntities;
   Map<Zones, Map<Entities, EntityEncounter>> entityEncounters = {};
 
-  ZoneState({required this.discoveredEntities});
+  // Singleton implementation
+  static final ExploreController instance = ExploreController._internal();
+
+  factory ExploreController({
+    Map<Zones, Map<Entities, int>>? discoveredEntities,
+  }) {
+    if (discoveredEntities != null) {
+      instance.discoveredEntities = discoveredEntities;
+    }
+    return instance;
+  }
+
+  ExploreController._internal() : discoveredEntities = {};
 
   Map<String, dynamic> toJson() {
     return {
@@ -22,7 +36,7 @@ class ZoneState {
     };
   }
 
-  factory ZoneState.fromJson(Map<String, dynamic> json) {
+  factory ExploreController.fromJson(Map<String, dynamic> json) {
     final rawZones = json['discoveredEntities'] as Map<String, dynamic>? ?? {};
 
     final Map<Zones, Map<Entities, int>> discovered = {};
@@ -48,7 +62,7 @@ class ZoneState {
       discovered[zone] = entityMap;
     }
 
-    return ZoneState(discoveredEntities: discovered);
+    return ExploreController(discoveredEntities: discovered);
   }
 
   List<ObjectStack> getEntityList(Zones zoneId) {
@@ -123,5 +137,9 @@ class ZoneState {
     if (zoneMap == null) return;
 
     zoneMap.update(id, (existing) => existing + count, ifAbsent: () => count);
+  }
+
+  Duration maxInterval() {
+    return Duration(seconds: 2);
   }
 }
