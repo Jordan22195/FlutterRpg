@@ -1,5 +1,5 @@
 import '../data/equipment_data.dart';
-import '../data/skill.dart';
+import '../data/skill_data.dart';
 import '../catalogs/item_catalog.dart';
 import '../utilities/util.dart';
 

@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:rpg/data/player_data.dart';
 import '../services/player_data_service.dart';
-import '../data/skill.dart';
+import '../data/skill_data.dart';
 import 'dart:math';
 
 // primary button sets the on fire function and max interval in the controller.

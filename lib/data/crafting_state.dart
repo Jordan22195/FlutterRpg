@@ -1,5 +1,5 @@
 import '../catalogs/recipe_catalog.dart';
-import '../data/skill.dart';
+import 'skill_data.dart';
 import 'inventory_data.dart';
 
 class CraftingState {

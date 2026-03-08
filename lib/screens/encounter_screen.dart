@@ -12,7 +12,7 @@ import '../catalogs/entity_catalog.dart';
 import '../controllers/encounter_controller.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/primary_button.dart';
-import '../data/skill.dart';
+import '../data/skill_data.dart';
 import '../widgets/skil_tile.dart';
 import '../widgets/icon_renderer.dart';
 import '../widgets/fading_number.dart';

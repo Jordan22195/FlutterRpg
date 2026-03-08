@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
-import '../data/skill.dart';
+import '../data/skill_data.dart';
 import '../catalogs/item_catalog.dart';
 import '../controllers/crafting_controller.dart';
 import '../controllers/buff_controller.dart';

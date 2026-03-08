@@ -1,4 +1,4 @@
-import 'package:rpg/data/skill.dart';
+import 'package:rpg/data/skill_data.dart';
 
 import '../services/encounter_service.dart';
 import '../services/world_service.dart';

@@ -1,5 +1,5 @@
 import 'package:rpg/catalogs/entity_catalog.dart';
-import 'skill.dart';
+import 'skill_data.dart';
 import 'equipment_data.dart';
 import '../catalogs/zone_catalog.dart';
 import '../data/buff_data.dart';

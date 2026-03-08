@@ -11,7 +11,7 @@ import 'package:rpg/widgets/item_stack_tile.dart';
 
 import '../services/player_data_service.dart';
 import '../data/zone.dart';
-import '../data/skill.dart';
+import '../data/skill_data.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/explore_card.dart';
 import 'encounter_screen.dart';

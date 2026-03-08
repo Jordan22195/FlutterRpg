@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/services/player_data_service.dart';
-import 'package:rpg/data/skill.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/recipe_card.dart';

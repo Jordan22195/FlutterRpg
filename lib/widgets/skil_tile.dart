@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/services/player_data_service.dart';
-import 'package:rpg/data/skill.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import '../widgets/icon_renderer.dart';
 import '../screens/skill_detail_screen.dart';

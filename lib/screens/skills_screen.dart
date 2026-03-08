@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/player_data_service.dart';
 import 'package:provider/provider.dart';
 import '../widgets/skil_tile.dart';
-import '../data/skill.dart';
+import '../data/skill_data.dart';
 import '../screens/skill_detail_screen.dart';
 
 class SkillsScreen extends StatelessWidget {

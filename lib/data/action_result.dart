@@ -1,5 +1,5 @@
 import 'ObjectStack.dart';
-import 'skill.dart';
+import 'skill_data.dart';
 
 class ActionResult {
   Map<SkillId, double> xp = {};

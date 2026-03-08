@@ -1,5 +1,5 @@
 import '../data/equipment_data.dart';
-import '../data/skill.dart';
+import '../data/skill_data.dart';
 import 'package:flutter/widgets.dart';
 import '../utilities/image_resolver.dart';
 

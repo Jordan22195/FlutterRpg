@@ -9,7 +9,7 @@ import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/data/player_data.dart';
-import 'package:rpg/data/skill.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/services/world_service.dart';

@@ -3,7 +3,7 @@ import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/catalogs/location_catalog.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
-import '../data/skill.dart';
+import '../data/skill_data.dart';
 import '../utilities/util.dart';
 import 'countdown_timer.dart';
 

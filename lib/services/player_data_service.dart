@@ -16,7 +16,7 @@ import '../catalogs/zone_catalog.dart';
 import '../data/player_data.dart';
 import 'file_manager_service.dart';
 import '../catalogs/entity_catalog.dart';
-import '../data/skill.dart';
+import '../data/skill_data.dart';
 import '../catalogs/item_catalog.dart';
 
 import 'package:flutter/foundation.dart';

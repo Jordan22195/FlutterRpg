@@ -1,11 +1,22 @@
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:flutter/widgets.dart';
-import '../data/skill.dart';
+import '../data/skill_data.dart';
 import 'item_catalog.dart';
 import '../services/weighted_drop_table_service.dart';
 import '../utilities/image_resolver.dart';
 
-enum EntityId { NULL, TREE, GOBLIN, COPPER, TRANQUIL_POND, RIVER, LAKE, OCEAN }
+enum EntityId {
+  NULL,
+  ANVIL,
+  BASIC_CAMPIRE,
+  TREE,
+  GOBLIN,
+  COPPER,
+  TRANQUIL_POND,
+  RIVER,
+  LAKE,
+  OCEAN,
+}
 
 // Base Entity Class
 class Entity {
@@ -15,6 +26,58 @@ class Entity {
 
   Entity({required this.id, required this.name})
     : instanceId = UniqueKey().toString();
+}
+
+class EntityDefinition {
+  final String name;
+  final String iconAsset;
+
+  EntityDefinition({required this.name, required this.iconAsset});
+
+  Entity toEntity(EntityId id) => Entity(id: id, name: name);
+}
+
+class CraftingEntity extends Entity {
+  final SkillId craftingSkill;
+  CraftingEntity({
+    required super.id,
+    required super.name,
+    required this.craftingSkill,
+  });
+}
+
+class CampfireEntity extends CraftingEntity {
+  CampfireEntity({
+    required super.id,
+    required super.name,
+    super.craftingSkill = SkillId.COOKING,
+  });
+}
+
+class CraftingEntityDefinition extends EntityDefinition {
+  final SkillId craftingSkill;
+
+  CraftingEntityDefinition({
+    required super.name,
+    required super.iconAsset,
+    required this.craftingSkill,
+  });
+
+  @override
+  CraftingEntity toEntity(EntityId id) =>
+      CraftingEntity(id: id, name: name, craftingSkill: craftingSkill);
+}
+
+class CampfireEntityDefinition extends CraftingEntityDefinition {
+  CampfireEntityDefinition({
+    required super.name,
+    required super.iconAsset,
+    super.craftingSkill = SkillId.COOKING,
+  });
+
+  @override
+  CampfireEntity toEntity(EntityId id) =>
+      CampfireEntity(id: id, name: name, craftingSkill: craftingSkill);
 }
 
 // Encounter Entity Class
@@ -35,23 +98,22 @@ class EncounterEntity extends Entity {
   }) : maxHitPoints = hitpoints;
 }
 
-class EncounterEntityDefinition {
-  final String name;
+class EncounterEntityDefinition extends EntityDefinition {
   final SkillId entityType;
   final int defence;
   final int hitpoints;
   final List<WeightedDropTableEntry<ItemId>> itemDrops;
-  final String? iconAsset;
 
   EncounterEntityDefinition({
-    required this.name,
+    required super.name,
+    required super.iconAsset,
     required this.entityType,
     required this.defence,
     required this.hitpoints,
     required this.itemDrops,
-    this.iconAsset,
   });
 
+  @override
   EncounterEntity toEntity(EntityId id) => EncounterEntity(
     id: id,
     name: name,
@@ -84,15 +146,16 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
 
   CombatEntityDefinition({
     required super.name,
+    required super.iconAsset,
     super.entityType = SkillId.ATTACK,
     required super.defence,
     required super.hitpoints,
     required super.itemDrops,
     required this.attack,
     required this.attackInterval,
-    super.iconAsset,
   });
 
+  @override
   CombatEntity toEntity(EntityId id) => CombatEntity(
     id: id,
     name: name,
@@ -113,7 +176,30 @@ class EntityCatalog {
     EnumImageProviderLookup.register<EntityId>(EntityCatalog.imageProviderFor);
   }
 
-  final _defs = <EntityId, EncounterEntityDefinition>{
+  final _defs = <EntityId, EntityDefinition>{
+    //
+    //
+    //  CRAFTING
+    //
+    //
+    EntityId.ANVIL: CraftingEntityDefinition(
+      name: "Anvil",
+      craftingSkill: SkillId.BLACKSMITHING,
+      iconAsset: "assets/images/entities/anvil.png",
+    ),
+
+    EntityId.BASIC_CAMPIRE: CampfireEntityDefinition(
+      name: "Basic Campfire",
+      craftingSkill: SkillId.COOKING,
+      iconAsset: "assets/images/entities/basic_campfire.png",
+    ),
+
+    //
+    //
+    //  GATHERING
+    //
+    //
+
     // WOODCUTTING
     EntityId.TREE: EncounterEntityDefinition(
       name: "Tree",
@@ -205,15 +291,8 @@ class EntityCatalog {
     ),
   };
 
-  EncounterEntityDefinition getDefinitionFor(EntityId id) {
-    return _defs[id] ??
-        EncounterEntityDefinition(
-          name: "",
-          entityType: SkillId.NULL,
-          defence: 0,
-          hitpoints: 0,
-          itemDrops: [],
-        );
+  EntityDefinition getDefinitionFor(EntityId id) {
+    return _defs[id] ?? EntityDefinition(name: "", iconAsset: "");
   }
 
   static EncounterEntity buildEntity(EntityId id) {

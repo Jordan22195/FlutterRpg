@@ -1,6 +1,6 @@
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
-import 'package:rpg/data/skill.dart';
+import 'package:rpg/data/skill_data.dart';
 
 /// A single crafting recipe (inputs -> output) gated by a skill level requirement.
 class CraftingRecipe {

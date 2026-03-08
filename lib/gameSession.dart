@@ -6,7 +6,7 @@ import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/data/player_data.dart';
-import 'package:rpg/data/skill.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/location_catalog.dart';
 
 import 'data/inventory_data.dart';

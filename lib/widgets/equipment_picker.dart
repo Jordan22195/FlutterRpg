@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/data/equipment_data.dart';
-import 'package:rpg/data/skill.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/widgets/equipment_card.dart';
 import '../catalogs/item_catalog.dart';
 import '../widgets/food_card.dart';
