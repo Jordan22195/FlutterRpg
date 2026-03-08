@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/data/inventory.dart';
+import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import '../data/skill.dart';
-import '../data/item.dart';
+import '../catalogs/item_catalog.dart';
 import '../controllers/crafting_controller.dart';
 import '../controllers/buff_controller.dart';
 
@@ -20,7 +20,7 @@ class RecipeOutputTile extends StatelessWidget {
     final crafting = CraftingController.instance;
     final recipe = crafting.recipeById(recipeId);
     if (recipe == null) {
-      return ItemStackTile(size: 1, count: 1, id: Items.NULL);
+      return ItemStackTile(size: 1, count: 1, id: ItemId.NULL);
     }
     final output = recipe.output;
     return ItemStackTile(
@@ -31,12 +31,12 @@ class RecipeOutputTile extends StatelessWidget {
           : CraftingController.instance.getPlayerCount(output.first.id),
       // Only show timer for firemaking recipes that are currently active
       isTimerStackTile:
-          recipe.skill == Skills.FIREMAKING &&
+          recipe.skill == SkillId.FIREMAKING &&
               BuffController.instance.campfireBuff.id == recipe.output.first.id
           ? true
           : false,
       expirationTime:
-          recipe.skill == Skills.FIREMAKING &&
+          recipe.skill == SkillId.FIREMAKING &&
               BuffController.instance.campfireBuff.id == recipe.output.first.id
           ? BuffController.instance.campfireBuff.expirationTime
           : null,
@@ -55,7 +55,7 @@ class RecipeCard extends StatelessWidget {
   });
 
   bool maxCraftable = true;
-  final Inventory inventory;
+  final InventoryData inventory;
   final String recipeId;
   final VoidCallback? onTap;
   final double height;

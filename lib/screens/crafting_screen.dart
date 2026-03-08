@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
-import 'package:rpg/controllers/player_data_controller.dart';
+import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/data/skill.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
@@ -12,7 +12,7 @@ import '../controllers/buff_controller.dart';
 
 class CraftingScreen extends StatefulWidget {
   CraftingScreen({super.key, required this.skill, required this.imageId});
-  final Skills skill;
+  final SkillId skill;
   final Enum imageId;
 
   @override
@@ -207,13 +207,13 @@ class _CraftingScreenState extends State<CraftingScreen>
                       ),
                       // Only show timer for firemaking recipes that are currently active
                       isTimerStackTile:
-                          activeRecipe?.skill == Skills.FIREMAKING &&
+                          activeRecipe?.skill == SkillId.FIREMAKING &&
                               BuffController.instance.campfireBuff.id ==
                                   activeRecipe?.output.first.id
                           ? true
                           : false,
                       expirationTime:
-                          activeRecipe?.skill == Skills.FIREMAKING &&
+                          activeRecipe?.skill == SkillId.FIREMAKING &&
                               BuffController.instance.campfireBuff.id ==
                                   activeRecipe?.output.first.id
                           ? BuffController.instance.campfireBuff.expirationTime

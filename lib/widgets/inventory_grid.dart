@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/data/ObjectStack.dart';
-import 'package:rpg/data/item.dart'; // <-- uses ItemController.imageProviderFor
+import 'package:rpg/catalogs/item_catalog.dart'; // <-- uses ItemController.imageProviderFor
 import 'item_stack_tile.dart';
 
 class InventoryGrid extends StatelessWidget {
@@ -39,7 +39,7 @@ class InventoryGrid extends StatelessWidget {
     if (fromCallback != null) return fromCallback;
 
     // Otherwise, resolve from item registry using dynamic enum key.
-    return ItemController.imageProviderFor(stack.id);
+    return ItemCatalog.imageProviderFor(stack.id);
   }
 
   @override
@@ -62,10 +62,10 @@ class InventoryGrid extends StatelessWidget {
           showInfoDialogOnTap: showInfoDialogOnTap && onItemTap == null,
           title:
               titleForItem?.call(stack) ??
-              ItemController.definitionFor(stack.id)?.name,
+              ItemCatalog.definitionFor(stack.id)?.name,
           description:
               descriptionForItem?.call(stack) ??
-              ItemController.definitionFor(stack.id)?.description,
+              ItemCatalog.definitionFor(stack.id)?.description,
           //onTap: onItemTap != null ? () => onItemTap!(stack) : null,
         );
       },

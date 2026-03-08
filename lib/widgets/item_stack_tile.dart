@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/data/item.dart';
+import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import '../utilities/image_resolver.dart';
 import '../controllers/crafting_controller.dart';
@@ -37,7 +37,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
 
   void _showInfoDialog(BuildContext context) {
     final itemDef =
-        ItemController.definitionFor(id as Items) ??
+        ItemCatalog.definitionFor(id as ItemId) ??
         ItemDefinition(name: "error", value: -1);
     showDialog<void>(
       context: context,
@@ -48,11 +48,11 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconRenderer(size: size * 2, id: id as Items),
+              IconRenderer(size: size * 2, id: id as ItemId),
               Text(itemDef.description ?? "No description available."),
               Row(
                 children: [
-                  IconRenderer(size: 40, id: Items.COINS),
+                  IconRenderer(size: 40, id: ItemId.COINS),
                   Text("${itemDef.value}"),
                 ],
               ),
@@ -85,7 +85,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
               if (itemDef is FoodItemDefinition)
                 Row(
                   children: [
-                    IconRenderer(size: 40, id: Skills.HITPOINTS),
+                    IconRenderer(size: 40, id: SkillId.HITPOINTS),
                     Text("+${itemDef.restoreAmount}"),
                   ],
                 ),

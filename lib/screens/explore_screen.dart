@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
-import 'package:rpg/controllers/zone_controller.dart';
-import 'package:rpg/data/entity.dart';
-import 'package:rpg/data/exploration_state.dart';
-import 'package:rpg/data/zone_location.dart';
+import 'package:rpg/controllers/world_controller.dart';
+import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/data/world_data.dart';
+import 'package:rpg/catalogs/location_catalog.dart';
 import 'package:rpg/screens/crafting_screen.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
-import '../controllers/player_data_controller.dart';
+import '../services/player_data_service.dart';
 import '../data/zone.dart';
 import '../data/skill.dart';
 import '../widgets/primary_button.dart';
@@ -25,7 +25,7 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen>
     with TickerProviderStateMixin {
-  void navigateToEncounter(Entities id) {
+  void navigateToEncounter(EntityId id) {
     Navigator.of(context)
         .push(
           MaterialPageRoute(
@@ -43,11 +43,7 @@ class _ExploreScreenState extends State<ExploreScreen>
         });
   }
 
-  void navigateToCrafting(
-    Skills skill,
-    PlayerDataController controller,
-    Enum locationId,
-  ) {
+  void navigateToCrafting(SkillId skill, Enum locationId) {
     Navigator.of(context)
         .push(
           MaterialPageRoute(
@@ -59,12 +55,13 @@ class _ExploreScreenState extends State<ExploreScreen>
         });
   }
 
-  void navigateToLocation(
-    ZoneLocation location,
-    PlayerDataController controller,
-  ) {
+  // todo update how navigation works. don't to navigation checks in the ui.
+  // instead call the controller to update a state. have the ui reflect the state.
+  // ex: click on entity or location. controllers sets the the new active player view.
+  // navigator swiches based on player view state.
+  void navigateToLocation(ZoneLocation location) {
     if (location is CraftingLocation) {
-      navigateToCrafting(location.craftingSkill, controller, location.id);
+      navigateToCrafting(location.craftingSkill, location.id);
     }
     if (location is FishingLocation) {
       navigateToEncounter(location.fishingSpotEntity);
@@ -73,10 +70,10 @@ class _ExploreScreenState extends State<ExploreScreen>
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<PlayerDataController>();
-    final entities = controller.getZoneEntities();
-    final locations = controller.getZoneLocations();
-    final zoneId = controller.getCurrentZone();
+    final worldController = context.watch<WorldController>();
+    final zoneDef = worldController.getCurrentZoneDefinition();
+    final entities = worldController.getCurrentZoneEntities();
+    final locations = zoneDef.permanentLocations;
 
     // IMPORTANT: no Scaffold here — MainShell owns the Scaffold + BottomNav.
     return SafeArea(
@@ -94,7 +91,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    ZoneController.getZone(zoneId)?.name ?? "Unknown Zone",
+                    zoneDef.name,
                     style: Theme.of(context).textTheme.titleLarge,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -123,14 +120,14 @@ class _ExploreScreenState extends State<ExploreScreen>
                 if (index < locations.length) {
                   final id = locations[index];
 
-                  final loc = ZoneLocationController.definitionFor(id);
+                  final loc = LocationCatalog.definitionFor(id);
                   return ObjectCard(
                     key: ValueKey(id),
                     id: id,
                     count: 1,
-                    onTap: () => navigateToLocation(loc, controller),
+                    onTap: () => navigateToLocation(loc),
                     typeId: loc.typeForIcon,
-                    expirationTime: id == ZoneLocationId.CAMPFIRE
+                    expirationTime: id == LocationId.CAMPFIRE
                         ? BuffController.instance.campfireBuff.expirationTime
                         : null,
                   );
@@ -153,8 +150,8 @@ class _ExploreScreenState extends State<ExploreScreen>
                   count: e.count,
                   onTap: () => navigateToEncounter(e.id),
                   typeId:
-                      EntityController.definitionFor(e.id)?.entityType ??
-                      Skills.NULL,
+                      EntityCatalog.definitionFor(e.id)?.entityType ??
+                      SkillId.NULL,
                 );
               },
             ),
@@ -169,16 +166,12 @@ class _ExploreScreenState extends State<ExploreScreen>
                 child: TextButton(
                   onPressed: () {
                     PlayerDataController.instance.restoreStaminaToFull();
-                    navigateToCrafting(
-                      Skills.FIREMAKING,
-                      controller,
-                      Skills.FIREMAKING,
-                    );
+                    navigateToCrafting(SkillId.FIREMAKING, SkillId.FIREMAKING);
                   },
                   child: ItemStackTile(
                     size: 56,
                     count: 0,
-                    id: Skills.FIREMAKING,
+                    id: SkillId.FIREMAKING,
                     showInfoDialogOnTap: false,
                   ),
                 ),
@@ -188,17 +181,17 @@ class _ExploreScreenState extends State<ExploreScreen>
               Padding(
                 padding: const EdgeInsets.all(12),
                 child: MomentumPrimaryButton(
-                  maxInterval: ExploreController.instance.maxInterval(),
+                  maxInterval: WorldData.instance.maxInterval(),
                   enabled: true,
                   label: "Explore",
-                  controller: controller.actionTimingController,
+                  controller: worldController.actionTimingController,
                   onFireFunction: () {
-                    PlayerDataController.instance.explore();
+                    worldController.discoverEntity();
                   },
                   appBarTile: ItemStackTile(
                     size: 1,
                     count: 1,
-                    id: Skills.EXPLORATION,
+                    id: SkillId.EXPLORATION,
                   ),
                 ),
               ),

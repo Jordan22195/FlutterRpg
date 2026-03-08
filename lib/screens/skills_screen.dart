@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../controllers/player_data_controller.dart';
+import '../services/player_data_service.dart';
 import 'package:provider/provider.dart';
 import '../widgets/skil_tile.dart';
 import '../data/skill.dart';
@@ -11,7 +11,7 @@ class SkillsScreen extends StatelessWidget {
   Widget buildSkillTile(
     BuildContext context,
     PlayerDataController controller,
-    Skills skillId,
+    SkillId skillId,
   ) {
     return SkillTile(id: skillId);
   }
@@ -20,7 +20,7 @@ class SkillsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.watch<PlayerDataController>();
 
-    final list = Skills.values.toList();
+    final list = SkillId.values.toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Skills')),
@@ -31,11 +31,11 @@ class SkillsScreen extends StatelessWidget {
           mainAxisSpacing: 1,
           crossAxisSpacing: 1,
         ),
-        itemCount: Skills.values.length,
+        itemCount: SkillId.values.length,
         itemBuilder: (context, i) {
           final id = list[i];
 
-          return buildSkillTile(context, controller, id ?? Skills.ATTACK);
+          return buildSkillTile(context, controller, id ?? SkillId.ATTACK);
         },
       ),
     );

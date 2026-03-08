@@ -18,4 +18,18 @@ class Util {
       return "${seconds}s";
     }
   }
+
+  static Map<dynamic, int> addMap(Map<dynamic, int> a, Map<dynamic, int> b) {
+    final totals = <dynamic, int>{};
+
+    final keys = <dynamic>{...a.keys, ...b.keys};
+
+    for (final key in keys) {
+      final aVal = a[key] ?? 0;
+      final bVal = b[key] ?? 0;
+      totals[key] = aVal + bVal;
+    }
+
+    return totals;
+  }
 }

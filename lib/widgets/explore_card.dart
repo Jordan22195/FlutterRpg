@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/data/entity.dart';
-import 'package:rpg/data/zone_location.dart';
+import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/location_catalog.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import '../data/skill.dart';
@@ -75,11 +75,10 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
     final id = widget.id;
     String cardText = id.toString();
 
-    if (id is Entities) {
-      cardText = EntityController.definitionFor(id)?.name ?? id.toString();
-    } else if (id is ZoneLocationId) {
-      cardText =
-          ZoneLocationController.locations[id]?.name.toString() ?? "error";
+    if (id is EntityId) {
+      cardText = EntityCatalog.definitionFor(id)?.name ?? id.toString();
+    } else if (id is LocationId) {
+      cardText = LocationCatalog.locations[id]?.name.toString() ?? "error";
     }
 
     return cardText;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/controllers/player_data_controller.dart';
-import 'package:rpg/data/item.dart';
+import 'package:rpg/services/player_data_service.dart';
+import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
@@ -14,14 +14,14 @@ class FoodCard extends StatelessWidget {
   });
 
   bool maxCraftable = true;
-  final Items id;
+  final ItemId id;
   final VoidCallback? onTap;
   final double height;
 
   @override
   Widget build(BuildContext context) {
     print("Building EquipmentCard for item ID: $id");
-    final item = ItemController.definitionFor(id) as FoodItemDefinition?;
+    final item = ItemCatalog.definitionFor(id) as FoodItemDefinition?;
 
     if (item == null) {
       return Card(

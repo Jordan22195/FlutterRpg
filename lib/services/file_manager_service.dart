@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 
-class FileManager {
+class FileManagerService {
   // save the current app data to the app folder
   Future<void> saveAppData(Map<String, dynamic> json) async {
     final dir = await getApplicationDocumentsDirectory();

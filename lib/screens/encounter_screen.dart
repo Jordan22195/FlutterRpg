@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/data/armor_equipment.dart';
-import 'package:rpg/data/item.dart';
+import 'package:rpg/data/equipment_data.dart';
+import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/widgets/buff_row.dart';
 import 'package:rpg/widgets/equipment_picker.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/progress_bars.dart';
-import '../controllers/player_data_controller.dart';
+import '../services/player_data_service.dart';
 import 'package:provider/provider.dart';
-import '../data/entity.dart';
+import '../catalogs/entity_catalog.dart';
 import '../controllers/encounter_controller.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/primary_button.dart';
@@ -58,20 +58,20 @@ class _EncounterScreenState extends State<EncounterScreen>
       children: [
         Row(
           children: [
-            IconRenderer(id: Skills.HITPOINTS, size: iconSize),
+            IconRenderer(id: SkillId.HITPOINTS, size: iconSize),
             SizedBox(width: 4),
             Text(
-              controller.getStatTotal(Skills.HITPOINTS).toString(),
+              controller.getStatTotal(SkillId.HITPOINTS).toString(),
               style: TextStyle(fontSize: fontSize),
             ),
           ],
         ),
         Row(
           children: [
-            IconRenderer(id: Skills.DEFENCE, size: iconSize),
+            IconRenderer(id: SkillId.DEFENCE, size: iconSize),
             SizedBox(width: 4),
             Text(
-              controller.getStatTotal(Skills.DEFENCE).toString(),
+              controller.getStatTotal(SkillId.DEFENCE).toString(),
               style: TextStyle(fontSize: fontSize),
             ),
           ],
@@ -102,10 +102,10 @@ class _EncounterScreenState extends State<EncounterScreen>
       children: [
         Row(
           children: [
-            if (skillId != Skills.FISHING)
-              IconRenderer(id: Skills.HITPOINTS, size: iconSize),
-            if (skillId != Skills.FISHING) SizedBox(width: 4),
-            if (skillId != Skills.FISHING)
+            if (skillId != SkillId.FISHING)
+              IconRenderer(id: SkillId.HITPOINTS, size: iconSize),
+            if (skillId != SkillId.FISHING) SizedBox(width: 4),
+            if (skillId != SkillId.FISHING)
               Text(
                 entity.hitpoints.toString(),
                 style: TextStyle(fontSize: fontSize),
@@ -114,7 +114,7 @@ class _EncounterScreenState extends State<EncounterScreen>
         ),
         Row(
           children: [
-            IconRenderer(id: Skills.DEFENCE, size: iconSize),
+            IconRenderer(id: SkillId.DEFENCE, size: iconSize),
             SizedBox(width: 4),
             Text(
               entity.defence.toString(),
@@ -125,7 +125,7 @@ class _EncounterScreenState extends State<EncounterScreen>
         if (entity is CombatEntity)
           Row(
             children: [
-              IconRenderer(id: Skills.ATTACK, size: iconSize),
+              IconRenderer(id: SkillId.ATTACK, size: iconSize),
               SizedBox(width: 4),
               Text(
                 entity.attack.toString(),
@@ -247,7 +247,7 @@ class _EncounterScreenState extends State<EncounterScreen>
             const SizedBox(height: 8),
 
             //entity hp bar
-            if (skillType != Skills.FISHING)
+            if (skillType != SkillId.FISHING)
               Row(
                 children: [
                   SizedBox(width: 50),
@@ -272,7 +272,7 @@ class _EncounterScreenState extends State<EncounterScreen>
 
             Row(
               children: [
-                if (skillType == Skills.WOODCUTTING)
+                if (skillType == SkillId.WOODCUTTING)
                   ItemStackTile(
                     size: 56,
                     count: 1,
@@ -281,9 +281,9 @@ class _EncounterScreenState extends State<EncounterScreen>
                         EquipmentPicker.build(context, ArmorSlots.TOOL, (id) {
                           EncounterController.instance.equipedAxe = id;
                           setState(() {});
-                        }, skillFilter: Skills.WOODCUTTING),
+                        }, skillFilter: SkillId.WOODCUTTING),
                   ),
-                if (skillType == Skills.MINING)
+                if (skillType == SkillId.MINING)
                   ItemStackTile(
                     size: 56,
                     count: 1,
@@ -292,7 +292,7 @@ class _EncounterScreenState extends State<EncounterScreen>
                         EquipmentPicker.build(context, ArmorSlots.TOOL, (id) {
                           EncounterController.instance.equipedPickaxe = id;
                           setState(() {});
-                        }, skillFilter: Skills.MINING),
+                        }, skillFilter: SkillId.MINING),
                   ),
                 if (encounter.isCombatEntity())
                   ItemStackTile(
@@ -376,7 +376,7 @@ class _EncounterScreenState extends State<EncounterScreen>
                   child: TextButton(
                     child: Text("Stop"),
                     onPressed: () {
-                      ProgressBars.iconId = Items.NULL;
+                      ProgressBars.iconId = ItemId.NULL;
                       encounter.endEcnounter();
                     },
                   ),

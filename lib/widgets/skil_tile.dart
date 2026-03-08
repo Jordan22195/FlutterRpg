@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/controllers/player_data_controller.dart';
+import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/data/skill.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import '../widgets/icon_renderer.dart';
@@ -9,7 +9,7 @@ class SkillTile extends StatelessWidget {
   const SkillTile({required this.id, super.key, this.size = 100})
     : strokeWidth = size * 0.2;
 
-  final Skills id;
+  final SkillId id;
 
   final double size;
   final double strokeWidth;

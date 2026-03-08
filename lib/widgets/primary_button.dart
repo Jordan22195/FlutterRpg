@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rpg/widgets/progress_bars.dart';
 import '../controllers/momentum_loop_controller.dart';
-import '../controllers/player_data_controller.dart';
+import '../services/player_data_service.dart';
 import '../widgets/item_stack_tile.dart';
-import '../data/item.dart';
+import '../catalogs/item_catalog.dart';
 
 class MomentumPrimaryButton extends StatefulWidget {
   const MomentumPrimaryButton({
@@ -23,7 +23,7 @@ class MomentumPrimaryButton extends StatefulWidget {
   final FutureOr<void> Function() onFireFunction;
   final bool enabled;
   final String label;
-  final MomentumLoopController controller;
+  final ActionTimingService controller;
   final Widget appBarTile;
 
   @override
@@ -39,7 +39,7 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
   void _populateAppBarIconIfNeeded() {
     if (widget.appBarTile is ItemStackTile) {
       final tile = widget.appBarTile as ItemStackTile;
-      ProgressBars.iconId = tile.id ?? Items.NULL;
+      ProgressBars.iconId = tile.id ?? ItemId.NULL;
       ProgressBars.iconCount = tile.count;
       ProgressBars.iconIsTimer = tile.isTimerStackTile;
       ProgressBars.iconTimerEnd = tile.expirationTime;

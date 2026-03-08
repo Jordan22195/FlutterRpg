@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/data/item.dart';
+import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
@@ -13,14 +13,14 @@ class EquipmentCard extends StatelessWidget {
   });
 
   bool maxCraftable = true;
-  final Items id;
+  final ItemId id;
   final VoidCallback? onTap;
   final double height;
 
   @override
   Widget build(BuildContext context) {
     print("Building EquipmentCard for item ID: $id");
-    final item = ItemController.buildItem(id) as EquipmentItem?;
+    final item = ItemCatalog.buildItem(id) as EquipmentItem?;
     double actionInterval = 0;
     if (item is WeaponItem) {
       actionInterval = item.actionInterval.inSeconds.toDouble();

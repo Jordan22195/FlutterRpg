@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/momentum_loop_controller.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
-import '../controllers/player_data_controller.dart';
+import '../services/player_data_service.dart';
 import 'fill_bar.dart';
-import '../data/item.dart';
+import '../catalogs/item_catalog.dart';
 
 class ProgressBars extends StatelessWidget {
   ProgressBars({super.key});
 
-  static Enum iconId = Items.NULL;
+  static Enum iconId = ItemId.NULL;
   static int iconCount = 1;
   static bool iconIsTimer = false;
   static DateTime? iconTimerEnd = DateTime.now();
@@ -42,7 +42,7 @@ class ProgressBars extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         //Skill Icon
-        iconId == Items.NULL
+        iconId == ItemId.NULL
             ? const SizedBox(width: 36)
             : ItemStackTile(
                 size: 36,
@@ -106,7 +106,7 @@ class ActionIntervalTimer extends StatelessWidget {
     final intervalMs = timing?.getCurrentActionDuration().inMilliseconds ?? 0;
     final percentSpeed = timing?.percentMaxSpeed ?? 0;
     final speedBoost = timing?.getCurrentSpeedMultiplier() ?? 1.0;
-    context.watch<MomentumLoopController>();
+    context.watch<ActionTimingService>();
 
     return SizedBox(
       width: 80, // Fixed width so layout doesn't shift

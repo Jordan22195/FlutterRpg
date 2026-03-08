@@ -13,12 +13,14 @@ class WeightedDropTableEntry<T> {
   });
 }
 
-class WeightedDropTable {
-  static ObjectStack<T> roll<T>(
+class WeightedDropTableService {
+  ObjectStack<T> roll<T>(
     List<WeightedDropTableEntry<T>> entries, {
     Random? rng,
   }) {
-    assert(entries.isNotEmpty, 'WeightedDropTable got an empty items list');
+    if (entries.isEmpty) {
+      return ObjectStack(id: 0 as T, count: 0);
+    }
 
     final random = rng ?? Random();
 

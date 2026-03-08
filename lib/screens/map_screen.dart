@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/controllers/player_data_controller.dart';
+import 'package:rpg/services/player_data_service.dart';
 import 'explore_screen.dart';
 import '../data/zone.dart';
 

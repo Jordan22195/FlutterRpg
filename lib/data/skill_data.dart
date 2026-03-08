@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/widgets.dart';
 import '../utilities/image_resolver.dart';
 
-enum Skills {
+enum SkillId {
   STAMINA, // each point increaes stamina bar by 10.
   // each point of stam spent is 1xp
   SPEED, // each point increases max speed (reduces min action interval) by a percent
@@ -34,59 +34,13 @@ enum Skills {
   NULL,
 }
 
-class Skill {
+class SkillData {
   final String name;
   double xp;
 
-  final List<double> xpTable = Skill._buildXpTable(99);
+  final List<double> xpTable = SkillData._buildXpTable(99);
 
-  Skill({required this.name, required this.xp});
-
-  double percentProgressToLevelUp() {
-    final curLevel = getLevel();
-
-    // Maxed (level 99 if table is 99)
-    if (curLevel >= xpTable.length - 1) return 1.0;
-
-    final curLvlXp = xpTable[curLevel];
-    final nextLvlXp = nextLevelXp();
-    final span = nextLvlXp - curLvlXp;
-
-    if (span <= 0) return 0.0;
-
-    final intoLevel = (this.xp - curLvlXp);
-
-    return (intoLevel / span).clamp(0.0, 1.0);
-  }
-
-  double nextLevelXp() {
-    final curLevel = getLevel();
-
-    // Maxed (level 99 if table is 99)
-    if (curLevel >= xpTable.length - 1) return 0;
-
-    return xpTable[curLevel + 1];
-  }
-
-  double xpToLevelUp() {
-    final level = getLevel();
-    final nextLevel = (level + 1).clamp(1, xpTable.length - 1);
-
-    // Already at max level
-    if (level >= xpTable.length - 1) return 0;
-
-    final nextXp = xpTable[nextLevel];
-    final remaining = nextXp - xp;
-    return remaining <= 0 ? 0 : remaining;
-  }
-
-  int getLevel() {
-    return getLevelFromXp(xp);
-  }
-
-  void addXp(double xp) {
-    this.xp += xp;
-  }
+  SkillData({required this.name, required this.xp});
 
   static List<double> _buildXpTable(int maxLevel) {
     final table = List<double>.filled(maxLevel + 1, 0);
@@ -99,135 +53,111 @@ class Skill {
 
     return table;
   }
+}
 
-  int getLevelFromXp(double xp) {
-    for (int level = 1; level < xpTable.length; level++) {
-      if (xp < xpTable[level]) {
+class SkillService {
+  double percentProgressToLevelUp(SkillData skillState) {
+    final curLevel = getLevel();
+
+    // Maxed (level 99 if table is 99)
+    if (curLevel >= skillState.xpTable.length - 1) return 1.0;
+
+    final curLvlXp = skillState.xpTable[curLevel];
+    final nextLvlXp = nextLevelXp();
+    final span = nextLvlXp - curLvlXp;
+
+    if (span <= 0) return 0.0;
+
+    final intoLevel = (skillState.xp - curLvlXp);
+
+    return (intoLevel / span).clamp(0.0, 1.0);
+  }
+
+  double nextLevelXp(SkillData skillState) {
+    final curLevel = getLevel();
+
+    // Maxed (level 99 if table is 99)
+    if (curLevel >= skillState.xpTable.length - 1) return 0;
+
+    return skillState.xpTable[curLevel + 1];
+  }
+
+  double xpToLevelUp(SkillData skillState) {
+    final level = getLevel();
+    final nextLevel = (level + 1).clamp(1, skillState.xpTable.length - 1);
+
+    // Already at max level
+    if (level >= skillState.xpTable.length - 1) return 0;
+
+    final nextXp = skillState.xpTable[nextLevel];
+    final remaining = nextXp - skillState.xp;
+    return remaining <= 0 ? 0 : remaining;
+  }
+
+  int getLevel(SkillData skillState) {
+    return getLevelFromXp(skillState.xp, skillState);
+  }
+
+  void addXp(double xp, SkillData skillState) {
+    skillState.xp += xp;
+  }
+
+  int getLevelFromXp(double xp, SkillData skillState) {
+    for (int level = 1; level < skillState.xpTable.length; level++) {
+      if (xp < skillState.xpTable[level]) {
         return level - 1;
       }
     }
-    return xpTable.length - 1;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {'name': name, 'xp': xp};
-  }
-
-  factory Skill.fromJson(Map<String, dynamic> json) {
-    print("fromjson ${json['name']} ${json['xp']}");
-    return Skill(name: json['name'] as String, xp: json['xp'] as double);
+    return skillState.xpTable.length - 1;
   }
 }
 
 class SkillController extends ChangeNotifier {
-  SkillController._internal();
-  static final SkillController instance = SkillController._internal();
-
-  static final Map<Skills, Skill> _skills = {};
-
-  Map<String, dynamic> toJson() {
-    print("skillcontroller tojson");
-    final map = <String, dynamic>{};
-    _skills.forEach((key, value) {
-      map[key.name] = value.toJson();
-    });
-    return map;
-  }
-
-  void fromJson(Map<String, dynamic> json) {
-    print("skillcontroller fromjson with keys ${json.keys}");
-    // Start from a known-good default set so missing keys don't leave holes.
-    _skills..clear();
-
-    for (final skill in Skills.values) {
-      if (skill != Skills.NULL) {
-        _skills[skill] = Skill(name: skill.name, xp: 0);
-      }
-    }
-
-    // Overlay any persisted values.
-    json.forEach((key, value) {
-      print("processing skill key $key with value $value");
-      final skillEnum = Skills.values.firstWhere(
-        (e) => e.name == key,
-        orElse: () => Skills.NULL,
-      );
-
-      if (skillEnum == Skills.NULL) return;
-
-      // jsonDecode often produces Map<dynamic, dynamic>; normalize before parsing.
-      print("parsing skill $key with value $value");
-      if (value is Map) {
-        final map = Map<String, dynamic>.from(value as Map);
-        _skills[skillEnum] = Skill.fromJson(map);
-      }
-    });
-
-    notifyListeners();
-  }
-
-  static void init() {
-    for (var skill in Skills.values) {
-      if (skill != Skills.NULL) {
-        _skills[skill] = Skill(name: skill.name, xp: 0);
-      }
-    }
-    EnumImageProviderLookup.register<Skills>(SkillController.imageProviderFor);
-  }
-
-  Skill getSkill(Skills id) {
-    return _skills[id] ?? Skill(name: "Error", xp: 1);
-  }
-
-  void addXp(Skills skill, double xp) {
-    _skills[skill]?.addXp(xp);
-  }
-
   static ImageProvider? imageProviderFor(dynamic objectId) {
     {
-      if (objectId is! Skills) {
+      if (objectId is! SkillId) {
         throw ArgumentError('Expected Skills, got ${objectId.runtimeType}');
       }
       switch (objectId) {
-        case Skills.ECONOMY:
+        case SkillId.ECONOMY:
           return AssetImage('assets/icons/skills/economy.png');
-        case Skills.SPEED:
+        case SkillId.SPEED:
           return AssetImage('assets/icons/skills/speed.png');
-        case Skills.STAMINA:
+        case SkillId.STAMINA:
           return AssetImage('assets/icons/skills/stamina.png');
-        case Skills.ATTACK:
+        case SkillId.ATTACK:
           return AssetImage('assets/icons/skills/attack.png');
-        case Skills.DEFENCE:
+        case SkillId.DEFENCE:
           return AssetImage('assets/icons/skills/defence.png');
-        case Skills.HITPOINTS:
+        case SkillId.HITPOINTS:
           return AssetImage('assets/icons/skills/hp.png');
-        case Skills.RANGED:
+        case SkillId.RANGED:
           return AssetImage('assets/icons/skills/ranged.png');
-        case Skills.MAGIC:
+        case SkillId.MAGIC:
           return AssetImage('assets/icons/skills/magic.png');
-        case Skills.WOODCUTTING:
+        case SkillId.WOODCUTTING:
           return AssetImage('assets/icons/skills/woodcutting.png');
-        case Skills.FIREMAKING:
+        case SkillId.FIREMAKING:
           return AssetImage('assets/icons/skills/firemaking.png');
-        case Skills.MINING:
+        case SkillId.MINING:
           return AssetImage('assets/icons/skills/mining.png');
-        case Skills.LEATHERWORKING:
+        case SkillId.LEATHERWORKING:
           return AssetImage('assets/icons/skills/leatherworking.png');
-        case Skills.BLACKSMITHING:
+        case SkillId.BLACKSMITHING:
           return AssetImage('assets/icons/skills/blacksmithing.png');
-        case Skills.TAILORING:
+        case SkillId.TAILORING:
           return AssetImage('assets/icons/skills/tailoring.png');
-        case Skills.ENCHANTING:
+        case SkillId.ENCHANTING:
           return AssetImage('assets/icons/skills/enchanting.png');
-        case Skills.JEWELCRAFTING:
+        case SkillId.JEWELCRAFTING:
           return AssetImage('assets/icons/skills/jewelcrafting.png');
-        case Skills.FLETCHING:
+        case SkillId.FLETCHING:
           return AssetImage('assets/icons/skills/fletching.png');
-        case Skills.FISHING:
+        case SkillId.FISHING:
           return AssetImage('assets/icons/skills/fishing.png');
-        case Skills.COOKING:
+        case SkillId.COOKING:
           return AssetImage('assets/icons/skills/cooking.png');
-        case Skills.NULL:
+        case SkillId.NULL:
           return null;
         default:
           return null;

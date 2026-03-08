@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../data/skill.dart';
-import '../controllers/player_data_controller.dart';
+import '../services/player_data_service.dart';
 
 class SkillDetailScreen extends StatelessWidget {
   const SkillDetailScreen({super.key, required this.skillId});
 
-  final Skills skillId;
+  final SkillId skillId;
 
   @override
   Widget build(BuildContext context) {

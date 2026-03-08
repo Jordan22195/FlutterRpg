@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/controllers/player_data_controller.dart';
-import 'package:rpg/data/armor_equipment.dart';
+import 'package:rpg/services/player_data_service.dart';
+import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill.dart';
 import 'package:rpg/widgets/equipment_card.dart';
-import '../data/item.dart';
+import '../catalogs/item_catalog.dart';
 import '../widgets/food_card.dart';
 
 class FoodPicker {
   static void build(
     BuildContext context,
-    Function(Items id) onEquip, {
-    Skills skillFilter = Skills.NULL,
+    Function(ItemId id) onEquip, {
+    SkillId skillFilter = SkillId.NULL,
   }) {
     final list = PlayerDataController.instance.data!.inventory
         .getFoodItemsSortedByHealing();
@@ -54,10 +54,10 @@ class EquipmentPicker {
   static void build(
     BuildContext context,
     ArmorSlots slot,
-    Function(Items id) onEquip, {
-    Skills skillFilter = Skills.NULL,
+    Function(ItemId id) onEquip, {
+    SkillId skillFilter = SkillId.NULL,
   }) {
-    final list = skillFilter == Skills.NULL
+    final list = skillFilter == SkillId.NULL
         ? PlayerDataController.instance.data!.inventory
               .getItemsListForEquipmentSlot(slot)
         : PlayerDataController.instance.data!.inventory

@@ -1,17 +1,15 @@
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
-import 'package:rpg/data/entity.dart';
+import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/data/skill.dart';
-import 'package:rpg/data/item.dart';
+import 'package:rpg/catalogs/item_catalog.dart';
 import '../utilities/image_resolver.dart';
 
-enum ZoneLocationId { NULL, ANVIL, INN, SHOP, POND_1, CAMPFIRE }
+enum LocationId { NULL, ANVIL, INN, SHOP, POND_1, CAMPFIRE }
 
 class ZoneLocation {
   final String name;
   final String iconAsset;
-  final ZoneLocationId id;
+  final LocationId id;
   final Enum typeForIcon;
 
   ZoneLocation({
@@ -23,7 +21,7 @@ class ZoneLocation {
 }
 
 class CraftingLocation extends ZoneLocation {
-  final Skills craftingSkill;
+  final SkillId craftingSkill;
 
   CraftingLocation({
     required super.name,
@@ -35,84 +33,82 @@ class CraftingLocation extends ZoneLocation {
 
 // location exists while campfire buff is active, and disappears when buff expires. Icon is based on the fire item used to create the buff.
 class CampfireLocation extends CraftingLocation {
-  Items fireId;
+  ItemId fireId;
   CampfireLocation({required super.id, required this.fireId})
     : super(
-        name: ItemController.definitionFor(fireId)?.name ?? "Error",
-        craftingSkill: Skills.COOKING,
+        name: ItemCatalog.definitionFor(fireId)?.name ?? "Error",
+        craftingSkill: SkillId.COOKING,
         iconAsset:
-            ItemController.definitionFor(fireId)?.iconAsset ??
+            ItemCatalog.definitionFor(fireId)?.iconAsset ??
             'assets/icons/campfire.png',
       );
 }
 
 class FishingLocation extends ZoneLocation {
-  final Entities fishingSpotEntity;
+  final EntityId fishingSpotEntity;
 
   FishingLocation({
     required super.name,
     required super.id,
     required this.fishingSpotEntity,
   }) : super(
-         typeForIcon: Skills.FISHING,
+         typeForIcon: SkillId.FISHING,
          iconAsset:
-             EntityController.definitionFor(fishingSpotEntity)?.iconAsset ??
+             EntityCatalog.definitionFor(fishingSpotEntity)?.iconAsset ??
              'assets/icons/anvil.png',
-       ) {
-    print("object created with icon ${iconAsset}");
-  }
+       ) {}
 }
 
-class ZoneLocationController {
-  static Map<ZoneLocationId, ZoneLocation> locations = {
-    ZoneLocationId.ANVIL: CraftingLocation(
-      craftingSkill: Skills.BLACKSMITHING,
+class LocationCatalog {
+  static Map<LocationId, ZoneLocation> locations = {
+    LocationId.ANVIL: CraftingLocation(
+      craftingSkill: SkillId.BLACKSMITHING,
       name: 'Anvil',
-      id: ZoneLocationId.ANVIL,
+      id: LocationId.ANVIL,
       iconAsset: 'assets/icons/anvil.png',
     ),
 
-    ZoneLocationId.POND_1: FishingLocation(
-      fishingSpotEntity: Entities.TRANQUIL_POND,
-      id: ZoneLocationId.POND_1,
+    LocationId.POND_1: FishingLocation(
+      fishingSpotEntity: EntityId.TRANQUIL_POND,
+      id: LocationId.POND_1,
       name: 'Tranquil Pond',
     ),
 
-    ZoneLocationId.CAMPFIRE: CampfireLocation(
-      id: ZoneLocationId.CAMPFIRE,
-      fireId: Items.BASIC_CAMPFIRE,
+    LocationId.CAMPFIRE: CampfireLocation(
+      id: LocationId.CAMPFIRE,
+      fireId: ItemId.BASIC_CAMPFIRE,
     ),
   };
 
-  static ZoneLocation definitionFor(ZoneLocationId id) {
+  static ZoneLocation definitionFor(LocationId id) {
     return locations[id] ??
         ZoneLocation(
-          id: ZoneLocationId.NULL,
+          id: LocationId.NULL,
           name: "",
           iconAsset: "",
-          typeForIcon: ZoneLocationId.NULL,
+          typeForIcon: LocationId.NULL,
         );
   }
 
   static void init() {
     // Register the image resolver for Items.
-    EnumImageProviderLookup.register<ZoneLocationId>(
-      ZoneLocationController.imageProviderFor,
+    EnumImageProviderLookup.register<LocationId>(
+      LocationCatalog.imageProviderFor,
     );
   }
 
   static ImageProvider? imageProviderFor(dynamic objectId) {
     {
-      if (objectId is! ZoneLocationId) {
+      if (objectId is! LocationId) {
         return null;
       }
       final location =
           locations[objectId] ??
           ZoneLocation(
-            id: ZoneLocationId.NULL,
+            id: LocationId.NULL,
             name: "",
             iconAsset: "",
-            typeForIcon: ZoneLocationId.NULL,
+            typeForIcon: LocationId.NULL,
           );
       return AssetImage(location.iconAsset);
     }
