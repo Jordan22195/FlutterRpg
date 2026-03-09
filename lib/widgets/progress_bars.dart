@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rpg/controllers/momentum_loop_controller.dart';
+import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import '../services/player_data_service.dart';
 import 'fill_bar.dart';

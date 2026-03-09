@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:rpg/controllers/momentum_loop_controller.dart';
+import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/action_result.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/catalogs/entity_catalog.dart';
@@ -13,6 +13,7 @@ import 'package:rpg/services/world_service.dart';
 import '../data/encounter_data.dart';
 import '../services/encounter_service.dart';
 import '../systems/encounter_system.dart';
+import '../services/inventory_service.dart';
 
 // controllers coordinate between ui and systems or services
 // services coordinate multiple services
@@ -36,7 +37,6 @@ class EncounterController extends ChangeNotifier {
 
   //systems
   final EncounterSystem _encounterSystem;
-  final PlayerStatSystem _playerStatSystem;
 
   ActionResult latestActionResult = ActionResult();
 
@@ -56,7 +56,6 @@ class EncounterController extends ChangeNotifier {
     required InventoryService inventoryService,
     required ItemCatalog itemCatalog,
     required EncounterSystem encounterSystem,
-    required PlayerStatSystem playerStatSystem,
   }) : _playerState = playerData,
        _encounterState = encounterState,
        _encounterService = encounterService,
@@ -65,15 +64,11 @@ class EncounterController extends ChangeNotifier {
        _actionTimingController = actionTimingController,
        _playerDataService = playerDataService,
        _inventoryState = inventoryState,
-       _encounterSystem = encounterSystem,
-       _playerStatSystem = playerStatSystem;
+       _encounterSystem = encounterSystem;
 
   void doFishingEncounterAction() {
-    final stats = _playerStatSystem.getStatTotals(_playerState);
-
     latestActionResult = _encounterSystem.executeFishingAction(
-      stats: stats,
-      player: _playerState,
+      playerState: _playerState,
       encounter: _encounterState,
       world: _worldState,
       playerInventory: _inventoryState,
@@ -83,13 +78,10 @@ class EncounterController extends ChangeNotifier {
 
   // function bound to action button. executes periodically.
   void doEncounterAction() {
-    final stats = _playerStatSystem.getStatTotals(_playerState);
-
     latestActionResult = _encounterSystem.executePlayerAction(
-      stats: stats,
-      player: _playerState,
+      playerState: _playerState,
       encounter: _encounterState,
-      world: _worldState,
+      worldState: _worldState,
       playerInventory: _inventoryState,
     );
 
@@ -106,7 +98,8 @@ class EncounterController extends ChangeNotifier {
   }
 
   // todo move this logic to the enoucnter system
-  // fire a single time when action button is pressed
+  // fires a single time when action button is pressed
+  // binds doEncounterAction to the periodic loop
   void startEncounterAction() {
     // get the player view entity
     final entity = _worldService.getSelectedEntity(_playerState, _worldState);

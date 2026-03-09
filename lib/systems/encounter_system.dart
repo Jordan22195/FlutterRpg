@@ -4,53 +4,64 @@ import '../services/encounter_service.dart';
 import '../services/world_service.dart';
 import '../services/player_data_service.dart';
 import '../services/weighted_drop_table_service.dart';
-import '../services/inventory_service';
 import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog';
 import '../data/action_result.dart';
 import '../data/player_data.dart';
 import '../data/encounter_data.dart';
 import '../data/world_data.dart';
 import '../data/inventory_data.dart';
+import '../services/inventory_service.dart';
+import '../catalogs/item_catalog.dart';
 
 class EncounterSystem {
-  final EncounterService encounterService;
-  final WorldService worldService;
-  final PlayerDataService playerDataService;
-  final WeightedDropTableService dropTableService;
-  final InventoryService inventoryService;
-  final EntityCatalog entityCatalog;
-  final ItemCatalog itemCatalog;
+  final EncounterService _encounterService;
+  final WorldService _worldService;
+  final PlayerDataService _playerDataService;
+  final WeightedDropTableService _dropTableService;
+  final InventoryService _inventoryService;
+  final EntityCatalog _entityCatalog;
+  final ItemCatalog _itemCatalog;
 
   EncounterSystem({
-    required this.encounterService,
-    required this.worldService,
-    required this.playerDataService,
-    required this.dropTableService,
-    required this.inventoryService,
-    required this.entityCatalog,
-    required this.itemCatalog,
-  });
+    required EncounterService encounterService,
+    required WorldService worldService,
+    required PlayerDataService playerDataService,
+    required WeightedDropTableService dropTableService,
+    required InventoryService inventoryService,
+    required EntityCatalog entityCatalog,
+    required ItemCatalog itemCatalog,
+  }) : _itemCatalog = itemCatalog,
+       _entityCatalog = entityCatalog,
+       _inventoryService = inventoryService,
+       _dropTableService = dropTableService,
+       _playerDataService = playerDataService,
+       _worldService = worldService,
+       _encounterService = encounterService;
 
   /// Runs exactly ONE tick of the currently active encounter.
   /// Mutates player/world/inventories/encounterState as needed.
   ActionResult executePlayerAction({
-    required Map<SkillId, int> stats,
-    required PlayerData player,
+    required PlayerData playerState,
     required EncounterData encounter,
-    required WorldData world,
+    required WorldData worldState,
     required InventoryData playerInventory,
   }) {
     final result = ActionResult();
 
-    if (!encounterService.encounterConditionsMet(player, encounter)) {
+    final stats = _playerDataService.getStatTotals(playerState);
+
+    if (!_encounterService.encounterConditionsMet(playerState, encounter)) {
       return result;
     }
 
     final e = encounter.entity!;
 
     // do damage
-    final r = encounterService.resolvePlayerDamage(stats, player, encounter);
+    final r = _encounterService.resolvePlayerDamage(
+      stats,
+      playerState,
+      encounter,
+    );
     result.damageDone = r.damageDone;
     result.enemyDied = r.enemyDied;
 
@@ -63,21 +74,25 @@ class EncounterSystem {
       // decrement world entity count
       encounter.entity!.count--;
       if (encounter.entity!.count > 0) {
-        encounterService.respawn(encounter);
+        _encounterService.respawn(encounter);
+      } else {
+        _worldService.removeEntityFromZone(
+          e.id,
+          playerState.currentZoneId,
+          worldState,
+        );
       }
 
-      // todo - count is now in the entity object. make this function
-      //  remmove the entity if the count is 0.
-      worldService.decrimentEncounterEntity(world, e);
-
       // roll drops
-      final entries = entityCatalog.getDefinitionFor(e.id).itemDrops;
-      final drop = dropTableService.roll(entries);
+      final entries =
+          (_entityCatalog.getDefinitionFor(e.id) as EncounterEntityDefinition)
+              .itemDrops;
+      final drop = _dropTableService.roll(entries);
       result.items.add(drop);
 
       // add drops to inventories (player + encounter history)
-      inventoryService.addItems(playerInventory, [drop]);
-      inventoryService.addItems(encounter.itemDrops, [drop]);
+      _inventoryService.addItems(playerInventory, [drop]);
+      _inventoryService.addItems(encounter.itemDrops, [drop]);
 
       // todo move hardcoded multiplier somwhere else
       result.xp[e.entityType] = (5 * result.damageDone).toDouble();
@@ -85,29 +100,33 @@ class EncounterSystem {
 
     // Apply XP to player
     if (result.xp.isNotEmpty) {
-      playerDataService.applyXp(player, result.xp);
+      _playerDataService.applyXp(playerState, result.xp);
     }
 
     return result;
   }
 
   ActionResult executeFishingAction({
-    required Map<SkillId, int> stats,
-    required PlayerData player,
+    required PlayerData playerState,
     required EncounterData encounter,
     required WorldData world,
     required InventoryData playerInventory,
   }) {
     final result = ActionResult();
+    final stats = _playerDataService.getStatTotals(playerState);
 
-    if (!encounterService.fishingConditionsMet(player, encounter)) {
+    if (!_encounterService.fishingConditionsMet(playerState, encounter)) {
       return result;
     }
 
     final e = encounter.entity!;
 
     // do damage
-    final r = encounterService.resolvePlayerDamage(stats, player, encounter);
+    final r = _encounterService.resolvePlayerDamage(
+      stats,
+      playerState,
+      encounter,
+    );
     result.damageDone = r.damageDone;
     result.enemyDied = r.enemyDied;
 
@@ -116,20 +135,23 @@ class EncounterSystem {
     }
 
     // roll drops
-    final entries = entityCatalog.getDefinitionFor(e.id).itemDrops;
-    final drop = dropTableService.roll(entries);
+    final entries =
+        (_entityCatalog.getDefinitionFor(e.id) as EncounterEntityDefinition)
+            .itemDrops;
+    final drop = _dropTableService.roll(entries);
     result.items.add(drop);
 
     // add drops to inventories (player + encounter history)
-    inventoryService.addItems(playerInventory, [drop]);
-    inventoryService.addItems(encounter.itemDrops, [drop]);
+    _inventoryService.addItems(playerInventory, [drop]);
+    _inventoryService.addItems(encounter.itemDrops, [drop]);
 
     result.xp[SkillId.FISHING] =
-        itemCatalog.definitionFor(drop.id)?.xpValue ?? 0 * drop.count;
+        (_itemCatalog.definitionFor(drop.id)?.xpValue ?? 0 * drop.count)
+            as double;
 
     // Apply XP to player
     if (result.xp.isNotEmpty) {
-      playerDataService.applyXp(player, result.xp);
+      _playerDataService.applyXp(playerState, result.xp);
     }
 
     return result;

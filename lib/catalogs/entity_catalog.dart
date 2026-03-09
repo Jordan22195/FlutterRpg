@@ -1,9 +1,7 @@
-import 'package:rpg/data/ObjectStack.dart';
 import 'package:flutter/widgets.dart';
 import '../data/skill_data.dart';
 import 'item_catalog.dart';
 import '../services/weighted_drop_table_service.dart';
-import '../utilities/image_resolver.dart';
 
 enum EntityId {
   NULL,
@@ -171,11 +169,6 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
 // Catalog
 
 class EntityCatalog {
-  static void init() {
-    // Register the image resolver for Items.
-    EnumImageProviderLookup.register<EntityId>(EntityCatalog.imageProviderFor);
-  }
-
   final _defs = <EntityId, EntityDefinition>{
     //
     //
@@ -295,44 +288,23 @@ class EntityCatalog {
     return _defs[id] ?? EntityDefinition(name: "", iconAsset: "");
   }
 
-  static EncounterEntity buildEntity(EntityId id) {
+  Entity buildEntity(EntityId id) {
     final def = _defs[id];
     if (def == null) {
-      return EncounterEntity(
-        id: EntityId.NULL,
-        name: "Null",
-        entityType: SkillId.WOODCUTTING,
-        defence: 1,
-        hitpoints: 10,
-      );
+      return Entity(id: EntityId.NULL, name: "Null");
     }
     return def.toEntity(id);
   }
 
-  static ObjectStack entityDropTableRoll(EntityId id) {
-    print("rolling loot");
-    if (_defs[id] == null) {
-      return ObjectStack(id: ItemId.NULL, count: 0);
-    }
-
-    final result = WeightedDropTableService.roll(_defs[id]!.itemDrops);
-
-    return result;
-  }
-
-  static EncounterEntityDefinition? definitionFor(dynamic objectId) {
-    return _defs[objectId as EntityId];
-  }
-
   /// Returns the icon asset path (if any) for any enum-like id value.
-  static String? iconAssetFor(dynamic objectId) {
-    return EntityCatalog._defs[objectId]?.iconAsset;
+  String iconAssetFor(dynamic objectId) {
+    return _defs[objectId]?.iconAsset ?? "";
   }
 
   /// Returns an ImageProvider for any enum-like id value.
   /// If no icon is configured, returns null.
-  static ImageProvider? imageProviderFor(dynamic objectId) {
+  ImageProvider? imageProviderFor(dynamic objectId) {
     final asset = iconAssetFor(objectId);
-    return asset != null ? AssetImage(asset) : null;
+    return AssetImage(asset);
   }
 }

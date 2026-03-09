@@ -1,4 +1,7 @@
 import '../services/equipment_service.dart';
+import '../services/inventory_service.dart';
+import '../data/equipment_data.dart';
+import '../data/inventory_data.dart';
 
 class EquipmentSystem {
   final InventoryService _inventoryService;

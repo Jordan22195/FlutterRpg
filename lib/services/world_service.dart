@@ -1,10 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
-
 import '../catalogs/entity_catalog.dart';
-import '../data/ObjectStack.dart';
-import '../catalogs/item_catalog.dart';
 import 'weighted_drop_table_service.dart';
 import '../catalogs/zone_catalog.dart';
 
@@ -65,7 +61,8 @@ class WorldService {
   }
 
   void addEntityToCurrentZone(
-    ObjectStack<EntityId> newEntity,
+    EntityId entityId,
+    int entityCount,
     EntityCatalog entityCatalog,
     PlayerData playerState,
     WorldData worldState,
@@ -78,30 +75,31 @@ class WorldService {
     }
 
     final zone = worldState.zones[zoneId] ?? nullZone;
-    List<Entity> entities = zone.discoveredEntities;
 
-    final e = getDiscoveredEntity(newEntity.id, zone);
+    final e = getDiscoveredEntity(entityId, zone);
 
     if (e == null) {
       final newEnt = entityCatalog
-          .getDefinitionFor(newEntity.id)
-          .toEntity(newEntity.id);
+          .getDefinitionFor(entityId)
+          .toEntity(entityId);
 
       if (newEnt is EncounterEntity) {
-        newEnt.count = newEntity.count;
+        newEnt.count = entityCount;
       }
 
       zone.discoveredEntities.add(newEnt);
     }
   }
 
-  // todo change this to not modify the catalog
-  void removeCampfireFromZone(ZoneId zoneId, WorldData worldState) {
+  void removeEntityFromZone(
+    EntityId entityId,
+    ZoneId zoneId,
+    WorldData worldState,
+  ) {
     final zone = worldState.zones[zoneId] ?? nullZone;
     for (final e in zone.discoveredEntities) {
-      if (e is CampfireEntity) {
+      if (e.id == entityId) {
         zone.discoveredEntities.remove(e);
-        return;
       }
     }
   }

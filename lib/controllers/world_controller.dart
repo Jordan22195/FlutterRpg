@@ -1,12 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
-
 import '../catalogs/zone_catalog.dart';
 import '../services/world_service.dart';
 import '../catalogs/entity_catalog.dart';
 import '../services/weighted_drop_table_service.dart';
-import '../data/ObjectStack.dart';
 
 class WorldController extends ChangeNotifier {
   // data
@@ -54,7 +52,8 @@ class WorldController extends ChangeNotifier {
     );
     final newEntity = _dropTableService.roll(entries);
     _worldService.addEntityToCurrentZone(
-      newEntity as ObjectStack<EntityId>,
+      newEntity.id,
+      newEntity.count,
       _entityCatalog,
       _playerState,
       _worldState,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/controllers/momentum_loop_controller.dart';
+import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:provider/provider.dart';
 import 'screens/main_shell.dart';

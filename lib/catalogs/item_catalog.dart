@@ -1,3 +1,6 @@
+import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/zone_catalog.dart';
+
 import '../data/equipment_data.dart';
 import '../data/skill_data.dart';
 import 'package:flutter/widgets.dart';
@@ -107,6 +110,20 @@ class BuffItem extends Item {
     required this.skillBonus,
     required this.duration,
   }) : expirationTime = DateTime.now().add(duration);
+}
+
+class ZoneBuffItem extends BuffItem {
+  ZoneId zoneId;
+  final EntityId entityId;
+  ZoneBuffItem({
+    required super.id,
+    required super.name,
+    required super.value,
+    required super.skillBonus,
+    required super.duration,
+    this.zoneId = ZoneId.NULL,
+    required this.entityId,
+  });
 }
 
 class EquipmentItem extends Item {

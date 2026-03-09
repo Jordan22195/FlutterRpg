@@ -1,19 +1,10 @@
 import 'dart:math';
-
-import 'package:flutter/cupertino.dart';
-import 'package:rpg/controllers/momentum_loop_controller.dart';
-import 'package:rpg/services/player_data_service.dart';
-import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/data/equipment_data.dart';
-import 'package:rpg/data/inventory_data.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
-import 'package:rpg/data/world_data.dart';
-import 'package:rpg/services/weighted_drop_table_service.dart';
-import 'package:rpg/services/world_service.dart';
+import '../services/inventory_service.dart';
 import '../data/encounter_data.dart';
+import '../data/action_result.dart';
 
 class EncounterService {
   // set respawn flag for ui for 200ms then reset entity hp
@@ -185,7 +176,6 @@ class EncounterService {
     EncounterData encounterState,
     Map<SkillId, int> playerStatTotals,
   ) {
-    int attack = 0;
     if (encounterState.entity is! CombatEntity) {
       return 0;
     }

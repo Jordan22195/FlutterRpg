@@ -1,3 +1,8 @@
+import '../data/skill_data.dart';
+import '../data/crafting_state.dart';
+import '../catalogs/item_catalog.dart';
+import '../catalogs/recipe_catalog.dart';
+
 class CraftingService {
   void adjustActiveRecipeDropTable(
     CraftingState craftinState,

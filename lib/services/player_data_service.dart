@@ -1,75 +1,73 @@
-import 'package:rpg/controllers/buff_controller.dart';
-import 'package:rpg/data/buff_data.dart';
 import 'package:rpg/services/buff_service.dart';
-import 'package:rpg/utilities/interval_runner.dart';
-import 'package:rpg/controllers/momentum_loop_controller.dart';
-import 'package:rpg/controllers/world_controller.dart';
-import 'package:rpg/data/ObjectStack.dart';
-import 'package:rpg/data/equipment_data.dart';
-import 'package:rpg/controllers/encounter_controller.dart';
-import 'package:rpg/data/world_data.dart';
-import 'package:rpg/data/inventory_data.dart';
-import 'package:rpg/data/world_data.dart';
-import 'package:rpg/catalogs/location_catalog.dart';
+import 'package:rpg/utilities/util.dart';
 import '../catalogs/zone_catalog.dart';
 
 import '../data/player_data.dart';
-import 'file_manager_service.dart';
-import '../catalogs/entity_catalog.dart';
 import '../data/skill_data.dart';
-import '../catalogs/item_catalog.dart';
 
 import 'package:flutter/foundation.dart';
-import 'dart:math';
-import 'package:flutter/scheduler.dart';
+import '../services/equipment_service.dart';
+import '../services/skill_service.dart';
 
-// player data service is going to the excepiton of services not talkting to other services
-// becuase of the stat total calculation. Player data service will use buff, skill, and equipment
-// services to get stat totals.
-
-class PlayerStatSystem {
+class PlayerDataService {
   final BuffService _buffService;
   final EquipmentService _equipmentService;
   final SkillService _skillService;
 
-  Map<SkillId, int> addStats(Map<SkillId, int> a, Map<SkillId, int> b) {
-    final totals = <SkillId, int>{};
+  PlayerDataService({
+    required BuffService buffService,
+    required EquipmentService equpmentService,
+    required SkillService skillService,
+  }) : _buffService = buffService,
+       _skillService = skillService,
+       _equipmentService = equpmentService;
 
-    final keys = <SkillId>{...a.keys, ...b.keys};
-
-    for (final key in keys) {
-      final aVal = a[key] ?? 0;
-      final bVal = b[key] ?? 0;
-      totals[key] = aVal + bVal;
-    }
-
-    return totals;
-  }
-
+  // player data service is the excepiton of services not talkting to other services
+  // becuase of the stat total calculation. Player data service will use buff, skill, and equipment
+  // services to get stat totals.
   Map<SkillId, int> getStatTotals(PlayerData playerState) {
-    final skillStats = _skillService.getStatTotals(playerState.skillData);
+    Map<SkillId, int> skillStats = {};
+    for (final s in playerState.skillData.entries) {
+      skillStats[s.key] = _skillService.getLevel(s.value);
+    }
     final equipmentStats = _equipmentService.getStatTotals(
       playerState.equipmentData,
     );
-    final buffStats = _buffService.getStatTotals(playerState.buffData);
+    final buffStats = _buffService.getBuffedStatTotal(playerState.buffData);
 
-    final totals = addStats(skillStats, addStats(equipmentStats, buffStats));
+    final totals = Util.addMap(
+      skillStats,
+      Util.addMap(equipmentStats, buffStats),
+    );
 
-    return totals;
+    return totals as Map<SkillId, int>;
   }
-}
 
-class PlayerDataService {
+  void drainStamina(double stamina, PlayerData playerState) {
+    playerState.stamina -= stamina;
+    if (playerState.stamina < 0) {
+      playerState.stamina = 0;
+    }
+  }
+
   void setCurrentZone(ZoneId id, PlayerData playerState) {
     playerState.currentZoneId = id;
   }
 
-  void getCurrentZone(PlayerData playerState) {
+  ZoneId getCurrentZone(PlayerData playerState) {
     return playerState.currentZoneId;
   }
 
-  void applyXp(PlayerData playerState, Map<SkillId, double> xp) {}
+  void applyXp(PlayerData playerState, Map<SkillId, double> xp) {
+    for (final exp in xp.entries) {
+      _skillService.addXp(
+        exp.value,
+        playerState.skillData[exp.key] ?? SkillData(name: "error", xp: 1),
+      );
+    }
+  }
 
+  // todo
   void eatEquipedFood(PlayerData playerState) {}
 }
 

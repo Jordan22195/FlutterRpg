@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/widgets.dart';
-import '../utilities/image_resolver.dart';
 
 enum SkillId {
   STAMINA, // each point increaes stamina bar by 10.

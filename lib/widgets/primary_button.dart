@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:rpg/widgets/progress_bars.dart';
-import '../controllers/momentum_loop_controller.dart';
+import '../controllers/action_timing_controller.dart';
 import '../services/player_data_service.dart';
 import '../widgets/item_stack_tile.dart';
 import '../catalogs/item_catalog.dart';

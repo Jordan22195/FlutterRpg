@@ -3,6 +3,7 @@ import 'skill_data.dart';
 import 'inventory_data.dart';
 
 class CraftingState {
+  String selectedRecipeId = "";
   CraftingRecipe activeRecipe = CraftingRecipe(
     id: "null",
     name: "null",

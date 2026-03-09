@@ -2,9 +2,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:rpg/data/player_data.dart';
-import '../services/player_data_service.dart';
+import 'package:rpg/services/player_data_service.dart';
 import '../data/skill_data.dart';
-import 'dart:math';
 
 // primary button sets the on fire function and max interval in the controller.
 // the primary button triggers startIfNeeded which starts the ticker.
@@ -47,8 +46,6 @@ class ActionTimingData {
 //  Action Timing Controller
 //
 
-
-
 class ActionTimingController {
   // internal state
   final TickerProvider _vsync;
@@ -61,20 +58,21 @@ class ActionTimingController {
   // services
   ActionTimingService _actionTimingService;
 
+  //systems
+  ActionSpeedSystem _actionSpeedSystem;
+
   ActionTimingController({
     required TickerProvider vsync,
 
     required ActionTimingService actionTimingService,
     required PlayerData playerState,
+    required ActionSpeedSystem actionSpeedSystem,
   }) : _actionTimingService = actionTimingService,
        _playerState = playerState,
-       _vsync = vsync
-
-       {
+       _vsync = vsync,
+       _actionSpeedSystem = actionSpeedSystem {
     ticker = _vsync.createTicker(_onTick);
-
-       }
-
+  }
 
   void bindOnFireFunction(FutureOr<void> Function() function) {
     _actionTimingState.onFire = function;
@@ -83,11 +81,9 @@ class ActionTimingController {
   void start() {
     _actionTimingService.start(_actionTimingState);
     ticker.start();
-
-
   }
 
-  void stop(){
+  void stop() {
     _actionTimingService.stop(_actionTimingState);
     ticker.stop();
   }
@@ -97,35 +93,62 @@ class ActionTimingController {
   // if action progress is 100% fire the action
   // drain stamina and apply xp based on speed mulitplier
   void _onTick(Duration elapsed) {
-    final dt = (_actionTimingState.lastElapsed == Duration.zero)
+    _actionSpeedSystem.frameUpdate(elapsed, _actionTimingState, _playerState);
+  }
+}
+
+class ActionSpeedSystem {
+  final ActionTimingService _actionTimingService;
+  final PlayerDataService _playerDataService;
+
+  ActionSpeedSystem({
+    required ActionTimingService actionTimingService,
+    required PlayerDataService playerDataService,
+  }) : _actionTimingService = actionTimingService,
+       _playerDataService = playerDataService;
+
+  // increase speed percent based on acceleration values
+  // icriment action progress based on time elapsed and current action interval
+  // if action progress is 100% fire the action
+  // drain stamina and apply xp based on speed mulitplier
+  void frameUpdate(
+    Duration elapsed,
+    ActionTimingData actionTimingState,
+    PlayerData playerState,
+  ) {
+    final dt = (actionTimingState.lastElapsed == Duration.zero)
         ? 0.0
-        : (elapsed - _actionTimingState.lastElapsed).inMicroseconds / 1e6;
-    _actionTimingState.lastElapsed = elapsed;
+        : (elapsed - actionTimingState.lastElapsed).inMicroseconds / 1e6;
+    actionTimingState.lastElapsed = elapsed;
 
     // return if no time has passed.
     if (dt <= 0) return;
 
-    _actionTimingService.updateActionSpeed(
-      dt,
-      _actionTimingState,
-      _playerState,
-    );
+    _actionTimingService.updateActionSpeed(dt, actionTimingState, playerState);
 
     // icriment action progress based on time elapsed and current action interval
-    _actionTimingService.udpateActionProgress(dt, _actionTimingState);
+    _actionTimingService.udpateActionProgress(dt, actionTimingState);
 
     // if action progress is > 100% try and fire the action and roll over the
     // progress percentage.
-    if (_actionTimingState.actionProgress >= 1.0) {
-      _actionTimingState.actionProgress =
-          _actionTimingState.actionProgress % 1.0;
-      _actionTimingService.tryFire(_actionTimingState);
+    if (actionTimingState.actionProgress >= 1.0) {
+      actionTimingState.actionProgress = actionTimingState.actionProgress % 1.0;
+      _actionTimingService.tryFire(actionTimingState);
     }
 
-    final speed = _actionTimingService.getCurrentSpeedMultiplier();
-    // todo : put this calculation somwhere
-    final sustainableSpeed =
-        1; // 1 + 0.05 * (economyStatTotal - 1)* specific skill stat total
+    final speed = _actionTimingService.getCurrentSpeedMultiplier(
+      actionTimingState,
+    );
+    // get player stat totals
+    final stats = _playerDataService.getStatTotals(playerState);
+    final economyStatTotal = stats[SkillId.ECONOMY] ?? 1;
+    // get active skill (todo)
+    final activeSkillTotal = 1;
+    // get a 5% increase to stamina drain threshold per economny level.
+    // 1% boost to encononmy per skill level in active skill (mulitplicative)
+    final baseThreshold = (0.05 * economyStatTotal);
+    final skillMulitplier = 1 + (activeSkillTotal * .1);
+    final sustainableSpeed = 1 + (baseThreshold * skillMulitplier);
     double staminaCost = 0;
     if (speed > sustainableSpeed) {
       staminaCost = 1 * dt;
@@ -133,28 +156,33 @@ class ActionTimingController {
     }
 
     // drain stamina
-    //playerService.drainStamina(staminaCost.toDouble());
+    _playerDataService.drainStamina(staminaCost, playerState);
 
     // calculate speed, stamina, and economy xp
 
     if (speed > 1) {
       final staminaXp = dt * 10;
-      SkillController.instance.addXp(SkillId.STAMINA, staminaXp);
+      _playerDataService.applyXp(
+        playerState,
+        {SkillId.STAMINA, staminaXp} as Map<SkillId, double>,
+      );
     }
 
     final speedXp = (speed - 1) * 100 * dt;
+    _playerDataService.applyXp(
+      playerState,
+      {SkillId.SPEED, speedXp} as Map<SkillId, double>,
+    );
 
     if (staminaCost > 0) {
       final econXp = dt * 10.0;
+      _playerDataService.applyXp(
+        playerState,
+        {SkillId.ECONOMY, econXp} as Map<SkillId, double>,
+      );
     }
-
-    // todo skill services apply xp
   }
 }
-
-//
-//  Action Timing Service
-//
 
 class ActionTimingService {
   void updateActionSpeed(
@@ -179,12 +207,14 @@ class ActionTimingService {
   }
 
   void udpateActionProgress(double dt, ActionTimingData actionTimingState) {
-    final intervalSec = getCurrentActionDuration(actionTimingState).inMicroseconds / 1e6;
+    final intervalSec =
+        getCurrentActionDuration(actionTimingState).inMicroseconds / 1e6;
     actionTimingState.actionProgress += dt / intervalSec;
   }
 
-  double get actionsPerSecond(ActionTimingData actionTimingState) {
-    final intervalSec = getCurrentActionDuration(actionTimingState).inMicroseconds / 1e6;
+  double actionsPerSecond(ActionTimingData actionTimingState) {
+    final intervalSec =
+        getCurrentActionDuration(actionTimingState).inMicroseconds / 1e6;
     if (intervalSec == 0) return 0;
     return 1 / intervalSec;
   }
@@ -223,10 +253,6 @@ class ActionTimingService {
   void tryFire(ActionTimingData actionTimingState) {
     if (actionTimingState.actionInFlight) return;
     actionTimingState.actionInFlight = true;
-    debugPrint(
-      ": firing action with momentum ${actionTimingState.speedPercent.toStringAsFixed(2)} "
-      "(${actionsPerSecond.toStringAsFixed(2)} actions/sec)",
-    );
     Future.sync(
       actionTimingState.onFire,
     ).whenComplete(() => actionTimingState.actionInFlight = false);

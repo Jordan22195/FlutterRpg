@@ -11,7 +11,7 @@ class PlayerData {
 
   // skill stats
   BuffData buffData;
-  SkillData skillData;
+  Map<SkillId, SkillData> skillData;
   EquipmentData equipmentData;
 
   // mutable stats

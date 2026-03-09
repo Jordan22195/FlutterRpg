@@ -29,14 +29,9 @@ class ZoneDefinition {
     required this.discoverableEntities,
     required this.permanentEntities,
   });
-
-  Zone toZone() => Zone(
-    id: id,
-    name: name,
-    discoveredEntities: [],
-    permanentEntities: permanentEntities,
-  );
 }
+
+// todo make a zone builder that has access to entity catalog
 
 class ZoneCatalog {
   static final Map<ZoneId, ZoneDefinition> _zones = {};
