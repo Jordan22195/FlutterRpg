@@ -70,5 +70,3 @@ class PlayerDataService {
   // todo
   void eatEquipedFood(PlayerData playerState) {}
 }
-
-class PlayerDataController extends ChangeNotifier {}

@@ -40,7 +40,6 @@ class CraftingSystem {
     required InventoryService inventoryService,
     required WeightedDropTableService weightedDropTableService,
     required WorldService worldService,
-    required BuffData buffData,
     required BuffService buffService,
     required EntityCatalog entityCatalog,
   }) : _recipeCatalog = recipeCatalog,

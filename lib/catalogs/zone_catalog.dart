@@ -15,6 +15,68 @@ class Zone {
     required this.discoveredEntities,
     required this.permanentEntities,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id.name,
+      'name': name,
+      'permanentEntities': permanentEntities.map((e) => e.toJson()).toList(),
+      'discoveredEntities': discoveredEntities.map((e) => e.toJson()).toList(),
+    };
+  }
+
+  factory Zone.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final rawName = json['name'];
+    final rawPermanent = json['permanentEntities'];
+    final rawDiscovered = json['discoveredEntities'];
+
+    if (rawId is! String) {
+      throw FormatException('Missing or invalid "id". Expected String.');
+    }
+
+    if (rawName is! String) {
+      throw FormatException('Missing or invalid "name". Expected String.');
+    }
+
+    if (rawPermanent is! List) {
+      throw FormatException(
+        'Missing or invalid "permanentEntities". Expected list.',
+      );
+    }
+
+    if (rawDiscovered is! List) {
+      throw FormatException(
+        'Missing or invalid "discoveredEntities". Expected list.',
+      );
+    }
+
+    final zoneId = ZoneId.values.firstWhere(
+      (z) => z.name == rawId,
+      orElse: () => throw FormatException('Invalid ZoneId "\$rawId".'),
+    );
+
+    final permanentEntities = rawPermanent.map((e) {
+      if (e is! Map<String, dynamic>) {
+        throw FormatException('Invalid permanent entity entry.');
+      }
+      return Entity.fromJson(e);
+    }).toList();
+
+    final discoveredEntities = rawDiscovered.map((e) {
+      if (e is! Map<String, dynamic>) {
+        throw FormatException('Invalid discovered entity entry.');
+      }
+      return Entity.fromJson(e);
+    }).toList();
+
+    return Zone(
+      id: zoneId,
+      name: rawName,
+      permanentEntities: permanentEntities,
+      discoveredEntities: discoveredEntities,
+    );
+  }
 }
 
 class ZoneDefinition {

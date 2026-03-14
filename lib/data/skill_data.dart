@@ -41,6 +41,25 @@ class SkillData {
 
   SkillData({required this.name, required this.xp});
 
+  Map<String, dynamic> toJson() {
+    return {'name': name, 'xp': xp};
+  }
+
+  factory SkillData.fromJson(Map<String, dynamic> json) {
+    final rawName = json['name'];
+    final rawXp = json['xp'];
+
+    if (rawName is! String) {
+      throw FormatException('Missing or invalid "name". Expected String.');
+    }
+
+    if (rawXp is! num) {
+      throw FormatException('Missing or invalid "xp". Expected number.');
+    }
+
+    return SkillData(name: rawName, xp: rawXp.toDouble());
+  }
+
   static List<double> _buildXpTable(int maxLevel) {
     final table = List<double>.filled(maxLevel + 1, 0);
     double points = 0;

@@ -47,7 +47,6 @@ class EncounterController extends ChangeNotifier {
     required EncounterService encounterService,
     required WorldData worldState,
     required WorldService worldService,
-    required EquipmentData equpmentState,
     required ActionTimingController actionTimingController,
     required EntityCatalog entityCatalog,
     required WeightedDropTableService dropTableService,

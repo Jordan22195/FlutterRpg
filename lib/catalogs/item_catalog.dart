@@ -1,5 +1,6 @@
 import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/catalogs/zone_catalog.dart';
+import 'dart:convert';
 
 import '../data/equipment_data.dart';
 import '../data/skill_data.dart';
@@ -89,6 +90,108 @@ String itemKey(dynamic enumValue) {
   return (dot >= 0 && dot < s.length - 1) ? s.substring(dot + 1) : s;
 }
 
+// ---- Serialization helpers ----
+Map<String, int> _skillBonusToJson(Map<SkillId, int> skillBonus) {
+  return skillBonus.map((key, value) => MapEntry(key.name, value));
+}
+
+Map<SkillId, int> _skillBonusFromJson(Map<String, dynamic> json, String key) {
+  final raw = json[key];
+  if (raw == null) {
+    throw FormatException('Missing "$key". Expected object.');
+  }
+  if (raw is! Map) {
+    throw FormatException('Invalid "$key". Expected object.');
+  }
+
+  final result = <SkillId, int>{};
+  for (final entry in raw.entries) {
+    final rawKey = entry.key;
+    final rawValue = entry.value;
+
+    if (rawKey is! String) {
+      throw FormatException('Invalid key in "$key". Expected String key.');
+    }
+    if (rawValue is! int) {
+      throw FormatException(
+        'Invalid value in "$key" for skill "$rawKey". Expected int.',
+      );
+    }
+
+    final skillId = SkillId.values.firstWhere(
+      (value) => value.name == rawKey,
+      orElse: () =>
+          throw FormatException('Invalid SkillId "$rawKey" in "$key".'),
+    );
+
+    result[skillId] = rawValue;
+  }
+
+  return result;
+}
+
+ItemId _parseItemId(String rawValue, {String fieldName = 'id'}) {
+  return ItemId.values.firstWhere(
+    (value) => value.name == rawValue,
+    orElse: () =>
+        throw FormatException('Invalid ItemId "$rawValue" for "$fieldName".'),
+  );
+}
+
+SkillId _parseSkillId(String rawValue, {String fieldName = 'skillId'}) {
+  return SkillId.values.firstWhere(
+    (value) => value.name == rawValue,
+    orElse: () =>
+        throw FormatException('Invalid SkillId "$rawValue" for "$fieldName".'),
+  );
+}
+
+ZoneId _parseZoneId(String rawValue, {String fieldName = 'zoneId'}) {
+  return ZoneId.values.firstWhere(
+    (value) => value.name == rawValue,
+    orElse: () =>
+        throw FormatException('Invalid ZoneId "$rawValue" for "$fieldName".'),
+  );
+}
+
+EntityId _parseEntityId(String rawValue, {String fieldName = 'entityId'}) {
+  return EntityId.values.firstWhere(
+    (value) => value.name == rawValue,
+    orElse: () =>
+        throw FormatException('Invalid EntityId "$rawValue" for "$fieldName".'),
+  );
+}
+
+ArmorSlots _parseArmorSlot(String rawValue, {String fieldName = 'armorSlot'}) {
+  return ArmorSlots.values.firstWhere(
+    (value) => value.name == rawValue,
+    orElse: () => throw FormatException(
+      'Invalid ArmorSlot "$rawValue" for "$fieldName".',
+    ),
+  );
+}
+
+Duration _durationFromMilliseconds(Map<String, dynamic> json, String key) {
+  final value = json[key];
+  if (value is! int) {
+    throw FormatException('Missing or invalid "$key". Expected int.');
+  }
+  return Duration(milliseconds: value);
+}
+
+DateTime _dateTimeFromJson(Map<String, dynamic> json, String key) {
+  final value = json[key];
+  if (value is! String) {
+    throw FormatException('Missing or invalid "$key". Expected String.');
+  }
+
+  final parsed = DateTime.tryParse(value);
+  if (parsed == null) {
+    throw FormatException('Invalid DateTime for "$key": "$value".');
+  }
+  return parsed;
+}
+
 class Item {
   final ItemId id;
   final String name;
@@ -96,6 +199,40 @@ class Item {
   int count = 1;
 
   Item({required this.id, required this.name, required this.value});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'runtimeType': 'Item',
+      'id': id.name,
+      'name': name,
+      'value': value,
+      'count': count,
+    };
+  }
+
+  factory Item.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final rawName = json['name'];
+    final rawValue = json['value'];
+    final rawCount = json['count'];
+
+    if (rawId is! String) {
+      throw FormatException('Missing or invalid "id". Expected String.');
+    }
+    if (rawName is! String) {
+      throw FormatException('Missing or invalid "name". Expected String.');
+    }
+    if (rawValue is! int) {
+      throw FormatException('Missing or invalid "value". Expected int.');
+    }
+    if (rawCount is! int) {
+      throw FormatException('Missing or invalid "count". Expected int.');
+    }
+
+    final item = Item(id: _parseItemId(rawId), name: rawName, value: rawValue);
+    item.count = rawCount;
+    return item;
+  }
 }
 
 class BuffItem extends Item {
@@ -110,6 +247,32 @@ class BuffItem extends Item {
     required this.skillBonus,
     required this.duration,
   }) : expirationTime = DateTime.now().add(duration);
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'BuffItem';
+    json['skillBonus'] = _skillBonusToJson(skillBonus);
+    json['durationMs'] = duration.inMilliseconds;
+    json['expirationTime'] = expirationTime.toIso8601String();
+    return json;
+  }
+
+  factory BuffItem.fromJson(Map<String, dynamic> json) {
+    final baseItem = Item.fromJson(json);
+
+    final item = BuffItem(
+      id: baseItem.id,
+      name: baseItem.name,
+      value: baseItem.value,
+      skillBonus: _skillBonusFromJson(json, 'skillBonus'),
+      duration: _durationFromMilliseconds(json, 'durationMs'),
+    );
+
+    item.count = baseItem.count;
+    item.expirationTime = _dateTimeFromJson(json, 'expirationTime');
+    return item;
+  }
 }
 
 class ZoneBuffItem extends BuffItem {
@@ -124,6 +287,43 @@ class ZoneBuffItem extends BuffItem {
     this.zoneId = ZoneId.NULL,
     required this.entityId,
   });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'ZoneBuffItem';
+    json['zoneId'] = zoneId.name;
+    json['entityId'] = entityId.name;
+    return json;
+  }
+
+  factory ZoneBuffItem.fromJson(Map<String, dynamic> json) {
+    final baseItem = BuffItem.fromJson(json);
+
+    final rawZoneId = json['zoneId'];
+    final rawEntityId = json['entityId'];
+
+    if (rawZoneId is! String) {
+      throw FormatException('Missing or invalid "zoneId". Expected String.');
+    }
+    if (rawEntityId is! String) {
+      throw FormatException('Missing or invalid "entityId". Expected String.');
+    }
+
+    final item = ZoneBuffItem(
+      id: baseItem.id,
+      name: baseItem.name,
+      value: baseItem.value,
+      skillBonus: Map<SkillId, int>.from(baseItem.skillBonus),
+      duration: baseItem.duration,
+      zoneId: _parseZoneId(rawZoneId),
+      entityId: _parseEntityId(rawEntityId),
+    );
+
+    item.count = baseItem.count;
+    item.expirationTime = baseItem.expirationTime;
+    return item;
+  }
 }
 
 class EquipmentItem extends Item {
@@ -137,6 +337,35 @@ class EquipmentItem extends Item {
     required this.armorSlot,
     required this.skillBonus,
   });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'EquipmentItem';
+    json['armorSlot'] = armorSlot.name;
+    json['skillBonus'] = _skillBonusToJson(skillBonus);
+    return json;
+  }
+
+  factory EquipmentItem.fromJson(Map<String, dynamic> json) {
+    final baseItem = Item.fromJson(json);
+    final rawArmorSlot = json['armorSlot'];
+
+    if (rawArmorSlot is! String) {
+      throw FormatException('Missing or invalid "armorSlot". Expected String.');
+    }
+
+    final item = EquipmentItem(
+      id: baseItem.id,
+      name: baseItem.name,
+      value: baseItem.value,
+      armorSlot: _parseArmorSlot(rawArmorSlot),
+      skillBonus: _skillBonusFromJson(json, 'skillBonus'),
+    );
+
+    item.count = baseItem.count;
+    return item;
+  }
 }
 
 class ItemDefinition {
@@ -234,6 +463,30 @@ class WeaponItem extends EquipmentItem {
     required super.skillBonus,
     required this.actionInterval,
   });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'WeaponItem';
+    json['actionIntervalMs'] = actionInterval.inMilliseconds;
+    return json;
+  }
+
+  factory WeaponItem.fromJson(Map<String, dynamic> json) {
+    final baseItem = EquipmentItem.fromJson(json);
+
+    final item = WeaponItem(
+      id: baseItem.id,
+      name: baseItem.name,
+      value: baseItem.value,
+      armorSlot: baseItem.armorSlot,
+      skillBonus: Map<SkillId, int>.from(baseItem.skillBonus),
+      actionInterval: _durationFromMilliseconds(json, 'actionIntervalMs'),
+    );
+
+    item.count = baseItem.count;
+    return item;
+  }
 }
 
 class WeaponItemDefition extends EquipmentItemDefition {
@@ -548,6 +801,14 @@ class ItemCatalog {
       return Item(id: ItemId.NULL, name: "Null", value: 0);
     }
     return def.toItem(id);
+  }
+
+  static ItemInstanceData toInstanceData(Item item) {
+    return ItemInstanceData.fromItem(item);
+  }
+
+  static Item buildItemFromJson(Map<String, dynamic> json) {
+    return ItemInstanceData.fromJson(json).toItem();
   }
 
   ItemDefinition? definitionFor(ItemId objectId) {

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/services/player_data_service.dart';
 
 import 'gear_screen.dart';
 import 'inventory_screen.dart';
@@ -14,7 +13,7 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
+class _MainShellState extends State<MainShell> {
   int index = 0;
 
   final _navKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
@@ -23,7 +22,6 @@ class _MainShellState extends State<MainShell> with TickerProviderStateMixin {
 
   @override
   void initState() {
-    print("MainShell: initState");
     super.initState();
   }
 

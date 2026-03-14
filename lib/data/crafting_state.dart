@@ -1,18 +1,48 @@
-import '../catalogs/recipe_catalog.dart';
-import 'skill_data.dart';
 import 'inventory_data.dart';
 
 class CraftingState {
+  CraftingState();
   String selectedRecipeId = "";
-  CraftingRecipe activeRecipe = CraftingRecipe(
-    id: "null",
-    name: "null",
-    skill: SkillId.NULL,
-    levelRequirement: 1,
-    inputs: {},
-    output: [],
-    xp: 0,
-  );
+  String activeRecipeId = "";
 
   InventoryData craftedItems = InventoryData(itemMap: {});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'selectedRecipeId': selectedRecipeId,
+      'activeRecipeId': activeRecipeId,
+      'craftedItems': craftedItems.toJson(),
+    };
+  }
+
+  factory CraftingState.fromJson(Map<String, dynamic> json) {
+    final rawSelected = json['selectedRecipeId'];
+    final rawActive = json['activeRecipeId'];
+    final rawItems = json['craftedItems'];
+
+    if (rawSelected is! String) {
+      throw FormatException(
+        'Missing or invalid "selectedRecipeId". Expected String.',
+      );
+    }
+
+    if (rawActive is! String) {
+      throw FormatException(
+        'Missing or invalid "activeRecipeId". Expected String.',
+      );
+    }
+
+    if (rawItems is! Map<String, dynamic>) {
+      throw FormatException(
+        'Missing or invalid "craftedItems". Expected object.',
+      );
+    }
+
+    final state = CraftingState();
+    state.selectedRecipeId = rawSelected;
+    state.activeRecipeId = rawActive;
+    state.craftedItems = InventoryData.fromJson(rawItems);
+
+    return state;
+  }
 }

@@ -1,89 +1,95 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/controllers/action_timing_controller.dart';
-import 'package:rpg/services/player_data_service.dart';
 import 'package:provider/provider.dart';
-import 'screens/main_shell.dart';
+
+import 'services/file_manager_service.dart';
+import 'game_session.dart';
+
+import 'controllers/buff_controller.dart';
+import 'controllers/crafting_controller.dart';
 import 'controllers/encounter_controller.dart';
-import 'package:rpg/controllers/crafting_controller.dart';
+import 'controllers/world_controller.dart';
+import 'controllers/action_timing_controller.dart';
+import 'controllers/player_data_controller.dart';
+import 'screens/main_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<PlayerDataController>(
-          create: (_) =>
-              PlayerDataController()
-                ..ensureLoaded().catchError((e, st) {
-                  print("Error loading player data: $e\n$st");
-                }),
-        ),
+  final fileManagerService = FileManagerService();
+  final gameDataRaw = await fileManagerService.loadAppData();
+  final gameData = SaveGameData.fromJson(gameDataRaw);
 
-        ChangeNotifierProvider<CraftingController>(
-          create: (_) => CraftingController(),
-        ),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(MyApp(saveData: gameData));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final SaveGameData saveData;
 
-  // This widget is the root of your application.
+  const MyApp({super.key, required this.saveData});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'RPG',
       theme: ThemeData.dark(),
-      //ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: GameBootstrap(saveData: saveData),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+class GameBootstrap extends StatefulWidget {
+  final SaveGameData saveData;
 
-  final String title;
+  const GameBootstrap({super.key, required this.saveData});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<GameBootstrap> createState() => _GameBootstrapState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  late final ActionTimingService _momentum;
+class _GameBootstrapState extends State<GameBootstrap>
+    with TickerProviderStateMixin {
+  late final GameSession session;
 
   @override
   void initState() {
     super.initState();
 
-    _momentum = ActionTimingService(
+    final factory = GameSessionFactory();
+
+    session = factory.create(
+      save: widget.saveData,
+      catalogs: factory.catalog1(),
       vsync: this,
-      onFire: () {
-        // TODO: wire this to whatever "fire" should do in your game.
-      },
     );
   }
 
   @override
-  void dispose() {
-    _momentum.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    PlayerDataController controller = context.watch<PlayerDataController>();
-    if (PlayerDataController.instance.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    PlayerDataController.instance.setActionTiminingController(_momentum);
-    return ChangeNotifierProvider<ActionTimingService>.value(
-      value: _momentum,
-      child: MainShell(),
+    return MultiProvider(
+      providers: [
+        Provider<GameSession>.value(value: session),
+
+        ChangeNotifierProvider<BuffController>.value(
+          value: session.buffController,
+        ),
+        ChangeNotifierProvider<CraftingController>.value(
+          value: session.craftingController,
+        ),
+        ChangeNotifierProvider<EncounterController>.value(
+          value: session.encounterController,
+        ),
+        ChangeNotifierProvider<WorldController>.value(
+          value: session.worldController,
+        ),
+        ChangeNotifierProvider<PlayerDataController>.value(
+          value: session.playerDataController,
+        ),
+
+        //ChangeNotifierProvider<ActionTimingController>.value(
+        //  value: session.encounterController.actionTimingController,
+        //),
+      ],
+      child: const MainShell(),
     );
   }
 }

@@ -1,0 +1,357 @@
+import 'package:flutter/widgets.dart';
+import 'package:rpg/catalogs/recipe_catalog.dart';
+import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/controllers/action_timing_controller.dart';
+import 'package:rpg/controllers/buff_controller.dart';
+import 'package:rpg/controllers/crafting_controller.dart';
+import 'package:rpg/controllers/encounter_controller.dart';
+import 'package:rpg/controllers/equipment_controller.dart';
+import 'package:rpg/data/crafting_state.dart';
+import 'package:rpg/data/encounter_data.dart';
+import 'package:rpg/services/buff_service.dart';
+import 'package:rpg/services/crafting_service.dart';
+import 'package:rpg/services/encounter_service.dart';
+import 'package:rpg/services/equipment_service.dart';
+import 'package:rpg/services/inventory_service.dart';
+import 'package:rpg/services/player_data_service.dart';
+import 'package:rpg/controllers/world_controller.dart';
+import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/data/world_data.dart';
+import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/data/player_data.dart';
+import 'package:rpg/services/skill_service.dart';
+import 'package:rpg/services/weighted_drop_table_service.dart';
+import 'package:rpg/services/world_service.dart';
+import 'package:rpg/systems/crafting_system.dart';
+import 'package:rpg/systems/encounter_system.dart';
+import 'package:rpg/systems/equipment_system.dart';
+
+import 'data/inventory_data.dart';
+
+class SaveGameData {
+  final String slotId;
+  final String contentPackId;
+  final int saveVersion;
+  final int contentPackVersion;
+  final PlayerData playerData;
+  final InventoryData inventoryData;
+  final WorldData worldData;
+  final CraftingState craftingState;
+  final EncounterData encounterData;
+
+  SaveGameData({
+    required this.slotId,
+    required this.contentPackId,
+    required this.saveVersion,
+    required this.contentPackVersion,
+    required this.playerData,
+    required this.inventoryData,
+    required this.worldData,
+    required this.craftingState,
+    required this.encounterData,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'slotId': slotId,
+      'contentPackId': contentPackId,
+      'saveVersion': saveVersion,
+      'contentPackVersion': contentPackVersion,
+      'playerData': playerData.toJson(),
+      'inventoryData': inventoryData.toJson(),
+      'worldData': worldData.toJson(),
+      'craftingState': craftingState.toJson(),
+      'encounterData': encounterData.toJson(),
+    };
+  }
+
+  factory SaveGameData.fromJson(Map<String, dynamic> json) {
+    if (json['slotId'] is! String || (json['slotId'] as String).isEmpty) {
+      throw FormatException('SaveGameData.slotId is missing or invalid.');
+    }
+    if (json['contentPackId'] is! String ||
+        (json['contentPackId'] as String).isEmpty) {
+      throw FormatException(
+        'SaveGameData.contentPackId is missing or invalid.',
+      );
+    }
+    if (json['saveVersion'] is! int) {
+      throw FormatException('SaveGameData.saveVersion is missing or invalid.');
+    }
+    if (json['contentPackVersion'] is! int) {
+      throw FormatException(
+        'SaveGameData.contentPackVersion is missing or invalid.',
+      );
+    }
+    if (json['playerData'] is! Map<String, dynamic>) {
+      throw FormatException('SaveGameData.playerData is missing or invalid.');
+    }
+    if (json['inventoryData'] is! Map<String, dynamic>) {
+      throw FormatException(
+        'SaveGameData.inventoryData is missing or invalid.',
+      );
+    }
+    if (json['worldData'] is! Map<String, dynamic>) {
+      throw FormatException('SaveGameData.worldData is missing or invalid.');
+    }
+    if (json['craftingState'] is! Map<String, dynamic>) {
+      throw FormatException(
+        'SaveGameData.craftingState is missing or invalid.',
+      );
+    }
+    if (json['encounterData'] is! Map<String, dynamic>) {
+      throw FormatException(
+        'SaveGameData.encounterData is missing or invalid.',
+      );
+    }
+
+    return SaveGameData(
+      slotId: json['slotId'] as String,
+      contentPackId: json['contentPackId'] as String,
+      saveVersion: json['saveVersion'] as int,
+      contentPackVersion: json['contentPackVersion'] as int,
+      playerData: PlayerData.fromJson(
+        json['playerData'] as Map<String, dynamic>,
+      ),
+      inventoryData: InventoryData.fromJson(
+        json['inventoryData'] as Map<String, dynamic>,
+      ),
+      worldData: WorldData.fromJson(json['worldData'] as Map<String, dynamic>),
+      craftingState: CraftingState.fromJson(
+        json['craftingState'] as Map<String, dynamic>,
+      ),
+      encounterData: EncounterData.fromJson(
+        json['encounterData'] as Map<String, dynamic>,
+      ),
+    );
+  }
+}
+
+class GameCatalogBundle {
+  final String id;
+  final int version;
+  final ItemCatalog itemCatalog;
+  final EntityCatalog entityCatalog;
+  final RecipeCatalog recipeCatalog;
+  final ZoneCatalog zoneCatalog;
+
+  GameCatalogBundle({
+    required this.id,
+    required this.version,
+    required this.itemCatalog,
+    required this.entityCatalog,
+    required this.recipeCatalog,
+    required this.zoneCatalog,
+  });
+}
+
+class GameSessionFactory {
+  GameCatalogBundle catalog1() {
+    return GameCatalogBundle(
+      id: "1",
+      version: 1,
+      itemCatalog: ItemCatalog(),
+      entityCatalog: EntityCatalog(),
+      recipeCatalog: RecipeCatalog(),
+      zoneCatalog: ZoneCatalog(),
+    );
+  }
+
+  GameSession create({
+    required SaveGameData save,
+    required GameCatalogBundle catalogs,
+    required TickerProvider vsync,
+  }) {
+    // services
+    final buffService = BuffService();
+    final craftingService = CraftingService();
+    final encounterService = EncounterService();
+    final equipmentService = EquipmentService();
+    final inventoryService = InventoryService();
+    final skillService = SkillService();
+    final weightedDropTableService = WeightedDropTableService();
+    final worldService = WorldService();
+    ActionTimingService actionTimingService = ActionTimingService();
+    final playerDataService = PlayerDataService(
+      buffService: buffService,
+      equpmentService: equipmentService,
+      skillService: skillService,
+    );
+
+    // systems
+    final craftingSystem = CraftingSystem(
+      playerState: save.playerData,
+      inventoryData: save.inventoryData,
+      craftingState: save.craftingState,
+      worldState: save.worldData,
+      recipeCatalog: catalogs.recipeCatalog,
+      zoneCatalog: catalogs.zoneCatalog,
+      playerDataService: playerDataService,
+      craftingService: craftingService,
+      inventoryService: inventoryService,
+      weightedDropTableService: weightedDropTableService,
+      worldService: worldService,
+      buffService: buffService,
+      entityCatalog: catalogs.entityCatalog,
+    );
+    final encounterSystem = EncounterSystem(
+      encounterService: encounterService,
+      worldService: worldService,
+      playerDataService: playerDataService,
+      dropTableService: weightedDropTableService,
+      inventoryService: inventoryService,
+      entityCatalog: catalogs.entityCatalog,
+      itemCatalog: catalogs.itemCatalog,
+    );
+    final equipmentSystem = EquipmentSystem(
+      inventoryService: inventoryService,
+      equipmentService: equipmentService,
+    );
+    final zoneBuffSystem = ZoneBuffSystem(
+      worldService: worldService,
+      buffService: buffService,
+    );
+    ActionSpeedSystem actionSpeedSystem = ActionSpeedSystem(
+      actionTimingService: actionTimingService,
+      playerDataService: playerDataService,
+    );
+
+    //controllers
+    ActionTimingController actionTimingController = ActionTimingController(
+      vsync: vsync,
+      actionTimingService: actionTimingService,
+      playerState: save.playerData,
+      actionSpeedSystem: actionSpeedSystem,
+    );
+    final playerDataController = PlayerDataController();
+    final encounterController = EncounterController(
+      playerData: save.playerData,
+      encounterState: save.encounterData,
+      encounterService: encounterService,
+      worldState: save.worldData,
+      worldService: worldService,
+      actionTimingController: actionTimingController,
+      entityCatalog: catalogs.entityCatalog,
+      dropTableService: weightedDropTableService,
+      playerDataService: playerDataService,
+      inventoryState: save.inventoryData,
+      inventoryService: inventoryService,
+      itemCatalog: catalogs.itemCatalog,
+      encounterSystem: encounterSystem,
+    );
+    final buffController = BuffController(
+      playerState: save.playerData,
+      buffService: buffService,
+      zoneBuffSystem: zoneBuffSystem,
+      worldState: save.worldData,
+    );
+    final craftingController = CraftingController(
+      actionTimingController: actionTimingController,
+      inventoryData: save.inventoryData,
+      inventoryService: inventoryService,
+      craftingSystem: craftingSystem,
+      worldState: save.worldData,
+      buffState: save.playerData.buffData,
+      craftingService: craftingService,
+      craftingState: save.craftingState,
+      playerState: save.playerData,
+      reciepeCatalog: catalogs.recipeCatalog,
+    );
+    final equipmentController = EquipmentController();
+    final worldController = WorldController(
+      worldState: save.worldData,
+      worldService: worldService,
+      playerState: save.playerData,
+      zoneCatalog: catalogs.zoneCatalog,
+      dropTableService: weightedDropTableService,
+      entityCatalog: catalogs.entityCatalog,
+    );
+
+    return GameSession(
+      saveGameData: save,
+      catalogBundle: catalogs,
+      playerDataController: playerDataController,
+      encounterController: encounterController,
+      buffController: buffController,
+      craftingController: craftingController,
+      equipmentController: equipmentController,
+      worldController: worldController,
+      buffService: buffService,
+      craftingService: craftingService,
+      encounterService: encounterService,
+      equipmentService: equipmentService,
+      inventoryService: inventoryService,
+      playerDataService: playerDataService,
+      skillService: skillService,
+      weightedDropTableService: weightedDropTableService,
+      worldService: worldService,
+      craftingSystem: craftingSystem,
+      encounterSystem: encounterSystem,
+      equipmentSystem: equipmentSystem,
+    );
+  }
+}
+
+class GameSession {
+  // game state data
+  SaveGameData saveGameData;
+
+  // catalogs
+  GameCatalogBundle catalogBundle;
+
+  // controllers
+  PlayerDataController playerDataController;
+  EncounterController encounterController;
+  BuffController buffController;
+  CraftingController craftingController;
+  EquipmentController equipmentController;
+  WorldController worldController;
+
+  // services
+  BuffService buffService;
+  CraftingService craftingService;
+  EncounterService encounterService;
+  EquipmentService equipmentService;
+  InventoryService inventoryService;
+  PlayerDataService playerDataService;
+  SkillService skillService;
+  WeightedDropTableService weightedDropTableService;
+  WorldService worldService;
+
+  // systems
+  CraftingSystem craftingSystem;
+  EncounterSystem encounterSystem;
+  EquipmentSystem equipmentSystem;
+
+  GameSession({
+    // data
+    required this.saveGameData,
+
+    // catalogs
+    required this.catalogBundle,
+
+    // controllers
+    required this.playerDataController,
+    required this.encounterController,
+    required this.buffController,
+    required this.craftingController,
+    required this.equipmentController,
+    required this.worldController,
+
+    // services
+    required this.buffService,
+    required this.craftingService,
+    required this.encounterService,
+    required this.equipmentService,
+    required this.inventoryService,
+    required this.playerDataService,
+    required this.skillService,
+    required this.weightedDropTableService,
+    required this.worldService,
+
+    // systems
+    required this.craftingSystem,
+    required this.encounterSystem,
+    required this.equipmentSystem,
+  });
+}

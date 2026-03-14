@@ -24,6 +24,56 @@ class Entity {
 
   Entity({required this.id, required this.name})
     : instanceId = UniqueKey().toString();
+
+  Map<String, dynamic> toJson() {
+    return {
+      'runtimeType': 'Entity',
+      'id': id.name,
+      'name': name,
+      // instanceId is intentionally not serialized because it is a runtime-only value
+    };
+  }
+
+  factory Entity.fromJson(Map<String, dynamic> json) {
+    final runtimeType = json['runtimeType'];
+
+    if (runtimeType is! String) {
+      throw FormatException(
+        'Missing or invalid "runtimeType". Expected String.',
+      );
+    }
+
+    switch (runtimeType) {
+      case 'Entity':
+        final rawId = json['id'];
+        final rawName = json['name'];
+
+        if (rawId is! String) {
+          throw FormatException('Missing or invalid "id". Expected String.');
+        }
+
+        if (rawName is! String) {
+          throw FormatException('Missing or invalid "name". Expected String.');
+        }
+
+        final entityId = EntityId.values.firstWhere(
+          (e) => e.name == rawId,
+          orElse: () => throw FormatException('Invalid EntityId "$rawId".'),
+        );
+
+        return Entity(id: entityId, name: rawName);
+      case 'CraftingEntity':
+        return CraftingEntity.fromJson(json);
+      case 'CampfireEntity':
+        return CampfireEntity.fromJson(json);
+      case 'EncounterEntity':
+        return EncounterEntity.fromJson(json);
+      case 'CombatEntity':
+        return CombatEntity.fromJson(json);
+      default:
+        throw FormatException('Unsupported runtimeType "$runtimeType".');
+    }
+  }
 }
 
 class EntityDefinition {
@@ -42,6 +92,37 @@ class CraftingEntity extends Entity {
     required super.name,
     required this.craftingSkill,
   });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'CraftingEntity';
+    json['craftingSkill'] = craftingSkill.name;
+    return json;
+  }
+
+  factory CraftingEntity.fromJson(Map<String, dynamic> json) {
+    final baseEntity = Entity.fromJson({...json, 'runtimeType': 'Entity'});
+    final rawCraftingSkill = json['craftingSkill'];
+
+    if (rawCraftingSkill is! String) {
+      throw FormatException(
+        'Missing or invalid "craftingSkill". Expected String.',
+      );
+    }
+
+    final craftingSkill = SkillId.values.firstWhere(
+      (s) => s.name == rawCraftingSkill,
+      orElse: () =>
+          throw FormatException('Invalid SkillId "$rawCraftingSkill".'),
+    );
+
+    return CraftingEntity(
+      id: baseEntity.id,
+      name: baseEntity.name,
+      craftingSkill: craftingSkill,
+    );
+  }
 }
 
 class CampfireEntity extends CraftingEntity {
@@ -50,6 +131,26 @@ class CampfireEntity extends CraftingEntity {
     required super.name,
     super.craftingSkill = SkillId.COOKING,
   });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'CampfireEntity';
+    return json;
+  }
+
+  factory CampfireEntity.fromJson(Map<String, dynamic> json) {
+    final baseEntity = CraftingEntity.fromJson({
+      ...json,
+      'runtimeType': 'CraftingEntity',
+    });
+
+    return CampfireEntity(
+      id: baseEntity.id,
+      name: baseEntity.name,
+      craftingSkill: baseEntity.craftingSkill,
+    );
+  }
 }
 
 class CraftingEntityDefinition extends EntityDefinition {
@@ -94,6 +195,66 @@ class EncounterEntity extends Entity {
     required this.defence,
     required this.hitpoints,
   }) : maxHitPoints = hitpoints;
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'EncounterEntity';
+    json['entityType'] = entityType.name;
+    json['defence'] = defence;
+    json['count'] = count;
+    json['hitpoints'] = hitpoints;
+    json['maxHitPoints'] = maxHitPoints;
+    return json;
+  }
+
+  factory EncounterEntity.fromJson(Map<String, dynamic> json) {
+    final baseEntity = Entity.fromJson({...json, 'runtimeType': 'Entity'});
+    final rawEntityType = json['entityType'];
+    final rawDefence = json['defence'];
+    final rawCount = json['count'];
+    final rawHitpoints = json['hitpoints'];
+    final rawMaxHitPoints = json['maxHitPoints'];
+
+    if (rawEntityType is! String) {
+      throw FormatException(
+        'Missing or invalid "entityType". Expected String.',
+      );
+    }
+
+    if (rawDefence is! int) {
+      throw FormatException('Missing or invalid "defence". Expected int.');
+    }
+
+    if (rawCount is! int) {
+      throw FormatException('Missing or invalid "count". Expected int.');
+    }
+
+    if (rawHitpoints is! int) {
+      throw FormatException('Missing or invalid "hitpoints". Expected int.');
+    }
+
+    if (rawMaxHitPoints is! int) {
+      throw FormatException('Missing or invalid "maxHitPoints". Expected int.');
+    }
+
+    final entityType = SkillId.values.firstWhere(
+      (s) => s.name == rawEntityType,
+      orElse: () => throw FormatException('Invalid SkillId "$rawEntityType".'),
+    );
+
+    final entity = EncounterEntity(
+      id: baseEntity.id,
+      name: baseEntity.name,
+      count: rawCount,
+      entityType: entityType,
+      defence: rawDefence,
+      hitpoints: rawHitpoints,
+    );
+
+    entity.maxHitPoints = rawMaxHitPoints;
+    return entity;
+  }
 }
 
 class EncounterEntityDefinition extends EntityDefinition {
@@ -136,6 +297,48 @@ class CombatEntity extends EncounterEntity {
     required this.attack,
     required this.attackInterval,
   });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'CombatEntity';
+    json['attack'] = attack;
+    json['attackInterval'] = attackInterval;
+    return json;
+  }
+
+  factory CombatEntity.fromJson(Map<String, dynamic> json) {
+    final baseEntity = EncounterEntity.fromJson({
+      ...json,
+      'runtimeType': 'EncounterEntity',
+    });
+    final rawAttack = json['attack'];
+    final rawAttackInterval = json['attackInterval'];
+
+    if (rawAttack is! int) {
+      throw FormatException('Missing or invalid "attack". Expected int.');
+    }
+
+    if (rawAttackInterval is! num) {
+      throw FormatException(
+        'Missing or invalid "attackInterval". Expected number.',
+      );
+    }
+
+    final entity = CombatEntity(
+      id: baseEntity.id,
+      name: baseEntity.name,
+      entityType: baseEntity.entityType,
+      count: baseEntity.count,
+      defence: baseEntity.defence,
+      hitpoints: baseEntity.hitpoints,
+      attack: rawAttack,
+      attackInterval: rawAttackInterval.toDouble(),
+    );
+
+    entity.maxHitPoints = baseEntity.maxHitPoints;
+    return entity;
+  }
 }
 
 class CombatEntityDefinition extends EncounterEntityDefinition {
