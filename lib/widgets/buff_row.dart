@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
-import '../catalogs/item_catalog.dart';
 
 class BuffRow extends StatelessWidget {
   const BuffRow({super.key});

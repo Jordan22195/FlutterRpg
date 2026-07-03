@@ -11,77 +11,28 @@ import 'package:rpg/widgets/skil_tile.dart';
 import '../controllers/buff_controller.dart';
 
 class CraftingScreen extends StatefulWidget {
-  CraftingScreen({super.key, required this.skill, required this.imageId});
-  final SkillId skill;
-  final Enum imageId;
+  const CraftingScreen({super.key});
 
   @override
   State<CraftingScreen> createState() => _CraftingScreenState();
 }
 
+/*
+crafting screen contents:
+-center screen image of craftin screen location
+-header with crafting skill name and back button
+-recipe card that shows currently selected recipe, and opens recipe picker dialog on tap
+-skill progress tile for the active crafting skill
+-inventory grid of currently crafted items 
+*/
+
 class _CraftingScreenState extends State<CraftingScreen>
     with TickerProviderStateMixin {
-  final crafting = CraftingController.instance;
-  PlayerDataController? _player;
-  bool _initializing = true;
-
-  @override
-  void initState() {
-    super.initState();
-
-    Future.microtask(() async {
-      final c = context.read<PlayerDataController>();
-      _player = c;
-      await c.ensureLoaded();
-      if (!mounted) return;
-
-      // Bind controller references
-      crafting.initForSkill(skill: widget.skill, controller: c);
-
-      setState(() {
-        _initializing = false;
-      });
-    });
-  }
-
-  void bindActionButton() {
-    Future.microtask(() async {
-      final c = context.read<PlayerDataController>();
-      _player = c;
-      await c.ensureLoaded();
-      if (!mounted) return;
-
-      // Bind controller references
-      crafting.initForSkill(skill: widget.skill, controller: c);
-
-      // Hook into timing loop (same idea as encounter)
-      //c.initActionTiming(this);
-      if (!mounted) return;
-      c.actionTimingController.onFire = () {
-        if (!mounted) return;
-        setState(() {
-          crafting.craftOnce();
-        });
-      };
-      if (!mounted) return;
-      setState(() {
-        _initializing = false;
-      });
-      setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   void _showRecipePicker(
     BuildContext context,
-    PlayerDataController playerDataController,
+    CraftingController controller,
+    List<Recipie> recipies,
   ) {
-    final recipes = crafting.getVisibleRecipesForActiveSkill();
-    print("Showing recipe picker with ${recipes.length} recipes");
     showDialog(
       context: context,
       builder: (ctx) {
@@ -95,10 +46,9 @@ class _CraftingScreenState extends State<CraftingScreen>
               itemBuilder: (context, i) {
                 final r = recipes[i];
                 return RecipeCard(
-                  inventory: playerDataController.data!.inventory,
                   recipeId: r.id,
                   onTap: () {
-                    crafting.selectRecipe(r);
+                    controller.selectRecipe(r);
                     Navigator.of(ctx).pop();
                     setState(() {});
                   },
@@ -119,38 +69,36 @@ class _CraftingScreenState extends State<CraftingScreen>
 
   @override
   Widget build(BuildContext context) {
-    final playerDataController = context.watch<PlayerDataController>();
-
-    if (playerDataController.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    if (playerDataController.error != null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Crafting')),
-        body: Center(child: Text('Error: ${playerDataController.error}')),
-      );
-    }
-
-    final activeRecipe = crafting.activeRecipe;
+    final controller = context.watch<CraftingController>();
+    final skillName = controller.skillName();
+    final skillId = controller.getCraftingEntitySkillId();
+    final entityImageId = controller.entityIconAsset();
+    final activeRecipe = controller.activeRecipe;
+    final activeRecipeId;
     final canCraft = (activeRecipe != null) && crafting.canCraftActive();
+    final recipeList;
+    final craftedItems;
 
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(16),
+        // header column
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
               child: Row(
                 children: [
+                  // navigation arrow
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
                     onPressed: () => Navigator.of(context).maybePop(),
                   ),
                   const SizedBox(width: 4),
+                  // title text
                   Expanded(
                     child: Text(
-                      CraftingController.instance.activeSkill.name ?? "Error",
+                      skillName,
                       style: Theme.of(context).textTheme.titleLarge,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -158,18 +106,22 @@ class _CraftingScreenState extends State<CraftingScreen>
                 ],
               ),
             ),
-            ItemStackTile(size: 160, count: 0, id: widget.imageId),
+
+            // main center image
+            ItemStackTile(size: 160, count: 0, id: entityImageId),
             SizedBox(height: 12),
 
-            SkillTile(id: widget.skill),
+            // skill progress tile
+            SkillTile(id: skillId),
 
+            // selectable recipe card
             RecipeCard(
               maxCraftable: false,
-              inventory: playerDataController.data!.inventory,
-              recipeId: activeRecipe?.id ?? '',
-              onTap: () => _showRecipePicker(context, playerDataController),
+              recipeId: activeRecipeId,
+              onTap: () => _showRecipePicker(context, controller, recipeList),
             ),
 
+            // inventory grid of crafted items
             Card(
               child: Column(
                 children: [
@@ -191,51 +143,15 @@ class _CraftingScreenState extends State<CraftingScreen>
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: MomentumPrimaryButton(
-                    maxInterval: Duration(seconds: 2),
                     enabled: canCraft,
                     label: "Craft",
-                    controller: playerDataController.actionTimingController,
-                    onFireFunction: () {
-                      print("CraftingScreen: Craft button fired!");
-                      crafting.craftOnce();
+                    startActionFunction: () {
+                      controller.startCraftingAction();
                     },
-                    appBarTile: ItemStackTile(
-                      size: 52,
-                      id: activeRecipe?.output.first.id,
-                      count: CraftingController.instance.getPlayerCount(
-                        activeRecipe?.output.first.id,
-                      ),
-                      // Only show timer for firemaking recipes that are currently active
-                      isTimerStackTile:
-                          activeRecipe?.skill == SkillId.FIREMAKING &&
-                              BuffController.instance.campfireBuff.id ==
-                                  activeRecipe?.output.first.id
-                          ? true
-                          : false,
-                      expirationTime:
-                          activeRecipe?.skill == SkillId.FIREMAKING &&
-                              BuffController.instance.campfireBuff.id ==
-                                  activeRecipe?.output.first.id
-                          ? BuffController.instance.campfireBuff.expirationTime
-                          : null,
-                    ),
                   ),
                 ),
                 SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.all(1),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: TextButton(
-                    child: Text("Stop"),
-                    onPressed: () {
-                      PlayerDataController.instance.actionTimingController
-                          .stopNow();
-                    },
-                  ),
-                ),
+                StopPrimaryButton(),
               ],
             ),
           ],

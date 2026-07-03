@@ -25,7 +25,7 @@ class SkillDetailScreen extends StatelessWidget {
             Text("Total Xp : ${skill.xp.round()}"),
             Text("Next Level Xp : ${skill.nextLevelXp().round()}"),
             Text("Xp for next level : ${skill.xpToLevelUp().round()}"),
-            Text("Level Progress: ${levelProgress}"),
+            Text("Level Progress: $levelProgress"),
           ],
         ),
       ),

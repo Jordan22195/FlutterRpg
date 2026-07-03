@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import '../utilities/image_resolver.dart';
-import '../controllers/crafting_controller.dart';
 import '../data/skill_data.dart';
 import '../widgets/countdown_timer.dart';
 

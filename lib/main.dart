@@ -8,7 +8,6 @@ import 'controllers/buff_controller.dart';
 import 'controllers/crafting_controller.dart';
 import 'controllers/encounter_controller.dart';
 import 'controllers/world_controller.dart';
-import 'controllers/action_timing_controller.dart';
 import 'controllers/player_data_controller.dart';
 import 'screens/main_shell.dart';
 

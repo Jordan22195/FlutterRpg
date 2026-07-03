@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/action_result.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/data/player_data.dart';
@@ -14,9 +14,10 @@ import '../data/encounter_data.dart';
 import '../services/encounter_service.dart';
 import '../systems/encounter_system.dart';
 import '../services/inventory_service.dart';
+import '../data/ObjectStack.dart';
 
 // controllers coordinate between ui and systems or services
-// services coordinate multiple services
+// systems coordinate multiple services
 
 class EncounterController extends ChangeNotifier {
   // nonserialized data
@@ -34,6 +35,7 @@ class EncounterController extends ChangeNotifier {
   final EncounterService _encounterService;
   final WorldService _worldService;
   final PlayerDataService _playerDataService;
+  final InventoryService _inventoryService;
 
   //systems
   final EncounterSystem _encounterSystem;
@@ -55,6 +57,7 @@ class EncounterController extends ChangeNotifier {
     required InventoryService inventoryService,
     required ItemCatalog itemCatalog,
     required EncounterSystem encounterSystem,
+    required InventoryService invetoryService,
   }) : _playerState = playerData,
        _encounterState = encounterState,
        _encounterService = encounterService,
@@ -63,7 +66,8 @@ class EncounterController extends ChangeNotifier {
        _actionTimingController = actionTimingController,
        _playerDataService = playerDataService,
        _inventoryState = inventoryState,
-       _encounterSystem = encounterSystem;
+       _encounterSystem = encounterSystem,
+       _inventoryService = inventoryService;
 
   void doFishingEncounterAction() {
     latestActionResult = _encounterSystem.executeFishingAction(
@@ -145,5 +149,56 @@ class EncounterController extends ChangeNotifier {
     final e = _encounterState.entity;
     if (e!.maxHitPoints <= 0) return 0.0;
     return (e.hitpoints / e.maxHitPoints).clamp(0.0, 1.0);
+  }
+
+  // todo make this not return the mutable entity state. instead return
+  // a snapshot or copy of the entity
+  EncounterEntity getActiveEntity() {
+    return _encounterState.entity ??
+        EncounterEntity(
+          id: EntityId.NULL,
+          name: "null",
+          count: 0,
+          entityType: SkillId.NULL,
+          defence: 0,
+          hitpoints: 0,
+        );
+  }
+
+  bool respawning() {
+    return _encounterState.respawning;
+  }
+
+  bool isCombatEntity() {
+    return (_encounterState.entity is CombatEntity);
+  }
+
+  List<ObjectStack> itemDrops() {
+    return _inventoryService.getObjectStackList(_encounterState.itemDrops);
+  }
+
+  ItemId getEquipedFoodItemId() {
+    return _playerState.equipmentData.equipedFood;
+  }
+
+  int getEquipedFoodItemCount() {
+    final id = _playerState.equipmentData.equipedFood;
+    return _inventoryService.getItemCount(_inventoryState, id);
+  }
+
+  void setEquipedFood(ItemId id) {}
+
+  ItemId getEquipedTool() {
+    return ItemId.NULL;
+  }
+
+  void equipTool(ItemId id) {}
+
+  Map<SkillId, int> getPlayerStats() {
+    return _playerDataService.getStatTotals(_playerState);
+  }
+
+  int getPlayerHp() {
+    return _playerState.hitpoints;
   }
 }

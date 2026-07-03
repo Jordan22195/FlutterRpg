@@ -33,10 +33,6 @@ class BuffData {
     final Map<ZoneId, Map<ItemId, ZoneBuffItem>> parsedZoneBuffs = {};
 
     for (final entry in zoneBuffsJson.entries) {
-      if (entry.key is! String) {
-        throw FormatException('Invalid key in zoneBuffs. Expected String.');
-      }
-
       if (entry.value is! Map) {
         throw FormatException(
           'Invalid value in zoneBuffs for key "${entry.key}". Expected object.',

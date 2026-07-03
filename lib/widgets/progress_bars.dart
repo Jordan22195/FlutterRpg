@@ -7,7 +7,7 @@ import 'fill_bar.dart';
 import '../catalogs/item_catalog.dart';
 
 class ProgressBars extends StatelessWidget {
-  ProgressBars({super.key});
+  const ProgressBars({super.key});
 
   static Enum iconId = ItemId.NULL;
   static int iconCount = 1;
@@ -97,7 +97,7 @@ class ProgressBars extends StatelessWidget {
 }
 
 class ActionIntervalTimer extends StatelessWidget {
-  ActionIntervalTimer({super.key});
+  const ActionIntervalTimer({super.key});
 
   @override
   Widget build(BuildContext context) {

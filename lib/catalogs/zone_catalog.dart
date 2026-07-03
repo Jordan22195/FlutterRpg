@@ -84,12 +84,14 @@ class ZoneDefinition {
   final String name;
   final List<EntityId> permanentEntities;
   final List<WeightedDropTableEntry<EntityId>> discoverableEntities;
+  final String iconAsset;
 
   ZoneDefinition({
     required this.id,
     required this.name,
     required this.discoverableEntities,
     required this.permanentEntities,
+    required this.iconAsset,
   });
 }
 
@@ -103,6 +105,7 @@ class ZoneCatalog {
     name: "error",
     discoverableEntities: [],
     permanentEntities: [],
+    iconAsset: "",
   );
 
   ZoneCatalog() {
@@ -121,6 +124,8 @@ class ZoneCatalog {
     _zones[ZoneId.TUTORIAL_FARM] = ZoneDefinition(
       id: ZoneId.TUTORIAL_FARM,
       name: "Blanchy's Farm",
+      iconAsset: "",
+
       permanentEntities: [],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
@@ -130,6 +135,8 @@ class ZoneCatalog {
     );
     _zones[ZoneId.STARTING_FOREST] = ZoneDefinition(
       id: ZoneId.STARTING_FOREST,
+      iconAsset: 'assets/images/zones/forest.png',
+
       name: "The Forest",
       permanentEntities: [EntityId.ANVIL, EntityId.TRANQUIL_POND],
       discoverableEntities: [
@@ -142,6 +149,8 @@ class ZoneCatalog {
     _zones[ZoneId.CHALLENGING_MOUNTAIN] = ZoneDefinition(
       id: ZoneId.CHALLENGING_MOUNTAIN,
       name: "The Mountain",
+      iconAsset: "",
+
       permanentEntities: [],
 
       discoverableEntities: [

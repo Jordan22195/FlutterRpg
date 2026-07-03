@@ -46,20 +46,20 @@ class ActionTimingData {
 //  Action Timing Controller
 //
 
-class ActionTimingController {
+class ActionTimingController extends ChangeNotifier {
   // internal state
   final TickerProvider _vsync;
   late Ticker ticker;
-  ActionTimingData _actionTimingState = ActionTimingData();
+  final ActionTimingData _actionTimingState = ActionTimingData();
 
   // data
-  PlayerData _playerState;
+  final PlayerData _playerState;
 
   // services
-  ActionTimingService _actionTimingService;
+  final ActionTimingService _actionTimingService;
 
   //systems
-  ActionSpeedSystem _actionSpeedSystem;
+  final ActionSpeedSystem _actionSpeedSystem;
 
   ActionTimingController({
     required TickerProvider vsync,
@@ -72,6 +72,18 @@ class ActionTimingController {
        _vsync = vsync,
        _actionSpeedSystem = actionSpeedSystem {
     ticker = _vsync.createTicker(_onTick);
+  }
+
+  bool getActionSpeedLockState() {
+    return _actionTimingState.speedLocked;
+  }
+
+  void lockActionSpeed() {
+    _actionTimingService.setLockActionSpeed(true, _actionTimingState);
+  }
+
+  void unlockActionSpeed() {
+    _actionTimingService.setLockActionSpeed(false, _actionTimingState);
   }
 
   void bindOnFireFunction(FutureOr<void> Function() function) {
@@ -88,12 +100,23 @@ class ActionTimingController {
     ticker.stop();
   }
 
+  void onPrimaryButtonPressed() {
+    // set held flag
+    _actionTimingService.setPrimaryButtonHeld(true, _actionTimingState);
+  }
+
+  void onPrimaryButtonReleased() {
+    // reset held flag
+    _actionTimingService.setPrimaryButtonHeld(false, _actionTimingState);
+  }
+
   // increase speed percent based on acceleration values
   // icriment action progress based on time elapsed and current action interval
   // if action progress is 100% fire the action
   // drain stamina and apply xp based on speed mulitplier
   void _onTick(Duration elapsed) {
     _actionSpeedSystem.frameUpdate(elapsed, _actionTimingState, _playerState);
+    notifyListeners();
   }
 }
 
@@ -204,6 +227,14 @@ class ActionTimingService {
                 .clamp(0.0, 1.0);
       }
     }
+  }
+
+  void setLockActionSpeed(bool locked, ActionTimingData actionTimingState) {
+    actionTimingState.speedLocked = locked;
+  }
+
+  void setPrimaryButtonHeld(bool held, ActionTimingData state) {
+    state.buttonHeld = held;
   }
 
   void udpateActionProgress(double dt, ActionTimingData actionTimingState) {

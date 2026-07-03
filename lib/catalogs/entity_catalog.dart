@@ -7,6 +7,7 @@ enum EntityId {
   NULL,
   ANVIL,
   BASIC_CAMPIRE,
+  FIREPIT,
   TREE,
   GOBLIN,
   COPPER,
@@ -126,6 +127,8 @@ class CraftingEntity extends Entity {
 }
 
 class CampfireEntity extends CraftingEntity {
+  DateTime? expirationTime;
+
   CampfireEntity({
     required super.id,
     required super.name,
@@ -387,6 +390,12 @@ class EntityCatalog {
     EntityId.BASIC_CAMPIRE: CampfireEntityDefinition(
       name: "Basic Campfire",
       craftingSkill: SkillId.COOKING,
+      iconAsset: "assets/images/entities/basic_campfire.png",
+    ),
+
+    EntityId.FIREPIT: CraftingEntityDefinition(
+      name: "Firepit",
+      craftingSkill: SkillId.FIREMAKING,
       iconAsset: "assets/images/entities/basic_campfire.png",
     ),
 

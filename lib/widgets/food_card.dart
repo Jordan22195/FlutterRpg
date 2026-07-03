@@ -64,10 +64,7 @@ class FoodCard extends StatelessWidget {
                       child: Row(
                         children: [
                           IconRenderer(size: 16, id: skill),
-                          Text(
-                            "+${stats}",
-                            style: const TextStyle(fontSize: 12),
-                          ),
+                          Text("+$stats", style: const TextStyle(fontSize: 12)),
                           const SizedBox(width: 2),
                         ],
                       ),

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/services/player_data_service.dart';
+import 'package:provider/provider.dart';
+import 'package:rpg/controllers/player_data_controller.dart';
 import 'explore_screen.dart';
+import '../catalogs/zone_catalog.dart';
 
 class MapScreen extends StatelessWidget {
   const MapScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final playerDataController = context.watch<PlayerDataController>();
+
     // IMPORTANT: no Scaffold here — MainShell owns the Scaffold + BottomNav.
     return SafeArea(
       child: Stack(
@@ -30,9 +34,7 @@ class MapScreen extends StatelessWidget {
             top: 220,
             child: ElevatedButton(
               onPressed: () {
-                PlayerDataController.instance.setCurrentZone(
-                  Zones.STARTING_FOREST,
-                );
+                playerDataController.setCurrentZone(ZoneId.STARTING_FOREST);
                 // This pushes onto the MAP TAB's nested navigator,
                 // so switching tabs and coming back returns to ExploreScreen.
                 Navigator.of(

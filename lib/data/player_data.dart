@@ -7,6 +7,7 @@ import '../data/buff_data.dart';
 class PlayerData {
   // location info
   ZoneId currentZoneId;
+
   EntityId currentEntityViewId;
 
   // skill stats

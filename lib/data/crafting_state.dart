@@ -1,7 +1,10 @@
+import 'package:rpg/catalogs/entity_catalog.dart';
+
 import 'inventory_data.dart';
 
 class CraftingState {
   CraftingState();
+  EntityId craftingEntityId = EntityId.NULL;
   String selectedRecipeId = "";
   String activeRecipeId = "";
 

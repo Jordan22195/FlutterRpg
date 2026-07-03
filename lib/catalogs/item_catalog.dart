@@ -405,6 +405,7 @@ class FoodItemDefinition extends ItemDefinition {
     super.xpValue,
   });
 
+  @override
   Item toItem(ItemId id) => Item(id: id, name: name, value: value);
 }
 
@@ -421,6 +422,7 @@ class BuffItemDefinition extends ItemDefinition {
     super.iconAsset,
   });
 
+  @override
   BuffItem toItem(ItemId id) => BuffItem(
     id: id,
     name: name,
@@ -443,6 +445,7 @@ class EquipmentItemDefition extends ItemDefinition {
     super.iconAsset,
   });
 
+  @override
   EquipmentItem toItem(ItemId id) => EquipmentItem(
     id: id,
     name: name,

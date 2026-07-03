@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/widgets/equipment_card.dart';
-import '../services/player_data_service.dart';
 import 'package:provider/provider.dart';
-import 'explore_screen.dart';
 import '../data/equipment_data.dart';
 import '../catalogs/item_catalog.dart';
 import '../widgets/item_stack_tile.dart';

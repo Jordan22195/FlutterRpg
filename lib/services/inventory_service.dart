@@ -1,5 +1,6 @@
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/equipment_data.dart';
+import 'package:rpg/data/skill_data.dart';
 import '../catalogs/item_catalog.dart';
 import '../data/inventory_data.dart';
 
@@ -65,11 +66,28 @@ class InventoryService {
     InventoryData inventoryState,
     ItemCatalog itemCatalog,
   ) {
-    // This is a placeholder implementation. You can replace it with actual logic based on your game's design.
     List<ItemId> itemsForSlot = [];
     for (MapEntry entry in inventoryState.itemMap.entries) {
       final def = itemCatalog.definitionFor(entry.key);
       if (def is EquipmentItemDefition && def.armorSlot == slot) {
+        itemsForSlot.add(entry.key);
+      }
+    }
+    return itemsForSlot;
+  }
+
+  List<ItemId> getItemsListForEquipmentSlotAndSkill(
+    ArmorSlots slot,
+    InventoryData inventoryState,
+    ItemCatalog itemCatalog,
+    SkillId skillId,
+  ) {
+    List<ItemId> itemsForSlot = [];
+    for (MapEntry entry in inventoryState.itemMap.entries) {
+      final def = itemCatalog.definitionFor(entry.key);
+      if (def is EquipmentItemDefition &&
+          def.armorSlot == slot &&
+          def.skillBonus.containsKey(skillId)) {
         itemsForSlot.add(entry.key);
       }
     }

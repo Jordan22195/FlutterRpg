@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/services/player_data_service.dart';
+import 'package:provider/provider.dart';
+import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/widgets/equipment_card.dart';
@@ -12,9 +13,8 @@ class FoodPicker {
     Function(ItemId id) onEquip, {
     SkillId skillFilter = SkillId.NULL,
   }) {
-    final list = PlayerDataController.instance.data!.inventory
-        .getFoodItemsSortedByHealing();
-    print("Opening food picker dialog with ${list.length} items");
+    final controller = context.watch<InventoryController>();
+    final list = controller.getFoodItems();
     showDialog(
       context: context,
       builder: (ctx) {
@@ -30,7 +30,6 @@ class FoodPicker {
                 return FoodCard(
                   id: id,
                   onTap: () {
-                    PlayerDataController.instance.refresh();
                     onEquip(id);
                     Navigator.of(ctx).pop();
                   },
@@ -57,12 +56,10 @@ class EquipmentPicker {
     Function(ItemId id) onEquip, {
     SkillId skillFilter = SkillId.NULL,
   }) {
+    final controller = context.watch<InventoryController>();
     final list = skillFilter == SkillId.NULL
-        ? PlayerDataController.instance.data!.inventory
-              .getItemsListForEquipmentSlot(slot)
-        : PlayerDataController.instance.data!.inventory
-              .getItemListForSlotAndSkill(slot, skillFilter);
-    print("Opening dialog for slot: ${slot.name}, with ${list.length} items");
+        ? controller.getSlotItemList(slot)
+        : controller.getSlotItemListForSkill(slot, skillFilter);
     showDialog(
       context: context,
       builder: (ctx) {
@@ -79,7 +76,6 @@ class EquipmentPicker {
                   id: e,
 
                   onTap: () {
-                    PlayerDataController.instance.refresh();
                     onEquip(e);
                     Navigator.of(ctx).pop();
                   },

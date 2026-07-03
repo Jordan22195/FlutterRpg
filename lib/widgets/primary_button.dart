@@ -1,30 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:rpg/widgets/progress_bars.dart';
+import 'package:provider/provider.dart';
 import '../controllers/action_timing_controller.dart';
-import '../services/player_data_service.dart';
-import '../widgets/item_stack_tile.dart';
-import '../catalogs/item_catalog.dart';
 
 class MomentumPrimaryButton extends StatefulWidget {
   const MomentumPrimaryButton({
     required this.enabled,
     super.key,
     required this.label,
-    required this.controller,
-    required this.onFireFunction,
-    required this.appBarTile,
-    required this.maxInterval,
+    required this.startActionFunction,
   });
 
-  final Duration maxInterval;
-
-  final FutureOr<void> Function() onFireFunction;
+  final FutureOr<void> Function() startActionFunction;
   final bool enabled;
   final String label;
-  final ActionTimingService controller;
-  final Widget appBarTile;
 
   @override
   State<MomentumPrimaryButton> createState() => _MomentumPrimaryButtonState();
@@ -33,51 +23,22 @@ class MomentumPrimaryButton extends StatefulWidget {
 class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
   static const double _lockDragThresholdPx = 24.0;
 
-  bool _locked = false;
   bool _lockTriggeredThisDrag = false;
 
-  void _populateAppBarIconIfNeeded() {
-    if (widget.appBarTile is ItemStackTile) {
-      final tile = widget.appBarTile as ItemStackTile;
-      ProgressBars.iconId = tile.id ?? ItemId.NULL;
-      ProgressBars.iconCount = tile.count;
-      ProgressBars.iconIsTimer = tile.isTimerStackTile;
-      ProgressBars.iconTimerEnd = tile.expirationTime;
-    }
-  }
-
-  void _unlock() {
-    widget.controller.pressUp();
-    widget.controller.speedLocked = false;
-    setState(() {
-      _locked = false;
-    });
-  }
-
-  void _startPressed() {
-    _populateAppBarIconIfNeeded();
-    widget.controller.onFire = widget.onFireFunction;
-    widget.controller.pressDown();
-  }
-
-  Future<void> _lockAndFireOnce() async {
-    _populateAppBarIconIfNeeded();
-
-    widget.controller.speedLocked = true;
-
-    if (mounted) {
-      setState(() {
-        _locked = true;
-      });
-    }
-  }
+  // a 'start' action is bound to the button. The start action
+  // action is specific to the aciton that is being performed
+  // (explore, ecounter, craft, ect). The start action that is
+  // bound to the button checks the conditions for the action,
+  // binds the actualy action method to the action controller
+  // loop and starts the periodc action controller.
 
   @override
   Widget build(BuildContext context) {
-    widget.controller.maxInterval = widget.maxInterval;
-    _locked = widget.controller.speedLocked;
+    final controller = context.watch<ActionTimingController>();
+    final locked = controller.getActionSpeedLockState();
+
     return AnimatedBuilder(
-      animation: widget.controller,
+      animation: controller,
       builder: (context, _) {
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -86,22 +47,14 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
           // normal momentum press interaction.
           onTapDown: (_) {
             if (!widget.enabled) return;
-            if (_locked) {
-              _unlock();
+            if (locked) {
+              controller.unlockActionSpeed();
               return;
             }
-            _startPressed();
+            controller.onPrimaryButtonPressed();
+            widget.startActionFunction();
           },
-          onTapUp: (_) {
-            if (!widget.enabled) return;
-            if (_locked) return; // locked keeps the press held
-            widget.controller.pressUp();
-          },
-          onTapCancel: () {
-            _lockTriggeredThisDrag = false;
-            if (_locked) return;
-            widget.controller.cancel();
-          },
+          onTapUp: (_) {},
 
           // Drag up to lock: once the user drags upward past a threshold,
           // execute once immediately and lock the button.
@@ -110,23 +63,19 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
           },
           onPanUpdate: (details) {
             if (!widget.enabled) return;
-            if (_locked) return;
+            if (locked) return;
             if (_lockTriggeredThisDrag) return;
 
             if (details.delta.dy <= -_lockDragThresholdPx) {
               _lockTriggeredThisDrag = true;
-              // Fire once immediately and lock.
-              _lockAndFireOnce();
+              controller.lockActionSpeed();
             }
           },
           onPanEnd: (_) {
-            // If we did not lock, release like a normal press.
-            if (!_locked && !_lockTriggeredThisDrag) {
-              widget.controller.pressUp();
-            }
             _lockTriggeredThisDrag = false;
           },
 
+          // button container
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -137,7 +86,7 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(widget.label, style: const TextStyle(color: Colors.white)),
-                if (_locked) ...[
+                if (locked) ...[
                   const SizedBox(width: 8),
                   const Icon(Icons.lock, size: 16, color: Colors.white),
                 ],
@@ -151,7 +100,7 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
 }
 
 class StopPrimaryButton extends StatelessWidget {
-  StopPrimaryButton({super.key, this.onTap});
+  const StopPrimaryButton({super.key, this.onTap});
 
   final VoidCallback? onTap;
 
@@ -162,6 +111,8 @@ class StopPrimaryButton extends StatelessWidget {
   //
   // the onTap parameter can be used to add more functinality.
   Widget build(BuildContext context) {
+    final controller = context.watch<ActionTimingController>();
+
     return Container(
       padding: const EdgeInsets.all(1),
       decoration: BoxDecoration(
@@ -171,7 +122,7 @@ class StopPrimaryButton extends StatelessWidget {
       child: TextButton(
         child: Text("Stop"),
         onPressed: () {
-          PlayerDataController.instance.actionTimingController.stopNow();
+          controller.stop();
         },
       ),
     );

@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/catalogs/recipe_catalog.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/inventory_data.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/crafting_service.dart';
 import '../services/inventory_service.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
@@ -24,6 +26,7 @@ class CraftingController extends ChangeNotifier {
 
   // catalogs
   final RecipeCatalog _recipeCatalog;
+  final EntityCatalog _entityCatalog;
 
   //services
   final InventoryService _inventoryService;
@@ -43,6 +46,7 @@ class CraftingController extends ChangeNotifier {
     required CraftingState craftingState,
     required PlayerData playerState,
     required RecipeCatalog reciepeCatalog,
+    required EntityCatalog entityCatalog,
   }) : _actionTimingController = actionTimingController,
        _inventoryState = inventoryData,
        _inventoryService = inventoryService,
@@ -52,6 +56,7 @@ class CraftingController extends ChangeNotifier {
        _playerState = playerState,
        _recipeCatalog = reciepeCatalog,
        _craftingState = craftingState,
+       _entityCatalog = entityCatalog,
        _buffState = buffState;
 
   int getItemCountInPlayerInventory(ItemId itemId) {
@@ -78,6 +83,8 @@ class CraftingController extends ChangeNotifier {
     notifyListeners();
   }
 
+
+  // each crafting entity is going to have its own seleted reciepe so there is going to need to be a state for every crafting entity. 
   void selectRecipe(String recipeId) {
     //service sets active recipe in crafting state
     _craftingState.selectedRecipeId = recipeId;
@@ -88,12 +95,14 @@ class CraftingController extends ChangeNotifier {
 
     // recipe becomes selected when tapped in the screen
     // recipe becomes active when action button is pressed
+
+
   }
 
   // todo move this logic to the enoucnter system
   // fires a single time when action button is pressed
   // binds doEncounterAction to the periodic loop
-  void startEncounterAction() {
+  void startCraftingAction() {
     if (_craftingState.selectedRecipeId == _craftingState.activeRecipe.id) {
       return;
     }
@@ -126,5 +135,24 @@ class CraftingController extends ChangeNotifier {
 
   int getMaxNumberCraftsForRecipe(String recipeId) {
     return _craftingSystem.craftableCount(recipeId, _inventoryState);
+  }
+
+  SkillId getCraftingEntitySkillId() {
+    final entityId = _playerState.currentEntityViewId;
+    final def = _entityCatalog.getDefinitionFor(entityId);
+    if (def is CraftingEntityDefinition) {
+      return def.craftingSkill;
+    }
+    return SkillId.NULL;
+  }
+
+  String skillName() {
+    return getCraftingEntitySkillId().name;
+  }
+
+  String entityIconAsset() {
+    return _entityCatalog
+        .getDefinitionFor(_playerState.currentEntityViewId)
+        .iconAsset;
   }
 }

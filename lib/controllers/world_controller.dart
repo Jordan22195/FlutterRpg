@@ -5,6 +5,7 @@ import '../catalogs/zone_catalog.dart';
 import '../services/world_service.dart';
 import '../catalogs/entity_catalog.dart';
 import '../services/weighted_drop_table_service.dart';
+import '../services/entity_screen_router_service.dart';
 
 class WorldController extends ChangeNotifier {
   // data
@@ -18,6 +19,7 @@ class WorldController extends ChangeNotifier {
   // services
   final WorldService _worldService;
   final WeightedDropTableService _dropTableService;
+  final EntityScreenRouterService _entityScreenRouterService;
 
   WorldController({
     required WorldData worldState,
@@ -26,12 +28,14 @@ class WorldController extends ChangeNotifier {
     required ZoneCatalog zoneCatalog,
     required WeightedDropTableService dropTableService,
     required EntityCatalog entityCatalog,
+    required EntityScreenRouterService entityScreenRouterService,
   }) : _dropTableService = dropTableService,
        _worldService = worldService,
        _zoneCatalog = zoneCatalog,
        _worldState = worldState,
        _entityCatalog = entityCatalog,
-       _playerState = playerState;
+       _playerState = playerState,
+       _entityScreenRouterService = entityScreenRouterService;
 
   List<Entity> getCurrentZoneEntities() {
     final list = _worldService.getCurrentZoneEntities(
@@ -44,6 +48,9 @@ class WorldController extends ChangeNotifier {
   ZoneDefinition getCurrentZoneDefinition() {
     return _zoneCatalog.getDefinitionFor(_playerState.currentZoneId);
   }
+
+  // todo tie action timing controller into this class
+  void startExplore() {}
 
   void discoverEntity() {
     final entries = _worldService.getZoneDropTableEntries(
@@ -59,5 +66,14 @@ class WorldController extends ChangeNotifier {
       _worldState,
     );
     notifyListeners();
+  }
+
+  void stopExplore() {}
+
+  void navigateToEntity(EntityId entityId, BuildContext context) {
+    _entityScreenRouterService.navigateToEntity(entityId, context);
+
+    // todo: move this. break paradigm of only mutating data in services.
+    _playerState.currentEntityViewId = entityId;
   }
 }

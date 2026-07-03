@@ -5,7 +5,6 @@ import '../catalogs/zone_catalog.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
 
-import 'package:flutter/foundation.dart';
 import '../services/equipment_service.dart';
 import '../services/skill_service.dart';
 
