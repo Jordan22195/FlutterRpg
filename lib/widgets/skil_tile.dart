@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rpg/data/skill_data.dart';
+import '../controllers/player_data_controller.dart';
 import '../widgets/icon_renderer.dart';
 import '../screens/skill_detail_screen.dart';
 
@@ -15,9 +17,8 @@ class SkillTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final progress = SkillController.instance
-        .getSkill(id)
-        .percentProgressToLevelUp();
+    final controller = context.watch<PlayerDataController>();
+    final progress = controller.getSkillProgress(id);
     final p = progress.clamp(0.0, 1.0);
 
     final centerChild = IconRenderer(id: id, size: size * 0.60);
@@ -73,9 +74,7 @@ class SkillTile extends StatelessWidget {
                             right: 0,
                             bottom: 0,
                             child: _CountBadge(
-                              count: SkillController.instance
-                                  .getSkill(id)
-                                  .getLevel(),
+                              count: controller.getSkillLevel(id),
                             ),
                           ),
                         ],
@@ -85,14 +84,6 @@ class SkillTile extends StatelessWidget {
                 ],
               ),
             ),
-            //  const SizedBox(height: 8),
-            /*    Text(
-              SkillController.instance.getSkill(id).name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelLarge,
-            ),
-            */
           ],
         ),
       ),

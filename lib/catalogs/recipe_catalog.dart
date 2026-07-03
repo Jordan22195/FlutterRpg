@@ -306,6 +306,12 @@ class RecipeCatalog {
     ),
   ];
 
+  List<CraftingRecipe> get recipes => List.unmodifiable(_recipes);
+
+  List<CraftingRecipe> recipesForSkill(SkillId skill) {
+    return _recipes.where((r) => r.skill == skill).toList();
+  }
+
   CraftingRecipe recipeById(String recipeId) {
     try {
       return _recipes.firstWhere((r) => r.id == recipeId);

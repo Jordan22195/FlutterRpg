@@ -146,8 +146,8 @@ class EncounterSystem {
     _inventoryService.addItems(encounter.itemDrops, [drop]);
 
     result.xp[SkillId.FISHING] =
-        (_itemCatalog.definitionFor(drop.id)?.xpValue ?? 0 * drop.count)
-            as double;
+        ((_itemCatalog.definitionFor(drop.id)?.xpValue ?? 0) * drop.count)
+            .toDouble();
 
     // Apply XP to player
     if (result.xp.isNotEmpty) {

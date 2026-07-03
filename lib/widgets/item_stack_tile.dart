@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/game_session.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import '../utilities/image_resolver.dart';
 import '../data/skill_data.dart';
@@ -35,8 +37,12 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   final String? description;
 
   void _showInfoDialog(BuildContext context) {
+    final currentId = id;
+    if (currentId is! ItemId) return;
     final itemDef =
-        ItemCatalog.definitionFor(id as ItemId) ??
+        context.read<GameSession>().catalogBundle.itemCatalog.definitionFor(
+          currentId,
+        ) ??
         ItemDefinition(name: "error", value: -1);
     showDialog<void>(
       context: context,

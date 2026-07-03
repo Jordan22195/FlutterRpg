@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -19,6 +20,18 @@ class InventoryController extends ChangeNotifier {
   }) : _inventoryData = inventoryData,
        _inventoryService = inventoryService,
        _itemCatalog = itemCatalog;
+
+  List<ObjectStack> getObjectStackList() {
+    return _inventoryService.getObjectStackList(_inventoryData);
+  }
+
+  int getItemCount(ItemId id) {
+    return _inventoryService.getItemCount(_inventoryData, id);
+  }
+
+  ItemDefinition? getItemDefinition(ItemId id) {
+    return _itemCatalog.definitionFor(id);
+  }
 
   List<ItemId> getFoodItems() {
     return _inventoryService.getFoodItemsSortedByHealing(

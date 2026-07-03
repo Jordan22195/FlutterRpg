@@ -11,7 +11,7 @@ class EquipmentService {
       final item = ItemCatalog.buildItem(itemId);
 
       if (item is EquipmentItem) {
-        stats = Util.addMap(stats, item.skillBonus) as Map<SkillId, int>;
+        stats = Util.addMap(stats, item.skillBonus);
       }
     }
     return stats;

@@ -13,7 +13,7 @@ class FoodPicker {
     Function(ItemId id) onEquip, {
     SkillId skillFilter = SkillId.NULL,
   }) {
-    final controller = context.watch<InventoryController>();
+    final controller = context.read<InventoryController>();
     final list = controller.getFoodItems();
     showDialog(
       context: context,
@@ -56,7 +56,7 @@ class EquipmentPicker {
     Function(ItemId id) onEquip, {
     SkillId skillFilter = SkillId.NULL,
   }) {
-    final controller = context.watch<InventoryController>();
+    final controller = context.read<InventoryController>();
     final list = skillFilter == SkillId.NULL
         ? controller.getSlotItemList(slot)
         : controller.getSlotItemListForSkill(slot, skillFilter);

@@ -5,12 +5,11 @@ import '../catalogs/recipe_catalog.dart';
 
 class CraftingService {
   void adjustActiveRecipeDropTable(
-    CraftingState craftinState,
+    CraftingRecipe recipe,
     Map<SkillId, int> skillLevels,
   ) {
     final skillLevel = skillLevels[SkillId.COOKING] ?? 1;
 
-    final recipe = craftinState.activeRecipe;
     recipe.output.forEach((entry) {
       if (entry.id == ItemId.BURNT_FOOD) {
         final burnChance = calculateBurnChance(
@@ -30,7 +29,7 @@ class CraftingService {
     RecipeCatalog catalog,
   ) {
     // todo check requirements
-    craftingState.activeRecipe = catalog.recipeById(recipeId);
+    craftingState.activeRecipeId = catalog.recipeById(recipeId).id;
     return true;
   }
 

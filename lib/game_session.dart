@@ -6,9 +6,15 @@ import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/equipment_controller.dart';
+import 'package:rpg/controllers/inventory_controller.dart';
+import 'package:rpg/controllers/player_data_controller.dart';
+import 'package:rpg/data/buff_data.dart';
 import 'package:rpg/data/crafting_state.dart';
 import 'package:rpg/data/encounter_data.dart';
+import 'package:rpg/data/equipment_data.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/buff_service.dart';
+import 'package:rpg/services/entity_screen_router_service.dart';
 import 'package:rpg/services/crafting_service.dart';
 import 'package:rpg/services/encounter_service.dart';
 import 'package:rpg/services/equipment_service.dart';
@@ -157,6 +163,47 @@ class GameSessionFactory {
     );
   }
 
+  // builds a fresh save for first runs or when the stored save
+  // cannot be parsed.
+  SaveGameData newGame(GameCatalogBundle catalogs) {
+    final zones = <ZoneId, Zone>{};
+    for (final zoneId in ZoneId.values) {
+      if (zoneId == ZoneId.NULL) continue;
+      final def = catalogs.zoneCatalog.getDefinitionFor(zoneId);
+      if (def.id == ZoneId.NULL) continue;
+      zones[zoneId] = Zone(
+        id: zoneId,
+        name: def.name,
+        permanentEntities: def.permanentEntities
+            .map((id) => catalogs.entityCatalog.buildEntity(id))
+            .toList(),
+        discoveredEntities: [],
+      );
+    }
+
+    return SaveGameData(
+      slotId: "slot_1",
+      contentPackId: catalogs.id,
+      saveVersion: 1,
+      contentPackVersion: catalogs.version,
+      playerData: PlayerData(
+        currentZoneId: ZoneId.STARTING_FOREST,
+        currentEntityViewId: EntityId.NULL,
+        buffData: BuffData(),
+        skillData: {
+          for (final s in SkillId.values) s: SkillData(name: s.name, xp: 0),
+        },
+        equipmentData: EquipmentData(),
+        hitpoints: 10,
+        stamina: 100,
+      ),
+      inventoryData: InventoryData(itemMap: {}),
+      worldData: WorldData(zones: zones),
+      craftingState: CraftingState(),
+      encounterData: EncounterData(),
+    );
+  }
+
   GameSession create({
     required SaveGameData save,
     required GameCatalogBundle catalogs,
@@ -176,6 +223,9 @@ class GameSessionFactory {
       buffService: buffService,
       equpmentService: equipmentService,
       skillService: skillService,
+    );
+    final entityScreenRouterService = EntityScreenRouterService(
+      entityCatalog: catalogs.entityCatalog,
     );
 
     // systems
@@ -223,7 +273,15 @@ class GameSessionFactory {
       playerState: save.playerData,
       actionSpeedSystem: actionSpeedSystem,
     );
-    final playerDataController = PlayerDataController();
+    final playerDataController = PlayerDataController(
+      playerData: save.playerData,
+      playerDataService: playerDataService,
+    );
+    final inventoryController = InventoryController(
+      inventoryData: save.inventoryData,
+      inventoryService: inventoryService,
+      itemCatalog: catalogs.itemCatalog,
+    );
     final encounterController = EncounterController(
       playerData: save.playerData,
       encounterState: save.encounterData,
@@ -256,8 +314,14 @@ class GameSessionFactory {
       craftingState: save.craftingState,
       playerState: save.playerData,
       reciepeCatalog: catalogs.recipeCatalog,
+      entityCatalog: catalogs.entityCatalog,
     );
-    final equipmentController = EquipmentController();
+    final equipmentController = EquipmentController(
+      playerState: save.playerData,
+      inventoryState: save.inventoryData,
+      equipmentService: equipmentService,
+      equipmentSystem: equipmentSystem,
+    );
     final worldController = WorldController(
       worldState: save.worldData,
       worldService: worldService,
@@ -265,12 +329,15 @@ class GameSessionFactory {
       zoneCatalog: catalogs.zoneCatalog,
       dropTableService: weightedDropTableService,
       entityCatalog: catalogs.entityCatalog,
+      entityScreenRouterService: entityScreenRouterService,
     );
 
     return GameSession(
       saveGameData: save,
       catalogBundle: catalogs,
       playerDataController: playerDataController,
+      actionTimingController: actionTimingController,
+      inventoryController: inventoryController,
       encounterController: encounterController,
       buffController: buffController,
       craftingController: craftingController,
@@ -301,6 +368,8 @@ class GameSession {
 
   // controllers
   PlayerDataController playerDataController;
+  ActionTimingController actionTimingController;
+  InventoryController inventoryController;
   EncounterController encounterController;
   BuffController buffController;
   CraftingController craftingController;
@@ -332,6 +401,8 @@ class GameSession {
 
     // controllers
     required this.playerDataController,
+    required this.actionTimingController,
+    required this.inventoryController,
     required this.encounterController,
     required this.buffController,
     required this.craftingController,

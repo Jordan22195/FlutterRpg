@@ -57,7 +57,6 @@ class EncounterController extends ChangeNotifier {
     required InventoryService inventoryService,
     required ItemCatalog itemCatalog,
     required EncounterSystem encounterSystem,
-    required InventoryService invetoryService,
   }) : _playerState = playerData,
        _encounterState = encounterState,
        _encounterService = encounterService,

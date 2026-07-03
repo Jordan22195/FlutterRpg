@@ -4,6 +4,7 @@ import 'package:rpg/catalogs/recipe_catalog.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/services/crafting_service.dart';
 import '../services/inventory_service.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
@@ -63,6 +64,27 @@ class CraftingController extends ChangeNotifier {
     return _inventoryService.getItemCount(_inventoryState, itemId);
   }
 
+  String get selectedRecipeId => _craftingState.selectedRecipeId;
+
+  String get activeRecipeId => _craftingState.activeRecipeId;
+
+  CraftingRecipe getRecipe(String recipeId) {
+    return _recipeCatalog.recipeById(recipeId);
+  }
+
+  // recipes for the crafting entity the player is viewing
+  List<CraftingRecipe> availableRecipes() {
+    final skill = getCraftingEntitySkillId();
+    if (skill == SkillId.NULL) {
+      return _recipeCatalog.recipes;
+    }
+    return _recipeCatalog.recipesForSkill(skill);
+  }
+
+  List<ObjectStack> craftedItems() {
+    return _inventoryService.getObjectStackList(_craftingState.craftedItems);
+  }
+
   // function bound to action button. executes periodically.
   void doCraftingAction() {
     _craftingSystem.craftActiveRecipeOnce(
@@ -72,8 +94,8 @@ class CraftingController extends ChangeNotifier {
       _buffState,
       _worldState,
     );
-    if (_craftingSystem.recipeRequirementsMet(
-      _craftingState.activeRecipe.id,
+    if (!_craftingSystem.recipeRequirementsMet(
+      _craftingState.activeRecipeId,
       _playerState,
       _inventoryState,
       _craftingState,
@@ -96,14 +118,14 @@ class CraftingController extends ChangeNotifier {
     // recipe becomes selected when tapped in the screen
     // recipe becomes active when action button is pressed
 
-
+    notifyListeners();
   }
 
   // todo move this logic to the enoucnter system
   // fires a single time when action button is pressed
   // binds doEncounterAction to the periodic loop
   void startCraftingAction() {
-    if (_craftingState.selectedRecipeId == _craftingState.activeRecipe.id) {
+    if (_craftingState.selectedRecipeId == _craftingState.activeRecipeId) {
       return;
     }
 
@@ -117,8 +139,8 @@ class CraftingController extends ChangeNotifier {
     );
 
     // check action conditions are met
-    if (_craftingSystem.recipeRequirementsMet(
-      _craftingState.activeRecipe.id,
+    if (!_craftingSystem.recipeRequirementsMet(
+      _craftingState.activeRecipeId,
       _playerState,
       _inventoryState,
       _craftingState,

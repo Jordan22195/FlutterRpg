@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
-import 'package:rpg/services/player_data_service.dart';
-import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/catalogs/recipe_catalog.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
-import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/skil_tile.dart';
-import '../controllers/buff_controller.dart';
 
 class CraftingScreen extends StatefulWidget {
   const CraftingScreen({super.key});
@@ -23,7 +20,7 @@ crafting screen contents:
 -header with crafting skill name and back button
 -recipe card that shows currently selected recipe, and opens recipe picker dialog on tap
 -skill progress tile for the active crafting skill
--inventory grid of currently crafted items 
+-inventory grid of currently crafted items
 */
 
 class _CraftingScreenState extends State<CraftingScreen>
@@ -31,7 +28,7 @@ class _CraftingScreenState extends State<CraftingScreen>
   void _showRecipePicker(
     BuildContext context,
     CraftingController controller,
-    List<Recipie> recipies,
+    List<CraftingRecipe> recipes,
   ) {
     showDialog(
       context: context,
@@ -48,9 +45,8 @@ class _CraftingScreenState extends State<CraftingScreen>
                 return RecipeCard(
                   recipeId: r.id,
                   onTap: () {
-                    controller.selectRecipe(r);
+                    controller.selectRecipe(r.id);
                     Navigator.of(ctx).pop();
-                    setState(() {});
                   },
                 );
               },
@@ -72,12 +68,12 @@ class _CraftingScreenState extends State<CraftingScreen>
     final controller = context.watch<CraftingController>();
     final skillName = controller.skillName();
     final skillId = controller.getCraftingEntitySkillId();
-    final entityImageId = controller.entityIconAsset();
-    final activeRecipe = controller.activeRecipe;
-    final activeRecipeId;
-    final canCraft = (activeRecipe != null) && crafting.canCraftActive();
-    final recipeList;
-    final craftedItems;
+    final entityIconAsset = controller.entityIconAsset();
+    final selectedRecipeId = controller.selectedRecipeId;
+    final recipeList = controller.availableRecipes();
+    final canCraft =
+        selectedRecipeId.isNotEmpty &&
+        controller.getMaxNumberCraftsForRecipe(selectedRecipeId) > 0;
 
     return SafeArea(
       child: Padding(
@@ -108,7 +104,18 @@ class _CraftingScreenState extends State<CraftingScreen>
             ),
 
             // main center image
-            ItemStackTile(size: 160, count: 0, id: entityImageId),
+            SizedBox(
+              width: 160,
+              height: 160,
+              child: entityIconAsset.isEmpty
+                  ? const Icon(Icons.help_outline, size: 80)
+                  : Image.asset(
+                      entityIconAsset,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) =>
+                          const Icon(Icons.broken_image_outlined, size: 80),
+                    ),
+            ),
             SizedBox(height: 12),
 
             // skill progress tile
@@ -117,7 +124,7 @@ class _CraftingScreenState extends State<CraftingScreen>
             // selectable recipe card
             RecipeCard(
               maxCraftable: false,
-              recipeId: activeRecipeId,
+              recipeId: selectedRecipeId,
               onTap: () => _showRecipePicker(context, controller, recipeList),
             ),
 
@@ -127,10 +134,7 @@ class _CraftingScreenState extends State<CraftingScreen>
                 children: [
                   SizedBox(
                     height: 80,
-                    child: InventoryGrid(
-                      items: CraftingController.instance.craftedItems
-                          .getObjectStackList(),
-                    ),
+                    child: InventoryGrid(items: controller.craftedItems()),
                   ),
                 ],
               ),

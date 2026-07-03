@@ -432,6 +432,30 @@ class BuffItemDefinition extends ItemDefinition {
   );
 }
 
+class ZoneBuffItemDefinition extends BuffItemDefinition {
+  final EntityId entityId;
+
+  ZoneBuffItemDefinition({
+    required super.name,
+    required super.value,
+    required super.skillBonus,
+    required super.duration,
+    required this.entityId,
+    super.description,
+    super.iconAsset,
+  });
+
+  @override
+  ZoneBuffItem toItem(ItemId id) => ZoneBuffItem(
+    id: id,
+    name: name,
+    value: value,
+    skillBonus: skillBonus,
+    duration: duration,
+    entityId: entityId,
+  );
+}
+
 class EquipmentItemDefition extends ItemDefinition {
   final ArmorSlots armorSlot;
   final Map<SkillId, int> skillBonus;
@@ -552,11 +576,12 @@ class ItemCatalog {
     ),
 
     // campfires
-    ItemId.BASIC_CAMPFIRE: BuffItemDefinition(
+    ItemId.BASIC_CAMPFIRE: ZoneBuffItemDefinition(
       name: "Basic Campfire",
       value: 5,
       skillBonus: {SkillId.HITPOINTS: 5},
       duration: Duration(minutes: 1),
+      entityId: EntityId.BASIC_CAMPIRE,
       iconAsset: "assets/icons/items/basic_campfire.png",
     ),
 
@@ -804,14 +829,6 @@ class ItemCatalog {
       return Item(id: ItemId.NULL, name: "Null", value: 0);
     }
     return def.toItem(id);
-  }
-
-  static ItemInstanceData toInstanceData(Item item) {
-    return ItemInstanceData.fromItem(item);
-  }
-
-  static Item buildItemFromJson(Map<String, dynamic> json) {
-    return ItemInstanceData.fromJson(json).toItem();
   }
 
   ItemDefinition? definitionFor(ItemId objectId) {

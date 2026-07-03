@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/services/player_data_service.dart';
+import 'package:provider/provider.dart';
+import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
 class FoodCard extends StatelessWidget {
-  FoodCard({
+  const FoodCard({
     super.key,
     required this.id,
     required this.onTap,
-    this.maxCraftable = true,
     this.height = 68,
   });
 
-  bool maxCraftable = true;
   final ItemId id;
   final VoidCallback? onTap;
   final double height;
 
   @override
   Widget build(BuildContext context) {
-    print("Building EquipmentCard for item ID: $id");
-    final item = ItemCatalog.definitionFor(id) as FoodItemDefinition?;
+    final inventory = context.watch<InventoryController>();
+    final item = inventory.getItemDefinition(id) as FoodItemDefinition?;
 
     if (item == null) {
       return Card(
@@ -32,7 +31,7 @@ class FoodCard extends StatelessWidget {
       );
     }
 
-    int stats = item.restoreAmount ?? -1;
+    int stats = item.restoreAmount;
     final skill = item.restoreSkill;
 
     return Card(
@@ -50,9 +49,7 @@ class FoodCard extends StatelessWidget {
                 ItemStackTile(
                   size: 52,
                   id: id,
-                  count: PlayerDataController.instance.data!.inventory.countOf(
-                    id,
-                  ),
+                  count: inventory.getItemCount(id),
                 ),
 
                 // Stats (right)

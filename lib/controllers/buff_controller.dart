@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/world_data.dart';
+import '../catalogs/item_catalog.dart';
 import '../services/buff_service.dart';
 
 class BuffController extends ChangeNotifier {
@@ -27,5 +28,24 @@ class BuffController extends ChangeNotifier {
     _zoneBuffSystem.updateZoneBuffs(_playerState.buffData, _worldState);
 
     notifyListeners();
+  }
+
+  List<BuffItem> getGlobalBuffs() {
+    return _buffService.getGlobalBuffs(_playerState.buffData);
+  }
+
+  List<ZoneBuffItem> getCurrentZoneBuffs() {
+    return _buffService.getZoneBuffs(
+      _playerState.buffData,
+      _playerState.currentZoneId,
+    );
+  }
+
+  // expiration time of a buff in the player's current zone, or null
+  // if the buff is not active there.
+  DateTime? getZoneBuffExpiration(ItemId itemId) {
+    return _buffService
+        .getZoneBuff(_playerState.buffData, _playerState.currentZoneId, itemId)
+        ?.expirationTime;
   }
 }

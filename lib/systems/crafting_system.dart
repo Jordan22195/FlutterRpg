@@ -58,7 +58,7 @@ class CraftingSystem {
     BuffData buffState,
     WorldData worldState,
   ) {
-    final r = craftingState.activeRecipe;
+    final r = _recipeCatalog.recipeById(craftingState.activeRecipeId);
 
     if (!checkRecipeLevelRequirement(r.id, playerState)) {
       return;
@@ -117,7 +117,8 @@ class CraftingSystem {
     PlayerData playerState,
   ) {
     final skillLevels = _playerDataService.getStatTotals(playerState);
-    _craftingService.adjustActiveRecipeDropTable(craftingState, skillLevels);
+    final recipe = _recipeCatalog.recipeById(recipeId);
+    _craftingService.adjustActiveRecipeDropTable(recipe, skillLevels);
   }
 
   int craftableCount(String recipeId, InventoryData inventoryData) {

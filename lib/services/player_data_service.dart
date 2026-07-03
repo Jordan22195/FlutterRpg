@@ -39,7 +39,43 @@ class PlayerDataService {
       Util.addMap(equipmentStats, buffStats),
     );
 
-    return totals as Map<SkillId, int>;
+    return totals;
+  }
+
+  SkillData getSkillData(SkillId id, PlayerData playerState) {
+    return playerState.skillData[id] ?? SkillData(name: id.name, xp: 0);
+  }
+
+  int getSkillLevel(SkillId id, PlayerData playerState) {
+    return _skillService.getLevel(getSkillData(id, playerState));
+  }
+
+  double getSkillXp(SkillId id, PlayerData playerState) {
+    return getSkillData(id, playerState).xp;
+  }
+
+  double getSkillProgress(SkillId id, PlayerData playerState) {
+    return _skillService.percentProgressToLevelUp(getSkillData(id, playerState));
+  }
+
+  double getNextLevelXp(SkillId id, PlayerData playerState) {
+    return _skillService.nextLevelXp(getSkillData(id, playerState));
+  }
+
+  double getXpToLevelUp(SkillId id, PlayerData playerState) {
+    return _skillService.xpToLevelUp(getSkillData(id, playerState));
+  }
+
+  // each point of stamina skill adds 10 to the stamina bar
+  double getMaxStamina(PlayerData playerState) {
+    final staminaStat = getStatTotals(playerState)[SkillId.STAMINA] ?? 1;
+    return 10.0 * (staminaStat < 1 ? 1 : staminaStat);
+  }
+
+  double getStaminaPercent(PlayerData playerState) {
+    final max = getMaxStamina(playerState);
+    if (max <= 0) return 0;
+    return (playerState.stamina / max).clamp(0.0, 1.0);
   }
 
   void drainStamina(double stamina, PlayerData playerState) {

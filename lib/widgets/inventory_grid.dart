@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rpg/data/ObjectStack.dart';
-import 'package:rpg/catalogs/item_catalog.dart'; // <-- uses ItemController.imageProviderFor
+import 'package:rpg/game_session.dart';
 import 'item_stack_tile.dart';
 
 class InventoryGrid extends StatelessWidget {
@@ -33,17 +34,10 @@ class InventoryGrid extends StatelessWidget {
   final String Function(ObjectStack stack)? titleForItem;
   final String Function(ObjectStack stack)? descriptionForItem;
 
-  ImageProvider? _resolveImage(ObjectStack stack) {
-    // If caller provided a resolver, use it.
-    final fromCallback = imageForItem?.call(stack);
-    if (fromCallback != null) return fromCallback;
-
-    // Otherwise, resolve from item registry using dynamic enum key.
-    return ItemCatalog.imageProviderFor(stack.id);
-  }
-
   @override
   Widget build(BuildContext context) {
+    final itemCatalog = context.read<GameSession>().catalogBundle.itemCatalog;
+
     return GridView.builder(
       padding: const EdgeInsets.all(12),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -62,10 +56,10 @@ class InventoryGrid extends StatelessWidget {
           showInfoDialogOnTap: showInfoDialogOnTap && onItemTap == null,
           title:
               titleForItem?.call(stack) ??
-              ItemCatalog.definitionFor(stack.id)?.name,
+              itemCatalog.definitionFor(stack.id)?.name,
           description:
               descriptionForItem?.call(stack) ??
-              ItemCatalog.definitionFor(stack.id)?.description,
+              itemCatalog.definitionFor(stack.id)?.description,
           //onTap: onItemTap != null ? () => onItemTap!(stack) : null,
         );
       },

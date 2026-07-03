@@ -15,10 +15,22 @@ class BuffService {
     duration: Duration(seconds: 0),
   );
 
+  List<BuffItem> getGlobalBuffs(BuffData buffState) {
+    return buffState.globalBuffs.values.toList();
+  }
+
+  List<ZoneBuffItem> getZoneBuffs(BuffData buffState, ZoneId zoneId) {
+    return buffState.zoneBuffs[zoneId]?.values.toList() ?? [];
+  }
+
+  ZoneBuffItem? getZoneBuff(BuffData buffState, ZoneId zoneId, ItemId itemId) {
+    return buffState.zoneBuffs[zoneId]?[itemId];
+  }
+
   Map<SkillId, int> getBuffedStatTotal(BuffData buffState) {
     Map<SkillId, int> total = {};
     for (final buff in buffState.globalBuffs.values) {
-      total = Util.addMap(total, buff.skillBonus) as Map<SkillId, int>;
+      total = Util.addMap(total, buff.skillBonus);
     }
 
     return total;
@@ -66,12 +78,14 @@ class BuffService {
   // return list of removed buffs so zone buff system can remove
   // associated enitities from world state
   List<ZoneBuffItem> removeExpiredZoneBuffs(BuffData buffState) {
-    final list = [] as List<ZoneBuffItem>;
+    final list = <ZoneBuffItem>[];
     for (final z in buffState.zoneBuffs.values) {
-      for (final b in z.entries) {
-        if (b.value.expirationTime.isBefore(DateTime.now())) {
-          list.add(b.value);
-          z.remove(b.key);
+      final ids = z.keys.toList(growable: false);
+      for (final id in ids) {
+        final buff = z[id];
+        if (buff != null && buff.expirationTime.isBefore(DateTime.now())) {
+          list.add(buff);
+          z.remove(id);
         }
       }
     }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:provider/provider.dart';
+import '../controllers/inventory_controller.dart';
 import '../widgets/inventory_grid.dart';
 
 class InventoryScreen extends StatelessWidget {
@@ -8,9 +8,8 @@ class InventoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<PlayerDataController>();
-    final craftingController = context.watch<CraftingController>();
-    final items = controller.data?.inventory.getObjectStackList() ?? [];
+    final controller = context.watch<InventoryController>();
+    final items = controller.getObjectStackList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Inventory')),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
+import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
-import '../services/player_data_service.dart';
 import 'fill_bar.dart';
 import '../catalogs/item_catalog.dart';
 
@@ -16,26 +16,8 @@ class ProgressBars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    PlayerDataController controller = PlayerDataController.instance;
-    const double speedBarPadding = 120;
-    final timing = controller.actionTimingControllerOrNull;
-
-    if (timing == null) {
-      // Build can run before async init finishes. Show placeholders.
-      return Column(
-        children: [
-          const FillBar(value: 0),
-          const SizedBox(height: 8),
-          Row(
-            children: const [
-              SizedBox(width: speedBarPadding),
-              Expanded(child: FillBar(value: 0)),
-              SizedBox(width: speedBarPadding),
-            ],
-          ),
-        ],
-      );
-    }
+    final playerController = context.watch<PlayerDataController>();
+    final timing = context.watch<ActionTimingController>();
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -59,8 +41,8 @@ class ProgressBars extends StatelessWidget {
               //Stamina Bar
               AnimatedBuilder(
                 animation: timing,
-                builder: (_, __) => FillBar(
-                  value: PlayerDataController.instance.getStaminaPercent(),
+                builder: (_, _) => FillBar(
+                  value: playerController.getStaminaPercent(),
                   foregroundColor: Colors.blue,
                 ),
               ),
@@ -71,7 +53,7 @@ class ProgressBars extends StatelessWidget {
                 width: 200,
                 child: AnimatedBuilder(
                   animation: timing,
-                  builder: (_, __) => FillBar(value: timing.percentMaxSpeed),
+                  builder: (_, _) => FillBar(value: timing.percentMaxSpeed),
                 ),
               ),
               const SizedBox(height: 8),
@@ -80,7 +62,7 @@ class ProgressBars extends StatelessWidget {
                 width: 50,
                 child: AnimatedBuilder(
                   animation: timing,
-                  builder: (_, __) => FillBar(
+                  builder: (_, _) => FillBar(
                     value: timing.actionProgress,
                     foregroundColor: Theme.of(context).colorScheme.secondary,
                   ),
@@ -101,12 +83,9 @@ class ActionIntervalTimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    PlayerDataController controller = PlayerDataController.instance;
-    final timing = controller.actionTimingControllerOrNull;
-    final intervalMs = timing?.getCurrentActionDuration().inMilliseconds ?? 0;
-    final percentSpeed = timing?.percentMaxSpeed ?? 0;
-    final speedBoost = timing?.getCurrentSpeedMultiplier() ?? 1.0;
-    context.watch<ActionTimingService>();
+    final timing = context.watch<ActionTimingController>();
+    final intervalMs = timing.getCurrentActionDuration().inMilliseconds;
+    final speedBoost = timing.getCurrentSpeedMultiplier();
 
     return SizedBox(
       width: 80, // Fixed width so layout doesn't shift
@@ -139,7 +118,7 @@ class ActionIntervalTimer extends StatelessWidget {
               SizedBox(
                 width: 40, // Fixed width for text so it doesn't resize
                 child: Text(
-                  '${(intervalMs).toStringAsFixed(2)}s',
+                  '${(intervalMs / 1000).toStringAsFixed(2)}s',
                   textAlign: TextAlign.left,
                   style: TextStyle(fontSize: 12),
                 ),

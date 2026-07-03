@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/widgets/equipment_card.dart';
 import 'package:provider/provider.dart';
+import '../controllers/equipment_controller.dart';
+import '../controllers/inventory_controller.dart';
 import '../data/equipment_data.dart';
 import '../catalogs/item_catalog.dart';
+import '../widgets/equipment_card.dart';
 import '../widgets/item_stack_tile.dart';
 
 class GearScreen extends StatelessWidget {
@@ -10,23 +12,19 @@ class GearScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<PlayerDataController>();
-    final gear = controller.data?.gear;
+    final equipmentController = context.watch<EquipmentController>();
+    final inventoryController = context.read<InventoryController>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Gear')),
       body: ListView(
         children: ArmorSlots.values.map((slot) {
-          ItemId itemId = gear?.armorEquipment[slot] ?? ItemId.NULL;
+          ItemId itemId = equipmentController.getItemInSlot(slot);
           return ListTile(
             title: Text(slot.name),
             trailing: ItemStackTile(id: itemId, count: 1, size: 56),
             onTap: () {
-              final list = controller.data!.inventory
-                  .getItemsListForEquipmentSlot(slot);
-              print(
-                "Opening dialog for slot: ${slot.name}, with ${list.length} items",
-              );
+              final list = inventoryController.getSlotItemList(slot);
               showDialog(
                 context: context,
                 builder: (ctx) {
@@ -41,10 +39,8 @@ class GearScreen extends StatelessWidget {
                           final e = list[i];
                           return EquipmentCard(
                             id: e,
-
                             onTap: () {
-                              controller.refresh();
-                              gear?.equipItem(e);
+                              equipmentController.equipItem(e);
                               Navigator.of(ctx).pop();
                             },
                           );

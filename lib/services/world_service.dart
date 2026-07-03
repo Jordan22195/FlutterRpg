@@ -97,18 +97,14 @@ class WorldService {
     WorldData worldState,
   ) {
     final zone = worldState.zones[zoneId] ?? nullZone;
-    for (final e in zone.discoveredEntities) {
-      if (e.id == entityId) {
-        zone.discoveredEntities.remove(e);
-      }
-    }
+    zone.discoveredEntities.removeWhere((e) => e.id == entityId);
   }
 
   List<Entity> getCurrentZoneEntities(
     PlayerData playerState,
     WorldData worldState,
   ) {
-    final allEnts = [] as List<Entity>;
+    final allEnts = <Entity>[];
     final zone = worldState.zones[playerState.currentZoneId] ?? nullZone;
 
     allEnts.addAll(zone.permanentEntities);

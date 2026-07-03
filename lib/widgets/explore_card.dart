@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/location_catalog.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
-import '../data/skill_data.dart';
-import '../utilities/util.dart';
 import 'countdown_timer.dart';
 
 class ObjectCard<T extends Enum> extends StatefulWidget {
-  ObjectCard({
+  const ObjectCard({
     required super.key,
     required this.id,
     required this.count,
     required this.onTap,
     required this.typeId,
+    this.name,
     this.height = 60,
     this.expirationTime,
   });
@@ -22,8 +19,9 @@ class ObjectCard<T extends Enum> extends StatefulWidget {
   final int count;
   final VoidCallback onTap;
   final Enum typeId;
+  final String? name;
   final double height;
-  DateTime? expirationTime;
+  final DateTime? expirationTime;
 
   @override
   State<ObjectCard<T>> createState() => _ObjectCardState<T>();
@@ -72,16 +70,7 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
   }
 
   String _cardText() {
-    final id = widget.id;
-    String cardText = id.toString();
-
-    if (id is EntityId) {
-      cardText = EntityCatalog.definitionFor(id)?.name ?? id.toString();
-    } else if (id is LocationId) {
-      cardText = LocationCatalog.locations[id]?.name.toString() ?? "error";
-    }
-
-    return cardText;
+    return widget.name ?? widget.id.name;
   }
 
   @override

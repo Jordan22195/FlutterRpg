@@ -78,6 +78,18 @@ class ActionTimingController extends ChangeNotifier {
     return _actionTimingState.speedLocked;
   }
 
+  double get percentMaxSpeed => _actionTimingState.speedPercent;
+
+  double get actionProgress => _actionTimingState.actionProgress;
+
+  Duration getCurrentActionDuration() {
+    return _actionTimingService.getCurrentActionDuration(_actionTimingState);
+  }
+
+  double getCurrentSpeedMultiplier() {
+    return _actionTimingService.getCurrentSpeedMultiplier(_actionTimingState);
+  }
+
   void lockActionSpeed() {
     _actionTimingService.setLockActionSpeed(true, _actionTimingState);
   }
@@ -185,24 +197,15 @@ class ActionSpeedSystem {
 
     if (speed > 1) {
       final staminaXp = dt * 10;
-      _playerDataService.applyXp(
-        playerState,
-        {SkillId.STAMINA, staminaXp} as Map<SkillId, double>,
-      );
+      _playerDataService.applyXp(playerState, {SkillId.STAMINA: staminaXp});
     }
 
     final speedXp = (speed - 1) * 100 * dt;
-    _playerDataService.applyXp(
-      playerState,
-      {SkillId.SPEED, speedXp} as Map<SkillId, double>,
-    );
+    _playerDataService.applyXp(playerState, {SkillId.SPEED: speedXp});
 
     if (staminaCost > 0) {
       final econXp = dt * 10.0;
-      _playerDataService.applyXp(
-        playerState,
-        {SkillId.ECONOMY, econXp} as Map<SkillId, double>,
-      );
+      _playerDataService.applyXp(playerState, {SkillId.ECONOMY: econXp});
     }
   }
 }

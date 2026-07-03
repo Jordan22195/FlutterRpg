@@ -63,6 +63,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   return ObjectCard(
                     key: ValueKey(e.id),
                     id: e.id,
+                    name: e.name,
                     count: e.count,
                     onTap: () =>
                         worldController.navigateToEntity(e.id, context),
@@ -72,6 +73,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   return ObjectCard(
                     key: ValueKey(e.id),
                     id: e.id,
+                    name: e.name,
                     count: 0,
                     expirationTime: e.expirationTime,
                     onTap: () =>
@@ -83,6 +85,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   return ObjectCard(
                     key: ValueKey(e.id),
                     id: e.id,
+                    name: e.name,
                     count: 0,
                     onTap: () =>
                         worldController.navigateToEntity(e.id, context),

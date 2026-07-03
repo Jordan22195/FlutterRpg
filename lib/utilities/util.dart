@@ -19,10 +19,10 @@ class Util {
     }
   }
 
-  static Map<dynamic, int> addMap(Map<dynamic, int> a, Map<dynamic, int> b) {
-    final totals = <dynamic, int>{};
+  static Map<K, int> addMap<K>(Map<K, int> a, Map<K, int> b) {
+    final totals = <K, int>{};
 
-    final keys = <dynamic>{...a.keys, ...b.keys};
+    final keys = <K>{...a.keys, ...b.keys};
 
     for (final key in keys) {
       final aVal = a[key] ?? 0;

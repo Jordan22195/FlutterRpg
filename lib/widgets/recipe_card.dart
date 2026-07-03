@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/data/inventory_data.dart';
+import 'package:provider/provider.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import '../data/skill_data.dart';
 import '../catalogs/item_catalog.dart';
@@ -7,75 +7,71 @@ import '../controllers/crafting_controller.dart';
 import '../controllers/buff_controller.dart';
 
 class RecipeOutputTile extends StatelessWidget {
-  RecipeOutputTile({
+  const RecipeOutputTile({
     super.key,
     required this.recipeId,
     this.maxCraftable = false,
   });
-  String recipeId;
+
+  final String recipeId;
   final bool maxCraftable;
 
   @override
   Widget build(BuildContext context) {
-    final crafting = CraftingController.instance;
-    final recipe = crafting.recipeById(recipeId);
-    if (recipe == null) {
+    final crafting = context.watch<CraftingController>();
+    final buffs = context.watch<BuffController>();
+    final recipe = crafting.getRecipe(recipeId);
+    if (recipe.output.isEmpty) {
       return ItemStackTile(size: 1, count: 1, id: ItemId.NULL);
     }
     final output = recipe.output;
+
+    // Only show timer for firemaking recipes whose buff is active in
+    // the player's current zone.
+    final buffExpiration = recipe.skill == SkillId.FIREMAKING
+        ? buffs.getZoneBuffExpiration(output.first.id)
+        : null;
+
     return ItemStackTile(
       size: 52,
       id: output.first.id,
       count: maxCraftable
-          ? CraftingController.instance.calcMaxNumberCraftsForRecipe(recipeId)
-          : CraftingController.instance.getPlayerCount(output.first.id),
-      // Only show timer for firemaking recipes that are currently active
-      isTimerStackTile:
-          recipe.skill == SkillId.FIREMAKING &&
-              BuffController.instance.campfireBuff.id == recipe.output.first.id
-          ? true
-          : false,
-      expirationTime:
-          recipe.skill == SkillId.FIREMAKING &&
-              BuffController.instance.campfireBuff.id == recipe.output.first.id
-          ? BuffController.instance.campfireBuff.expirationTime
-          : null,
+          ? crafting.getMaxNumberCraftsForRecipe(recipeId)
+          : crafting.getItemCountInPlayerInventory(output.first.id),
+      isTimerStackTile: buffExpiration != null,
+      expirationTime: buffExpiration,
     );
   }
 }
 
 class RecipeCard extends StatelessWidget {
-  RecipeCard({
+  const RecipeCard({
     super.key,
     required this.recipeId,
     required this.onTap,
-    required this.inventory,
     this.maxCraftable = true,
     this.height = 68,
   });
 
-  bool maxCraftable = true;
-  final InventoryData inventory;
+  final bool maxCraftable;
   final String recipeId;
   final VoidCallback? onTap;
   final double height;
 
   @override
   Widget build(BuildContext context) {
-    print("Building RecipeCard for $recipeId");
-    final crafting = CraftingController.instance;
-    final recipe = crafting.recipeById(recipeId);
+    final crafting = context.watch<CraftingController>();
+    final recipe = crafting.getRecipe(recipeId);
 
-    if (recipe == null) {
+    if (recipe.output.isEmpty) {
       return Card(
         child: SizedBox(
           height: height,
-          child: const Center(child: Text('Recipe not found')),
+          child: const Center(child: Text('Select a recipe')),
         ),
       );
     }
 
-    final output = recipe.output;
     final inputs = recipe.inputs.entries.toList();
 
     return Card(
@@ -112,7 +108,7 @@ class RecipeCard extends StatelessWidget {
                               id: inputs[i].key,
                               count: maxCraftable
                                   ? inputs[i].value
-                                  : CraftingController.instance.getPlayerCount(
+                                  : crafting.getItemCountInPlayerInventory(
                                       inputs[i].key,
                                     ),
                             ),

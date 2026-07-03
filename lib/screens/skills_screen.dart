@@ -1,26 +1,13 @@
 import 'package:flutter/material.dart';
-import '../services/player_data_service.dart';
-import 'package:provider/provider.dart';
 import '../widgets/skil_tile.dart';
 import '../data/skill_data.dart';
-import '../screens/skill_detail_screen.dart';
 
 class SkillsScreen extends StatelessWidget {
   const SkillsScreen({super.key});
 
-  Widget buildSkillTile(
-    BuildContext context,
-    PlayerDataController controller,
-    SkillId skillId,
-  ) {
-    return SkillTile(id: skillId);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<PlayerDataController>();
-
-    final list = SkillId.values.toList();
+    final list = SkillId.values.where((s) => s != SkillId.NULL).toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Skills')),
@@ -31,11 +18,9 @@ class SkillsScreen extends StatelessWidget {
           mainAxisSpacing: 1,
           crossAxisSpacing: 1,
         ),
-        itemCount: SkillId.values.length,
+        itemCount: list.length,
         itemBuilder: (context, i) {
-          final id = list[i];
-
-          return buildSkillTile(context, controller, id ?? SkillId.ATTACK);
+          return SkillTile(id: list[i]);
         },
       ),
     );
