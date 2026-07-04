@@ -74,6 +74,12 @@ class ActionTimingController extends ChangeNotifier {
     ticker = _vsync.createTicker(_onTick);
   }
 
+  @override
+  void dispose() {
+    ticker.dispose();
+    super.dispose();
+  }
+
   bool getActionSpeedLockState() {
     return _actionTimingState.speedLocked;
   }
@@ -100,6 +106,11 @@ class ActionTimingController extends ChangeNotifier {
 
   void bindOnFireFunction(FutureOr<void> Function() function) {
     _actionTimingState.onFire = function;
+  }
+
+  // true when the loop is running with [function] bound as its action
+  bool isRunningAction(FutureOr<void> Function() function) {
+    return _actionTimingState.running && _actionTimingState.onFire == function;
   }
 
   void start() {

@@ -330,6 +330,7 @@ class GameSessionFactory {
       dropTableService: weightedDropTableService,
       entityCatalog: catalogs.entityCatalog,
       entityScreenRouterService: entityScreenRouterService,
+      actionTimingController: actionTimingController,
     );
 
     return GameSession(
@@ -425,4 +426,15 @@ class GameSession {
     required this.encounterSystem,
     required this.equipmentSystem,
   });
+
+  void dispose() {
+    playerDataController.dispose();
+    actionTimingController.dispose();
+    inventoryController.dispose();
+    encounterController.dispose();
+    buffController.dispose();
+    craftingController.dispose();
+    equipmentController.dispose();
+    worldController.dispose();
+  }
 }

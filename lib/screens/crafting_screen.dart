@@ -103,45 +103,54 @@ class _CraftingScreenState extends State<CraftingScreen>
               ),
             ),
 
-            // main center image
-            SizedBox(
-              width: 160,
-              height: 160,
-              child: entityIconAsset.isEmpty
-                  ? const Icon(Icons.help_outline, size: 80)
-                  : Image.asset(
-                      entityIconAsset,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) =>
-                          const Icon(Icons.broken_image_outlined, size: 80),
-                    ),
-            ),
-            SizedBox(height: 12),
-
-            // skill progress tile
-            SkillTile(id: skillId),
-
-            // selectable recipe card
-            RecipeCard(
-              maxCraftable: false,
-              recipeId: selectedRecipeId,
-              onTap: () => _showRecipePicker(context, controller, recipeList),
-            ),
-
-            // inventory grid of crafted items
-            Card(
-              child: Column(
+            Expanded(
+              child: ListView(
                 children: [
+                  // main center image
                   SizedBox(
-                    height: 80,
-                    child: InventoryGrid(items: controller.craftedItems()),
+                    height: 160,
+                    child: entityIconAsset.isEmpty
+                        ? const Icon(Icons.help_outline, size: 80)
+                        : Image.asset(
+                            entityIconAsset,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) => const Icon(
+                              Icons.broken_image_outlined,
+                              size: 80,
+                            ),
+                          ),
+                  ),
+                  SizedBox(height: 12),
+
+                  // skill progress tile
+                  SkillTile(id: skillId),
+
+                  // selectable recipe card
+                  RecipeCard(
+                    maxCraftable: false,
+                    recipeId: selectedRecipeId,
+                    onTap: () =>
+                        _showRecipePicker(context, controller, recipeList),
+                  ),
+
+                  // inventory grid of crafted items
+                  Card(
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 80,
+                          child: InventoryGrid(
+                            items: controller.craftedItems(),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
 
             const SizedBox(height: 12),
-            Spacer(),
             Row(
               children: [
                 Padding(

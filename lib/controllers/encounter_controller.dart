@@ -78,7 +78,9 @@ class EncounterController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // function bound to action button. executes periodically.
+  // function bound to action button in startEncounterAction.
+  // This executes periodically.
+  // 
   void doEncounterAction() {
     latestActionResult = _encounterSystem.executePlayerAction(
       playerState: _playerState,
@@ -146,7 +148,7 @@ class EncounterController extends ChangeNotifier {
   // populates encounter hp bar percentage - needs to move to entity view controller
   double getHealthPercent() {
     final e = _encounterState.entity;
-    if (e!.maxHitPoints <= 0) return 0.0;
+    if (e == null || e.maxHitPoints <= 0) return 0.0;
     return (e.hitpoints / e.maxHitPoints).clamp(0.0, 1.0);
   }
 

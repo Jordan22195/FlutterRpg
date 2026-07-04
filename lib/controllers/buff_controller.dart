@@ -10,6 +10,7 @@ class BuffController extends ChangeNotifier {
   final BuffService _buffService;
   final ZoneBuffSystem _zoneBuffSystem;
   final WorldData _worldState;
+  late final Timer _timer;
 
   BuffController({
     required PlayerData playerState,
@@ -20,7 +21,13 @@ class BuffController extends ChangeNotifier {
        _buffService = buffService,
        _zoneBuffSystem = zoneBuffSystem,
        _worldState = worldState {
-    Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   void _onTick() {

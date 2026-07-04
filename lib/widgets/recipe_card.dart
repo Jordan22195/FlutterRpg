@@ -65,9 +65,14 @@ class RecipeCard extends StatelessWidget {
 
     if (recipe.output.isEmpty) {
       return Card(
-        child: SizedBox(
-          height: height,
-          child: const Center(child: Text('Select a recipe')),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            height: height,
+            width: double.infinity,
+            child: const Center(child: Text('Select a recipe')),
+          ),
         ),
       );
     }

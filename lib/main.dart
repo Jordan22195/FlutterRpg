@@ -34,11 +34,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'RPG',
-      theme: ThemeData.dark(),
-      home: GameBootstrap(rawSave: rawSave),
-    );
+    // GameBootstrap owns the providers and wraps MaterialApp so that
+    // dialogs (pushed on the root navigator) can also see them.
+    return GameBootstrap(rawSave: rawSave);
   }
 }
 
@@ -81,6 +79,12 @@ class _GameBootstrapState extends State<GameBootstrap>
   }
 
   @override
+  void dispose() {
+    session.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
@@ -111,7 +115,11 @@ class _GameBootstrapState extends State<GameBootstrap>
           value: session.equipmentController,
         ),
       ],
-      child: const MainShell(),
+      child: MaterialApp(
+        title: 'RPG',
+        theme: ThemeData.dark(),
+        home: const MainShell(),
+      ),
     );
   }
 }

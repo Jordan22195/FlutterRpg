@@ -1,4 +1,5 @@
 import 'package:flutter/widgets.dart';
+import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
 import '../catalogs/zone_catalog.dart';
@@ -8,6 +9,9 @@ import '../services/weighted_drop_table_service.dart';
 import '../services/entity_screen_router_service.dart';
 
 class WorldController extends ChangeNotifier {
+  // controllers
+  final ActionTimingController _actionTimingController;
+
   // data
   final PlayerData _playerState;
   final WorldData _worldState;
@@ -29,13 +33,15 @@ class WorldController extends ChangeNotifier {
     required WeightedDropTableService dropTableService,
     required EntityCatalog entityCatalog,
     required EntityScreenRouterService entityScreenRouterService,
+    required ActionTimingController actionTimingController,
   }) : _dropTableService = dropTableService,
        _worldService = worldService,
        _zoneCatalog = zoneCatalog,
        _worldState = worldState,
        _entityCatalog = entityCatalog,
        _playerState = playerState,
-       _entityScreenRouterService = entityScreenRouterService;
+       _entityScreenRouterService = entityScreenRouterService,
+       _actionTimingController = actionTimingController;
 
   List<Entity> getCurrentZoneEntities() {
     final list = _worldService.getCurrentZoneEntities(
@@ -49,10 +55,27 @@ class WorldController extends ChangeNotifier {
     return _zoneCatalog.getDefinitionFor(_playerState.currentZoneId);
   }
 
-  // todo tie action timing controller into this class
-  void startExplore() {}
+  // fires a single time when the explore button is pressed
+  // binds doExplore to the periodic loop
+  void startExplore() {
+    // if already exploring, continue the current explore action
+    if (_actionTimingController.isRunningAction(doExplore)) {
+      return;
+    }
 
-  void discoverEntity() {
+    // stop action timing
+    _actionTimingController.stop();
+
+    // bind explore action to action timing controller
+    _actionTimingController.bindOnFireFunction(doExplore);
+
+    // start action timing
+    _actionTimingController.start();
+  }
+
+  // function bound to action button in startExplore.
+  // This executes periodically.
+  void doExplore() {
     final entries = _worldService.getZoneDropTableEntries(
       _playerState,
       _zoneCatalog,
@@ -68,7 +91,11 @@ class WorldController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void stopExplore() {}
+  void stopExplore() {
+    // stop action timing
+    _actionTimingController.stop();
+    notifyListeners();
+  }
 
   void navigateToEntity(EntityId entityId, BuildContext context) {
     _entityScreenRouterService.navigateToEntity(entityId, context);
