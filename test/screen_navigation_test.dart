@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/main.dart';
+import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/skil_tile.dart';
 
@@ -20,7 +21,9 @@ Future<void> settle(WidgetTester tester) async {
 void main() {
   testWidgets('tap through all screens', (WidgetTester tester) async {
     // empty raw save triggers the new-game fallback
-    await tester.pumpWidget(const MyApp(rawSave: {}));
+    await tester.pumpWidget(
+      MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
+    );
     await settle(tester);
 
     // ---- Map tab ----

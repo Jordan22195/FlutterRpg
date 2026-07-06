@@ -333,6 +333,12 @@ class GameSessionFactory {
       actionTimingController: actionTimingController,
     );
 
+    // encounter, crafting, and equipment actions mutate inventory data;
+    // forward their change notifications so inventory listeners rebuild
+    encounterController.addListener(inventoryController.refresh);
+    craftingController.addListener(inventoryController.refresh);
+    equipmentController.addListener(inventoryController.refresh);
+
     return GameSession(
       saveGameData: save,
       catalogBundle: catalogs,

@@ -89,6 +89,8 @@ class WorldService {
       }
 
       zone.discoveredEntities.add(newEnt);
+    } else if (e is EncounterEntity) {
+      e.count += entityCount;
     }
   }
 

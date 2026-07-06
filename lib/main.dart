@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -24,38 +26,53 @@ Future<void> main() async {
   final fileManagerService = FileManagerService();
   final gameDataRaw = await fileManagerService.loadAppData();
 
-  runApp(MyApp(rawSave: gameDataRaw));
+  runApp(MyApp(rawSave: gameDataRaw, fileManagerService: fileManagerService));
 }
 
 class MyApp extends StatelessWidget {
   final Map<String, dynamic> rawSave;
+  final FileManagerService fileManagerService;
 
-  const MyApp({super.key, required this.rawSave});
+  const MyApp({
+    super.key,
+    required this.rawSave,
+    required this.fileManagerService,
+  });
 
   @override
   Widget build(BuildContext context) {
     // GameBootstrap owns the providers and wraps MaterialApp so that
     // dialogs (pushed on the root navigator) can also see them.
-    return GameBootstrap(rawSave: rawSave);
+    return GameBootstrap(
+      rawSave: rawSave,
+      fileManagerService: fileManagerService,
+    );
   }
 }
 
 class GameBootstrap extends StatefulWidget {
   final Map<String, dynamic> rawSave;
+  final FileManagerService fileManagerService;
 
-  const GameBootstrap({super.key, required this.rawSave});
+  const GameBootstrap({
+    super.key,
+    required this.rawSave,
+    required this.fileManagerService,
+  });
 
   @override
   State<GameBootstrap> createState() => _GameBootstrapState();
 }
 
 class _GameBootstrapState extends State<GameBootstrap>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late final GameSession session;
+  Timer? _autosaveTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
@@ -76,10 +93,33 @@ class _GameBootstrapState extends State<GameBootstrap>
     EnumImageProviderLookup.register<EntityId>(
       session.catalogBundle.entityCatalog.imageProviderFor,
     );
+
+    // autosave safety net for platforms where lifecycle events are
+    // unreliable (e.g. closing a desktop window)
+    _autosaveTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _saveGame(),
+    );
+  }
+
+  void _saveGame() {
+    widget.fileManagerService.saveAppData(session.saveGameData.toJson());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      _saveGame();
+    }
   }
 
   @override
   void dispose() {
+    _autosaveTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    _saveGame();
     session.dispose();
     super.dispose();
   }

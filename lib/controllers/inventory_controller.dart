@@ -21,6 +21,12 @@ class InventoryController extends ChangeNotifier {
        _inventoryService = inventoryService,
        _itemCatalog = itemCatalog;
 
+  // inventory data is mutated by other domains (encounter drops, crafting,
+  // equipment). those controllers are wired to call this in GameSessionFactory
+  void refresh() {
+    notifyListeners();
+  }
+
   List<ObjectStack> getObjectStackList() {
     return _inventoryService.getObjectStackList(_inventoryData);
   }

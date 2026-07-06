@@ -145,9 +145,21 @@ class EncounterController extends ChangeNotifier {
     _playerDataService.eatEquipedFood(_playerState);
   }
 
+  // resolves the entity the player is viewing. prefers the live encounter
+  // entity so in-progress state is shown; before the first action starts
+  // (or after viewing a different entity) falls back to the selected world entity
+  EncounterEntity? _resolveViewedEntity() {
+    final active = _encounterState.entity;
+    if (active != null && active.id == _playerState.currentEntityViewId) {
+      return active;
+    }
+    final selected = _worldService.getSelectedEntity(_playerState, _worldState);
+    return selected is EncounterEntity ? selected : null;
+  }
+
   // populates encounter hp bar percentage - needs to move to entity view controller
   double getHealthPercent() {
-    final e = _encounterState.entity;
+    final e = _resolveViewedEntity();
     if (e == null || e.maxHitPoints <= 0) return 0.0;
     return (e.hitpoints / e.maxHitPoints).clamp(0.0, 1.0);
   }
@@ -155,7 +167,7 @@ class EncounterController extends ChangeNotifier {
   // todo make this not return the mutable entity state. instead return
   // a snapshot or copy of the entity
   EncounterEntity getActiveEntity() {
-    return _encounterState.entity ??
+    return _resolveViewedEntity() ??
         EncounterEntity(
           id: EntityId.NULL,
           name: "null",
@@ -171,7 +183,7 @@ class EncounterController extends ChangeNotifier {
   }
 
   bool isCombatEntity() {
-    return (_encounterState.entity is CombatEntity);
+    return (_resolveViewedEntity() is CombatEntity);
   }
 
   List<ObjectStack> itemDrops() {

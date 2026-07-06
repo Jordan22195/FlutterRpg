@@ -20,7 +20,7 @@ import '../data/skill_data.dart';
 class ActionTimingData {
   ActionTimingData();
   FutureOr<void> Function() onFire = () {};
-  Duration maxInterval = Duration(seconds: 5);
+  Duration maxInterval = Duration(seconds: 1);
 
   double accelPerSecond =
       0.25; // how quickly speed bar fills when button is held
