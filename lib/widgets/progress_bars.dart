@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
+import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
+import 'fading_number.dart';
 import 'fill_bar.dart';
 
 class ProgressBars extends StatelessWidget {
-  const ProgressBars({super.key, this.onActivityTap});
+  const ProgressBars({
+    super.key,
+    this.onActivityTap,
+    this.encounterScreenInView = false,
+  });
 
   /// Called with the current activity's icon id when the activity
   /// icon is tapped. Only invoked while an activity is running.
   final void Function(Enum activityIconId)? onActivityTap;
+
+  /// Whether an encounter screen is currently visible to the user.
+  /// When the active encounter is on screen it shows its own damage
+  /// numbers, so the activity icon stays quiet.
+  final bool encounterScreenInView;
 
   static const double _activityIconSize = 40;
 
@@ -18,6 +29,13 @@ class ProgressBars extends StatelessWidget {
   Widget build(BuildContext context) {
     final playerController = context.watch<PlayerDataController>();
     final timing = context.watch<ActionTimingController>();
+    final encounter = context.watch<EncounterController>();
+
+    // flash damage on the icon unless the active encounter's own screen
+    // is in view (it shows the numbers over the entity image instead)
+    final damageOnIcon =
+        !(encounterScreenInView && encounter.isViewingActiveEncounter());
+    final damageDone = encounter.latestActionResult.damageDone;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -36,14 +54,34 @@ class ProgressBars extends StatelessWidget {
                 height: _activityIconSize,
               );
             }
-            return ItemStackTile(
-              size: _activityIconSize,
-              count: timing.activityCount,
-              id: iconId,
-              showInfoDialogOnTap: false,
-              onTap: onActivityTap == null
-                  ? null
-                  : () => onActivityTap!(iconId),
+            return Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                ItemStackTile(
+                  size: _activityIconSize,
+                  count: timing.activityCount,
+                  id: iconId,
+                  showInfoDialogOnTap: false,
+                  onTap: onActivityTap == null
+                      ? null
+                      : () => onActivityTap!(iconId),
+                ),
+                if (damageOnIcon)
+                  IgnorePointer(
+                    child: FadingNumber(
+                      number: damageDone,
+                      trigger: encounter.actionSequence,
+                      autoplay: false,
+                      color: damageDone > 0 ? Colors.red : Colors.blue,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        shadows: [Shadow(blurRadius: 6, color: Colors.black)],
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),

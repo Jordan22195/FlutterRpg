@@ -8,6 +8,8 @@ import 'map_screen.dart';
 import 'skills_screen.dart';
 import '../catalogs/entity_catalog.dart';
 import '../controllers/world_controller.dart';
+import '../services/entity_screen_router_service.dart';
+import '../utilities/top_route_observer.dart';
 import '../widgets/progress_bars.dart';
 
 class MainShell extends StatefulWidget {
@@ -22,7 +24,25 @@ class _MainShellState extends State<MainShell> {
 
   final _navKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
 
+  // watches the map tab's stack so the shell knows which screen is on top
+  late final TopRouteObserver _mapTabObserver = TopRouteObserver(
+    _onMapTabRouteChanged,
+  );
+
   NavigatorState get _currentNavigator => _navKeys[index].currentState!;
+
+  // true when an encounter screen is actually visible to the user
+  bool get _encounterScreenInView =>
+      index == 0 &&
+      _mapTabObserver.topRouteName ==
+          EntityScreenRouterService.encounterRouteName;
+
+  void _onMapTabRouteChanged() {
+    // route changes can fire while the navigator is building; defer
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   void initState() {
@@ -58,9 +78,11 @@ class _MainShellState extends State<MainShell> {
   Widget _tabNavigator({
     required GlobalKey<NavigatorState> key,
     required Widget root,
+    List<NavigatorObserver> observers = const [],
   }) {
     return Navigator(
       key: key,
+      observers: observers,
       onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => root),
     );
   }
@@ -71,12 +93,19 @@ class _MainShellState extends State<MainShell> {
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          title: ProgressBars(onActivityTap: _openActivityScreen),
+          title: ProgressBars(
+            onActivityTap: _openActivityScreen,
+            encounterScreenInView: _encounterScreenInView,
+          ),
         ),
         body: IndexedStack(
           index: index,
           children: [
-            _tabNavigator(key: _navKeys[0], root: const MapScreen()),
+            _tabNavigator(
+              key: _navKeys[0],
+              root: const MapScreen(),
+              observers: [_mapTabObserver],
+            ),
             _tabNavigator(key: _navKeys[1], root: const SkillsScreen()),
             _tabNavigator(key: _navKeys[2], root: const InventoryScreen()),
             _tabNavigator(key: _navKeys[3], root: const GearScreen()),

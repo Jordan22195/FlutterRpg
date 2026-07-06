@@ -44,6 +44,13 @@ class WorldController extends ChangeNotifier {
        _entityScreenRouterService = entityScreenRouterService,
        _actionTimingController = actionTimingController;
 
+  // world data (entity counts, removals) is mutated by other domains
+  // (encounter kills/catches). those controllers are wired to call this
+  // in GameSessionFactory
+  void refresh() {
+    notifyListeners();
+  }
+
   List<Entity> getCurrentZoneEntities() {
     final list = _worldService.getCurrentZoneEntities(
       _playerState,

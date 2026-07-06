@@ -132,12 +132,9 @@ class _EncounterScreenState extends State<EncounterScreen> {
     final healthPercent = controller.getHealthPercent();
     final skillType = entity.entityType;
 
-    final fadeKey = GlobalKey<FadingNumberState>();
-
-    // ...
-
-    // whenever you want to show+fade (even if count didn’t change):
-    fadeKey.currentState?.replay();
+    // damage feedback belongs only to the encounter the actions fire on
+    final bool isActiveEncounter = controller.isViewingActiveEncounter();
+    final int actionSequence = controller.actionSequence;
 
     return SafeArea(
       child: Padding(
@@ -171,7 +168,8 @@ class _EncounterScreenState extends State<EncounterScreen> {
                   child: buildPlayerStatStack(stats, playerHp, skillType),
                 ),
 
-                // Center: Item stack tile (always centered)
+                // Center: Item stack tile (always centered) with the
+                // per-action damage number overlaid on the entity image
                 Expanded(
                   child: Center(
                     child: respawning
@@ -188,34 +186,42 @@ class _EncounterScreenState extends State<EncounterScreen> {
                               SizedBox(width: 10),
                             ],
                           )
-                        : ItemStackTile(
-                            size: 200,
-                            count: entityCount,
-                            id: entityId,
+                        : Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              ItemStackTile(
+                                size: 200,
+                                count: entityCount,
+                                id: entityId,
+                              ),
+                              if (isActiveEncounter)
+                                FadingNumber(
+                                  number: playerDamage,
+                                  trigger: actionSequence,
+                                  autoplay: false,
+                                  color: playerDamage > 0
+                                      ? Colors.red
+                                      : Colors.blue,
+                                  style: const TextStyle(
+                                    fontSize: 42,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(
+                                        blurRadius: 8,
+                                        color: Colors.black,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
                           ),
                   ),
                 ),
 
-                // Right side: Fading number centered between tile and entity stats,
-                // and entity stats right-aligned
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    // Fading number centered in remaining space before stats
-                    Center(
-                      child: FadingNumber(
-                        key: fadeKey,
-                        number: playerDamage,
-                        color: Colors.amber,
-                      ),
-                    ),
-
-                    // Entity stats right-aligned
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: buildEntityStatStack(entity),
-                    ),
-                  ],
+                // Entity stats right-aligned
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: buildEntityStatStack(entity),
                 ),
               ],
             ),

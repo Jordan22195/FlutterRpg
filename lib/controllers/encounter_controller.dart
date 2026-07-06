@@ -42,6 +42,10 @@ class EncounterController extends ChangeNotifier {
 
   ActionResult latestActionResult = ActionResult();
 
+  // increments every time an encounter action fires; lets the ui replay
+  // per-action feedback (damage numbers) even when the value repeats
+  int actionSequence = 0;
+
   EncounterController({
     required PlayerData playerData,
     required EncounterData encounterState,
@@ -75,6 +79,7 @@ class EncounterController extends ChangeNotifier {
       world: _worldState,
       playerInventory: _inventoryState,
     );
+    actionSequence++;
 
     // check action conditions are met before the action fires again
     if (!_encounterService.fishingConditionsMet(
@@ -96,6 +101,7 @@ class EncounterController extends ChangeNotifier {
       worldState: _worldState,
       playerInventory: _inventoryState,
     );
+    actionSequence++;
 
     // check action conditions are met before the action fires again
     if (!_encounterService.encounterConditionsMet(
@@ -198,8 +204,19 @@ class EncounterController extends ChangeNotifier {
         );
   }
 
+  // true only when the entity being viewed is the one respawning; the
+  // respawn flag itself is global to the running encounter
   bool respawning() {
-    return _encounterState.respawning;
+    return _encounterState.respawning && isViewingActiveEncounter();
+  }
+
+  // true when the screen is showing the entity the encounter actions are
+  // firing on, so per-action feedback belongs on this screen
+  bool isViewingActiveEncounter() {
+    final active = _encounterState.entity;
+    return active != null &&
+        _encounterState.isActive &&
+        active.id == _playerState.currentEntityViewId;
   }
 
   bool isCombatEntity() {

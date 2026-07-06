@@ -339,6 +339,10 @@ class GameSessionFactory {
     craftingController.addListener(inventoryController.refresh);
     equipmentController.addListener(inventoryController.refresh);
 
+    // encounter actions mutate world data (entity counts, removals);
+    // forward so world listeners (explore screen) rebuild
+    encounterController.addListener(worldController.refresh);
+
     return GameSession(
       saveGameData: save,
       catalogBundle: catalogs,

@@ -4,6 +4,7 @@ class FadingNumber extends StatefulWidget {
   const FadingNumber({
     super.key,
     required this.number,
+    this.trigger = 0,
     this.color,
     this.style,
     this.duration = const Duration(milliseconds: 650),
@@ -14,6 +15,11 @@ class FadingNumber extends StatefulWidget {
   });
 
   final int number;
+
+  /// Replays the fade whenever this value changes, even if [number]
+  /// stays the same. Increment it once per event to show.
+  final int trigger;
+
   final Color? color;
   final TextStyle? style;
 
@@ -50,6 +56,9 @@ class FadingNumberState extends State<FadingNumber>
     if (widget.autoplay) {
       // Start after first frame so layout is done.
       WidgetsBinding.instance.addPostFrameCallback((_) => replay());
+    } else {
+      // start fully faded (invisible) until a replay is triggered
+      _controller.value = 1.0;
     }
   }
 
@@ -73,10 +82,7 @@ class FadingNumberState extends State<FadingNumber>
   void didUpdateWidget(covariant FadingNumber oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Optional: auto-replay if the number *changes*.
-    if (oldWidget.number != widget.number) {
-      // If you want this behavior, keep it.
-      // If you only want manual triggers, remove this block.
+    if (oldWidget.trigger != widget.trigger) {
       WidgetsBinding.instance.addPostFrameCallback((_) => replay());
     }
   }
