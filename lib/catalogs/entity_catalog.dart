@@ -395,19 +395,19 @@ class EntityCatalog {
     EntityId.ANVIL: CraftingEntityDefinition(
       name: "Anvil",
       craftingSkill: SkillId.BLACKSMITHING,
-      iconAsset: "assets/images/entities/anvil.png",
+      iconAsset: "assets/icons/anvil.png",
     ),
 
     EntityId.BASIC_CAMPIRE: CampfireEntityDefinition(
       name: "Basic Campfire",
       craftingSkill: SkillId.COOKING,
-      iconAsset: "assets/images/entities/basic_campfire.png",
+      iconAsset: "assets/icons/items/basic_campfire.png",
     ),
 
     EntityId.FIREPIT: CraftingEntityDefinition(
       name: "Firepit",
       craftingSkill: SkillId.FIREMAKING,
-      iconAsset: "assets/images/entities/basic_campfire.png",
+      iconAsset: "assets/icons/items/basic_campfire.png",
     ),
 
     //

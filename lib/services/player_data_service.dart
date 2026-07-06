@@ -78,6 +78,23 @@ class PlayerDataService {
     return (playerState.stamina / max).clamp(0.0, 1.0);
   }
 
+  void applyDamage(int damage, PlayerData playerState) {
+    playerState.hitpoints -= damage;
+    if (playerState.hitpoints < 0) {
+      playerState.hitpoints = 0;
+    }
+  }
+
+  // restore hitpoints, capped at the player's max hp stat
+  void heal(int amount, PlayerData playerState) {
+    if (amount <= 0) return;
+    final maxHp = getStatTotals(playerState)[SkillId.HITPOINTS] ?? 1;
+    playerState.hitpoints += amount;
+    if (playerState.hitpoints > maxHp) {
+      playerState.hitpoints = maxHp;
+    }
+  }
+
   void drainStamina(double stamina, PlayerData playerState) {
     playerState.stamina -= stamina;
     if (playerState.stamina < 0) {
@@ -102,6 +119,4 @@ class PlayerDataService {
     }
   }
 
-  // todo
-  void eatEquipedFood(PlayerData playerState) {}
 }

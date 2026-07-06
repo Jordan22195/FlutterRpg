@@ -29,6 +29,8 @@ class _EncounterScreenState extends State<EncounterScreen> {
     Map<SkillId, int> stats,
     int hp,
     SkillId attackSkillType,
+    int entityDamage,
+    int entityAttackSequence,
   ) {
     double fontSize = 14;
     double iconSize = 20;
@@ -44,6 +46,18 @@ class _EncounterScreenState extends State<EncounterScreen> {
             IconRenderer(id: SkillId.HITPOINTS, size: iconSize),
             SizedBox(width: 4),
             Text("$hp / $hitPoints", style: TextStyle(fontSize: fontSize)),
+            SizedBox(width: 6),
+            // damage taken from the combat entity's attacks
+            FadingNumber(
+              number: entityDamage,
+              trigger: entityAttackSequence,
+              autoplay: false,
+              color: entityDamage > 0 ? Colors.red : Colors.blue,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
         Row(
@@ -169,7 +183,13 @@ class _EncounterScreenState extends State<EncounterScreen> {
                 // Left: Player stats (left-justified)
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: buildPlayerStatStack(stats, playerHp, skillType),
+                  child: buildPlayerStatStack(
+                    stats,
+                    playerHp,
+                    skillType,
+                    controller.latestEntityDamage,
+                    controller.entityAttackSequence,
+                  ),
                 ),
 
                 // Center: Item stack tile (always centered) with the
@@ -328,7 +348,6 @@ class _EncounterScreenState extends State<EncounterScreen> {
                     child: Text("Eat"),
                     onPressed: () {
                       controller.eatSingleEquipedFood();
-                      setState(() {});
                     },
                   ),
                 ),

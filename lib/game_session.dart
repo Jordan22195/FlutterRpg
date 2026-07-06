@@ -181,6 +181,13 @@ class GameSessionFactory {
       );
     }
 
+    // hitpoints starts at level 10; all other skills start at level 1
+    final skillData = {
+      for (final s in SkillId.values) s: SkillData(name: s.name, xp: 0),
+    };
+    final hpSkill = skillData[SkillId.HITPOINTS]!;
+    hpSkill.xp = hpSkill.xpTable[10];
+
     return SaveGameData(
       slotId: "slot_1",
       contentPackId: catalogs.id,
@@ -190,9 +197,7 @@ class GameSessionFactory {
         currentZoneId: ZoneId.STARTING_FOREST,
         currentEntityViewId: EntityId.NULL,
         buffData: BuffData(),
-        skillData: {
-          for (final s in SkillId.values) s: SkillData(name: s.name, xp: 0),
-        },
+        skillData: skillData,
         equipmentData: EquipmentData(),
         hitpoints: 10,
         stamina: 100,
@@ -209,6 +214,16 @@ class GameSessionFactory {
     required GameCatalogBundle catalogs,
     required TickerProvider vsync,
   }) {
+    // migration: hitpoints has a level-10 floor; saves created before the
+    // floor existed get bumped up (and healed to the new minimum max hp)
+    final hpSkill = save.playerData.skillData[SkillId.HITPOINTS];
+    if (hpSkill != null && hpSkill.xp < hpSkill.xpTable[10]) {
+      hpSkill.xp = hpSkill.xpTable[10];
+      if (save.playerData.hitpoints < 10) {
+        save.playerData.hitpoints = 10;
+      }
+    }
+
     // services
     final buffService = BuffService();
     final craftingService = CraftingService();
@@ -344,6 +359,10 @@ class GameSessionFactory {
     // encounter actions mutate world data (entity counts, removals);
     // forward so world listeners (explore screen) rebuild
     encounterController.addListener(worldController.refresh);
+
+    // the action timing loop notifies every frame while running; the
+    // encounter controller uses it to drive combat entity attacks
+    actionTimingController.addListener(encounterController.onActionTimingFrame);
 
     return GameSession(
       saveGameData: save,

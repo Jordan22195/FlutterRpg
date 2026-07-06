@@ -46,6 +46,12 @@ class EncounterController extends ChangeNotifier {
   // per-action feedback (damage numbers) even when the value repeats
   int actionSequence = 0;
 
+  // last damage the combat entity dealt to the player, with its own
+  // sequence so the ui can replay the hit feedback
+  int latestEntityDamage = 0;
+  int entityAttackSequence = 0;
+  DateTime? _lastEntityAttackAt;
+
   EncounterController({
     required PlayerData playerData,
     required EncounterData encounterState,
@@ -169,13 +175,60 @@ class EncounterController extends ChangeNotifier {
       activityCount: () => _encounterState.entity?.count ?? 0,
     );
 
+    // fresh combat starts a fresh enemy swing timer
+    _lastEntityAttackAt = null;
+
     // start action timing
     _actionTimingController.start();
   }
 
+  // called every frame of the action timing loop (wired in
+  // GameSessionFactory). drives combat entity attacks on their own
+  // attack interval while the player's combat action is running
+  void onActionTimingFrame() {
+    if (!_actionTimingController.isRunningAction(doEncounterAction)) {
+      _lastEntityAttackAt = null;
+      return;
+    }
+    final entity = _encounterState.entity;
+    if (entity is! CombatEntity || _encounterState.respawning) {
+      return;
+    }
+
+    final now = DateTime.now();
+    // first frame of combat starts the swing timer
+    _lastEntityAttackAt ??= now;
+
+    final interval = Duration(
+      milliseconds: (entity.attackInterval * 1000).round(),
+    );
+    if (now.difference(_lastEntityAttackAt!) < interval) {
+      return;
+    }
+    _lastEntityAttackAt = now;
+
+    latestEntityDamage = _encounterSystem.executeEntityAttack(
+      playerState: _playerState,
+      encounter: _encounterState,
+    );
+    entityAttackSequence++;
+
+    // player death ends the encounter
+    if (_playerState.hitpoints <= 0) {
+      _actionTimingController.stop();
+    }
+    notifyListeners();
+  }
+
   // function bound to eat button
   void eatSingleEquipedFood() {
-    _playerDataService.eatEquipedFood(_playerState);
+    final ate = _encounterSystem.eatEquipedFood(
+      playerState: _playerState,
+      playerInventory: _inventoryState,
+    );
+    if (ate) {
+      notifyListeners();
+    }
   }
 
   // resolves the entity the player is viewing. prefers the live encounter

@@ -69,6 +69,15 @@ class EncounterSystem {
       return result; // miss/no progress this tick
     }
 
+    // xp accrues on every damaging action, scaled by the damage done
+    // todo move hardcoded multiplier somwhere else
+    result.xp[e.entityType] = (5 * result.damageDone).toDouble();
+
+    // combat also trains hitpoints, at a third of the attack xp rate
+    if (e is CombatEntity) {
+      result.xp[SkillId.HITPOINTS] = (5 * result.damageDone) / 3.0;
+    }
+
     // Handle death
     if (result.enemyDied) {
       // decrement world entity count
@@ -93,9 +102,6 @@ class EncounterSystem {
       // add drops to inventories (player + encounter history)
       _inventoryService.addItems(playerInventory, [drop]);
       _inventoryService.addItems(encounter.itemDrops, [drop]);
-
-      // todo move hardcoded multiplier somwhere else
-      result.xp[e.entityType] = (5 * result.damageDone).toDouble();
     }
 
     // Apply XP to player
@@ -104,6 +110,45 @@ class EncounterSystem {
     }
 
     return result;
+  }
+
+  /// Eats one of the equipped food items: consumes it from the player
+  /// inventory and restores its heal amount, capped at max hp. Returns
+  /// false (and changes nothing) when no edible food is equipped, the
+  /// inventory is out, or the player is already at full health.
+  bool eatEquipedFood({
+    required PlayerData playerState,
+    required InventoryData playerInventory,
+  }) {
+    final foodId = playerState.equipmentData.equipedFood;
+    if (foodId == ItemId.NULL) return false;
+
+    final def = _itemCatalog.definitionFor(foodId);
+    if (def is! FoodItemDefinition) return false;
+
+    if (_inventoryService.getItemCount(playerInventory, foodId) <= 0) {
+      return false;
+    }
+
+    final maxHp =
+        _playerDataService.getStatTotals(playerState)[SkillId.HITPOINTS] ?? 1;
+    if (playerState.hitpoints >= maxHp) return false; // don't waste food
+
+    _inventoryService.removeItems(playerInventory, foodId, 1);
+    _playerDataService.heal(def.restoreAmount, playerState);
+    return true;
+  }
+
+  /// Rolls the active combat entity's attack against the player and
+  /// applies the damage. Returns the damage dealt.
+  int executeEntityAttack({
+    required PlayerData playerState,
+    required EncounterData encounter,
+  }) {
+    final stats = _playerDataService.getStatTotals(playerState);
+    final damage = _encounterService.entityAttack(encounter, stats);
+    _playerDataService.applyDamage(damage, playerState);
+    return damage;
   }
 
   ActionResult executeFishingAction({
