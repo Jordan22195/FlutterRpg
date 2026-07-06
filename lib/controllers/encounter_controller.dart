@@ -130,15 +130,22 @@ class EncounterController extends ChangeNotifier {
     final isFishing = entity.entityType == SkillId.FISHING;
     final action = isFishing ? doFishingEncounterAction : doEncounterAction;
 
+    final isNew = _encounterService.isNewEntity(_encounterState, entity);
+
     // same entity with its action already running: let it continue.
     // (a stopped action on the same entity falls through and restarts)
-    if (!_encounterService.isNewEntity(_encounterState, entity) &&
-        _actionTimingController.isRunningAction(action)) {
+    if (!isNew && _actionTimingController.isRunningAction(action)) {
       return;
     }
 
     // stop action timing
     _actionTimingController.stop();
+
+    // a new entity starts a new encounter session: drops shown in the
+    // encounter screen belong to the previous session and are cleared
+    if (isNew) {
+      _inventoryService.clearItems(_encounterState.itemDrops);
+    }
 
     // set as active entity in encounter state.
     _encounterService.setEncounterEntity(_encounterState, entity);
@@ -223,8 +230,26 @@ class EncounterController extends ChangeNotifier {
     return (_resolveViewedEntity() is CombatEntity);
   }
 
+  // drops collected during the current encounter session. entities that
+  // are not the session's entity show an empty list
   List<ObjectStack> itemDrops() {
+    if (!isViewingActiveEncounter()) {
+      return [];
+    }
     return _inventoryService.getObjectStackList(_encounterState.itemDrops);
+  }
+
+  // called when the player navigates to view an entity. if no encounter
+  // action is running the previous session is over, so its drops are
+  // cleared; a still-running session keeps its drops
+  void onEntityViewChanged() {
+    final sessionRunning =
+        _actionTimingController.isRunningAction(doEncounterAction) ||
+        _actionTimingController.isRunningAction(doFishingEncounterAction);
+    if (!sessionRunning) {
+      _inventoryService.clearItems(_encounterState.itemDrops);
+      notifyListeners();
+    }
   }
 
   ItemId getEquipedFoodItemId() {
@@ -235,14 +260,6 @@ class EncounterController extends ChangeNotifier {
     final id = _playerState.equipmentData.equipedFood;
     return _inventoryService.getItemCount(_inventoryState, id);
   }
-
-  void setEquipedFood(ItemId id) {}
-
-  ItemId getEquipedTool() {
-    return ItemId.NULL;
-  }
-
-  void equipTool(ItemId id) {}
 
   Map<SkillId, int> getPlayerStats() {
     return _playerDataService.getStatTotals(_playerState);

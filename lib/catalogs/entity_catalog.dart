@@ -139,6 +139,9 @@ class CampfireEntity extends CraftingEntity {
   Map<String, dynamic> toJson() {
     final json = super.toJson();
     json['runtimeType'] = 'CampfireEntity';
+    if (expirationTime != null) {
+      json['expirationTime'] = expirationTime!.toIso8601String();
+    }
     return json;
   }
 
@@ -148,11 +151,19 @@ class CampfireEntity extends CraftingEntity {
       'runtimeType': 'CraftingEntity',
     });
 
-    return CampfireEntity(
+    final campfire = CampfireEntity(
       id: baseEntity.id,
       name: baseEntity.name,
       craftingSkill: baseEntity.craftingSkill,
     );
+
+    // optional: older saves have no expiration on the entity
+    final rawExpiration = json['expirationTime'];
+    if (rawExpiration is String) {
+      campfire.expirationTime = DateTime.tryParse(rawExpiration);
+    }
+
+    return campfire;
   }
 }
 

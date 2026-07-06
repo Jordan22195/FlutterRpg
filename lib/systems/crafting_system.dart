@@ -81,6 +81,10 @@ class CraftingSystem {
       craftFire(craftedItemObjectStack.id, playerState, buffState, worldState);
     } else {
       _inventoryService.addItems(inventoryState, [craftedItemObjectStack]);
+      // record in the session's crafted-items grid (player + session history)
+      _inventoryService.addItems(craftingState.craftedItems, [
+        craftedItemObjectStack,
+      ]);
     }
 
     _playerDataService.applyXp(playerState, {r.skill: r.xp});
@@ -95,7 +99,7 @@ class CraftingSystem {
     // create the buff item
     final fire = ItemCatalog.buildItem(id) as ZoneBuffItem;
     fire.zoneId = playerState.currentZoneId;
-    // add to zone buff data
+    // add to zone buff data (extends the expiration if already burning)
     _buffService.setZoneBuff(fire, buffState, playerState.currentZoneId);
 
     // create associated entity
@@ -107,6 +111,22 @@ class CraftingSystem {
       playerState,
       worldState,
     );
+
+    // stamp the campfire entity with the live buff's expiration so the
+    // explore card can show the remaining burn time
+    final zoneBuff = _buffService.getZoneBuff(
+      buffState,
+      playerState.currentZoneId,
+      fire.id,
+    );
+    final entity = _worldService.getEntity(
+      fire.entityId,
+      playerState.currentZoneId,
+      worldState,
+    );
+    if (entity is CampfireEntity) {
+      entity.expirationTime = zoneBuff?.expirationTime ?? fire.expirationTime;
+    }
   }
 
   // right now just scales drop chance for burnt food

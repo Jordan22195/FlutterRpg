@@ -40,6 +40,11 @@ class EquipmentController extends ChangeNotifier {
     return equipped;
   }
 
+  void setEquipedFood(ItemId itemId) {
+    _equipmentService.setEquipedFood(itemId, _playerState.equipmentData);
+    notifyListeners();
+  }
+
   void unequipSlot(ArmorSlots slot) {
     _equipmentSystem.unequipSlot(
       slot,

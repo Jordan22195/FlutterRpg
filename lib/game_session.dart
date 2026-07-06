@@ -331,6 +331,8 @@ class GameSessionFactory {
       entityCatalog: catalogs.entityCatalog,
       entityScreenRouterService: entityScreenRouterService,
       actionTimingController: actionTimingController,
+      encounterController: encounterController,
+      craftingController: craftingController,
     );
 
     // encounter, crafting, and equipment actions mutate inventory data;

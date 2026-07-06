@@ -8,6 +8,7 @@ import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entity_catalog.dart';
 import '../controllers/encounter_controller.dart';
+import '../controllers/equipment_controller.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/primary_button.dart';
 import '../data/skill_data.dart';
@@ -113,6 +114,7 @@ class _EncounterScreenState extends State<EncounterScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<EncounterController>();
+    final equipmentController = context.watch<EquipmentController>();
     final entity = controller.getActiveEntity();
     final stats = controller.getPlayerStats();
     final actionResult = controller.latestActionResult;
@@ -125,7 +127,9 @@ class _EncounterScreenState extends State<EncounterScreen> {
     final bool isCombatEntity = controller.isCombatEntity();
     final int equipedFoodItemCount = controller.getEquipedFoodItemCount();
     final ItemId equipedFoodItemId = controller.getEquipedFoodItemId();
-    final ItemId equipedTool = controller.getEquipedTool();
+    final ItemId equipedTool = equipmentController.getItemInSlot(
+      ArmorSlots.TOOL,
+    );
 
     final List<ObjectStack> encounterItemDrops = controller.itemDrops();
     final entityCount = entity.count;
@@ -257,11 +261,13 @@ class _EncounterScreenState extends State<EncounterScreen> {
                   size: 56,
                   count: 1,
                   id: equipedTool,
-                  onTap: () =>
-                      EquipmentPicker.build(context, ArmorSlots.TOOL, (id) {
-                        controller.equipTool(id);
-                        setState(() {});
-                      }, skillFilter: SkillId.WOODCUTTING),
+                  onTap: () => EquipmentPicker.build(
+                    context,
+                    ArmorSlots.TOOL,
+                    (id) => equipmentController.equipItem(id),
+                    // tools relevant to this entity's skill (fishing, mining, ...)
+                    skillFilter: skillType,
+                  ),
                 ),
 
                 if (isCombatEntity)
@@ -270,10 +276,10 @@ class _EncounterScreenState extends State<EncounterScreen> {
                     count: equipedFoodItemCount,
                     id: equipedFoodItemId,
                     onTap: () {
-                      FoodPicker.build(context, (id) {
-                        controller.setEquipedFood(id);
-                        setState(() {});
-                      });
+                      FoodPicker.build(
+                        context,
+                        (id) => equipmentController.setEquipedFood(id),
+                      );
                     },
                   ),
 

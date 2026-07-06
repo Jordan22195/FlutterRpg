@@ -33,6 +33,7 @@ class EquipmentData {
     ArmorSlots.WEAPON_1H: ItemId.NULL,
     ArmorSlots.WEAPON_2H: ItemId.NULL,
     ArmorSlots.OFFHAND: ItemId.NULL,
+    ArmorSlots.TOOL: ItemId.NULL,
   };
   ItemId equipedPickaxe = ItemId.NULL;
   ItemId equipedAxe = ItemId.NULL;

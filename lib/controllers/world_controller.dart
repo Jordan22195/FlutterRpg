@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
+import 'package:rpg/controllers/crafting_controller.dart';
+import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -12,6 +14,8 @@ import '../services/entity_screen_router_service.dart';
 class WorldController extends ChangeNotifier {
   // controllers
   final ActionTimingController _actionTimingController;
+  final EncounterController _encounterController;
+  final CraftingController _craftingController;
 
   // data
   final PlayerData _playerState;
@@ -35,6 +39,8 @@ class WorldController extends ChangeNotifier {
     required EntityCatalog entityCatalog,
     required EntityScreenRouterService entityScreenRouterService,
     required ActionTimingController actionTimingController,
+    required EncounterController encounterController,
+    required CraftingController craftingController,
   }) : _dropTableService = dropTableService,
        _worldService = worldService,
        _zoneCatalog = zoneCatalog,
@@ -42,7 +48,9 @@ class WorldController extends ChangeNotifier {
        _entityCatalog = entityCatalog,
        _playerState = playerState,
        _entityScreenRouterService = entityScreenRouterService,
-       _actionTimingController = actionTimingController;
+       _actionTimingController = actionTimingController,
+       _encounterController = encounterController,
+       _craftingController = craftingController;
 
   // world data (entity counts, removals) is mutated by other domains
   // (encounter kills/catches). those controllers are wired to call this
@@ -113,5 +121,9 @@ class WorldController extends ChangeNotifier {
 
     // todo: move this. break paradigm of only mutating data in services.
     _playerState.currentEntityViewId = entityId;
+
+    // finished encounter/crafting sessions clear their drops on navigation
+    _encounterController.onEntityViewChanged();
+    _craftingController.onEntityViewChanged();
   }
 }

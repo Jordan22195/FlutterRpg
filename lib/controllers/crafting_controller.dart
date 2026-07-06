@@ -64,7 +64,11 @@ class CraftingController extends ChangeNotifier {
     return _inventoryService.getItemCount(_inventoryState, itemId);
   }
 
-  String get selectedRecipeId => _craftingState.selectedRecipeId;
+  // the selection belonging to the crafting entity the player is viewing
+  String get selectedRecipeId =>
+      _craftingState.selectedRecipeByEntity[_playerState
+          .currentEntityViewId] ??
+      "";
 
   String get activeRecipeId => _craftingState.activeRecipeId;
 
@@ -81,8 +85,23 @@ class CraftingController extends ChangeNotifier {
     return _recipeCatalog.recipesForSkill(skill);
   }
 
+  // items crafted during the current crafting session. stations that are
+  // not the session's station show an empty list
   List<ObjectStack> craftedItems() {
+    if (_craftingState.craftingEntityId != _playerState.currentEntityViewId) {
+      return [];
+    }
     return _inventoryService.getObjectStackList(_craftingState.craftedItems);
+  }
+
+  // called when the player navigates to view an entity. if no crafting
+  // action is running the previous session is over, so its crafted items
+  // are cleared; a still-running session keeps them
+  void onEntityViewChanged() {
+    if (!_actionTimingController.isRunningAction(doCraftingAction)) {
+      _inventoryService.clearItems(_craftingState.craftedItems);
+      notifyListeners();
+    }
   }
 
   // function bound to action button. executes periodically.
@@ -106,10 +125,10 @@ class CraftingController extends ChangeNotifier {
   }
 
 
-  // each crafting entity is going to have its own seleted reciepe so there is going to need to be a state for every crafting entity. 
   void selectRecipe(String recipeId) {
-    //service sets active recipe in crafting state
-    _craftingState.selectedRecipeId = recipeId;
+    // selections are stored per crafting entity
+    _craftingState.selectedRecipeByEntity[_playerState.currentEntityViewId] =
+        recipeId;
 
     // player can view a recipe while crafting another
     // active recipe is what is being crafted.
@@ -125,18 +144,30 @@ class CraftingController extends ChangeNotifier {
   // fires a single time when action button is pressed
   // binds doEncounterAction to the periodic loop
   void startCraftingAction() {
-    if (_craftingState.selectedRecipeId == _craftingState.activeRecipeId) {
+    final selected = selectedRecipeId;
+    if (selected.isEmpty) {
       return;
     }
 
-    // if selected != active recipe, then starting a crafting
-    // action on a new selection. stop the timing controller.
+    // same recipe with its action already running: let it continue.
+    // (a stopped action on the same recipe falls through and restarts)
+    if (selected == _craftingState.activeRecipeId &&
+        _actionTimingController.isRunningAction(doCraftingAction)) {
+      return;
+    }
+
+    // starting a crafting action on a new selection.
+    // stop the timing controller.
     _actionTimingController.stop();
-    _craftingService.setActiveRecipe(
-      _craftingState.selectedRecipeId,
-      _craftingState,
-      _recipeCatalog,
-    );
+
+    // crafting at a new station starts a new session: crafted items
+    // shown in the crafting screen belong to the previous session
+    if (_craftingState.craftingEntityId != _playerState.currentEntityViewId) {
+      _inventoryService.clearItems(_craftingState.craftedItems);
+      _craftingState.craftingEntityId = _playerState.currentEntityViewId;
+    }
+
+    _craftingService.setActiveRecipe(selected, _craftingState, _recipeCatalog);
 
     // check action conditions are met
     if (!_craftingSystem.recipeRequirementsMet(

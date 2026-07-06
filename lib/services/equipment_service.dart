@@ -35,6 +35,10 @@ class EquipmentService {
         equipmentState.armorEquipment[ArmorSlots.OFFHAND] = item.id;
         equipmentState.armorEquipment[ArmorSlots.WEAPON_2H] = ItemId.NULL;
         return true;
+      } else if (item.armorSlot == ArmorSlots.TOOL) {
+        // tools (axe, pickaxe, ...) are weapons that live in the tool slot
+        equipmentState.armorEquipment[ArmorSlots.TOOL] = item.id;
+        return true;
       } else {
         return false;
       }
@@ -49,6 +53,10 @@ class EquipmentService {
       return false;
     }
     return false;
+  }
+
+  void setEquipedFood(ItemId itemId, EquipmentData equipmentState) {
+    equipmentState.equipedFood = itemId;
   }
 
   ItemId unequipSlot(ArmorSlots slot, EquipmentData equipmentState) {
