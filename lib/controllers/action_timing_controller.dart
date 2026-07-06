@@ -36,6 +36,12 @@ class ActionTimingData {
   bool buttonHeld = false;
   bool actionInFlight = false;
 
+  // what the running action is, shown as an icon tile in the top status bar.
+  // activityCount is a getter so the badge stays live as the entity count
+  // or craftable count changes while the action runs.
+  Enum? activityIconId;
+  int Function()? activityCount;
+
   double speedPercent = 0.0; // 0 to 1 percentage of maximum speed.
   double actionProgress = 0.0; // 0 to 1 percentage of action progress
 
@@ -104,9 +110,22 @@ class ActionTimingController extends ChangeNotifier {
     _actionTimingService.setLockActionSpeed(false, _actionTimingState);
   }
 
-  void bindOnFireFunction(FutureOr<void> Function() function) {
+  void bindOnFireFunction(
+    FutureOr<void> Function() function, {
+    Enum? activityIconId,
+    int Function()? activityCount,
+  }) {
     _actionTimingState.onFire = function;
+    _actionTimingState.activityIconId = activityIconId;
+    _actionTimingState.activityCount = activityCount;
   }
+
+  // icon id of the currently running activity; null when idle
+  Enum? get activityIconId =>
+      _actionTimingState.running ? _actionTimingState.activityIconId : null;
+
+  // live count for the activity icon badge
+  int get activityCount => _actionTimingState.activityCount?.call() ?? 0;
 
   // true when the loop is running with [function] bound as its action
   bool isRunningAction(FutureOr<void> Function() function) {
@@ -116,11 +135,13 @@ class ActionTimingController extends ChangeNotifier {
   void start() {
     _actionTimingService.start(_actionTimingState);
     ticker.start();
+    notifyListeners();
   }
 
   void stop() {
     _actionTimingService.stop(_actionTimingState);
     ticker.stop();
+    notifyListeners();
   }
 
   void onPrimaryButtonPressed() {
@@ -275,6 +296,8 @@ class ActionTimingService {
     actionTimingState.speedPercent = 0.0;
     actionTimingState.lastElapsed = Duration.zero;
     actionTimingState.speedLocked = false;
+    actionTimingState.activityIconId = null;
+    actionTimingState.activityCount = null;
   }
 
   void start(ActionTimingData actionTimingState) {

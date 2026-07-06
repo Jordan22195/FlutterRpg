@@ -4,15 +4,15 @@ import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'fill_bar.dart';
-import '../catalogs/item_catalog.dart';
 
 class ProgressBars extends StatelessWidget {
-  const ProgressBars({super.key});
+  const ProgressBars({super.key, this.onActivityTap});
 
-  static Enum iconId = ItemId.NULL;
-  static int iconCount = 1;
-  static bool iconIsTimer = false;
-  static DateTime? iconTimerEnd = DateTime.now();
+  /// Called with the current activity's icon id when the activity
+  /// icon is tapped. Only invoked while an activity is running.
+  final void Function(Enum activityIconId)? onActivityTap;
+
+  static const double _activityIconSize = 40;
 
   @override
   Widget build(BuildContext context) {
@@ -23,16 +23,30 @@ class ProgressBars extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        //Skill Icon
-        iconId == ItemId.NULL
-            ? const SizedBox(width: 36)
-            : ItemStackTile(
-                size: 36,
-                count: iconCount,
-                id: iconId,
-                isTimerStackTile: iconIsTimer,
-                expirationTime: iconTimerEnd,
-              ),
+        // Current activity icon — same tile the explore screen shows for the
+        // entity, with a live count badge. An empty slot is kept when idle so
+        // the bars don't shift.
+        AnimatedBuilder(
+          animation: timing,
+          builder: (_, _) {
+            final iconId = timing.activityIconId;
+            if (iconId == null) {
+              return const SizedBox(
+                width: _activityIconSize,
+                height: _activityIconSize,
+              );
+            }
+            return ItemStackTile(
+              size: _activityIconSize,
+              count: timing.activityCount,
+              id: iconId,
+              showInfoDialogOnTap: false,
+              onTap: onActivityTap == null
+                  ? null
+                  : () => onActivityTap!(iconId),
+            );
+          },
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Column(

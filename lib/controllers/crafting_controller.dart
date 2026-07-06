@@ -148,8 +148,15 @@ class CraftingController extends ChangeNotifier {
       return;
     }
 
-    // bind Encounter action to action timing controller
-    _actionTimingController.bindOnFireFunction(doCraftingAction);
+    // bind Encounter action to action timing controller.
+    // icon is the crafting station the player is viewing; the badge counts
+    // how many more crafts the inventory can support.
+    _actionTimingController.bindOnFireFunction(
+      doCraftingAction,
+      activityIconId: _playerState.currentEntityViewId,
+      activityCount: () =>
+          getMaxNumberCraftsForRecipe(_craftingState.activeRecipeId),
+    );
 
     // start action timing
     _actionTimingController.start();

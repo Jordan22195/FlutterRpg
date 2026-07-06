@@ -75,6 +75,14 @@ class EncounterController extends ChangeNotifier {
       world: _worldState,
       playerInventory: _inventoryState,
     );
+
+    // check action conditions are met before the action fires again
+    if (!_encounterService.fishingConditionsMet(
+      _playerState,
+      _encounterState,
+    )) {
+      _actionTimingController.stop();
+    }
     notifyListeners();
   }
 
@@ -103,17 +111,23 @@ class EncounterController extends ChangeNotifier {
 
   // todo move this logic to the enoucnter system
   // fires a single time when action button is pressed
-  // binds doEncounterAction to the periodic loop
+  // binds the entity's encounter action to the periodic loop
   void startEncounterAction() {
     // get the player view entity
     final entity = _worldService.getSelectedEntity(_playerState, _worldState);
+    if (entity is! EncounterEntity) {
+      return;
+    }
 
-    // check if this is a new entity
-    final isNew = _encounterService.isNewEntity(_encounterState, entity);
+    // fishing spots don't deplete or fight back, so they run their own
+    // action with looser start conditions than combat/gathering encounters
+    final isFishing = entity.entityType == SkillId.FISHING;
+    final action = isFishing ? doFishingEncounterAction : doEncounterAction;
 
-    // if the entity is not new
-    if (!isNew) {
-      // return, and continue action with current entity.
+    // same entity with its action already running: let it continue.
+    // (a stopped action on the same entity falls through and restarts)
+    if (!_encounterService.isNewEntity(_encounterState, entity) &&
+        _actionTimingController.isRunningAction(action)) {
       return;
     }
 
@@ -121,20 +135,26 @@ class EncounterController extends ChangeNotifier {
     _actionTimingController.stop();
 
     // set as active entity in encounter state.
-    _encounterService.setEncounterEntity(
-      _encounterState,
-      entity as EncounterEntity,
-    );
+    _encounterService.setEncounterEntity(_encounterState, entity);
 
     // check action conditions are met
-    if (!_encounterService.encounterConditionsMet(
-      _playerState,
-      _encounterState,
-    )) {
+    final conditionsMet = isFishing
+        ? _encounterService.fishingConditionsMet(_playerState, _encounterState)
+        : _encounterService.encounterConditionsMet(
+            _playerState,
+            _encounterState,
+          );
+    if (!conditionsMet) {
       return;
     }
-    // bind Encounter action to action timing controller
-    _actionTimingController.bindOnFireFunction(doEncounterAction);
+
+    // bind the encounter action to the action timing controller.
+    // same icon + count the entity's card shows on the explore screen.
+    _actionTimingController.bindOnFireFunction(
+      action,
+      activityIconId: entity.id,
+      activityCount: () => _encounterState.entity?.count ?? 0,
+    );
 
     // start action timing
     _actionTimingController.start();

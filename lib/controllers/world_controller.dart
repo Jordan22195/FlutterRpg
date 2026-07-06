@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
+import 'package:rpg/data/skill_data.dart';
 import '../catalogs/zone_catalog.dart';
 import '../services/world_service.dart';
 import '../catalogs/entity_catalog.dart';
@@ -67,7 +68,10 @@ class WorldController extends ChangeNotifier {
     _actionTimingController.stop();
 
     // bind explore action to action timing controller
-    _actionTimingController.bindOnFireFunction(doExplore);
+    _actionTimingController.bindOnFireFunction(
+      doExplore,
+      activityIconId: SkillId.EXPLORATION,
+    );
 
     // start action timing
     _actionTimingController.start();

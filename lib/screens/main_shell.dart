@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'explore_screen.dart';
 import 'gear_screen.dart';
 import 'inventory_screen.dart';
 import 'map_screen.dart';
 import 'skills_screen.dart';
+import '../catalogs/entity_catalog.dart';
+import '../controllers/world_controller.dart';
 import '../widgets/progress_bars.dart';
 
 class MainShell extends StatefulWidget {
@@ -23,6 +27,24 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
+  }
+
+  // jumps to the screen of the running activity: switches to the map tab
+  // and rebuilds its stack as Map -> Explore (-> entity screen when the
+  // activity is an encounter or crafting entity)
+  void _openActivityScreen(Enum activityIconId) {
+    setState(() => index = 0);
+
+    final nav = _navKeys[0].currentState!;
+    nav.popUntil((route) => route.isFirst);
+    nav.push(MaterialPageRoute(builder: (_) => const ExploreScreen()));
+
+    if (activityIconId is EntityId) {
+      context.read<WorldController>().navigateToEntity(
+        activityIconId,
+        _navKeys[0].currentContext!,
+      );
+    }
   }
 
   Future<bool> _onWillPop() async {
@@ -48,7 +70,9 @@ class _MainShellState extends State<MainShell> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        appBar: AppBar(title: ProgressBars()),
+        appBar: AppBar(
+          title: ProgressBars(onActivityTap: _openActivityScreen),
+        ),
         body: IndexedStack(
           index: index,
           children: [

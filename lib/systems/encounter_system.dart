@@ -121,6 +121,12 @@ class EncounterSystem {
 
     final e = encounter.entity!;
 
+    // fishing spots replenish rather than deplete: a spot at 0 hp would cap
+    // every damage roll at 0 and never yield another catch
+    if (e.hitpoints <= 0) {
+      e.hitpoints = e.maxHitPoints;
+    }
+
     // do damage
     final r = _encounterService.resolvePlayerDamage(
       stats,
