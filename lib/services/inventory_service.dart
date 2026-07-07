@@ -42,6 +42,14 @@ class InventoryService {
     return inventoryState.itemMap[id] ?? 0;
   }
 
+  void setItemCount(InventoryData inventoryState, ItemId id, int count) {
+    if (count <= 0) {
+      inventoryState.itemMap.remove(id);
+    } else {
+      inventoryState.itemMap[id] = count;
+    }
+  }
+
   // get list of food items sorted by healing amount
   List<ItemId> getFoodItemsSortedByHealing(
     InventoryData inventoryState,
@@ -96,6 +104,38 @@ class InventoryService {
 
   void removeEquipment(InventoryData inventoryState, String instanceId) {
     inventoryState.equipment.removeWhere((e) => e.instanceId == instanceId);
+  }
+
+  /// Forces the stack matching [item]'s identity to [count], creating
+  /// the stack when the inventory doesn't have one yet.
+  void setEquipmentCount(
+    InventoryData inventoryState,
+    EquipmentItem item,
+    int count,
+  ) {
+    for (final stack in inventoryState.equipment) {
+      if (stack.canStackWith(item)) {
+        if (count <= 0) {
+          inventoryState.equipment.remove(stack);
+        } else {
+          stack.count = count;
+        }
+        return;
+      }
+    }
+    if (count > 0) {
+      final stack = item.copy();
+      stack.count = count;
+      inventoryState.equipment.add(stack);
+    }
+  }
+
+  /// Count of the inventory stack matching [item]'s identity.
+  int getEquipmentCount(InventoryData inventoryState, EquipmentItem item) {
+    for (final stack in inventoryState.equipment) {
+      if (stack.canStackWith(item)) return stack.count;
+    }
+    return 0;
   }
 
   List<EquipmentItem> getEquipmentForSlot(

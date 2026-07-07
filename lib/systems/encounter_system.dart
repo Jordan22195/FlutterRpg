@@ -83,7 +83,7 @@ class EncounterSystem {
       // decrement world entity count
       encounter.entity!.count--;
       if (encounter.entity!.count > 0) {
-        _encounterService.respawn(encounter);
+        _encounterService.respawn(encounter, e);
       } else {
         _worldService.removeEntityFromZone(
           e.id,

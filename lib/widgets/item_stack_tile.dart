@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import '../utilities/image_resolver.dart';
@@ -65,13 +66,17 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
           currentId,
         ) ??
         ItemDefinition(name: "error", value: -1);
+    final inventoryController = context.read<InventoryController>();
+    final devCountController = TextEditingController(
+      text: '${inventoryController.getItemCount(currentId)}',
+    );
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(itemDef.name),
-        content: SizedBox(
-          height: 300,
+        content: SingleChildScrollView(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               IconRenderer(size: size * 2, id: id as ItemId),
@@ -115,6 +120,34 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
                     Text("+${itemDef.restoreAmount}"),
                   ],
                 ),
+
+              // dev tool: force the player-inventory stack count
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: devCountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        labelText: 'Dev: stack count',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      final count = int.tryParse(devCountController.text);
+                      if (count != null) {
+                        inventoryController.devSetItemCount(currentId, count);
+                      }
+                      Navigator.of(dialogContext).pop();
+                    },
+                    child: const Text('Set'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

@@ -35,6 +35,23 @@ class InventoryController extends ChangeNotifier {
     return _inventoryService.getItemCount(_inventoryData, id);
   }
 
+  // dev/testing helper: force a stack to a specific count
+  void devSetItemCount(ItemId id, int count) {
+    _inventoryService.setItemCount(_inventoryData, id, count);
+    notifyListeners();
+  }
+
+  int getEquipmentCount(EquipmentItem item) {
+    return _inventoryService.getEquipmentCount(_inventoryData, item);
+  }
+
+  // dev/testing helper: force the equipment stack matching this item's
+  // identity to a specific count
+  void devSetEquipmentCount(EquipmentItem item, int count) {
+    _inventoryService.setEquipmentCount(_inventoryData, item, count);
+    notifyListeners();
+  }
+
   ItemDefinition? getItemDefinition(ItemId id) {
     return _itemCatalog.definitionFor(id);
   }

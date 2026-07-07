@@ -281,6 +281,10 @@ class GameSessionFactory {
       }
     }
 
+    // a save written during the 200ms respawn window restores the flag
+    // with no respawn pending; clear it so the ui isn't stuck spinning
+    save.encounterData.respawning = false;
+
     // migration: hitpoints has a level-10 floor; saves created before the
     // floor existed get bumped up (and healed to the new minimum max hp)
     final hpSkill = save.playerData.skillData[SkillId.HITPOINTS];

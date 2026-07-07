@@ -7,13 +7,17 @@ import '../data/encounter_data.dart';
 import '../data/action_result.dart';
 
 class EncounterService {
-  // set respawn flag for ui for 200ms then reset entity hp
-  Future<void> respawn(EncounterData encounterState) async {
+  // set respawn flag for ui for 200ms then reset entity hp. the dying
+  // entity is captured at call time: the active encounter can switch
+  // during the delay, and the reset must land on the entity that died
+  Future<void> respawn(
+    EncounterData encounterState,
+    EncounterEntity entity,
+  ) async {
     encounterState.respawning = true;
 
     await Future.delayed(const Duration(milliseconds: 200));
-    final e = encounterState.entity!;
-    e.hitpoints = e.maxHitPoints;
+    entity.hitpoints = entity.maxHitPoints;
 
     encounterState.respawning = false;
   }
@@ -110,6 +114,15 @@ class EncounterService {
   ) {
     if (entity.count <= 0) {
       encounterState.isActive = false;
+    }
+
+    // revive entities stuck at 0 hp (a missed respawn or a save written
+    // mid-respawn); at 0 hp all damage rolls cap at 0 and the entity can
+    // never die again
+    if (entity.hitpoints <= 0 &&
+        entity.count > 0 &&
+        entity.maxHitPoints > 0) {
+      entity.hitpoints = entity.maxHitPoints;
     }
 
     encounterState.entity = entity;
