@@ -50,7 +50,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
           SizedBox(
             width: double.infinity,
             height: 200,
-            child: Image.asset(zoneDef.iconAsset, fit: BoxFit.cover),
+            child: zoneDef.iconAsset.isEmpty
+                ? const ColoredBox(color: Colors.black26)
+                : Image.asset(
+                    zoneDef.iconAsset,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) =>
+                        const ColoredBox(color: Colors.black26),
+                  ),
           ),
 
           // Combined Location + Entity list

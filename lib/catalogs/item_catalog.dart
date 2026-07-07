@@ -74,6 +74,30 @@ enum ItemId {
   COPPER_DAGGER,
   COPPER_AXE,
   COPPER_PICKAXE,
+
+  // farm
+  CHICKEN_MEAT,
+  FEATHER,
+  COOKED_CHICKEN,
+
+  // tier 2 materials
+  OAK_LOGS,
+  IRON_ORE,
+  IRON_BAR,
+  OAK_CAMPFIRE,
+
+  // tier 2 armor
+  IRON_HELMET,
+  IRON_CHESTPLATE,
+  IRON_LEGS,
+  IRON_BOOTS,
+  IRON_SHIELD,
+  IRON_GLOVES,
+
+  // tier 2 weapons
+  IRON_DAGGER,
+  IRON_AXE,
+  IRON_PICKAXE,
 }
 
 const Duration SlowAttackSpeed = Duration(seconds: 2);
@@ -567,12 +591,22 @@ class ItemCatalog {
       value: 3,
       iconAsset: "assets/icons/items/COPPER_ORE.png",
     ),
+    ItemId.IRON_ORE: ItemDefinition(
+      name: "Iron Ore",
+      value: 6,
+      iconAsset: "assets/icons/items/iron_ore.png",
+    ),
 
     // logs
     ItemId.LOGS: ItemDefinition(
       name: "Logs",
       value: 2,
       iconAsset: "assets/icons/items/regular_logs.png",
+    ),
+    ItemId.OAK_LOGS: ItemDefinition(
+      name: "Oak Logs",
+      value: 5,
+      iconAsset: "assets/icons/items/oak_logs.png",
     ),
 
     // campfires
@@ -583,6 +617,33 @@ class ItemCatalog {
       duration: Duration(minutes: 1),
       entityId: EntityId.BASIC_CAMPIRE,
       iconAsset: "assets/icons/items/basic_campfire.png",
+    ),
+    ItemId.OAK_CAMPFIRE: ZoneBuffItemDefinition(
+      name: "Oak Campfire",
+      value: 12,
+      skillBonus: {SkillId.HITPOINTS: 10},
+      duration: Duration(minutes: 3),
+      entityId: EntityId.OAK_CAMPFIRE,
+      iconAsset: "assets/icons/items/basic_campfire.png",
+    ),
+
+    // farm
+    ItemId.CHICKEN_MEAT: ItemDefinition(
+      name: "Chicken Meat",
+      value: 2,
+      iconAsset: "assets/icons/items/chicken_meat.png",
+    ),
+    ItemId.FEATHER: ItemDefinition(
+      name: "Feather",
+      value: 1,
+      iconAsset: "assets/icons/items/feather.png",
+    ),
+    ItemId.COOKED_CHICKEN: FoodItemDefinition(
+      name: "Cooked Chicken",
+      value: 4,
+      restoreAmount: 3,
+      xpValue: 10,
+      iconAsset: "assets/icons/items/cooked_chicken.png",
     ),
 
     //FISH
@@ -751,6 +812,11 @@ class ItemCatalog {
       value: 2,
       iconAsset: "assets/icons/items/copper_bar.png",
     ),
+    ItemId.IRON_BAR: ItemDefinition(
+      name: "Iron Bar",
+      value: 8,
+      iconAsset: "assets/icons/items/iron_bar.png",
+    ),
 
     //armor
     ItemId.COPPER_HELMET: EquipmentItemDefition(
@@ -796,6 +862,50 @@ class ItemCatalog {
       iconAsset: "assets/icons/items/copper_shield.png",
     ),
 
+    // iron armor (tier 2)
+    ItemId.IRON_HELMET: EquipmentItemDefition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Iron Helmet",
+      value: 30,
+      skillBonus: {SkillId.DEFENCE: 10},
+      iconAsset: "assets/icons/items/iron_helmet.png",
+    ),
+    ItemId.IRON_CHESTPLATE: EquipmentItemDefition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Iron Chestplate",
+      value: 50,
+      skillBonus: {SkillId.DEFENCE: 20},
+      iconAsset: "assets/icons/items/iron_chestplate.png",
+    ),
+    ItemId.IRON_LEGS: EquipmentItemDefition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Iron Leggings",
+      value: 40,
+      skillBonus: {SkillId.DEFENCE: 16},
+      iconAsset: "assets/icons/items/iron_legs.png",
+    ),
+    ItemId.IRON_GLOVES: EquipmentItemDefition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Iron Gloves",
+      value: 20,
+      skillBonus: {SkillId.DEFENCE: 6},
+      iconAsset: "assets/icons/items/iron_gloves.png",
+    ),
+    ItemId.IRON_BOOTS: EquipmentItemDefition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Iron Boots",
+      value: 20,
+      skillBonus: {SkillId.DEFENCE: 6},
+      iconAsset: "assets/icons/items/iron_boots.png",
+    ),
+    ItemId.IRON_SHIELD: EquipmentItemDefition(
+      armorSlot: ArmorSlots.OFFHAND,
+      name: "Iron Shield",
+      value: 30,
+      skillBonus: {SkillId.DEFENCE: 14},
+      iconAsset: "assets/icons/items/iron_shield.png",
+    ),
+
     //weapons
     ItemId.COPPER_AXE: WeaponItemDefition(
       armorSlot: ArmorSlots.TOOL,
@@ -820,6 +930,32 @@ class ItemCatalog {
       skillBonus: {SkillId.ATTACK: 5},
       actionInterval: FastAttackSpeed,
       iconAsset: "assets/icons/items/copper_dagger.png",
+    ),
+
+    // iron weapons and tools (tier 2)
+    ItemId.IRON_AXE: WeaponItemDefition(
+      armorSlot: ArmorSlots.TOOL,
+      name: "Iron Axe",
+      value: 25,
+      skillBonus: {SkillId.ATTACK: 4, SkillId.WOODCUTTING: 10},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/iron_axe.png",
+    ),
+    ItemId.IRON_PICKAXE: WeaponItemDefition(
+      armorSlot: ArmorSlots.TOOL,
+      name: "Iron Pickaxe",
+      value: 25,
+      skillBonus: {SkillId.ATTACK: 4, SkillId.MINING: 10},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/iron_pickaxe.png",
+    ),
+    ItemId.IRON_DAGGER: WeaponItemDefition(
+      armorSlot: ArmorSlots.WEAPON_1H,
+      name: "Iron Dagger",
+      value: 25,
+      skillBonus: {SkillId.ATTACK: 10},
+      actionInterval: FastAttackSpeed,
+      iconAsset: "assets/icons/items/iron_dagger.png",
     ),
   };
 

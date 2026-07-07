@@ -1,4 +1,5 @@
 import '../catalogs/item_catalog.dart';
+import 'skill_data.dart';
 
 enum ArmorSlots {
   HEAD,
@@ -33,10 +34,12 @@ class EquipmentData {
     ArmorSlots.WEAPON_1H: ItemId.NULL,
     ArmorSlots.WEAPON_2H: ItemId.NULL,
     ArmorSlots.OFFHAND: ItemId.NULL,
-    ArmorSlots.TOOL: ItemId.NULL,
   };
-  ItemId equipedPickaxe = ItemId.NULL;
-  ItemId equipedAxe = ItemId.NULL;
+
+  // one tool per gathering skill (woodcutting axe, mining pickaxe, ...).
+  // combat entities use the weapon slots in armorEquipment instead
+  Map<SkillId, ItemId> equipedTools = {};
+
   ItemId equipedFood = ItemId.NULL;
 
   Map<String, dynamic> toJson() {
@@ -44,8 +47,9 @@ class EquipmentData {
       'armorEquipment': armorEquipment.map(
         (slot, itemId) => MapEntry(slot.name, itemId.name),
       ),
-      'equipedPickaxe': equipedPickaxe.name,
-      'equipedAxe': equipedAxe.name,
+      'equipedTools': equipedTools.map(
+        (skill, itemId) => MapEntry(skill.name, itemId.name),
+      ),
       'equipedFood': equipedFood.name,
     };
   }
@@ -81,6 +85,10 @@ class EquipmentData {
             throw FormatException('Invalid ArmorSlots value "$rawSlot".'),
       );
 
+      // migration: the legacy shared TOOL slot is dropped; tools are
+      // now tracked per skill in equipedTools
+      if (slot == ArmorSlots.TOOL) continue;
+
       final itemId = ItemId.values.firstWhere(
         (i) => i.name == rawItem,
         orElse: () => throw FormatException('Invalid ItemId value "$rawItem".'),
@@ -89,17 +97,21 @@ class EquipmentData {
       armorEquipment[slot] = itemId;
     }
 
-    final rawPickaxe = json['equipedPickaxe'];
-    final rawAxe = json['equipedAxe'];
+    // tolerated when missing: older saves predate per-skill tools
+    // (and stored legacy "equipedPickaxe"/"equipedAxe", which are dropped)
+    final equipedTools = <SkillId, ItemId>{};
+    final rawTools = json['equipedTools'];
+    if (rawTools is Map) {
+      for (final entry in rawTools.entries) {
+        final skill = SkillId.values.asNameMap()[entry.key];
+        final itemId = ItemId.values.asNameMap()[entry.value];
+        if (skill != null && itemId != null) {
+          equipedTools[skill] = itemId;
+        }
+      }
+    }
+
     final rawFood = json['equipedFood'];
-
-    if (rawPickaxe is! String) {
-      throw FormatException('Missing or invalid "equipedPickaxe".');
-    }
-
-    if (rawAxe is! String) {
-      throw FormatException('Missing or invalid "equipedAxe".');
-    }
 
     if (rawFood is! String) {
       throw FormatException('Missing or invalid "equipedFood".');
@@ -107,15 +119,7 @@ class EquipmentData {
 
     return EquipmentData()
       ..armorEquipment = armorEquipment
-      ..equipedPickaxe = ItemId.values.firstWhere(
-        (i) => i.name == rawPickaxe,
-        orElse: () =>
-            throw FormatException('Invalid ItemId value "$rawPickaxe".'),
-      )
-      ..equipedAxe = ItemId.values.firstWhere(
-        (i) => i.name == rawAxe,
-        orElse: () => throw FormatException('Invalid ItemId value "$rawAxe".'),
-      )
+      ..equipedTools = equipedTools
       ..equipedFood = ItemId.values.firstWhere(
         (i) => i.name == rawFood,
         orElse: () => throw FormatException('Invalid ItemId value "$rawFood".'),

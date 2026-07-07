@@ -27,9 +27,21 @@ class BuffService {
     return buffState.zoneBuffs[zoneId]?[itemId];
   }
 
-  Map<SkillId, int> getBuffedStatTotal(BuffData buffState) {
+  // stat bonuses from all buffs affecting the player right now: global
+  // buffs plus the zone buffs of the zone the player is in. expired
+  // buffs are skipped even if the expiry sweep hasn't removed them yet
+  Map<SkillId, int> getBuffedStatTotal(
+    BuffData buffState,
+    ZoneId currentZoneId,
+  ) {
     Map<SkillId, int> total = {};
-    for (final buff in buffState.globalBuffs.values) {
+    final now = DateTime.now();
+    final activeBuffs = [
+      ...buffState.globalBuffs.values,
+      ...?buffState.zoneBuffs[currentZoneId]?.values,
+    ];
+    for (final buff in activeBuffs) {
+      if (buff.expirationTime.isBefore(now)) continue;
       total = Util.addMap(total, buff.skillBonus);
     }
 
@@ -45,10 +57,18 @@ class BuffService {
     final buffs = buffState.zoneBuffs[zoneId] ?? {};
     if (buffs.containsKey(buffItem.id)) {
       final buff = buffs[buffItem.id] ?? nullBuff;
-      buff.expirationTime = buff.expirationTime.add(buffItem.duration);
+      buff.expirationTime = _extendedExpiration(buff, buffItem.duration);
       return;
     }
     buffs[buffItem.id] = buffItem as ZoneBuffItem;
+  }
+
+  // extend from the current expiration, or from now if the buff already
+  // ran out but hasn't been swept yet (never extend from the past)
+  DateTime _extendedExpiration(BuffItem buff, Duration duration) {
+    final now = DateTime.now();
+    final base = buff.expirationTime.isAfter(now) ? buff.expirationTime : now;
+    return base.add(duration);
   }
 
   /// Add/refresh a buff.
@@ -57,7 +77,7 @@ class BuffService {
     if (buffState.globalBuffs.containsKey(buff.id)) {
       final existing = buffState.globalBuffs[buff.id];
       if (existing != null) {
-        existing.expirationTime = existing.expirationTime.add(buff.duration);
+        existing.expirationTime = _extendedExpiration(existing, buff.duration);
       }
       return;
     }

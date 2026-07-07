@@ -1,7 +1,13 @@
 import 'entity_catalog.dart';
 import '../services/weighted_drop_table_service.dart';
 
-enum ZoneId { TUTORIAL_FARM, STARTING_FOREST, CHALLENGING_MOUNTAIN, NULL }
+enum ZoneId {
+  TUTORIAL_FARM,
+  STARTING_FOREST,
+  CHALLENGING_MOUNTAIN,
+  DEV_FOREST,
+  NULL,
+}
 
 class Zone {
   final ZoneId id;
@@ -121,16 +127,17 @@ class ZoneCatalog {
   }
 
   void _initialize() {
+    // starting zone: a gentle tutorial farm with trees, a pond, and
+    // chickens to learn woodcutting, fishing, and combat on
     _zones[ZoneId.TUTORIAL_FARM] = ZoneDefinition(
       id: ZoneId.TUTORIAL_FARM,
       name: "Blanchy's Farm",
-      iconAsset: "",
+      iconAsset: "assets/images/zones/farm.png",
 
-      permanentEntities: [],
+      permanentEntities: [EntityId.TRANQUIL_POND],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
-        WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.CHICKEN, weight: 2),
       ],
     );
     _zones[ZoneId.STARTING_FOREST] = ZoneDefinition(
@@ -143,6 +150,31 @@ class ZoneCatalog {
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
+      ],
+    );
+
+    // dev/test zone: every entity is discoverable
+    _zones[ZoneId.DEV_FOREST] = ZoneDefinition(
+      id: ZoneId.DEV_FOREST,
+      name: "Dev Forest",
+      iconAsset: 'assets/images/zones/forest.png',
+
+      permanentEntities: [EntityId.ANVIL],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.CHICKEN, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TRANQUIL_POND,
+          weight: 1,
+        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.DEEP_POND, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.RIVER, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.LAKE, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.OCEAN, weight: 1),
       ],
     );
 

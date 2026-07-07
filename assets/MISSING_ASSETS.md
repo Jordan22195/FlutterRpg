@@ -35,10 +35,51 @@ Armor:
 
 - [ ] copper_gloves.png
 
+Farm (chicken drops and cooking):
+
+- [ ] chicken_meat.png
+- [ ] feather.png
+- [ ] cooked_chicken.png
+
+Tier 2 materials:
+
+- [ ] oak_logs.png
+- [ ] iron_ore.png
+- [ ] iron_bar.png
+
+Tier 2 armor:
+
+- [ ] iron_helmet.png
+- [ ] iron_chestplate.png
+- [ ] iron_legs.png
+- [ ] iron_gloves.png
+- [ ] iron_boots.png
+- [ ] iron_shield.png
+
+Tier 2 weapons and tools:
+
+- [ ] iron_dagger.png
+- [ ] iron_axe.png
+- [ ] iron_pickaxe.png
+
+Optional (currently reusing basic_campfire.png):
+
+- [ ] oak_campfire.png
+
 ## Entity images — `assets/images/entities/`
 
-Fishing spots (referenced in `lib/catalogs/entity_catalog.dart`; tranquil_pond.png exists as reference style):
+Fishing spots (referenced in `lib/catalogs/entity_catalog.dart`; tranquil_pond.png exists as reference style; the deep pond reuses tranquil_pond.png):
 
 - [ ] river.png
 - [ ] lake.png
 - [ ] ocean.png
+
+New entities:
+
+- [ ] chicken.png
+- [ ] oak_tree.png
+- [ ] iron.png
+
+## Zone images — `assets/images/zones/`
+
+- [ ] farm.png (Blanchy's Farm explore header; falls back to a plain box until added)

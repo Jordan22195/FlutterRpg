@@ -7,6 +7,23 @@ import '../catalogs/zone_catalog.dart';
 class MapScreen extends StatelessWidget {
   const MapScreen({super.key});
 
+  Widget _zoneButton(
+    BuildContext context,
+    PlayerDataController playerDataController,
+    ZoneId zoneId,
+    String label,
+  ) {
+    return ElevatedButton(
+      onPressed: () {
+        playerDataController.setCurrentZone(zoneId);
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => ExploreScreen()));
+      },
+      child: Text(label),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final playerDataController = context.watch<PlayerDataController>();
@@ -28,20 +45,36 @@ class MapScreen extends StatelessWidget {
             ),
           ),
 
-          // Example zone button
+          // Zone buttons. each pushes onto the MAP TAB's nested navigator,
+          // so switching tabs and coming back returns to ExploreScreen.
+          Positioned(
+            left: 80,
+            top: 160,
+            child: _zoneButton(
+              context,
+              playerDataController,
+              ZoneId.TUTORIAL_FARM,
+              'Farm',
+            ),
+          ),
           Positioned(
             left: 80,
             top: 220,
-            child: ElevatedButton(
-              onPressed: () {
-                playerDataController.setCurrentZone(ZoneId.STARTING_FOREST);
-                // This pushes onto the MAP TAB's nested navigator,
-                // so switching tabs and coming back returns to ExploreScreen.
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => ExploreScreen()));
-              },
-              child: const Text('Forest'),
+            child: _zoneButton(
+              context,
+              playerDataController,
+              ZoneId.STARTING_FOREST,
+              'Forest',
+            ),
+          ),
+          Positioned(
+            left: 80,
+            top: 280,
+            child: _zoneButton(
+              context,
+              playerDataController,
+              ZoneId.DEV_FOREST,
+              'Dev Forest',
             ),
           ),
         ],

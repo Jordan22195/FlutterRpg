@@ -52,14 +52,17 @@ class FoodPicker {
 class EquipmentPicker {
   static void build(
     BuildContext context,
-    ArmorSlots slot,
+    List<ArmorSlots> slots,
     Function(ItemId id) onEquip, {
     SkillId skillFilter = SkillId.NULL,
   }) {
     final controller = context.read<InventoryController>();
-    final list = skillFilter == SkillId.NULL
-        ? controller.getSlotItemList(slot)
-        : controller.getSlotItemListForSkill(slot, skillFilter);
+    final list = [
+      for (final slot in slots)
+        ...(skillFilter == SkillId.NULL
+            ? controller.getSlotItemList(slot)
+            : controller.getSlotItemListForSkill(slot, skillFilter)),
+    ];
     showDialog(
       context: context,
       builder: (ctx) {

@@ -194,7 +194,7 @@ class GameSessionFactory {
       saveVersion: 1,
       contentPackVersion: catalogs.version,
       playerData: PlayerData(
-        currentZoneId: ZoneId.STARTING_FOREST,
+        currentZoneId: ZoneId.TUTORIAL_FARM,
         currentEntityViewId: EntityId.NULL,
         buffData: BuffData(),
         skillData: skillData,
@@ -214,6 +214,33 @@ class GameSessionFactory {
     required GameCatalogBundle catalogs,
     required TickerProvider vsync,
   }) {
+    // migration: saves created before a zone was added have no entry for
+    // it in world data; build the missing zones from their definitions
+    for (final zoneId in ZoneId.values) {
+      if (zoneId == ZoneId.NULL) continue;
+      if (save.worldData.zones.containsKey(zoneId)) continue;
+      final def = catalogs.zoneCatalog.getDefinitionFor(zoneId);
+      if (def.id == ZoneId.NULL) continue;
+      save.worldData.zones[zoneId] = Zone(
+        id: zoneId,
+        name: def.name,
+        permanentEntities: def.permanentEntities
+            .map((id) => catalogs.entityCatalog.buildEntity(id))
+            .toList(),
+        discoveredEntities: [],
+      );
+    }
+
+    // migration: permanent entities added to a zone definition after the
+    // save serialized that zone are synced in on load
+    for (final zone in save.worldData.zones.values) {
+      final def = catalogs.zoneCatalog.getDefinitionFor(zone.id);
+      for (final entityId in def.permanentEntities) {
+        if (zone.permanentEntities.any((e) => e.id == entityId)) continue;
+        zone.permanentEntities.add(catalogs.entityCatalog.buildEntity(entityId));
+      }
+    }
+
     // migration: hitpoints has a level-10 floor; saves created before the
     // floor existed get bumped up (and healed to the new minimum max hp)
     final hpSkill = save.playerData.skillData[SkillId.HITPOINTS];

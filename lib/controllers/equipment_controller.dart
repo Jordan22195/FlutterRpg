@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../catalogs/item_catalog.dart';
 import '../data/equipment_data.dart';
+import '../data/skill_data.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';
 import '../services/equipment_service.dart';
@@ -38,6 +39,23 @@ class EquipmentController extends ChangeNotifier {
     );
     notifyListeners();
     return equipped;
+  }
+
+  // the tool equipped for a gathering skill
+  ItemId getToolForSkill(SkillId skill) {
+    return _equipmentService.getToolForSkill(skill, _playerState.equipmentData);
+  }
+
+  void equipToolForSkill(SkillId skill, ItemId itemId) {
+    _equipmentService.equipTool(skill, itemId, _playerState.equipmentData);
+    notifyListeners();
+  }
+
+  // the equipped weapon; combat entities use this as their 'tool'
+  ItemId getEquipedWeapon() {
+    final twoHand = getItemInSlot(ArmorSlots.WEAPON_2H);
+    if (twoHand != ItemId.NULL) return twoHand;
+    return getItemInSlot(ArmorSlots.WEAPON_1H);
   }
 
   void setEquipedFood(ItemId itemId) {

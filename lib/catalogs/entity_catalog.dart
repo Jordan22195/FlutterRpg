@@ -7,11 +7,16 @@ enum EntityId {
   NULL,
   ANVIL,
   BASIC_CAMPIRE,
+  OAK_CAMPFIRE,
   FIREPIT,
   TREE,
+  OAK_TREE,
   GOBLIN,
+  CHICKEN,
   COPPER,
+  IRON,
   TRANQUIL_POND,
+  DEEP_POND,
   RIVER,
   LAKE,
   OCEAN,
@@ -404,6 +409,12 @@ class EntityCatalog {
       iconAsset: "assets/icons/items/basic_campfire.png",
     ),
 
+    EntityId.OAK_CAMPFIRE: CampfireEntityDefinition(
+      name: "Oak Campfire",
+      craftingSkill: SkillId.COOKING,
+      iconAsset: "assets/icons/items/basic_campfire.png",
+    ),
+
     EntityId.FIREPIT: CraftingEntityDefinition(
       name: "Firepit",
       craftingSkill: SkillId.FIREMAKING,
@@ -426,6 +437,17 @@ class EntityCatalog {
       hitpoints: 10,
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.LOGS, weight: 1)],
     ),
+    EntityId.OAK_TREE: EncounterEntityDefinition(
+      name: "Oak Tree",
+      iconAsset: "assets/images/entities/oak_tree.png",
+
+      entityType: SkillId.WOODCUTTING,
+      defence: 10,
+      hitpoints: 15,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.OAK_LOGS, weight: 1),
+      ],
+    ),
 
     // COMBAT
     EntityId.GOBLIN: CombatEntityDefinition(
@@ -438,6 +460,20 @@ class EntityCatalog {
       attack: 2,
       attackInterval: 2.0,
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1)],
+    ),
+    EntityId.CHICKEN: CombatEntityDefinition(
+      name: "Chicken",
+      iconAsset: "assets/images/entities/chicken.png",
+
+      entityType: SkillId.ATTACK,
+      defence: 1,
+      hitpoints: 5,
+      attack: 1,
+      attackInterval: 2.0,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
+        WeightedDropTableEntry<ItemId>(id: ItemId.FEATHER, weight: 1),
+      ],
     ),
 
     // MINING
@@ -452,6 +488,17 @@ class EntityCatalog {
         WeightedDropTableEntry<ItemId>(id: ItemId.COPPER_ORE, weight: 1),
       ],
     ),
+    EntityId.IRON: EncounterEntityDefinition(
+      name: "Iron Vein",
+      iconAsset: "assets/images/entities/iron.png",
+
+      entityType: SkillId.MINING,
+      defence: 10,
+      hitpoints: 15,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.IRON_ORE, weight: 1),
+      ],
+    ),
     // FISHING
     EntityId.TRANQUIL_POND: EncounterEntityDefinition(
       name: "Pond",
@@ -464,6 +511,19 @@ class EntityCatalog {
         WeightedDropTableEntry<ItemId>(id: ItemId.MINNOW, weight: 1),
         WeightedDropTableEntry<ItemId>(id: ItemId.CARP, weight: 0.5),
         WeightedDropTableEntry(id: ItemId.BLUEGILL, weight: .25),
+      ],
+    ),
+    EntityId.DEEP_POND: EncounterEntityDefinition(
+      name: "Deep Pond",
+      iconAsset: "assets/images/entities/tranquil_pond.png",
+
+      entityType: SkillId.FISHING,
+      defence: 10,
+      hitpoints: 10,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.TROUT, weight: 1),
+        WeightedDropTableEntry<ItemId>(id: ItemId.PIKE, weight: 0.5),
+        WeightedDropTableEntry<ItemId>(id: ItemId.SALMON, weight: 0.25),
       ],
     ),
     EntityId.RIVER: EncounterEntityDefinition(

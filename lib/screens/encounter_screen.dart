@@ -41,21 +41,41 @@ class _EncounterScreenState extends State<EncounterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // current hp
         Row(
           children: [
             IconRenderer(id: SkillId.HITPOINTS, size: iconSize),
             SizedBox(width: 4),
-            Text("$hp / $hitPoints", style: TextStyle(fontSize: fontSize)),
+            Text("$hp", style: TextStyle(fontSize: fontSize)),
             SizedBox(width: 6),
-            // damage taken from the combat entity's attacks
-            FadingNumber(
-              number: entityDamage,
-              trigger: entityAttackSequence,
-              autoplay: false,
-              color: entityDamage > 0 ? Colors.red : Colors.blue,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
+            // damage taken from the combat entity's attacks. fixed-width
+            // slot so the flash doesn't shift the surrounding layout
+            SizedBox(
+              width: 28,
+              child: FadingNumber(
+                number: entityDamage,
+                trigger: entityAttackSequence,
+                autoplay: false,
+                color: entityDamage > 0 ? Colors.red : Colors.blue,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        // max hp
+        Row(
+          children: [
+            SizedBox(width: iconSize + 4),
+            Text(
+              "/ $hitPoints",
+              style: TextStyle(
+                fontSize: fontSize,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
           ],
@@ -141,14 +161,17 @@ class _EncounterScreenState extends State<EncounterScreen> {
     final bool isCombatEntity = controller.isCombatEntity();
     final int equipedFoodItemCount = controller.getEquipedFoodItemCount();
     final ItemId equipedFoodItemId = controller.getEquipedFoodItemId();
-    final ItemId equipedTool = equipmentController.getItemInSlot(
-      ArmorSlots.TOOL,
-    );
+    final skillType = entity.entityType;
+
+    // combat entities use the equipped weapon as their 'tool'; gathering
+    // entities use the tool equipped for their skill
+    final ItemId equipedTool = isCombatEntity
+        ? equipmentController.getEquipedWeapon()
+        : equipmentController.getToolForSkill(skillType);
 
     final List<ObjectStack> encounterItemDrops = controller.itemDrops();
     final entityCount = entity.count;
     final healthPercent = controller.getHealthPercent();
-    final skillType = entity.entityType;
 
     // damage feedback belongs only to the encounter the actions fire on
     final bool isActiveEncounter = controller.isViewingActiveEncounter();
@@ -180,9 +203,10 @@ class _EncounterScreenState extends State<EncounterScreen> {
             ),
             Row(
               children: [
-                // Left: Player stats (left-justified)
-                Align(
-                  alignment: Alignment.centerLeft,
+                // Left: Player stats. fixed width so growing/shrinking
+                // numbers don't re-center the entity image
+                SizedBox(
+                  width: 100,
                   child: buildPlayerStatStack(
                     stats,
                     playerHp,
@@ -193,60 +217,52 @@ class _EncounterScreenState extends State<EncounterScreen> {
                 ),
 
                 // Center: Item stack tile (always centered) with the
-                // per-action damage number overlaid on the entity image
+                // per-action damage number overlaid on the entity image.
+                // a fixed 200x200 slot that only swaps its background
+                // between tile and respawn spinner, so nothing shifts and
+                // the damage number stays mounted across respawns
                 Expanded(
                   child: Center(
-                    child: respawning
-                        ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: const [
-                              SizedBox(
-                                width: 200,
-                                height: 200,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
+                    child: SizedBox(
+                      width: 200,
+                      height: 200,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          if (respawning)
+                            const Positioned.fill(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          else
+                            ItemStackTile(
+                              size: 200,
+                              count: entityCount,
+                              id: entityId,
+                            ),
+                          if (isActiveEncounter)
+                            FadingNumber(
+                              number: playerDamage,
+                              trigger: actionSequence,
+                              autoplay: false,
+                              color: playerDamage > 0
+                                  ? Colors.red
+                                  : Colors.blue,
+                              style: const TextStyle(
+                                fontSize: 42,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(blurRadius: 8, color: Colors.black),
+                                ],
                               ),
-                              SizedBox(width: 10),
-                            ],
-                          )
-                        : Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              ItemStackTile(
-                                size: 200,
-                                count: entityCount,
-                                id: entityId,
-                              ),
-                              if (isActiveEncounter)
-                                FadingNumber(
-                                  number: playerDamage,
-                                  trigger: actionSequence,
-                                  autoplay: false,
-                                  color: playerDamage > 0
-                                      ? Colors.red
-                                      : Colors.blue,
-                                  style: const TextStyle(
-                                    fontSize: 42,
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [
-                                      Shadow(
-                                        blurRadius: 8,
-                                        color: Colors.black,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
 
-                // Entity stats right-aligned
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: buildEntityStatStack(entity),
-                ),
+                // Right: Entity stats. fixed width, mirroring the left side
+                SizedBox(width: 100, child: buildEntityStatStack(entity)),
               ],
             ),
             const SizedBox(height: 8),
@@ -283,10 +299,19 @@ class _EncounterScreenState extends State<EncounterScreen> {
                   id: equipedTool,
                   onTap: () => EquipmentPicker.build(
                     context,
-                    ArmorSlots.TOOL,
-                    (id) => equipmentController.equipItem(id),
-                    // tools relevant to this entity's skill (fishing, mining, ...)
-                    skillFilter: skillType,
+                    // combat picks a weapon; gathering picks a tool for
+                    // this entity's skill (fishing, mining, ...)
+                    isCombatEntity
+                        ? const [ArmorSlots.WEAPON_1H, ArmorSlots.WEAPON_2H]
+                        : const [ArmorSlots.TOOL],
+                    (id) {
+                      if (isCombatEntity) {
+                        equipmentController.equipItem(id);
+                      } else {
+                        equipmentController.equipToolForSkill(skillType, id);
+                      }
+                    },
+                    skillFilter: isCombatEntity ? SkillId.NULL : skillType,
                   ),
                 ),
 

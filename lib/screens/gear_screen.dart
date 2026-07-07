@@ -18,7 +18,11 @@ class GearScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Gear')),
       body: ListView(
-        children: ArmorSlots.values.map((slot) {
+        // tools are equipped per skill from the encounter screens,
+        // so the shared TOOL slot is not shown here
+        children: ArmorSlots.values.where((s) => s != ArmorSlots.TOOL).map((
+          slot,
+        ) {
           ItemId itemId = equipmentController.getItemInSlot(slot);
           return ListTile(
             title: Text(slot.name),

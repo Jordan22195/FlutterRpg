@@ -14,6 +14,19 @@ class EquipmentService {
         stats = Util.addMap(stats, item.skillBonus);
       }
     }
+
+    // each per-skill tool contributes only the bonus for the skill it
+    // is equipped under (an axe's attack bonus doesn't leak into combat)
+    for (final entry in equipmentState.equipedTools.entries) {
+      if (entry.value == ItemId.NULL) continue;
+      final item = ItemCatalog.buildItem(entry.value);
+      if (item is EquipmentItem) {
+        final bonus = item.skillBonus[entry.key];
+        if (bonus != null) {
+          stats = Util.addMap(stats, {entry.key: bonus});
+        }
+      }
+    }
     return stats;
   }
 
@@ -35,11 +48,8 @@ class EquipmentService {
         equipmentState.armorEquipment[ArmorSlots.OFFHAND] = item.id;
         equipmentState.armorEquipment[ArmorSlots.WEAPON_2H] = ItemId.NULL;
         return true;
-      } else if (item.armorSlot == ArmorSlots.TOOL) {
-        // tools (axe, pickaxe, ...) are weapons that live in the tool slot
-        equipmentState.armorEquipment[ArmorSlots.TOOL] = item.id;
-        return true;
       } else {
+        // tools (armorSlot TOOL) are equipped per skill via equipTool
         return false;
       }
       //main hand/offhand checks
@@ -57,6 +67,15 @@ class EquipmentService {
 
   void setEquipedFood(ItemId itemId, EquipmentData equipmentState) {
     equipmentState.equipedFood = itemId;
+  }
+
+  // the tool equipped for a gathering skill (axe for woodcutting, ...)
+  ItemId getToolForSkill(SkillId skill, EquipmentData equipmentState) {
+    return equipmentState.equipedTools[skill] ?? ItemId.NULL;
+  }
+
+  void equipTool(SkillId skill, ItemId itemId, EquipmentData equipmentState) {
+    equipmentState.equipedTools[skill] = itemId;
   }
 
   ItemId unequipSlot(ArmorSlots slot, EquipmentData equipmentState) {

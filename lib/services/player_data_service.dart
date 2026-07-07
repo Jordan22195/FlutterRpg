@@ -32,7 +32,10 @@ class PlayerDataService {
     final equipmentStats = _equipmentService.getStatTotals(
       playerState.equipmentData,
     );
-    final buffStats = _buffService.getBuffedStatTotal(playerState.buffData);
+    final buffStats = _buffService.getBuffedStatTotal(
+      playerState.buffData,
+      playerState.currentZoneId,
+    );
 
     final totals = Util.addMap(
       skillStats,
