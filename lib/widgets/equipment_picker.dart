@@ -53,7 +53,7 @@ class EquipmentPicker {
   static void build(
     BuildContext context,
     List<ArmorSlots> slots,
-    Function(ItemId id) onEquip, {
+    Function(EquipmentItem item) onEquip, {
     SkillId skillFilter = SkillId.NULL,
   }) {
     final controller = context.read<InventoryController>();
@@ -76,8 +76,7 @@ class EquipmentPicker {
               itemBuilder: (context, i) {
                 final e = list[i];
                 return EquipmentCard(
-                  id: e,
-
+                  item: e,
                   onTap: () {
                     onEquip(e);
                     Navigator.of(ctx).pop();

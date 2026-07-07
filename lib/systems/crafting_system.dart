@@ -80,14 +80,56 @@ class CraftingSystem {
     if (r.skill == SkillId.FIREMAKING) {
       craftFire(craftedItemObjectStack.id, playerState, buffState, worldState);
     } else {
-      _inventoryService.addItems(inventoryState, [craftedItemObjectStack]);
-      // record in the session's crafted-items grid (player + session history)
-      _inventoryService.addItems(craftingState.craftedItems, [
-        craftedItemObjectStack,
-      ]);
+      final built = ItemCatalog.buildItem(craftedItemObjectStack.id);
+      if (built is EquipmentItem) {
+        // equipment is a unique instance with a rolled quality; higher
+        // crafting levels raise the odds of the upper tiers
+        final skillLevel =
+            _playerDataService.getStatTotals(playerState)[r.skill] ?? 1;
+        built.quality = rollQuality(skillLevel, r.levelRequirement);
+        // the session grid gets its own copy: sharing one object between
+        // two inventories would double-count when stacks merge
+        final sessionCopy = built.copy();
+        _inventoryService.addEquipment(inventoryState, built);
+        _inventoryService.addEquipment(craftingState.craftedItems, sessionCopy);
+      } else {
+        _inventoryService.addItems(inventoryState, [craftedItemObjectStack]);
+        _inventoryService.addItems(craftingState.craftedItems, [
+          craftedItemObjectStack,
+        ]);
+      }
     }
 
     _playerDataService.applyXp(playerState, {r.skill: r.xp});
+  }
+
+  /// Rolls the quality tier for a crafted piece of equipment. Common is
+  /// always the most likely outcome; levels above the recipe requirement
+  /// shift weight toward the higher tiers.
+  ItemQuality rollQuality(int skillLevel, int levelRequirement) {
+    final levelBonus = (skillLevel - levelRequirement)
+        .clamp(0, 99)
+        .toDouble();
+    final entries = [
+      WeightedDropTableEntry<ItemQuality>(id: ItemQuality.COMMON, weight: 100),
+      WeightedDropTableEntry<ItemQuality>(
+        id: ItemQuality.UNCOMMON,
+        weight: 10 + levelBonus,
+      ),
+      WeightedDropTableEntry<ItemQuality>(
+        id: ItemQuality.RARE,
+        weight: 4 + levelBonus * 0.5,
+      ),
+      WeightedDropTableEntry<ItemQuality>(
+        id: ItemQuality.EPIC,
+        weight: 1.5 + levelBonus * 0.25,
+      ),
+      WeightedDropTableEntry<ItemQuality>(
+        id: ItemQuality.LEGENDARY,
+        weight: 0.5 + levelBonus * 0.1,
+      ),
+    ];
+    return _weightedDropTableService.roll(entries).id;
   }
 
   void craftFire(

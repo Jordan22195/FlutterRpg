@@ -5,6 +5,7 @@ import '../controllers/inventory_controller.dart';
 import '../data/equipment_data.dart';
 import '../catalogs/item_catalog.dart';
 import '../widgets/equipment_card.dart';
+import '../widgets/equipment_info_dialog.dart';
 import '../widgets/item_stack_tile.dart';
 
 class GearScreen extends StatelessWidget {
@@ -23,10 +24,24 @@ class GearScreen extends StatelessWidget {
         children: ArmorSlots.values.where((s) => s != ArmorSlots.TOOL).map((
           slot,
         ) {
-          ItemId itemId = equipmentController.getItemInSlot(slot);
+          final item = equipmentController.getItemInSlot(slot);
           return ListTile(
             title: Text(slot.name),
-            trailing: ItemStackTile(id: itemId, count: 1, size: 56),
+            subtitle: item == null ? null : Text(item.displayName),
+            trailing: ItemStackTile(
+              id: item?.id ?? ItemId.NULL,
+              count: 1,
+              size: 56,
+              showInfoDialogOnTap: false,
+              borderColor: item == null
+                  ? null
+                  : qualityBorderColor(item.quality),
+              // tapping the equipped item's icon shows its stats; tapping
+              // the row itself opens the slot's item picker
+              onTap: item == null
+                  ? null
+                  : () => showEquipmentInfoDialog(context, item),
+            ),
             onTap: () {
               final list = inventoryController.getSlotItemList(slot);
               showDialog(
@@ -42,7 +57,7 @@ class GearScreen extends StatelessWidget {
                         itemBuilder: (context, i) {
                           final e = list[i];
                           return EquipmentCard(
-                            id: e,
+                            item: e,
                             onTap: () {
                               equipmentController.equipItem(e);
                               Navigator.of(ctx).pop();

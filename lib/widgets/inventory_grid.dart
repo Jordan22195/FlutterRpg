@@ -16,9 +16,14 @@ class InventoryGrid extends StatelessWidget {
     this.showInfoDialogOnTap = true,
     this.titleForItem,
     this.descriptionForItem,
+    this.shrinkWrap = false,
   });
 
   final List<ObjectStack> items;
+
+  /// Set when embedding in an unbounded-height parent (e.g. a ListView):
+  /// the grid sizes to its content and scrolls with the parent instead.
+  final bool shrinkWrap;
 
   /// Optional image resolver override.
   /// If null, the grid will try to resolve via ItemController.imageProviderFor(stack.objectId).
@@ -39,6 +44,8 @@ class InventoryGrid extends StatelessWidget {
     final itemCatalog = context.read<GameSession>().catalogBundle.itemCatalog;
 
     return GridView.builder(
+      shrinkWrap: shrinkWrap,
+      physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
       padding: const EdgeInsets.all(12),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: columns,

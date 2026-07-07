@@ -6,63 +6,73 @@ import '../utilities/util.dart';
 class EquipmentService {
   Map<SkillId, int> getStatTotals(EquipmentData equipmentState) {
     Map<SkillId, int> stats = {};
-    for (final itemId in equipmentState.armorEquipment.values) {
-      if (itemId == ItemId.NULL) continue;
-      final item = ItemCatalog.buildItem(itemId);
-
-      if (item is EquipmentItem) {
-        stats = Util.addMap(stats, item.skillBonus);
-      }
+    for (final item in equipmentState.armorEquipment.values) {
+      if (item == null) continue;
+      stats = Util.addMap(stats, item.effectiveSkillBonus);
     }
 
     // each per-skill tool contributes only the bonus for the skill it
     // is equipped under (an axe's attack bonus doesn't leak into combat)
     for (final entry in equipmentState.equipedTools.entries) {
-      if (entry.value == ItemId.NULL) continue;
-      final item = ItemCatalog.buildItem(entry.value);
-      if (item is EquipmentItem) {
-        final bonus = item.skillBonus[entry.key];
-        if (bonus != null) {
-          stats = Util.addMap(stats, {entry.key: bonus});
-        }
+      final item = entry.value;
+      if (item == null) continue;
+      final bonus = item.effectiveSkillBonus[entry.key];
+      if (bonus != null) {
+        stats = Util.addMap(stats, {entry.key: bonus});
       }
     }
     return stats;
   }
 
-  bool equipItem(ItemId itemId, EquipmentData equipmentState) {
-    Item item = ItemCatalog.buildItem(itemId);
-    if (item.id == ItemId.NULL) return false;
+  /// Equips [item] into its slot, applying weapon exclusivity rules.
+  /// Returns the instances displaced by the swap (so they can be put
+  /// back in the inventory), or null when the item can't be equipped
+  /// this way (tools go through [equipTool]).
+  List<EquipmentItem>? equipItem(EquipmentItem item, EquipmentData eq) {
+    final displaced = <EquipmentItem>[];
 
-    if (item is WeaponItem) {
-      if (item.armorSlot == ArmorSlots.WEAPON_2H) {
-        equipmentState.armorEquipment[ArmorSlots.WEAPON_2H] = item.id;
-        equipmentState.armorEquipment[ArmorSlots.WEAPON_1H] = ItemId.NULL;
-        equipmentState.armorEquipment[ArmorSlots.OFFHAND] = ItemId.NULL;
-        return true;
-      } else if (item.armorSlot == ArmorSlots.WEAPON_1H) {
-        equipmentState.armorEquipment[ArmorSlots.WEAPON_1H] = item.id;
-        equipmentState.armorEquipment[ArmorSlots.WEAPON_2H] = ItemId.NULL;
-        return true;
-      } else if (item.armorSlot == ArmorSlots.OFFHAND) {
-        equipmentState.armorEquipment[ArmorSlots.OFFHAND] = item.id;
-        equipmentState.armorEquipment[ArmorSlots.WEAPON_2H] = ItemId.NULL;
-        return true;
-      } else {
-        // tools (armorSlot TOOL) are equipped per skill via equipTool
-        return false;
-      }
-      //main hand/offhand checks
-    } else if (item is EquipmentItem) {
-      //check equipment slot is correct
-      if (equipmentState.armorEquipment.containsKey(item.armorSlot)) {
-        equipmentState.armorEquipment[item.armorSlot] = item.id;
-        return true;
-      }
-    } else {
-      return false;
+    void displace(ArmorSlots slot) {
+      final old = eq.armorEquipment[slot];
+      if (old != null) displaced.add(old);
+      eq.armorEquipment[slot] = null;
     }
-    return false;
+
+    switch (item.armorSlot) {
+      case ArmorSlots.WEAPON_2H:
+        displace(ArmorSlots.WEAPON_2H);
+        displace(ArmorSlots.WEAPON_1H);
+        displace(ArmorSlots.OFFHAND);
+        eq.armorEquipment[ArmorSlots.WEAPON_2H] = item;
+        return displaced;
+      case ArmorSlots.WEAPON_1H:
+        displace(ArmorSlots.WEAPON_1H);
+        displace(ArmorSlots.WEAPON_2H);
+        eq.armorEquipment[ArmorSlots.WEAPON_1H] = item;
+        return displaced;
+      case ArmorSlots.OFFHAND:
+        displace(ArmorSlots.OFFHAND);
+        displace(ArmorSlots.WEAPON_2H);
+        eq.armorEquipment[ArmorSlots.OFFHAND] = item;
+        return displaced;
+      case ArmorSlots.TOOL:
+        // tools are equipped per skill via equipTool
+        return null;
+      default:
+        if (!eq.armorEquipment.containsKey(item.armorSlot)) return null;
+        displace(item.armorSlot);
+        eq.armorEquipment[item.armorSlot] = item;
+        return displaced;
+    }
+  }
+
+  EquipmentItem? unequipSlot(ArmorSlots slot, EquipmentData equipmentState) {
+    final old = equipmentState.armorEquipment[slot];
+    equipmentState.armorEquipment[slot] = null;
+    return old;
+  }
+
+  EquipmentItem? getItemInSlot(ArmorSlots slot, EquipmentData equipmentState) {
+    return equipmentState.armorEquipment[slot];
   }
 
   void setEquipedFood(ItemId itemId, EquipmentData equipmentState) {
@@ -70,21 +80,18 @@ class EquipmentService {
   }
 
   // the tool equipped for a gathering skill (axe for woodcutting, ...)
-  ItemId getToolForSkill(SkillId skill, EquipmentData equipmentState) {
-    return equipmentState.equipedTools[skill] ?? ItemId.NULL;
+  EquipmentItem? getToolForSkill(SkillId skill, EquipmentData equipmentState) {
+    return equipmentState.equipedTools[skill];
   }
 
-  void equipTool(SkillId skill, ItemId itemId, EquipmentData equipmentState) {
-    equipmentState.equipedTools[skill] = itemId;
-  }
-
-  ItemId unequipSlot(ArmorSlots slot, EquipmentData equipmentState) {
-    final i = equipmentState.armorEquipment[slot] ?? ItemId.NULL;
-    equipmentState.armorEquipment[slot] = ItemId.NULL;
-    return i;
-  }
-
-  ItemId getItemInSlot(ArmorSlots slot, EquipmentData equipmentState) {
-    return equipmentState.armorEquipment[slot] ?? ItemId.NULL;
+  /// Equips [item] as the tool for [skill]; returns the displaced tool.
+  EquipmentItem? equipTool(
+    SkillId skill,
+    EquipmentItem item,
+    EquipmentData equipmentState,
+  ) {
+    final old = equipmentState.equipedTools[skill];
+    equipmentState.equipedTools[skill] = item;
+    return old;
   }
 }

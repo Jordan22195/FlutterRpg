@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import '../catalogs/entity_catalog.dart';
+import '../data/skill_data.dart';
 import '../screens/crafting_screen.dart';
+import '../screens/enchanting_screen.dart';
 import '../screens/encounter_screen.dart';
 
 class EntityScreenRouterService {
   // route names let navigator observers identify which screen is on top
   static const String encounterRouteName = 'encounter';
   static const String craftingRouteName = 'crafting';
+  static const String enchantingRouteName = 'enchanting';
 
   final EntityCatalog _entityCatalog;
 
@@ -27,6 +30,17 @@ class EntityScreenRouterService {
         ),
       );
     } else if (enitity is CraftingEntity) {
+      // the enchanting bench has its own screen (disenchant/enchant
+      // instances rather than recipe crafting)
+      if (enitity.craftingSkill == SkillId.ENCHANTING) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            settings: const RouteSettings(name: enchantingRouteName),
+            builder: (_) => const EnchantingScreen(),
+          ),
+        );
+        return;
+      }
       Navigator.of(context).push(
         MaterialPageRoute(
           settings: const RouteSettings(name: craftingRouteName),

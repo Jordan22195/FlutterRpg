@@ -159,7 +159,14 @@ class ZoneCatalog {
       name: "Dev Forest",
       iconAsset: 'assets/images/zones/forest.png',
 
-      permanentEntities: [EntityId.ANVIL],
+      permanentEntities: [
+        EntityId.ANVIL,
+        EntityId.ENCHANTING_BENCH,
+        EntityId.DEEP_POND,
+        EntityId.RIVER,
+        EntityId.LAKE,
+        EntityId.OCEAN,
+      ],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: 1),
@@ -167,14 +174,7 @@ class ZoneCatalog {
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 1),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.TRANQUIL_POND,
-          weight: 1,
-        ),
-        WeightedDropTableEntry<EntityId>(id: EntityId.DEEP_POND, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.RIVER, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.LAKE, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.OCEAN, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.TRANQUIL_POND, weight: 1),
       ],
     );
 

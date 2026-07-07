@@ -11,6 +11,7 @@ import 'catalogs/entity_catalog.dart';
 import 'controllers/action_timing_controller.dart';
 import 'controllers/buff_controller.dart';
 import 'controllers/crafting_controller.dart';
+import 'controllers/enchanting_controller.dart';
 import 'controllers/encounter_controller.dart';
 import 'controllers/equipment_controller.dart';
 import 'controllers/inventory_controller.dart';
@@ -153,6 +154,9 @@ class _GameBootstrapState extends State<GameBootstrap>
         ),
         ChangeNotifierProvider<EquipmentController>.value(
           value: session.equipmentController,
+        ),
+        ChangeNotifierProvider<EnchantingController>.value(
+          value: session.enchantingController,
         ),
       ],
       child: MaterialApp(

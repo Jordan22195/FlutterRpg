@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import '../catalogs/item_catalog.dart';
 import '../data/equipment_data.dart';
-import '../data/skill_data.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';
+import '../data/skill_data.dart';
 import '../services/equipment_service.dart';
 import '../systems/equipment_system.dart';
 
@@ -28,34 +28,39 @@ class EquipmentController extends ChangeNotifier {
        _equipmentService = equipmentService,
        _equipmentSystem = equipmentSystem;
 
-  ItemId getItemInSlot(ArmorSlots slot) {
+  EquipmentItem? getItemInSlot(ArmorSlots slot) {
     return _equipmentService.getItemInSlot(slot, _playerState.equipmentData);
   }
 
-  bool equipItem(ItemId itemId) {
-    final equipped = _equipmentService.equipItem(
-      itemId,
+  bool equipItem(EquipmentItem item) {
+    final equipped = _equipmentSystem.equipItem(
+      item,
       _playerState.equipmentData,
+      _inventoryState,
     );
     notifyListeners();
     return equipped;
   }
 
   // the tool equipped for a gathering skill
-  ItemId getToolForSkill(SkillId skill) {
+  EquipmentItem? getToolForSkill(SkillId skill) {
     return _equipmentService.getToolForSkill(skill, _playerState.equipmentData);
   }
 
-  void equipToolForSkill(SkillId skill, ItemId itemId) {
-    _equipmentService.equipTool(skill, itemId, _playerState.equipmentData);
+  void equipToolForSkill(SkillId skill, EquipmentItem item) {
+    _equipmentSystem.equipTool(
+      skill,
+      item,
+      _playerState.equipmentData,
+      _inventoryState,
+    );
     notifyListeners();
   }
 
   // the equipped weapon; combat entities use this as their 'tool'
-  ItemId getEquipedWeapon() {
-    final twoHand = getItemInSlot(ArmorSlots.WEAPON_2H);
-    if (twoHand != ItemId.NULL) return twoHand;
-    return getItemInSlot(ArmorSlots.WEAPON_1H);
+  EquipmentItem? getEquipedWeapon() {
+    return getItemInSlot(ArmorSlots.WEAPON_2H) ??
+        getItemInSlot(ArmorSlots.WEAPON_1H);
   }
 
   void setEquipedFood(ItemId itemId) {

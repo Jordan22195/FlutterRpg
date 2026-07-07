@@ -3,39 +3,30 @@ import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
+/// Card for a unique equipment instance: shows its (quality/enchant
+/// aware) display name, effective stats, and a quality-colored tile.
 class EquipmentCard extends StatelessWidget {
-  EquipmentCard({
+  const EquipmentCard({
     super.key,
-    required this.id,
+    required this.item,
     required this.onTap,
-    this.maxCraftable = true,
     this.height = 68,
   });
 
-  bool maxCraftable = true;
-  final ItemId id;
+  final EquipmentItem item;
   final VoidCallback? onTap;
   final double height;
 
   @override
   Widget build(BuildContext context) {
-    print("Building EquipmentCard for item ID: $id");
-    final item = ItemCatalog.buildItem(id) as EquipmentItem?;
     double actionInterval = 0;
-    if (item is WeaponItem) {
-      actionInterval = item.actionInterval.inSeconds.toDouble();
+    final currentItem = item;
+    if (currentItem is WeaponItem) {
+      actionInterval = currentItem.actionInterval.inMilliseconds / 1000.0;
     }
 
-    if (item == null) {
-      return Card(
-        child: SizedBox(
-          height: height,
-          child: const Center(child: Text('Item not found')),
-        ),
-      );
-    }
-
-    final stats = item.skillBonus;
+    final stats = item.effectiveSkillBonus;
+    final qualityColor = qualityBorderColor(item.quality);
 
     return Card(
       child: InkWell(
@@ -48,28 +39,49 @@ class EquipmentCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: [
-                // Icon (left)
-                ItemStackTile(size: 52, id: item.id, count: 1),
+                // Icon (left); count badge shows the stack size
+                ItemStackTile(
+                  size: 52,
+                  id: item.id,
+                  count: item.count,
+                  showInfoDialogOnTap: false,
+                  borderColor: qualityColor,
+                ),
+                const SizedBox(width: 8),
 
-                // Stats (right)
+                // Name + stats
                 Expanded(
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          for (final entry in stats.entries) ...[
-                            IconRenderer(size: 16, id: entry.key),
-                            Text(
-                              "${entry.value}",
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            const SizedBox(width: 2),
-                          ],
-                        ],
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: qualityColor,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 2),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final entry in stats.entries) ...[
+                              IconRenderer(size: 16, id: entry.key),
+                              Text(
+                                "${entry.value}",
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              const SizedBox(width: 2),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 

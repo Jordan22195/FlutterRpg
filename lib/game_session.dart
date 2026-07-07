@@ -1,9 +1,13 @@
 import 'package:flutter/widgets.dart';
 import 'package:rpg/catalogs/recipe_catalog.dart';
 import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/enchantment_catalog.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
+import 'package:rpg/controllers/enchanting_controller.dart';
+import 'package:rpg/services/enchanting_service.dart';
+import 'package:rpg/systems/enchanting_system.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/equipment_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
@@ -241,6 +245,42 @@ class GameSessionFactory {
       }
     }
 
+    // migration: equipment used to be stored as stackable counts in the
+    // item map; convert those counts into unique equipment instances
+    final legacyEquipmentIds = save.inventoryData.itemMap.keys
+        .where(
+          (id) =>
+              catalogs.itemCatalog.definitionFor(id) is EquipmentItemDefition,
+        )
+        .toList();
+    for (final id in legacyEquipmentIds) {
+      final count = save.inventoryData.itemMap.remove(id) ?? 0;
+      if (count <= 0) continue;
+      final item = ItemCatalog.buildItem(id);
+      if (item is EquipmentItem) {
+        item.count = count;
+        save.inventoryData.equipment.add(item);
+      }
+    }
+
+    // migration: merge identical equipment into stacks (saves from before
+    // stacking stored each piece as its own entry)
+    final loadedEquipment = save.inventoryData.equipment.toList();
+    save.inventoryData.equipment.clear();
+    for (final item in loadedEquipment) {
+      var merged = false;
+      for (final stack in save.inventoryData.equipment) {
+        if (stack.canStackWith(item)) {
+          stack.count += item.count;
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) {
+        save.inventoryData.equipment.add(item);
+      }
+    }
+
     // migration: hitpoints has a level-10 floor; saves created before the
     // floor existed get bumped up (and healed to the new minimum max hp)
     final hpSkill = save.playerData.skillData[SkillId.HITPOINTS];
@@ -269,6 +309,8 @@ class GameSessionFactory {
     final entityScreenRouterService = EntityScreenRouterService(
       entityCatalog: catalogs.entityCatalog,
     );
+    final enchantingService = EnchantingService();
+    final enchantmentCatalog = EnchantmentCatalog();
 
     // systems
     final craftingSystem = CraftingSystem(
@@ -298,6 +340,12 @@ class GameSessionFactory {
     final equipmentSystem = EquipmentSystem(
       inventoryService: inventoryService,
       equipmentService: equipmentService,
+    );
+    final enchantingSystem = EnchantingSystem(
+      enchantingService: enchantingService,
+      inventoryService: inventoryService,
+      playerDataService: playerDataService,
+      enchantmentCatalog: enchantmentCatalog,
     );
     final zoneBuffSystem = ZoneBuffSystem(
       worldService: worldService,
@@ -364,6 +412,14 @@ class GameSessionFactory {
       equipmentService: equipmentService,
       equipmentSystem: equipmentSystem,
     );
+    final enchantingController = EnchantingController(
+      actionTimingController: actionTimingController,
+      playerState: save.playerData,
+      inventoryState: save.inventoryData,
+      enchantmentCatalog: enchantmentCatalog,
+      inventoryService: inventoryService,
+      enchantingSystem: enchantingSystem,
+    );
     final worldController = WorldController(
       worldState: save.worldData,
       worldService: worldService,
@@ -375,6 +431,7 @@ class GameSessionFactory {
       actionTimingController: actionTimingController,
       encounterController: encounterController,
       craftingController: craftingController,
+      enchantingController: enchantingController,
     );
 
     // encounter, crafting, and equipment actions mutate inventory data;
@@ -382,6 +439,7 @@ class GameSessionFactory {
     encounterController.addListener(inventoryController.refresh);
     craftingController.addListener(inventoryController.refresh);
     equipmentController.addListener(inventoryController.refresh);
+    enchantingController.addListener(inventoryController.refresh);
 
     // encounter actions mutate world data (entity counts, removals);
     // forward so world listeners (explore screen) rebuild
@@ -401,6 +459,7 @@ class GameSessionFactory {
       buffController: buffController,
       craftingController: craftingController,
       equipmentController: equipmentController,
+      enchantingController: enchantingController,
       worldController: worldController,
       buffService: buffService,
       craftingService: craftingService,
@@ -433,6 +492,7 @@ class GameSession {
   BuffController buffController;
   CraftingController craftingController;
   EquipmentController equipmentController;
+  EnchantingController enchantingController;
   WorldController worldController;
 
   // services
@@ -466,6 +526,7 @@ class GameSession {
     required this.buffController,
     required this.craftingController,
     required this.equipmentController,
+    required this.enchantingController,
     required this.worldController,
 
     // services

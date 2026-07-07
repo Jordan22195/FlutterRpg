@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/catalogs/recipe_catalog.dart';
+import 'package:rpg/widgets/equipment_info_dialog.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
+import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/skil_tile.dart';
@@ -143,6 +145,32 @@ class _CraftingScreenState extends State<CraftingScreen>
                             items: controller.craftedItems(),
                           ),
                         ),
+                        // crafted equipment with quality borders
+                        if (controller.craftedEquipment().isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                for (final item
+                                    in controller.craftedEquipment())
+                                  ItemStackTile(
+                                    size: 56,
+                                    count: item.count,
+                                    id: item.id,
+                                    showInfoDialogOnTap: false,
+                                    borderColor: qualityBorderColor(
+                                      item.quality,
+                                    ),
+                                    onTap: () => showEquipmentInfoDialog(
+                                      context,
+                                      item,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),

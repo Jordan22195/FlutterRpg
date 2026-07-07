@@ -46,19 +46,19 @@ class InventoryController extends ChangeNotifier {
     );
   }
 
-  List<ItemId> getSlotItemList(ArmorSlots slot) {
-    return _inventoryService.getItemsListForEquipmentSlot(
-      slot,
-      _inventoryData,
-      _itemCatalog,
-    );
+  // unique equipment instances in the inventory (unequipped)
+  List<EquipmentItem> getEquipmentList() {
+    return List.unmodifiable(_inventoryData.equipment);
   }
 
-  List<ItemId> getSlotItemListForSkill(ArmorSlots slot, SkillId skillId) {
-    return _inventoryService.getItemsListForEquipmentSlotAndSkill(
+  List<EquipmentItem> getSlotItemList(ArmorSlots slot) {
+    return _inventoryService.getEquipmentForSlot(slot, _inventoryData);
+  }
+
+  List<EquipmentItem> getSlotItemListForSkill(ArmorSlots slot, SkillId skillId) {
+    return _inventoryService.getEquipmentForSlotAndSkill(
       slot,
       _inventoryData,
-      _itemCatalog,
       skillId,
     );
   }

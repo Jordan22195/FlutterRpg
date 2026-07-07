@@ -35,6 +35,7 @@ class InventoryService {
 
   void clearItems(InventoryData inventoryState) {
     inventoryState.itemMap.clear();
+    inventoryState.equipment.clear();
   }
 
   int getItemCount(InventoryData inventoryState, ItemId id) {
@@ -61,37 +62,59 @@ class InventoryService {
     return foodItems;
   }
 
-  List<ItemId> getItemsListForEquipmentSlot(
-    ArmorSlots slot,
-    InventoryData inventoryState,
-    ItemCatalog itemCatalog,
-  ) {
-    List<ItemId> itemsForSlot = [];
-    for (MapEntry entry in inventoryState.itemMap.entries) {
-      final def = itemCatalog.definitionFor(entry.key);
-      if (def is EquipmentItemDefition && def.armorSlot == slot) {
-        itemsForSlot.add(entry.key);
+  // ---- unique equipment instances ----
+
+  /// Adds equipment to the inventory, merging onto an existing stack when
+  /// the items are identical (same base, quality, and enchant).
+  void addEquipment(InventoryData inventoryState, EquipmentItem item) {
+    for (final stack in inventoryState.equipment) {
+      if (stack.canStackWith(item)) {
+        stack.count += item.count;
+        return;
       }
     }
-    return itemsForSlot;
+    inventoryState.equipment.add(item);
   }
 
-  List<ItemId> getItemsListForEquipmentSlotAndSkill(
+  /// Takes a single item off the stack identified by [instanceId].
+  /// Returns a count-1 instance, or null when the stack doesn't exist.
+  EquipmentItem? takeOneEquipment(
+    InventoryData inventoryState,
+    String instanceId,
+  ) {
+    for (final stack in inventoryState.equipment) {
+      if (stack.instanceId != instanceId) continue;
+      if (stack.count > 1) {
+        stack.count -= 1;
+        return stack.copy();
+      }
+      inventoryState.equipment.remove(stack);
+      return stack;
+    }
+    return null;
+  }
+
+  void removeEquipment(InventoryData inventoryState, String instanceId) {
+    inventoryState.equipment.removeWhere((e) => e.instanceId == instanceId);
+  }
+
+  List<EquipmentItem> getEquipmentForSlot(
     ArmorSlots slot,
     InventoryData inventoryState,
-    ItemCatalog itemCatalog,
+  ) {
+    return inventoryState.equipment
+        .where((e) => e.armorSlot == slot)
+        .toList();
+  }
+
+  List<EquipmentItem> getEquipmentForSlotAndSkill(
+    ArmorSlots slot,
+    InventoryData inventoryState,
     SkillId skillId,
   ) {
-    List<ItemId> itemsForSlot = [];
-    for (MapEntry entry in inventoryState.itemMap.entries) {
-      final def = itemCatalog.definitionFor(entry.key);
-      if (def is EquipmentItemDefition &&
-          def.armorSlot == slot &&
-          def.skillBonus.containsKey(skillId)) {
-        itemsForSlot.add(entry.key);
-      }
-    }
-    return itemsForSlot;
+    return inventoryState.equipment
+        .where((e) => e.armorSlot == slot && e.skillBonus.containsKey(skillId))
+        .toList();
   }
 
   void addOtherInventory(InventoryData destInv, InventoryData sourceInv) {

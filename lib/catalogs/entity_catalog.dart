@@ -6,6 +6,7 @@ import '../services/weighted_drop_table_service.dart';
 enum EntityId {
   NULL,
   ANVIL,
+  ENCHANTING_BENCH,
   BASIC_CAMPIRE,
   OAK_CAMPFIRE,
   FIREPIT,
@@ -401,6 +402,12 @@ class EntityCatalog {
       name: "Anvil",
       craftingSkill: SkillId.BLACKSMITHING,
       iconAsset: "assets/icons/anvil.png",
+    ),
+
+    EntityId.ENCHANTING_BENCH: CraftingEntityDefinition(
+      name: "Enchanting Bench",
+      craftingSkill: SkillId.ENCHANTING,
+      iconAsset: "assets/icons/enchanting_bench.png",
     ),
 
     EntityId.BASIC_CAMPIRE: CampfireEntityDefinition(

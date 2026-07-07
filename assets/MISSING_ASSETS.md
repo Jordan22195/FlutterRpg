@@ -62,9 +62,21 @@ Tier 2 weapons and tools:
 - [ ] iron_axe.png
 - [ ] iron_pickaxe.png
 
+Enchanting materials:
+
+- [ ] enchanting_dust.png
+- [ ] enchanting_essence.png
+- [ ] enchanting_rune.png
+- [ ] enchanting_prism.png
+- [ ] soul_shard.png
+
 Optional (currently reusing basic_campfire.png):
 
 - [ ] oak_campfire.png
+
+## Icons — `assets/icons/`
+
+- [ ] enchanting_bench.png (dev forest enchanting station)
 
 ## Entity images — `assets/images/entities/`
 

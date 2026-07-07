@@ -7,6 +7,23 @@ import '../utilities/image_resolver.dart';
 import '../data/skill_data.dart';
 import '../widgets/countdown_timer.dart';
 
+/// Border color used to signal an equipment item's quality tier.
+/// Common quality has no special color (falls back to the theme outline).
+Color? qualityBorderColor(ItemQuality quality) {
+  switch (quality) {
+    case ItemQuality.COMMON:
+      return null;
+    case ItemQuality.UNCOMMON:
+      return Colors.green;
+    case ItemQuality.RARE:
+      return Colors.blue;
+    case ItemQuality.EPIC:
+      return Colors.purple;
+    case ItemQuality.LEGENDARY:
+      return Colors.orange;
+  }
+}
+
 class ItemStackTile<T extends Enum> extends StatelessWidget {
   const ItemStackTile({
     super.key,
@@ -19,6 +36,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     this.description,
     this.isTimerStackTile = false,
     this.expirationTime,
+    this.borderColor,
   });
 
   final double size;
@@ -35,6 +53,9 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   final bool showInfoDialogOnTap;
   final String? title;
   final String? description;
+
+  /// Overrides the tile border, e.g. to show equipment quality.
+  final Color? borderColor;
 
   void _showInfoDialog(BuildContext context) {
     final currentId = id;
@@ -132,7 +153,10 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
                 ).colorScheme.surfaceContainerHighest.withOpacity(0.6),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                  width: borderColor != null ? 2 : 1,
+                  color:
+                      borderColor ??
+                      Theme.of(context).colorScheme.outline.withOpacity(0.5),
                 ),
               ),
               child: Padding(

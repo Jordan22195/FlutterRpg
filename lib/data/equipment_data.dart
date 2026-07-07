@@ -20,109 +20,80 @@ enum ArmorSlots {
 
 class EquipmentData {
   EquipmentData();
-  // todo change this to use item instances
-  Map<ArmorSlots, ItemId> armorEquipment = {
-    ArmorSlots.HEAD: ItemId.NULL,
-    ArmorSlots.SHOULDER: ItemId.NULL,
-    ArmorSlots.NECK: ItemId.NULL,
-    ArmorSlots.CHEST: ItemId.NULL,
-    ArmorSlots.WAIST: ItemId.NULL,
-    ArmorSlots.LEGS: ItemId.NULL,
-    ArmorSlots.HANDS: ItemId.NULL,
-    ArmorSlots.WRIST: ItemId.NULL,
-    ArmorSlots.FINGER: ItemId.NULL,
-    ArmorSlots.WEAPON_1H: ItemId.NULL,
-    ArmorSlots.WEAPON_2H: ItemId.NULL,
-    ArmorSlots.OFFHAND: ItemId.NULL,
+
+  /// Equipped unique equipment instances by slot; null = empty slot.
+  Map<ArmorSlots, EquipmentItem?> armorEquipment = {
+    for (final slot in ArmorSlots.values)
+      if (slot != ArmorSlots.TOOL) slot: null,
   };
 
-  // one tool per gathering skill (woodcutting axe, mining pickaxe, ...).
-  // combat entities use the weapon slots in armorEquipment instead
-  Map<SkillId, ItemId> equipedTools = {};
+  /// One tool instance per gathering skill (woodcutting axe, mining
+  /// pickaxe, ...). Combat uses the weapon slots in armorEquipment.
+  Map<SkillId, EquipmentItem?> equipedTools = {};
 
   ItemId equipedFood = ItemId.NULL;
 
   Map<String, dynamic> toJson() {
     return {
-      'armorEquipment': armorEquipment.map(
-        (slot, itemId) => MapEntry(slot.name, itemId.name),
-      ),
-      'equipedTools': equipedTools.map(
-        (skill, itemId) => MapEntry(skill.name, itemId.name),
-      ),
+      'armorEquipment': {
+        for (final entry in armorEquipment.entries)
+          if (entry.value != null) entry.key.name: entry.value!.toJson(),
+      },
+      'equipedTools': {
+        for (final entry in equipedTools.entries)
+          if (entry.value != null) entry.key.name: entry.value!.toJson(),
+      },
       'equipedFood': equipedFood.name,
     };
   }
 
+  // resolves either the new instance format (item json object) or the
+  // legacy format (a plain ItemId name string) to an equipment instance
+  static EquipmentItem? _parseEquipmentValue(dynamic rawValue) {
+    if (rawValue is Map<String, dynamic>) {
+      return WeaponItem.equipmentFromJson(rawValue);
+    }
+    if (rawValue is String) {
+      final itemId = ItemId.values.asNameMap()[rawValue];
+      if (itemId == null || itemId == ItemId.NULL) return null;
+      final item = ItemCatalog.buildItem(itemId);
+      return item is EquipmentItem ? item : null;
+    }
+    return null;
+  }
+
   factory EquipmentData.fromJson(Map<String, dynamic> json) {
+    final data = EquipmentData();
+
     final rawArmor = json['armorEquipment'];
-
-    if (rawArmor is! Map) {
-      throw FormatException(
-        'Missing or invalid "armorEquipment". Expected object.',
-      );
+    if (rawArmor is Map) {
+      for (final entry in rawArmor.entries) {
+        final slot = ArmorSlots.values.asNameMap()[entry.key];
+        if (slot == null || slot == ArmorSlots.TOOL) continue;
+        final item = _parseEquipmentValue(entry.value);
+        if (item != null) {
+          data.armorEquipment[slot] = item;
+        }
+      }
     }
 
-    final armorEquipment = <ArmorSlots, ItemId>{};
-
-    for (final entry in rawArmor.entries) {
-      final rawSlot = entry.key;
-      final rawItem = entry.value;
-
-      if (rawSlot is! String) {
-        throw FormatException('Invalid armor slot key. Expected String.');
-      }
-
-      if (rawItem is! String) {
-        throw FormatException(
-          'Invalid item id for slot "$rawSlot". Expected String.',
-        );
-      }
-
-      final slot = ArmorSlots.values.firstWhere(
-        (s) => s.name == rawSlot,
-        orElse: () =>
-            throw FormatException('Invalid ArmorSlots value "$rawSlot".'),
-      );
-
-      // migration: the legacy shared TOOL slot is dropped; tools are
-      // now tracked per skill in equipedTools
-      if (slot == ArmorSlots.TOOL) continue;
-
-      final itemId = ItemId.values.firstWhere(
-        (i) => i.name == rawItem,
-        orElse: () => throw FormatException('Invalid ItemId value "$rawItem".'),
-      );
-
-      armorEquipment[slot] = itemId;
-    }
-
-    // tolerated when missing: older saves predate per-skill tools
-    // (and stored legacy "equipedPickaxe"/"equipedAxe", which are dropped)
-    final equipedTools = <SkillId, ItemId>{};
     final rawTools = json['equipedTools'];
     if (rawTools is Map) {
       for (final entry in rawTools.entries) {
         final skill = SkillId.values.asNameMap()[entry.key];
-        final itemId = ItemId.values.asNameMap()[entry.value];
-        if (skill != null && itemId != null) {
-          equipedTools[skill] = itemId;
+        if (skill == null) continue;
+        final item = _parseEquipmentValue(entry.value);
+        if (item != null) {
+          data.equipedTools[skill] = item;
         }
       }
     }
 
     final rawFood = json['equipedFood'];
-
-    if (rawFood is! String) {
-      throw FormatException('Missing or invalid "equipedFood".');
+    if (rawFood is String) {
+      data.equipedFood = ItemId.values.asNameMap()[rawFood] ?? ItemId.NULL;
     }
 
-    return EquipmentData()
-      ..armorEquipment = armorEquipment
-      ..equipedTools = equipedTools
-      ..equipedFood = ItemId.values.firstWhere(
-        (i) => i.name == rawFood,
-        orElse: () => throw FormatException('Invalid ItemId value "$rawFood".'),
-      );
+    return data;
   }
 }

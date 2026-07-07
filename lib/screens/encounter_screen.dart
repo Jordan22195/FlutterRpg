@@ -73,9 +73,7 @@ class _EncounterScreenState extends State<EncounterScreen> {
               "/ $hitPoints",
               style: TextStyle(
                 fontSize: fontSize,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
           ],
@@ -165,7 +163,7 @@ class _EncounterScreenState extends State<EncounterScreen> {
 
     // combat entities use the equipped weapon as their 'tool'; gathering
     // entities use the tool equipped for their skill
-    final ItemId equipedTool = isCombatEntity
+    final EquipmentItem? equipedTool = isCombatEntity
         ? equipmentController.getEquipedWeapon()
         : equipmentController.getToolForSkill(skillType);
 
@@ -201,154 +199,178 @@ class _EncounterScreenState extends State<EncounterScreen> {
                 ],
               ),
             ),
-            Row(
-              children: [
-                // Left: Player stats. fixed width so growing/shrinking
-                // numbers don't re-center the entity image
-                SizedBox(
-                  width: 100,
-                  child: buildPlayerStatStack(
-                    stats,
-                    playerHp,
-                    skillType,
-                    controller.latestEntityDamage,
-                    controller.entityAttackSequence,
-                  ),
-                ),
-
-                // Center: Item stack tile (always centered) with the
-                // per-action damage number overlaid on the entity image.
-                // a fixed 200x200 slot that only swaps its background
-                // between tile and respawn spinner, so nothing shifts and
-                // the damage number stays mounted across respawns
-                Expanded(
-                  child: Center(
-                    child: SizedBox(
-                      width: 200,
-                      height: 200,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          if (respawning)
-                            const Positioned.fill(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          else
-                            ItemStackTile(
-                              size: 200,
-                              count: entityCount,
-                              id: entityId,
-                            ),
-                          if (isActiveEncounter)
-                            FadingNumber(
-                              number: playerDamage,
-                              trigger: actionSequence,
-                              autoplay: false,
-                              color: playerDamage > 0
-                                  ? Colors.red
-                                  : Colors.blue,
-                              style: const TextStyle(
-                                fontSize: 42,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(blurRadius: 8, color: Colors.black),
-                                ],
-                              ),
-                            ),
-                        ],
+            // scrollable middle so short screens don't overflow; the
+            // header above and action buttons below stay pinned
+            Expanded(
+              child: ListView(
+                children: [
+                  Row(
+                    children: [
+                      // Left: Player stats. fixed width so growing/shrinking
+                      // numbers don't re-center the entity image
+                      SizedBox(
+                        width: 100,
+                        child: buildPlayerStatStack(
+                          stats,
+                          playerHp,
+                          skillType,
+                          controller.latestEntityDamage,
+                          controller.entityAttackSequence,
+                        ),
                       ),
+
+                      // Center: Item stack tile (always centered) with the
+                      // per-action damage number overlaid on the entity image.
+                      // a fixed 200x200 slot that only swaps its background
+                      // between tile and respawn spinner, so nothing shifts and
+                      // the damage number stays mounted across respawns
+                      Expanded(
+                        child: Center(
+                          child: SizedBox(
+                            width: 200,
+                            height: 200,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                if (respawning)
+                                  const Positioned.fill(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                else
+                                  ItemStackTile(
+                                    size: 200,
+                                    count: entityCount,
+                                    id: entityId,
+                                  ),
+                                if (isActiveEncounter)
+                                  FadingNumber(
+                                    number: playerDamage,
+                                    trigger: actionSequence,
+                                    autoplay: false,
+                                    color: playerDamage > 0
+                                        ? Colors.red
+                                        : Colors.blue,
+                                    style: const TextStyle(
+                                      fontSize: 42,
+                                      fontWeight: FontWeight.bold,
+                                      shadows: [
+                                        Shadow(
+                                          blurRadius: 8,
+                                          color: Colors.black,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Right: Entity stats. fixed width, mirroring the left side
+                      SizedBox(width: 100, child: buildEntityStatStack(entity)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  //entity hp bar
+                  if (skillType != SkillId.FISHING)
+                    Row(
+                      children: [
+                        SizedBox(width: 50),
+                        Expanded(
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween<double>(end: healthPercent),
+                            duration: const Duration(milliseconds: 100),
+                            builder: (context, animatedValue, child) {
+                              return FillBar(
+                                value: animatedValue,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.tertiary,
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(width: 50),
+                      ],
+                    ),
+                  const SizedBox(height: 8),
+
+                  Row(
+                    children: [
+                      ItemStackTile(
+                        size: 56,
+                        count: 1,
+                        id: equipedTool?.id ?? ItemId.NULL,
+                        showInfoDialogOnTap: false,
+                        borderColor: equipedTool == null
+                            ? null
+                            : qualityBorderColor(equipedTool.quality),
+                        onTap: () => EquipmentPicker.build(
+                          context,
+                          // combat picks a weapon; gathering picks a tool for
+                          // this entity's skill (fishing, mining, ...)
+                          isCombatEntity
+                              ? const [
+                                  ArmorSlots.WEAPON_1H,
+                                  ArmorSlots.WEAPON_2H,
+                                ]
+                              : const [ArmorSlots.TOOL],
+                          (item) {
+                            if (isCombatEntity) {
+                              equipmentController.equipItem(item);
+                            } else {
+                              equipmentController.equipToolForSkill(
+                                skillType,
+                                item,
+                              );
+                            }
+                          },
+                          skillFilter: isCombatEntity
+                              ? SkillId.NULL
+                              : skillType,
+                        ),
+                      ),
+
+                      if (isCombatEntity)
+                        ItemStackTile(
+                          size: 56,
+                          count: equipedFoodItemCount,
+                          id: equipedFoodItemId,
+                          onTap: () {
+                            FoodPicker.build(
+                              context,
+                              (id) => equipmentController.setEquipedFood(id),
+                            );
+                          },
+                        ),
+
+                      const SizedBox(width: 8),
+
+                      Expanded(child: BuffRow()),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+                  Divider(),
+                  SkillTile(id: skillType),
+
+                  Card(
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: 80,
+                          child: InventoryGrid(items: encounterItemDrops),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-
-                // Right: Entity stats. fixed width, mirroring the left side
-                SizedBox(width: 100, child: buildEntityStatStack(entity)),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            //entity hp bar
-            if (skillType != SkillId.FISHING)
-              Row(
-                children: [
-                  SizedBox(width: 50),
-                  Expanded(
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(end: healthPercent),
-                      duration: const Duration(milliseconds: 100),
-                      builder: (context, animatedValue, child) {
-                        return FillBar(
-                          value: animatedValue,
-                          foregroundColor: Theme.of(
-                            context,
-                          ).colorScheme.tertiary,
-                        );
-                      },
-                    ),
-                  ),
-                  SizedBox(width: 50),
-                ],
-              ),
-            const SizedBox(height: 8),
-
-            Row(
-              children: [
-                ItemStackTile(
-                  size: 56,
-                  count: 1,
-                  id: equipedTool,
-                  onTap: () => EquipmentPicker.build(
-                    context,
-                    // combat picks a weapon; gathering picks a tool for
-                    // this entity's skill (fishing, mining, ...)
-                    isCombatEntity
-                        ? const [ArmorSlots.WEAPON_1H, ArmorSlots.WEAPON_2H]
-                        : const [ArmorSlots.TOOL],
-                    (id) {
-                      if (isCombatEntity) {
-                        equipmentController.equipItem(id);
-                      } else {
-                        equipmentController.equipToolForSkill(skillType, id);
-                      }
-                    },
-                    skillFilter: isCombatEntity ? SkillId.NULL : skillType,
-                  ),
-                ),
-
-                if (isCombatEntity)
-                  ItemStackTile(
-                    size: 56,
-                    count: equipedFoodItemCount,
-                    id: equipedFoodItemId,
-                    onTap: () {
-                      FoodPicker.build(
-                        context,
-                        (id) => equipmentController.setEquipedFood(id),
-                      );
-                    },
-                  ),
-
-                const SizedBox(width: 8),
-
-                Expanded(child: BuffRow()),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-            Divider(),
-            SkillTile(id: skillType),
-
-            Card(
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 80,
-                    child: InventoryGrid(items: encounterItemDrops),
-                  ),
                 ],
               ),
             ),
-            Spacer(),
 
             Row(
               children: [

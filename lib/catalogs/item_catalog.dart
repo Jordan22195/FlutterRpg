@@ -98,11 +98,36 @@ enum ItemId {
   IRON_DAGGER,
   IRON_AXE,
   IRON_PICKAXE,
+
+  // enchanting materials, one per equipment quality tier
+  ENCHANTING_DUST,
+  ENCHANTING_ESSENCE,
+  ENCHANTING_RUNE,
+  ENCHANTING_PRISM,
+  SOUL_SHARD,
 }
 
 const Duration SlowAttackSpeed = Duration(seconds: 2);
 const Duration MediumAttackSpeed = Duration(seconds: 1, milliseconds: 500);
 const Duration FastAttackSpeed = Duration(seconds: 1);
+
+/// Quality tiers for crafted equipment. Higher tiers multiply the item's
+/// base stats. Crafting rolls a quality; higher crafting levels raise the
+/// odds of the upper tiers.
+enum ItemQuality {
+  COMMON(1.0, ''),
+  UNCOMMON(1.1, 'Uncommon'),
+  RARE(1.2, 'Rare'),
+  EPIC(1.3, 'Epic'),
+  LEGENDARY(1.5, 'Legendary');
+
+  const ItemQuality(this.statMultiplier, this.label);
+
+  final double statMultiplier;
+
+  /// Display prefix; empty for common.
+  final String label;
+}
 
 String itemKey(dynamic enumValue) {
   if (enumValue == null) return 'null';
@@ -352,7 +377,20 @@ class ZoneBuffItem extends BuffItem {
 
 class EquipmentItem extends Item {
   final ArmorSlots armorSlot;
+
+  /// Base stats from the item definition; quality/enchant scale on top.
   final Map<SkillId, int> skillBonus;
+
+  /// Unique per instance so individual pieces of equipment can be
+  /// tracked, equipped, and enchanted independently.
+  String instanceId;
+
+  ItemQuality quality;
+
+  /// Enchant suffix, e.g. "Boar" -> "... of the Boar". Empty when the
+  /// item is not enchanted. Only equipment (armor/weapons) can carry one.
+  String enchantName;
+  Map<SkillId, int> enchantBonus;
 
   EquipmentItem({
     required super.id,
@@ -360,7 +398,55 @@ class EquipmentItem extends Item {
     required super.value,
     required this.armorSlot,
     required this.skillBonus,
-  });
+    this.quality = ItemQuality.COMMON,
+    this.enchantName = '',
+    Map<SkillId, int>? enchantBonus,
+  }) : enchantBonus = enchantBonus ?? {},
+       instanceId = UniqueKey().toString();
+
+  /// Stats after quality scaling and enchant bonus.
+  Map<SkillId, int> get effectiveSkillBonus {
+    final result = <SkillId, int>{};
+    for (final entry in skillBonus.entries) {
+      result[entry.key] = (entry.value * quality.statMultiplier).round();
+    }
+    for (final entry in enchantBonus.entries) {
+      result[entry.key] = (result[entry.key] ?? 0) + entry.value;
+    }
+    return result;
+  }
+
+  /// "Epic Bronze Helmet of the Boar"
+  String get displayName {
+    final prefix = quality.label.isEmpty ? '' : '${quality.label} ';
+    final suffix = enchantName.isEmpty ? '' : ' of the $enchantName';
+    return '$prefix$name$suffix';
+  }
+
+  /// Identity for stacking: items that are the same in every way (base
+  /// item, quality, enchant name and bonus) live on one stack.
+  String get stackKey {
+    final bonus =
+        enchantBonus.entries.map((e) => '${e.key.name}:${e.value}').toList()
+          ..sort();
+    return '${id.name}|${quality.name}|$enchantName|${bonus.join(',')}';
+  }
+
+  bool canStackWith(EquipmentItem other) => stackKey == other.stackKey;
+
+  /// A fresh single instance with the same identity (new instanceId).
+  EquipmentItem copy() {
+    return EquipmentItem(
+      id: id,
+      name: name,
+      value: value,
+      armorSlot: armorSlot,
+      skillBonus: Map.of(skillBonus),
+      quality: quality,
+      enchantName: enchantName,
+      enchantBonus: Map.of(enchantBonus),
+    );
+  }
 
   @override
   Map<String, dynamic> toJson() {
@@ -368,6 +454,10 @@ class EquipmentItem extends Item {
     json['runtimeType'] = 'EquipmentItem';
     json['armorSlot'] = armorSlot.name;
     json['skillBonus'] = _skillBonusToJson(skillBonus);
+    json['instanceId'] = instanceId;
+    json['quality'] = quality.name;
+    json['enchantName'] = enchantName;
+    json['enchantBonus'] = _skillBonusToJson(enchantBonus);
     return json;
   }
 
@@ -388,7 +478,28 @@ class EquipmentItem extends Item {
     );
 
     item.count = baseItem.count;
+    item.readInstanceFieldsFromJson(json);
     return item;
+  }
+
+  /// Restores instance fields (tolerating their absence in older saves).
+  void readInstanceFieldsFromJson(Map<String, dynamic> json) {
+    final rawInstanceId = json['instanceId'];
+    if (rawInstanceId is String && rawInstanceId.isNotEmpty) {
+      instanceId = rawInstanceId;
+    }
+    final rawQuality = json['quality'];
+    if (rawQuality is String) {
+      quality = ItemQuality.values.asNameMap()[rawQuality] ??
+          ItemQuality.COMMON;
+    }
+    final rawEnchantName = json['enchantName'];
+    if (rawEnchantName is String) {
+      enchantName = rawEnchantName;
+    }
+    if (json['enchantBonus'] is Map) {
+      enchantBonus = _skillBonusFromJson(json, 'enchantBonus');
+    }
   }
 }
 
@@ -513,6 +624,9 @@ class WeaponItem extends EquipmentItem {
     required super.armorSlot,
     required super.skillBonus,
     required this.actionInterval,
+    super.quality,
+    super.enchantName,
+    super.enchantBonus,
   });
 
   @override
@@ -536,7 +650,30 @@ class WeaponItem extends EquipmentItem {
     );
 
     item.count = baseItem.count;
+    item.readInstanceFieldsFromJson(json);
     return item;
+  }
+
+  /// Parses an equipment instance, dispatching on the serialized type.
+  static EquipmentItem equipmentFromJson(Map<String, dynamic> json) {
+    return json['runtimeType'] == 'WeaponItem'
+        ? WeaponItem.fromJson(json)
+        : EquipmentItem.fromJson(json);
+  }
+
+  @override
+  WeaponItem copy() {
+    return WeaponItem(
+      id: id,
+      name: name,
+      value: value,
+      armorSlot: armorSlot,
+      skillBonus: Map.of(skillBonus),
+      actionInterval: actionInterval,
+      quality: quality,
+      enchantName: enchantName,
+      enchantBonus: Map.of(enchantBonus),
+    );
   }
 }
 
@@ -625,6 +762,38 @@ class ItemCatalog {
       duration: Duration(minutes: 3),
       entityId: EntityId.OAK_CAMPFIRE,
       iconAsset: "assets/icons/items/basic_campfire.png",
+    ),
+
+    // enchanting materials (from disenchanting equipment)
+    ItemId.ENCHANTING_DUST: ItemDefinition(
+      name: "Enchanting Dust",
+      value: 1,
+      description: "Disenchanted from common equipment.",
+      iconAsset: "assets/icons/items/enchanting_dust.png",
+    ),
+    ItemId.ENCHANTING_ESSENCE: ItemDefinition(
+      name: "Enchanting Essence",
+      value: 4,
+      description: "Disenchanted from uncommon equipment.",
+      iconAsset: "assets/icons/items/enchanting_essence.png",
+    ),
+    ItemId.ENCHANTING_RUNE: ItemDefinition(
+      name: "Enchanting Rune",
+      value: 15,
+      description: "Disenchanted from rare equipment.",
+      iconAsset: "assets/icons/items/enchanting_rune.png",
+    ),
+    ItemId.ENCHANTING_PRISM: ItemDefinition(
+      name: "Enchanting Prism",
+      value: 50,
+      description: "Disenchanted from epic equipment.",
+      iconAsset: "assets/icons/items/enchanting_prism.png",
+    ),
+    ItemId.SOUL_SHARD: ItemDefinition(
+      name: "Soul Shard",
+      value: 200,
+      description: "Disenchanted from legendary equipment.",
+      iconAsset: "assets/icons/items/soul_shard.png",
     ),
 
     // farm

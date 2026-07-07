@@ -94,6 +94,14 @@ class CraftingController extends ChangeNotifier {
     return _inventoryService.getObjectStackList(_craftingState.craftedItems);
   }
 
+  // unique equipment crafted during the current session (with quality)
+  List<EquipmentItem> craftedEquipment() {
+    if (_craftingState.craftingEntityId != _playerState.currentEntityViewId) {
+      return [];
+    }
+    return List.unmodifiable(_craftingState.craftedItems.equipment);
+  }
+
   // called when the player navigates to view an entity. if no crafting
   // action is running the previous session is over, so its crafted items
   // are cleared; a still-running session keeps them
