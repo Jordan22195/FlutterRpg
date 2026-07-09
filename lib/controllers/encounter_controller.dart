@@ -130,7 +130,13 @@ class EncounterController extends ChangeNotifier {
     if (entity is! EncounterEntity) {
       return;
     }
+    startEncounterActionFor(entity);
+  }
 
+  // starts the encounter action on [entity] directly (used by the action
+  // button via startEncounterAction and by the action queue). returns
+  // true when the action is running when this returns
+  bool startEncounterActionFor(EncounterEntity entity) {
     // fishing spots don't deplete or fight back, so they run their own
     // action with looser start conditions than combat/gathering encounters
     final isFishing = entity.entityType == SkillId.FISHING;
@@ -141,7 +147,7 @@ class EncounterController extends ChangeNotifier {
     // same entity with its action already running: let it continue.
     // (a stopped action on the same entity falls through and restarts)
     if (!isNew && _actionTimingController.isRunningAction(action)) {
-      return;
+      return true;
     }
 
     // stop action timing
@@ -164,7 +170,7 @@ class EncounterController extends ChangeNotifier {
             _encounterState,
           );
     if (!conditionsMet) {
-      return;
+      return false;
     }
 
     // bind the encounter action to the action timing controller.
@@ -180,6 +186,7 @@ class EncounterController extends ChangeNotifier {
 
     // start action timing
     _actionTimingController.start();
+    return true;
   }
 
   // called every frame of the action timing loop (wired in

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/catalogs/recipe_catalog.dart';
 import 'package:rpg/widgets/equipment_info_dialog.dart';
@@ -7,6 +8,7 @@ import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';
+import 'package:rpg/widgets/queue_add_button.dart';
 import 'package:rpg/widgets/skil_tile.dart';
 
 class CraftingScreen extends StatefulWidget {
@@ -193,6 +195,13 @@ class _CraftingScreenState extends State<CraftingScreen>
                 ),
                 SizedBox(width: 8),
                 StopPrimaryButton(),
+                SizedBox(width: 8),
+                QueueAddButton(
+                  enabled: selectedRecipeId.isNotEmpty,
+                  onQueue: () => context
+                      .read<ActionQueueController>()
+                      .enqueueCraft(selectedRecipeId),
+                ),
               ],
             ),
           ],

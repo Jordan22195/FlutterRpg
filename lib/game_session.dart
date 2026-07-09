@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:rpg/catalogs/recipe_catalog.dart';
 import 'package:rpg/catalogs/zone_catalog.dart';
 import 'package:rpg/catalogs/enchantment_catalog.dart';
+import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
@@ -24,6 +25,8 @@ import 'package:rpg/services/encounter_service.dart';
 import 'package:rpg/services/equipment_service.dart';
 import 'package:rpg/services/inventory_service.dart';
 import 'package:rpg/services/player_data_service.dart';
+import 'package:rpg/services/shop_service.dart';
+import 'package:rpg/controllers/shop_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/data/world_data.dart';
@@ -204,7 +207,8 @@ class GameSessionFactory {
         skillData: skillData,
         equipmentData: EquipmentData(),
         hitpoints: 10,
-        stamina: 100,
+        // matches max stamina at stamina level 1 (10 per level)
+        stamina: 10,
       ),
       inventoryData: InventoryData(itemMap: {}),
       worldData: WorldData(zones: zones),
@@ -243,6 +247,21 @@ class GameSessionFactory {
         if (zone.permanentEntities.any((e) => e.id == entityId)) continue;
         zone.permanentEntities.add(catalogs.entityCatalog.buildEntity(entityId));
       }
+    }
+
+    // save repair: an entity must not be both permanent and discovered.
+    // (entities discovered before they were promoted to permanent are
+    // duplicated in older saves.) the permanent entry wins; the
+    // discovered duplicate - the one carrying a discovery count - is
+    // dropped. also collapses accidental duplicates within each list
+    for (final zone in save.worldData.zones.values) {
+      final permanentIds = <EntityId>{};
+      zone.permanentEntities.retainWhere((e) => permanentIds.add(e.id));
+
+      final discoveredIds = <EntityId>{};
+      zone.discoveredEntities.retainWhere(
+        (e) => !permanentIds.contains(e.id) && discoveredIds.add(e.id),
+      );
     }
 
     // migration: equipment used to be stored as stackable counts in the
@@ -315,6 +334,7 @@ class GameSessionFactory {
     );
     final enchantingService = EnchantingService();
     final enchantmentCatalog = EnchantmentCatalog();
+    final shopService = ShopService(inventoryService: inventoryService);
 
     // systems
     final craftingSystem = CraftingSystem(
@@ -370,6 +390,7 @@ class GameSessionFactory {
     final playerDataController = PlayerDataController(
       playerData: save.playerData,
       playerDataService: playerDataService,
+      actionTimingController: actionTimingController,
     );
     final inventoryController = InventoryController(
       inventoryData: save.inventoryData,
@@ -432,10 +453,33 @@ class GameSessionFactory {
       dropTableService: weightedDropTableService,
       entityCatalog: catalogs.entityCatalog,
       entityScreenRouterService: entityScreenRouterService,
+      playerDataService: playerDataService,
       actionTimingController: actionTimingController,
       encounterController: encounterController,
       craftingController: craftingController,
       enchantingController: enchantingController,
+    );
+    final shopController = ShopController(
+      playerState: save.playerData,
+      worldState: save.worldData,
+      inventoryState: save.inventoryData,
+      entityCatalog: catalogs.entityCatalog,
+      itemCatalog: catalogs.itemCatalog,
+      worldService: worldService,
+      inventoryService: inventoryService,
+      shopService: shopService,
+    );
+    final actionQueueController = ActionQueueController(
+      actionTimingController: actionTimingController,
+      encounterController: encounterController,
+      craftingController: craftingController,
+      worldController: worldController,
+      playerState: save.playerData,
+      worldState: save.worldData,
+      worldService: worldService,
+      entityCatalog: catalogs.entityCatalog,
+      recipeCatalog: catalogs.recipeCatalog,
+      zoneCatalog: catalogs.zoneCatalog,
     );
 
     // encounter, crafting, and equipment actions mutate inventory data;
@@ -444,6 +488,7 @@ class GameSessionFactory {
     craftingController.addListener(inventoryController.refresh);
     equipmentController.addListener(inventoryController.refresh);
     enchantingController.addListener(inventoryController.refresh);
+    shopController.addListener(inventoryController.refresh);
 
     // encounter actions mutate world data (entity counts, removals);
     // forward so world listeners (explore screen) rebuild
@@ -465,6 +510,8 @@ class GameSessionFactory {
       equipmentController: equipmentController,
       enchantingController: enchantingController,
       worldController: worldController,
+      actionQueueController: actionQueueController,
+      shopController: shopController,
       buffService: buffService,
       craftingService: craftingService,
       encounterService: encounterService,
@@ -474,6 +521,7 @@ class GameSessionFactory {
       skillService: skillService,
       weightedDropTableService: weightedDropTableService,
       worldService: worldService,
+      shopService: shopService,
       craftingSystem: craftingSystem,
       encounterSystem: encounterSystem,
       equipmentSystem: equipmentSystem,
@@ -498,6 +546,8 @@ class GameSession {
   EquipmentController equipmentController;
   EnchantingController enchantingController;
   WorldController worldController;
+  ActionQueueController actionQueueController;
+  ShopController shopController;
 
   // services
   BuffService buffService;
@@ -509,6 +559,7 @@ class GameSession {
   SkillService skillService;
   WeightedDropTableService weightedDropTableService;
   WorldService worldService;
+  ShopService shopService;
 
   // systems
   CraftingSystem craftingSystem;
@@ -532,6 +583,8 @@ class GameSession {
     required this.equipmentController,
     required this.enchantingController,
     required this.worldController,
+    required this.actionQueueController,
+    required this.shopController,
 
     // services
     required this.buffService,
@@ -543,6 +596,7 @@ class GameSession {
     required this.skillService,
     required this.weightedDropTableService,
     required this.worldService,
+    required this.shopService,
 
     // systems
     required this.craftingSystem,
@@ -551,6 +605,9 @@ class GameSession {
   });
 
   void dispose() {
+    // the queue listens to the action timing controller; drop the
+    // listener before the timing controller goes away
+    actionQueueController.dispose();
     playerDataController.dispose();
     actionTimingController.dispose();
     inventoryController.dispose();
@@ -559,5 +616,6 @@ class GameSession {
     craftingController.dispose();
     equipmentController.dispose();
     worldController.dispose();
+    shopController.dispose();
   }
 }

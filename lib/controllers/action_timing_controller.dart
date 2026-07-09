@@ -26,8 +26,10 @@ class ActionTimingData {
       0.25; // how quickly speed bar fills when button is held
   double decelPerSecond =
       .5; // how quickly speed bar empties when button is released
-  double maxSpeedMultiplier =
-      1.0; // min action interval = max action interval / maxSpeedMulitplier
+
+  // the boost ceiling; refreshed from the speed stat every frame.
+  // min action interval = max action interval / maxSpeedMultiplier
+  double maxSpeedMultiplier = 2.0;
 
   bool speedLocked =
       false; // speed will not change (unless out of stamina) when this is true.
@@ -132,6 +134,9 @@ class ActionTimingController extends ChangeNotifier {
     return _actionTimingState.running && _actionTimingState.onFire == function;
   }
 
+  /// True while the action loop is running (any action).
+  bool get isRunning => _actionTimingState.running;
+
   void start() {
     _actionTimingService.start(_actionTimingState);
     ticker.start();
@@ -174,10 +179,12 @@ class ActionSpeedSystem {
   }) : _actionTimingService = actionTimingService,
        _playerDataService = playerDataService;
 
-  // increase speed percent based on acceleration values
-  // icriment action progress based on time elapsed and current action interval
-  // if action progress is 100% fire the action
-  // drain stamina and apply xp based on speed mulitplier
+  // the momentum loop, once per frame:
+  // - the speed stat sets the boost ceiling
+  // - holding the button accelerates toward the ceiling
+  // - boosting drains stamina faster the harder the boost
+  // - the recovery stat restores stamina at a steady rate, so a gentle
+  //   boost whose drain matches recovery can be held indefinitely
   void frameUpdate(
     Duration elapsed,
     ActionTimingData actionTimingState,
@@ -190,6 +197,11 @@ class ActionSpeedSystem {
 
     // return if no time has passed.
     if (dt <= 0) return;
+
+    // refresh the boost ceiling from the speed stat
+    final stats = _playerDataService.getStatTotals(playerState);
+    actionTimingState.maxSpeedMultiplier = _actionTimingService
+        .maxSpeedForStat(stats[SkillId.SPEED] ?? 1);
 
     _actionTimingService.updateActionSpeed(dt, actionTimingState, playerState);
 
@@ -206,61 +218,73 @@ class ActionSpeedSystem {
     final speed = _actionTimingService.getCurrentSpeedMultiplier(
       actionTimingState,
     );
-    // get player stat totals
-    final stats = _playerDataService.getStatTotals(playerState);
-    final economyStatTotal = stats[SkillId.ECONOMY] ?? 1;
-    // get active skill (todo)
-    final activeSkillTotal = 1;
-    // get a 5% increase to stamina drain threshold per economny level.
-    // 1% boost to encononmy per skill level in active skill (mulitplicative)
-    final baseThreshold = (0.05 * economyStatTotal);
-    final skillMulitplier = 1 + (activeSkillTotal * .1);
-    final sustainableSpeed = 1 + (baseThreshold * skillMulitplier);
-    double staminaCost = 0;
-    if (speed > sustainableSpeed) {
-      staminaCost = 1 * dt;
-      // dt * k * (speed - sustainableSpeed);
-    }
 
-    // drain stamina
-    _playerDataService.drainStamina(staminaCost, playerState);
+    // stamina flow: drain scales with how boosted you are; recovery is a
+    // steady rate from the recovery stat. the net is applied clamped to
+    // [0, max stamina]
+    final drainPerSecond =
+        ActionTimingService.staminaDrainPerBoost * (speed - 1);
+    final recoveryPerSecond = _playerDataService.staminaRecoveryPerSecond(
+      playerState,
+    );
+    final wasBelowMax =
+        playerState.stamina < _playerDataService.getMaxStamina(playerState);
 
-    // calculate speed, stamina, and economy xp
+    _playerDataService.changeStamina(
+      (recoveryPerSecond - drainPerSecond) * dt,
+      playerState,
+    );
 
+    // xp: speed trains while boosting, stamina trains while draining,
+    // recovery trains while it has something to restore
     if (speed > 1) {
-      final staminaXp = dt * 10;
-      _playerDataService.applyXp(playerState, {SkillId.STAMINA: staminaXp});
+      _playerDataService.applyXp(playerState, {
+        SkillId.SPEED: (speed - 1) * 100 * dt,
+        SkillId.STAMINA: 10 * dt,
+      });
     }
 
-    final speedXp = (speed - 1) * 100 * dt;
-    _playerDataService.applyXp(playerState, {SkillId.SPEED: speedXp});
-
-    if (staminaCost > 0) {
-      final econXp = dt * 10.0;
-      _playerDataService.applyXp(playerState, {SkillId.ECONOMY: econXp});
+    if (wasBelowMax && recoveryPerSecond > 0) {
+      _playerDataService.applyXp(playerState, {SkillId.RECOVERY: 10 * dt});
     }
   }
 }
 
 class ActionTimingService {
+  /// Stamina drained per second per point of boost (speed above 1x).
+  static const double staminaDrainPerBoost = 1.0;
+
+  /// The boost ceiling granted by the speed stat.
+  double maxSpeedForStat(int speedStat) {
+    return 2.0 + 0.1 * speedStat;
+  }
+
   void updateActionSpeed(
     double dt,
     ActionTimingData actionTimingState,
     PlayerData playerState,
   ) {
-    if (!actionTimingState.speedLocked) {
-      // momentum update
-      if (actionTimingState.buttonHeld && playerState.stamina > 0) {
-        actionTimingState.speedPercent =
-            (actionTimingState.speedPercent +
-                    actionTimingState.accelPerSecond * dt)
-                .clamp(0.0, 1.0);
-      } else {
-        actionTimingState.speedPercent =
-            (actionTimingState.speedPercent -
-                    actionTimingState.decelPerSecond * dt)
-                .clamp(0.0, 1.0);
-      }
+    final hasStamina = playerState.stamina > 0;
+
+    // a locked speed holds steady, but running out of stamina always
+    // forces the boost to fall off
+    if (actionTimingState.speedLocked && hasStamina) {
+      return;
+    }
+
+    // momentum update
+    if (!actionTimingState.speedLocked &&
+        actionTimingState.buttonHeld &&
+        hasStamina) {
+      actionTimingState.speedPercent =
+          (actionTimingState.speedPercent +
+                  actionTimingState.accelPerSecond * dt)
+              .clamp(0.0, 1.0);
+    } else {
+      actionTimingState.speedPercent =
+          (actionTimingState.speedPercent -
+                  actionTimingState.decelPerSecond * dt)
+              .clamp(0.0, 1.0);
     }
   }
 
@@ -287,13 +311,16 @@ class ActionTimingService {
 
   /// Returns the current speed multiplier relative to the max interval.
   double getCurrentSpeedMultiplier(ActionTimingData actionTimingState) {
-    return actionTimingState.speedPercent * (getMaxSpeed() - 1) + 1;
+    return actionTimingState.speedPercent *
+            (actionTimingState.maxSpeedMultiplier - 1) +
+        1;
   }
 
   void stop(ActionTimingData actionTimingState) {
     actionTimingState.running = false;
     actionTimingState.actionProgress = 0.0;
     actionTimingState.speedPercent = 0.0;
+    actionTimingState.buttonHeld = false;
     actionTimingState.lastElapsed = Duration.zero;
     actionTimingState.speedLocked = false;
     actionTimingState.activityIconId = null;
@@ -304,10 +331,6 @@ class ActionTimingService {
     if (actionTimingState.running) return;
     actionTimingState.running = true;
     actionTimingState.lastElapsed = Duration.zero;
-  }
-
-  double getMaxSpeed() {
-    return 10.0;
   }
 
   Duration getCurrentActionDuration(ActionTimingData actionTimingState) {

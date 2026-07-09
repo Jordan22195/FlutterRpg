@@ -105,6 +105,35 @@ enum ItemId {
   ENCHANTING_RUNE,
   ENCHANTING_PRISM,
   SOUL_SHARD,
+
+  // gems (rare mining drops), in ascending tier order
+  TOPAZ,
+  SAPPHIRE,
+  EMERALD,
+  RUBY,
+  DIAMOND,
+  DRAGONSTONE,
+  ONYX,
+
+  // jewelry bases (blacksmithing)
+  COPPER_RING,
+  COPPER_NECKLACE,
+
+  // jewelry (jewelcrafting: gem + base)
+  TOPAZ_RING,
+  TOPAZ_NECKLACE,
+  SAPPHIRE_RING,
+  SAPPHIRE_NECKLACE,
+  EMERALD_RING,
+  EMERALD_NECKLACE,
+  RUBY_RING,
+  RUBY_NECKLACE,
+  DIAMOND_RING,
+  DIAMOND_NECKLACE,
+  DRAGONSTONE_RING,
+  DRAGONSTONE_NECKLACE,
+  ONYX_RING,
+  ONYX_NECKLACE,
 }
 
 const Duration SlowAttackSpeed = Duration(seconds: 2);
@@ -794,6 +823,158 @@ class ItemCatalog {
       value: 200,
       description: "Disenchanted from legendary equipment.",
       iconAsset: "assets/icons/items/soul_shard.png",
+    ),
+
+    // gems (rare mining drops)
+    ItemId.TOPAZ: ItemDefinition(
+      name: "Topaz",
+      value: 20,
+      iconAsset: "assets/icons/items/topaz.png",
+    ),
+    ItemId.SAPPHIRE: ItemDefinition(
+      name: "Sapphire",
+      value: 40,
+      iconAsset: "assets/icons/items/sapphire.png",
+    ),
+    ItemId.EMERALD: ItemDefinition(
+      name: "Emerald",
+      value: 60,
+      iconAsset: "assets/icons/items/emerald.png",
+    ),
+    ItemId.RUBY: ItemDefinition(
+      name: "Ruby",
+      value: 90,
+      iconAsset: "assets/icons/items/ruby.png",
+    ),
+    ItemId.DIAMOND: ItemDefinition(
+      name: "Diamond",
+      value: 130,
+      iconAsset: "assets/icons/items/diamond.png",
+    ),
+    ItemId.DRAGONSTONE: ItemDefinition(
+      name: "Dragonstone",
+      value: 200,
+      iconAsset: "assets/icons/items/dragonstone.png",
+    ),
+    ItemId.ONYX: ItemDefinition(
+      name: "Onyx",
+      value: 350,
+      iconAsset: "assets/icons/items/onyx.png",
+    ),
+
+    // jewelry bases (blacksmithing); plain stackable crafting components
+    // that gems are set into at the jewelcrafting bench
+    ItemId.COPPER_RING: ItemDefinition(
+      name: "Copper Ring",
+      value: 8,
+      description: "A plain band, ready for a gem.",
+      iconAsset: "assets/icons/items/copper_ring.png",
+    ),
+    ItemId.COPPER_NECKLACE: ItemDefinition(
+      name: "Copper Necklace",
+      value: 16,
+      description: "A plain chain, ready for a gem.",
+      iconAsset: "assets/icons/items/copper_necklace.png",
+    ),
+
+    // jewelry (jewelcrafting): high stats relative to armor of the tier
+    ItemId.TOPAZ_RING: EquipmentItemDefition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Topaz Ring",
+      value: 40,
+      skillBonus: {SkillId.RECOVERY: 4},
+      iconAsset: "assets/icons/items/topaz_ring.png",
+    ),
+    ItemId.TOPAZ_NECKLACE: EquipmentItemDefition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Topaz Necklace",
+      value: 55,
+      skillBonus: {SkillId.RECOVERY: 6},
+      iconAsset: "assets/icons/items/topaz_necklace.png",
+    ),
+    ItemId.SAPPHIRE_RING: EquipmentItemDefition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Sapphire Ring",
+      value: 70,
+      skillBonus: {SkillId.STAMINA: 5},
+      iconAsset: "assets/icons/items/sapphire_ring.png",
+    ),
+    ItemId.SAPPHIRE_NECKLACE: EquipmentItemDefition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Sapphire Necklace",
+      value: 90,
+      skillBonus: {SkillId.STAMINA: 7},
+      iconAsset: "assets/icons/items/sapphire_necklace.png",
+    ),
+    ItemId.EMERALD_RING: EquipmentItemDefition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Emerald Ring",
+      value: 100,
+      skillBonus: {SkillId.SPEED: 5},
+      iconAsset: "assets/icons/items/emerald_ring.png",
+    ),
+    ItemId.EMERALD_NECKLACE: EquipmentItemDefition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Emerald Necklace",
+      value: 130,
+      skillBonus: {SkillId.SPEED: 7},
+      iconAsset: "assets/icons/items/emerald_necklace.png",
+    ),
+    ItemId.RUBY_RING: EquipmentItemDefition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Ruby Ring",
+      value: 150,
+      skillBonus: {SkillId.HITPOINTS: 6},
+      iconAsset: "assets/icons/items/ruby_ring.png",
+    ),
+    ItemId.RUBY_NECKLACE: EquipmentItemDefition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Ruby Necklace",
+      value: 190,
+      skillBonus: {SkillId.HITPOINTS: 9},
+      iconAsset: "assets/icons/items/ruby_necklace.png",
+    ),
+    ItemId.DIAMOND_RING: EquipmentItemDefition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Diamond Ring",
+      value: 220,
+      skillBonus: {SkillId.DEFENCE: 8},
+      iconAsset: "assets/icons/items/diamond_ring.png",
+    ),
+    ItemId.DIAMOND_NECKLACE: EquipmentItemDefition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Diamond Necklace",
+      value: 280,
+      skillBonus: {SkillId.DEFENCE: 12},
+      iconAsset: "assets/icons/items/diamond_necklace.png",
+    ),
+    ItemId.DRAGONSTONE_RING: EquipmentItemDefition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Dragonstone Ring",
+      value: 330,
+      skillBonus: {SkillId.ATTACK: 9},
+      iconAsset: "assets/icons/items/dragonstone_ring.png",
+    ),
+    ItemId.DRAGONSTONE_NECKLACE: EquipmentItemDefition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Dragonstone Necklace",
+      value: 420,
+      skillBonus: {SkillId.ATTACK: 13},
+      iconAsset: "assets/icons/items/dragonstone_necklace.png",
+    ),
+    ItemId.ONYX_RING: EquipmentItemDefition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Onyx Ring",
+      value: 550,
+      skillBonus: {SkillId.ATTACK: 6, SkillId.DEFENCE: 6, SkillId.HITPOINTS: 6},
+      iconAsset: "assets/icons/items/onyx_ring.png",
+    ),
+    ItemId.ONYX_NECKLACE: EquipmentItemDefition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Onyx Necklace",
+      value: 700,
+      skillBonus: {SkillId.ATTACK: 9, SkillId.DEFENCE: 9, SkillId.HITPOINTS: 9},
+      iconAsset: "assets/icons/items/onyx_necklace.png",
     ),
 
     // farm

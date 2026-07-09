@@ -156,12 +156,18 @@ class CraftingController extends ChangeNotifier {
     if (selected.isEmpty) {
       return;
     }
+    startCraftingActionFor(selected, _playerState.currentEntityViewId);
+  }
 
+  // starts crafting [recipeId] at [stationEntityId] directly (used by the
+  // craft button via startCraftingAction and by the action queue).
+  // returns true when the action is running when this returns
+  bool startCraftingActionFor(String recipeId, EntityId stationEntityId) {
     // same recipe with its action already running: let it continue.
     // (a stopped action on the same recipe falls through and restarts)
-    if (selected == _craftingState.activeRecipeId &&
+    if (recipeId == _craftingState.activeRecipeId &&
         _actionTimingController.isRunningAction(doCraftingAction)) {
-      return;
+      return true;
     }
 
     // starting a crafting action on a new selection.
@@ -170,12 +176,12 @@ class CraftingController extends ChangeNotifier {
 
     // crafting at a new station starts a new session: crafted items
     // shown in the crafting screen belong to the previous session
-    if (_craftingState.craftingEntityId != _playerState.currentEntityViewId) {
+    if (_craftingState.craftingEntityId != stationEntityId) {
       _inventoryService.clearItems(_craftingState.craftedItems);
-      _craftingState.craftingEntityId = _playerState.currentEntityViewId;
+      _craftingState.craftingEntityId = stationEntityId;
     }
 
-    _craftingService.setActiveRecipe(selected, _craftingState, _recipeCatalog);
+    _craftingService.setActiveRecipe(recipeId, _craftingState, _recipeCatalog);
 
     // check action conditions are met
     if (!_craftingSystem.recipeRequirementsMet(
@@ -184,21 +190,22 @@ class CraftingController extends ChangeNotifier {
       _inventoryState,
       _craftingState,
     )) {
-      return;
+      return false;
     }
 
     // bind Encounter action to action timing controller.
-    // icon is the crafting station the player is viewing; the badge counts
-    // how many more crafts the inventory can support.
+    // icon is the crafting station; the badge counts how many more
+    // crafts the inventory can support.
     _actionTimingController.bindOnFireFunction(
       doCraftingAction,
-      activityIconId: _playerState.currentEntityViewId,
+      activityIconId: stationEntityId,
       activityCount: () =>
           getMaxNumberCraftsForRecipe(_craftingState.activeRecipeId),
     );
 
     // start action timing
     _actionTimingController.start();
+    return true;
   }
 
   int getMaxNumberCraftsForRecipe(String recipeId) {

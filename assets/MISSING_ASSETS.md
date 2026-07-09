@@ -62,6 +62,38 @@ Tier 2 weapons and tools:
 - [ ] iron_axe.png
 - [ ] iron_pickaxe.png
 
+Gems (mining drops):
+
+- [ ] topaz.png
+- [ ] sapphire.png
+- [ ] emerald.png
+- [ ] ruby.png
+- [ ] diamond.png
+- [ ] dragonstone.png
+- [ ] onyx.png
+
+Jewelry bases (blacksmithing):
+
+- [ ] copper_ring.png
+- [ ] copper_necklace.png
+
+Jewelry (jewelcrafting):
+
+- [ ] topaz_ring.png
+- [ ] topaz_necklace.png
+- [ ] sapphire_ring.png
+- [ ] sapphire_necklace.png
+- [ ] emerald_ring.png
+- [ ] emerald_necklace.png
+- [ ] ruby_ring.png
+- [ ] ruby_necklace.png
+- [ ] diamond_ring.png
+- [ ] diamond_necklace.png
+- [ ] dragonstone_ring.png
+- [ ] dragonstone_necklace.png
+- [ ] onyx_ring.png
+- [ ] onyx_necklace.png
+
 Enchanting materials:
 
 - [ ] enchanting_dust.png
@@ -77,6 +109,7 @@ Optional (currently reusing basic_campfire.png):
 ## Icons — `assets/icons/`
 
 - [ ] enchanting_bench.png (dev forest enchanting station)
+- [ ] jewelcrafting_bench.png (dev forest jewelcrafting station)
 
 ## Entity images — `assets/images/entities/`
 
@@ -91,7 +124,14 @@ New entities:
 - [ ] chicken.png
 - [ ] oak_tree.png
 - [ ] iron.png
+- [ ] giant_spider.png
+
+Shops (dev forest proof of concept):
+
+- [ ] trading_post.png
+- [ ] wandering_merchant.png
 
 ## Zone images — `assets/images/zones/`
 
 - [ ] farm.png (Blanchy's Farm explore header; falls back to a plain box until added)
+- [ ] mine.png (Forest Mine explore header; falls back to a plain box until added)

@@ -94,10 +94,16 @@ class PlayerData {
         throw FormatException('Invalid skill data for "\$rawSkillId".');
       }
 
-      final skillId = SkillId.values.firstWhere(
-        (s) => s.name == rawSkillId,
-        orElse: () => throw FormatException('Invalid SkillId "\$rawSkillId".'),
-      );
+      // migration: renamed skills map onto their new ids
+      const legacySkillNames = {'ECONOMY': SkillId.RECOVERY};
+
+      final skillId =
+          legacySkillNames[rawSkillId] ??
+          SkillId.values.firstWhere(
+            (s) => s.name == rawSkillId,
+            orElse: () =>
+                throw FormatException('Invalid SkillId "\$rawSkillId".'),
+          );
 
       skillData[skillId] = SkillData.fromJson(rawSkill);
     }

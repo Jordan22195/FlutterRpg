@@ -7,6 +7,7 @@ enum EntityId {
   NULL,
   ANVIL,
   ENCHANTING_BENCH,
+  JEWELCRAFTING_BENCH,
   BASIC_CAMPIRE,
   OAK_CAMPFIRE,
   FIREPIT,
@@ -14,6 +15,7 @@ enum EntityId {
   OAK_TREE,
   GOBLIN,
   CHICKEN,
+  GIANT_SPIDER,
   COPPER,
   IRON,
   TRANQUIL_POND,
@@ -21,6 +23,8 @@ enum EntityId {
   RIVER,
   LAKE,
   OCEAN,
+  TRADING_POST,
+  WANDERING_MERCHANT,
 }
 
 // Base Entity Class
@@ -77,6 +81,8 @@ class Entity {
         return EncounterEntity.fromJson(json);
       case 'CombatEntity':
         return CombatEntity.fromJson(json);
+      case 'ShopEntity':
+        return ShopEntity.fromJson(json);
       default:
         throw FormatException('Unsupported runtimeType "$runtimeType".');
     }
@@ -389,6 +395,104 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
   );
 }
 
+// one item stack a shop currently offers
+class ShopStockEntry {
+  final ItemId itemId;
+  int count;
+
+  ShopStockEntry({required this.itemId, required this.count});
+
+  Map<String, dynamic> toJson() {
+    return {'itemId': itemId.name, 'count': count};
+  }
+
+  factory ShopStockEntry.fromJson(Map<String, dynamic> json) {
+    final rawItemId = json['itemId'];
+    final rawCount = json['count'];
+
+    if (rawItemId is! String) {
+      throw FormatException('Missing or invalid "itemId". Expected String.');
+    }
+    if (rawCount is! int) {
+      throw FormatException('Missing or invalid "count". Expected int.');
+    }
+
+    final itemId = ItemId.values.firstWhere(
+      (i) => i.name == rawItemId,
+      orElse: () => throw FormatException('Invalid ItemId "$rawItemId".'),
+    );
+
+    return ShopStockEntry(itemId: itemId, count: rawCount);
+  }
+}
+
+// Shop Entity Class
+// a permanent entity that trades items for coins. its stock and next
+// restock time are runtime state, so they serialize with the zone;
+// pricing and restock cadence live on the definition
+class ShopEntity extends Entity {
+  final List<ShopStockEntry> stock = [];
+  DateTime? nextRestockAt;
+
+  ShopEntity({required super.id, required super.name});
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'ShopEntity';
+    json['stock'] = stock.map((s) => s.toJson()).toList();
+    if (nextRestockAt != null) {
+      json['nextRestockAt'] = nextRestockAt!.toIso8601String();
+    }
+    return json;
+  }
+
+  factory ShopEntity.fromJson(Map<String, dynamic> json) {
+    final baseEntity = Entity.fromJson({...json, 'runtimeType': 'Entity'});
+
+    final shop = ShopEntity(id: baseEntity.id, name: baseEntity.name);
+
+    final rawStock = json['stock'];
+    if (rawStock is List) {
+      for (final rawEntry in rawStock) {
+        if (rawEntry is Map<String, dynamic>) {
+          shop.stock.add(ShopStockEntry.fromJson(rawEntry));
+        }
+      }
+    }
+
+    // optional: a shop that never restocked has no timestamp yet
+    final rawRestock = json['nextRestockAt'];
+    if (rawRestock is String) {
+      shop.nextRestockAt = DateTime.tryParse(rawRestock);
+    }
+
+    return shop;
+  }
+}
+
+class ShopEntityDefinition extends EntityDefinition {
+  /// Buy price multiplier applied to an item's value (1.25 = 25% over).
+  final double priceMarkup;
+
+  /// How often the shop rerolls its stock.
+  final Duration restockInterval;
+
+  /// How many random item stacks a restock puts on the shelf.
+  final int stockSlots;
+
+  ShopEntityDefinition({
+    required super.name,
+    required super.iconAsset,
+    this.priceMarkup = 1.25,
+    this.restockInterval = const Duration(hours: 6),
+    this.stockSlots = 10,
+  });
+
+  @override
+  ShopEntity toEntity(EntityId id) => ShopEntity(id: id, name: name);
+}
+
 // Catalog
 
 class EntityCatalog {
@@ -410,6 +514,12 @@ class EntityCatalog {
       iconAsset: "assets/icons/enchanting_bench.png",
     ),
 
+    EntityId.JEWELCRAFTING_BENCH: CraftingEntityDefinition(
+      name: "Jewelcrafting Bench",
+      craftingSkill: SkillId.JEWELCRAFTING,
+      iconAsset: "assets/icons/jewelcrafting_bench.png",
+    ),
+
     EntityId.BASIC_CAMPIRE: CampfireEntityDefinition(
       name: "Basic Campfire",
       craftingSkill: SkillId.COOKING,
@@ -426,6 +536,24 @@ class EntityCatalog {
       name: "Firepit",
       craftingSkill: SkillId.FIREMAKING,
       iconAsset: "assets/icons/items/basic_campfire.png",
+    ),
+
+    //
+    //
+    //  SHOPS
+    //
+    //
+    EntityId.TRADING_POST: ShopEntityDefinition(
+      name: "Trading Post",
+      iconAsset: "assets/images/entities/trading_post.png",
+      // defaults: 25% markup, 6 hour restock, 10 stock slots
+    ),
+    EntityId.WANDERING_MERCHANT: ShopEntityDefinition(
+      name: "Wandering Merchant",
+      iconAsset: "assets/images/entities/wandering_merchant.png",
+      // pricier but restocks much faster than the trading post
+      priceMarkup: 1.5,
+      restockInterval: Duration(hours: 1),
     ),
 
     //
@@ -468,6 +596,17 @@ class EntityCatalog {
       attackInterval: 2.0,
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1)],
     ),
+    EntityId.GIANT_SPIDER: CombatEntityDefinition(
+      name: "Giant Spider",
+      iconAsset: "assets/images/entities/giant_spider.png",
+
+      entityType: SkillId.ATTACK,
+      defence: 5,
+      hitpoints: 20,
+      attack: 4,
+      attackInterval: 1.5,
+      itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1)],
+    ),
     EntityId.CHICKEN: CombatEntityDefinition(
       name: "Chicken",
       iconAsset: "assets/images/entities/chicken.png",
@@ -493,6 +632,10 @@ class EntityCatalog {
       hitpoints: 10,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.COPPER_ORE, weight: 1),
+        // rare gem finds (lower tiers only in the starter vein)
+        WeightedDropTableEntry<ItemId>(id: ItemId.TOPAZ, weight: 0.05),
+        WeightedDropTableEntry<ItemId>(id: ItemId.SAPPHIRE, weight: 0.03),
+        WeightedDropTableEntry<ItemId>(id: ItemId.EMERALD, weight: 0.02),
       ],
     ),
     EntityId.IRON: EncounterEntityDefinition(
@@ -504,6 +647,14 @@ class EntityCatalog {
       hitpoints: 15,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.IRON_ORE, weight: 1),
+        // rare gem finds, all tiers
+        WeightedDropTableEntry<ItemId>(id: ItemId.TOPAZ, weight: 0.06),
+        WeightedDropTableEntry<ItemId>(id: ItemId.SAPPHIRE, weight: 0.04),
+        WeightedDropTableEntry<ItemId>(id: ItemId.EMERALD, weight: 0.03),
+        WeightedDropTableEntry<ItemId>(id: ItemId.RUBY, weight: 0.02),
+        WeightedDropTableEntry<ItemId>(id: ItemId.DIAMOND, weight: 0.012),
+        WeightedDropTableEntry<ItemId>(id: ItemId.DRAGONSTONE, weight: 0.006),
+        WeightedDropTableEntry<ItemId>(id: ItemId.ONYX, weight: 0.003),
       ],
     ),
     // FISHING

@@ -5,6 +5,7 @@ import 'explore_screen.dart';
 import 'gear_screen.dart';
 import 'inventory_screen.dart';
 import 'map_screen.dart';
+import 'queue_screen.dart';
 import 'skills_screen.dart';
 import '../catalogs/entity_catalog.dart';
 import '../controllers/world_controller.dart';
@@ -22,7 +23,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int index = 0;
 
-  final _navKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
+  final _navKeys = List.generate(5, (_) => GlobalKey<NavigatorState>());
 
   // watches the map tab's stack so the shell knows which screen is on top
   late final TopRouteObserver _mapTabObserver = TopRouteObserver(
@@ -109,9 +110,13 @@ class _MainShellState extends State<MainShell> {
             _tabNavigator(key: _navKeys[1], root: const SkillsScreen()),
             _tabNavigator(key: _navKeys[2], root: const InventoryScreen()),
             _tabNavigator(key: _navKeys[3], root: const GearScreen()),
+            _tabNavigator(key: _navKeys[4], root: const QueueScreen()),
           ],
         ),
         bottomNavigationBar: BottomNavigationBar(
+          // five tabs: fixed keeps labels visible (default flips to
+          // shifting at 4+ items)
+          type: BottomNavigationBarType.fixed,
           selectedItemColor: Theme.of(context).colorScheme.primary,
           unselectedItemColor: Theme.of(
             context,
@@ -129,6 +134,10 @@ class _MainShellState extends State<MainShell> {
               label: 'Inventory',
             ),
             BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'Gear'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.playlist_play),
+              label: 'Queue',
+            ),
           ],
         ),
       ),

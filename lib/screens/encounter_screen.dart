@@ -7,10 +7,12 @@ import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entity_catalog.dart';
+import '../controllers/action_queue_controller.dart';
 import '../controllers/encounter_controller.dart';
 import '../controllers/equipment_controller.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/primary_button.dart';
+import '../widgets/queue_add_button.dart';
 import '../data/skill_data.dart';
 import '../widgets/skil_tile.dart';
 import '../widgets/icon_renderer.dart';
@@ -400,6 +402,13 @@ class _EncounterScreenState extends State<EncounterScreen> {
                 ),
                 SizedBox(width: 8),
                 StopPrimaryButton(),
+                SizedBox(width: 8),
+                QueueAddButton(
+                  enabled: entityId != EntityId.NULL,
+                  onQueue: () => context
+                      .read<ActionQueueController>()
+                      .enqueueEncounter(entityId),
+                ),
               ],
             ),
           ],

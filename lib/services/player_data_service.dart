@@ -98,11 +98,19 @@ class PlayerDataService {
     }
   }
 
-  void drainStamina(double stamina, PlayerData playerState) {
-    playerState.stamina -= stamina;
-    if (playerState.stamina < 0) {
-      playerState.stamina = 0;
-    }
+  /// Stamina recovered per second per point of the recovery stat.
+  static const double staminaRecoveryPerStat = 0.1;
+
+  // the passive stamina regeneration rate from the recovery stat
+  double staminaRecoveryPerSecond(PlayerData playerState) {
+    final recoveryStat = getStatTotals(playerState)[SkillId.RECOVERY] ?? 1;
+    return staminaRecoveryPerStat * recoveryStat;
+  }
+
+  // clamped stamina adjustment: positive recovers, negative drains
+  void changeStamina(double delta, PlayerData playerState) {
+    final max = getMaxStamina(playerState);
+    playerState.stamina = (playerState.stamina + delta).clamp(0.0, max);
   }
 
   void setCurrentZone(ZoneId id, PlayerData playerState) {

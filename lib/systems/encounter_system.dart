@@ -146,9 +146,15 @@ class EncounterSystem {
     required EncounterData encounter,
   }) {
     final stats = _playerDataService.getStatTotals(playerState);
-    final damage = _encounterService.entityAttack(encounter, stats);
-    _playerDataService.applyDamage(damage, playerState);
-    return damage;
+    final result = _encounterService.entityAttack(encounter, stats);
+    _playerDataService.applyDamage(result.damageDone, playerState);
+
+    // blocked hits award defence xp for the damage avoided
+    if (result.xp.isNotEmpty) {
+      _playerDataService.applyXp(playerState, result.xp);
+    }
+
+    return result.damageDone;
   }
 
   ActionResult executeFishingAction({

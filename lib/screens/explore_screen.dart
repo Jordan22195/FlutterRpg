@@ -4,9 +4,11 @@ import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
+import '../controllers/action_queue_controller.dart';
 import '../data/skill_data.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/explore_card.dart';
+import '../widgets/queue_add_button.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -98,6 +100,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         worldController.navigateToEntity(e.id, context),
                     typeId: e.craftingSkill,
                   );
+                } else if (e is ShopEntity) {
+                  return ObjectCard(
+                    key: ValueKey(e.id),
+                    id: e.id,
+                    name: e.name,
+                    count: 0,
+                    onTap: () =>
+                        worldController.navigateToEntity(e.id, context),
+                    typeId: e.id,
+                  );
                 }
                 return null;
               },
@@ -137,6 +149,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
               SizedBox(width: 8),
               // stop action button
               StopPrimaryButton(),
+              SizedBox(width: 8),
+              QueueAddButton(
+                enabled: true,
+                onQueue: () =>
+                    context.read<ActionQueueController>().enqueueExplore(),
+              ),
             ],
           ),
 

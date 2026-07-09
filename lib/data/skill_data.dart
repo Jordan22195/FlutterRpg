@@ -6,8 +6,8 @@ enum SkillId {
   // each point of stam spent is 1xp
   SPEED, // each point increases max speed (reduces min action interval) by a percent
   // actions done at near top speed give xp
-  ECONOMY, //increases speed threasold where stamina drain starts
-  //actions done near threshold give xp
+  RECOVERY, // stamina recovers over time at a rate set by this stat
+  // trains while stamina is actively being restored
   // COMBAT
   EXPLORATION,
   HITPOINTS, // health - entity
@@ -80,7 +80,8 @@ class SkillController extends ChangeNotifier {
         throw ArgumentError('Expected Skills, got ${objectId.runtimeType}');
       }
       switch (objectId) {
-        case SkillId.ECONOMY:
+        case SkillId.RECOVERY:
+          // reuses the old economy art until recovery art exists
           return AssetImage('assets/icons/skills/economy.png');
         case SkillId.SPEED:
           return AssetImage('assets/icons/skills/speed.png');

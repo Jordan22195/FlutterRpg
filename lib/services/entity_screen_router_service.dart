@@ -4,12 +4,14 @@ import '../data/skill_data.dart';
 import '../screens/crafting_screen.dart';
 import '../screens/enchanting_screen.dart';
 import '../screens/encounter_screen.dart';
+import '../screens/shop_screen.dart';
 
 class EntityScreenRouterService {
   // route names let navigator observers identify which screen is on top
   static const String encounterRouteName = 'encounter';
   static const String craftingRouteName = 'crafting';
   static const String enchantingRouteName = 'enchanting';
+  static const String shopRouteName = 'shop';
 
   final EntityCatalog _entityCatalog;
 
@@ -22,7 +24,14 @@ class EntityScreenRouterService {
         .getDefinitionFor(entityId)
         .toEntity(entityId);
 
-    if (enitity is EncounterEntity) {
+    if (enitity is ShopEntity) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          settings: const RouteSettings(name: shopRouteName),
+          builder: (_) => const ShopScreen(),
+        ),
+      );
+    } else if (enitity is EncounterEntity) {
       Navigator.of(context).push(
         MaterialPageRoute(
           settings: const RouteSettings(name: encounterRouteName),

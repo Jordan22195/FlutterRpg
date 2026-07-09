@@ -1,9 +1,11 @@
 import 'entity_catalog.dart';
+import '../data/skill_data.dart';
 import '../services/weighted_drop_table_service.dart';
 
 enum ZoneId {
   TUTORIAL_FARM,
   STARTING_FOREST,
+  FOREST_MINE,
   CHALLENGING_MOUNTAIN,
   DEV_FOREST,
   NULL,
@@ -92,12 +94,18 @@ class ZoneDefinition {
   final List<WeightedDropTableEntry<EntityId>> discoverableEntities;
   final String iconAsset;
 
+  /// Skill level gate for entering the zone; NULL/0 means unrestricted.
+  final SkillId requiredSkill;
+  final int requiredLevel;
+
   ZoneDefinition({
     required this.id,
     required this.name,
     required this.discoverableEntities,
     required this.permanentEntities,
     required this.iconAsset,
+    this.requiredSkill = SkillId.NULL,
+    this.requiredLevel = 0,
   });
 }
 
@@ -106,6 +114,54 @@ class ZoneDefinition {
 class ZoneCatalog {
   static final Map<ZoneId, ZoneDefinition> _zones = {};
   static ZoneId activeZone = ZoneId.STARTING_FOREST;
+
+  // travel edges with stamina costs; the world map is a path/tree.
+  // farm <-5-> forest <-1-> mine
+  static const Map<ZoneId, Map<ZoneId, double>> _connections = {
+    ZoneId.TUTORIAL_FARM: {ZoneId.STARTING_FOREST: 5},
+    ZoneId.STARTING_FOREST: {
+      ZoneId.TUTORIAL_FARM: 5,
+      ZoneId.FOREST_MINE: 1,
+    },
+    ZoneId.FOREST_MINE: {ZoneId.STARTING_FOREST: 1},
+  };
+
+  /// Unique travel edges (each bidirectional pair listed once), for
+  /// drawing the path graph on the map.
+  static List<(ZoneId, ZoneId, double)> travelEdges() {
+    final seen = <String>{};
+    final edges = <(ZoneId, ZoneId, double)>[];
+    _connections.forEach((from, destinations) {
+      destinations.forEach((to, cost) {
+        final key = ([from.index, to.index]..sort()).join('-');
+        if (seen.add(key)) {
+          edges.add((from, to, cost));
+        }
+      });
+    });
+    return edges;
+  }
+
+  /// Total stamina cost to travel from [from] to [to], summing the edge
+  /// costs along the path. The dev forest is always free to enter and
+  /// leave. Returns [double.infinity] when no path exists.
+  double travelCost(ZoneId from, ZoneId to) {
+    if (from == to) return 0;
+    if (from == ZoneId.DEV_FOREST || to == ZoneId.DEV_FOREST) return 0;
+
+    final visited = <ZoneId>{from};
+    final queue = <(ZoneId, double)>[(from, 0)];
+    while (queue.isNotEmpty) {
+      final (zone, costSoFar) = queue.removeAt(0);
+      for (final edge in (_connections[zone] ?? const {}).entries) {
+        if (!visited.add(edge.key)) continue;
+        final total = costSoFar + edge.value;
+        if (edge.key == to) return total;
+        queue.add((edge.key, total));
+      }
+    }
+    return double.infinity;
+  }
   final nullZone = ZoneDefinition(
     id: ZoneId.NULL,
     name: "error",
@@ -153,6 +209,22 @@ class ZoneCatalog {
       ],
     );
 
+    // a mine deeper in the forest; gated behind mining experience
+    _zones[ZoneId.FOREST_MINE] = ZoneDefinition(
+      id: ZoneId.FOREST_MINE,
+      name: "Forest Mine",
+      iconAsset: 'assets/images/zones/mine.png',
+      requiredSkill: SkillId.MINING,
+      requiredLevel: 5,
+
+      permanentEntities: [],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 2),
+        WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 2),
+        WeightedDropTableEntry<EntityId>(id: EntityId.GIANT_SPIDER, weight: 1),
+      ],
+    );
+
     // dev/test zone: every entity is discoverable
     _zones[ZoneId.DEV_FOREST] = ZoneDefinition(
       id: ZoneId.DEV_FOREST,
@@ -162,10 +234,13 @@ class ZoneCatalog {
       permanentEntities: [
         EntityId.ANVIL,
         EntityId.ENCHANTING_BENCH,
+        EntityId.JEWELCRAFTING_BENCH,
         EntityId.DEEP_POND,
         EntityId.RIVER,
         EntityId.LAKE,
         EntityId.OCEAN,
+        EntityId.TRADING_POST,
+        EntityId.WANDERING_MERCHANT,
       ],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 1),
@@ -174,7 +249,6 @@ class ZoneCatalog {
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.TRANQUIL_POND, weight: 1),
       ],
     );
 

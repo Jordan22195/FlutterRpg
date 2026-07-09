@@ -29,8 +29,11 @@ void main() {
     // ---- Map tab ----
     expect(find.text('World Map'), findsOneWidget);
 
-    // enter the forest -> explore screen
+    // select the forest, then travel there -> explore screen
     await tester.tap(find.text('Forest'));
+    await settle(tester);
+    expect(find.text('Travel'), findsOneWidget);
+    await tester.tap(find.text('Travel'));
     await settle(tester);
     expect(find.text('The Forest'), findsOneWidget);
     expect(find.text('Anvil'), findsOneWidget);

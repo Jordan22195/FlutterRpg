@@ -8,6 +8,7 @@ import 'game_session.dart';
 
 import 'catalogs/item_catalog.dart';
 import 'catalogs/entity_catalog.dart';
+import 'controllers/action_queue_controller.dart';
 import 'controllers/action_timing_controller.dart';
 import 'controllers/buff_controller.dart';
 import 'controllers/crafting_controller.dart';
@@ -17,6 +18,7 @@ import 'controllers/equipment_controller.dart';
 import 'controllers/inventory_controller.dart';
 import 'controllers/world_controller.dart';
 import 'controllers/player_data_controller.dart';
+import 'controllers/shop_controller.dart';
 import 'data/skill_data.dart';
 import 'utilities/image_resolver.dart';
 import 'screens/main_shell.dart';
@@ -157,6 +159,12 @@ class _GameBootstrapState extends State<GameBootstrap>
         ),
         ChangeNotifierProvider<EnchantingController>.value(
           value: session.enchantingController,
+        ),
+        ChangeNotifierProvider<ActionQueueController>.value(
+          value: session.actionQueueController,
+        ),
+        ChangeNotifierProvider<ShopController>.value(
+          value: session.shopController,
         ),
       ],
       child: MaterialApp(

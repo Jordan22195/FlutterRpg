@@ -184,22 +184,38 @@ class EncounterService {
     return 1 + r.nextInt(maxHit);
   }
 
-  // calculate enemy attack roll against player
-  int entityAttack(
+  // calculate enemy attack roll against player. a blocked hit deals 0
+  // damage; when that happens the player earns defence xp equal to the
+  // damage the blow would have dealt had it landed.
+  ActionResult entityAttack(
     EncounterData encounterState,
     Map<SkillId, int> playerStatTotals,
   ) {
+    final result = ActionResult();
     if (encounterState.entity is! CombatEntity) {
-      return 0;
+      return result;
     }
     final e = encounterState.entity as CombatEntity;
 
+    final defence = playerStatTotals[SkillId.DEFENCE] ?? 1;
+
     int damageDone = calculateAttackDamage(
       attackerAttack: e.attack,
-      defenderDefense: playerStatTotals[SkillId.DEFENCE] ?? 1,
+      defenderDefense: defence,
       defenderHp: playerStatTotals[SkillId.HITPOINTS] ?? 0,
     );
-    return damageDone;
+    result.damageDone = damageDone;
+
+    // blocked hit: reward defence xp for the damage that was avoided
+    if (damageDone <= 0) {
+      final wouldHaveDone = rollDamageUniform(
+        attack: e.attack,
+        defense: defence,
+      );
+      result.xp[SkillId.DEFENCE] = wouldHaveDone.toDouble();
+    }
+
+    return result;
   }
 
   void resetEncounterState(

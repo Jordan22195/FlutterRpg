@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../controllers/action_queue_controller.dart';
 import '../controllers/action_timing_controller.dart';
 
 class MomentumPrimaryButton extends StatefulWidget {
@@ -44,7 +45,8 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
           behavior: HitTestBehavior.opaque,
 
           // Tap toggles lock state when locked; otherwise it behaves like the
-          // normal momentum press interaction.
+          // normal momentum press interaction: a tap starts the action at
+          // the idle rate, and only an ongoing HOLD boosts the speed.
           onTapDown: (_) {
             if (!widget.enabled) return;
             if (locked) {
@@ -54,7 +56,12 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
             controller.onPrimaryButtonPressed();
             widget.startActionFunction();
           },
-          onTapUp: (_) {},
+          onTapUp: (_) {
+            controller.onPrimaryButtonReleased();
+          },
+          onTapCancel: () {
+            controller.onPrimaryButtonReleased();
+          },
 
           // Drag up to lock: once the user drags upward past a threshold,
           // execute once immediately and lock the button.
@@ -73,6 +80,8 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
           },
           onPanEnd: (_) {
             _lockTriggeredThisDrag = false;
+            // lifting the finger after a drag also ends the hold
+            controller.onPrimaryButtonReleased();
           },
 
           // button container
@@ -122,7 +131,11 @@ class StopPrimaryButton extends StatelessWidget {
       child: TextButton(
         child: Text("Stop"),
         onPressed: () {
+          // a user stop cancels the action queue too; otherwise the
+          // queue would treat the stop as a finished task and advance
+          context.read<ActionQueueController>().stopQueue();
           controller.stop();
+          onTap?.call();
         },
       ),
     );
