@@ -102,6 +102,28 @@ Enchanting materials:
 - [ ] enchanting_prism.png
 - [ ] soul_shard.png
 
+Herbs (herbalism drops):
+
+- [ ] guam_leaf.png
+- [ ] marrentill.png
+- [ ] tarromin.png
+- [ ] harralander.png
+- [ ] ranarr_weed.png
+- [ ] toadflax.png
+- [ ] irit_leaf.png
+- [ ] avantoe.png
+- [ ] kwuarm.png
+- [ ] snapdragon.png
+- [ ] cadantine.png
+- [ ] lantadyme.png
+- [ ] dwarf_weed.png
+- [ ] torstol.png
+
+Herbalism tools:
+
+- [ ] copper_sickle.png
+- [ ] iron_sickle.png
+
 Optional (currently reusing basic_campfire.png):
 
 - [ ] oak_campfire.png
@@ -110,6 +132,10 @@ Optional (currently reusing basic_campfire.png):
 
 - [ ] enchanting_bench.png (dev forest enchanting station)
 - [ ] jewelcrafting_bench.png (dev forest jewelcrafting station)
+
+## Skill icons — `assets/icons/skills/`
+
+- [ ] herbalism.png (herbalism skill, e.g. a sickle over an herb sprig)
 
 ## Entity images — `assets/images/entities/`
 
@@ -130,6 +156,23 @@ Shops (dev forest proof of concept):
 
 - [ ] trading_post.png
 - [ ] wandering_merchant.png
+
+Herb nodes (dev forest herbalism):
+
+- [ ] guam.png
+- [ ] marrentill.png
+- [ ] tarromin.png
+- [ ] harralander.png
+- [ ] ranarr.png
+- [ ] toadflax.png
+- [ ] irit.png
+- [ ] avantoe.png
+- [ ] kwuarm.png
+- [ ] snapdragon.png
+- [ ] cadantine.png
+- [ ] lantadyme.png
+- [ ] dwarf_weed.png
+- [ ] torstol.png
 
 ## Zone images — `assets/images/zones/`
 

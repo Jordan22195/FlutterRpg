@@ -249,6 +249,22 @@ class ZoneCatalog {
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 1),
+        // every herb, each found as a patch of 3 picks. herbs live only
+        // here until real zones get herb geography
+        WeightedDropTableEntry<EntityId>(id: EntityId.GUAM, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.MARRENTILL, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.TARROMIN, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.HARRALANDER, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.RANARR, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.TOADFLAX, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.IRIT, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.AVANTOE, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.KWUARM, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.SNAPDRAGON, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.CADANTINE, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.LANTADYME, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.DWARF_WEED, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(id: EntityId.TORSTOL, weight: 1, count: 3),
       ],
     );
 

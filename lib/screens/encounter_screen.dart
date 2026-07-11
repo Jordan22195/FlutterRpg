@@ -100,7 +100,7 @@ class _EncounterScreenState extends State<EncounterScreen> {
     );
   }
 
-  Widget buildEntityStatStack(EncounterEntity entity) {
+  Widget buildEntityStatStack(EncounterEntity entity, int requiredLevel) {
     int hp = entity.hitpoints;
     int defence = entity.defence;
     bool combatEntity = entity is CombatEntity;
@@ -112,16 +112,19 @@ class _EncounterScreenState extends State<EncounterScreen> {
     double fontSize = 14;
     double iconSize = 20;
 
+    // fishing spots replenish and herbs are picked in one action, so
+    // neither shows hitpoints
+    final bool showsHp =
+        skillId != SkillId.FISHING && skillId != SkillId.HERBALISM;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            if (skillId != SkillId.FISHING)
-              IconRenderer(id: SkillId.HITPOINTS, size: iconSize),
-            if (skillId != SkillId.FISHING) SizedBox(width: 4),
-            if (skillId != SkillId.FISHING)
-              Text("$hp", style: TextStyle(fontSize: fontSize)),
+            if (showsHp) IconRenderer(id: SkillId.HITPOINTS, size: iconSize),
+            if (showsHp) SizedBox(width: 4),
+            if (showsHp) Text("$hp", style: TextStyle(fontSize: fontSize)),
           ],
         ),
         Row(
@@ -131,6 +134,15 @@ class _EncounterScreenState extends State<EncounterScreen> {
             Text("$defence", style: TextStyle(fontSize: fontSize)),
           ],
         ),
+        // level needed to gather this entity (herbs)
+        if (requiredLevel > 0)
+          Row(
+            children: [
+              IconRenderer(id: skillId, size: iconSize),
+              SizedBox(width: 4),
+              Text("Lv $requiredLevel", style: TextStyle(fontSize: fontSize)),
+            ],
+          ),
         if (combatEntity)
           Row(
             children: [
@@ -176,6 +188,10 @@ class _EncounterScreenState extends State<EncounterScreen> {
     // damage feedback belongs only to the encounter the actions fire on
     final bool isActiveEncounter = controller.isViewingActiveEncounter();
     final int actionSequence = controller.actionSequence;
+
+    // herbalism level gate: locked herbs stay visible but can't be picked
+    final int herbRequiredLevel = controller.viewedHerbRequiredLevel();
+    final bool herbLocked = controller.viewedHerbLocked();
 
     return SafeArea(
       child: Padding(
@@ -272,13 +288,17 @@ class _EncounterScreenState extends State<EncounterScreen> {
                       ),
 
                       // Right: Entity stats. fixed width, mirroring the left side
-                      SizedBox(width: 100, child: buildEntityStatStack(entity)),
+                      SizedBox(
+                        width: 100,
+                        child: buildEntityStatStack(entity, herbRequiredLevel),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
 
                   //entity hp bar
-                  if (skillType != SkillId.FISHING)
+                  if (skillType != SkillId.FISHING &&
+                      skillType != SkillId.HERBALISM)
                     Row(
                       children: [
                         SizedBox(width: 50),
@@ -360,6 +380,17 @@ class _EncounterScreenState extends State<EncounterScreen> {
                   Divider(),
                   SkillTile(id: skillType),
 
+                  if (herbLocked)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        "Requires Herbalism level $herbRequiredLevel",
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ),
+
                   Card(
                     child: Column(
                       children: [
@@ -379,7 +410,7 @@ class _EncounterScreenState extends State<EncounterScreen> {
                 Padding(
                   padding: const EdgeInsets.all(0),
                   child: MomentumPrimaryButton(
-                    enabled: true,
+                    enabled: !herbLocked,
                     label: "Action",
                     startActionFunction: () {
                       controller.startEncounterAction();

@@ -97,9 +97,39 @@ class EncounterController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void doHerbalismEncounterAction() {
+    latestActionResult = _encounterSystem.executeHerbalismAction(
+      playerState: _playerState,
+      encounter: _encounterState,
+      worldState: _worldState,
+      playerInventory: _inventoryState,
+    );
+    actionSequence++;
+
+    // check action conditions are met before the action fires again
+    if (!_herbalismConditionsMet()) {
+      _actionTimingController.stop();
+    }
+    notifyListeners();
+  }
+
+  // basic gather conditions plus the herb's herbalism level gate
+  bool _herbalismConditionsMet() {
+    if (!_encounterService.herbalismConditionsMet(
+      _playerState,
+      _encounterState,
+    )) {
+      return false;
+    }
+    return _encounterSystem.meetsHerbRequirement(
+      _playerState,
+      _encounterState.entity!.id,
+    );
+  }
+
   // function bound to action button in startEncounterAction.
   // This executes periodically.
-  // 
+  //
   void doEncounterAction() {
     latestActionResult = _encounterSystem.executePlayerAction(
       playerState: _playerState,
@@ -137,10 +167,16 @@ class EncounterController extends ChangeNotifier {
   // button via startEncounterAction and by the action queue). returns
   // true when the action is running when this returns
   bool startEncounterActionFor(EncounterEntity entity) {
-    // fishing spots don't deplete or fight back, so they run their own
-    // action with looser start conditions than combat/gathering encounters
+    // fishing spots don't deplete or fight back, and herbs are picked in
+    // one action with a level gate, so each runs its own action with its
+    // own start conditions
     final isFishing = entity.entityType == SkillId.FISHING;
-    final action = isFishing ? doFishingEncounterAction : doEncounterAction;
+    final isHerbalism = entity.entityType == SkillId.HERBALISM;
+    final action = isFishing
+        ? doFishingEncounterAction
+        : isHerbalism
+        ? doHerbalismEncounterAction
+        : doEncounterAction;
 
     final isNew = _encounterService.isNewEntity(_encounterState, entity);
 
@@ -165,6 +201,8 @@ class EncounterController extends ChangeNotifier {
     // check action conditions are met
     final conditionsMet = isFishing
         ? _encounterService.fishingConditionsMet(_playerState, _encounterState)
+        : isHerbalism
+        ? _herbalismConditionsMet()
         : _encounterService.encounterConditionsMet(
             _playerState,
             _encounterState,
@@ -305,11 +343,25 @@ class EncounterController extends ChangeNotifier {
   void onEntityViewChanged() {
     final sessionRunning =
         _actionTimingController.isRunningAction(doEncounterAction) ||
-        _actionTimingController.isRunningAction(doFishingEncounterAction);
+        _actionTimingController.isRunningAction(doFishingEncounterAction) ||
+        _actionTimingController.isRunningAction(doHerbalismEncounterAction);
     if (!sessionRunning) {
       _inventoryService.clearItems(_encounterState.itemDrops);
       notifyListeners();
     }
+  }
+
+  // herbalism level required to pick the viewed entity; 0 for non-herbs
+  int viewedHerbRequiredLevel() {
+    final e = _resolveViewedEntity();
+    return e == null ? 0 : _encounterSystem.herbRequiredLevel(e.id);
+  }
+
+  // true when the viewed entity is an herb the player can't pick yet
+  bool viewedHerbLocked() {
+    final e = _resolveViewedEntity();
+    if (e == null) return false;
+    return !_encounterSystem.meetsHerbRequirement(_playerState, e.id);
   }
 
   ItemId getEquipedFoodItemId() {

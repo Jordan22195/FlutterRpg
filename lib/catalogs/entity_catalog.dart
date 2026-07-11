@@ -25,6 +25,21 @@ enum EntityId {
   OCEAN,
   TRADING_POST,
   WANDERING_MERCHANT,
+  // herbs (herbalism), ascending level order
+  GUAM,
+  MARRENTILL,
+  TARROMIN,
+  HARRALANDER,
+  RANARR,
+  TOADFLAX,
+  IRIT,
+  AVANTOE,
+  KWUARM,
+  SNAPDRAGON,
+  CADANTINE,
+  LANTADYME,
+  DWARF_WEED,
+  TORSTOL,
 }
 
 // Base Entity Class
@@ -307,6 +322,26 @@ class EncounterEntityDefinition extends EntityDefinition {
     defence: defence,
     hitpoints: hitpoints,
   );
+}
+
+// An herb node. Unlike trees/ore it has no meaningful hitpoints: one
+// gathering action consumes one count and always succeeds; the roll
+// against its difficulty (defence) only sets the yield. Picking is
+// gated behind a herbalism level. The runtime entity is a plain
+// EncounterEntity, so nothing new serializes.
+class HerbEntityDefinition extends EncounterEntityDefinition {
+  /// Herbalism level required to pick this herb.
+  final int requiredLevel;
+
+  HerbEntityDefinition({
+    required super.name,
+    required super.iconAsset,
+    super.entityType = SkillId.HERBALISM,
+    required super.defence,
+    super.hitpoints = 1,
+    required super.itemDrops,
+    this.requiredLevel = 1,
+  });
 }
 
 // Combat Encounter Entity Class
@@ -721,6 +756,136 @@ class EntityCatalog {
         WeightedDropTableEntry<ItemId>(id: ItemId.TUNA, weight: 1),
         WeightedDropTableEntry(id: ItemId.SWORDFISH, weight: .5),
         WeightedDropTableEntry(id: ItemId.SHARK, weight: .25),
+      ],
+    ),
+
+    // HERBALISM
+    // difficulty (defence) tracks the required level so yield rolls stay
+    // challenging for a player picking at-level herbs
+    EntityId.GUAM: HerbEntityDefinition(
+      name: "Guam Leaf",
+      iconAsset: "assets/images/entities/guam.png",
+      requiredLevel: 1,
+      defence: 1,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.GUAM_LEAF, weight: 1),
+      ],
+    ),
+    EntityId.MARRENTILL: HerbEntityDefinition(
+      name: "Marrentill",
+      iconAsset: "assets/images/entities/marrentill.png",
+      requiredLevel: 5,
+      defence: 5,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.MARRENTILL, weight: 1),
+      ],
+    ),
+    EntityId.TARROMIN: HerbEntityDefinition(
+      name: "Tarromin",
+      iconAsset: "assets/images/entities/tarromin.png",
+      requiredLevel: 11,
+      defence: 11,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.TARROMIN, weight: 1),
+      ],
+    ),
+    EntityId.HARRALANDER: HerbEntityDefinition(
+      name: "Harralander",
+      iconAsset: "assets/images/entities/harralander.png",
+      requiredLevel: 20,
+      defence: 20,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.HARRALANDER, weight: 1),
+      ],
+    ),
+    EntityId.RANARR: HerbEntityDefinition(
+      name: "Ranarr Weed",
+      iconAsset: "assets/images/entities/ranarr.png",
+      requiredLevel: 25,
+      defence: 25,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.RANARR_WEED, weight: 1),
+      ],
+    ),
+    EntityId.TOADFLAX: HerbEntityDefinition(
+      name: "Toadflax",
+      iconAsset: "assets/images/entities/toadflax.png",
+      requiredLevel: 30,
+      defence: 30,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.TOADFLAX, weight: 1),
+      ],
+    ),
+    EntityId.IRIT: HerbEntityDefinition(
+      name: "Irit Leaf",
+      iconAsset: "assets/images/entities/irit.png",
+      requiredLevel: 40,
+      defence: 40,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.IRIT_LEAF, weight: 1),
+      ],
+    ),
+    EntityId.AVANTOE: HerbEntityDefinition(
+      name: "Avantoe",
+      iconAsset: "assets/images/entities/avantoe.png",
+      requiredLevel: 48,
+      defence: 48,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.AVANTOE, weight: 1),
+      ],
+    ),
+    EntityId.KWUARM: HerbEntityDefinition(
+      name: "Kwuarm",
+      iconAsset: "assets/images/entities/kwuarm.png",
+      requiredLevel: 54,
+      defence: 54,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.KWUARM, weight: 1),
+      ],
+    ),
+    EntityId.SNAPDRAGON: HerbEntityDefinition(
+      name: "Snapdragon",
+      iconAsset: "assets/images/entities/snapdragon.png",
+      requiredLevel: 59,
+      defence: 59,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.SNAPDRAGON, weight: 1),
+      ],
+    ),
+    EntityId.CADANTINE: HerbEntityDefinition(
+      name: "Cadantine",
+      iconAsset: "assets/images/entities/cadantine.png",
+      requiredLevel: 65,
+      defence: 65,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.CADANTINE, weight: 1),
+      ],
+    ),
+    EntityId.LANTADYME: HerbEntityDefinition(
+      name: "Lantadyme",
+      iconAsset: "assets/images/entities/lantadyme.png",
+      requiredLevel: 67,
+      defence: 67,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.LANTADYME, weight: 1),
+      ],
+    ),
+    EntityId.DWARF_WEED: HerbEntityDefinition(
+      name: "Dwarf Weed",
+      iconAsset: "assets/images/entities/dwarf_weed.png",
+      requiredLevel: 70,
+      defence: 70,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.DWARF_WEED, weight: 1),
+      ],
+    ),
+    EntityId.TORSTOL: HerbEntityDefinition(
+      name: "Torstol",
+      iconAsset: "assets/images/entities/torstol.png",
+      requiredLevel: 75,
+      defence: 75,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.TORSTOL, weight: 1),
       ],
     ),
   };

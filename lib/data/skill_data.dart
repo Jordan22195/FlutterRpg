@@ -19,7 +19,7 @@ enum SkillId {
   WOODCUTTING, // cut down trees for logs - entity encounter
   MINING, // mine for ore and gems - entity encounter
   FISHING, // catch fish for cooking - entity encounter
-  FORAGING, // gather herbs for alchemy - entity encounter - higher level let you find more stuff while exploring
+  HERBALISM, // gather herbs for alchemy - entity encounter - one pick per action, roll vs difficulty sets yield
   // Crafting
   FIREMAKING, // build fires for buffs and cooking - crafting without location
   LEATHERWORKING, // make leather armor for ranging - crafting at leatherworking station
@@ -117,6 +117,8 @@ class SkillController extends ChangeNotifier {
           return AssetImage('assets/icons/skills/fletching.png');
         case SkillId.FISHING:
           return AssetImage('assets/icons/skills/fishing.png');
+        case SkillId.HERBALISM:
+          return AssetImage('assets/icons/skills/herbalism.png');
         case SkillId.COOKING:
           return AssetImage('assets/icons/skills/cooking.png');
         case SkillId.NULL:

@@ -15,6 +15,7 @@ class EnchantingService {
     SkillId.WOODCUTTING,
     SkillId.MINING,
     SkillId.FISHING,
+    SkillId.HERBALISM,
   ];
 
   /// The material an item of [quality] disenchants into.

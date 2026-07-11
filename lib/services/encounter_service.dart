@@ -259,6 +259,40 @@ class EncounterService {
     return true;
   }
 
+  // herbs don't fight back, so no hp check; unlike fishing spots they
+  // deplete, so the count matters. the herbalism level gate needs the
+  // entity catalog and lives in EncounterSystem.meetsHerbRequirement
+  bool herbalismConditionsMet(
+    PlayerData playerState,
+    EncounterData encounterState,
+  ) {
+    if (encounterState.entity == null) return false;
+    if (encounterState.entity!.count <= 0) return false;
+    if (!encounterState.isActive) return false;
+
+    return true;
+  }
+
+  // picking an herb always succeeds; the roll against its difficulty only
+  // sets the yield. base 1 herb plus one bonus herb per successful to-hit
+  // roll, so yield runs 1-5 and approaches 5 as herbalism outgrows the
+  // herb's defence
+  int rollHerbYield({
+    required int herbalismStat,
+    required int defence,
+    int bonusRolls = 4,
+    Random? rng,
+  }) {
+    final r = rng ?? Random();
+    final bonusChance = chanceToHit(herbalismStat, defence);
+
+    int gathered = 1;
+    for (int i = 0; i < bonusRolls; i++) {
+      if (r.nextDouble() <= bonusChance) gathered++;
+    }
+    return gathered;
+  }
+
   bool encounterConditionsMet(
     PlayerData playerState,
     EncounterData encounterState,

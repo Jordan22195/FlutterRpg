@@ -95,7 +95,10 @@ class PlayerData {
       }
 
       // migration: renamed skills map onto their new ids
-      const legacySkillNames = {'ECONOMY': SkillId.RECOVERY};
+      const legacySkillNames = {
+        'ECONOMY': SkillId.RECOVERY,
+        'FORAGING': SkillId.HERBALISM,
+      };
 
       final skillId =
           legacySkillNames[rawSkillId] ??

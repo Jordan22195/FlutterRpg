@@ -1,0 +1,132 @@
+# Asset prompt pack
+
+Workflow: for each block below, start a new ChatGPT chat, paste the
+SYSTEM PROMPT, then paste the numbered ITEM LIST. ChatGPT returns one
+optimized image prompt per number. Generate each image, download it, and
+name the file exactly as shown in [brackets]. Then run:
+    python3 tools/generate_assets.py --import <download_folder>
+
+======================================================================
+ICON BLOCK  (67 assets)
+======================================================================
+
+--- SYSTEM PROMPT (paste first) ---
+
+You are a professional pixel-art asset generator for a cozy fantasy RPG. You write ONE optimized image-generation prompt for a single inventory icon that must stay crisp and instantly readable when shrunk to 32x32 pixels.
+
+Bake ALL of these non-negotiable rules into every prompt you write:
+- Subject: exactly ONE item, centered, filling ~80% of the frame, shown from a consistent slight 3/4 top-down angle.
+- Format: true pixel art on a 32x32 pixel grid, chunky oversized pixels, a bold readable silhouette built from a few large shapes; omit fine detail that would vanish when shrunk.
+- Outline: clean dark 1-pixel outline around the whole silhouette for contrast against a transparent background.
+- Color: limited, warm, cohesive palette; 3-4 flat value steps per material; no gradients.
+- Lighting: single consistent light source from the top-left, with a subtle rim/glow highlight on the upper edge.
+- Sparkle: at most 2-3 tiny sparkle/dust pixels, never covering the item.
+- Background: FULLY TRANSPARENT — no scene, no ground, no cast shadow, no frame, no border, no card, no backdrop of any kind.
+- Rendering: crisp hard pixel edges, no anti-aliasing, no blur, no drop shadow, no gradient, no 3D render look.
+- Forbidden: any text, letters, numbers, watermark, UI, or more than one item.
+- The result must sit in a cohesive matching icon set.
+
+When I give you an item name (and an optional category for context), infer that item's material, shape, and signature colors, then write ONE final optimized prompt describing THAT specific item in the exact style above. Output ONLY the final prompt text — no preamble, no quotes, no explanation.
+
+--- ITEM LIST (paste second) ---
+
+1. [trout.png]  Item name: trout | Category: Raw fish
+2. [pike.png]  Item name: pike | Category: Raw fish
+3. [salmon.png]  Item name: salmon | Category: Raw fish
+4. [catfish.png]  Item name: catfish | Category: Raw fish
+5. [bass.png]  Item name: bass | Category: Raw fish
+6. [whitefish.png]  Item name: whitefish | Category: Raw fish
+7. [tuna.png]  Item name: tuna | Category: Raw fish
+8. [swordfish.png]  Item name: swordfish | Category: Raw fish
+9. [shark.png]  Item name: shark | Category: Raw fish
+10. [cooked_carp.png]  Item name: cooked carp | Category: Cooked fish
+11. [cooked_bluegill.png]  Item name: cooked bluegill | Category: Cooked fish
+12. [cooked_trout.png]  Item name: cooked trout | Category: Cooked fish
+13. [cooked_pike.png]  Item name: cooked pike | Category: Cooked fish
+14. [cooked_salmon.png]  Item name: cooked salmon | Category: Cooked fish
+15. [cooked_catfish.png]  Item name: cooked catfish | Category: Cooked fish
+16. [cooked_whitefish.png]  Item name: cooked whitefish | Category: Cooked fish
+17. [cooked_bass.png]  Item name: cooked bass | Category: Cooked fish
+18. [cooked_tuna.png]  Item name: cooked tuna | Category: Cooked fish
+19. [cooked_swordfish.png]  Item name: cooked swordfish | Category: Cooked fish
+20. [cooked_shark.png]  Item name: cooked shark | Category: Cooked fish
+21. [copper_gloves.png]  Item name: copper gloves | Category: Armor
+22. [chicken_meat.png]  Item name: chicken meat | Category: Farm
+23. [feather.png]  Item name: feather | Category: Farm
+24. [cooked_chicken.png]  Item name: cooked chicken | Category: Farm
+25. [oak_logs.png]  Item name: oak logs | Category: Tier 2 materials
+26. [iron_ore.png]  Item name: iron ore | Category: Tier 2 materials
+27. [iron_bar.png]  Item name: iron bar | Category: Tier 2 materials
+28. [iron_helmet.png]  Item name: iron helmet | Category: Tier 2 armor
+29. [iron_chestplate.png]  Item name: iron chestplate | Category: Tier 2 armor
+30. [iron_legs.png]  Item name: iron legs | Category: Tier 2 armor
+31. [iron_gloves.png]  Item name: iron gloves | Category: Tier 2 armor
+32. [iron_boots.png]  Item name: iron boots | Category: Tier 2 armor
+33. [iron_shield.png]  Item name: iron shield | Category: Tier 2 armor
+34. [iron_dagger.png]  Item name: iron dagger | Category: Tier 2 weapons and tools
+35. [iron_axe.png]  Item name: iron axe | Category: Tier 2 weapons and tools
+36. [iron_pickaxe.png]  Item name: iron pickaxe | Category: Tier 2 weapons and tools
+37. [topaz.png]  Item name: topaz | Category: Gems
+38. [sapphire.png]  Item name: sapphire | Category: Gems
+39. [emerald.png]  Item name: emerald | Category: Gems
+40. [ruby.png]  Item name: ruby | Category: Gems
+41. [diamond.png]  Item name: diamond | Category: Gems
+42. [dragonstone.png]  Item name: dragonstone | Category: Gems
+43. [onyx.png]  Item name: onyx | Category: Gems
+44. [copper_ring.png]  Item name: copper ring | Category: Jewelry bases
+45. [copper_necklace.png]  Item name: copper necklace | Category: Jewelry bases
+46. [topaz_ring.png]  Item name: topaz ring | Category: Jewelry
+47. [topaz_necklace.png]  Item name: topaz necklace | Category: Jewelry
+48. [sapphire_ring.png]  Item name: sapphire ring | Category: Jewelry
+49. [sapphire_necklace.png]  Item name: sapphire necklace | Category: Jewelry
+50. [emerald_ring.png]  Item name: emerald ring | Category: Jewelry
+51. [emerald_necklace.png]  Item name: emerald necklace | Category: Jewelry
+52. [ruby_ring.png]  Item name: ruby ring | Category: Jewelry
+53. [ruby_necklace.png]  Item name: ruby necklace | Category: Jewelry
+54. [diamond_ring.png]  Item name: diamond ring | Category: Jewelry
+55. [diamond_necklace.png]  Item name: diamond necklace | Category: Jewelry
+56. [dragonstone_ring.png]  Item name: dragonstone ring | Category: Jewelry
+57. [dragonstone_necklace.png]  Item name: dragonstone necklace | Category: Jewelry
+58. [onyx_ring.png]  Item name: onyx ring | Category: Jewelry
+59. [onyx_necklace.png]  Item name: onyx necklace | Category: Jewelry
+60. [enchanting_dust.png]  Item name: enchanting dust | Category: Enchanting materials
+61. [enchanting_essence.png]  Item name: enchanting essence | Category: Enchanting materials
+62. [enchanting_rune.png]  Item name: enchanting rune | Category: Enchanting materials
+63. [enchanting_prism.png]  Item name: enchanting prism | Category: Enchanting materials
+64. [soul_shard.png]  Item name: soul shard | Category: Enchanting materials
+65. [oak_campfire.png]  Item name: oak campfire | Category: Optional
+66. [enchanting_bench.png]  Item name: enchanting bench | Category: Icons | Note: dev forest enchanting station
+67. [jewelcrafting_bench.png]  Item name: jewelcrafting bench | Category: Icons | Note: dev forest jewelcrafting station
+
+======================================================================
+SCENE BLOCK  (11 assets)
+======================================================================
+
+--- SYSTEM PROMPT (paste first) ---
+
+You are a professional illustration prompt-writer for a cozy fantasy RPG. You write ONE optimized image-generation prompt for a single scene or creature portrait that matches the game's warm storybook art.
+
+Bake ALL of these rules into every prompt you write:
+- Subject: ONE clear subject, centered and large in frame, instantly recognizable at a glance.
+- Style: cozy stylized hand-painted fantasy illustration, soft painterly brushwork, warm inviting lighting, gentle ambient occlusion and soft rim light.
+- Palette: rich but harmonious, warm-leaning colors that read as one set.
+- Composition: minimal, uncluttered surroundings that support the subject; shallow depth; subject isolated as a clean cutout.
+- Background: TRANSPARENT around the subject — no frame, no border, no vignette, no ground plane, no cast shadow.
+- Forbidden: any text, letters, numbers, watermark, UI, maps, or a collage of multiple scenes.
+- The result must sit in a cohesive matching set of RPG art.
+
+When I give you a subject name (and an optional category for context), infer what it is in a fantasy RPG setting and write ONE final optimized prompt describing THAT specific subject in the exact style above. Output ONLY the final prompt text — no preamble, no quotes, no explanation.
+
+--- ITEM LIST (paste second) ---
+
+1. [river.png]  Subject name: river | Category: Fishing spots
+2. [lake.png]  Subject name: lake | Category: Fishing spots
+3. [ocean.png]  Subject name: ocean | Category: Fishing spots
+4. [chicken.png]  Subject name: chicken | Category: New entities
+5. [oak_tree.png]  Subject name: oak tree | Category: New entities
+6. [iron.png]  Subject name: iron | Category: New entities
+7. [giant_spider.png]  Subject name: giant spider | Category: New entities
+8. [trading_post.png]  Subject name: trading post | Category: Shops
+9. [wandering_merchant.png]  Subject name: wandering merchant | Category: Shops
+10. [farm.png]  Subject name: farm | Category: Zone images | Note: Blanchy's Farm explore header; falls back to a plain box until added
+11. [mine.png]  Subject name: mine | Category: Zone images | Note: Forest Mine explore header; falls back to a plain box until added

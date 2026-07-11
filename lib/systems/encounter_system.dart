@@ -10,6 +10,7 @@ import '../data/player_data.dart';
 import '../data/encounter_data.dart';
 import '../data/world_data.dart';
 import '../data/inventory_data.dart';
+import '../data/ObjectStack.dart';
 import '../services/inventory_service.dart';
 import '../catalogs/item_catalog.dart';
 
@@ -155,6 +156,75 @@ class EncounterSystem {
     }
 
     return result.damageDone;
+  }
+
+  /// Herbalism level required to pick [id]; 0 for non-herb entities.
+  int herbRequiredLevel(EntityId id) {
+    final def = _entityCatalog.getDefinitionFor(id);
+    return def is HerbEntityDefinition ? def.requiredLevel : 0;
+  }
+
+  /// Whether the player's herbalism (with tool bonuses, matching the
+  /// zone-gate convention) meets the herb's level requirement. True for
+  /// non-herb entities.
+  bool meetsHerbRequirement(PlayerData playerState, EntityId id) {
+    final level =
+        _playerDataService.getStatTotals(playerState)[SkillId.HERBALISM] ?? 0;
+    return level >= herbRequiredLevel(id);
+  }
+
+  /// One herbalism gather tick: always succeeds, consumes one count from
+  /// the herb node, and rolls yield against the herb's difficulty.
+  ActionResult executeHerbalismAction({
+    required PlayerData playerState,
+    required EncounterData encounter,
+    required WorldData worldState,
+    required InventoryData playerInventory,
+  }) {
+    final result = ActionResult();
+    final stats = _playerDataService.getStatTotals(playerState);
+
+    if (!_encounterService.herbalismConditionsMet(playerState, encounter)) {
+      return result;
+    }
+
+    final e = encounter.entity!;
+    final def = _entityCatalog.getDefinitionFor(e.id);
+    if (def is! HerbEntityDefinition) return result;
+    if (!meetsHerbRequirement(playerState, e.id)) return result;
+
+    final gathered = _encounterService.rollHerbYield(
+      herbalismStat: stats[SkillId.HERBALISM] ?? 1,
+      defence: e.defence,
+    );
+
+    // one pick consumes one herb from the node; no hp/respawn cycle
+    e.count--;
+    if (e.count <= 0) {
+      _worldService.removeEntityFromZone(
+        e.id,
+        playerState.currentZoneId,
+        worldState,
+      );
+    }
+
+    final rolled = _dropTableService.roll(def.itemDrops);
+    final drop = ObjectStack<ItemId>(id: rolled.id, count: gathered);
+    result.items.add(drop);
+
+    // add drops to inventories (player + encounter history)
+    _inventoryService.addItems(playerInventory, [drop]);
+    _inventoryService.addItems(encounter.itemDrops, [drop]);
+
+    // shown as the per-action feedback number on the encounter screen
+    result.damageDone = gathered;
+
+    result.xp[SkillId.HERBALISM] =
+        ((_itemCatalog.definitionFor(drop.id)?.xpValue ?? 0) * gathered)
+            .toDouble();
+    _playerDataService.applyXp(playerState, result.xp);
+
+    return result;
   }
 
   ActionResult executeFishingAction({

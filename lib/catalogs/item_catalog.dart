@@ -74,6 +74,23 @@ enum ItemId {
   COPPER_DAGGER,
   COPPER_AXE,
   COPPER_PICKAXE,
+  COPPER_SICKLE,
+
+  // herbs (herbalism), in ascending level order
+  GUAM_LEAF,
+  MARRENTILL,
+  TARROMIN,
+  HARRALANDER,
+  RANARR_WEED,
+  TOADFLAX,
+  IRIT_LEAF,
+  AVANTOE,
+  KWUARM,
+  SNAPDRAGON,
+  CADANTINE,
+  LANTADYME,
+  DWARF_WEED,
+  TORSTOL,
 
   // farm
   CHICKEN_MEAT,
@@ -98,6 +115,7 @@ enum ItemId {
   IRON_DAGGER,
   IRON_AXE,
   IRON_PICKAXE,
+  IRON_SICKLE,
 
   // enchanting materials, one per equipment quality tier
   ENCHANTING_DUST,
@@ -1070,6 +1088,92 @@ class ItemCatalog {
       xpValue: 200,
     ),
 
+    // HERBS (herbalism -> alchemy ingredients), ascending level order
+    ItemId.GUAM_LEAF: ItemDefinition(
+      name: "Guam Leaf",
+      value: 1,
+      iconAsset: "assets/icons/items/guam_leaf.png",
+      xpValue: 5,
+    ),
+    ItemId.MARRENTILL: ItemDefinition(
+      name: "Marrentill",
+      value: 2,
+      iconAsset: "assets/icons/items/marrentill.png",
+      xpValue: 8,
+    ),
+    ItemId.TARROMIN: ItemDefinition(
+      name: "Tarromin",
+      value: 3,
+      iconAsset: "assets/icons/items/tarromin.png",
+      xpValue: 12,
+    ),
+    ItemId.HARRALANDER: ItemDefinition(
+      name: "Harralander",
+      value: 5,
+      iconAsset: "assets/icons/items/harralander.png",
+      xpValue: 18,
+    ),
+    ItemId.RANARR_WEED: ItemDefinition(
+      name: "Ranarr Weed",
+      value: 12,
+      iconAsset: "assets/icons/items/ranarr_weed.png",
+      xpValue: 24,
+    ),
+    ItemId.TOADFLAX: ItemDefinition(
+      name: "Toadflax",
+      value: 10,
+      iconAsset: "assets/icons/items/toadflax.png",
+      xpValue: 30,
+    ),
+    ItemId.IRIT_LEAF: ItemDefinition(
+      name: "Irit Leaf",
+      value: 12,
+      iconAsset: "assets/icons/items/irit_leaf.png",
+      xpValue: 40,
+    ),
+    ItemId.AVANTOE: ItemDefinition(
+      name: "Avantoe",
+      value: 15,
+      iconAsset: "assets/icons/items/avantoe.png",
+      xpValue: 48,
+    ),
+    ItemId.KWUARM: ItemDefinition(
+      name: "Kwuarm",
+      value: 18,
+      iconAsset: "assets/icons/items/kwuarm.png",
+      xpValue: 55,
+    ),
+    ItemId.SNAPDRAGON: ItemDefinition(
+      name: "Snapdragon",
+      value: 25,
+      iconAsset: "assets/icons/items/snapdragon.png",
+      xpValue: 62,
+    ),
+    ItemId.CADANTINE: ItemDefinition(
+      name: "Cadantine",
+      value: 22,
+      iconAsset: "assets/icons/items/cadantine.png",
+      xpValue: 70,
+    ),
+    ItemId.LANTADYME: ItemDefinition(
+      name: "Lantadyme",
+      value: 24,
+      iconAsset: "assets/icons/items/lantadyme.png",
+      xpValue: 74,
+    ),
+    ItemId.DWARF_WEED: ItemDefinition(
+      name: "Dwarf Weed",
+      value: 26,
+      iconAsset: "assets/icons/items/dwarf_weed.png",
+      xpValue: 78,
+    ),
+    ItemId.TORSTOL: ItemDefinition(
+      name: "Torstol",
+      value: 40,
+      iconAsset: "assets/icons/items/torstol.png",
+      xpValue: 85,
+    ),
+
     // food
     ItemId.COOKED_MINNOW: FoodItemDefinition(
       name: "Cooked Minnow",
@@ -1273,6 +1377,14 @@ class ItemCatalog {
       actionInterval: MediumAttackSpeed,
       iconAsset: "assets/icons/items/copper_pickaxe.png",
     ),
+    ItemId.COPPER_SICKLE: WeaponItemDefition(
+      armorSlot: ArmorSlots.TOOL,
+      name: "Copper Sickle",
+      value: 10,
+      skillBonus: {SkillId.ATTACK: 2, SkillId.HERBALISM: 5},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/copper_sickle.png",
+    ),
     ItemId.COPPER_DAGGER: WeaponItemDefition(
       armorSlot: ArmorSlots.WEAPON_1H,
       name: "Copper Dagger",
@@ -1298,6 +1410,14 @@ class ItemCatalog {
       skillBonus: {SkillId.ATTACK: 4, SkillId.MINING: 10},
       actionInterval: MediumAttackSpeed,
       iconAsset: "assets/icons/items/iron_pickaxe.png",
+    ),
+    ItemId.IRON_SICKLE: WeaponItemDefition(
+      armorSlot: ArmorSlots.TOOL,
+      name: "Iron Sickle",
+      value: 25,
+      skillBonus: {SkillId.ATTACK: 4, SkillId.HERBALISM: 10},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/iron_sickle.png",
     ),
     ItemId.IRON_DAGGER: WeaponItemDefition(
       armorSlot: ArmorSlots.WEAPON_1H,
