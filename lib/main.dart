@@ -8,7 +8,9 @@ import 'game_session.dart';
 
 import 'catalogs/item_catalog.dart';
 import 'catalogs/entity_catalog.dart';
+import 'catalogs/dungeon_catalog.dart';
 import 'controllers/action_queue_controller.dart';
+import 'controllers/dungeon_controller.dart';
 import 'controllers/action_timing_controller.dart';
 import 'controllers/buff_controller.dart';
 import 'controllers/crafting_controller.dart';
@@ -96,6 +98,9 @@ class _GameBootstrapState extends State<GameBootstrap>
     EnumImageProviderLookup.register<EntityId>(
       session.catalogBundle.entityCatalog.imageProviderFor,
     );
+    EnumImageProviderLookup.register<DungeonId>(
+      session.catalogBundle.dungeonCatalog.imageProviderFor,
+    );
 
     // autosave safety net for platforms where lifecycle events are
     // unreliable (e.g. closing a desktop window)
@@ -165,6 +170,9 @@ class _GameBootstrapState extends State<GameBootstrap>
         ),
         ChangeNotifierProvider<ShopController>.value(
           value: session.shopController,
+        ),
+        ChangeNotifierProvider<DungeonController>.value(
+          value: session.dungeonController,
         ),
       ],
       child: MaterialApp(

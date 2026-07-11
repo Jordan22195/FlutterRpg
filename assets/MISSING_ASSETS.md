@@ -124,6 +124,12 @@ Herbalism tools:
 - [ ] copper_sickle.png
 - [ ] iron_sickle.png
 
+Dungeon (keys and Goblin Queen boss uniques):
+
+- [ ] goblin_queen_key.png
+- [ ] goblin_crown.png
+- [ ] goblin_scepter.png
+
 Optional (currently reusing basic_campfire.png):
 
 - [ ] oak_campfire.png
@@ -157,6 +163,10 @@ Shops (dev forest proof of concept):
 - [ ] trading_post.png
 - [ ] wandering_merchant.png
 
+Dungeon boss:
+
+- [ ] goblin_queen.png
+
 Herb nodes (dev forest herbalism):
 
 - [ ] guam.png
@@ -173,6 +183,12 @@ Herb nodes (dev forest herbalism):
 - [ ] lantadyme.png
 - [ ] dwarf_weed.png
 - [ ] torstol.png
+
+## Dungeon images — `assets/images/dungeons/`
+
+(new folder; add to pubspec `assets:` once populated)
+
+- [ ] goblin_queen_lair.png (Goblin Queen's Lair landmark header)
 
 ## Zone images — `assets/images/zones/`
 

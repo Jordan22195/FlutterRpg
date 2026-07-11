@@ -3,7 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'explore_screen.dart';
+import 'dungeon_screen.dart';
+import '../catalogs/dungeon_catalog.dart';
 import '../catalogs/zone_catalog.dart';
+import '../controllers/dungeon_controller.dart';
 import '../data/skill_data.dart';
 
 class MapScreen extends StatefulWidget {
@@ -28,6 +31,12 @@ class _MapScreenState extends State<MapScreen> {
     ZoneId.STARTING_FOREST: 'Forest',
     ZoneId.FOREST_MINE: 'Mine',
     ZoneId.DEV_FOREST: 'Dev Forest',
+  };
+
+  /// Landmark dungeons sit on the map from the start as aspirational
+  /// targets; tapping one opens its (free) inspect screen.
+  static const Map<DungeonId, Offset> _dungeonAnchors = {
+    DungeonId.GOBLIN_QUEEN_LAIR: Offset(220, 220),
   };
 
   // approximate center of a zone button relative to its anchor, used to
@@ -111,6 +120,38 @@ class _MapScreenState extends State<MapScreen> {
                 color: meetsRequirement ? null : Colors.red,
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _landmarkMarker(DungeonId dungeonId) {
+    final scheme = Theme.of(context).colorScheme;
+    final dungeons = context.read<DungeonController>();
+    final def = dungeons.definitionFor(dungeonId);
+    if (def == null) return const SizedBox.shrink();
+
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: scheme.tertiaryContainer,
+        side: BorderSide(color: scheme.tertiary, width: 2),
+      ),
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DungeonScreen(dungeonId: dungeonId),
+          ),
+        );
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.castle, size: 16, color: scheme.onTertiaryContainer),
+          const SizedBox(width: 4),
+          Text(
+            def.name,
+            style: TextStyle(color: scheme.onTertiaryContainer, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -234,6 +275,13 @@ class _MapScreenState extends State<MapScreen> {
               left: entry.value.dx,
               top: entry.value.dy,
               child: _zoneButton(world, entry.key),
+            ),
+
+          for (final entry in _dungeonAnchors.entries)
+            Positioned(
+              left: entry.value.dx,
+              top: entry.value.dy,
+              child: _landmarkMarker(entry.key),
             ),
 
           // travel panel for the selected zone

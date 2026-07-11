@@ -15,10 +15,15 @@ import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/buff_data.dart';
 import 'package:rpg/data/crafting_state.dart';
+import 'package:rpg/data/dungeon_run.dart';
 import 'package:rpg/data/encounter_data.dart';
+import 'package:rpg/catalogs/dungeon_catalog.dart';
+import 'package:rpg/controllers/dungeon_controller.dart';
+import 'package:rpg/systems/dungeon_system.dart';
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/buff_service.dart';
+import 'package:rpg/services/combat_auto_eat_service.dart';
 import 'package:rpg/services/entity_screen_router_service.dart';
 import 'package:rpg/services/crafting_service.dart';
 import 'package:rpg/services/encounter_service.dart';
@@ -51,6 +56,7 @@ class SaveGameData {
   final WorldData worldData;
   final CraftingState craftingState;
   final EncounterData encounterData;
+  final DungeonRun dungeonRun;
 
   SaveGameData({
     required this.slotId,
@@ -62,7 +68,8 @@ class SaveGameData {
     required this.worldData,
     required this.craftingState,
     required this.encounterData,
-  });
+    DungeonRun? dungeonRun,
+  }) : dungeonRun = dungeonRun ?? DungeonRun();
 
   Map<String, dynamic> toJson() {
     return {
@@ -75,6 +82,7 @@ class SaveGameData {
       'worldData': worldData.toJson(),
       'craftingState': craftingState.toJson(),
       'encounterData': encounterData.toJson(),
+      'dungeonRun': dungeonRun.toJson(),
     };
   }
 
@@ -136,6 +144,11 @@ class SaveGameData {
       encounterData: EncounterData.fromJson(
         json['encounterData'] as Map<String, dynamic>,
       ),
+      // optional: saves from before dungeons have no run; default to an
+      // inactive one
+      dungeonRun: json['dungeonRun'] is Map<String, dynamic>
+          ? DungeonRun.fromJson(json['dungeonRun'] as Map<String, dynamic>)
+          : DungeonRun(),
     );
   }
 }
@@ -147,6 +160,7 @@ class GameCatalogBundle {
   final EntityCatalog entityCatalog;
   final RecipeCatalog recipeCatalog;
   final ZoneCatalog zoneCatalog;
+  final DungeonCatalog dungeonCatalog;
 
   GameCatalogBundle({
     required this.id,
@@ -155,6 +169,7 @@ class GameCatalogBundle {
     required this.entityCatalog,
     required this.recipeCatalog,
     required this.zoneCatalog,
+    required this.dungeonCatalog,
   });
 }
 
@@ -167,6 +182,7 @@ class GameSessionFactory {
       entityCatalog: EntityCatalog(),
       recipeCatalog: RecipeCatalog(),
       zoneCatalog: ZoneCatalog(),
+      dungeonCatalog: DungeonCatalog(),
     );
   }
 
@@ -335,6 +351,11 @@ class GameSessionFactory {
     final enchantingService = EnchantingService();
     final enchantmentCatalog = EnchantmentCatalog();
     final shopService = ShopService(inventoryService: inventoryService);
+    final combatAutoEatService = CombatAutoEatService(
+      itemCatalog: catalogs.itemCatalog,
+      inventoryService: inventoryService,
+      playerDataService: playerDataService,
+    );
 
     // systems
     final craftingSystem = CraftingSystem(
@@ -360,6 +381,7 @@ class GameSessionFactory {
       inventoryService: inventoryService,
       entityCatalog: catalogs.entityCatalog,
       itemCatalog: catalogs.itemCatalog,
+      autoEatService: combatAutoEatService,
     );
     final equipmentSystem = EquipmentSystem(
       inventoryService: inventoryService,
@@ -370,6 +392,15 @@ class GameSessionFactory {
       inventoryService: inventoryService,
       playerDataService: playerDataService,
       enchantmentCatalog: enchantmentCatalog,
+    );
+    final dungeonSystem = DungeonSystem(
+      dungeonCatalog: catalogs.dungeonCatalog,
+      entityCatalog: catalogs.entityCatalog,
+      encounterService: encounterService,
+      dropTableService: weightedDropTableService,
+      inventoryService: inventoryService,
+      playerDataService: playerDataService,
+      autoEatService: combatAutoEatService,
     );
     final zoneBuffSystem = ZoneBuffSystem(
       worldService: worldService,
@@ -459,6 +490,16 @@ class GameSessionFactory {
       craftingController: craftingController,
       enchantingController: enchantingController,
     );
+    final dungeonController = DungeonController(
+      dungeonRun: save.dungeonRun,
+      actionTimingController: actionTimingController,
+      playerState: save.playerData,
+      inventoryState: save.inventoryData,
+      entityCatalog: catalogs.entityCatalog,
+      dungeonSystem: dungeonSystem,
+      playerDataService: playerDataService,
+      inventoryService: inventoryService,
+    );
     final shopController = ShopController(
       playerState: save.playerData,
       worldState: save.worldData,
@@ -489,14 +530,20 @@ class GameSessionFactory {
     equipmentController.addListener(inventoryController.refresh);
     enchantingController.addListener(inventoryController.refresh);
     shopController.addListener(inventoryController.refresh);
+    // dungeon combat mutates inventory (drops, key consumption, food)
+    dungeonController.addListener(inventoryController.refresh);
 
     // encounter actions mutate world data (entity counts, removals);
     // forward so world listeners (explore screen) rebuild
     encounterController.addListener(worldController.refresh);
 
     // the action timing loop notifies every frame while running; the
-    // encounter controller uses it to drive combat entity attacks
+    // encounter and dungeon controllers use it to drive enemy attacks
     actionTimingController.addListener(encounterController.onActionTimingFrame);
+    actionTimingController.addListener(dungeonController.onActionTimingFrame);
+
+    // a run restored from a save (app closed mid-dungeon) resumes its loop
+    dungeonController.resumeIfRunning();
 
     return GameSession(
       saveGameData: save,
@@ -512,6 +559,7 @@ class GameSessionFactory {
       worldController: worldController,
       actionQueueController: actionQueueController,
       shopController: shopController,
+      dungeonController: dungeonController,
       buffService: buffService,
       craftingService: craftingService,
       encounterService: encounterService,
@@ -525,6 +573,7 @@ class GameSessionFactory {
       craftingSystem: craftingSystem,
       encounterSystem: encounterSystem,
       equipmentSystem: equipmentSystem,
+      dungeonSystem: dungeonSystem,
     );
   }
 }
@@ -548,6 +597,7 @@ class GameSession {
   WorldController worldController;
   ActionQueueController actionQueueController;
   ShopController shopController;
+  DungeonController dungeonController;
 
   // services
   BuffService buffService;
@@ -565,6 +615,7 @@ class GameSession {
   CraftingSystem craftingSystem;
   EncounterSystem encounterSystem;
   EquipmentSystem equipmentSystem;
+  DungeonSystem dungeonSystem;
 
   GameSession({
     // data
@@ -585,6 +636,7 @@ class GameSession {
     required this.worldController,
     required this.actionQueueController,
     required this.shopController,
+    required this.dungeonController,
 
     // services
     required this.buffService,
@@ -602,6 +654,7 @@ class GameSession {
     required this.craftingSystem,
     required this.encounterSystem,
     required this.equipmentSystem,
+    required this.dungeonSystem,
   });
 
   void dispose() {
@@ -617,5 +670,6 @@ class GameSession {
     equipmentController.dispose();
     worldController.dispose();
     shopController.dispose();
+    dungeonController.dispose();
   }
 }

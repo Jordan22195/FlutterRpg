@@ -1,5 +1,6 @@
 import 'package:rpg/data/skill_data.dart';
 
+import '../services/combat_auto_eat_service.dart';
 import '../services/encounter_service.dart';
 import '../services/world_service.dart';
 import '../services/player_data_service.dart';
@@ -22,6 +23,7 @@ class EncounterSystem {
   final InventoryService _inventoryService;
   final EntityCatalog _entityCatalog;
   final ItemCatalog _itemCatalog;
+  final CombatAutoEatService _autoEatService;
 
   EncounterSystem({
     required EncounterService encounterService,
@@ -31,13 +33,28 @@ class EncounterSystem {
     required InventoryService inventoryService,
     required EntityCatalog entityCatalog,
     required ItemCatalog itemCatalog,
+    required CombatAutoEatService autoEatService,
   }) : _itemCatalog = itemCatalog,
        _entityCatalog = entityCatalog,
        _inventoryService = inventoryService,
        _dropTableService = dropTableService,
        _playerDataService = playerDataService,
        _worldService = worldService,
-       _encounterService = encounterService;
+       _encounterService = encounterService,
+       _autoEatService = autoEatService;
+
+  /// Auto-eats one equipped food when hp is low (shared rule). Used during
+  /// automated combat (manual encounters and queued encounters both run
+  /// through the timing loop). Returns true when it ate.
+  bool autoEat({
+    required PlayerData playerState,
+    required InventoryData playerInventory,
+  }) {
+    return _autoEatService.autoEat(
+      playerState: playerState,
+      playerInventory: playerInventory,
+    );
+  }
 
   /// Runs exactly ONE tick of the currently active encounter.
   /// Mutates player/world/inventories/encounterState as needed.
@@ -93,16 +110,19 @@ class EncounterSystem {
         );
       }
 
-      // roll drops
-      final entries =
-          (_entityCatalog.getDefinitionFor(e.id) as EncounterEntityDefinition)
-              .itemDrops;
-      final drop = _dropTableService.roll(entries);
-      result.items.add(drop);
+      // roll drops: the guaranteed main drop plus any layered bonus rolls
+      // (rare uniques, bulk stacks) the entity defines
+      final def =
+          _entityCatalog.getDefinitionFor(e.id) as EncounterEntityDefinition;
+      final drops = <ObjectStack<ItemId>>[
+        _dropTableService.roll(def.itemDrops),
+        ..._dropTableService.rollBonus(def.bonusDrops),
+      ];
+      result.items.addAll(drops);
 
       // add drops to inventories (player + encounter history)
-      _inventoryService.addItems(playerInventory, [drop]);
-      _inventoryService.addItems(encounter.itemDrops, [drop]);
+      _inventoryService.addItems(playerInventory, drops);
+      _inventoryService.addItems(encounter.itemDrops, drops);
     }
 
     // Apply XP to player

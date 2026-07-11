@@ -258,6 +258,13 @@ class EncounterController extends ChangeNotifier {
     );
     entityAttackSequence++;
 
+    // heal between hits when hp runs low and food is equipped; this is why
+    // queued/automated combat can sustain itself
+    _encounterSystem.autoEat(
+      playerState: _playerState,
+      playerInventory: _inventoryState,
+    );
+
     // player death ends the encounter
     if (_playerState.hitpoints <= 0) {
       _actionTimingController.stop();

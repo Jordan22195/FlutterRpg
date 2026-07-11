@@ -14,6 +14,7 @@ enum EntityId {
   TREE,
   OAK_TREE,
   GOBLIN,
+  GOBLIN_QUEEN,
   CHICKEN,
   GIANT_SPIDER,
   COPPER,
@@ -302,7 +303,13 @@ class EncounterEntityDefinition extends EntityDefinition {
   final SkillId entityType;
   final int defence;
   final int hitpoints;
+
+  /// The main drop: rolled once per kill, always yields one weighted pick.
   final List<WeightedDropTableEntry<ItemId>> itemDrops;
+
+  /// Extra layered rolls on top of the main drop (rare uniques, bulk
+  /// stacks, tertiary drops). Empty for most entities.
+  final List<DropRoll<ItemId>> bonusDrops;
 
   EncounterEntityDefinition({
     required super.name,
@@ -311,6 +318,7 @@ class EncounterEntityDefinition extends EntityDefinition {
     required this.defence,
     required this.hitpoints,
     required this.itemDrops,
+    this.bonusDrops = const [],
   });
 
   @override
@@ -413,6 +421,7 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
     required super.defence,
     required super.hitpoints,
     required super.itemDrops,
+    super.bonusDrops,
     required this.attack,
     required this.attackInterval,
   });
@@ -630,7 +639,61 @@ class EntityCatalog {
       attack: 2,
       attackInterval: 2.0,
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1)],
+      // 5% chance, on top of the coin drop, to yield the key that opens
+      // the Goblin Queen's Lair landmark dungeon
+      bonusDrops: [
+        DropRoll<ItemId>(
+          chance: 0.05,
+          entries: [
+            WeightedDropTableEntry<ItemId>(
+              id: ItemId.GOBLIN_QUEEN_KEY,
+              weight: 1,
+            ),
+          ],
+        ),
+      ],
     ),
+    // DUNGEON BOSS: Goblin Queen's Lair. A stat-check boss (v1). Its main
+    // drop is a guaranteed one-of-two uniques; a bonus roll always adds a
+    // bulk coin stack, and a rare roll can add a second unique.
+    EntityId.GOBLIN_QUEEN: CombatEntityDefinition(
+      name: "Goblin Queen",
+      iconAsset: "assets/images/entities/goblin_queen.png",
+
+      entityType: SkillId.ATTACK,
+      defence: 30,
+      hitpoints: 200,
+      attack: 14,
+      attackInterval: 2.5,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.GOBLIN_CROWN, weight: 1),
+        WeightedDropTableEntry<ItemId>(id: ItemId.GOBLIN_SCEPTER, weight: 1),
+      ],
+      bonusDrops: [
+        // guaranteed bulk currency
+        DropRoll<ItemId>(
+          entries: [
+            WeightedDropTableEntry<ItemId>(
+              id: ItemId.COINS,
+              weight: 1,
+              count: 500,
+            ),
+          ],
+        ),
+        // rare second unique on top of the guaranteed one
+        DropRoll<ItemId>(
+          chance: 0.1,
+          entries: [
+            WeightedDropTableEntry<ItemId>(id: ItemId.GOBLIN_CROWN, weight: 1),
+            WeightedDropTableEntry<ItemId>(
+              id: ItemId.GOBLIN_SCEPTER,
+              weight: 1,
+            ),
+          ],
+        ),
+      ],
+    ),
+
     EntityId.GIANT_SPIDER: CombatEntityDefinition(
       name: "Giant Spider",
       iconAsset: "assets/images/entities/giant_spider.png",

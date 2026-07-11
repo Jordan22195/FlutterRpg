@@ -152,6 +152,13 @@ enum ItemId {
   DRAGONSTONE_NECKLACE,
   ONYX_RING,
   ONYX_NECKLACE,
+
+  // dungeon keys (landmark dungeon entry, consumed on use)
+  GOBLIN_QUEEN_KEY,
+
+  // dungeon boss uniques (Goblin Queen's Lair)
+  GOBLIN_CROWN,
+  GOBLIN_SCEPTER,
 }
 
 const Duration SlowAttackSpeed = Duration(seconds: 2);
@@ -1426,6 +1433,30 @@ class ItemCatalog {
       skillBonus: {SkillId.ATTACK: 10},
       actionInterval: FastAttackSpeed,
       iconAsset: "assets/icons/items/iron_dagger.png",
+    ),
+
+    // DUNGEON: keys and boss uniques
+    // key opens the Goblin Queen's Lair landmark dungeon; consumed on entry
+    ItemId.GOBLIN_QUEEN_KEY: ItemDefinition(
+      name: "Goblin Queen Key",
+      value: 0,
+      iconAsset: "assets/icons/items/goblin_queen_key.png",
+    ),
+    // Goblin Queen boss uniques (a kill guarantees one of these)
+    ItemId.GOBLIN_CROWN: EquipmentItemDefition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Goblin Crown",
+      value: 150,
+      skillBonus: {SkillId.DEFENCE: 12, SkillId.ATTACK: 4},
+      iconAsset: "assets/icons/items/goblin_crown.png",
+    ),
+    ItemId.GOBLIN_SCEPTER: WeaponItemDefition(
+      armorSlot: ArmorSlots.WEAPON_1H,
+      name: "Goblin Scepter",
+      value: 150,
+      skillBonus: {SkillId.ATTACK: 18},
+      actionInterval: FastAttackSpeed,
+      iconAsset: "assets/icons/items/goblin_scepter.png",
     ),
   };
 

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'dungeon_screen.dart';
 import 'explore_screen.dart';
 import 'gear_screen.dart';
 import 'inventory_screen.dart';
 import 'map_screen.dart';
 import 'queue_screen.dart';
 import 'skills_screen.dart';
+import '../catalogs/dungeon_catalog.dart';
 import '../catalogs/entity_catalog.dart';
 import '../controllers/world_controller.dart';
 import '../services/entity_screen_router_service.dart';
@@ -58,6 +60,18 @@ class _MainShellState extends State<MainShell> {
 
     final nav = _navKeys[0].currentState!;
     nav.popUntil((route) => route.isFirst);
+
+    // a running dungeon opens straight to its screen; other activities
+    // rebuild the Map -> Explore (-> entity) stack
+    if (activityIconId is DungeonId) {
+      nav.push(
+        MaterialPageRoute(
+          builder: (_) => DungeonScreen(dungeonId: activityIconId),
+        ),
+      );
+      return;
+    }
+
     nav.push(MaterialPageRoute(builder: (_) => const ExploreScreen()));
 
     if (activityIconId is EntityId) {
