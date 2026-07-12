@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../catalogs/entity_catalog.dart';
 import '../data/skill_data.dart';
 import '../screens/crafting_screen.dart';
+import '../screens/dungeon_screen.dart';
 import '../screens/enchanting_screen.dart';
 import '../screens/encounter_screen.dart';
 import '../screens/shop_screen.dart';
@@ -12,6 +13,7 @@ class EntityScreenRouterService {
   static const String craftingRouteName = 'crafting';
   static const String enchantingRouteName = 'enchanting';
   static const String shopRouteName = 'shop';
+  static const String dungeonRouteName = 'dungeon';
 
   final EntityCatalog _entityCatalog;
 
@@ -29,6 +31,13 @@ class EntityScreenRouterService {
         MaterialPageRoute(
           settings: const RouteSettings(name: shopRouteName),
           builder: (_) => const ShopScreen(),
+        ),
+      );
+    } else if (enitity is DungeonEntity) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          settings: const RouteSettings(name: dungeonRouteName),
+          builder: (_) => DungeonScreen(dungeonId: enitity.dungeonId),
         ),
       );
     } else if (enitity is EncounterEntity) {

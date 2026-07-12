@@ -124,11 +124,12 @@ Herbalism tools:
 - [ ] copper_sickle.png
 - [ ] iron_sickle.png
 
-Dungeon (keys and Goblin Queen boss uniques):
+Dungeon (keys and boss uniques):
 
 - [ ] goblin_queen_key.png
 - [ ] goblin_crown.png
 - [ ] goblin_scepter.png
+- [ ] spider_silk_necklace.png (Spider Den boss unique)
 
 Optional (currently reusing basic_campfire.png):
 
@@ -166,6 +167,11 @@ Shops (dev forest proof of concept):
 Dungeon boss:
 
 - [ ] goblin_queen.png
+- [ ] spider_broodmother.png (Spider Den boss)
+
+Dungeon entrances (zone dungeons; shown in the zone's entity list):
+
+- [ ] spider_den.png (Spider Den entrance in the forest)
 
 Herb nodes (dev forest herbalism):
 
@@ -189,6 +195,7 @@ Herb nodes (dev forest herbalism):
 (new folder; add to pubspec `assets:` once populated)
 
 - [ ] goblin_queen_lair.png (Goblin Queen's Lair landmark header)
+- [ ] spider_den.png (Spider Den zone-dungeon header)
 
 ## Zone images — `assets/images/zones/`
 

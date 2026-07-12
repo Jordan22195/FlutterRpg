@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -6,8 +8,12 @@ import '../widgets/icon_renderer.dart';
 import '../screens/skill_detail_screen.dart';
 
 class SkillTile extends StatelessWidget {
-  const SkillTile({required this.id, super.key, this.size = 100})
-    : strokeWidth = size * 0.2;
+  const SkillTile({
+    required this.id,
+    super.key,
+    this.size = 100,
+    double? strokeWidth,
+  }) : strokeWidth = strokeWidth ?? size * 0.2;
 
   final SkillId id;
 
@@ -75,6 +81,8 @@ class SkillTile extends StatelessWidget {
                             bottom: 0,
                             child: _CountBadge(
                               count: controller.getSkillLevel(id),
+                              // scales down for compact rings
+                              fontSize: max(10, size * 0.14),
                             ),
                           ),
                         ],
@@ -92,9 +100,10 @@ class SkillTile extends StatelessWidget {
 }
 
 class _CountBadge extends StatelessWidget {
-  const _CountBadge({required this.count});
+  const _CountBadge({required this.count, this.fontSize = 14});
 
   final int count;
+  final double fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -106,9 +115,9 @@ class _CountBadge extends StatelessWidget {
       ),
       child: Text(
         '$count',
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
-          fontSize: 14,
+          fontSize: fontSize,
           //fontWeight: FontWeight.bold,
         ),
       ),

@@ -5,6 +5,7 @@ import 'package:rpg/main.dart';
 import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/skil_tile.dart';
+import 'package:rpg/widgets/skill_grid_tile.dart';
 
 // Boots the real app (new-game save) and taps through every screen.
 // Uses fixed pumps instead of pumpAndSettle because BuffController
@@ -37,7 +38,6 @@ void main() {
     await settle(tester);
     expect(find.text('The Forest'), findsOneWidget);
     expect(find.text('Anvil'), findsOneWidget);
-    expect(find.text('Pond'), findsOneWidget);
 
     // ---- Crafting screen (anvil) ----
     await tester.tap(find.text('Anvil'));
@@ -67,6 +67,11 @@ void main() {
     expect(find.text('The Forest'), findsOneWidget);
 
     // ---- Encounter screen (pond) ----
+    await tester.scrollUntilVisible(
+      find.text('Pond'),
+      100,
+      scrollable: find.byType(Scrollable).last,
+    );
     await tester.tap(find.text('Pond'));
     await settle(tester);
     expect(find.text('Action'), findsOneWidget);
@@ -82,10 +87,10 @@ void main() {
     // ---- Skills tab ----
     await tester.tap(find.text('Skills'));
     await settle(tester);
-    expect(find.byType(SkillTile), findsWidgets);
+    expect(find.byType(SkillGridTile), findsWidgets);
 
     // open a skill detail screen and go back
-    await tester.tap(find.byType(SkillTile).first);
+    await tester.tap(find.byType(SkillGridTile).first);
     await settle(tester);
     expect(find.textContaining('Level :'), findsOneWidget);
     await tester.tap(find.byTooltip('Back'));

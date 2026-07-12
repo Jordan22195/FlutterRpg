@@ -3,24 +3,16 @@ import 'package:provider/provider.dart';
 
 import '../catalogs/dungeon_catalog.dart';
 import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
 import '../controllers/dungeon_controller.dart';
-import '../controllers/equipment_controller.dart';
-import '../controllers/player_data_controller.dart';
-import '../data/equipment_data.dart';
 import '../data/skill_data.dart';
-import '../widgets/buff_row.dart';
-import '../widgets/equipment_picker.dart';
-import '../widgets/fading_number.dart';
-import '../widgets/fill_bar.dart';
 import '../widgets/icon_renderer.dart';
-import '../widgets/inventory_grid.dart';
 import '../widgets/item_stack_tile.dart';
-import '../widgets/skil_tile.dart';
+import 'encounter_screen.dart';
 
 /// A dungeon's screen. When no run is active it's a free inspect/lobby
-/// (floors, boss, rewards, entry cost, Enter). Once a run is active it
-/// shows the auto-advancing fight and the run's loot.
+/// (floors, boss, rewards, entry cost, Enter). An active run renders as a
+/// combat encounter screen — the same shared layout world combat uses —
+/// with the floor progression added.
 class DungeonScreen extends StatelessWidget {
   const DungeonScreen({super.key, required this.dungeonId});
 
@@ -29,12 +21,14 @@ class DungeonScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<DungeonController>();
-    // player hp/stamina changes should re-render the active run view
-    context.watch<PlayerDataController>();
 
     final def = controller.definitionFor(dungeonId);
     final showRun =
         controller.hasActiveRun && controller.activeDungeonId == dungeonId;
+
+    if (def != null && showRun) {
+      return _DungeonRunScreen(def: def);
+    }
 
     return SafeArea(
       child: Padding(
@@ -45,8 +39,6 @@ class DungeonScreen extends StatelessWidget {
             Expanded(
               child: def == null
                   ? const Center(child: Text('Unknown dungeon'))
-                  : showRun
-                  ? _RunView(controller: controller, def: def)
                   : _InspectView(controller: controller, def: def),
             ),
           ],
@@ -102,10 +94,17 @@ class _InspectView extends StatelessWidget {
 
               // floors and their packs, boss last
               for (int i = 0; i < def.floors.length; i++)
-                _floorCard(context, def.floors[i], isBossFloor: i == def.floors.length - 1),
+                _floorCard(
+                  context,
+                  def.floors[i],
+                  isBossFloor: i == def.floors.length - 1,
+                ),
 
               const SizedBox(height: 12),
-              Text('Boss rewards', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Boss rewards',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
@@ -117,7 +116,7 @@ class _InspectView extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'A kill guarantees one of these.',
+                'Possible boss drops.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -177,8 +176,9 @@ class _InspectView extends StatelessWidget {
 
   Widget _floorCard(
     BuildContext context,
-    DungeonFloor floor,
-    {required bool isBossFloor}) {
+    DungeonFloor floor, {
+    required bool isBossFloor,
+  }) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -223,206 +223,79 @@ class _InspectView extends StatelessWidget {
 
 // ---- active run ----
 
-// Mirrors the world-combat encounter screen (entity image with damage
-// numbers, hp bar, weapon/food/buff row, skill tile, drops grid) with the
-// floor progression list added. Fights auto-advance, so there is no
-// action/stop/eat button, and no player stat stack.
-class _RunView extends StatelessWidget {
-  const _RunView({required this.controller, required this.def});
+/// The active run IS the world combat screen: it extends the shared
+/// [CombatScreenState] layout from encounter_screen.dart, so any layout
+/// change there applies here too. The dungeon overrides only:
+/// - the data source (the dungeon run instead of a world encounter)
+/// - floor progression above the fight
+/// - the bottom bar (Leave / loop-continue; fights auto-advance, so there
+///   is no action/stop/eat button)
+/// The shared layout's player hp strip shows during fights (the entity is
+/// a combat entity) and hides between floors.
+class _DungeonRunScreen extends StatefulWidget {
+  const _DungeonRunScreen({required this.def});
 
-  final DungeonController controller;
   final DungeonDefinition def;
 
   @override
-  Widget build(BuildContext context) {
-    final equipmentController = context.watch<EquipmentController>();
+  State<_DungeonRunScreen> createState() => _DungeonRunScreenState();
+}
 
-    final entity = controller.currentEntity;
-    final hpPercent = controller.currentEntityHealthPercent();
-    final loot = controller.runLoot();
+class _DungeonRunScreenState extends CombatScreenState<_DungeonRunScreen> {
+  DungeonDefinition get def => widget.def;
 
-    final equipedWeapon = equipmentController.getEquipedWeapon();
-    final foodItemId = controller.getEquipedFoodItemId();
-    final foodItemCount = controller.getEquipedFoodItemCount();
+  @override
+  CombatViewState resolveView(BuildContext context) {
+    final controller = context.watch<DungeonController>();
 
-    return Column(
-      children: [
-        Expanded(
-          child: ListView(
-            children: [
-              // floor progression (the dungeon-specific part of the screen)
-              for (int i = 0; i < def.floors.length; i++)
-                _floorRow(context, i, def.floors[i].name),
-              const SizedBox(height: 8),
+    final entity =
+        controller.currentEntity ??
+        EncounterEntity(
+          id: EntityId.NULL,
+          name: "",
+          count: 0,
+          entityType: SkillId.ATTACK,
+          defence: 0,
+          hitpoints: 0,
+        );
 
-              Row(
-                children: [
-                  // left spacer where the encounter screen shows player
-                  // stats, so the entity image stays centered the same way
-                  const SizedBox(width: 100),
-
-                  // current enemy with the per-hit damage number overlaid
-                  Expanded(
-                    child: Center(
-                      child: SizedBox(
-                        width: 200,
-                        height: 200,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            ItemStackTile(
-                              size: 200,
-                              count: entity?.count ?? 0,
-                              id: entity?.id ?? EntityId.NULL,
-                              showInfoDialogOnTap: false,
-                            ),
-                            FadingNumber(
-                              number:
-                                  controller.latestActionResult.damageDone,
-                              trigger: controller.actionSequence,
-                              autoplay: false,
-                              color:
-                                  controller.latestActionResult.damageDone > 0
-                                  ? Colors.red
-                                  : Colors.blue,
-                              style: const TextStyle(
-                                fontSize: 42,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(blurRadius: 8, color: Colors.black),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // entity stats, mirroring the encounter screen's right side
-                  SizedBox(width: 100, child: _entityStatStack(context, entity)),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // enemy hp bar
-              Row(
-                children: [
-                  const SizedBox(width: 50),
-                  Expanded(
-                    child: TweenAnimationBuilder<double>(
-                      tween: Tween<double>(end: hpPercent),
-                      duration: const Duration(milliseconds: 100),
-                      builder: (context, v, child) => FillBar(
-                        value: v,
-                        foregroundColor: Theme.of(context).colorScheme.tertiary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 50),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // equipped weapon and food pickers + buffs, as in world combat.
-              // food matters here: auto-eat draws from the equipped stack
-              Row(
-                children: [
-                  ItemStackTile(
-                    size: 56,
-                    count: 1,
-                    id: equipedWeapon?.id ?? ItemId.NULL,
-                    showInfoDialogOnTap: false,
-                    borderColor: equipedWeapon == null
-                        ? null
-                        : qualityBorderColor(equipedWeapon.quality),
-                    onTap: () => EquipmentPicker.build(
-                      context,
-                      const [ArmorSlots.WEAPON_1H, ArmorSlots.WEAPON_2H],
-                      (item) => equipmentController.equipItem(item),
-                    ),
-                  ),
-                  ItemStackTile(
-                    size: 56,
-                    count: foodItemCount,
-                    id: foodItemId,
-                    onTap: () {
-                      FoodPicker.build(
-                        context,
-                        (id) => equipmentController.setEquipedFood(id),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(child: BuffRow()),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-              const Divider(),
-              SkillTile(id: entity?.entityType ?? SkillId.ATTACK),
-
-              Card(
-                child: Column(
-                  children: [
-                    SizedBox(height: 80, child: InventoryGrid(items: loot)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        _controls(context),
-      ],
+    return CombatViewState(
+      title: def.name,
+      entity: entity,
+      // dungeon packs never respawn; the next enemy spawns instantly
+      respawning: false,
+      playerHp: controller.getPlayerHp(),
+      playerStats: controller.getPlayerStats(),
+      playerDamage: controller.latestActionResult.damageDone,
+      actionSequence: controller.actionSequence,
+      entityDamage: controller.latestEntityDamage,
+      entityAttackSequence: controller.entityAttackSequence,
+      showActionFeedback: true,
+      drops: controller.runLoot(),
+      foodItemId: controller.getEquipedFoodItemId(),
+      foodItemCount: controller.getEquipedFoodItemCount(),
     );
   }
 
-  // entity hp / defence / attack, matching the encounter screen's stack
-  Widget _entityStatStack(BuildContext context, EncounterEntity? entity) {
-    const double fontSize = 14;
-    const double iconSize = 20;
-    final combatEntity = entity is CombatEntity;
-
+  @override
+  Widget? buildAboveFight(BuildContext context) {
+    final controller = context.watch<DungeonController>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            IconRenderer(id: SkillId.HITPOINTS, size: iconSize),
-            const SizedBox(width: 4),
-            Text(
-              '${entity?.hitpoints ?? 0}',
-              style: const TextStyle(fontSize: fontSize),
-            ),
-          ],
-        ),
-        Row(
-          children: [
-            IconRenderer(id: SkillId.DEFENCE, size: iconSize),
-            const SizedBox(width: 4),
-            Text(
-              '${entity?.defence ?? 0}',
-              style: const TextStyle(fontSize: fontSize),
-            ),
-          ],
-        ),
-        if (combatEntity)
-          Row(
-            children: [
-              IconRenderer(id: SkillId.ATTACK, size: iconSize),
-              const SizedBox(width: 4),
-              Text(
-                '${entity.attack}',
-                style: const TextStyle(fontSize: fontSize),
-              ),
-            ],
-          ),
+        for (int i = 0; i < def.floors.length; i++)
+          _floorRow(context, controller, i, def.floors[i].name),
+        const SizedBox(height: 8),
       ],
     );
   }
 
-  Widget _floorRow(BuildContext context, int index, String name) {
+  Widget _floorRow(
+    BuildContext context,
+    DungeonController controller,
+    int index,
+    String name,
+  ) {
     final status = controller.floorStatus(index);
     late final IconData icon;
     late final Color? color;
@@ -459,7 +332,10 @@ class _RunView extends StatelessWidget {
     );
   }
 
-  Widget _controls(BuildContext context) {
+  @override
+  Widget buildActionBar(BuildContext context, CombatViewState view) {
+    final controller = context.watch<DungeonController>();
+
     if (controller.awaitingFloorChoice) {
       final atBoss = controller.atBossFloorChoice;
       return Row(
@@ -485,14 +361,17 @@ class _RunView extends StatelessWidget {
         ),
         const Spacer(),
         OutlinedButton(
-          onPressed: () => _confirmLeave(context),
+          onPressed: () => _confirmLeave(context, controller),
           child: const Text('Leave'),
         ),
       ],
     );
   }
 
-  Future<void> _confirmLeave(BuildContext context) async {
+  Future<void> _confirmLeave(
+    BuildContext context,
+    DungeonController controller,
+  ) async {
     final keyed = def.isKeyed;
     final leave = await showDialog<bool>(
       context: context,

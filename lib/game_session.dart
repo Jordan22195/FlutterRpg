@@ -483,6 +483,7 @@ class GameSessionFactory {
       zoneCatalog: catalogs.zoneCatalog,
       dropTableService: weightedDropTableService,
       entityCatalog: catalogs.entityCatalog,
+      itemCatalog: catalogs.itemCatalog,
       entityScreenRouterService: entityScreenRouterService,
       playerDataService: playerDataService,
       actionTimingController: actionTimingController,

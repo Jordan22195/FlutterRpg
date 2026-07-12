@@ -54,7 +54,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 ASSETS_ROOT = REPO_ROOT / "assets"
 MISSING_MD = ASSETS_ROOT / "MISSING_ASSETS.md"
 
-ICON_SIZE = 32  # final on-disk size for inventory icons
+ICON_SIZE = 1254  # final on-disk size for inventory icons
 
 # Shared style rules. Tuned for image models: forbid the things they add
 # unprompted (backgrounds, frames, shadows, text, multiple objects) and, for

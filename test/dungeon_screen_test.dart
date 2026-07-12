@@ -86,11 +86,14 @@ void main() {
     // appears as the current-floor label next to Leave)
     expect(find.text('Warren Entrance'), findsWidgets);
 
-    // the shared combat elements (buffs, skill tile) sit below the fold of
-    // the lazy list; scroll them into build range before asserting
+    // the skill ring strip sits at the top of the fight: combat trains
+    // attack, hitpoints, and defence, one ring each
+    expect(find.byType(SkillTile), findsNWidgets(3));
+
+    // the buff row sits below the fold of the lazy list; scroll it into
+    // build range before asserting
     await tester.drag(find.byType(ListView).last, const Offset(0, -400));
     await tester.pump();
-    expect(find.byType(SkillTile), findsOneWidget);
     expect(find.byType(BuffRow), findsOneWidget);
 
     // key was consumed
@@ -103,6 +106,43 @@ void main() {
     );
 
     // unmount so the session disposes its timer and ticker
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('zone dungeon entrance in the forest opens (free entry)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
+    );
+    await settle(tester);
+
+    // travel from the farm to the forest
+    await tester.tap(find.text('Forest'));
+    await settle(tester);
+    await tester.tap(find.text('Travel'));
+    await settle(tester);
+    expect(find.text('The Forest'), findsOneWidget);
+
+    // the Spider Den entrance sits in the zone's entity list; tapping it
+    // opens the dungeon inspect screen (free entry — plain "Enter")
+    expect(find.text('Spider Den'), findsWidgets);
+    await tester.ensureVisible(find.text('Spider Den').first);
+    await settle(tester);
+    await tester.tap(find.text('Spider Den').first);
+    await settle(tester);
+
+    expect(find.text('Webbed Thicket'), findsOneWidget);
+    final enter = find.widgetWithText(FilledButton, 'Enter');
+    expect(enter, findsOneWidget);
+    expect(tester.widget<FilledButton>(enter).onPressed, isNotNull);
+
+    // enter starts the run
+    await tester.tap(enter);
+    await tester.pump();
+    expect(find.text('Leave'), findsOneWidget);
+
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
   });

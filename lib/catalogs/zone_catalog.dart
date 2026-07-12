@@ -201,7 +201,11 @@ class ZoneCatalog {
       iconAsset: 'assets/images/zones/forest.png',
 
       name: "The Forest",
-      permanentEntities: [EntityId.ANVIL, EntityId.TRANQUIL_POND],
+      permanentEntities: [
+        EntityId.ANVIL,
+        EntityId.TRANQUIL_POND,
+        EntityId.SPIDER_DEN_ENTRANCE,
+      ],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),

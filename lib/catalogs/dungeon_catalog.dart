@@ -7,6 +7,7 @@ import '../data/skill_data.dart';
 enum DungeonId {
   NULL,
   GOBLIN_QUEEN_LAIR,
+  SPIDER_DEN,
 }
 
 /// How a dungeon is reached and how it behaves on entry/exit.
@@ -107,6 +108,34 @@ class DungeonCatalog {
           packs: [
             DungeonPack(EntityId.GOBLIN, count: 2),
             DungeonPack(EntityId.GOBLIN_QUEEN),
+          ],
+        ),
+      ],
+    ),
+
+    // Zone dungeon: a permanent entrance inside the forest. Free to enter
+    // and REPEATABLE — clear down to the Broodmother, then loop the boss
+    // floor to farm the Spider Silk Necklace.
+    DungeonId.SPIDER_DEN: const DungeonDefinition(
+      id: DungeonId.SPIDER_DEN,
+      name: "Spider Den",
+      iconAsset: "assets/images/dungeons/spider_den.png",
+      type: DungeonType.ZONE,
+      repeatable: true,
+      floors: [
+        DungeonFloor(
+          name: "Webbed Thicket",
+          packs: [DungeonPack(EntityId.GIANT_SPIDER, count: 4)],
+        ),
+        DungeonFloor(
+          name: "Deep Nest",
+          packs: [DungeonPack(EntityId.GIANT_SPIDER, count: 5)],
+        ),
+        DungeonFloor(
+          name: "Broodmother's Lair",
+          packs: [
+            DungeonPack(EntityId.GIANT_SPIDER, count: 2),
+            DungeonPack(EntityId.SPIDER_BROODMOTHER),
           ],
         ),
       ],

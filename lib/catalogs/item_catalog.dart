@@ -159,6 +159,10 @@ enum ItemId {
   // dungeon boss uniques (Goblin Queen's Lair)
   GOBLIN_CROWN,
   GOBLIN_SCEPTER,
+
+  // dungeon boss unique (Spider Den, forest zone dungeon) — the farmable
+  // chase drop
+  SPIDER_SILK_NECKLACE,
 }
 
 const Duration SlowAttackSpeed = Duration(seconds: 2);
@@ -1457,6 +1461,14 @@ class ItemCatalog {
       skillBonus: {SkillId.ATTACK: 18},
       actionInterval: FastAttackSpeed,
       iconAsset: "assets/icons/items/goblin_scepter.png",
+    ),
+    // Spider Den boss unique (necklace slot); a rare drop you grind for
+    ItemId.SPIDER_SILK_NECKLACE: EquipmentItemDefition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Spider Silk Necklace",
+      value: 120,
+      skillBonus: {SkillId.ATTACK: 8, SkillId.DEFENCE: 4},
+      iconAsset: "assets/icons/items/spider_silk_necklace.png",
     ),
   };
 

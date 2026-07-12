@@ -7,11 +7,13 @@ import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import '../catalogs/zone_catalog.dart';
+import '../catalogs/item_catalog.dart';
 import '../services/player_data_service.dart';
 import '../services/world_service.dart';
 import '../catalogs/entity_catalog.dart';
 import '../services/weighted_drop_table_service.dart';
 import '../services/entity_screen_router_service.dart';
+import '../systems/encounter_system.dart';
 
 class WorldController extends ChangeNotifier {
   // controllers
@@ -27,6 +29,7 @@ class WorldController extends ChangeNotifier {
   // catalogs
   final ZoneCatalog _zoneCatalog;
   final EntityCatalog _entityCatalog;
+  final ItemCatalog _itemCatalog;
 
   // services
   final WorldService _worldService;
@@ -41,6 +44,7 @@ class WorldController extends ChangeNotifier {
     required ZoneCatalog zoneCatalog,
     required WeightedDropTableService dropTableService,
     required EntityCatalog entityCatalog,
+    required ItemCatalog itemCatalog,
     required EntityScreenRouterService entityScreenRouterService,
     required PlayerDataService playerDataService,
     required ActionTimingController actionTimingController,
@@ -53,6 +57,7 @@ class WorldController extends ChangeNotifier {
        _zoneCatalog = zoneCatalog,
        _worldState = worldState,
        _entityCatalog = entityCatalog,
+       _itemCatalog = itemCatalog,
        _playerState = playerState,
        _entityScreenRouterService = entityScreenRouterService,
        _actionTimingController = actionTimingController,
@@ -77,6 +82,49 @@ class WorldController extends ChangeNotifier {
 
   ZoneDefinition getCurrentZoneDefinition() {
     return _zoneCatalog.getDefinitionFor(_playerState.currentZoneId);
+  }
+
+  // ---- explore screen card data ----
+
+  /// Estimated xp for fully consuming ONE count of [e], mirroring
+  /// EncounterSystem's rules: damage-based skills accrue
+  /// [EncounterSystem.xpPerDamage] per damage (one kill/fell/deplete deals
+  /// the node's full hitpoints), while fishing and herbalism award the
+  /// caught item's xpValue (weighted average across the drop table).
+  double xpPerUnit(EncounterEntity e) {
+    final def = _entityCatalog.getDefinitionFor(e.id);
+    if (def is! EncounterEntityDefinition) return 0;
+
+    switch (e.entityType) {
+      case SkillId.FISHING:
+      case SkillId.HERBALISM:
+        double weightSum = 0;
+        double xpSum = 0;
+        for (final entry in def.itemDrops) {
+          final xp = _itemCatalog.definitionFor(entry.id)?.xpValue ?? 0;
+          weightSum += entry.weight;
+          xpSum += entry.weight * xp * entry.count;
+        }
+        return weightSum <= 0 ? 0 : xpSum / weightSum;
+      default:
+        return EncounterSystem.xpPerDamage * def.hitpoints;
+    }
+  }
+
+  /// Level required to interact with [id] (herb gates); 0 when ungated.
+  int requiredLevelFor(EntityId id) {
+    final def = _entityCatalog.getDefinitionFor(id);
+    return def is HerbEntityDefinition ? def.requiredLevel : 0;
+  }
+
+  /// Whether the player's stats (with gear/buffs, matching the zone-gate
+  /// convention) meet [id]'s level requirement. True for ungated entities.
+  bool meetsEntityRequirement(EntityId id) {
+    final def = _entityCatalog.getDefinitionFor(id);
+    if (def is! HerbEntityDefinition) return true;
+    final level =
+        _playerDataService.getStatTotals(_playerState)[def.entityType] ?? 0;
+    return level >= def.requiredLevel;
   }
 
   // ---- zone travel ----

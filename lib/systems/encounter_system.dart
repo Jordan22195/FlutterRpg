@@ -16,6 +16,11 @@ import '../services/inventory_service.dart';
 import '../catalogs/item_catalog.dart';
 
 class EncounterSystem {
+  /// XP awarded per point of damage done by damage-based skills (combat,
+  /// woodcutting, mining). Also used by the explore screen to estimate a
+  /// node's xp yield.
+  static const double xpPerDamage = 5;
+
   final EncounterService _encounterService;
   final WorldService _worldService;
   final PlayerDataService _playerDataService;
@@ -88,12 +93,11 @@ class EncounterSystem {
     }
 
     // xp accrues on every damaging action, scaled by the damage done
-    // todo move hardcoded multiplier somwhere else
-    result.xp[e.entityType] = (5 * result.damageDone).toDouble();
+    result.xp[e.entityType] = xpPerDamage * result.damageDone;
 
     // combat also trains hitpoints, at a third of the attack xp rate
     if (e is CombatEntity) {
-      result.xp[SkillId.HITPOINTS] = (5 * result.damageDone) / 3.0;
+      result.xp[SkillId.HITPOINTS] = (xpPerDamage * result.damageDone) / 3.0;
     }
 
     // Handle death

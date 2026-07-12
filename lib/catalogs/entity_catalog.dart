@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import '../data/skill_data.dart';
 import 'item_catalog.dart';
+import 'dungeon_catalog.dart';
 import '../services/weighted_drop_table_service.dart';
 
 enum EntityId {
@@ -15,6 +16,7 @@ enum EntityId {
   OAK_TREE,
   GOBLIN,
   GOBLIN_QUEEN,
+  SPIDER_BROODMOTHER,
   CHICKEN,
   GIANT_SPIDER,
   COPPER,
@@ -26,6 +28,8 @@ enum EntityId {
   OCEAN,
   TRADING_POST,
   WANDERING_MERCHANT,
+  // dungeon entrances that live inside a zone (zone dungeons)
+  SPIDER_DEN_ENTRANCE,
   // herbs (herbalism), ascending level order
   GUAM,
   MARRENTILL,
@@ -99,6 +103,8 @@ class Entity {
         return CombatEntity.fromJson(json);
       case 'ShopEntity':
         return ShopEntity.fromJson(json);
+      case 'DungeonEntity':
+        return DungeonEntity.fromJson(json);
       default:
         throw FormatException('Unsupported runtimeType "$runtimeType".');
     }
@@ -537,6 +543,61 @@ class ShopEntityDefinition extends EntityDefinition {
   ShopEntity toEntity(EntityId id) => ShopEntity(id: id, name: name);
 }
 
+// A dungeon entrance that lives inside a zone (a zone dungeon). Carries
+// the [DungeonId] it opens; tapping it routes to the dungeon screen.
+// Purely an entrance — no fight/count state of its own.
+class DungeonEntity extends Entity {
+  final DungeonId dungeonId;
+
+  DungeonEntity({
+    required super.id,
+    required super.name,
+    required this.dungeonId,
+  });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'DungeonEntity';
+    json['dungeonId'] = dungeonId.name;
+    return json;
+  }
+
+  factory DungeonEntity.fromJson(Map<String, dynamic> json) {
+    final baseEntity = Entity.fromJson({...json, 'runtimeType': 'Entity'});
+    final rawDungeonId = json['dungeonId'];
+
+    if (rawDungeonId is! String) {
+      throw FormatException('Missing or invalid "dungeonId". Expected String.');
+    }
+
+    final dungeonId = DungeonId.values.firstWhere(
+      (d) => d.name == rawDungeonId,
+      orElse: () => throw FormatException('Invalid DungeonId "$rawDungeonId".'),
+    );
+
+    return DungeonEntity(
+      id: baseEntity.id,
+      name: baseEntity.name,
+      dungeonId: dungeonId,
+    );
+  }
+}
+
+class DungeonEntityDefinition extends EntityDefinition {
+  final DungeonId dungeonId;
+
+  DungeonEntityDefinition({
+    required super.name,
+    required super.iconAsset,
+    required this.dungeonId,
+  });
+
+  @override
+  DungeonEntity toEntity(EntityId id) =>
+      DungeonEntity(id: id, name: name, dungeonId: dungeonId);
+}
+
 // Catalog
 
 class EntityCatalog {
@@ -598,6 +659,17 @@ class EntityCatalog {
       // pricier but restocks much faster than the trading post
       priceMarkup: 1.5,
       restockInterval: Duration(hours: 1),
+    ),
+
+    //
+    //
+    //  DUNGEON ENTRANCES (zone dungeons)
+    //
+    //
+    EntityId.SPIDER_DEN_ENTRANCE: DungeonEntityDefinition(
+      name: "Spider Den",
+      iconAsset: "assets/images/entities/spider_den.png",
+      dungeonId: DungeonId.SPIDER_DEN,
     ),
 
     //
@@ -687,6 +759,34 @@ class EntityCatalog {
             WeightedDropTableEntry<ItemId>(id: ItemId.GOBLIN_CROWN, weight: 1),
             WeightedDropTableEntry<ItemId>(
               id: ItemId.GOBLIN_SCEPTER,
+              weight: 1,
+            ),
+          ],
+        ),
+      ],
+    ),
+
+    // DUNGEON BOSS: Spider Den (forest zone dungeon). Weaker than the
+    // Goblin Queen since it's free/repeatable. Guaranteed bulk coins each
+    // kill; the Spider Silk Necklace is a rare chase drop you grind for.
+    EntityId.SPIDER_BROODMOTHER: CombatEntityDefinition(
+      name: "Spider Broodmother",
+      iconAsset: "assets/images/entities/spider_broodmother.png",
+
+      entityType: SkillId.ATTACK,
+      defence: 12,
+      hitpoints: 120,
+      attack: 8,
+      attackInterval: 2.5,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1, count: 100),
+      ],
+      bonusDrops: [
+        DropRoll<ItemId>(
+          chance: 0.08,
+          entries: [
+            WeightedDropTableEntry<ItemId>(
+              id: ItemId.SPIDER_SILK_NECKLACE,
               weight: 1,
             ),
           ],
