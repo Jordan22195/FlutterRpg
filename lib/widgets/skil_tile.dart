@@ -27,7 +27,15 @@ class SkillTile extends StatelessWidget {
     final progress = controller.getSkillProgress(id);
     final p = progress.clamp(0.0, 1.0);
 
-    final centerChild = IconRenderer(id: id, size: size * 0.60);
+    // Size the inner disc to sit just inside the ring (leaving a hair of
+    // gap), rather than a fixed fraction of the ring. This lets the skill
+    // icon fill the whole ring hole, so it stays legible even on the
+    // compact 40px rings in the encounter/explore screens.
+    final innerDiameter = (size - 2 * strokeWidth - size * 0.06).clamp(
+      size * 0.4,
+      size,
+    );
+    final centerChild = IconRenderer(id: id, size: innerDiameter * 0.86);
 
     return InkWell(
       borderRadius: BorderRadius.circular(210),
@@ -56,10 +64,10 @@ class SkillTile extends StatelessWidget {
                     color: scheme.primary,
                   ),
 
-                  // Center icon/image (slightly smaller so it doesn't swallow ring)
+                  // Center icon/image, sized to fill the ring hole
                   Container(
-                    width: size * 0.45,
-                    height: size * 0.45,
+                    width: innerDiameter,
+                    height: innerDiameter,
                     decoration: BoxDecoration(
                       color: scheme.surface,
                       shape: BoxShape.circle,
@@ -71,22 +79,20 @@ class SkillTile extends StatelessWidget {
                       ],
                     ),
                     alignment: Alignment.center,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Stack(
-                        children: [
-                          centerChild,
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: _CountBadge(
-                              count: controller.getSkillLevel(id),
-                              // scales down for compact rings
-                              fontSize: max(10, size * 0.14),
-                            ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        centerChild,
+                        Positioned(
+                          right: 0,
+                          bottom: 0,
+                          child: _CountBadge(
+                            count: controller.getSkillLevel(id),
+                            // scales down for compact rings
+                            fontSize: max(10, size * 0.14),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

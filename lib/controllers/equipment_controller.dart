@@ -32,6 +32,11 @@ class EquipmentController extends ChangeNotifier {
     return _equipmentService.getItemInSlot(slot, _playerState.equipmentData);
   }
 
+  /// Combined effective bonuses from all equipped armor, weapons, and tools.
+  Map<SkillId, int> getStatTotals() {
+    return _equipmentService.getStatTotals(_playerState.equipmentData);
+  }
+
   bool equipItem(EquipmentItem item) {
     final equipped = _equipmentSystem.equipItem(
       item,
@@ -71,6 +76,15 @@ class EquipmentController extends ChangeNotifier {
   void unequipSlot(ArmorSlots slot) {
     _equipmentSystem.unequipSlot(
       slot,
+      _playerState.equipmentData,
+      _inventoryState,
+    );
+    notifyListeners();
+  }
+
+  void unequipToolForSkill(SkillId skill) {
+    _equipmentSystem.unequipTool(
+      skill,
       _playerState.equipmentData,
       _inventoryState,
     );

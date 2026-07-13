@@ -71,4 +71,15 @@ class EquipmentSystem {
       _inventoryService.addEquipment(inventoryState, old);
     }
   }
+
+  void unequipTool(
+    SkillId skill,
+    EquipmentData equipmentState,
+    InventoryData inventoryState,
+  ) {
+    final old = _equipmentService.unequipTool(skill, equipmentState);
+    if (old != null) {
+      _inventoryService.addEquipment(inventoryState, old);
+    }
+  }
 }

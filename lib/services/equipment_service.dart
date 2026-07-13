@@ -94,4 +94,10 @@ class EquipmentService {
     equipmentState.equipedTools[skill] = item;
     return old;
   }
+
+  EquipmentItem? unequipTool(SkillId skill, EquipmentData equipmentState) {
+    final old = equipmentState.equipedTools[skill];
+    equipmentState.equipedTools[skill] = null;
+    return old;
+  }
 }
