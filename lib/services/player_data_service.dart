@@ -69,6 +69,34 @@ class PlayerDataService {
     return _skillService.xpToLevelUp(getSkillData(id, playerState));
   }
 
+  void startXpTracker(SkillId id, PlayerData playerState) {
+    _skillService.startXpTracking(getSkillData(id, playerState));
+  }
+
+  void resetXpTracker(SkillId id, PlayerData playerState) {
+    _skillService.resetXpTracking(getSkillData(id, playerState));
+  }
+
+  bool isTrackingXp(SkillId id, PlayerData playerState) {
+    return _skillService.isTrackingXp(getSkillData(id, playerState));
+  }
+
+  Duration getTrackedElapsed(SkillId id, PlayerData playerState) {
+    return _skillService.trackedElapsed(getSkillData(id, playerState));
+  }
+
+  double getTrackedXpGained(SkillId id, PlayerData playerState) {
+    return _skillService.trackedXpGained(getSkillData(id, playerState));
+  }
+
+  double getXpPerHour(SkillId id, PlayerData playerState) {
+    return _skillService.xpPerHour(getSkillData(id, playerState));
+  }
+
+  void debugSetSkillXp(SkillId id, double xp, PlayerData playerState) {
+    _skillService.setXp(xp, getSkillData(id, playerState));
+  }
+
   // each point of stamina skill adds 10 to the stamina bar
   double getMaxStamina(PlayerData playerState) {
     final staminaStat = getStatTotals(playerState)[SkillId.STAMINA] ?? 1;

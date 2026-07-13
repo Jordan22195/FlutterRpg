@@ -74,7 +74,44 @@ class PlayerDataController extends ChangeNotifier {
     return _playerDataService.getXpToLevelUp(id, _playerData);
   }
 
+  void startXpTracker(SkillId id) {
+    _playerDataService.startXpTracker(id, _playerData);
+    notifyListeners();
+  }
+
+  void resetXpTracker(SkillId id) {
+    _playerDataService.resetXpTracker(id, _playerData);
+    notifyListeners();
+  }
+
+  bool isTrackingXp(SkillId id) {
+    return _playerDataService.isTrackingXp(id, _playerData);
+  }
+
+  Duration getTrackedElapsed(SkillId id) {
+    return _playerDataService.getTrackedElapsed(id, _playerData);
+  }
+
+  double getTrackedXpGained(SkillId id) {
+    return _playerDataService.getTrackedXpGained(id, _playerData);
+  }
+
+  double getXpPerHour(SkillId id) {
+    return _playerDataService.getXpPerHour(id, _playerData);
+  }
+
+  void debugSetSkillXp(SkillId id, double xp) {
+    _playerDataService.debugSetSkillXp(id, xp, _playerData);
+    notifyListeners();
+  }
+
   double getStaminaPercent() {
     return _playerDataService.getStaminaPercent(_playerData);
+  }
+
+  double getStamina() => _playerData.stamina;
+
+  double getMaxStamina() {
+    return _playerDataService.getMaxStamina(_playerData);
   }
 }

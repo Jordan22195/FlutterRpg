@@ -73,6 +73,7 @@ class _GameBootstrapState extends State<GameBootstrap>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   late final GameSession session;
   Timer? _autosaveTimer;
+  Timer? _navSaveDebounce;
 
   @override
   void initState() {
@@ -114,6 +115,13 @@ class _GameBootstrapState extends State<GameBootstrap>
     widget.fileManagerService.saveAppData(session.saveGameData.toJson());
   }
 
+  // navigation fires this on every tab/route change; debounced so a
+  // quick flurry of taps writes the save once
+  void _onUiStateChanged() {
+    _navSaveDebounce?.cancel();
+    _navSaveDebounce = Timer(const Duration(seconds: 1), _saveGame);
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
@@ -126,6 +134,7 @@ class _GameBootstrapState extends State<GameBootstrap>
   @override
   void dispose() {
     _autosaveTimer?.cancel();
+    _navSaveDebounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _saveGame();
     session.dispose();
@@ -178,7 +187,7 @@ class _GameBootstrapState extends State<GameBootstrap>
       child: MaterialApp(
         title: 'RPG',
         theme: ThemeData.dark(),
-        home: const MainShell(),
+        home: MainShell(onUiStateChanged: _onUiStateChanged),
       ),
     );
   }

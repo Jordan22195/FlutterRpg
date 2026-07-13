@@ -47,6 +47,10 @@ class SkillService {
     skillState.xp += xp;
   }
 
+  void setXp(double xp, SkillData skillState) {
+    skillState.xp = xp < 0 ? 0 : xp;
+  }
+
   int getLevelFromXp(double xp, SkillData skillState) {
     for (int level = 1; level < skillState.xpTable.length; level++) {
       if (xp < skillState.xpTable[level]) {
@@ -54,5 +58,38 @@ class SkillService {
       }
     }
     return skillState.xpTable.length - 1;
+  }
+
+  void startXpTracking(SkillData skillState) {
+    skillState.trackerStartTime = DateTime.now();
+    skillState.trackerStartXp = skillState.xp;
+  }
+
+  void resetXpTracking(SkillData skillState) {
+    if (skillState.trackerStartTime == null) return;
+    skillState.trackerStartTime = DateTime.now();
+    skillState.trackerStartXp = skillState.xp;
+  }
+
+  bool isTrackingXp(SkillData skillState) {
+    return skillState.trackerStartTime != null;
+  }
+
+  Duration trackedElapsed(SkillData skillState) {
+    final start = skillState.trackerStartTime;
+    if (start == null) return Duration.zero;
+    return DateTime.now().difference(start);
+  }
+
+  double trackedXpGained(SkillData skillState) {
+    final startXp = skillState.trackerStartXp;
+    if (skillState.trackerStartTime == null || startXp == null) return 0;
+    return skillState.xp - startXp;
+  }
+
+  double xpPerHour(SkillData skillState) {
+    final elapsedHours = trackedElapsed(skillState).inMilliseconds / 3600000;
+    if (elapsedHours <= 0) return 0;
+    return trackedXpGained(skillState) / elapsedHours;
   }
 }

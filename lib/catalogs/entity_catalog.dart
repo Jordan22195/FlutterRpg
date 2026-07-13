@@ -1057,6 +1057,8 @@ class EntityCatalog {
     return _defs[id] ?? EntityDefinition(name: "", iconAsset: "");
   }
 
+  List<EntityDefinition> get all => _defs.values.toList();
+
   Entity buildEntity(EntityId id) {
     final def = _defs[id];
     if (def == null) {

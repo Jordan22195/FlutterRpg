@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/main.dart';
 import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/widgets/recipe_card.dart';
-import 'package:rpg/widgets/skil_tile.dart';
 import 'package:rpg/widgets/skill_grid_tile.dart';
 
 // Boots the real app (new-game save) and taps through every screen.

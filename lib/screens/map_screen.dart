@@ -8,6 +8,7 @@ import '../catalogs/dungeon_catalog.dart';
 import '../catalogs/zone_catalog.dart';
 import '../controllers/dungeon_controller.dart';
 import '../data/skill_data.dart';
+import '../services/entity_screen_router_service.dart';
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -50,9 +51,14 @@ class _MapScreenState extends State<MapScreen> {
       setState(() => _selected = null);
       // This pushes onto the MAP TAB's nested navigator, so switching
       // tabs and coming back returns to ExploreScreen.
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => ExploreScreen()));
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          settings: const RouteSettings(
+            name: EntityScreenRouterService.exploreRouteName,
+          ),
+          builder: (_) => ExploreScreen(),
+        ),
+      );
     }
   }
 
@@ -139,6 +145,10 @@ class _MapScreenState extends State<MapScreen> {
       onPressed: () {
         Navigator.of(context).push(
           MaterialPageRoute(
+            settings: RouteSettings(
+              name: EntityScreenRouterService.dungeonRouteName,
+              arguments: dungeonId,
+            ),
             builder: (_) => DungeonScreen(dungeonId: dungeonId),
           ),
         );

@@ -91,12 +91,19 @@ class ProgressBars extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               //Stamina Bar
-              AnimatedBuilder(
-                animation: timing,
-                builder: (_, _) => FillBar(
-                  value: playerController.getStaminaPercent(),
-                  foregroundColor: Colors.blue,
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: AnimatedBuilder(
+                      animation: timing,
+                      builder: (_, _) => FillBar(
+                        value: playerController.getStaminaPercent(),
+                        foregroundColor: Colors.blue,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
               ),
               const SizedBox(height: 8),
 
@@ -124,7 +131,48 @@ class ProgressBars extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Column(children: [SizedBox(height: 28), ActionIntervalTimer()]),
+        Column(
+          children: [
+            AnimatedBuilder(
+              animation: timing,
+              builder: (_, _) => StatValueLabel(
+                value: playerController.getStamina(),
+                max: playerController.getMaxStamina(),
+              ),
+            ),
+            ActionIntervalTimer(),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// "xx / yy" readout next to a stat bar (e.g. current/max stamina),
+/// matching the icon + fixed-width text style of ActionIntervalTimer.
+class StatValueLabel extends StatelessWidget {
+  const StatValueLabel({
+    super.key,
+    required this.value,
+    required this.max,
+    this.icon = Icons.bolt,
+  });
+
+  final double value;
+  final double max;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15),
+        const SizedBox(width: 4),
+        Text(
+          '${value.round()} / ${max.round()}',
+          style: const TextStyle(fontSize: 12),
+        ),
       ],
     );
   }

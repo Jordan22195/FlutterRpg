@@ -9,6 +9,8 @@ import '../screens/shop_screen.dart';
 
 class EntityScreenRouterService {
   // route names let navigator observers identify which screen is on top
+  // (and let the saved ui state rebuild the stack on relaunch)
+  static const String exploreRouteName = 'explore';
   static const String encounterRouteName = 'encounter';
   static const String craftingRouteName = 'crafting';
   static const String enchantingRouteName = 'enchanting';
@@ -36,7 +38,12 @@ class EntityScreenRouterService {
     } else if (enitity is DungeonEntity) {
       Navigator.of(context).push(
         MaterialPageRoute(
-          settings: const RouteSettings(name: dungeonRouteName),
+          // the dungeon id rides in the route arguments so the saved ui
+          // state knows which dungeon screen to restore
+          settings: RouteSettings(
+            name: dungeonRouteName,
+            arguments: enitity.dungeonId,
+          ),
           builder: (_) => DungeonScreen(dungeonId: enitity.dungeonId),
         ),
       );

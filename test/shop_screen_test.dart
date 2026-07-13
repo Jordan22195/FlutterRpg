@@ -37,7 +37,7 @@ void main() {
 
     // give the player coins + a sellable stack and move them to the dev
     // forest, viewing the trading post
-    save.inventoryData.itemMap[ItemId.COINS] = 1000;
+    save.inventoryData.itemMap[ItemId.COINS] = 10000;
     save.inventoryData.itemMap[ItemId.COPPER_ORE] = 5;
     save.playerData.currentZoneId = ZoneId.DEV_FOREST;
     save.playerData.currentEntityViewId = EntityId.TRADING_POST;
@@ -69,7 +69,9 @@ void main() {
 
     final coinsBeforeBuy = session.shopController.playerCoins();
 
-    // buy the first item; coins drop
+    // buy the first item; coins drop (player has plenty of coins so this should always work)
+    await tester.ensureVisible(buyButtons.first);
+    await tester.pumpAndSettle();
     await tester.tap(buyButtons.first);
     await tester.pump();
     expect(session.shopController.playerCoins(), lessThan(coinsBeforeBuy));
@@ -85,7 +87,32 @@ void main() {
 
     final coinsBeforeSell = session.shopController.playerCoins();
     final oreBefore = save.inventoryData.itemMap[ItemId.COPPER_ORE] ?? 0;
-    await tester.tap(sellButton.first);
+
+    // Target the copper ore sell row explicitly instead of `.first`
+    // to avoid flakiness when other inventory items have 0-value sell prices
+    final copperOreText = find.text('Copper Ore');
+    await tester.ensureVisible(copperOreText);
+    await tester.pumpAndSettle();
+
+    // Find the Card parent of copper ore by searching upward in the widget tree
+    final copperOreCard = find.ancestor(
+      of: copperOreText,
+      matching: find.byType(Card),
+    );
+
+    expect(copperOreCard, findsOneWidget,
+        reason: 'Copper ore should be in a Card widget');
+
+    // Find the sell button within that Card
+    final copperOreSellButton = find.descendant(
+      of: copperOreCard.first,
+      matching: find.textContaining('Sell '),
+    );
+
+    expect(copperOreSellButton, findsWidgets,
+        reason: 'Copper ore Card should have a Sell button');
+
+    await tester.tap(copperOreSellButton.first);
     await tester.pump();
     expect(session.shopController.playerCoins(), greaterThan(coinsBeforeSell));
     expect(save.inventoryData.itemMap[ItemId.COPPER_ORE] ?? 0, oreBefore - 1);

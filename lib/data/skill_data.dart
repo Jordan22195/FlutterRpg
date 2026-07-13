@@ -37,17 +37,35 @@ class SkillData {
   final String name;
   double xp;
 
+  // Xp-rate tracker: set when the player presses Start/Reset on the skill's
+  // detail screen. Null means no tracker is running for this skill.
+  DateTime? trackerStartTime;
+  double? trackerStartXp;
+
   final List<double> xpTable = SkillData._buildXpTable(99);
 
-  SkillData({required this.name, required this.xp});
+  SkillData({
+    required this.name,
+    required this.xp,
+    this.trackerStartTime,
+    this.trackerStartXp,
+  });
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'xp': xp};
+    return {
+      'name': name,
+      'xp': xp,
+      if (trackerStartTime != null)
+        'trackerStartTime': trackerStartTime!.toIso8601String(),
+      if (trackerStartXp != null) 'trackerStartXp': trackerStartXp,
+    };
   }
 
   factory SkillData.fromJson(Map<String, dynamic> json) {
     final rawName = json['name'];
     final rawXp = json['xp'];
+    final rawTrackerStartTime = json['trackerStartTime'];
+    final rawTrackerStartXp = json['trackerStartXp'];
 
     if (rawName is! String) {
       throw FormatException('Missing or invalid "name". Expected String.');
@@ -57,7 +75,22 @@ class SkillData {
       throw FormatException('Missing or invalid "xp". Expected number.');
     }
 
-    return SkillData(name: rawName, xp: rawXp.toDouble());
+    if (rawTrackerStartTime != null && rawTrackerStartTime is! String) {
+      throw FormatException('Invalid "trackerStartTime". Expected String.');
+    }
+
+    if (rawTrackerStartXp != null && rawTrackerStartXp is! num) {
+      throw FormatException('Invalid "trackerStartXp". Expected number.');
+    }
+
+    return SkillData(
+      name: rawName,
+      xp: rawXp.toDouble(),
+      trackerStartTime: rawTrackerStartTime == null
+          ? null
+          : DateTime.tryParse(rawTrackerStartTime as String),
+      trackerStartXp: (rawTrackerStartXp as num?)?.toDouble(),
+    );
   }
 
   static List<double> _buildXpTable(int maxLevel) {

@@ -182,6 +182,8 @@ class ZoneCatalog {
     }
   }
 
+  List<ZoneDefinition> get all => _zones.values.toList();
+
   void _initialize() {
     // starting zone: a gentle tutorial farm with trees, a pond, and
     // chickens to learn woodcutting, fishing, and combat on

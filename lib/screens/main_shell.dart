@@ -10,13 +10,19 @@ import 'queue_screen.dart';
 import 'skills_screen.dart';
 import '../catalogs/dungeon_catalog.dart';
 import '../catalogs/entity_catalog.dart';
+import '../controllers/dungeon_controller.dart';
 import '../controllers/world_controller.dart';
+import '../game_session.dart';
 import '../services/entity_screen_router_service.dart';
 import '../utilities/top_route_observer.dart';
 import '../widgets/progress_bars.dart';
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  /// Fired whenever the saved ui state (active tab / map tab stack) is
+  /// updated, so the owner can persist it promptly.
+  final VoidCallback? onUiStateChanged;
+
+  const MainShell({super.key, this.onUiStateChanged});
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -40,7 +46,14 @@ class _MainShellState extends State<MainShell> {
       _mapTabObserver.topRouteName ==
           EntityScreenRouterService.encounterRouteName;
 
+  // the map tab stack to rebuild after the first frame, copied from the
+  // save in initState before route changes start overwriting the ui state
+  List<String> _restoreRoutes = const [];
+  DungeonId _restoreDungeonId = DungeonId.NULL;
+
   void _onMapTabRouteChanged() {
+    _captureUiState();
+
     // route changes can fire while the navigator is building; defer
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() {});
@@ -50,6 +63,86 @@ class _MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
+
+    final ui = context.read<GameSession>().saveGameData.uiState;
+    if (ui.tabIndex >= 0 && ui.tabIndex < _navKeys.length) {
+      index = ui.tabIndex;
+    }
+    _restoreRoutes = List.of(ui.mapRouteStack);
+    _restoreDungeonId = ui.dungeonId;
+
+    // the tab navigators don't exist until after the first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _restoreMapTabStack();
+    });
+  }
+
+  // snapshots the active tab and the map tab's named route stack into the
+  // save's ui state; called on every tab switch and map tab route change
+  void _captureUiState() {
+    if (!mounted) return;
+
+    final ui = context.read<GameSession>().saveGameData.uiState;
+    ui.tabIndex = index;
+    ui.mapRouteStack = [];
+    ui.dungeonId = DungeonId.NULL;
+    for (final settings in _mapTabObserver.namedRouteSettings) {
+      ui.mapRouteStack.add(settings.name!);
+      if (settings.name == EntityScreenRouterService.dungeonRouteName &&
+          settings.arguments is DungeonId) {
+        ui.dungeonId = settings.arguments as DungeonId;
+      }
+    }
+
+    widget.onUiStateChanged?.call();
+  }
+
+  // rebuilds the map tab's stack from the saved route names. an entry
+  // that can't be restored (entity gone from the zone, unknown dungeon)
+  // stops the walk, landing on the nearest valid ancestor screen
+  void _restoreMapTabStack() {
+    final nav = _navKeys[0].currentState;
+    final navContext = _navKeys[0].currentContext;
+    if (nav == null || navContext == null) return;
+
+    final world = context.read<WorldController>();
+    final dungeons = context.read<DungeonController>();
+
+    for (final name in _restoreRoutes) {
+      switch (name) {
+        case EntityScreenRouterService.exploreRouteName:
+          nav.push(
+            MaterialPageRoute(
+              settings: const RouteSettings(
+                name: EntityScreenRouterService.exploreRouteName,
+              ),
+              builder: (_) => const ExploreScreen(),
+            ),
+          );
+        case EntityScreenRouterService.dungeonRouteName:
+          // an active run knows its dungeon; otherwise use the saved id
+          final dungeonId = _restoreDungeonId != DungeonId.NULL
+              ? _restoreDungeonId
+              : dungeons.activeDungeonId;
+          if (dungeons.definitionFor(dungeonId) == null) return;
+          nav.push(
+            MaterialPageRoute(
+              settings: RouteSettings(
+                name: EntityScreenRouterService.dungeonRouteName,
+                arguments: dungeonId,
+              ),
+              builder: (_) => DungeonScreen(dungeonId: dungeonId),
+            ),
+          );
+        case EntityScreenRouterService.encounterRouteName:
+        case EntityScreenRouterService.craftingRouteName:
+        case EntityScreenRouterService.enchantingRouteName:
+        case EntityScreenRouterService.shopRouteName:
+          if (!world.restoreEntityView(navContext)) return;
+        default:
+          return; // unknown route: stop at the last restored screen
+      }
+    }
   }
 
   // jumps to the screen of the running activity: switches to the map tab
@@ -66,13 +159,24 @@ class _MainShellState extends State<MainShell> {
     if (activityIconId is DungeonId) {
       nav.push(
         MaterialPageRoute(
+          settings: RouteSettings(
+            name: EntityScreenRouterService.dungeonRouteName,
+            arguments: activityIconId,
+          ),
           builder: (_) => DungeonScreen(dungeonId: activityIconId),
         ),
       );
       return;
     }
 
-    nav.push(MaterialPageRoute(builder: (_) => const ExploreScreen()));
+    nav.push(
+      MaterialPageRoute(
+        settings: const RouteSettings(
+          name: EntityScreenRouterService.exploreRouteName,
+        ),
+        builder: (_) => const ExploreScreen(),
+      ),
+    );
 
     if (activityIconId is EntityId) {
       context.read<WorldController>().navigateToEntity(
@@ -136,7 +240,10 @@ class _MainShellState extends State<MainShell> {
             context,
           ).colorScheme.onSurface.withOpacity(0.6),
           currentIndex: index,
-          onTap: (i) => setState(() => index = i),
+          onTap: (i) {
+            setState(() => index = i);
+            _captureUiState();
+          },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
             BottomNavigationBarItem(

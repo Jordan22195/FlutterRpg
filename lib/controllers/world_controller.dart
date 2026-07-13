@@ -221,6 +221,23 @@ class WorldController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Re-pushes the entity screen for the saved [PlayerData.currentEntityViewId]
+  /// when rebuilding navigation after an app relaunch. Unlike
+  /// [navigateToEntity] this doesn't reset session drop logs — from the
+  /// player's perspective they never left the screen. Returns false
+  /// (pushing nothing) when the entity is no longer in the current zone,
+  /// so the caller can stop at the nearest restorable ancestor.
+  bool restoreEntityView(BuildContext context) {
+    final entityId = _playerState.currentEntityViewId;
+    final present = _worldService
+        .getCurrentZoneEntities(_playerState, _worldState)
+        .any((e) => e.id == entityId);
+    if (!present) return false;
+
+    _entityScreenRouterService.navigateToEntity(entityId, context);
+    return true;
+  }
+
   void navigateToEntity(EntityId entityId, BuildContext context) {
     _entityScreenRouterService.navigateToEntity(entityId, context);
 

@@ -45,6 +45,7 @@ import 'package:rpg/systems/encounter_system.dart';
 import 'package:rpg/systems/equipment_system.dart';
 
 import 'data/inventory_data.dart';
+import 'data/ui_state.dart';
 
 class SaveGameData {
   final String slotId;
@@ -57,6 +58,7 @@ class SaveGameData {
   final CraftingState craftingState;
   final EncounterData encounterData;
   final DungeonRun dungeonRun;
+  final UiState uiState;
 
   SaveGameData({
     required this.slotId,
@@ -69,7 +71,9 @@ class SaveGameData {
     required this.craftingState,
     required this.encounterData,
     DungeonRun? dungeonRun,
-  }) : dungeonRun = dungeonRun ?? DungeonRun();
+    UiState? uiState,
+  }) : dungeonRun = dungeonRun ?? DungeonRun(),
+       uiState = uiState ?? UiState();
 
   Map<String, dynamic> toJson() {
     return {
@@ -83,6 +87,7 @@ class SaveGameData {
       'craftingState': craftingState.toJson(),
       'encounterData': encounterData.toJson(),
       'dungeonRun': dungeonRun.toJson(),
+      'uiState': uiState.toJson(),
     };
   }
 
@@ -149,6 +154,11 @@ class SaveGameData {
       dungeonRun: json['dungeonRun'] is Map<String, dynamic>
           ? DungeonRun.fromJson(json['dungeonRun'] as Map<String, dynamic>)
           : DungeonRun(),
+      // optional: saves from before screen restore have no ui state;
+      // default to opening on the map tab
+      uiState: json['uiState'] is Map<String, dynamic>
+          ? UiState.fromJson(json['uiState'] as Map<String, dynamic>)
+          : UiState(),
     );
   }
 }
