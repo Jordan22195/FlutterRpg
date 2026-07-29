@@ -42,26 +42,13 @@ class ShopService {
     final random = rng ?? Random();
 
     // sellable pool: every defined item except the currency itself
-    final candidates = ItemId.values
-        .where(
-          (id) =>
-              id != ItemId.NULL &&
-              id != ItemId.COINS &&
-              itemCatalog.definitionFor(id) != null,
-        )
-        .toList();
+    final candidates = def.shopStockPool;
 
     shop.stock.clear();
     final slots = min(def.stockSlots, candidates.length);
     for (int i = 0; i < slots; i++) {
       final pick = candidates.removeAt(random.nextInt(candidates.length));
-      final isEquipment = itemCatalog.definitionFor(pick) is EquipmentItemDefition;
-      shop.stock.add(
-        ShopStockEntry(
-          itemId: pick,
-          count: isEquipment ? 1 : 1 + random.nextInt(10),
-        ),
-      );
+      shop.stock.add(pick);
     }
 
     shop.nextRestockAt = time.add(def.restockInterval);

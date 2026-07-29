@@ -14,6 +14,7 @@ enum ItemId {
 
   //junk
   BURNT_FOOD,
+  COW_HIDE,
 
   // Materials
   LOGS,
@@ -21,6 +22,9 @@ enum ItemId {
   COPPER_BAR,
 
   BASIC_CAMPFIRE,
+
+  // uncooked food
+  COW_MEAT,
 
   // fish
   // pond
@@ -62,7 +66,13 @@ enum ItemId {
   COOKED_SWORDFISH,
   COOKED_SHARK,
 
-  //Armor
+  // Light leather
+  LIGHT_LEATHER_BOOTS,
+  LIGHT_LETHER_CHEST,
+  LIGHT_LEATHER_PANTS,
+  LIGHT_LEATHER_GLOVES,
+
+  // tier 1 Armor
   COPPER_HELMET,
   COPPER_CHESTPLATE,
   COPPER_LEGS,
@@ -70,7 +80,10 @@ enum ItemId {
   COPPER_SHIELD,
   COPPER_GLOVES,
 
-  //Weapons
+  // UNIQUE WEAPONS
+  PITCHFORK,
+
+  // tier 1 Weapons
   COPPER_DAGGER,
   COPPER_AXE,
   COPPER_PICKAXE,
@@ -548,8 +561,8 @@ class EquipmentItem extends Item {
     }
     final rawQuality = json['quality'];
     if (rawQuality is String) {
-      quality = ItemQuality.values.asNameMap()[rawQuality] ??
-          ItemQuality.COMMON;
+      quality =
+          ItemQuality.values.asNameMap()[rawQuality] ?? ItemQuality.COMMON;
     }
     final rawEnchantName = json['enchantName'];
     if (rawEnchantName is String) {
@@ -778,6 +791,12 @@ class ItemCatalog {
       name: "Burnt Food",
       value: 1,
       iconAsset: "assets/icons/items/burnt_food.png",
+    ),
+    //junk
+    ItemId.COW_HIDE: ItemDefinition(
+      name: "Cow Hide",
+      value: 1,
+      iconAsset: "assets/icons/items/cow_hide.png",
     ),
 
     // ore
@@ -1026,6 +1045,12 @@ class ItemCatalog {
     ),
 
     //FISH
+    ItemId.COW_MEAT: ItemDefinition(
+      name: "Cow Meat",
+      value: 1,
+      iconAsset: "assets/icons/items/cow_meat.png",
+      xpValue: 5,
+    ),
     ItemId.MINNOW: ItemDefinition(
       name: "Minnow",
       value: 1,
@@ -1283,6 +1308,36 @@ class ItemCatalog {
       iconAsset: "assets/icons/items/iron_bar.png",
     ),
 
+    // Leather armor
+    ItemId.LIGHT_LEATHER_BOOTS: EquipmentItemDefition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Light Leather Boots",
+      value: 5,
+      skillBonus: {SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_leather_boots.png",
+    ),
+    ItemId.LIGHT_LEATHER_GLOVES: EquipmentItemDefition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Light Leather Gloves",
+      value: 5,
+      skillBonus: {SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_leather_gloves.png",
+    ),
+    ItemId.LIGHT_LEATHER_PANTS: EquipmentItemDefition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Light Leather Pants",
+      value: 10,
+      skillBonus: {SkillId.DEFENCE: 2},
+      iconAsset: "assets/icons/items/light_leather_pants.png",
+    ),
+    ItemId.LIGHT_LETHER_CHEST: EquipmentItemDefition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Light Leather Jerkin",
+      value: 10,
+      skillBonus: {SkillId.DEFENCE: 2},
+      iconAsset: "assets/icons/items/light_leather_chest.png",
+    ),
+
     //armor
     ItemId.COPPER_HELMET: EquipmentItemDefition(
       armorSlot: ArmorSlots.HEAD,
@@ -1372,6 +1427,8 @@ class ItemCatalog {
     ),
 
     //weapons
+
+    //
     ItemId.COPPER_AXE: WeaponItemDefition(
       armorSlot: ArmorSlots.TOOL,
       name: "Bronze Axe",
@@ -1439,6 +1496,16 @@ class ItemCatalog {
       iconAsset: "assets/icons/items/iron_dagger.png",
     ),
 
+    // UNIQUE WEAPONS
+    ItemId.PITCHFORK: WeaponItemDefition(
+      armorSlot: ArmorSlots.WEAPON_2H,
+      name: "Pitchfork",
+      value: 30,
+      skillBonus: {SkillId.ATTACK: 2},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/pitchfork.png",
+    ),
+
     // DUNGEON: keys and boss uniques
     // key opens the Goblin Queen's Lair landmark dungeon; consumed on entry
     ItemId.GOBLIN_QUEEN_KEY: ItemDefinition(
@@ -1454,14 +1521,7 @@ class ItemCatalog {
       skillBonus: {SkillId.DEFENCE: 12, SkillId.ATTACK: 4},
       iconAsset: "assets/icons/items/goblin_crown.png",
     ),
-    ItemId.GOBLIN_SCEPTER: WeaponItemDefition(
-      armorSlot: ArmorSlots.WEAPON_1H,
-      name: "Goblin Scepter",
-      value: 150,
-      skillBonus: {SkillId.ATTACK: 18},
-      actionInterval: FastAttackSpeed,
-      iconAsset: "assets/icons/items/goblin_scepter.png",
-    ),
+
     // Spider Den boss unique (necklace slot); a rare drop you grind for
     ItemId.SPIDER_SILK_NECKLACE: EquipmentItemDefition(
       armorSlot: ArmorSlots.NECK,

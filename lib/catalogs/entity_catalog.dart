@@ -14,11 +14,17 @@ enum EntityId {
   FIREPIT,
   TREE,
   OAK_TREE,
+
+  // MONSTERS
   GOBLIN,
   GOBLIN_QUEEN,
   SPIDER_BROODMOTHER,
   CHICKEN,
+  BIG_RED,
+  COW,
   GIANT_SPIDER,
+
+  // MINERALS
   COPPER,
   IRON,
   TRANQUIL_POND,
@@ -26,6 +32,9 @@ enum EntityId {
   RIVER,
   LAKE,
   OCEAN,
+
+  // SHOPS
+  FARMER,
   TRADING_POST,
   WANDERING_MERCHANT,
   // dungeon entrances that live inside a zone (zone dungeons)
@@ -531,9 +540,13 @@ class ShopEntityDefinition extends EntityDefinition {
   /// How many random item stacks a restock puts on the shelf.
   final int stockSlots;
 
+  /// List of items the shop restocks from
+  final List<ShopStockEntry> shopStockPool;
+
   ShopEntityDefinition({
     required super.name,
     required super.iconAsset,
+    required this.shopStockPool,
     this.priceMarkup = 1.25,
     this.restockInterval = const Duration(hours: 6),
     this.stockSlots = 10,
@@ -648,9 +661,36 @@ class EntityCatalog {
     //  SHOPS
     //
     //
+    EntityId.FARMER: ShopEntityDefinition(
+      name: "Farmer John",
+      iconAsset: "assets/images/entities/farmer_john.png",
+      stockSlots: 3,
+      restockInterval: Duration(minutes: 30),
+      shopStockPool: [
+        ShopStockEntry(itemId: ItemId.COOKED_MINNOW, count: 10),
+        ShopStockEntry(itemId: ItemId.MINNOW, count: 20),
+        ShopStockEntry(itemId: ItemId.FEATHER, count: 20),
+        ShopStockEntry(itemId: ItemId.LIGHT_LEATHER_BOOTS, count: 1),
+        ShopStockEntry(itemId: ItemId.LIGHT_LEATHER_GLOVES, count: 1),
+        ShopStockEntry(itemId: ItemId.LIGHT_LEATHER_PANTS, count: 1),
+        ShopStockEntry(itemId: ItemId.LIGHT_LETHER_CHEST, count: 1),
+        ShopStockEntry(itemId: ItemId.PITCHFORK, count: 1),
+      ],
+
+      // defaults: 25% markup, 6 hour restock, 10 stock slots
+    ),
     EntityId.TRADING_POST: ShopEntityDefinition(
       name: "Trading Post",
       iconAsset: "assets/images/entities/trading_post.png",
+      shopStockPool: [
+        ShopStockEntry(itemId: ItemId.IRON_AXE, count: 1),
+        ShopStockEntry(itemId: ItemId.IRON_BOOTS, count: 1),
+        ShopStockEntry(itemId: ItemId.IRON_DAGGER, count: 1),
+        ShopStockEntry(itemId: ItemId.IRON_CHESTPLATE, count: 1),
+        ShopStockEntry(itemId: ItemId.IRON_GLOVES, count: 1),
+        ShopStockEntry(itemId: ItemId.IRON_SHIELD, count: 1),
+        ShopStockEntry(itemId: ItemId.IRON_PICKAXE, count: 1),
+      ],
       // defaults: 25% markup, 6 hour restock, 10 stock slots
     ),
     EntityId.WANDERING_MERCHANT: ShopEntityDefinition(
@@ -659,6 +699,14 @@ class EntityCatalog {
       // pricier but restocks much faster than the trading post
       priceMarkup: 1.5,
       restockInterval: Duration(hours: 1),
+      stockSlots: 1,
+      shopStockPool: [
+        ShopStockEntry(itemId: ItemId.COPPER_PICKAXE, count: 1),
+        ShopStockEntry(itemId: ItemId.COPPER_AXE, count: 1),
+        ShopStockEntry(itemId: ItemId.COPPER_SICKLE, count: 1),
+        ShopStockEntry(itemId: ItemId.GOBLIN_QUEEN_KEY, count: 1),
+        ShopStockEntry(itemId: ItemId.GOBLIN_SCEPTER, count: 1),
+      ],
     ),
 
     //
@@ -811,12 +859,44 @@ class EntityCatalog {
 
       entityType: SkillId.ATTACK,
       defence: 1,
-      hitpoints: 5,
+      hitpoints: 2,
       attack: 1,
       attackInterval: 2.0,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
         WeightedDropTableEntry<ItemId>(id: ItemId.FEATHER, weight: 1),
+      ],
+    ),
+    EntityId.BIG_RED: CombatEntityDefinition(
+      name: "Big Red",
+      iconAsset: "assets/images/entities/big_red.png",
+
+      entityType: SkillId.ATTACK,
+      defence: 3,
+      hitpoints: 10,
+      attack: 2,
+      attackInterval: 2.0,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.FEATHER,
+          weight: 1,
+          count: 100,
+        ),
+      ],
+    ),
+    EntityId.COW: CombatEntityDefinition(
+      name: "Cow",
+      iconAsset: "assets/images/entities/cow.png",
+
+      entityType: SkillId.ATTACK,
+      defence: 1,
+      hitpoints: 5,
+      attack: 2,
+      attackInterval: 2.0,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.COW_MEAT, weight: 1),
+        WeightedDropTableEntry<ItemId>(id: ItemId.COW_HIDE, weight: 1),
       ],
     ),
 
@@ -866,7 +946,6 @@ class EntityCatalog {
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.MINNOW, weight: 1),
         WeightedDropTableEntry<ItemId>(id: ItemId.CARP, weight: 0.5),
-        WeightedDropTableEntry(id: ItemId.BLUEGILL, weight: .25),
       ],
     ),
     EntityId.DEEP_POND: EncounterEntityDefinition(
@@ -1002,9 +1081,7 @@ class EntityCatalog {
       iconAsset: "assets/images/entities/kwuarm.png",
       requiredLevel: 54,
       defence: 54,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.KWUARM, weight: 1),
-      ],
+      itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.KWUARM, weight: 1)],
     ),
     EntityId.SNAPDRAGON: HerbEntityDefinition(
       name: "Snapdragon",

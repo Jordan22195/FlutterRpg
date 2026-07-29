@@ -252,10 +252,6 @@ class _MapScreenState extends State<MapScreen> {
     return SafeArea(
       child: Stack(
         children: [
-          Positioned.fill(
-            child: Image.asset('assets/images/map.png', fit: BoxFit.cover),
-          ),
-
           // travel path edges between connected zones
           Positioned.fill(
             child: IgnorePointer(

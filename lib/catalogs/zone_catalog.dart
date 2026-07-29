@@ -64,12 +64,12 @@ class Zone {
       orElse: () => throw FormatException('Invalid ZoneId "\$rawId".'),
     );
 
-    final permanentEntities = rawPermanent.map((e) {
-      if (e is! Map<String, dynamic>) {
-        throw FormatException('Invalid permanent entity entry.');
-      }
-      return Entity.fromJson(e);
-    }).toList();
+    //final permanentEntities = rawPermanent.map((e) {
+    //  if (e is! Map<String, dynamic>) {
+    //    throw FormatException('Invalid permanent entity entry.');
+    //  }
+    //  return Entity.fromJson(e);
+    // }).toList();
 
     final discoveredEntities = rawDiscovered.map((e) {
       if (e is! Map<String, dynamic>) {
@@ -81,7 +81,7 @@ class Zone {
     return Zone(
       id: zoneId,
       name: rawName,
-      permanentEntities: permanentEntities,
+      permanentEntities: [],
       discoveredEntities: discoveredEntities,
     );
   }
@@ -119,10 +119,7 @@ class ZoneCatalog {
   // farm <-5-> forest <-1-> mine
   static const Map<ZoneId, Map<ZoneId, double>> _connections = {
     ZoneId.TUTORIAL_FARM: {ZoneId.STARTING_FOREST: 5},
-    ZoneId.STARTING_FOREST: {
-      ZoneId.TUTORIAL_FARM: 5,
-      ZoneId.FOREST_MINE: 1,
-    },
+    ZoneId.STARTING_FOREST: {ZoneId.TUTORIAL_FARM: 5, ZoneId.FOREST_MINE: 1},
     ZoneId.FOREST_MINE: {ZoneId.STARTING_FOREST: 1},
   };
 
@@ -162,6 +159,7 @@ class ZoneCatalog {
     }
     return double.infinity;
   }
+
   final nullZone = ZoneDefinition(
     id: ZoneId.NULL,
     name: "error",
@@ -189,13 +187,16 @@ class ZoneCatalog {
     // chickens to learn woodcutting, fishing, and combat on
     _zones[ZoneId.TUTORIAL_FARM] = ZoneDefinition(
       id: ZoneId.TUTORIAL_FARM,
-      name: "Blanchy's Farm",
+      name: "Southglen Meadow",
       iconAsset: "assets/images/zones/farm.png",
 
-      permanentEntities: [EntityId.TRANQUIL_POND],
+      permanentEntities: [EntityId.TRANQUIL_POND, EntityId.FARMER],
       discoverableEntities: [
-        WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
-        WeightedDropTableEntry<EntityId>(id: EntityId.CHICKEN, weight: 2),
+        WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.CHICKEN, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COW, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.BIG_RED, weight: .1),
       ],
     );
     _zones[ZoneId.STARTING_FOREST] = ZoneDefinition(
@@ -203,15 +204,13 @@ class ZoneCatalog {
       iconAsset: 'assets/images/zones/forest.png',
 
       name: "The Forest",
-      permanentEntities: [
-        EntityId.ANVIL,
-        EntityId.TRANQUIL_POND,
-        EntityId.SPIDER_DEN_ENTRANCE,
-      ],
+      permanentEntities: [EntityId.TRANQUIL_POND],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
+        WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: ),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
       ],
     );
 
@@ -257,20 +256,76 @@ class ZoneCatalog {
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 1),
         // every herb, each found as a patch of 3 picks. herbs live only
         // here until real zones get herb geography
-        WeightedDropTableEntry<EntityId>(id: EntityId.GUAM, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.MARRENTILL, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.TARROMIN, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.HARRALANDER, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.RANARR, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.TOADFLAX, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.IRIT, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.AVANTOE, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.KWUARM, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.SNAPDRAGON, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.CADANTINE, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.LANTADYME, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.DWARF_WEED, weight: 1, count: 3),
-        WeightedDropTableEntry<EntityId>(id: EntityId.TORSTOL, weight: 1, count: 3),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GUAM,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MARRENTILL,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TARROMIN,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.HARRALANDER,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.RANARR,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TOADFLAX,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.IRIT,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.AVANTOE,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.KWUARM,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SNAPDRAGON,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.CADANTINE,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.LANTADYME,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.DWARF_WEED,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TORSTOL,
+          weight: 1,
+          count: 3,
+        ),
       ],
     );
 

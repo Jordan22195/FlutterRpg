@@ -114,12 +114,13 @@ class SkillController extends ChangeNotifier {
       }
       switch (objectId) {
         case SkillId.RECOVERY:
-          // reuses the old economy art until recovery art exists
-          return AssetImage('assets/icons/skills/economy.png');
+          return AssetImage('assets/icons/skills/recovery.png');
         case SkillId.SPEED:
           return AssetImage('assets/icons/skills/speed.png');
         case SkillId.STAMINA:
           return AssetImage('assets/icons/skills/stamina.png');
+        case SkillId.EXPLORATION:
+          return AssetImage('assets/icons/skills/exploration.png');
         case SkillId.ATTACK:
           return AssetImage('assets/icons/skills/attack.png');
         case SkillId.DEFENCE:
@@ -154,6 +155,8 @@ class SkillController extends ChangeNotifier {
           return AssetImage('assets/icons/skills/herbalism.png');
         case SkillId.COOKING:
           return AssetImage('assets/icons/skills/cooking.png');
+        case SkillId.ALCHEMY:
+          return AssetImage('assets/icons/skills/alchemy.png');
         case SkillId.NULL:
           return null;
         default:
