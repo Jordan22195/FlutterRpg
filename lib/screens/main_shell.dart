@@ -11,6 +11,7 @@ import 'skills_screen.dart';
 import '../catalogs/dungeon_catalog.dart';
 import '../catalogs/entity_catalog.dart';
 import '../controllers/dungeon_controller.dart';
+import '../controllers/encounter_controller.dart';
 import '../controllers/world_controller.dart';
 import '../game_session.dart';
 import '../services/entity_screen_router_service.dart';
@@ -51,6 +52,10 @@ class _MainShellState extends State<MainShell> {
   List<String> _restoreRoutes = const [];
   DungeonId _restoreDungeonId = DungeonId.NULL;
 
+  // the encounter controller's death counter as of the last one handled
+  late final EncounterController _encounter;
+  int _handledDeathSequence = 0;
+
   void _onMapTabRouteChanged() {
     _captureUiState();
 
@@ -71,10 +76,52 @@ class _MainShellState extends State<MainShell> {
     _restoreRoutes = List.of(ui.mapRouteStack);
     _restoreDungeonId = ui.dungeonId;
 
+    _encounter = context.read<EncounterController>();
+    _handledDeathSequence = _encounter.deathSequence;
+    _encounter.addListener(_onEncounterChanged);
+
     // the tab navigators don't exist until after the first build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _restoreMapTabStack();
     });
+  }
+
+  @override
+  void dispose() {
+    _encounter.removeListener(_onEncounterChanged);
+    super.dispose();
+  }
+
+  // dying in an encounter unwinds the map tab back to the map screen and
+  // says so; the encounter itself is already stopped by the controller
+  void _onEncounterChanged() {
+    if (_encounter.deathSequence == _handledDeathSequence) return;
+    _handledDeathSequence = _encounter.deathSequence;
+
+    // the death lands mid-frame, inside the action loop's tick; navigating
+    // and showing a dialog have to wait for the frame to finish
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => index = 0);
+      _navKeys[0].currentState?.popUntil((route) => route.isFirst);
+      _captureUiState();
+      _showDeathDialog();
+    });
+  }
+
+  void _showDeathDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('You died'),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
   }
 
   // snapshots the active tab and the map tab's named route stack into the

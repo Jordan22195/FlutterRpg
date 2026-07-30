@@ -10,8 +10,11 @@ void main() {
   test('travel costs sum along the zone path', () {
     final catalog = ZoneCatalog();
 
-    expect(catalog.travelCost(ZoneId.TUTORIAL_FARM, ZoneId.STARTING_FOREST), 5);
-    expect(catalog.travelCost(ZoneId.STARTING_FOREST, ZoneId.FOREST_MINE), 1);
+    expect(
+      catalog.travelCost(ZoneId.TUTORIAL_FARM, ZoneId.SOUTHWOOD_FOREST),
+      5,
+    );
+    expect(catalog.travelCost(ZoneId.SOUTHWOOD_FOREST, ZoneId.FOREST_MINE), 1);
     // farm > forest > mine
     expect(catalog.travelCost(ZoneId.TUTORIAL_FARM, ZoneId.FOREST_MINE), 6);
     // dev forest is always free, both directions
@@ -42,8 +45,8 @@ void main() {
     expect(player.stamina, 10);
 
     // farm -> forest costs 5
-    expect(world.travelToZone(ZoneId.STARTING_FOREST), isTrue);
-    expect(player.currentZoneId, ZoneId.STARTING_FOREST);
+    expect(world.travelToZone(ZoneId.SOUTHWOOD_FOREST), isTrue);
+    expect(player.currentZoneId, ZoneId.SOUTHWOOD_FOREST);
     expect(player.stamina, 5);
 
     // with mining 5, forest -> mine costs 1

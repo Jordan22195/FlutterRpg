@@ -35,7 +35,7 @@ void main() {
   testWidgets('relaunch restores the map tab stack down to the entity '
       'screen', (tester) async {
     final save = newSave();
-    save.playerData.currentZoneId = ZoneId.STARTING_FOREST;
+    save.playerData.currentZoneId = ZoneId.SOUTHWOOD_FOREST;
     save.playerData.currentEntityViewId = EntityId.ANVIL;
     save.uiState.tabIndex = 0;
     save.uiState.mapRouteStack = ['explore', 'crafting'];
@@ -57,7 +57,7 @@ void main() {
   testWidgets('an entity missing from the zone falls back to the nearest '
       'restorable ancestor', (tester) async {
     final save = newSave();
-    save.playerData.currentZoneId = ZoneId.STARTING_FOREST;
+    save.playerData.currentZoneId = ZoneId.SOUTHWOOD_FOREST;
     // goblins are discovered entities; a new game hasn't found one
     save.playerData.currentEntityViewId = EntityId.GOBLIN;
     save.uiState.tabIndex = 0;

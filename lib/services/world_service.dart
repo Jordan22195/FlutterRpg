@@ -71,7 +71,6 @@ class WorldService {
 
     // create the zone entry if it does not exist
     if (!worldState.zones.containsKey(zoneId)) {
-      print("world state does not contain zone $zoneId");
       return;
     }
 

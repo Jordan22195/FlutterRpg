@@ -200,8 +200,9 @@ class ActionSpeedSystem {
 
     // refresh the boost ceiling from the speed stat
     final stats = _playerDataService.getStatTotals(playerState);
-    actionTimingState.maxSpeedMultiplier = _actionTimingService
-        .maxSpeedForStat(stats[SkillId.SPEED] ?? 1);
+    actionTimingState.maxSpeedMultiplier = _actionTimingService.maxSpeedForStat(
+      stats[SkillId.SPEED] ?? 1,
+    );
 
     _actionTimingService.updateActionSpeed(dt, actionTimingState, playerState);
 
@@ -230,22 +231,24 @@ class ActionSpeedSystem {
     final wasBelowMax =
         playerState.stamina < _playerDataService.getMaxStamina(playerState);
 
-    _playerDataService.changeStamina(
-      (recoveryPerSecond - drainPerSecond) * dt,
-      playerState,
-    );
-
+    // only recover if the button is not held
+    if (actionTimingState.buttonHeld == false) {
+      _playerDataService.changeStamina((recoveryPerSecond) * dt, playerState);
+      if (wasBelowMax && recoveryPerSecond > 0) {
+        _playerDataService.applyXp(playerState, {
+          SkillId.RECOVERY: recoveryPerSecond * dt,
+        });
+      }
+    } else {
+      _playerDataService.changeStamina(-1 * drainPerSecond * dt, playerState);
+    }
     // xp: speed trains while boosting, stamina trains while draining,
     // recovery trains while it has something to restore
     if (speed > 1) {
       _playerDataService.applyXp(playerState, {
-        SkillId.SPEED: (speed - 1) * 100 * dt,
-        SkillId.STAMINA: 10 * dt,
+        SkillId.SPEED: (speed - 1) * 1 * dt,
+        SkillId.STAMINA: 1 * dt,
       });
-    }
-
-    if (wasBelowMax && recoveryPerSecond > 0) {
-      _playerDataService.applyXp(playerState, {SkillId.RECOVERY: 10 * dt});
     }
   }
 }

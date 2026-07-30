@@ -11,7 +11,7 @@ class PlayerDataController extends ChangeNotifier {
   final PlayerData _playerData;
   final PlayerDataService _playerDataService;
   final ActionTimingController _actionTimingController;
-  late final Timer _recoveryTimer;
+  late final Timer _heartbeatTimer;
 
   PlayerDataController({
     required PlayerData playerData,
@@ -20,21 +20,32 @@ class PlayerDataController extends ChangeNotifier {
   }) : _playerData = playerData,
        _playerDataService = playerDataService,
        _actionTimingController = actionTimingController {
-    _recoveryTimer = Timer.periodic(
-      const Duration(seconds: 1),
-      (_) => tickAmbientRecovery(),
-    );
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
 
   @override
   void dispose() {
-    _recoveryTimer.cancel();
+    _heartbeatTimer.cancel();
     super.dispose();
+  }
+
+  /// The once-a-second heartbeat: applies ambient recovery, then republishes
+  /// player data whether or not anything recovered.
+  ///
+  /// The action loop trains speed/stamina/recovery continuously without going
+  /// through this controller, so the unconditional notify is what keeps live
+  /// readouts - skill xp bars, the xp trackers' elapsed clock and xp/hr -
+  /// ticking. Discrete xp (combat, gathering, crafting) arrives sooner: those
+  /// controllers are wired to [refresh] in GameSessionFactory.
+  void _tick() {
+    tickAmbientRecovery();
+    notifyListeners();
   }
 
   /// Ambient stamina recovery: one second's worth of the recovery stat.
   /// Only applies while the action loop is NOT running - the loop applies
   /// recovery itself every frame, and the two must not stack.
+  /// [_tick] does the notifying for this.
   void tickAmbientRecovery() {
     if (_actionTimingController.isRunning) return;
 
@@ -46,6 +57,13 @@ class PlayerDataController extends ChangeNotifier {
       _playerData,
     );
     _playerDataService.applyXp(_playerData, {SkillId.RECOVERY: 10});
+  }
+
+  /// Player data is mutated by other domains (combat xp, gathering and
+  /// crafting xp, dungeon rewards, equipment stat changes). Those controllers
+  /// are wired to call this in GameSessionFactory so skill readouts rebuild as
+  /// soon as the xp lands.
+  void refresh() {
     notifyListeners();
   }
 

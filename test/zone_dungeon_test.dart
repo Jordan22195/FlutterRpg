@@ -28,10 +28,8 @@ void main() {
       final s = skills[id]!;
       s.xp = s.xpTable[99];
     }
-    session.saveGameData.playerData.hitpoints =
-        session.playerDataService.getStatTotals(
-          session.saveGameData.playerData,
-        )[SkillId.HITPOINTS]!;
+    session.saveGameData.playerData.hitpoints = session.playerDataService
+        .getStatTotals(session.saveGameData.playerData)[SkillId.HITPOINTS]!;
   }
 
   // ticks combat until the run pauses for a floor choice or ends
@@ -63,7 +61,7 @@ void main() {
     test('the forest contains a Spider Den DungeonEntity', () {
       final session = buildSession();
       final forest =
-          session.saveGameData.worldData.zones[ZoneId.STARTING_FOREST]!;
+          session.saveGameData.worldData.zones[ZoneId.SOUTHWOOD_FOREST]!;
       final entrance = forest.permanentEntities.whereType<DungeonEntity>();
       expect(entrance, hasLength(1));
       expect(entrance.first.dungeonId, DungeonId.SPIDER_DEN);
@@ -72,10 +70,8 @@ void main() {
 
     test('the entrance survives a save round-trip', () {
       final session = buildSession();
-      final restored = SaveGameData.fromJson(
-        session.saveGameData.toJson(),
-      );
-      final forest = restored.worldData.zones[ZoneId.STARTING_FOREST]!;
+      final restored = SaveGameData.fromJson(session.saveGameData.toJson());
+      final forest = restored.worldData.zones[ZoneId.SOUTHWOOD_FOREST]!;
       final entrance = forest.permanentEntities.whereType<DungeonEntity>();
       expect(entrance, hasLength(1));
       expect(entrance.first.dungeonId, DungeonId.SPIDER_DEN);

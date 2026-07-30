@@ -306,7 +306,7 @@ class EncounterEntity extends Entity {
       count: rawCount,
       entityType: entityType,
       defence: rawDefence,
-      hitpoints: rawHitpoints,
+      hitpoints: rawMaxHitPoints,
     );
 
     entity.maxHitPoints = rawMaxHitPoints;

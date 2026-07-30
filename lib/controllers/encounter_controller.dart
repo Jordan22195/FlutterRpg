@@ -52,6 +52,11 @@ class EncounterController extends ChangeNotifier {
   int entityAttackSequence = 0;
   DateTime? _lastEntityAttackAt;
 
+  // increments each time the player is killed in an encounter. the shell
+  // watches this to drop back to the map screen and announce the death;
+  // a sequence (rather than a flag) so repeat deaths always register
+  int deathSequence = 0;
+
   EncounterController({
     required PlayerData playerData,
     required EncounterData encounterState,
@@ -266,8 +271,13 @@ class EncounterController extends ChangeNotifier {
     );
 
     // player death ends the encounter
+    // when the player dies, the encounter end and
+    // the player's hp is reset to 1.
+
     if (_playerState.hitpoints <= 0) {
       _actionTimingController.stop();
+      _playerDataService.heal(1, _playerState);
+      deathSequence++;
     }
     notifyListeners();
   }

@@ -77,10 +77,6 @@ class EncounterService {
     final hitRoll = rng.nextDouble();
 
     if (hitRoll > hitChance) {
-      print(
-        'Miss! (rolled ${hitRoll.toStringAsFixed(2)} '
-        'vs chance ${hitChance.toStringAsFixed(2)})',
-      );
       return 0;
     }
 
@@ -119,9 +115,7 @@ class EncounterService {
     // revive entities stuck at 0 hp (a missed respawn or a save written
     // mid-respawn); at 0 hp all damage rolls cap at 0 and the entity can
     // never die again
-    if (entity.hitpoints <= 0 &&
-        entity.count > 0 &&
-        entity.maxHitPoints > 0) {
+    if (entity.hitpoints <= 0 && entity.count > 0 && entity.maxHitPoints > 0) {
       entity.hitpoints = entity.maxHitPoints;
     }
 

@@ -1331,7 +1331,7 @@ class ItemCatalog {
       iconAsset: "assets/icons/items/light_leather_pants.png",
     ),
     ItemId.LIGHT_LETHER_CHEST: EquipmentItemDefition(
-      armorSlot: ArmorSlots.FEET,
+      armorSlot: ArmorSlots.CHEST,
       name: "Light Leather Jerkin",
       value: 10,
       skillBonus: {SkillId.DEFENCE: 2},

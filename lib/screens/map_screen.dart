@@ -22,16 +22,10 @@ class _MapScreenState extends State<MapScreen> {
   /// path: farm > forest > mine, with the dev forest off to the side.
   static const Map<ZoneId, Offset> _zoneAnchors = {
     ZoneId.TUTORIAL_FARM: Offset(80, 120),
-    ZoneId.STARTING_FOREST: Offset(80, 220),
-    ZoneId.FOREST_MINE: Offset(80, 320),
+    ZoneId.SOUTHWOOD_FOREST: Offset(60, 220),
+    ZoneId.SOUTH_HAVEN: Offset(80, 320),
+    ZoneId.FOREST_MINE: Offset(200, 500),
     ZoneId.DEV_FOREST: Offset(220, 420),
-  };
-
-  static const Map<ZoneId, String> _zoneLabels = {
-    ZoneId.TUTORIAL_FARM: 'Farm',
-    ZoneId.STARTING_FOREST: 'Forest',
-    ZoneId.FOREST_MINE: 'Mine',
-    ZoneId.DEV_FOREST: 'Dev Forest',
   };
 
   /// Landmark dungeons sit on the map from the start as aspirational
@@ -93,7 +87,7 @@ class _MapScreenState extends State<MapScreen> {
               // marks the zone the player is currently in
               if (isCurrent)
                 Icon(Icons.location_on, size: 16, color: scheme.primary),
-              Text(_zoneLabels[zoneId] ?? def.name),
+              Text(def.name),
             ],
           ),
 

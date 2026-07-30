@@ -548,6 +548,15 @@ class GameSessionFactory {
     // forward so world listeners (explore screen) rebuild
     encounterController.addListener(worldController.refresh);
 
+    // those same actions award skill xp on player data, and equipping
+    // changes stat totals; forward so skill readouts (skills grid, skill
+    // detail screen, status bars) rebuild as the xp lands
+    encounterController.addListener(playerDataController.refresh);
+    craftingController.addListener(playerDataController.refresh);
+    enchantingController.addListener(playerDataController.refresh);
+    dungeonController.addListener(playerDataController.refresh);
+    equipmentController.addListener(playerDataController.refresh);
+
     // the action timing loop notifies every frame while running; the
     // encounter and dungeon controllers use it to drive enemy attacks
     actionTimingController.addListener(encounterController.onActionTimingFrame);

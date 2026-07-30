@@ -4,7 +4,8 @@ import '../services/weighted_drop_table_service.dart';
 
 enum ZoneId {
   TUTORIAL_FARM,
-  STARTING_FOREST,
+  SOUTHWOOD_FOREST,
+  SOUTH_HAVEN,
   FOREST_MINE,
   CHALLENGING_MOUNTAIN,
   DEV_FOREST,
@@ -109,18 +110,17 @@ class ZoneDefinition {
   });
 }
 
-// todo make a zone builder that has access to entity catalog
-
 class ZoneCatalog {
   static final Map<ZoneId, ZoneDefinition> _zones = {};
-  static ZoneId activeZone = ZoneId.STARTING_FOREST;
+  static ZoneId activeZone = ZoneId.SOUTHWOOD_FOREST;
 
   // travel edges with stamina costs; the world map is a path/tree.
   // farm <-5-> forest <-1-> mine
   static const Map<ZoneId, Map<ZoneId, double>> _connections = {
-    ZoneId.TUTORIAL_FARM: {ZoneId.STARTING_FOREST: 5},
-    ZoneId.STARTING_FOREST: {ZoneId.TUTORIAL_FARM: 5, ZoneId.FOREST_MINE: 1},
-    ZoneId.FOREST_MINE: {ZoneId.STARTING_FOREST: 1},
+    ZoneId.TUTORIAL_FARM: {ZoneId.SOUTHWOOD_FOREST: 5},
+    ZoneId.SOUTHWOOD_FOREST: {ZoneId.TUTORIAL_FARM: 5, ZoneId.SOUTH_HAVEN: 10},
+    ZoneId.SOUTH_HAVEN: {ZoneId.SOUTHWOOD_FOREST: 10, ZoneId.FOREST_MINE: 1},
+    ZoneId.FOREST_MINE: {ZoneId.SOUTH_HAVEN: 10},
   };
 
   /// Unique travel edges (each bidirectional pair listed once), for
@@ -199,19 +199,27 @@ class ZoneCatalog {
         WeightedDropTableEntry<EntityId>(id: EntityId.BIG_RED, weight: .1),
       ],
     );
-    _zones[ZoneId.STARTING_FOREST] = ZoneDefinition(
-      id: ZoneId.STARTING_FOREST,
+    _zones[ZoneId.SOUTHWOOD_FOREST] = ZoneDefinition(
+      id: ZoneId.SOUTHWOOD_FOREST,
       iconAsset: 'assets/images/zones/forest.png',
 
-      name: "The Forest",
+      name: "Southwood Forest",
       permanentEntities: [EntityId.TRANQUIL_POND],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
-        WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: .5),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
       ],
+    );
+    _zones[ZoneId.SOUTH_HAVEN] = ZoneDefinition(
+      id: ZoneId.SOUTH_HAVEN,
+      iconAsset: 'assets/images/zones/south_haven.png',
+
+      name: "South Haven",
+      permanentEntities: [EntityId.ANVIL, EntityId.TRADING_POST],
+      discoverableEntities: [],
     );
 
     // a mine deeper in the forest; gated behind mining experience
