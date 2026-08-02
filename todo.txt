@@ -11,3 +11,16 @@ eqipable items will have level requirement.
 make a timer widget that subscribes to the buff timer so the etirety of player data controller ins't refreshing at 2hz. 
 
 eitehr make a new buff icon or add a conditional to the item stack tile for the buff instead of counter
+
+
+comabt stances
+    defence - boost button raises defence
+    strong - boost raises attack   
+    fast - boost speeds actions
+
+need to look up how runescape does drop tables
+
+zones have a diffucults like gathering entities. explorations level makes finding stuff more effective
+
+slayer as a skill. unlockes mechanics like auto eat. 
+

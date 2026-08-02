@@ -110,6 +110,8 @@ class Entity {
         return EncounterEntity.fromJson(json);
       case 'CombatEntity':
         return CombatEntity.fromJson(json);
+      case 'FishingEntity':
+        return FishingEntity.fromJson(json);
       case 'ShopEntity':
         return ShopEntity.fromJson(json);
       case 'DungeonEntity':
@@ -423,6 +425,69 @@ class CombatEntity extends EncounterEntity {
     entity.maxHitPoints = baseEntity.maxHitPoints;
     return entity;
   }
+}
+
+// A fishing spot. Unlike trees/ore it never depletes and it doesn't
+// fight back: the fishing action rolls against its difficulty (defence)
+// for a catch and the spot stays put. That makes it a permanent feature
+// of the zone rather than a resource node, so the explore screen lists
+// it with the structures.
+class FishingEntity extends EncounterEntity {
+  FishingEntity({
+    required super.id,
+    required super.name,
+    super.entityType = SkillId.FISHING,
+    required super.count,
+    required super.defence,
+    required super.hitpoints,
+  });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'FishingEntity';
+    return json;
+  }
+
+  factory FishingEntity.fromJson(Map<String, dynamic> json) {
+    final baseEntity = EncounterEntity.fromJson({
+      ...json,
+      'runtimeType': 'EncounterEntity',
+    });
+
+    final entity = FishingEntity(
+      id: baseEntity.id,
+      name: baseEntity.name,
+      count: baseEntity.count,
+      entityType: baseEntity.entityType,
+      defence: baseEntity.defence,
+      hitpoints: baseEntity.hitpoints,
+    );
+    entity.maxHitPoints = baseEntity.maxHitPoints;
+    return entity;
+  }
+}
+
+class FishingEntityDefinition extends EncounterEntityDefinition {
+  FishingEntityDefinition({
+    required super.name,
+    required super.iconAsset,
+    super.entityType = SkillId.FISHING,
+    required super.defence,
+    required super.hitpoints,
+    required super.itemDrops,
+    super.bonusDrops,
+  });
+
+  @override
+  FishingEntity toEntity(EntityId id) => FishingEntity(
+    id: id,
+    name: name,
+    count: 1,
+    entityType: entityType,
+    defence: defence,
+    hitpoints: hitpoints,
+  );
 }
 
 class CombatEntityDefinition extends EncounterEntityDefinition {
@@ -936,7 +1001,7 @@ class EntityCatalog {
       ],
     ),
     // FISHING
-    EntityId.TRANQUIL_POND: EncounterEntityDefinition(
+    EntityId.TRANQUIL_POND: FishingEntityDefinition(
       name: "Pond",
       iconAsset: "assets/images/entities/tranquil_pond.png",
 
@@ -948,7 +1013,7 @@ class EntityCatalog {
         WeightedDropTableEntry<ItemId>(id: ItemId.CARP, weight: 0.5),
       ],
     ),
-    EntityId.DEEP_POND: EncounterEntityDefinition(
+    EntityId.DEEP_POND: FishingEntityDefinition(
       name: "Deep Pond",
       iconAsset: "assets/images/entities/tranquil_pond.png",
 
@@ -961,7 +1026,7 @@ class EntityCatalog {
         WeightedDropTableEntry<ItemId>(id: ItemId.SALMON, weight: 0.25),
       ],
     ),
-    EntityId.RIVER: EncounterEntityDefinition(
+    EntityId.RIVER: FishingEntityDefinition(
       name: "River",
       iconAsset: "assets/images/entities/river.png",
 
@@ -974,7 +1039,7 @@ class EntityCatalog {
         WeightedDropTableEntry(id: ItemId.TROUT, weight: .25),
       ],
     ),
-    EntityId.LAKE: EncounterEntityDefinition(
+    EntityId.LAKE: FishingEntityDefinition(
       name: "Lake",
       iconAsset: "assets/images/entities/lake.png",
 
@@ -987,7 +1052,7 @@ class EntityCatalog {
         WeightedDropTableEntry(id: ItemId.WHITEFISH, weight: .25),
       ],
     ),
-    EntityId.OCEAN: EncounterEntityDefinition(
+    EntityId.OCEAN: FishingEntityDefinition(
       name: "Ocean",
       iconAsset: "assets/images/entities/ocean.png",
 

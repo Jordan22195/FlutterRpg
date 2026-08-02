@@ -183,7 +183,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Theme.of(
                   context,
-                ).colorScheme.surfaceContainerHighest.withOpacity(0.6),
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.0),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   width: borderColor != null ? 2 : 1,

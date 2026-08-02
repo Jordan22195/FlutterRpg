@@ -132,10 +132,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
               trigger: view.entityAttackSequence,
               autoplay: false,
               color: view.entityDamage > 0 ? Colors.red : Colors.blue,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
             ),
           ),
           Expanded(
@@ -308,7 +305,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                   if (skillType != SkillId.FISHING &&
                       skillType != SkillId.HERBALISM) ...[
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 60),
                       child: TweenAnimationBuilder<double>(
                         tween: Tween<double>(end: healthPercent),
                         duration: const Duration(milliseconds: 100),

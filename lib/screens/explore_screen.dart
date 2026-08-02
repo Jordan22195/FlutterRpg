@@ -123,6 +123,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
         onTap: () => worldController.navigateToEntity(e.id, context),
       );
     }
+    if (e is FishingEntity) {
+      return ObjectCard(
+        key: ValueKey(e.id),
+        id: e.id,
+        name: e.name,
+        count: 0,
+        typeId: e.entityType,
+        isStructure: true,
+        onTap: () => worldController.navigateToEntity(e.id, context),
+      );
+    }
     if (e is DungeonEntity) {
       return ObjectCard(
         key: ValueKey(e.id),
@@ -170,11 +181,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final zoneDef = worldController.getCurrentZoneDefinition();
     final entities = worldController.getCurrentZoneEntities();
 
-    // split the zone's entities into permanent structures and resource nodes
+    // split the zone's entities into permanent structures and resource
+    // nodes. fishing spots are encounter entities but never deplete, so
+    // they belong with the structures rather than the counted nodes
     final structures = <Entity>[];
     final resources = <EncounterEntity>[];
     for (final e in entities) {
-      if (e is EncounterEntity) {
+      if (e is EncounterEntity && e is! FishingEntity) {
         resources.add(e);
       } else {
         structures.add(e);
