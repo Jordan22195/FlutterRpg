@@ -144,7 +144,6 @@ class QueueScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const StopPrimaryButton(),
               ],
             ),
           ],

@@ -278,6 +278,10 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                               size: 200,
                               count: entityCount,
                               id: entityId,
+                              // nothing left to gather or fight: the action
+                              // conditions already reject it, so the portrait
+                              // reads as spent
+                              depleted: entityCount <= 0,
                             ),
                           if (view.showActionFeedback)
                             FadingNumber(
@@ -412,7 +416,9 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
     return Row(
       children: [
         MomentumPrimaryButton(
-          enabled: !view.locked,
+          // a depleted entity has nothing left to take: the action
+          // conditions reject it, so the button says so up front
+          enabled: !view.locked && view.entity.count > 0,
           label: "Action",
           startActionFunction: () {
             controller.startEncounterAction();
@@ -433,10 +439,8 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
           ),
           const SizedBox(width: 8),
         ],
-        StopPrimaryButton(),
-        const SizedBox(width: 8),
         QueueAddButton(
-          enabled: view.entity.id != EntityId.NULL,
+          enabled: false,
           onQueue: () => context.read<ActionQueueController>().enqueueEncounter(
             view.entity.id,
           ),

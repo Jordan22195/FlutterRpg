@@ -148,8 +148,7 @@ class EnchantingScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          for (final material
-                              in EnchantingController.materials)
+                          for (final material in EnchantingController.materials)
                             ItemStackTile(
                               size: 48,
                               count: controller.materialCount(material),
@@ -249,10 +248,8 @@ class EnchantingScreen extends StatelessWidget {
                                     borderColor: qualityBorderColor(
                                       item.quality,
                                     ),
-                                    onTap: () => showEquipmentInfoDialog(
-                                      context,
-                                      item,
-                                    ),
+                                    onTap: () =>
+                                        showEquipmentInfoDialog(context, item),
                                   ),
                               ],
                             ),
@@ -278,7 +275,6 @@ class EnchantingScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const StopPrimaryButton(),
               ],
             ),
           ],

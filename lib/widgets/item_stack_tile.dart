@@ -38,6 +38,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     this.isTimerStackTile = false,
     this.expirationTime,
     this.borderColor,
+    this.depleted = false,
   });
 
   final double size;
@@ -57,6 +58,11 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
 
   /// Overrides the tile border, e.g. to show equipment quality.
   final Color? borderColor;
+
+  /// Renders the tile as spent: the art is darkened and the count badge
+  /// stays up even at zero, so a used-up entity reads as unusable rather
+  /// than as an ordinary single-item stack.
+  final bool depleted;
 
   void _showInfoDialog(BuildContext context) {
     final currentId = id;
@@ -172,6 +178,19 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   Widget build(BuildContext context) {
     final resolvedImage = _resolveImage();
 
+    Widget icon = _IconOrFallback(imageProvider: resolvedImage);
+    if (depleted) {
+      // srcATop paints only where the sprite is opaque, so the art dims
+      // without laying a black rectangle over its transparent edges
+      icon = ColorFiltered(
+        colorFilter: ColorFilter.mode(
+          Colors.black.withValues(alpha: 0.65),
+          BlendMode.srcATop,
+        ),
+        child: icon,
+      );
+    }
+
     final child = SizedBox(
       width: size,
       height: size,
@@ -189,13 +208,12 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
                   width: borderColor != null ? 2 : 1,
                   color:
                       borderColor ??
-                      Theme.of(context).colorScheme.outline.withOpacity(0.5),
+                      Theme.of(
+                        context,
+                      ).colorScheme.outline.withOpacity(depleted ? 0.25 : 0.5),
                 ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(6),
-                child: _IconOrFallback(imageProvider: resolvedImage),
-              ),
+              child: Padding(padding: const EdgeInsets.all(6), child: icon),
             ),
           ),
 
@@ -210,7 +228,15 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
               ),
             )
           else
-            Positioned(right: 4, bottom: 4, child: _CountBadge(count: count)),
+            Positioned(
+              right: 4,
+              bottom: 4,
+              child: _CountBadge(
+                count: count,
+                depleted: depleted,
+                tileSize: size,
+              ),
+            ),
         ],
       ),
     );
@@ -247,25 +273,44 @@ class _IconOrFallback extends StatelessWidget {
 }
 
 class _CountBadge extends StatelessWidget {
-  const _CountBadge({required this.count});
+  const _CountBadge({
+    required this.count,
+    required this.tileSize,
+    this.depleted = false,
+  });
 
   final int count;
+  final bool depleted;
+
+  /// The tile this badge sits on. The badge scales with it so the count is
+  /// still readable on a 200px portrait, and the 9pt floor keeps the small
+  /// inventory tiles looking exactly as they did.
+  final double tileSize;
 
   @override
   Widget build(BuildContext context) {
-    if (count <= 1) return const SizedBox.shrink();
+    // a lone item needs no "1", but a depleted stack has to say "0" —
+    // that zero is the whole point of the badge
+    if (count <= 1 && !depleted) return const SizedBox.shrink();
+
+    final fontSize = (tileSize * 0.16).clamp(9.0, 28.0);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      padding: EdgeInsets.symmetric(
+        horizontal: fontSize * 0.45,
+        vertical: fontSize * 0.11,
+      ),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.75),
-        borderRadius: BorderRadius.circular(8),
+        color: depleted
+            ? Theme.of(context).colorScheme.error
+            : Colors.black.withOpacity(0.75),
+        borderRadius: BorderRadius.circular(fontSize * 0.9),
       ),
       child: Text(
         '$count',
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.white,
-          fontSize: 9,
+          fontSize: fontSize,
           fontWeight: FontWeight.w700,
         ),
       ),

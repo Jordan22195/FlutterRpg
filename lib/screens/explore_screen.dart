@@ -71,13 +71,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
     required String label,
     required bool selected,
     required VoidCallback onSelected,
+    required int count,
     Widget? icon,
   }) {
     return Padding(
       padding: const EdgeInsets.only(right: 6),
       child: ChoiceChip(
         avatar: icon,
-        label: Text(label),
+        // the count rides alongside the label and inherits the chip's own
+        // label color, so it stays legible selected or not
+        label: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label),
+            const SizedBox(width: 5),
+            Opacity(opacity: 0.6, child: Text("$count")),
+          ],
+        ),
         selected: selected,
         showCheckmark: false,
         visualDensity: VisualDensity.compact,
@@ -197,9 +207,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
     // one chip per skill actually present in this zone, in SkillId order
     final zoneSkills = resources.map((e) => e.entityType).toSet().toList()
       ..sort((a, b) => a.index.compareTo(b.index));
-    resources.sort(
-      (a, b) => a.entityType.index.compareTo(b.entityType.index),
+
+    // chip counters: resource nodes stack, so a skill's total is the sum of
+    // its node counts rather than the number of cards. structures are always
+    // one apiece.
+    final resourceCountBySkill = <SkillId, int>{};
+    for (final e in resources) {
+      resourceCountBySkill[e.entityType] =
+          (resourceCountBySkill[e.entityType] ?? 0) + e.count;
+    }
+    final totalResourceCount = resourceCountBySkill.values.fold(
+      0,
+      (sum, c) => sum + c,
     );
+    resources.sort((a, b) => a.entityType.index.compareTo(b.entityType.index));
 
     // a filtered skill that just vanished from the zone falls back to All
     if (_skillFilter != null && !zoneSkills.contains(_skillFilter)) {
@@ -213,7 +234,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final visibleResources = _structuresOnly
         ? const <EncounterEntity>[]
         : resources
-              .where((e) => _skillFilter == null || e.entityType == _skillFilter)
+              .where(
+                (e) => _skillFilter == null || e.entityType == _skillFilter,
+              )
               .toList();
 
     final listChildren = <Widget>[
@@ -286,6 +309,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 _filterChip(
                   context: context,
                   label: "All",
+                  count: totalResourceCount + structures.length,
                   selected: showAll,
                   onSelected: _selectAll,
                 ),
@@ -293,6 +317,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   _filterChip(
                     context: context,
                     label: "Structures",
+                    count: structures.length,
                     selected: _structuresOnly,
                     onSelected: _selectStructures,
                   ),
@@ -300,6 +325,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   _filterChip(
                     context: context,
                     label: skillDisplayName(skill),
+                    count: resourceCountBySkill[skill] ?? 0,
                     selected: _skillFilter == skill,
                     onSelected: () => _selectSkill(skill),
                     icon: IconRendererChipAvatar(skill: skill),
@@ -318,23 +344,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
           Row(
             children: [
-              // Firemaking button
-              Container(
-                padding: const EdgeInsets.all(1),
-
-                child: TextButton(
-                  onPressed: () {
-                    worldController.navigateToEntity(EntityId.FIREPIT, context);
-                  },
-                  child: ItemStackTile(
-                    size: 56,
-                    count: 0,
-                    id: SkillId.FIREMAKING,
-                    showInfoDialogOnTap: false,
-                  ),
-                ),
-              ),
-
               // primary action button
               Padding(
                 padding: const EdgeInsets.all(12),
@@ -348,10 +357,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
               SizedBox(width: 8),
               // stop action button
-              StopPrimaryButton(),
-              SizedBox(width: 8),
               QueueAddButton(
-                enabled: true,
+                enabled: false,
                 onQueue: () =>
                     context.read<ActionQueueController>().enqueueExplore(),
               ),

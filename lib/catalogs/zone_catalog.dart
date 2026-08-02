@@ -190,7 +190,11 @@ class ZoneCatalog {
       name: "Southglen Meadow",
       iconAsset: "assets/images/zones/farm.png",
 
-      permanentEntities: [EntityId.TRANQUIL_POND, EntityId.FARMER],
+      permanentEntities: [
+        EntityId.TRANQUIL_POND,
+        EntityId.FIREPIT,
+        EntityId.FARMER,
+      ],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: 1),
@@ -245,6 +249,7 @@ class ZoneCatalog {
       iconAsset: 'assets/images/zones/forest.png',
 
       permanentEntities: [
+        EntityId.FIREPIT,
         EntityId.ANVIL,
         EntityId.ENCHANTING_BENCH,
         EntityId.JEWELCRAFTING_BENCH,

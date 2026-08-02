@@ -136,9 +136,9 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
 
   Widget _buildSubtitle(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final style = Theme.of(context).textTheme.bodySmall?.copyWith(
-      color: scheme.onSurface.withOpacity(0.6),
-    );
+    final style = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: scheme.onSurface.withOpacity(0.6));
 
     if (widget.locked) {
       return Row(
@@ -230,6 +230,10 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
     // Use a higher-contrast container color so the flash is visible on most themes.
     final flashColor = scheme.secondaryContainer.withOpacity(0.35);
 
+    // a used-up resource node reads like a locked one. structures carry no
+    // count at all (they pass 0), so they are never depleted.
+    final depleted = !widget.isStructure && !widget.locked && widget.count <= 0;
+
     final card = Card(
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -279,6 +283,7 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
                       count: widget.locked ? 0 : widget.count,
                       id: widget.id,
                       showInfoDialogOnTap: false,
+                      depleted: depleted,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -308,6 +313,8 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
       ),
     );
 
-    return widget.locked ? Opacity(opacity: 0.55, child: card) : card;
+    return widget.locked || depleted
+        ? Opacity(opacity: 0.55, child: card)
+        : card;
   }
 }

@@ -92,7 +92,10 @@ class ActionQueueController extends ChangeNotifier {
 
   void enqueueEncounter(EntityId entityId) {
     _queueState.tasks.add(
-      QueuedTask.encounter(zoneId: _playerState.currentZoneId, entityId: entityId),
+      QueuedTask.encounter(
+        zoneId: _playerState.currentZoneId,
+        entityId: entityId,
+      ),
     );
     notifyListeners();
   }

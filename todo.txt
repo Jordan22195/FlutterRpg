@@ -18,9 +18,41 @@ comabt stances
     strong - boost raises attack   
     fast - boost speeds actions
 
+design fights around stances. need to switch to defence to block big hit. 
+
 need to look up how runescape does drop tables
 
-zones have a diffucults like gathering entities. explorations level makes finding stuff more effective
+zones have a diffucults like gathering entities. explorations level makes finding stuff more effective. a high exploration level makes you find more entities per action
 
 slayer as a skill. unlockes mechanics like auto eat. 
+
+combat triangle. 
+melee att > range def. swords cut through leather
+melee att > magic def. swords cut through cloth
+melee att < melee def. armor blocks swords
+
+range att > magic def. arrows peirce cloth
+range att < melee def  armor block arrows
+range att = range def. leather slows arrows.
+
+magic att > melee def  armor doesn't stop magic
+magic att < range def  leather absorbs magic
+magic att < magic def. magic armor absorbs magic
+
+
+
+
+mana as a resource. 
+
+black magic skill for damage
+white magic skill for healing / buffs
+
+detail screen on entities for drop table and combat stats
+
+
+campfires. 
+you build a campfire in a firepit using the exisitng crafting screen. when you build the fire, the entity icon/id changes for the firepit into the type of fire you made, with the duration. 
+the new crafting screen has a button select adding logs. a cooking recipe picker. and a button to put out the fire. 
+
+when the fire timer duration runs out, the entity goes back to a firepit. 
 

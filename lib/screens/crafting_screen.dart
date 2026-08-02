@@ -165,10 +165,8 @@ class _CraftingScreenState extends State<CraftingScreen>
                                     borderColor: qualityBorderColor(
                                       item.quality,
                                     ),
-                                    onTap: () => showEquipmentInfoDialog(
-                                      context,
-                                      item,
-                                    ),
+                                    onTap: () =>
+                                        showEquipmentInfoDialog(context, item),
                                   ),
                               ],
                             ),
@@ -194,10 +192,8 @@ class _CraftingScreenState extends State<CraftingScreen>
                   ),
                 ),
                 SizedBox(width: 8),
-                StopPrimaryButton(),
-                SizedBox(width: 8),
                 QueueAddButton(
-                  enabled: selectedRecipeId.isNotEmpty,
+                  enabled: false,
                   onQueue: () => context
                       .read<ActionQueueController>()
                       .enqueueCraft(selectedRecipeId),

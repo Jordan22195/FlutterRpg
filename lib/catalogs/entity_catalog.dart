@@ -718,7 +718,7 @@ class EntityCatalog {
     EntityId.FIREPIT: CraftingEntityDefinition(
       name: "Firepit",
       craftingSkill: SkillId.FIREMAKING,
-      iconAsset: "assets/icons/items/basic_campfire.png",
+      iconAsset: "assets/icons/items/empty_firepit.png",
     ),
 
     //

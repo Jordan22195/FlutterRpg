@@ -137,6 +137,9 @@ class ActionTimingController extends ChangeNotifier {
   /// True while the action loop is running (any action).
   bool get isRunning => _actionTimingState.running;
 
+  /// True while the primary button is held down and boosting the speed.
+  bool get isButtonHeld => _actionTimingState.buttonHeld;
+
   void start() {
     _actionTimingService.start(_actionTimingState);
     ticker.start();
