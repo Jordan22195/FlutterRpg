@@ -366,7 +366,7 @@ class GameSessionFactory {
     final inventoryService = InventoryService();
     final skillService = SkillService();
     final weightedDropTableService = WeightedDropTableService();
-    final worldService = WorldService();
+    final worldService = WorldService(inventoryService: inventoryService);
     ActionTimingService actionTimingService = ActionTimingService();
     final playerDataService = PlayerDataService(
       buffService: buffService,
@@ -508,6 +508,8 @@ class GameSessionFactory {
       worldState: save.worldData,
       worldService: worldService,
       playerState: save.playerData,
+      inventoryState: save.inventoryData,
+      inventoryService: inventoryService,
       zoneCatalog: catalogs.zoneCatalog,
       dropTableService: weightedDropTableService,
       entityCatalog: catalogs.entityCatalog,
@@ -561,6 +563,8 @@ class GameSessionFactory {
     shopController.addListener(inventoryController.refresh);
     // dungeon combat mutates inventory (drops, key consumption, food)
     dungeonController.addListener(inventoryController.refresh);
+    // explore finds land in the player inventory as well as the zone list
+    worldController.addListener(inventoryController.refresh);
 
     // encounter actions mutate world data (entity counts, removals);
     // forward so world listeners (explore screen) rebuild

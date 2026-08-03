@@ -1,6 +1,6 @@
 import 'entity_catalog.dart';
 import '../data/skill_data.dart';
-import '../data/ObjectStack.dart';
+import '../data/inventory_data.dart';
 import '../services/weighted_drop_table_service.dart';
 import '../catalogs/item_catalog.dart';
 
@@ -20,17 +20,18 @@ class Zone {
   final List<Entity> permanentEntities;
   final List<Entity> discoveredEntities;
 
-  /// Items found while exploring this zone. Kept separate from the player's
-  /// inventory for now; the two get wired together later.
-  final List<ObjectStack<ItemId>> discoveredItems;
+  /// Items turned up by the current explore session in this zone. Mirrors
+  /// the encounter screen's session drops: the finds also go to the player
+  /// inventory, and this list is session-scoped rather than saved.
+  final InventoryData discoveredItems;
 
   Zone({
     required this.id,
     required this.name,
     required this.discoveredEntities,
     required this.permanentEntities,
-    List<ObjectStack<ItemId>>? discoveredItems,
-  }) : discoveredItems = discoveredItems ?? [];
+    InventoryData? discoveredItems,
+  }) : discoveredItems = discoveredItems ?? InventoryData(itemMap: {});
 
   Map<String, dynamic> toJson() {
     return {
@@ -38,9 +39,6 @@ class Zone {
       'name': name,
       'permanentEntities': permanentEntities.map((e) => e.toJson()).toList(),
       'discoveredEntities': discoveredEntities.map((e) => e.toJson()).toList(),
-      'discoveredItems': discoveredItems
-          .map((s) => {'id': s.id.name, 'count': s.count})
-          .toList(),
     };
   }
 
@@ -89,30 +87,13 @@ class Zone {
       return Entity.fromJson(e);
     }).toList();
 
-    // absent in saves written before zones kept their own item inventory
-    final rawItems = json['discoveredItems'];
-    final discoveredItems = <ObjectStack<ItemId>>[];
-    if (rawItems is List) {
-      for (final entry in rawItems) {
-        if (entry is! Map<String, dynamic>) continue;
-        final rawItemId = entry['id'];
-        final rawCount = entry['count'];
-        if (rawItemId is! String || rawCount is! int) continue;
-        final itemId = ItemId.values.firstWhere(
-          (i) => i.name == rawItemId,
-          orElse: () => ItemId.NULL,
-        );
-        if (itemId == ItemId.NULL) continue;
-        discoveredItems.add(ObjectStack<ItemId>(id: itemId, count: rawCount));
-      }
-    }
-
+    // discoveredItems is explore-session state, so it isn't saved: a
+    // reloaded zone starts with an empty find list
     return Zone(
       id: zoneId,
       name: rawName,
       permanentEntities: [],
       discoveredEntities: discoveredEntities,
-      discoveredItems: discoveredItems,
     );
   }
 }

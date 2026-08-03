@@ -7,6 +7,8 @@ import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/data/ObjectStack.dart';
+import 'package:rpg/data/inventory_data.dart';
+import '../services/inventory_service.dart';
 import '../catalogs/zone_catalog.dart';
 import '../catalogs/item_catalog.dart';
 import '../services/player_data_service.dart';
@@ -26,6 +28,7 @@ class WorldController extends ChangeNotifier {
   // data
   final PlayerData _playerState;
   final WorldData _worldState;
+  final InventoryData _inventoryState;
 
   // catalogs
   final ZoneCatalog _zoneCatalog;
@@ -37,11 +40,14 @@ class WorldController extends ChangeNotifier {
   final WeightedDropTableService _dropTableService;
   final EntityScreenRouterService _entityScreenRouterService;
   final PlayerDataService _playerDataService;
+  final InventoryService _inventoryService;
 
   WorldController({
     required WorldData worldState,
     required WorldService worldService,
     required PlayerData playerState,
+    required InventoryData inventoryState,
+    required InventoryService inventoryService,
     required ZoneCatalog zoneCatalog,
     required WeightedDropTableService dropTableService,
     required EntityCatalog entityCatalog,
@@ -54,6 +60,8 @@ class WorldController extends ChangeNotifier {
     required EnchantingController enchantingController,
   }) : _dropTableService = dropTableService,
        _playerDataService = playerDataService,
+       _inventoryState = inventoryState,
+       _inventoryService = inventoryService,
        _worldService = worldService,
        _zoneCatalog = zoneCatalog,
        _worldState = worldState,
@@ -81,9 +89,28 @@ class WorldController extends ChangeNotifier {
     return list;
   }
 
-  /// Items the player has turned up while exploring the current zone.
-  /// Separate from the player inventory for now.
-  List<ObjectStack<ItemId>> getCurrentZoneItems() {
+  // ---- explore session finds ----
+
+  // whether the explore finds on screen still belong to the player's
+  // current activity. the action loop runs one action at a time, so any
+  // other action running means the explore session is over
+  bool _exploreSessionActive = false;
+
+  bool _isExploreSessionActive() {
+    if (_exploreSessionActive &&
+        _actionTimingController.isRunning &&
+        !_actionTimingController.isRunningAction(doExplore)) {
+      _exploreSessionActive = false;
+    }
+    return _exploreSessionActive;
+  }
+
+  /// Items turned up by the current explore session in this zone. Mirrors
+  /// the encounter screen's session drops: an ended session shows nothing.
+  List<ObjectStack> getCurrentZoneItems() {
+    if (!_isExploreSessionActive()) {
+      return [];
+    }
     return _worldService.getCurrentZoneItems(_playerState, _worldState);
   }
 
@@ -179,6 +206,8 @@ class WorldController extends ChangeNotifier {
 
     _playerDataService.changeStamina(-cost, _playerState);
     _playerDataService.setCurrentZone(target, _playerState);
+    // finds belong to the zone they were made in; leaving ends the session
+    _exploreSessionActive = false;
     notifyListeners();
     return true;
   }
@@ -193,6 +222,14 @@ class WorldController extends ChangeNotifier {
 
     // stop action timing
     _actionTimingController.stop();
+
+    // exploring after doing something else is a new session, so the
+    // previous session's finds are cleared. resuming an explore the
+    // player only paused keeps them
+    if (!_isExploreSessionActive()) {
+      _worldService.clearCurrentZoneItems(_playerState, _worldState);
+    }
+    _exploreSessionActive = true;
 
     // bind explore action to action timing controller
     _actionTimingController.bindOnFireFunction(
@@ -227,12 +264,17 @@ class WorldController extends ChangeNotifier {
     // has no meaningful result
     if (itemEntries.isNotEmpty) {
       final newItem = _dropTableService.roll(itemEntries);
-      _worldService.addItemToCurrentZone(
+      final found = _worldService.addItemToCurrentZone(
         newItem.id,
         newItem.count,
         _playerState,
         _worldState,
       );
+      // a find is kept by the player; the zone list is just the session's
+      // running tally of what this explore turned up
+      if (found) {
+        _inventoryService.addItems(_inventoryState, [newItem]);
+      }
     }
     notifyListeners();
   }
