@@ -1,6 +1,8 @@
 import 'entity_catalog.dart';
 import '../data/skill_data.dart';
+import '../data/ObjectStack.dart';
 import '../services/weighted_drop_table_service.dart';
+import '../catalogs/item_catalog.dart';
 
 enum ZoneId {
   TUTORIAL_FARM,
@@ -18,12 +20,17 @@ class Zone {
   final List<Entity> permanentEntities;
   final List<Entity> discoveredEntities;
 
+  /// Items found while exploring this zone. Kept separate from the player's
+  /// inventory for now; the two get wired together later.
+  final List<ObjectStack<ItemId>> discoveredItems;
+
   Zone({
     required this.id,
     required this.name,
     required this.discoveredEntities,
     required this.permanentEntities,
-  });
+    List<ObjectStack<ItemId>>? discoveredItems,
+  }) : discoveredItems = discoveredItems ?? [];
 
   Map<String, dynamic> toJson() {
     return {
@@ -31,6 +38,9 @@ class Zone {
       'name': name,
       'permanentEntities': permanentEntities.map((e) => e.toJson()).toList(),
       'discoveredEntities': discoveredEntities.map((e) => e.toJson()).toList(),
+      'discoveredItems': discoveredItems
+          .map((s) => {'id': s.id.name, 'count': s.count})
+          .toList(),
     };
   }
 
@@ -79,11 +89,30 @@ class Zone {
       return Entity.fromJson(e);
     }).toList();
 
+    // absent in saves written before zones kept their own item inventory
+    final rawItems = json['discoveredItems'];
+    final discoveredItems = <ObjectStack<ItemId>>[];
+    if (rawItems is List) {
+      for (final entry in rawItems) {
+        if (entry is! Map<String, dynamic>) continue;
+        final rawItemId = entry['id'];
+        final rawCount = entry['count'];
+        if (rawItemId is! String || rawCount is! int) continue;
+        final itemId = ItemId.values.firstWhere(
+          (i) => i.name == rawItemId,
+          orElse: () => ItemId.NULL,
+        );
+        if (itemId == ItemId.NULL) continue;
+        discoveredItems.add(ObjectStack<ItemId>(id: itemId, count: rawCount));
+      }
+    }
+
     return Zone(
       id: zoneId,
       name: rawName,
       permanentEntities: [],
       discoveredEntities: discoveredEntities,
+      discoveredItems: discoveredItems,
     );
   }
 }
@@ -93,6 +122,9 @@ class ZoneDefinition {
   final String name;
   final List<EntityId> permanentEntities;
   final List<WeightedDropTableEntry<EntityId>> discoverableEntities;
+  // items are on a separate drop table and have a chance to drop when
+  // an exploration action happens.
+  List<WeightedDropTableEntry<ItemId>> discoverableItems;
   final String iconAsset;
 
   /// Skill level gate for entering the zone; NULL/0 means unrestricted.
@@ -104,6 +136,7 @@ class ZoneDefinition {
     required this.name,
     required this.discoverableEntities,
     required this.permanentEntities,
+    this.discoverableItems = const [],
     required this.iconAsset,
     this.requiredSkill = SkillId.NULL,
     this.requiredLevel = 0,
@@ -201,6 +234,15 @@ class ZoneCatalog {
         WeightedDropTableEntry<EntityId>(id: EntityId.CHICKEN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COW, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.BIG_RED, weight: .1),
+      ],
+      discoverableItems: [
+        WeightedDropTableEntry(
+          id: ItemId.COINS,
+          count: 1,
+          highCount: 10,
+          weight: .1,
+        ),
+        WeightedDropTableEntry(id: ItemId.NULL, weight: 1),
       ],
     );
     _zones[ZoneId.SOUTHWOOD_FOREST] = ZoneDefinition(

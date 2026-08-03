@@ -4,11 +4,18 @@ import '../data/ObjectStack.dart';
 class WeightedDropTableEntry<T> {
   final T id;
   final int count;
+
+  /// Upper bound for a variable stack size. When greater than [count] the
+  /// roll yields a random amount in count..highCount inclusive; otherwise
+  /// the stack is always exactly [count].
+  final int highCount;
+
   double weight;
 
   WeightedDropTableEntry({
     required this.id,
     this.count = 1,
+    this.highCount = 0,
     required this.weight,
   });
 }
@@ -52,17 +59,24 @@ class WeightedDropTableService {
     final idx = _lowerBound(prefix, r);
     final selected = entries[idx];
 
-    return ObjectStack<T>(id: selected.id, count: selected.count);
+    return ObjectStack<T>(id: selected.id, count: _rollCount(selected, random));
+  }
+
+  /// An entry's stack size: fixed at [WeightedDropTableEntry.count], or a
+  /// uniform pick from count..highCount (both inclusive) when the entry
+  /// declares a higher upper bound.
+  static int _rollCount<T>(WeightedDropTableEntry<T> entry, Random random) {
+    if (entry.highCount <= 0 || entry.highCount <= entry.count) {
+      return entry.count;
+    }
+    return entry.count + random.nextInt(entry.highCount - entry.count + 1);
   }
 
   /// Rolls a layered drop table: for each [DropRoll] that fires (by its
   /// chance), adds one weighted pick. Guaranteed rolls always contribute;
   /// rare rolls contribute only when their chance succeeds. Empty rolls
   /// are skipped. Returns every stack the kill produced.
-  List<ObjectStack<T>> rollBonus<T>(
-    List<DropRoll<T>> rolls, {
-    Random? rng,
-  }) {
+  List<ObjectStack<T>> rollBonus<T>(List<DropRoll<T>> rolls, {Random? rng}) {
     final random = rng ?? Random();
     final out = <ObjectStack<T>>[];
     for (final dropRoll in rolls) {

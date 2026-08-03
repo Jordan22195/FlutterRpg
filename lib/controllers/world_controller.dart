@@ -6,6 +6,7 @@ import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/data/ObjectStack.dart';
 import '../catalogs/zone_catalog.dart';
 import '../catalogs/item_catalog.dart';
 import '../services/player_data_service.dart';
@@ -78,6 +79,12 @@ class WorldController extends ChangeNotifier {
       _worldState,
     );
     return list;
+  }
+
+  /// Items the player has turned up while exploring the current zone.
+  /// Separate from the player inventory for now.
+  List<ObjectStack<ItemId>> getCurrentZoneItems() {
+    return _worldService.getCurrentZoneItems(_playerState, _worldState);
   }
 
   ZoneDefinition getCurrentZoneDefinition() {
@@ -200,11 +207,15 @@ class WorldController extends ChangeNotifier {
   // function bound to action button in startExplore.
   // This executes periodically.
   void doExplore() {
-    final entries = _worldService.getZoneDropTableEntries(
+    final entityEntries = _worldService.getZoneEntityDropTableEntries(
       _playerState,
       _zoneCatalog,
     );
-    final newEntity = _dropTableService.roll(entries);
+    final itemEntries = _worldService.getZoneItemDropTableEntries(
+      _playerState,
+      _zoneCatalog,
+    );
+    final newEntity = _dropTableService.roll(entityEntries);
     _worldService.addEntityToCurrentZone(
       newEntity.id,
       newEntity.count,
@@ -212,6 +223,17 @@ class WorldController extends ChangeNotifier {
       _playerState,
       _worldState,
     );
+    // zones without an item table yield nothing; rolling an empty table
+    // has no meaningful result
+    if (itemEntries.isNotEmpty) {
+      final newItem = _dropTableService.roll(itemEntries);
+      _worldService.addItemToCurrentZone(
+        newItem.id,
+        newItem.count,
+        _playerState,
+        _worldState,
+      );
+    }
     notifyListeners();
   }
 

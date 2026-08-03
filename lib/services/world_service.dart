@@ -1,6 +1,8 @@
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
+import 'package:rpg/data/ObjectStack.dart';
 import '../catalogs/entity_catalog.dart';
+import '../catalogs/item_catalog.dart';
 import 'weighted_drop_table_service.dart';
 import '../catalogs/zone_catalog.dart';
 
@@ -12,12 +14,20 @@ class WorldService {
     permanentEntities: [],
   );
 
-  List<WeightedDropTableEntry> getZoneDropTableEntries(
+  List<WeightedDropTableEntry> getZoneEntityDropTableEntries(
     PlayerData playerState,
     ZoneCatalog zoneCatalog,
   ) {
     final zone = zoneCatalog.getDefinitionFor(playerState.currentZoneId);
     return zone.discoverableEntities;
+  }
+
+  List<WeightedDropTableEntry<ItemId>> getZoneItemDropTableEntries(
+    PlayerData playerState,
+    ZoneCatalog zoneCatalog,
+  ) {
+    final zone = zoneCatalog.getDefinitionFor(playerState.currentZoneId);
+    return zone.discoverableItems;
   }
 
   Entity getEntity(EntityId entityId, ZoneId zoneId, WorldData worldState) {
@@ -91,6 +101,37 @@ class WorldService {
     } else if (e is EncounterEntity) {
       e.count += entityCount;
     }
+  }
+
+  /// Adds [count] of [itemId] to the current zone's own item inventory,
+  /// merging onto an existing stack. NULL ids are the drop table's "found
+  /// nothing" entry and are ignored.
+  void addItemToCurrentZone(
+    ItemId itemId,
+    int count,
+    PlayerData playerState,
+    WorldData worldState,
+  ) {
+    if (itemId == ItemId.NULL || count <= 0) return;
+
+    final zone = worldState.zones[playerState.currentZoneId];
+    if (zone == null) return;
+
+    for (final stack in zone.discoveredItems) {
+      if (stack.id == itemId) {
+        stack.count += count;
+        return;
+      }
+    }
+    zone.discoveredItems.add(ObjectStack<ItemId>(id: itemId, count: count));
+  }
+
+  List<ObjectStack<ItemId>> getCurrentZoneItems(
+    PlayerData playerState,
+    WorldData worldState,
+  ) {
+    final zone = worldState.zones[playerState.currentZoneId] ?? nullZone;
+    return zone.discoveredItems;
   }
 
   void removeEntityFromZone(

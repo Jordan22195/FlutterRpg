@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
 import '../controllers/action_queue_controller.dart';
@@ -190,6 +191,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final worldController = context.watch<WorldController>();
     final zoneDef = worldController.getCurrentZoneDefinition();
     final entities = worldController.getCurrentZoneEntities();
+    final zoneItems = worldController.getCurrentZoneItems();
 
     // split the zone's entities into permanent structures and resource
     // nodes. fishing spots are encounter entities but never deplete, so
@@ -249,6 +251,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
         if (showAll) _sectionLabel(context, "Resources"),
         for (final e in visibleResources)
           _buildResourceCard(worldController, e),
+      ],
+      // items turned up by exploring, kept per-zone. shown under the
+      // entities regardless of the active filter
+      if (zoneItems.isNotEmpty) ...[
+        _sectionLabel(context, "Items"),
+        Card(child: InventoryGrid(items: zoneItems, shrinkWrap: true)),
       ],
     ];
 

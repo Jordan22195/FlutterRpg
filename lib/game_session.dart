@@ -271,7 +271,9 @@ class GameSessionFactory {
       final def = catalogs.zoneCatalog.getDefinitionFor(zone.id);
       for (final entityId in def.permanentEntities) {
         if (zone.permanentEntities.any((e) => e.id == entityId)) continue;
-        zone.permanentEntities.add(catalogs.entityCatalog.buildEntity(entityId));
+        zone.permanentEntities.add(
+          catalogs.entityCatalog.buildEntity(entityId),
+        );
       }
     }
 
