@@ -37,6 +37,7 @@ class ObjectCard<T extends Enum> extends StatefulWidget {
     required this.count,
     required this.onTap,
     required this.typeId,
+    this.onIconTap,
     this.name,
     this.height = 64,
     this.expirationTime,
@@ -50,6 +51,10 @@ class ObjectCard<T extends Enum> extends StatefulWidget {
   final T id;
   final int count;
   final VoidCallback onTap;
+
+  /// Tapping the entity's portrait, rather than the card body. Used for
+  /// the details popup, so the card itself still opens the entity screen.
+  final VoidCallback? onIconTap;
 
   /// The skill this entity trains (drives the subtitle icon/label). For
   /// structures without a skill (shops, dungeons) pass the entity id and
@@ -280,8 +285,9 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
                   children: [
                     ItemStackTile(
                       size: 52,
-                      count: widget.locked ? 0 : widget.count,
+                      count: widget.count,
                       id: widget.id,
+                      onTap: widget.onIconTap,
                       showInfoDialogOnTap: false,
                       depleted: depleted,
                     ),

@@ -11,7 +11,7 @@ class SkillRingRow extends StatelessWidget {
     super.key,
     required this.skills,
     this.maxVisible = 5,
-    this.alignment = MainAxisAlignment.start,
+    this.alignment = MainAxisAlignment.center,
   });
 
   final List<SkillId> skills;

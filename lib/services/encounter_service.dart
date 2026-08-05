@@ -7,6 +7,10 @@ import '../data/encounter_data.dart';
 import '../data/action_result.dart';
 
 class EncounterService {
+  /// Bonus yield rolls a single herb pick makes on top of its guaranteed
+  /// herb, so a pick yields 1..1+[herbBonusRolls].
+  static const int herbBonusRolls = 4;
+
   // set respawn flag for ui for 200ms then reset entity hp. the dying
   // entity is captured at call time: the active encounter can switch
   // during the delay, and the reset must land on the entity that died
@@ -274,7 +278,7 @@ class EncounterService {
   int rollHerbYield({
     required int herbalismStat,
     required int defence,
-    int bonusRolls = 4,
+    int bonusRolls = herbBonusRolls,
     Random? rng,
   }) {
     final r = rng ?? Random();

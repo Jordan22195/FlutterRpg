@@ -3,6 +3,7 @@ import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/enchanting_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
+import 'package:rpg/data/entity_details.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -10,7 +11,6 @@ import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/inventory_data.dart';
 import '../services/inventory_service.dart';
 import '../catalogs/zone_catalog.dart';
-import '../catalogs/item_catalog.dart';
 import '../services/player_data_service.dart';
 import '../services/world_service.dart';
 import '../catalogs/entity_catalog.dart';
@@ -33,7 +33,6 @@ class WorldController extends ChangeNotifier {
   // catalogs
   final ZoneCatalog _zoneCatalog;
   final EntityCatalog _entityCatalog;
-  final ItemCatalog _itemCatalog;
 
   // services
   final WorldService _worldService;
@@ -41,6 +40,9 @@ class WorldController extends ChangeNotifier {
   final EntityScreenRouterService _entityScreenRouterService;
   final PlayerDataService _playerDataService;
   final InventoryService _inventoryService;
+
+  // systems
+  final EncounterSystem _encounterSystem;
 
   WorldController({
     required WorldData worldState,
@@ -51,9 +53,9 @@ class WorldController extends ChangeNotifier {
     required ZoneCatalog zoneCatalog,
     required WeightedDropTableService dropTableService,
     required EntityCatalog entityCatalog,
-    required ItemCatalog itemCatalog,
     required EntityScreenRouterService entityScreenRouterService,
     required PlayerDataService playerDataService,
+    required EncounterSystem encounterSystem,
     required ActionTimingController actionTimingController,
     required EncounterController encounterController,
     required CraftingController craftingController,
@@ -66,9 +68,9 @@ class WorldController extends ChangeNotifier {
        _zoneCatalog = zoneCatalog,
        _worldState = worldState,
        _entityCatalog = entityCatalog,
-       _itemCatalog = itemCatalog,
        _playerState = playerState,
        _entityScreenRouterService = entityScreenRouterService,
+       _encounterSystem = encounterSystem,
        _actionTimingController = actionTimingController,
        _encounterController = encounterController,
        _craftingController = craftingController,
@@ -120,29 +122,25 @@ class WorldController extends ChangeNotifier {
 
   // ---- explore screen card data ----
 
-  /// Estimated xp for fully consuming ONE count of [e], mirroring
-  /// EncounterSystem's rules: damage-based skills accrue
-  /// [EncounterSystem.xpPerDamage] per damage (one kill/fell/deplete deals
-  /// the node's full hitpoints), while fishing and herbalism award the
-  /// caught item's xpValue (weighted average across the drop table).
+  /// Estimated xp for fully consuming ONE count of [e].
   double xpPerUnit(EncounterEntity e) {
-    final def = _entityCatalog.getDefinitionFor(e.id);
-    if (def is! EncounterEntityDefinition) return 0;
+    return _encounterSystem.xpPerUnit(e);
+  }
 
-    switch (e.entityType) {
-      case SkillId.FISHING:
-      case SkillId.HERBALISM:
-        double weightSum = 0;
-        double xpSum = 0;
-        for (final entry in def.itemDrops) {
-          final xp = _itemCatalog.definitionFor(entry.id)?.xpValue ?? 0;
-          weightSum += entry.weight;
-          xpSum += entry.weight * xp * entry.count;
-        }
-        return weightSum <= 0 ? 0 : xpSum / weightSum;
-      default:
-        return EncounterSystem.xpPerDamage * def.hitpoints;
-    }
+  /// Everything the entity details popup shows for [e]: its own stats, its
+  /// drop table odds, and the combat rolls both ways against the player's
+  /// current stats.
+  EntityDetails entityDetails(EncounterEntity e) {
+    return _encounterSystem.buildEntityDetails(
+      playerState: _playerState,
+      entity: e,
+    );
+  }
+
+  /// dev/testing helper: force an entity's remaining count in this zone
+  void devSetEntityCount(EntityId id, int count) {
+    _worldService.setEntityCount(id, count, _playerState, _worldState);
+    notifyListeners();
   }
 
   /// Level required to interact with [id] (herb gates); 0 when ungated.

@@ -8,6 +8,7 @@ import 'package:rpg/widgets/item_stack_tile.dart';
 import '../controllers/action_queue_controller.dart';
 import '../data/skill_data.dart';
 import '../widgets/primary_button.dart';
+import '../widgets/entity_info_dialog.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/queue_add_button.dart';
 import '../widgets/skill_ring_row.dart';
@@ -143,6 +144,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         typeId: e.entityType,
         isStructure: true,
         onTap: () => worldController.navigateToEntity(e.id, context),
+        onIconTap: () => showEntityInfoDialog(context, e),
       );
     }
     if (e is DungeonEntity) {
@@ -183,6 +185,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       locked: locked,
       requiredLevel: requiredLevel,
       onTap: () => worldController.navigateToEntity(e.id, context),
+      onIconTap: () => showEntityInfoDialog(context, e),
     );
   }
 

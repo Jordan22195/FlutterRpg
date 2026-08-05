@@ -2,11 +2,11 @@ import 'skill_data.dart';
 
 const Map<SkillId, String> kSkillDescriptions = {
   SkillId.STAMINA:
-      'Determines your maximum stamina. Each point of stamina spent while acting grants xp.',
+      'Determines your maximum stamina. Each level of stamina increases your max stamina by 10. Spending staming grants stamina xp',
   SkillId.SPEED:
-      'Raises your top action speed, reducing the minimum time between actions. Trains from acting near your top speed.',
+      'Raises your action top speed. Each level increases top action speed by 10%. Xp is xp is gained when actions are boosted. You gain your speed muliplier per second in xp.',
   SkillId.RECOVERY:
-      'Governs how quickly stamina refills over time. Trains passively while stamina is being restored.',
+      'Governs how quickly stamina refills over time. Stamina recovers when an action is not being boosted. You gain 1 stamina xp for every point of stamina recovered. ',
   SkillId.EXPLORATION:
       'Reflects your familiarity with the world. Trains from discovering and traveling to new zones.',
   SkillId.HITPOINTS:
@@ -15,7 +15,8 @@ const Map<SkillId, String> kSkillDescriptions = {
       'Governs melee accuracy and damage. Trains from landing melee hits in combat.',
   SkillId.RANGED:
       'Governs ranged weapon accuracy and damage. Trains from landing ranged hits in combat.',
-  SkillId.MAGIC: 'Governs spell accuracy and damage. Trains from casting spells in combat.',
+  SkillId.MAGIC:
+      'Governs spell accuracy and damage. Trains from casting spells in combat.',
   SkillId.DEFENCE:
       'Reduces the damage you take. Trains from surviving hits in combat.',
   SkillId.WOODCUTTING:

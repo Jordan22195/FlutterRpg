@@ -7,6 +7,7 @@ import '../services/player_data_service.dart';
 import '../services/weighted_drop_table_service.dart';
 import '../catalogs/entity_catalog.dart';
 import '../data/action_result.dart';
+import '../data/entity_details.dart';
 import '../data/player_data.dart';
 import '../data/encounter_data.dart';
 import '../data/world_data.dart';
@@ -107,11 +108,11 @@ class EncounterSystem {
       if (encounter.entity!.count > 0) {
         _encounterService.respawn(encounter, e);
       } else {
-        _worldService.removeEntityFromZone(
-          e.id,
-          playerState.currentZoneId,
-          worldState,
-        );
+        //_worldService.removeEntityFromZone(
+        //  e.id,
+        //  playerState.currentZoneId,
+        //  worldState,
+        //);
       }
 
       // roll drops: the guaranteed main drop plus any layered bonus rolls
@@ -197,6 +198,119 @@ class EncounterSystem {
     return level >= herbRequiredLevel(id);
   }
 
+  /// Estimated xp for fully consuming ONE count of [e], mirroring the xp
+  /// the actions actually award: damage-based skills accrue
+  /// [xpPerDamage] per damage (one kill/fell/deplete deals the node's full
+  /// hitpoints), while fishing and herbalism award the caught item's
+  /// xpValue (weighted average across the drop table).
+  double xpPerUnit(EncounterEntity e) {
+    final def = _entityCatalog.getDefinitionFor(e.id);
+    if (def is! EncounterEntityDefinition) return 0;
+
+    switch (e.entityType) {
+      case SkillId.FISHING:
+      case SkillId.HERBALISM:
+        double weightSum = 0;
+        double xpSum = 0;
+        for (final entry in def.itemDrops) {
+          final xp = _itemCatalog.definitionFor(entry.id)?.xpValue ?? 0;
+          weightSum += entry.weight;
+          xpSum += entry.weight * xp * entry.count;
+        }
+        return weightSum <= 0 ? 0 : xpSum / weightSum;
+      default:
+        return xpPerDamage * def.hitpoints;
+    }
+  }
+
+  /// Assembles the entity details snapshot the info popup renders: the
+  /// entity's own stats, its drop table with per-kill probabilities, and
+  /// the to-hit rolls both ways against the player's current stats.
+  EntityDetails buildEntityDetails({
+    required PlayerData playerState,
+    required EncounterEntity entity,
+  }) {
+    final stats = _playerDataService.getStatTotals(playerState);
+    final playerSkill = stats[entity.entityType] ?? 0;
+    final playerDefence = stats[SkillId.DEFENCE] ?? 1;
+
+    // the player's roll against the entity's difficulty. for damage-based
+    // skills this is the to-hit chance; for herbs it is the chance each
+    // bonus-yield roll succeeds
+    final playerHitChance = _encounterService.chanceToHit(
+      playerSkill,
+      entity.defence,
+    );
+
+    final combat = entity is CombatEntity ? entity : null;
+
+    return EntityDetails(
+      entity: entity,
+      requiredLevel: herbRequiredLevel(entity.id),
+      xpPerUnit: xpPerUnit(entity),
+      playerSkillLevel: playerSkill,
+      playerDefence: playerDefence,
+      playerMaxHp: stats[SkillId.HITPOINTS] ?? 1,
+      playerHitChance: playerHitChance,
+      playerMaxHit: _encounterService.computeMaxHit(
+        attack: playerSkill,
+        defense: entity.defence,
+      ),
+      entityHitChance: combat == null
+          ? 0
+          : _encounterService.chanceToHit(combat.attack, playerDefence),
+      entityMaxHit: combat == null
+          ? 0
+          : _encounterService.computeMaxHit(
+              attack: combat.attack,
+              defense: playerDefence,
+            ),
+      // one guaranteed herb plus one per successful bonus roll
+      expectedYield: entity.entityType == SkillId.HERBALISM
+          ? 1 + EncounterService.herbBonusRolls * playerHitChance
+          : 0,
+      drops: _buildDropChances(entity.id),
+    );
+  }
+
+  /// The entity's drop table as per-kill probabilities: the main table
+  /// always yields exactly one pick, and each layered bonus roll
+  /// contributes its own pick with its own firing chance.
+  List<EntityDropChance> _buildDropChances(EntityId id) {
+    final def = _entityCatalog.getDefinitionFor(id);
+    if (def is! EncounterEntityDefinition) return const [];
+
+    return [
+      ..._dropRows(def.itemDrops, rollChance: 1.0, bonus: false),
+      for (final roll in def.bonusDrops)
+        ..._dropRows(roll.entries, rollChance: roll.chance, bonus: true),
+    ];
+  }
+
+  List<EntityDropChance> _dropRows(
+    List<WeightedDropTableEntry<ItemId>> entries, {
+    required double rollChance,
+    required bool bonus,
+  }) {
+    final total = entries.fold<double>(0, (sum, e) => sum + e.weight);
+    if (total <= 0) return const [];
+
+    final rows = [
+      for (final e in entries)
+        EntityDropChance(
+          itemId: e.id,
+          name: _itemCatalog.definitionFor(e.id)?.name ?? e.id.name,
+          chance: rollChance * (e.weight / total),
+          minCount: e.count,
+          maxCount: e.highCount > e.count ? e.highCount : e.count,
+          bonus: bonus,
+        ),
+    ];
+    // commonest first, so the chase drops sit at the bottom of the table
+    rows.sort((a, b) => b.chance.compareTo(a.chance));
+    return rows;
+  }
+
   /// One herbalism gather tick: always succeeds, consumes one count from
   /// the herb node, and rolls yield against the herb's difficulty.
   ActionResult executeHerbalismAction({
@@ -224,13 +338,6 @@ class EncounterSystem {
 
     // one pick consumes one herb from the node; no hp/respawn cycle
     e.count--;
-    if (e.count <= 0) {
-      _worldService.removeEntityFromZone(
-        e.id,
-        playerState.currentZoneId,
-        worldState,
-      );
-    }
 
     final rolled = _dropTableService.roll(def.itemDrops);
     final drop = ObjectStack<ItemId>(id: rolled.id, count: gathered);

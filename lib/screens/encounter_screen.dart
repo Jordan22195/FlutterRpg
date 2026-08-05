@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/widgets/buff_row.dart';
+import 'package:rpg/widgets/entity_info_dialog.dart';
 import 'package:rpg/widgets/eat_food_button.dart';
 import 'package:rpg/widgets/equipment_picker.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
@@ -77,9 +78,9 @@ class CombatViewState {
 /// here changes every combat screen.
 ///
 /// Layout, top to bottom: skill rings for the skills the activity trains,
-/// the centered entity portrait, the entity hp bar with a stat chip row
-/// under it, active buffs, session drops. Combat pins a player hp strip
-/// above the action bar; gathering shows no player state at all. Weapons
+/// the centered entity portrait, the entity status row (hp chip, hp bar,
+/// stat chips), active buffs, session drops. Combat adds a matching player
+/// status strip below it; gathering shows no player state at all. Weapons
 /// and tools are equipped on the gear screen, not here.
 abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// Builds this frame's data snapshot. Watch the owning controller here
@@ -94,6 +95,91 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// floor progression list).
   Widget? buildAboveFight(BuildContext context) => null;
 
+  /// Tapping the entity portrait. World encounters open the entity details
+  /// popup; a dungeon fight has no zone entity behind it, so it stays inert.
+  VoidCallback? portraitTap(BuildContext context, EncounterEntity entity) =>
+      null;
+
+  /// Every slot on a status row except the bar itself is a fixed width, so
+  /// the entity's bar and the player's bar start and end at the same x no
+  /// matter how many digits their numbers run to.
+  static const double _hpTextWidth = 58;
+  static const double _damageSlotWidth = 28;
+  static const double _statTextWidth = 24;
+  static const double _statGap = 12;
+
+  /// One stat chip on a status row: icon plus a fixed-width value.
+  Widget buildStatChip(BuildContext context, SkillId icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: _statGap),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconRenderer(id: icon, size: 16),
+          const SizedBox(width: 3),
+          SizedBox(
+            width: _statTextWidth,
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The shared status strip layout: hp chip, hp bar, then stat chips.
+  /// Both the entity's row and the player's row are built from this so
+  /// they stay identical. Pass a null [hp] for entities without
+  /// hitpoints; the chip and bar collapse and the stats stay right-aligned.
+  Widget buildStatusRow(
+    BuildContext context, {
+    int? hp,
+    int? maxHp,
+    Widget? damageSlot,
+    Color? barColor,
+    required List<Widget> stats,
+  }) {
+    final double hpPercent = (hp == null || maxHp == null || maxHp <= 0)
+        ? 0.0
+        : (hp / maxHp).clamp(0.0, 1.0);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 2, bottom: 6),
+      child: Row(
+        children: [
+          if (hp != null) ...[
+            IconRenderer(id: SkillId.HITPOINTS, size: 18),
+            const SizedBox(width: 4),
+            SizedBox(
+              width: _hpTextWidth,
+              child: Text('$hp / $maxHp', style: const TextStyle(fontSize: 13)),
+            ),
+            SizedBox(width: _damageSlotWidth, child: damageSlot),
+            Expanded(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(end: hpPercent),
+                duration: const Duration(milliseconds: 100),
+                builder: (context, animatedValue, child) {
+                  return FillBar(
+                    value: animatedValue,
+                    foregroundColor: barColor,
+                  );
+                },
+              ),
+            ),
+          ] else
+            const Spacer(),
+          ...stats,
+        ],
+      ),
+    );
+  }
+
   /// Player hp/def/atk strip pinned above the action bar. Only combat
   /// needs it: gathering entities don't fight back.
   Widget buildPlayerStatusRow(
@@ -103,64 +189,41 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   ) {
     final stats = view.playerStats;
     final int maxHp = stats[SkillId.HITPOINTS] ?? 1;
-    final int defence = stats[SkillId.DEFENCE] ?? 1;
-    final int attack = stats[attackSkillType] ?? 1;
-    final double hpPercent = maxHp <= 0
-        ? 0.0
-        : (view.playerHp / maxHp).clamp(0.0, 1.0);
-    final muted = TextStyle(
-      fontSize: 12,
-      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-    );
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 2, bottom: 10),
-      child: Row(
-        children: [
-          IconRenderer(id: SkillId.HITPOINTS, size: 18),
-          const SizedBox(width: 4),
-          Text(
-            '${view.playerHp} / $maxHp',
-            style: const TextStyle(fontSize: 13),
-          ),
-          // damage taken from the entity's attacks. fixed-width slot so
-          // the flash doesn't shift the hp bar
-          SizedBox(
-            width: 28,
-            child: FadingNumber(
-              number: view.entityDamage,
-              trigger: view.entityAttackSequence,
-              autoplay: false,
-              color: view.entityDamage > 0 ? Colors.red : Colors.blue,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: TweenAnimationBuilder<double>(
-              tween: Tween<double>(end: hpPercent),
-              duration: const Duration(milliseconds: 100),
-              builder: (context, animatedValue, child) {
-                return FillBar(value: animatedValue);
-              },
-            ),
-          ),
-          const SizedBox(width: 12),
-          IconRenderer(id: SkillId.DEFENCE, size: 16),
-          const SizedBox(width: 3),
-          Text('$defence', style: muted),
-          const SizedBox(width: 10),
-          IconRenderer(id: attackSkillType, size: 16),
-          const SizedBox(width: 3),
-          Text('$attack', style: muted),
-        ],
+    return buildStatusRow(
+      context,
+      hp: view.playerHp,
+      maxHp: maxHp,
+      // damage taken from the entity's attacks. the slot is fixed-width so
+      // the flash doesn't shift the hp bar
+      damageSlot: FadingNumber(
+        number: view.entityDamage,
+        trigger: view.entityAttackSequence,
+        autoplay: false,
+        color: view.entityDamage > 0 ? Colors.red : Colors.blue,
+        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
       ),
+      stats: [
+        buildStatChip(
+          context,
+          SkillId.DEFENCE,
+          '${stats[SkillId.DEFENCE] ?? 1}',
+        ),
+        buildStatChip(
+          context,
+          attackSkillType,
+          '${stats[attackSkillType] ?? 1}',
+        ),
+      ],
     );
   }
 
-  /// Entity stats as a centered chip row under the hp bar.
-  Widget buildEntityStatChips(EncounterEntity entity, int requiredLevel) {
-    const double fontSize = 14;
-    const double iconSize = 20;
+  /// Entity hp/def/atk strip, laid out like [buildPlayerStatusRow].
+  Widget buildEntityStatusRow(
+    BuildContext context,
+    EncounterEntity entity,
+    int requiredLevel,
+  ) {
     final SkillId skillId = entity.entityType;
 
     // fishing spots replenish and herbs are picked in one action, so
@@ -168,32 +231,18 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     final bool showsHp =
         skillId != SkillId.FISHING && skillId != SkillId.HERBALISM;
 
-    Widget chip(SkillId icon, String text) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconRenderer(id: icon, size: iconSize),
-          const SizedBox(width: 4),
-          Text(text, style: const TextStyle(fontSize: fontSize)),
-        ],
-      );
-    }
-
-    final chips = <Widget>[
-      if (showsHp) chip(SkillId.HITPOINTS, '${entity.hitpoints}'),
-      chip(SkillId.DEFENCE, '${entity.defence}'),
-      // level needed to gather this entity (herbs)
-      if (requiredLevel > 0) chip(skillId, 'Lv $requiredLevel'),
-      if (entity is CombatEntity) chip(SkillId.ATTACK, '${entity.attack}'),
-    ];
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (int i = 0; i < chips.length; i++) ...[
-          if (i > 0) const SizedBox(width: 16),
-          chips[i],
-        ],
+    return buildStatusRow(
+      context,
+      hp: showsHp ? entity.hitpoints : null,
+      maxHp: entity.maxHitPoints,
+      barColor: Theme.of(context).colorScheme.tertiary,
+      stats: [
+        buildStatChip(context, SkillId.DEFENCE, '${entity.defence}'),
+        // level needed to gather this entity (herbs)
+        if (requiredLevel > 0)
+          buildStatChip(context, skillId, 'Lv $requiredLevel'),
+        if (entity is CombatEntity)
+          buildStatChip(context, SkillId.ATTACK, '${entity.attack}'),
       ],
     );
   }
@@ -207,9 +256,6 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     final bool isCombatEntity = entity is CombatEntity;
     final EntityId entityId = entity.id;
     final int entityCount = entity.count;
-    final double healthPercent = entity.maxHitPoints <= 0
-        ? 0.0
-        : (entity.hitpoints / entity.maxHitPoints).clamp(0.0, 1.0);
 
     // skills this activity trains: combat awards xp to the weapon skill,
     // hitpoints, and defence (blocked hits); gathering trains its own skill
@@ -228,33 +274,29 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.of(context).maybePop(),
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      view.title,
-                      style: Theme.of(context).textTheme.titleLarge,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
             // scrollable middle so short screens don't overflow; the
             // header above and action buttons below stay pinned
             Expanded(
               child: ListView(
                 children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.of(context).maybePop(),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          view.title,
+                          style: Theme.of(context).textTheme.titleLarge,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                   if (aboveFight != null) aboveFight,
 
-                  SkillRingRow(skills: trainedSkills),
                   const SizedBox(height: 8),
 
                   // Centered entity portrait with the per-action damage
@@ -264,25 +306,21 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                   // across respawns
                   Center(
                     child: SizedBox(
-                      width: 200,
-                      height: 200,
+                      width: 180,
+                      height: 180,
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          if (view.respawning)
-                            const Positioned.fill(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          else
-                            ItemStackTile(
-                              size: 200,
-                              count: entityCount,
-                              id: entityId,
-                              // nothing left to gather or fight: the action
-                              // conditions already reject it, so the portrait
-                              // reads as spent
-                              depleted: entityCount <= 0,
-                            ),
+                          ItemStackTile(
+                            size: 200,
+                            count: entityCount,
+                            id: entityId,
+                            onTap: portraitTap(context, entity),
+                            // nothing left to gather or fight: the action
+                            // conditions already reject it, so the portrait
+                            // reads as spent
+                            depleted: entityCount <= 0,
+                          ),
                           if (view.showActionFeedback)
                             FadingNumber(
                               number: view.playerDamage,
@@ -305,28 +343,8 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                   ),
                   const SizedBox(height: 12),
 
-                  //entity hp bar
-                  if (skillType != SkillId.FISHING &&
-                      skillType != SkillId.HERBALISM) ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 60),
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween<double>(end: healthPercent),
-                        duration: const Duration(milliseconds: 100),
-                        builder: (context, animatedValue, child) {
-                          return FillBar(
-                            value: animatedValue,
-                            foregroundColor: Theme.of(
-                              context,
-                            ).colorScheme.tertiary,
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-
-                  buildEntityStatChips(entity, view.requiredLevel),
+                  buildEntityStatusRow(context, entity, view.requiredLevel),
+                  buildPlayerStatusRow(context, view, skillType),
 
                   if (view.locked)
                     Padding(
@@ -339,9 +357,10 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 6),
 
                   BuffRow(),
+                  SkillRingRow(skills: trainedSkills),
 
                   Padding(
                     padding: const EdgeInsets.only(left: 2, top: 12, bottom: 4),
@@ -352,6 +371,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                       style: labelStyle,
                     ),
                   ),
+
                   Card(
                     child: Column(
                       children: [
@@ -366,7 +386,6 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
               ),
             ),
 
-            if (isCombatEntity) buildPlayerStatusRow(context, view, skillType),
             buildActionBar(context, view),
           ],
         ),
@@ -383,6 +402,11 @@ class EncounterScreen extends StatefulWidget {
 }
 
 class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
+  @override
+  VoidCallback? portraitTap(BuildContext context, EncounterEntity entity) {
+    return () => showEntityInfoDialog(context, entity);
+  }
+
   @override
   CombatViewState resolveView(BuildContext context) {
     final controller = context.watch<EncounterController>();

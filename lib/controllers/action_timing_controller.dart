@@ -249,7 +249,7 @@ class ActionSpeedSystem {
     // recovery trains while it has something to restore
     if (speed > 1) {
       _playerDataService.applyXp(playerState, {
-        SkillId.SPEED: (speed - 1) * 1 * dt,
+        SkillId.SPEED: speed * 1 * dt,
         SkillId.STAMINA: 1 * dt,
       });
     }
@@ -262,7 +262,7 @@ class ActionTimingService {
 
   /// The boost ceiling granted by the speed stat.
   double maxSpeedForStat(int speedStat) {
-    return 2.0 + 0.1 * speedStat;
+    return 1.0 + 0.1 * speedStat;
   }
 
   void updateActionSpeed(

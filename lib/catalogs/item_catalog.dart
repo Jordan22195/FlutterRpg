@@ -18,8 +18,84 @@ enum ItemId {
 
   // Materials
   LOGS,
+
+  //  mining
   COPPER_ORE,
+  IRON_ORE,
+  COAL,
+  GOLD_ORE,
+  MITHRIL_ORE,
+  ADAMANTITE_ORE,
+  RUNEITE_ORE,
+
+  // bars
   COPPER_BAR,
+  IRON_BAR,
+  STEEL_BAR,
+  GOLD_BAR,
+  MITHRIL_BAR,
+  ADAMANTITE_BAR,
+  RUNITE_BAR,
+
+  //
+  //  BLACKSMITHING
+  //
+
+  // copper armor
+  COPPER_HELMET,
+  COPPER_CHESTPLATE,
+  COPPER_LEGS,
+  COPPER_BOOTS,
+  COPPER_SHIELD,
+  COPPER_GLOVES,
+
+  // copper weapons
+  COPPER_DAGGER,
+  COPPER_AXE,
+  COPPER_PICKAXE,
+  COPPER_SICKLE,
+
+  // iron armor
+  IRON_HELMET,
+  IRON_CHESTPLATE,
+  IRON_LEGS,
+  IRON_BOOTS,
+  IRON_SHIELD,
+  IRON_GLOVES,
+
+  // iron weapons
+  IRON_DAGGER,
+  IRON_AXE,
+  IRON_PICKAXE,
+  IRON_SICKLE,
+
+  // STEEL armor
+  STEEL_HELMET,
+  STEEL_CHESTPLATE,
+  STEEL_LEGS,
+  STEEL_BOOTS,
+  STEEL_SHIELD,
+  STEEL_GLOVES,
+
+  // STEEL weapons
+  STEEL_DAGGER,
+  STEEL_AXE,
+  STEEL_PICKAXE,
+  STEEL_SICKLE,
+
+  // MITHRIL armor
+  MITHRIL_HELMET,
+  MITHRIL_CHESTPLATE,
+  MITHRIL_LEGS,
+  MITHRIL_BOOTS,
+  MITHRIL_SHIELD,
+  MITHRIL_GLOVES,
+
+  // MITHRIL weapons
+  MITHRIL_DAGGER,
+  MITHRIL_AXE,
+  MITHRIL_PICKAXE,
+  MITHRIL_SICKLE,
 
   BASIC_CAMPFIRE,
 
@@ -73,21 +149,11 @@ enum ItemId {
   LIGHT_LEATHER_GLOVES,
 
   // tier 1 Armor
-  COPPER_HELMET,
-  COPPER_CHESTPLATE,
-  COPPER_LEGS,
-  COPPER_BOOTS,
-  COPPER_SHIELD,
-  COPPER_GLOVES,
 
   // UNIQUE WEAPONS
   PITCHFORK,
 
   // tier 1 Weapons
-  COPPER_DAGGER,
-  COPPER_AXE,
-  COPPER_PICKAXE,
-  COPPER_SICKLE,
 
   // herbs (herbalism), in ascending level order
   GUAM_LEAF,
@@ -112,23 +178,7 @@ enum ItemId {
 
   // tier 2 materials
   OAK_LOGS,
-  IRON_ORE,
-  IRON_BAR,
   OAK_CAMPFIRE,
-
-  // tier 2 armor
-  IRON_HELMET,
-  IRON_CHESTPLATE,
-  IRON_LEGS,
-  IRON_BOOTS,
-  IRON_SHIELD,
-  IRON_GLOVES,
-
-  // tier 2 weapons
-  IRON_DAGGER,
-  IRON_AXE,
-  IRON_PICKAXE,
-  IRON_SICKLE,
 
   // enchanting materials, one per equipment quality tier
   ENCHANTING_DUST,
@@ -147,8 +197,8 @@ enum ItemId {
   ONYX,
 
   // jewelry bases (blacksmithing)
-  COPPER_RING,
-  COPPER_NECKLACE,
+  GOLD_RING,
+  GOLD_NECKLACE,
 
   // jewelry (jewelcrafting: gem + base)
   TOPAZ_RING,
@@ -810,6 +860,11 @@ class ItemCatalog {
       value: 6,
       iconAsset: "assets/icons/items/iron_ore.png",
     ),
+    ItemId.COAL: ItemDefinition(
+      name: "Coal",
+      value: 6,
+      iconAsset: "assets/icons/items/coal.png",
+    ),
 
     // logs
     ItemId.LOGS: ItemDefinition(
@@ -912,13 +967,13 @@ class ItemCatalog {
 
     // jewelry bases (blacksmithing); plain stackable crafting components
     // that gems are set into at the jewelcrafting bench
-    ItemId.COPPER_RING: ItemDefinition(
+    ItemId.GOLD_RING: ItemDefinition(
       name: "Copper Ring",
       value: 8,
       description: "A plain band, ready for a gem.",
       iconAsset: "assets/icons/items/copper_ring.png",
     ),
-    ItemId.COPPER_NECKLACE: ItemDefinition(
+    ItemId.GOLD_NECKLACE: ItemDefinition(
       name: "Copper Necklace",
       value: 16,
       description: "A plain chain, ready for a gem.",

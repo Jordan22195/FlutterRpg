@@ -148,6 +148,25 @@ class WorldService {
     _inventoryService.clearItems(zone.discoveredItems);
   }
 
+  /// dev/testing helper: forces [entityId]'s remaining count in the
+  /// player's current zone. A node raised off zero gets its hitpoints back
+  /// too — at 0 hp every damage roll caps at 0 and it could never be
+  /// depleted again.
+  void setEntityCount(
+    EntityId entityId,
+    int count,
+    PlayerData playerState,
+    WorldData worldState,
+  ) {
+    final entity = getEntity(entityId, playerState.currentZoneId, worldState);
+    if (entity is! EncounterEntity) return;
+
+    entity.count = count < 0 ? 0 : count;
+    if (entity.count > 0 && entity.hitpoints <= 0) {
+      entity.hitpoints = entity.maxHitPoints;
+    }
+  }
+
   void removeEntityFromZone(
     EntityId entityId,
     ZoneId zoneId,

@@ -338,7 +338,7 @@ class RecipeCatalog {
       xp: 15,
       inputs: {ItemId.COPPER_BAR: 1},
       output: [
-        WeightedDropTableEntry(id: ItemId.COPPER_RING, count: 1, weight: 1),
+        WeightedDropTableEntry(id: ItemId.GOLD_RING, count: 1, weight: 1),
       ],
     ),
     CraftingRecipe(
@@ -349,11 +349,7 @@ class RecipeCatalog {
       xp: 20,
       inputs: {ItemId.COPPER_BAR: 2},
       output: [
-        WeightedDropTableEntry(
-          id: ItemId.COPPER_NECKLACE,
-          count: 1,
-          weight: 1,
-        ),
+        WeightedDropTableEntry(id: ItemId.GOLD_NECKLACE, count: 1, weight: 1),
       ],
     ),
 
@@ -465,11 +461,7 @@ class RecipeCatalog {
       xp: 60,
       inputs: {ItemId.IRON_BAR: 3},
       output: [
-        WeightedDropTableEntry(
-          id: ItemId.IRON_CHESTPLATE,
-          count: 1,
-          weight: 1,
-        ),
+        WeightedDropTableEntry(id: ItemId.IRON_CHESTPLATE, count: 1, weight: 1),
       ],
     ),
 
@@ -481,7 +473,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 1,
       xp: 20,
-      inputs: {ItemId.TOPAZ: 1, ItemId.COPPER_RING: 1},
+      inputs: {ItemId.TOPAZ: 1, ItemId.GOLD_RING: 1},
       output: [
         WeightedDropTableEntry(id: ItemId.TOPAZ_RING, count: 1, weight: 1),
       ],
@@ -492,7 +484,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 1,
       xp: 25,
-      inputs: {ItemId.TOPAZ: 1, ItemId.COPPER_NECKLACE: 1},
+      inputs: {ItemId.TOPAZ: 1, ItemId.GOLD_NECKLACE: 1},
       output: [
         WeightedDropTableEntry(id: ItemId.TOPAZ_NECKLACE, count: 1, weight: 1),
       ],
@@ -503,7 +495,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 5,
       xp: 30,
-      inputs: {ItemId.SAPPHIRE: 1, ItemId.COPPER_RING: 1},
+      inputs: {ItemId.SAPPHIRE: 1, ItemId.GOLD_RING: 1},
       output: [
         WeightedDropTableEntry(id: ItemId.SAPPHIRE_RING, count: 1, weight: 1),
       ],
@@ -514,7 +506,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 5,
       xp: 35,
-      inputs: {ItemId.SAPPHIRE: 1, ItemId.COPPER_NECKLACE: 1},
+      inputs: {ItemId.SAPPHIRE: 1, ItemId.GOLD_NECKLACE: 1},
       output: [
         WeightedDropTableEntry(
           id: ItemId.SAPPHIRE_NECKLACE,
@@ -529,7 +521,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 10,
       xp: 40,
-      inputs: {ItemId.EMERALD: 1, ItemId.COPPER_RING: 1},
+      inputs: {ItemId.EMERALD: 1, ItemId.GOLD_RING: 1},
       output: [
         WeightedDropTableEntry(id: ItemId.EMERALD_RING, count: 1, weight: 1),
       ],
@@ -540,7 +532,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 10,
       xp: 45,
-      inputs: {ItemId.EMERALD: 1, ItemId.COPPER_NECKLACE: 1},
+      inputs: {ItemId.EMERALD: 1, ItemId.GOLD_NECKLACE: 1},
       output: [
         WeightedDropTableEntry(
           id: ItemId.EMERALD_NECKLACE,
@@ -555,7 +547,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 15,
       xp: 50,
-      inputs: {ItemId.RUBY: 1, ItemId.COPPER_RING: 1},
+      inputs: {ItemId.RUBY: 1, ItemId.GOLD_RING: 1},
       output: [
         WeightedDropTableEntry(id: ItemId.RUBY_RING, count: 1, weight: 1),
       ],
@@ -566,7 +558,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 15,
       xp: 55,
-      inputs: {ItemId.RUBY: 1, ItemId.COPPER_NECKLACE: 1},
+      inputs: {ItemId.RUBY: 1, ItemId.GOLD_NECKLACE: 1},
       output: [
         WeightedDropTableEntry(id: ItemId.RUBY_NECKLACE, count: 1, weight: 1),
       ],
@@ -577,7 +569,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 20,
       xp: 65,
-      inputs: {ItemId.DIAMOND: 1, ItemId.COPPER_RING: 1},
+      inputs: {ItemId.DIAMOND: 1, ItemId.GOLD_RING: 1},
       output: [
         WeightedDropTableEntry(id: ItemId.DIAMOND_RING, count: 1, weight: 1),
       ],
@@ -588,7 +580,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 20,
       xp: 70,
-      inputs: {ItemId.DIAMOND: 1, ItemId.COPPER_NECKLACE: 1},
+      inputs: {ItemId.DIAMOND: 1, ItemId.GOLD_NECKLACE: 1},
       output: [
         WeightedDropTableEntry(
           id: ItemId.DIAMOND_NECKLACE,
@@ -603,7 +595,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 25,
       xp: 80,
-      inputs: {ItemId.DRAGONSTONE: 1, ItemId.COPPER_RING: 1},
+      inputs: {ItemId.DRAGONSTONE: 1, ItemId.GOLD_RING: 1},
       output: [
         WeightedDropTableEntry(
           id: ItemId.DRAGONSTONE_RING,
@@ -618,7 +610,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 25,
       xp: 85,
-      inputs: {ItemId.DRAGONSTONE: 1, ItemId.COPPER_NECKLACE: 1},
+      inputs: {ItemId.DRAGONSTONE: 1, ItemId.GOLD_NECKLACE: 1},
       output: [
         WeightedDropTableEntry(
           id: ItemId.DRAGONSTONE_NECKLACE,
@@ -633,7 +625,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 30,
       xp: 100,
-      inputs: {ItemId.ONYX: 1, ItemId.COPPER_RING: 1},
+      inputs: {ItemId.ONYX: 1, ItemId.GOLD_RING: 1},
       output: [
         WeightedDropTableEntry(id: ItemId.ONYX_RING, count: 1, weight: 1),
       ],
@@ -644,7 +636,7 @@ class RecipeCatalog {
       skill: SkillId.JEWELCRAFTING,
       levelRequirement: 30,
       xp: 110,
-      inputs: {ItemId.ONYX: 1, ItemId.COPPER_NECKLACE: 1},
+      inputs: {ItemId.ONYX: 1, ItemId.GOLD_NECKLACE: 1},
       output: [
         WeightedDropTableEntry(id: ItemId.ONYX_NECKLACE, count: 1, weight: 1),
       ],

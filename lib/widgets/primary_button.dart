@@ -33,7 +33,7 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
   // how far above the button the empty lock slot sits. this doubles as the
   // drag distance: dragging the button the full offset seats it in the slot
   // and commits the lock.
-  static const double _lockSlotOffset = 30.0;
+  static const double _lockSlotOffset = 20.0;
 
   // how long the button must be held before the momentum boost kicks in.
   // GestureDetector hardcodes kLongPressTimeout (500ms), which felt sluggish,
@@ -74,7 +74,12 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
         widget.startActionFunction();
       }
       controller.lockActionSpeed();
-      setState(() => _dragOffsetY = 0.0);
+      // drop out of drag tracking so the button eases back down to rest
+      // instead of teleporting there while the finger is still down
+      setState(() {
+        _dragging = false;
+        _dragOffsetY = 0.0;
+      });
       return;
     }
 
@@ -118,8 +123,9 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // nothing to lock when the action can't be taken at all
-              if (widget.enabled)
+              // nothing to lock when the action can't be taken at all, and
+              // nothing to drag into once the lock is committed
+              if (widget.enabled && !locked)
                 Positioned(
                   top: 0,
                   left: 0,
@@ -130,10 +136,12 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
 
               AnimatedPositioned(
                 // 1:1 with the finger while dragging, eased when springing
-                // back or settling into the slot
+                // back. committing the lock springs it back too: the button
+                // rests where it always does and the lock icon on its face
+                // is what says the speed is held
                 duration: _dragging ? Duration.zero : _snapDuration,
                 curve: Curves.easeOut,
-                top: locked ? 0.0 : _lockSlotOffset + _dragOffsetY,
+                top: _lockSlotOffset + _dragOffsetY,
                 left: 0,
                 right: 0,
                 height: _buttonHeight,
@@ -293,8 +301,8 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
   }
 
   /// The empty slot the button drags up into. Its lock icon sits in the strip
-  /// left exposed above the button, so it stays visible until the button
-  /// slides up and fills the outline.
+  /// left exposed above the button. Once the lock commits the slot is gone
+  /// and the button drops back to rest.
   Widget _buildLockSlot(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
