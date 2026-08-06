@@ -19,9 +19,7 @@ class OverflowChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(
-      shape == BoxShape.circle ? size : 10,
-    );
+    final radius = BorderRadius.circular(shape == BoxShape.circle ? size : 10);
 
     return InkWell(
       borderRadius: radius,

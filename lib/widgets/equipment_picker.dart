@@ -381,7 +381,9 @@ class _PickerCard extends StatelessWidget {
               : (diff > 0
                     ? '+${diff.toStringAsFixed(1)}s'
                     : '−${(-diff).toStringAsFixed(1)}s'),
-          deltaColor: (diff != null && diff < 0) ? statGainColor : statLossColor,
+          deltaColor: (diff != null && diff < 0)
+              ? statGainColor
+              : statLossColor,
         ),
       );
     }

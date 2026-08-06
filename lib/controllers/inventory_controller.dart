@@ -72,7 +72,10 @@ class InventoryController extends ChangeNotifier {
     return _inventoryService.getEquipmentForSlot(slot, _inventoryData);
   }
 
-  List<EquipmentItem> getSlotItemListForSkill(ArmorSlots slot, SkillId skillId) {
+  List<EquipmentItem> getSlotItemListForSkill(
+    ArmorSlots slot,
+    SkillId skillId,
+  ) {
     return _inventoryService.getEquipmentForSlotAndSkill(
       slot,
       _inventoryData,

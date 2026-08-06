@@ -107,9 +107,7 @@ class CraftingSystem {
   /// always the most likely outcome; levels above the recipe requirement
   /// shift weight toward the higher tiers.
   ItemQuality rollQuality(int skillLevel, int levelRequirement) {
-    final levelBonus = (skillLevel - levelRequirement)
-        .clamp(0, 99)
-        .toDouble();
+    final levelBonus = (skillLevel - levelRequirement).clamp(0, 99).toDouble();
     final entries = [
       WeightedDropTableEntry<ItemQuality>(id: ItemQuality.COMMON, weight: 100),
       WeightedDropTableEntry<ItemQuality>(

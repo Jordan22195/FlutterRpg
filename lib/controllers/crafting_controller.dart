@@ -66,8 +66,7 @@ class CraftingController extends ChangeNotifier {
 
   // the selection belonging to the crafting entity the player is viewing
   String get selectedRecipeId =>
-      _craftingState.selectedRecipeByEntity[_playerState
-          .currentEntityViewId] ??
+      _craftingState.selectedRecipeByEntity[_playerState.currentEntityViewId] ??
       "";
 
   String get activeRecipeId => _craftingState.activeRecipeId;
@@ -131,7 +130,6 @@ class CraftingController extends ChangeNotifier {
     }
     notifyListeners();
   }
-
 
   void selectRecipe(String recipeId) {
     // selections are stored per crafting entity

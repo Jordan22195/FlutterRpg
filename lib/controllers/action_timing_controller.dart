@@ -22,16 +22,17 @@ class ActionTimingData {
   FutureOr<void> Function() onFire = () {};
   Duration maxInterval = Duration(seconds: 1);
 
+  bool boostingSpeed = true;
+
   double accelPerSecond =
-      0.25; // how quickly speed bar fills when button is held
+      0.5; // how quickly speed bar fills when button is held
   double decelPerSecond =
-      .5; // how quickly speed bar empties when button is released
+      .75; // how quickly speed bar empties when button is released
 
   // the boost ceiling; refreshed from the speed stat every frame.
-  // min action interval = max action interval / maxSpeedMultiplier
-  double maxSpeedMultiplier = 2.0;
+  double maxBoostMultiplier = 2.0;
 
-  bool speedLocked =
+  bool boostLocked =
       false; // speed will not change (unless out of stamina) when this is true.
 
   bool running = false;
@@ -44,8 +45,9 @@ class ActionTimingData {
   Enum? activityIconId;
   int Function()? activityCount;
 
-  double speedPercent = 0.0; // 0 to 1 percentage of maximum speed.
-  double actionProgress = 0.0; // 0 to 1 percentage of action progress
+  double percentOfMaxBoost = 0.0; // 0 to 1 percentage of maximum speed.
+  double actionProgressPercentComplete =
+      0.0; // 0 to 1 percentage of action progress
 
   Duration lastElapsed = Duration.zero;
 }
@@ -89,12 +91,12 @@ class ActionTimingController extends ChangeNotifier {
   }
 
   bool getActionSpeedLockState() {
-    return _actionTimingState.speedLocked;
+    return _actionTimingState.boostLocked;
   }
 
-  double get percentMaxSpeed => _actionTimingState.speedPercent;
+  double get percentMaxSpeed => _actionTimingState.percentOfMaxBoost;
 
-  double get actionProgress => _actionTimingState.actionProgress;
+  double get actionProgress => _actionTimingState.actionProgressPercentComplete;
 
   Duration getCurrentActionDuration() {
     return _actionTimingService.getCurrentActionDuration(_actionTimingState);
@@ -185,9 +187,12 @@ class ActionSpeedSystem {
   // the momentum loop, once per frame:
   // - the speed stat sets the boost ceiling
   // - holding the button accelerates toward the ceiling
-  // - boosting drains stamina faster the harder the boost
-  // - the recovery stat restores stamina at a steady rate, so a gentle
-  //   boost whose drain matches recovery can be held indefinitely
+  // - boosting drains stamina faster the harder the boost, and a locked
+  //   boost drains exactly as a held one does
+  // - the recovery stat restores stamina, but only once nothing is holding
+  //   the boost up: neither a finger on the button nor the speed lock
+  // - draining to empty breaks the lock, so the boost falls off rather than
+  //   snapping back as soon as stamina trickles in
   void frameUpdate(
     Duration elapsed,
     ActionTimingData actionTimingState,
@@ -203,31 +208,45 @@ class ActionSpeedSystem {
 
     // refresh the boost ceiling from the speed stat
     final stats = _playerDataService.getStatTotals(playerState);
-    actionTimingState.maxSpeedMultiplier = _actionTimingService.maxSpeedForStat(
-      stats[SkillId.SPEED] ?? 1,
+    final skillBoost = playerState.skillBoost;
+    if (skillBoost == SkillId.SPEED) {
+      actionTimingState.boostingSpeed = true;
+    } else {
+      actionTimingState.boostingSpeed = false;
+    }
+    actionTimingState.maxBoostMultiplier = actionTimingState.boostingSpeed
+        ? _actionTimingService.maxSpeedBoostForStat(stats[SkillId.SPEED] ?? 1)
+        : _actionTimingService.maxStrengthBoostForStat(
+            stats[SkillId.STRENGTH] ?? 1,
+          );
+
+    _actionTimingService.accelerateActionBoostValue(
+      dt,
+      actionTimingState,
+      playerState,
     );
-
-    _actionTimingService.updateActionSpeed(dt, actionTimingState, playerState);
-
     // icriment action progress based on time elapsed and current action interval
     _actionTimingService.udpateActionProgress(dt, actionTimingState);
 
     // if action progress is > 100% try and fire the action and roll over the
     // progress percentage.
-    if (actionTimingState.actionProgress >= 1.0) {
-      actionTimingState.actionProgress = actionTimingState.actionProgress % 1.0;
+    if (actionTimingState.actionProgressPercentComplete >= 1.0) {
+      actionTimingState.actionProgressPercentComplete =
+          actionTimingState.actionProgressPercentComplete % 1.0;
       _actionTimingService.tryFire(actionTimingState);
     }
 
-    final speed = _actionTimingService.getCurrentSpeedMultiplier(
+    // calculate stamina drain and xp gains
+    final boostMulitplier = _actionTimingService.getCurrentSpeedMultiplier(
       actionTimingState,
     );
+    _playerDataService.setBoostMultiplier(boostMulitplier, playerState);
 
     // stamina flow: drain scales with how boosted you are; recovery is a
     // steady rate from the recovery stat. the net is applied clamped to
     // [0, max stamina]
     final drainPerSecond =
-        ActionTimingService.staminaDrainPerBoost * (speed - 1);
+        ActionTimingService.staminaDrainPerBoost * (boostMulitplier - 1);
     final recoveryPerSecond = _playerDataService.staminaRecoveryPerSecond(
       playerState,
     );
@@ -235,7 +254,8 @@ class ActionSpeedSystem {
         playerState.stamina < _playerDataService.getMaxStamina(playerState);
 
     // only recover if the button is not held
-    if (actionTimingState.buttonHeld == false) {
+    if (actionTimingState.buttonHeld == false &&
+        actionTimingState.boostLocked == false) {
       _playerDataService.changeStamina((recoveryPerSecond) * dt, playerState);
       if (wasBelowMax && recoveryPerSecond > 0) {
         _playerDataService.applyXp(playerState, {
@@ -247,9 +267,10 @@ class ActionSpeedSystem {
     }
     // xp: speed trains while boosting, stamina trains while draining,
     // recovery trains while it has something to restore
-    if (speed > 1) {
+    if (boostMulitplier > 1) {
       _playerDataService.applyXp(playerState, {
-        SkillId.SPEED: speed * 1 * dt,
+        actionTimingState.boostingSpeed ? SkillId.SPEED : SkillId.STRENGTH:
+            boostMulitplier * 1 * dt,
         SkillId.STAMINA: 1 * dt,
       });
     }
@@ -258,44 +279,58 @@ class ActionSpeedSystem {
 
 class ActionTimingService {
   /// Stamina drained per second per point of boost (speed above 1x).
-  static const double staminaDrainPerBoost = 1.0;
+  static const double staminaDrainPerBoost = 2.0;
 
   /// The boost ceiling granted by the speed stat.
-  double maxSpeedForStat(int speedStat) {
-    return 1.0 + 0.1 * speedStat;
+  double maxSpeedBoostForStat(int speedStat) {
+    return 1.0 + 0.05 * speedStat;
   }
 
-  void updateActionSpeed(
+  /// The boost ceiling granted by the strength stat.
+  double maxStrengthBoostForStat(int strengthStat) {
+    return 1.0 + 0.1 * strengthStat;
+  }
+
+  // increase or decrease boost based on if button is held or not
+  // uses acceleration and deceleration values for the rate of change
+  void accelerateActionBoostValue(
     double dt,
     ActionTimingData actionTimingState,
     PlayerData playerState,
   ) {
     final hasStamina = playerState.stamina > 0;
 
-    // a locked speed holds steady, but running out of stamina always
-    // forces the boost to fall off
-    if (actionTimingState.speedLocked && hasStamina) {
+    // running out of stamina breaks the lock outright. there is nothing left
+    // to hold the boost up with, so the lock is dropped rather than left
+    // engaged to snap the speed back the moment stamina trickles in again.
+    if (!hasStamina && actionTimingState.boostLocked) {
+      setLockActionSpeed(false, actionTimingState);
+    }
+
+    // a locked speed holds steady
+    if (actionTimingState.boostLocked) {
       return;
     }
 
     // momentum update
-    if (!actionTimingState.speedLocked &&
-        actionTimingState.buttonHeld &&
-        hasStamina) {
-      actionTimingState.speedPercent =
-          (actionTimingState.speedPercent +
+    if (actionTimingState.buttonHeld && hasStamina) {
+      // calculate the current percentage of max boost (0 .. 1)
+      // increase boost amount by accerlation amount if button is pressed
+      actionTimingState.percentOfMaxBoost =
+          (actionTimingState.percentOfMaxBoost +
                   actionTimingState.accelPerSecond * dt)
               .clamp(0.0, 1.0);
     } else {
-      actionTimingState.speedPercent =
-          (actionTimingState.speedPercent -
+      // decrease boost bar amount be deceleration amount if button is not held
+      actionTimingState.percentOfMaxBoost =
+          (actionTimingState.percentOfMaxBoost -
                   actionTimingState.decelPerSecond * dt)
               .clamp(0.0, 1.0);
     }
   }
 
   void setLockActionSpeed(bool locked, ActionTimingData actionTimingState) {
-    actionTimingState.speedLocked = locked;
+    actionTimingState.boostLocked = locked;
   }
 
   void setPrimaryButtonHeld(bool held, ActionTimingData state) {
@@ -305,7 +340,7 @@ class ActionTimingService {
   void udpateActionProgress(double dt, ActionTimingData actionTimingState) {
     final intervalSec =
         getCurrentActionDuration(actionTimingState).inMicroseconds / 1e6;
-    actionTimingState.actionProgress += dt / intervalSec;
+    actionTimingState.actionProgressPercentComplete += dt / intervalSec;
   }
 
   double actionsPerSecond(ActionTimingData actionTimingState) {
@@ -317,18 +352,18 @@ class ActionTimingService {
 
   /// Returns the current speed multiplier relative to the max interval.
   double getCurrentSpeedMultiplier(ActionTimingData actionTimingState) {
-    return actionTimingState.speedPercent *
-            (actionTimingState.maxSpeedMultiplier - 1) +
+    return actionTimingState.percentOfMaxBoost *
+            (actionTimingState.maxBoostMultiplier - 1) +
         1;
   }
 
   void stop(ActionTimingData actionTimingState) {
     actionTimingState.running = false;
-    actionTimingState.actionProgress = 0.0;
-    actionTimingState.speedPercent = 0.0;
+    actionTimingState.actionProgressPercentComplete = 0.0;
+    actionTimingState.percentOfMaxBoost = 0.0;
     actionTimingState.buttonHeld = false;
     actionTimingState.lastElapsed = Duration.zero;
-    actionTimingState.speedLocked = false;
+    actionTimingState.boostLocked = false;
     actionTimingState.activityIconId = null;
     actionTimingState.activityCount = null;
   }
@@ -340,9 +375,10 @@ class ActionTimingService {
   }
 
   Duration getCurrentActionDuration(ActionTimingData actionTimingState) {
-    final ms =
-        actionTimingState.maxInterval.inMilliseconds /
-        getCurrentSpeedMultiplier(actionTimingState);
+    final ms = actionTimingState.boostingSpeed
+        ? actionTimingState.maxInterval.inMilliseconds /
+              getCurrentSpeedMultiplier(actionTimingState)
+        : actionTimingState.maxInterval.inMilliseconds;
 
     return Duration(milliseconds: ms.round());
   }

@@ -11,8 +11,7 @@ class TopRouteObserver extends NavigatorObserver {
 
   final List<Route<dynamic>> _stack = [];
 
-  String? get topRouteName =>
-      _stack.isEmpty ? null : _stack.last.settings.name;
+  String? get topRouteName => _stack.isEmpty ? null : _stack.last.settings.name;
 
   /// Settings of the named routes on the stack, bottom to top. Unnamed
   /// routes (the tab root, dialogs) are skipped.

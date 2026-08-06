@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/catalogs/recipe_catalog.dart';
 import 'package:rpg/widgets/equipment_info_dialog.dart';
@@ -8,7 +7,6 @@ import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';
-import 'package:rpg/widgets/queue_add_button.dart';
 import 'package:rpg/widgets/skil_tile.dart';
 
 class CraftingScreen extends StatefulWidget {
@@ -179,26 +177,14 @@ class _CraftingScreenState extends State<CraftingScreen>
             ),
 
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: MomentumPrimaryButton(
-                    enabled: canCraft,
-                    label: "Craft",
-                    startActionFunction: () {
-                      controller.startCraftingAction();
-                    },
-                  ),
-                ),
-                SizedBox(width: 8),
-                QueueAddButton(
-                  enabled: false,
-                  onQueue: () => context
-                      .read<ActionQueueController>()
-                      .enqueueCraft(selectedRecipeId),
-                ),
-              ],
+            ActionButtonRow(
+              actionButton: MomentumPrimaryButton(
+                enabled: canCraft,
+                label: "Craft",
+                startActionFunction: () {
+                  controller.startCraftingAction();
+                },
+              ),
             ),
           ],
         ),

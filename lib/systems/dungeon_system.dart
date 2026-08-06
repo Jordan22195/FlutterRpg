@@ -148,7 +148,11 @@ class DungeonSystem {
     final entity = run.fight.entity!;
 
     final stats = _playerDataService.getStatTotals(playerState);
-    final r = _encounterService.resolvePlayerDamage(stats, playerState, run.fight);
+    final r = _encounterService.resolvePlayerDamage(
+      stats,
+      playerState,
+      run.fight,
+    );
     result.damageDone = r.damageDone;
     result.enemyDied = r.enemyDied;
 

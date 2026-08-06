@@ -9,6 +9,7 @@ const Map<SkillCategory, List<SkillId>> kSkillsByCategory = {
   SkillCategory.core: [
     SkillId.STAMINA,
     SkillId.SPEED,
+    SkillId.STRENGTH,
     SkillId.RECOVERY,
   ],
   SkillCategory.combat: [

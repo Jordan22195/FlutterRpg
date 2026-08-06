@@ -5,12 +5,10 @@ import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
-import '../controllers/action_queue_controller.dart';
 import '../data/skill_data.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/entity_info_dialog.dart';
 import '../widgets/explore_card.dart';
-import '../widgets/queue_add_button.dart';
 import '../widgets/skill_ring_row.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -262,55 +260,60 @@ class _ExploreScreenState extends State<ExploreScreen> {
         Card(child: InventoryGrid(items: zoneItems, shrinkWrap: true)),
       ],
     ];
+    listChildren.insert(
+      0, // Exploration + energy-system skills trained by exploring
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: SkillRingRow(
+          skills: _exploreSkills,
+          alignment: MainAxisAlignment.spaceEvenly,
+        ),
+      ),
+    );
+    listChildren.insert(
+      0,
+      SizedBox(
+        width: double.infinity,
+        height: 140,
+        child: zoneDef.iconAsset.isEmpty
+            ? const ColoredBox(color: Colors.black26)
+            : Image.asset(
+                zoneDef.iconAsset,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) =>
+                    const ColoredBox(color: Colors.black26),
+              ),
+      ),
+    );
+    listChildren.insert(
+      0, // Top "app bar" row with a back button that pops the MAP tab navigator
+      Padding(
+        padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                zoneDef.name,
+                style: Theme.of(context).textTheme.titleLarge,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 
     // IMPORTANT: no Scaffold here — MainShell owns the Scaffold + BottomNav.
     return SafeArea(
       child: Column(
         children: [
-          // Top "app bar" row with a back button that pops the MAP tab navigator
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.of(context).maybePop(),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    zoneDef.name,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          SizedBox(
-            width: double.infinity,
-            height: 140,
-            child: zoneDef.iconAsset.isEmpty
-                ? const ColoredBox(color: Colors.black26)
-                : Image.asset(
-                    zoneDef.iconAsset,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) =>
-                        const ColoredBox(color: Colors.black26),
-                  ),
-          ),
-
-          // Exploration + energy-system skills trained by exploring
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: SkillRingRow(
-              skills: _exploreSkills,
-              alignment: MainAxisAlignment.spaceEvenly,
-            ),
-          ),
-
           // Filter chips: All / Structures / one per zone skill
+          /*
           SizedBox(
             height: 40,
             child: ListView(
@@ -344,7 +347,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ],
             ),
           ),
-
+*/
           // Filtered entity list
           Expanded(
             child: ListView(
@@ -353,30 +356,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
           ),
 
-          Row(
-            children: [
-              // primary action button
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: MomentumPrimaryButton(
-                  enabled: true,
-                  label: "Explore",
-                  startActionFunction: () {
-                    worldController.startExplore();
-                  },
-                ),
-              ),
-              SizedBox(width: 8),
-              // stop action button
-              QueueAddButton(
-                enabled: false,
-                onQueue: () =>
-                    context.read<ActionQueueController>().enqueueExplore(),
-              ),
-            ],
+          // Bottom action bar (sits above the shell bottom nav automatically)
+          ActionButtonRow(
+            actionButton: MomentumPrimaryButton(
+              enabled: true,
+              label: "Explore",
+              startActionFunction: () {
+                worldController.startExplore();
+              },
+            ),
           ),
-
-          // Bottom action button (sits above the shell bottom nav automatically)
         ],
       ),
     );

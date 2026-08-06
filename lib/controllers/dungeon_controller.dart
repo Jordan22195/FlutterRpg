@@ -114,6 +114,12 @@ class DungeonController extends ChangeNotifier {
 
   void _bindAndStart() {
     _actionTimingController.stop();
+
+    // a stance carried in from gathering isn't offered by a dungeon fight
+    final entity = _run.fight.entity;
+    if (entity != null) {
+      _playerDataService.coerceStanceFor(entity, _playerState);
+    }
     _actionTimingController.bindOnFireFunction(
       doDungeonAction,
       activityIconId: _run.dungeonId,
@@ -247,8 +253,7 @@ class DungeonController extends ChangeNotifier {
   bool get atBossFloorChoice {
     final def = activeDefinition;
     if (def == null) return false;
-    return _run.awaitingFloorChoice &&
-        _run.floorIndex + 1 >= def.floors.length;
+    return _run.awaitingFloorChoice && _run.floorIndex + 1 >= def.floors.length;
   }
 
   FloorStatus floorStatus(int floorIndex) {

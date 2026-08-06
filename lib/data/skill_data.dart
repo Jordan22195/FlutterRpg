@@ -6,6 +6,8 @@ enum SkillId {
   // each point of stam spent is 1xp
   SPEED, // each point increases max speed (reduces min action interval) by a percent
   // actions done at near top speed give xp
+  STRENGTH, // alternate boost stat: each point raises the boost ceiling like speed does.
+  // the boost behaviour itself is not wired yet - see ActionSpeedSystem.frameUpdate
   RECOVERY, // stamina recovers over time at a rate set by this stat
   // trains while stamina is actively being restored
   // COMBAT
@@ -117,6 +119,8 @@ class SkillController extends ChangeNotifier {
           return AssetImage('assets/icons/skills/recovery.png');
         case SkillId.SPEED:
           return AssetImage('assets/icons/skills/speed.png');
+        case SkillId.STRENGTH:
+          return AssetImage('assets/icons/skills/strength.png');
         case SkillId.STAMINA:
           return AssetImage('assets/icons/skills/stamina.png');
         case SkillId.EXPLORATION:

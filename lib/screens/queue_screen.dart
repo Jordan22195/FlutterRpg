@@ -131,20 +131,14 @@ class QueueScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: MomentumPrimaryButton(
-                    enabled: tasks.isNotEmpty,
-                    label: "Run Queue",
-                    startActionFunction: () {
-                      queue.startQueue();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
+            ActionButtonRow(
+              actionButton: MomentumPrimaryButton(
+                enabled: tasks.isNotEmpty,
+                label: "Run Queue",
+                startActionFunction: () {
+                  queue.startQueue();
+                },
+              ),
             ),
           ],
         ),

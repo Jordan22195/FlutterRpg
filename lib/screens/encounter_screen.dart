@@ -8,14 +8,14 @@ import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entity_catalog.dart';
-import '../controllers/action_queue_controller.dart';
 import '../controllers/encounter_controller.dart';
 import '../controllers/equipment_controller.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/primary_button.dart';
-import '../widgets/queue_add_button.dart';
+import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../widgets/skill_ring_row.dart';
+import '../widgets/stance_button.dart';
 import '../widgets/icon_renderer.dart';
 import '../widgets/fading_number.dart';
 import '../data/ObjectStack.dart';
@@ -263,6 +263,10 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         ? [skillType, SkillId.HITPOINTS, SkillId.DEFENCE]
         : [skillType];
 
+    // combat picks an attack style; mining and woodcutting pick strong or
+    // fast; everything else is locked to fast by the encounter start
+    final stances = stancesForEntity(entity);
+
     final labelStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
     );
@@ -386,6 +390,15 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
               ),
             ),
 
+            // stance, pinned with the action bar so it stays reachable
+            // mid-action. an entity with a single stance offers no choice,
+            // so the row is left out entirely
+            if (stances.length > 1)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: StanceButton(stances: stances),
+              ),
+
             buildActionBar(context, view),
           ],
         ),
@@ -437,21 +450,20 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
   Widget buildActionBar(BuildContext context, CombatViewState view) {
     final controller = context.read<EncounterController>();
 
-    return Row(
-      children: [
-        MomentumPrimaryButton(
-          // a depleted entity has nothing left to take: the action
-          // conditions reject it, so the button says so up front
-          enabled: !view.locked && view.entity.count > 0,
-          label: "Action",
-          startActionFunction: () {
-            controller.startEncounterAction();
-          },
-        ),
-        const SizedBox(width: 8),
+    return ActionButtonRow(
+      actionButton: MomentumPrimaryButton(
+        // a depleted entity has nothing left to take: the action
+        // conditions reject it, so the button says so up front
+        enabled: !view.locked && view.entity.count > 0,
+        label: "Action",
+        startActionFunction: () {
+          controller.startEncounterAction();
+        },
+      ),
+      trailing: [
         // gathering entities don't fight back, so there is nothing to eat
         // through; the eat control is combat-only
-        if (view.entity is CombatEntity) ...[
+        if (view.entity is CombatEntity)
           EatFoodButton(
             foodItemId: view.foodItemId,
             foodItemCount: view.foodItemCount,
@@ -461,14 +473,6 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
               (id) => context.read<EquipmentController>().setEquipedFood(id),
             ),
           ),
-          const SizedBox(width: 8),
-        ],
-        QueueAddButton(
-          enabled: false,
-          onQueue: () => context.read<ActionQueueController>().enqueueEncounter(
-            view.entity.id,
-          ),
-        ),
       ],
     );
   }

@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 // small button that adds the screen's action to the action queue.
 // sits next to the primary action button on action screens.
 class QueueAddButton extends StatelessWidget {
-  const QueueAddButton({super.key, required this.enabled, required this.onQueue});
+  const QueueAddButton({
+    super.key,
+    required this.enabled,
+    required this.onQueue,
+  });
 
   final bool enabled;
   final VoidCallback onQueue;

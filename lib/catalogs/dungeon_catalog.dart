@@ -4,11 +4,7 @@ import 'entity_catalog.dart';
 import 'item_catalog.dart';
 import '../data/skill_data.dart';
 
-enum DungeonId {
-  NULL,
-  GOBLIN_QUEEN_LAIR,
-  SPIDER_DEN,
-}
+enum DungeonId { NULL, GOBLIN_QUEEN_LAIR, SPIDER_DEN }
 
 /// How a dungeon is reached and how it behaves on entry/exit.
 /// - [TRANSIENT]: stumbled on while exploring; free entry; one-shot (not

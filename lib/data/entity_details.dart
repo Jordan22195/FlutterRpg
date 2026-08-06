@@ -88,8 +88,7 @@ class EntityDetails {
   /// Whether actions against this entity roll damage against its
   /// hitpoints. Fishing spots replenish and herbs are picked in one
   /// action, so neither has a damage/kill cycle.
-  bool get usesDamage =>
-      skill != SkillId.FISHING && skill != SkillId.HERBALISM;
+  bool get usesDamage => skill != SkillId.FISHING && skill != SkillId.HERBALISM;
 
   double get playerMissChance => 1.0 - playerHitChance;
 

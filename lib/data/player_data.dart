@@ -4,6 +4,44 @@ import 'equipment_data.dart';
 import '../catalogs/zone_catalog.dart';
 import '../data/buff_data.dart';
 
+/// Stance: which skill the action loop boosts during an encounter.
+/// Picked on the combat screen; sets [PlayerData.skillBoost].
+enum Stance { offensive, defensive, strong, fast }
+
+const Map<Stance, SkillId> kStanceBoostSkill = {
+  Stance.offensive: SkillId.ATTACK,
+  Stance.defensive: SkillId.DEFENCE,
+  Stance.strong: SkillId.STRENGTH,
+  Stance.fast: SkillId.SPEED,
+};
+
+String stanceLabel(Stance stance) {
+  switch (stance) {
+    case Stance.offensive:
+      return 'Offensive';
+    case Stance.defensive:
+      return 'Defensive';
+    case Stance.strong:
+      return 'Strong';
+    case Stance.fast:
+      return 'Fast';
+  }
+}
+
+/// The stances an encounter offers, in display order. Combat picks an attack
+/// style; mining and woodcutting trade power for pace. Everything else runs
+/// fast with nothing to choose - see [PlayerDataService.coerceStanceFor].
+List<Stance> stancesForEntity(EncounterEntity entity) {
+  if (entity is CombatEntity) {
+    return const [Stance.offensive, Stance.defensive, Stance.fast];
+  }
+  if (entity.entityType == SkillId.MINING ||
+      entity.entityType == SkillId.WOODCUTTING) {
+    return const [Stance.strong, Stance.fast];
+  }
+  return const [Stance.fast];
+}
+
 class PlayerData {
   // location info
   ZoneId currentZoneId;
@@ -14,10 +52,12 @@ class PlayerData {
   BuffData buffData;
   Map<SkillId, SkillData> skillData;
   EquipmentData equipmentData;
+  SkillId skillBoost = SkillId.SPEED;
 
   // mutable stats
   int hitpoints = 10;
   double stamina = 0;
+  double boostMultiplier = 1.0;
 
   PlayerData({
     required this.currentZoneId,

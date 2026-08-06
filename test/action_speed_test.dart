@@ -61,7 +61,7 @@ void main() {
     run(state, player, seconds: 0.1);
 
     // 2.0 base + 0.1 per speed level
-    expect(state.maxSpeedMultiplier, closeTo(4.0, 0.001));
+    expect(state.maxBoostMultiplier, closeTo(4.0, 0.001));
   });
 
   test('holding the button boosts speed and drains stamina', () {
@@ -73,7 +73,7 @@ void main() {
     state.buttonHeld = true;
     run(state, player, seconds: 2);
 
-    expect(state.speedPercent, greaterThan(0.3));
+    expect(state.percentOfMaxBoost, greaterThan(0.3));
     expect(player.stamina, lessThan(10)); // drain beat lvl-1 recovery
     // boosting trains speed and stamina
     expect(player.skillData[SkillId.SPEED]!.xp, greaterThan(0));
@@ -96,17 +96,58 @@ void main() {
     expect(player.stamina, 10);
   });
 
+  test('a locked boost drains stamina with no finger on the button', () {
+    final player = newPlayer();
+    setLevel(player, SkillId.SPEED, 20); // ceiling 2x -> 1.0/sec at full
+    player.stamina = 10;
+
+    final state = ActionTimingData();
+    state.percentOfMaxBoost = 1.0;
+    state.boostLocked = true;
+    state.buttonHeld = false;
+    run(state, player, seconds: 2);
+
+    // lvl-1 recovery (0.1/sec) is nowhere near the drain
+    expect(player.stamina, lessThan(10));
+    // and the lock held the boost up while it drained
+    expect(state.percentOfMaxBoost, 1.0);
+  });
+
   test('running out of stamina forces a locked boost to fall off', () {
     final player = newPlayer();
     setLevel(player, SkillId.SPEED, 30); // max 5x -> heavy drain at full
     player.stamina = 1;
 
     final state = ActionTimingData();
-    state.speedPercent = 1.0;
-    state.speedLocked = true;
+    state.percentOfMaxBoost = 1.0;
+    state.boostLocked = true;
     run(state, player, seconds: 3);
 
-    expect(state.speedPercent, lessThan(1.0));
+    expect(state.percentOfMaxBoost, lessThan(1.0));
+    // the lock is released outright, so recovering stamina doesn't snap
+    // the speed straight back up
+    expect(state.boostLocked, isFalse);
+  });
+
+  test('a released lock stays released once stamina recovers', () {
+    final player = newPlayer();
+    setLevel(player, SkillId.RECOVERY, 20); // 2.0/sec back
+    setLevel(player, SkillId.SPEED, 30);
+    player.stamina = 1;
+
+    final state = ActionTimingData();
+    state.percentOfMaxBoost = 1.0;
+    state.boostLocked = true;
+    run(state, player, seconds: 3); // burn it down to nothing
+
+    expect(state.boostLocked, isFalse);
+
+    // nothing is holding the button, so the boost stays down while
+    // stamina climbs back
+    run(state, player, seconds: 3);
+    expect(player.stamina, greaterThan(0));
+    expect(state.boostLocked, isFalse);
+    expect(state.percentOfMaxBoost, 0.0);
   });
 
   test('stamina recovers ambiently while the action loop is idle', () {
@@ -151,11 +192,11 @@ void main() {
 
     final state = ActionTimingData();
     // hold a boost of exactly +1 speed => drain 1.0/sec < recovery 2.0/sec
-    state.speedLocked = true;
-    state.speedPercent = 0.5;
+    state.boostLocked = true;
+    state.percentOfMaxBoost = 0.5;
     run(state, player, seconds: 5);
 
     expect(player.stamina, 10); // recovery kept up; no net loss
-    expect(state.speedPercent, closeTo(0.5, 0.001)); // lock held
+    expect(state.percentOfMaxBoost, closeTo(0.5, 0.001)); // lock held
   });
 }

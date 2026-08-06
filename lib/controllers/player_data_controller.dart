@@ -20,7 +20,10 @@ class PlayerDataController extends ChangeNotifier {
   }) : _playerData = playerData,
        _playerDataService = playerDataService,
        _actionTimingController = actionTimingController {
-    _heartbeatTimer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+    _heartbeatTimer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _tick(),
+    );
   }
 
   @override
@@ -69,6 +72,17 @@ class PlayerDataController extends ChangeNotifier {
 
   void setCurrentZone(ZoneId id) {
     _playerDataService.setCurrentZone(id, _playerData);
+    notifyListeners();
+  }
+
+  /// The active combat stance, or null when the boosted skill isn't one of
+  /// the stance skills.
+  Stance? getStance() {
+    return _playerDataService.getStance(_playerData);
+  }
+
+  void setStance(Stance stance) {
+    _playerDataService.setStance(stance, _playerData);
     notifyListeners();
   }
 

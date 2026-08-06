@@ -1,5 +1,6 @@
 import 'package:rpg/services/buff_service.dart';
 import 'package:rpg/utilities/util.dart';
+import '../catalogs/entity_catalog.dart';
 import '../catalogs/zone_catalog.dart';
 
 import '../data/player_data.dart';
@@ -42,7 +43,40 @@ class PlayerDataService {
       Util.addMap(equipmentStats, buffStats),
     );
 
+    if (playerState.skillBoost != SkillId.SPEED) {
+      totals[playerState.skillBoost] =
+          ((totals[playerState.skillBoost] ?? 0) * playerState.boostMultiplier)
+              .round();
+    }
+
     return totals;
+  }
+
+  void setBoostMultiplier(double boostValue, PlayerData playerState) {
+    playerState.boostMultiplier = boostValue;
+  }
+
+  /// The stance is stored as the skill the action loop boosts.
+  void setStance(Stance stance, PlayerData playerState) {
+    playerState.skillBoost = kStanceBoostSkill[stance]!;
+  }
+
+  /// Null when the boosted skill isn't one of the stance skills.
+  Stance? getStance(PlayerData playerState) {
+    for (final entry in kStanceBoostSkill.entries) {
+      if (entry.value == playerState.skillBoost) return entry.key;
+    }
+    return null;
+  }
+
+  /// Called when an encounter starts: an entity that doesn't offer the
+  /// current stance (fishing and herbalism offer none at all) drops the
+  /// player back to fast.
+  void coerceStanceFor(EncounterEntity entity, PlayerData playerState) {
+    final allowed = stancesForEntity(entity);
+    final current = getStance(playerState);
+    if (current != null && allowed.contains(current)) return;
+    setStance(Stance.fast, playerState);
   }
 
   SkillData getSkillData(SkillId id, PlayerData playerState) {
@@ -58,7 +92,9 @@ class PlayerDataService {
   }
 
   double getSkillProgress(SkillId id, PlayerData playerState) {
-    return _skillService.percentProgressToLevelUp(getSkillData(id, playerState));
+    return _skillService.percentProgressToLevelUp(
+      getSkillData(id, playerState),
+    );
   }
 
   double getNextLevelXp(SkillId id, PlayerData playerState) {
@@ -157,5 +193,4 @@ class PlayerDataService {
       );
     }
   }
-
 }

@@ -11,6 +11,7 @@ class EnchantingService {
     SkillId.HITPOINTS,
     SkillId.STAMINA,
     SkillId.SPEED,
+    SkillId.STRENGTH,
     SkillId.RECOVERY,
     SkillId.WOODCUTTING,
     SkillId.MINING,

@@ -262,20 +262,14 @@ class EnchantingScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: MomentumPrimaryButton(
-                    enabled: controller.selectionReady(),
-                    label: disenchantSelected ? 'Disenchant' : 'Enchant',
-                    startActionFunction: () {
-                      controller.startEnchantingAction();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
+            ActionButtonRow(
+              actionButton: MomentumPrimaryButton(
+                enabled: controller.selectionReady(),
+                label: disenchantSelected ? 'Disenchant' : 'Enchant',
+                startActionFunction: () {
+                  controller.startEnchantingAction();
+                },
+              ),
             ),
           ],
         ),

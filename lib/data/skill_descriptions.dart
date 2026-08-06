@@ -4,7 +4,9 @@ const Map<SkillId, String> kSkillDescriptions = {
   SkillId.STAMINA:
       'Determines your maximum stamina. Each level of stamina increases your max stamina by 10. Spending staming grants stamina xp',
   SkillId.SPEED:
-      'Raises your action top speed. Each level increases top action speed by 10%. Xp is xp is gained when actions are boosted. You gain your speed muliplier per second in xp.',
+      'Raises your action top speed. Each level increases top action speed by 5%. Xp is xp is gained when actions are boosted. You gain your speed muliplier per second in xp.',
+  SkillId.STRENGTH:
+      'Raises the ceiling of the strength boost. Each level increases the boost ceiling by 10%. Trains while an action is boosted with strength.',
   SkillId.RECOVERY:
       'Governs how quickly stamina refills over time. Stamina recovers when an action is not being boosted. You gain 1 stamina xp for every point of stamina recovered. ',
   SkillId.EXPLORATION:

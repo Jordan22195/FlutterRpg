@@ -313,9 +313,9 @@ class _DropTable extends StatelessWidget {
                   child: Text(
                     _percent(drop.chance),
                     textAlign: TextAlign.end,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],

@@ -203,6 +203,9 @@ class EncounterController extends ChangeNotifier {
     // set as active entity in encounter state.
     _encounterService.setEncounterEntity(_encounterState, entity);
 
+    // entities that don't offer the current stance start fast
+    _playerDataService.coerceStanceFor(entity, _playerState);
+
     // check action conditions are met
     final conditionsMet = isFishing
         ? _encounterService.fishingConditionsMet(_playerState, _encounterState)
