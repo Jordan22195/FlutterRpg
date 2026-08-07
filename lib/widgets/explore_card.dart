@@ -38,6 +38,7 @@ class ObjectCard<T extends Enum> extends StatefulWidget {
     required this.onTap,
     required this.typeId,
     this.onIconTap,
+    this.typeIds,
     this.name,
     this.height = 64,
     this.expirationTime,
@@ -60,6 +61,12 @@ class ObjectCard<T extends Enum> extends StatefulWidget {
   /// structures without a skill (shops, dungeons) pass the entity id and
   /// set [subtitle].
   final Enum typeId;
+
+  /// Every skill the entity currently offers, when that is more than one —
+  /// a firepit burning a cookfire trains firemaking and cooking both. Falls
+  /// back to `[typeId]`, which is what all single-skill callers get.
+  final List<Enum>? typeIds;
+
   final String? name;
   final double height;
 
@@ -163,16 +170,21 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
       );
     }
 
+    final types = widget.typeIds ?? [widget.typeId];
+    final skills = types
+        .where((t) => t is SkillId && t != SkillId.NULL)
+        .toList();
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (widget.typeId is SkillId && widget.typeId != SkillId.NULL) ...[
-          IconRenderer(size: 16, id: widget.typeId),
+        for (final skill in skills) ...[
+          IconRenderer(size: 16, id: skill),
           const SizedBox(width: 4),
         ],
         Flexible(
           child: Text(
-            widget.subtitle ?? skillDisplayName(widget.typeId),
+            widget.subtitle ?? types.map(skillDisplayName).join(' · '),
             style: style,
             overflow: TextOverflow.ellipsis,
           ),

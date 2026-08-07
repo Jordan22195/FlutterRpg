@@ -2,7 +2,7 @@ import 'package:rpg/data/skill_data.dart';
 
 import '../services/combat_auto_eat_service.dart';
 import '../services/encounter_service.dart';
-import '../services/world_service.dart';
+import '../services/exploration_service.dart';
 import '../services/player_data_service.dart';
 import '../services/weighted_drop_table_service.dart';
 import '../catalogs/entity_catalog.dart';
@@ -23,7 +23,7 @@ class EncounterSystem {
   static const double xpPerDamage = 5;
 
   final EncounterService _encounterService;
-  final WorldService _worldService;
+  final ExplorationService _explorationService;
   final PlayerDataService _playerDataService;
   final WeightedDropTableService _dropTableService;
   final InventoryService _inventoryService;
@@ -33,7 +33,7 @@ class EncounterSystem {
 
   EncounterSystem({
     required EncounterService encounterService,
-    required WorldService worldService,
+    required ExplorationService explorationService,
     required PlayerDataService playerDataService,
     required WeightedDropTableService dropTableService,
     required InventoryService inventoryService,
@@ -45,7 +45,7 @@ class EncounterSystem {
        _inventoryService = inventoryService,
        _dropTableService = dropTableService,
        _playerDataService = playerDataService,
-       _worldService = worldService,
+       _explorationService = explorationService,
        _encounterService = encounterService,
        _autoEatService = autoEatService;
 
@@ -108,7 +108,7 @@ class EncounterSystem {
       if (encounter.entity!.count > 0) {
         _encounterService.respawn(encounter, e);
       } else {
-        //_worldService.removeEntityFromZone(
+        //_explorationService.removeEntityFromZone(
         //  e.id,
         //  playerState.currentZoneId,
         //  worldState,

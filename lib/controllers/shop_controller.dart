@@ -7,7 +7,7 @@ import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/services/inventory_service.dart';
 import 'package:rpg/services/shop_service.dart';
-import 'package:rpg/services/world_service.dart';
+import 'package:rpg/services/exploration_service.dart';
 
 // controllers coordinate between ui and systems or services
 
@@ -22,7 +22,7 @@ class ShopController extends ChangeNotifier {
   final ItemCatalog _itemCatalog;
 
   // services
-  final WorldService _worldService;
+  final ExplorationService _explorationService;
   final InventoryService _inventoryService;
   final ShopService _shopService;
 
@@ -32,7 +32,7 @@ class ShopController extends ChangeNotifier {
     required InventoryData inventoryState,
     required EntityCatalog entityCatalog,
     required ItemCatalog itemCatalog,
-    required WorldService worldService,
+    required ExplorationService explorationService,
     required InventoryService inventoryService,
     required ShopService shopService,
   }) : _playerState = playerState,
@@ -40,14 +40,14 @@ class ShopController extends ChangeNotifier {
        _inventoryState = inventoryState,
        _entityCatalog = entityCatalog,
        _itemCatalog = itemCatalog,
-       _worldService = worldService,
+       _explorationService = explorationService,
        _inventoryService = inventoryService,
        _shopService = shopService;
 
   // the shop the player is viewing, restocked first when its timer is
   // due. null when the viewed entity isn't a shop
   ShopEntity? _currentShop() {
-    final entity = _worldService.getSelectedEntity(_playerState, _worldState);
+    final entity = _explorationService.getSelectedEntity(_playerState, _worldState);
     if (entity is! ShopEntity) return null;
 
     final def = _shopDefinition(entity.id);

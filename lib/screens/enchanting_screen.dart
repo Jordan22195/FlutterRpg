@@ -9,7 +9,8 @@ import '../widgets/equipment_info_dialog.dart';
 import '../widgets/inventory_grid.dart';
 import '../widgets/item_stack_tile.dart';
 import '../widgets/primary_button.dart';
-import '../widgets/skil_tile.dart';
+import '../widgets/buff_row.dart';
+import '../widgets/skill_ring_row.dart';
 
 /// The enchanting bench. Follows the crafting screen format: pick a
 /// recipe (an enchant tier or disenchant), pick a target item from the
@@ -139,7 +140,12 @@ class EnchantingScreen extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: [
-                  SkillTile(id: SkillId.ENCHANTING),
+                  // active buffs, then the skills this station trains — the
+                  // same pair the encounter screen shows
+                  const BuffRow(),
+                  const SizedBox(height: 8),
+                  const SkillRingRow(skills: [SkillId.ENCHANTING]),
+                  const SizedBox(height: 4),
 
                   // material counts
                   Card(

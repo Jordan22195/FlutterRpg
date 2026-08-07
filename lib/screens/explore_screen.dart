@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
-import 'package:rpg/widgets/item_stack_tile.dart';
 
 import '../data/skill_data.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/entity_info_dialog.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/skill_ring_row.dart';
+import 'zone_detail_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -97,15 +99,28 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _buildStructureCard(WorldController worldController, Entity e) {
-    // campfires are crafting entities with a burn-out timer; check first
-    if (e is CampfireEntity) {
-      return ObjectCard(
+    // a firepit shows whatever is burning in it — the fire's art, its name
+    // and its remaining time — and advertises cooking while a cookfire is
+    // lit. check first: FirepitEntity is also a CraftingEntity.
+    if (e is FirepitEntity) {
+      final fire = context.watch<BuffController>().getZoneBuffFor(e.id);
+      final lit = fire is FireItem && fire.expirationTime.isAfter(
+        DateTime.now(),
+      );
+
+      // the id is an ItemId when lit and an EntityId when cold, so the card
+      // is built over Enum. art resolves dynamically either way.
+      return ObjectCard<Enum>(
         key: ValueKey(e.id),
-        id: e.id,
-        name: e.name,
+        id: lit ? fire.id : e.id,
+        name: lit ? fire.name : e.name,
         count: 0,
-        expirationTime: e.expirationTime,
+        expirationTime: lit ? fire.expirationTime : null,
         typeId: e.craftingSkill,
+        typeIds: [
+          e.craftingSkill,
+          if (lit && fire.canCook) SkillId.COOKING,
+        ],
         isStructure: true,
         onTap: () => worldController.navigateToEntity(e.id, context),
       );
@@ -272,17 +287,55 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
     listChildren.insert(
       0,
-      SizedBox(
-        width: double.infinity,
-        height: 140,
-        child: zoneDef.iconAsset.isEmpty
-            ? const ColoredBox(color: Colors.black26)
-            : Image.asset(
-                zoneDef.iconAsset,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
-                    const ColoredBox(color: Colors.black26),
+      // the zone art doubles as the way into the zone's detail screen,
+      // where its discoveries and exploration gates are listed
+      InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => ZoneDetailScreen(zoneId: zoneDef.id),
+          ),
+        ),
+        child: Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: 140,
+              child: zoneDef.iconAsset.isEmpty
+                  ? const ColoredBox(color: Colors.black26)
+                  : Image.asset(
+                      zoneDef.iconAsset,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) =>
+                          const ColoredBox(color: Colors.black26),
+                    ),
+            ),
+            // the art alone doesn't read as tappable, so say so
+            Positioned(
+              right: 8,
+              bottom: 8,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.travel_explore, size: 13, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text(
+                        'Zone details',
+                        style: TextStyle(fontSize: 11, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
               ),
+            ),
+          ],
+        ),
       ),
     );
     listChildren.insert(

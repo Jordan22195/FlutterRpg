@@ -7,7 +7,8 @@ import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';
-import 'package:rpg/widgets/skil_tile.dart';
+import 'package:rpg/widgets/buff_row.dart';
+import 'package:rpg/widgets/skill_ring_row.dart';
 
 class CraftingScreen extends StatefulWidget {
   const CraftingScreen({super.key});
@@ -124,8 +125,12 @@ class _CraftingScreenState extends State<CraftingScreen>
                   ),
                   SizedBox(height: 12),
 
-                  // skill progress tile
-                  SkillTile(id: skillId),
+                  // active buffs, then the skills this station trains — the
+                  // same pair the encounter screen shows
+                  const BuffRow(),
+                  const SizedBox(height: 8),
+                  SkillRingRow(skills: [skillId]),
+                  const SizedBox(height: 4),
 
                   // selectable recipe card
                   RecipeCard(

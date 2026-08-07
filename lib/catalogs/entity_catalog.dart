@@ -9,8 +9,6 @@ enum EntityId {
   ANVIL,
   ENCHANTING_BENCH,
   JEWELCRAFTING_BENCH,
-  BASIC_CAMPIRE,
-  OAK_CAMPFIRE,
   FIREPIT,
   TREE,
   OAK_TREE,
@@ -23,10 +21,13 @@ enum EntityId {
   BIG_RED,
   COW,
   GIANT_SPIDER,
+  ROTWOOD_SCARECROW,
 
   // MINERALS
   COPPER,
   IRON,
+  COAL_VEIN,
+  GEM_VEIN,
   TRANQUIL_POND,
   DEEP_POND,
   RIVER,
@@ -104,8 +105,8 @@ class Entity {
         return Entity(id: entityId, name: rawName);
       case 'CraftingEntity':
         return CraftingEntity.fromJson(json);
-      case 'CampfireEntity':
-        return CampfireEntity.fromJson(json);
+      case 'FirepitEntity':
+        return FirepitEntity.fromJson(json);
       case 'EncounterEntity':
         return EncounterEntity.fromJson(json);
       case 'CombatEntity':
@@ -171,44 +172,36 @@ class CraftingEntity extends Entity {
   }
 }
 
-class CampfireEntity extends CraftingEntity {
-  DateTime? expirationTime;
-
-  CampfireEntity({
+/// A firepit. Carries no state of its own: what is burning in it, and for how
+/// long, is the zone buff keyed to this entity id in [BuffData]. Keeping it
+/// stateless is deliberate — firepits are permanent entities, and permanent
+/// entities are rebuilt from the catalog on every load, so anything stored
+/// here would be lost.
+class FirepitEntity extends CraftingEntity {
+  FirepitEntity({
     required super.id,
     required super.name,
-    super.craftingSkill = SkillId.COOKING,
+    super.craftingSkill = SkillId.FIREMAKING,
   });
 
   @override
   Map<String, dynamic> toJson() {
     final json = super.toJson();
-    json['runtimeType'] = 'CampfireEntity';
-    if (expirationTime != null) {
-      json['expirationTime'] = expirationTime!.toIso8601String();
-    }
+    json['runtimeType'] = 'FirepitEntity';
     return json;
   }
 
-  factory CampfireEntity.fromJson(Map<String, dynamic> json) {
+  factory FirepitEntity.fromJson(Map<String, dynamic> json) {
     final baseEntity = CraftingEntity.fromJson({
       ...json,
       'runtimeType': 'CraftingEntity',
     });
 
-    final campfire = CampfireEntity(
+    return FirepitEntity(
       id: baseEntity.id,
       name: baseEntity.name,
       craftingSkill: baseEntity.craftingSkill,
     );
-
-    // optional: older saves have no expiration on the entity
-    final rawExpiration = json['expirationTime'];
-    if (rawExpiration is String) {
-      campfire.expirationTime = DateTime.tryParse(rawExpiration);
-    }
-
-    return campfire;
   }
 }
 
@@ -226,16 +219,16 @@ class CraftingEntityDefinition extends EntityDefinition {
       CraftingEntity(id: id, name: name, craftingSkill: craftingSkill);
 }
 
-class CampfireEntityDefinition extends CraftingEntityDefinition {
-  CampfireEntityDefinition({
+class FirepitEntityDefinition extends CraftingEntityDefinition {
+  FirepitEntityDefinition({
     required super.name,
     required super.iconAsset,
-    super.craftingSkill = SkillId.COOKING,
+    super.craftingSkill = SkillId.FIREMAKING,
   });
 
   @override
-  CampfireEntity toEntity(EntityId id) =>
-      CampfireEntity(id: id, name: name, craftingSkill: craftingSkill);
+  FirepitEntity toEntity(EntityId id) =>
+      FirepitEntity(id: id, name: name, craftingSkill: craftingSkill);
 }
 
 // Encounter Entity Class
@@ -703,22 +696,13 @@ class EntityCatalog {
       iconAsset: "assets/icons/jewelcrafting_bench.png",
     ),
 
-    EntityId.BASIC_CAMPIRE: CampfireEntityDefinition(
-      name: "Basic Campfire",
-      craftingSkill: SkillId.COOKING,
-      iconAsset: "assets/icons/items/basic_campfire.png",
-    ),
-
-    EntityId.OAK_CAMPFIRE: CampfireEntityDefinition(
-      name: "Oak Campfire",
-      craftingSkill: SkillId.COOKING,
-      iconAsset: "assets/icons/items/basic_campfire.png",
-    ),
-
-    EntityId.FIREPIT: CraftingEntityDefinition(
+    // todo: art. the unlit firepit sprite does not exist yet, so this still
+    // renders the broken-image fallback (as the old empty_firepit.png path
+    // did). fires are drawn in the entity slot, so it belongs with the
+    // entity art rather than the item icons.
+    EntityId.FIREPIT: FirepitEntityDefinition(
       name: "Firepit",
-      craftingSkill: SkillId.FIREMAKING,
-      iconAsset: "assets/icons/items/empty_firepit.png",
+      iconAsset: "assets/images/entities/firepit.png",
     ),
 
     //
@@ -965,6 +949,42 @@ class EntityCatalog {
       ],
     ),
 
+    // the meadow's apex rare, found only by exploring it well. a real step
+    // up from Big Red but still beatable in copper gear, so it reads as a
+    // trophy rather than a wall. its unique is the farm's own weapon.
+    EntityId.ROTWOOD_SCARECROW: CombatEntityDefinition(
+      name: "Rotwood Scarecrow",
+      iconAsset: "assets/images/entities/rotwood_scarecrow.png",
+
+      entityType: SkillId.ATTACK,
+      defence: 4,
+      hitpoints: 25,
+      attack: 3,
+      attackInterval: 2.5,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.FEATHER,
+          weight: 1,
+          count: 20,
+          highCount: 60,
+        ),
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.COINS,
+          weight: 1,
+          count: 25,
+          highCount: 75,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll<ItemId>(
+          chance: 0.05,
+          entries: [
+            WeightedDropTableEntry<ItemId>(id: ItemId.PITCHFORK, weight: 1),
+          ],
+        ),
+      ],
+    ),
+
     // MINING
     EntityId.COPPER: EncounterEntityDefinition(
       name: "Copper Vein",
@@ -998,6 +1018,41 @@ class EntityCatalog {
         WeightedDropTableEntry<ItemId>(id: ItemId.DIAMOND, weight: 0.012),
         WeightedDropTableEntry<ItemId>(id: ItemId.DRAGONSTONE, weight: 0.006),
         WeightedDropTableEntry<ItemId>(id: ItemId.ONYX, weight: 0.003),
+      ],
+    ),
+    EntityId.COAL_VEIN: EncounterEntityDefinition(
+      name: "Coal Vein",
+      iconAsset: "assets/images/entities/coal_vein.png",
+
+      entityType: SkillId.MINING,
+      defence: 15,
+      hitpoints: 20,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.COAL,
+          weight: 1,
+          count: 1,
+          highCount: 3,
+        ),
+      ],
+    ),
+    // no ore at all: the whole point of the vein is the gem table, which
+    // is why it sits at the top of the mine's exploration ladder
+    EntityId.GEM_VEIN: EncounterEntityDefinition(
+      name: "Gem Vein",
+      iconAsset: "assets/images/entities/gem_vein.png",
+
+      entityType: SkillId.MINING,
+      defence: 25,
+      hitpoints: 30,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.TOPAZ, weight: 1),
+        WeightedDropTableEntry<ItemId>(id: ItemId.SAPPHIRE, weight: 0.7),
+        WeightedDropTableEntry<ItemId>(id: ItemId.EMERALD, weight: 0.5),
+        WeightedDropTableEntry<ItemId>(id: ItemId.RUBY, weight: 0.3),
+        WeightedDropTableEntry<ItemId>(id: ItemId.DIAMOND, weight: 0.15),
+        WeightedDropTableEntry<ItemId>(id: ItemId.DRAGONSTONE, weight: 0.07),
+        WeightedDropTableEntry<ItemId>(id: ItemId.ONYX, weight: 0.03),
       ],
     ),
     // FISHING

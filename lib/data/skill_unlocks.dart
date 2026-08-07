@@ -1,5 +1,6 @@
 import '../catalogs/enchantment_catalog.dart';
 import '../catalogs/entity_catalog.dart';
+import '../catalogs/item_catalog.dart';
 import '../game_session.dart';
 import 'skill_data.dart';
 
@@ -42,14 +43,53 @@ List<SkillUnlock> unlocksForSkill(SkillId skill, GameCatalogBundle catalogs) {
   }
 
   for (final zone in catalogs.zoneCatalog.all) {
-    if (zone.requiredSkill != skill) continue;
-    unlocks.add(
-      SkillUnlock(
-        name: zone.name,
-        levelRequirement: zone.requiredLevel,
-        category: 'Zone',
-      ),
-    );
+    if (zone.requiredSkill == skill) {
+      unlocks.add(
+        SkillUnlock(
+          name: zone.name,
+          levelRequirement: zone.requiredLevel,
+          category: 'Zone',
+        ),
+      );
+    }
+
+    // a zone's exploration difficulty is a separate gate from its skill
+    // requirement, so the mine can appear under both Mining and Exploration
+    if (skill == SkillId.EXPLORATION && zone.explorationLevel > 0) {
+      unlocks.add(
+        SkillUnlock(
+          name: zone.name,
+          levelRequirement: zone.explorationLevel,
+          category: 'Zone',
+        ),
+      );
+    }
+
+    // every discovery a zone gates behind an exploration level
+    if (skill == SkillId.EXPLORATION) {
+      for (final entry in zone.discoverableEntities) {
+        if (entry.unlockLevel <= 0) continue;
+        final def = catalogs.entityCatalog.getDefinitionFor(entry.id);
+        unlocks.add(
+          SkillUnlock(
+            name: '${def.name} · ${zone.name}',
+            levelRequirement: entry.unlockLevel,
+            category: 'Discovery',
+          ),
+        );
+      }
+      for (final entry in zone.discoverableItems) {
+        if (entry.unlockLevel <= 0 || entry.id == ItemId.NULL) continue;
+        final def = catalogs.itemCatalog.definitionFor(entry.id);
+        unlocks.add(
+          SkillUnlock(
+            name: '${def?.name ?? entry.id.name} · ${zone.name}',
+            levelRequirement: entry.unlockLevel,
+            category: 'Find',
+          ),
+        );
+      }
+    }
   }
 
   for (final def in catalogs.entityCatalog.all) {

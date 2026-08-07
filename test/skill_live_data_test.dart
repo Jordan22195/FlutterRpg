@@ -27,7 +27,7 @@ void main() {
     final session = buildSession();
     final save = session.saveGameData;
 
-    session.worldService.addEntityToCurrentZone(
+    session.explorationService.addEntityToCurrentZone(
       EntityId.GUAM,
       3,
       session.catalogBundle.entityCatalog,
@@ -35,7 +35,7 @@ void main() {
       save.worldData,
     );
     final herb =
-        session.worldService.getEntity(
+        session.explorationService.getEntity(
               EntityId.GUAM,
               save.playerData.currentZoneId,
               save.worldData,

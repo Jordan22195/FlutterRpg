@@ -5,6 +5,7 @@ import '../screens/crafting_screen.dart';
 import '../screens/dungeon_screen.dart';
 import '../screens/enchanting_screen.dart';
 import '../screens/encounter_screen.dart';
+import '../screens/firepit_screen.dart';
 import '../screens/shop_screen.dart';
 
 class EntityScreenRouterService {
@@ -14,6 +15,7 @@ class EntityScreenRouterService {
   static const String encounterRouteName = 'encounter';
   static const String craftingRouteName = 'crafting';
   static const String enchantingRouteName = 'enchanting';
+  static const String firepitRouteName = 'firepit';
   static const String shopRouteName = 'shop';
   static const String dungeonRouteName = 'dungeon';
 
@@ -55,6 +57,17 @@ class EntityScreenRouterService {
         ),
       );
     } else if (enitity is CraftingEntity) {
+      // a firepit has its own screen: it offers firemaking and, while a
+      // cookfire burns, cooking too
+      if (enitity is FirepitEntity) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            settings: const RouteSettings(name: firepitRouteName),
+            builder: (_) => const FirepitScreen(),
+          ),
+        );
+        return;
+      }
       // the enchanting bench has its own screen (disenchant/enchant
       // instances rather than recipe crafting)
       if (enitity.craftingSkill == SkillId.ENCHANTING) {

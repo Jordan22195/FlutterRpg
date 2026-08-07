@@ -39,19 +39,36 @@ void main() {
     expect(player.currentZoneId, ZoneId.TUTORIAL_FARM);
     expect(player.stamina, 10);
 
-    // mine requires mining 5: blocked, and nothing is charged
+    // mine requires mining 5 on top of its exploration difficulty:
+    // blocked, and nothing is charged
     expect(world.meetsZoneRequirement(ZoneId.FOREST_MINE), isFalse);
     expect(world.travelToZone(ZoneId.FOREST_MINE), isFalse);
     expect(player.stamina, 10);
+
+    // the forest sits at exploration 5, so it stays shut until the player
+    // has explored the meadow enough to reach it
+    expect(world.meetsZoneRequirement(ZoneId.SOUTHWOOD_FOREST), isFalse);
+    expect(world.travelToZone(ZoneId.SOUTHWOOD_FOREST), isFalse);
+    expect(player.currentZoneId, ZoneId.TUTORIAL_FARM);
+    expect(player.stamina, 10);
+
+    final exploration = player.skillData[SkillId.EXPLORATION]!;
+    exploration.xp = exploration.xpTable[5];
+    expect(world.meetsZoneRequirement(ZoneId.SOUTHWOOD_FOREST), isTrue);
 
     // farm -> forest costs 5
     expect(world.travelToZone(ZoneId.SOUTHWOOD_FOREST), isTrue);
     expect(player.currentZoneId, ZoneId.SOUTHWOOD_FOREST);
     expect(player.stamina, 5);
 
-    // with mining 5, forest -> mine costs 1
+    // the mine needs both of its gates: mining 5 and exploration 15
     final mining = player.skillData[SkillId.MINING]!;
     mining.xp = mining.xpTable[5];
+    expect(world.meetsZoneRequirement(ZoneId.FOREST_MINE), isFalse);
+    exploration.xp = exploration.xpTable[15];
+    expect(world.meetsZoneRequirement(ZoneId.FOREST_MINE), isTrue);
+
+    // forest -> mine costs 1
     expect(world.travelToZone(ZoneId.FOREST_MINE), isTrue);
     expect(player.stamina, 4);
 

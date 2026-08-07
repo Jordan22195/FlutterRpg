@@ -1,13 +1,17 @@
+import '../catalogs/entity_catalog.dart';
 import '../catalogs/item_catalog.dart';
 import '../catalogs/zone_catalog.dart';
 import '../utilities/json_utils.dart';
 
 class BuffData {
-  final Map<ZoneId, Map<ItemId, ZoneBuffItem>> zoneBuffs;
+  /// Zone buffs are keyed by the entity that owns them, not by item: two
+  /// firepits in one zone can burn the same kind of fire independently, and
+  /// lighting a new fire in a firepit replaces whatever it was burning.
+  final Map<ZoneId, Map<EntityId, ZoneBuffItem>> zoneBuffs;
   final Map<ItemId, BuffItem> globalBuffs;
 
   BuffData({
-    Map<ZoneId, Map<ItemId, ZoneBuffItem>>? zoneBuffs,
+    Map<ZoneId, Map<EntityId, ZoneBuffItem>>? zoneBuffs,
     Map<ItemId, BuffItem>? globalBuffs,
   }) : zoneBuffs = zoneBuffs ?? {},
        globalBuffs = globalBuffs ?? {};
@@ -15,9 +19,11 @@ class BuffData {
   Map<String, dynamic> toJson() {
     return {
       'zoneBuffs': zoneBuffs.map(
-        (zoneId, itemMap) => MapEntry(
+        (zoneId, entityMap) => MapEntry(
           zoneId.name,
-          itemMap.map((itemId, buff) => MapEntry(itemId.name, buff.toJson())),
+          entityMap.map(
+            (entityId, buff) => MapEntry(entityId.name, buff.toJson()),
+          ),
         ),
       ),
       'globalBuffs': globalBuffs.map(
@@ -30,7 +36,7 @@ class BuffData {
     final zoneBuffsJson = JsonUtils.requireMap(json, 'zoneBuffs');
     final globalBuffsJson = JsonUtils.requireMap(json, 'globalBuffs');
 
-    final Map<ZoneId, Map<ItemId, ZoneBuffItem>> parsedZoneBuffs = {};
+    final Map<ZoneId, Map<EntityId, ZoneBuffItem>> parsedZoneBuffs = {};
 
     for (final entry in zoneBuffsJson.entries) {
       if (entry.value is! Map) {
@@ -40,13 +46,30 @@ class BuffData {
       }
 
       final zoneId = JsonUtils.parseZoneId(entry.key);
+      final zoneMap = <EntityId, ZoneBuffItem>{};
 
-      parsedZoneBuffs[zoneId] = JsonUtils.parseMap<ItemId, ZoneBuffItem>(
-        Map<String, dynamic>.from(entry.value),
-        fieldName: 'zoneBuffs.${entry.key}',
-        parseKey: (key) => JsonUtils.parseItemId(key),
-        parseValue: (value) => ZoneBuffItem.fromJson(value),
-      );
+      for (final buffEntry in Map<String, dynamic>.from(entry.value).entries) {
+        final raw = buffEntry.value;
+        if (raw is! Map) {
+          throw FormatException(
+            'Invalid value in "zoneBuffs.${entry.key}" for key '
+            '"${buffEntry.key}". Expected object.',
+          );
+        }
+
+        final buff = ZoneBuffItem.fromJson(Map<String, dynamic>.from(raw));
+
+        // migration: these were keyed by ItemId and owned by a campfire
+        // entity that no longer exists. the only zone buff that ever shipped
+        // was a campfire, so anything unrecognised is re-homed on the firepit
+        final ownerId =
+            EntityId.values.asNameMap()[buffEntry.key] ?? EntityId.FIREPIT;
+        buff.ownerEntityId = ownerId;
+        buff.zoneId = zoneId;
+        zoneMap[ownerId] = buff;
+      }
+
+      parsedZoneBuffs[zoneId] = zoneMap;
     }
 
     final parsedGlobalBuffs = JsonUtils.parseMap<ItemId, BuffItem>(

@@ -12,11 +12,13 @@ import 'package:rpg/data/inventory_data.dart';
 import '../services/inventory_service.dart';
 import '../catalogs/zone_catalog.dart';
 import '../services/player_data_service.dart';
-import '../services/world_service.dart';
+import '../services/exploration_service.dart';
 import '../catalogs/entity_catalog.dart';
 import '../services/weighted_drop_table_service.dart';
 import '../services/entity_screen_router_service.dart';
 import '../systems/encounter_system.dart';
+import '../systems/exploration_system.dart';
+import '../data/zone_details.dart';
 
 class WorldController extends ChangeNotifier {
   // controllers
@@ -35,42 +37,39 @@ class WorldController extends ChangeNotifier {
   final EntityCatalog _entityCatalog;
 
   // services
-  final WorldService _worldService;
-  final WeightedDropTableService _dropTableService;
+  final ExplorationService _explorationService;
   final EntityScreenRouterService _entityScreenRouterService;
   final PlayerDataService _playerDataService;
-  final InventoryService _inventoryService;
 
   // systems
   final EncounterSystem _encounterSystem;
+  final ExplorationSystem _explorationSystem;
 
   WorldController({
     required WorldData worldState,
-    required WorldService worldService,
+    required ExplorationService explorationService,
     required PlayerData playerState,
     required InventoryData inventoryState,
-    required InventoryService inventoryService,
     required ZoneCatalog zoneCatalog,
-    required WeightedDropTableService dropTableService,
     required EntityCatalog entityCatalog,
     required EntityScreenRouterService entityScreenRouterService,
     required PlayerDataService playerDataService,
     required EncounterSystem encounterSystem,
+    required ExplorationSystem explorationSystem,
     required ActionTimingController actionTimingController,
     required EncounterController encounterController,
     required CraftingController craftingController,
     required EnchantingController enchantingController,
-  }) : _dropTableService = dropTableService,
-       _playerDataService = playerDataService,
+  }) : _playerDataService = playerDataService,
        _inventoryState = inventoryState,
-       _inventoryService = inventoryService,
-       _worldService = worldService,
+       _explorationService = explorationService,
        _zoneCatalog = zoneCatalog,
        _worldState = worldState,
        _entityCatalog = entityCatalog,
        _playerState = playerState,
        _entityScreenRouterService = entityScreenRouterService,
        _encounterSystem = encounterSystem,
+       _explorationSystem = explorationSystem,
        _actionTimingController = actionTimingController,
        _encounterController = encounterController,
        _craftingController = craftingController,
@@ -84,7 +83,7 @@ class WorldController extends ChangeNotifier {
   }
 
   List<Entity> getCurrentZoneEntities() {
-    final list = _worldService.getCurrentZoneEntities(
+    final list = _explorationService.getCurrentZoneEntities(
       _playerState,
       _worldState,
     );
@@ -113,7 +112,7 @@ class WorldController extends ChangeNotifier {
     if (!_isExploreSessionActive()) {
       return [];
     }
-    return _worldService.getCurrentZoneItems(_playerState, _worldState);
+    return _explorationService.getCurrentZoneItems(_playerState, _worldState);
   }
 
   ZoneDefinition getCurrentZoneDefinition() {
@@ -139,7 +138,7 @@ class WorldController extends ChangeNotifier {
 
   /// dev/testing helper: force an entity's remaining count in this zone
   void devSetEntityCount(EntityId id, int count) {
-    _worldService.setEntityCount(id, count, _playerState, _worldState);
+    _explorationService.setEntityCount(id, count, _playerState, _worldState);
     notifyListeners();
   }
 
@@ -182,7 +181,22 @@ class WorldController extends ChangeNotifier {
     return _playerState.stamina >= travelCostTo(target);
   }
 
-  bool meetsZoneRequirement(ZoneId target) {
+  /// Exploration level [target] demands to enter; 0 when ungated.
+  int requiredExplorationLevel(ZoneId target) {
+    return _zoneCatalog.getDefinitionFor(target).explorationLevel;
+  }
+
+  /// Whether the player's exploration reaches [target]'s base difficulty.
+  bool meetsZoneExplorationRequirement(ZoneId target) {
+    final def = _zoneCatalog.getDefinitionFor(target);
+    if (def.explorationLevel <= 0) return true;
+    return _explorationSystem.explorationLevel(_playerState) >=
+        def.explorationLevel;
+  }
+
+  /// Whether the player meets [target]'s extra skill gate (the mine's
+  /// mining requirement, say), independent of its exploration level.
+  bool meetsZoneSkillRequirement(ZoneId target) {
     final def = _zoneCatalog.getDefinitionFor(target);
     if (def.requiredSkill == SkillId.NULL || def.requiredLevel <= 0) {
       return true;
@@ -190,6 +204,18 @@ class WorldController extends ChangeNotifier {
     final level =
         _playerDataService.getStatTotals(_playerState)[def.requiredSkill] ?? 0;
     return level >= def.requiredLevel;
+  }
+
+  /// A zone opens only when both of its gates are met: its exploration
+  /// difficulty and any additional skill requirement.
+  bool meetsZoneRequirement(ZoneId target) {
+    return meetsZoneExplorationRequirement(target) &&
+        meetsZoneSkillRequirement(target);
+  }
+
+  /// Everything the zone detail screen shows for [zoneId].
+  ZoneDetails zoneDetails(ZoneId zoneId) {
+    return _explorationSystem.buildZoneDetails(_playerState, zoneId);
   }
 
   /// Moves the player to [target], paying the path's stamina cost.
@@ -225,7 +251,7 @@ class WorldController extends ChangeNotifier {
     // previous session's finds are cleared. resuming an explore the
     // player only paused keeps them
     if (!_isExploreSessionActive()) {
-      _worldService.clearCurrentZoneItems(_playerState, _worldState);
+      _explorationService.clearCurrentZoneItems(_playerState, _worldState);
     }
     _exploreSessionActive = true;
 
@@ -242,38 +268,11 @@ class WorldController extends ChangeNotifier {
   // function bound to action button in startExplore.
   // This executes periodically.
   void doExplore() {
-    final entityEntries = _worldService.getZoneEntityDropTableEntries(
-      _playerState,
-      _zoneCatalog,
+    _explorationSystem.explore(
+      playerState: _playerState,
+      worldState: _worldState,
+      playerInventory: _inventoryState,
     );
-    final itemEntries = _worldService.getZoneItemDropTableEntries(
-      _playerState,
-      _zoneCatalog,
-    );
-    final newEntity = _dropTableService.roll(entityEntries);
-    _worldService.addEntityToCurrentZone(
-      newEntity.id,
-      newEntity.count,
-      _entityCatalog,
-      _playerState,
-      _worldState,
-    );
-    // zones without an item table yield nothing; rolling an empty table
-    // has no meaningful result
-    if (itemEntries.isNotEmpty) {
-      final newItem = _dropTableService.roll(itemEntries);
-      final found = _worldService.addItemToCurrentZone(
-        newItem.id,
-        newItem.count,
-        _playerState,
-        _worldState,
-      );
-      // a find is kept by the player; the zone list is just the session's
-      // running tally of what this explore turned up
-      if (found) {
-        _inventoryService.addItems(_inventoryState, [newItem]);
-      }
-    }
     notifyListeners();
   }
 
@@ -291,7 +290,7 @@ class WorldController extends ChangeNotifier {
   /// so the caller can stop at the nearest restorable ancestor.
   bool restoreEntityView(BuildContext context) {
     final entityId = _playerState.currentEntityViewId;
-    final present = _worldService
+    final present = _explorationService
         .getCurrentZoneEntities(_playerState, _worldState)
         .any((e) => e.id == entityId);
     if (!present) return false;

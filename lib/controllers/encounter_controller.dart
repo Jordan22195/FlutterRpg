@@ -9,7 +9,7 @@ import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
-import 'package:rpg/services/world_service.dart';
+import 'package:rpg/services/exploration_service.dart';
 import '../data/encounter_data.dart';
 import '../services/encounter_service.dart';
 import '../systems/encounter_system.dart';
@@ -33,7 +33,7 @@ class EncounterController extends ChangeNotifier {
 
   // services
   final EncounterService _encounterService;
-  final WorldService _worldService;
+  final ExplorationService _explorationService;
   final PlayerDataService _playerDataService;
   final InventoryService _inventoryService;
 
@@ -63,7 +63,7 @@ class EncounterController extends ChangeNotifier {
 
     required EncounterService encounterService,
     required WorldData worldState,
-    required WorldService worldService,
+    required ExplorationService explorationService,
     required ActionTimingController actionTimingController,
     required EntityCatalog entityCatalog,
     required WeightedDropTableService dropTableService,
@@ -76,7 +76,7 @@ class EncounterController extends ChangeNotifier {
        _encounterState = encounterState,
        _encounterService = encounterService,
        _worldState = worldState,
-       _worldService = worldService,
+       _explorationService = explorationService,
        _actionTimingController = actionTimingController,
        _playerDataService = playerDataService,
        _inventoryState = inventoryState,
@@ -161,7 +161,7 @@ class EncounterController extends ChangeNotifier {
   // binds the entity's encounter action to the periodic loop
   void startEncounterAction() {
     // get the player view entity
-    final entity = _worldService.getSelectedEntity(_playerState, _worldState);
+    final entity = _explorationService.getSelectedEntity(_playerState, _worldState);
     if (entity is! EncounterEntity) {
       return;
     }
@@ -304,7 +304,7 @@ class EncounterController extends ChangeNotifier {
     if (active != null && active.id == _playerState.currentEntityViewId) {
       return active;
     }
-    final selected = _worldService.getSelectedEntity(_playerState, _worldState);
+    final selected = _explorationService.getSelectedEntity(_playerState, _worldState);
     return selected is EncounterEntity ? selected : null;
   }
 

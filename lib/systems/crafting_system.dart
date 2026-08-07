@@ -1,7 +1,5 @@
-import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/data/buff_data.dart';
-import 'package:rpg/services/buff_service.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../data/crafting_state.dart';
@@ -13,20 +11,20 @@ import '../services/player_data_service.dart';
 import '../services/crafting_service.dart';
 import '../services/inventory_service.dart';
 import '../services/weighted_drop_table_service.dart';
-import '../services/world_service.dart';
+import 'firemaking_system.dart';
 
 class CraftingSystem {
   // catalogs
   final RecipeCatalog _recipeCatalog;
-  final EntityCatalog _entityCatalog;
 
   // services
   final PlayerDataService _playerDataService;
   final CraftingService _craftingService;
   final InventoryService _inventoryService;
   final WeightedDropTableService _weightedDropTableService;
-  final WorldService _worldService;
-  final BuffService _buffService;
+
+  // systems
+  final FiremakingSystem _firemakingSystem;
 
   CraftingSystem({
     required PlayerData playerState,
@@ -39,17 +37,13 @@ class CraftingSystem {
     required CraftingService craftingService,
     required InventoryService inventoryService,
     required WeightedDropTableService weightedDropTableService,
-    required WorldService worldService,
-    required BuffService buffService,
-    required EntityCatalog entityCatalog,
+    required FiremakingSystem firemakingSystem,
   }) : _recipeCatalog = recipeCatalog,
        _playerDataService = playerDataService,
        _craftingService = craftingService,
        _inventoryService = inventoryService,
        _weightedDropTableService = weightedDropTableService,
-       _worldService = worldService,
-       _entityCatalog = entityCatalog,
-       _buffService = buffService;
+       _firemakingSystem = firemakingSystem;
 
   void craftActiveRecipeOnce(
     CraftingState craftingState,
@@ -76,9 +70,16 @@ class CraftingSystem {
 
     final craftedItemObjectStack = _weightedDropTableService.roll(r.output);
 
-    // if the crafted item is a fire, update fire buff
+    // a fire is not an item: it becomes a buff on the firepit being worked
+    // at. that is the session's station, not whatever the player happens to
+    // be looking at — crafting keeps running after you navigate away.
     if (r.skill == SkillId.FIREMAKING) {
-      craftFire(craftedItemObjectStack.id, playerState, buffState, worldState);
+      _firemakingSystem.lightOrExtend(
+        craftedItemObjectStack.id,
+        craftingState.craftingEntityId,
+        playerState.currentZoneId,
+        buffState,
+      );
     } else {
       final built = ItemCatalog.buildItem(craftedItemObjectStack.id);
       if (built is EquipmentItem) {
@@ -130,45 +131,6 @@ class CraftingSystem {
     return _weightedDropTableService.roll(entries).id;
   }
 
-  void craftFire(
-    ItemId id,
-    PlayerData playerState,
-    BuffData buffState,
-    WorldData worldState,
-  ) {
-    // create the buff item
-    final fire = ItemCatalog.buildItem(id) as ZoneBuffItem;
-    fire.zoneId = playerState.currentZoneId;
-    // add to zone buff data (extends the expiration if already burning)
-    _buffService.setZoneBuff(fire, buffState, playerState.currentZoneId);
-
-    // create associated entity
-    // add entity to zone
-    _worldService.addEntityToCurrentZone(
-      fire.entityId,
-      1,
-      _entityCatalog,
-      playerState,
-      worldState,
-    );
-
-    // stamp the campfire entity with the live buff's expiration so the
-    // explore card can show the remaining burn time
-    final zoneBuff = _buffService.getZoneBuff(
-      buffState,
-      playerState.currentZoneId,
-      fire.id,
-    );
-    final entity = _worldService.getEntity(
-      fire.entityId,
-      playerState.currentZoneId,
-      worldState,
-    );
-    if (entity is CampfireEntity) {
-      entity.expirationTime = zoneBuff?.expirationTime ?? fire.expirationTime;
-    }
-  }
-
   // right now just scales drop chance for burnt food
   // todo expand on this for all recipies and crafting qualities
   void adjustDropTable(
@@ -208,7 +170,22 @@ class CraftingSystem {
     InventoryData inventoryState,
     CraftingState craftingState,
   ) {
-    return (checkRecipeLevelRequirement(recipeId, playerState) &&
-        craftableCount(recipeId, inventoryState) > 0);
+    if (!checkRecipeLevelRequirement(recipeId, playerState)) return false;
+    if (craftableCount(recipeId, inventoryState) <= 0) return false;
+
+    // cooking needs a fire that can cook. checking it here is what stops a
+    // running cook loop the moment the fire burns out, via the requirements
+    // re-check in CraftingController.doCraftingAction
+    final r = _recipeCatalog.recipeById(recipeId);
+    if (r.skill == SkillId.COOKING &&
+        !_firemakingSystem.canCookAt(
+          craftingState.craftingEntityId,
+          playerState.currentZoneId,
+          playerState.buffData,
+        )) {
+      return false;
+    }
+
+    return true;
   }
 }

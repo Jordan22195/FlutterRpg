@@ -28,7 +28,7 @@ void main() {
     final timing = session.actionTimingController;
 
     // discover a tree in the current zone so the encounter can start
-    session.worldService.addEntityToCurrentZone(
+    session.explorationService.addEntityToCurrentZone(
       EntityId.TREE,
       3,
       session.catalogBundle.entityCatalog,
@@ -98,7 +98,7 @@ void main() {
     final queue = session.actionQueueController;
     final timing = session.actionTimingController;
 
-    session.worldService.addEntityToCurrentZone(
+    session.explorationService.addEntityToCurrentZone(
       EntityId.TREE,
       3,
       session.catalogBundle.entityCatalog,

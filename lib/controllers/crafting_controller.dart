@@ -9,6 +9,7 @@ import 'package:rpg/services/crafting_service.dart';
 import '../services/inventory_service.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import '../systems/crafting_system.dart';
+import '../systems/firemaking_system.dart';
 import '../data/player_data.dart';
 import '../data/crafting_state.dart';
 import '../data/world_data.dart';
@@ -35,12 +36,14 @@ class CraftingController extends ChangeNotifier {
 
   // systems
   final CraftingSystem _craftingSystem;
+  final FiremakingSystem _firemakingSystem;
 
   CraftingController({
     required ActionTimingController actionTimingController,
     required InventoryData inventoryData,
     required InventoryService inventoryService,
     required CraftingSystem craftingSystem,
+    required FiremakingSystem firemakingSystem,
     required WorldData worldState,
     required BuffData buffState,
     required CraftingService craftingService,
@@ -49,6 +52,7 @@ class CraftingController extends ChangeNotifier {
     required RecipeCatalog reciepeCatalog,
     required EntityCatalog entityCatalog,
   }) : _actionTimingController = actionTimingController,
+       _firemakingSystem = firemakingSystem,
        _inventoryState = inventoryData,
        _inventoryService = inventoryService,
        _craftingSystem = craftingSystem,
@@ -64,10 +68,17 @@ class CraftingController extends ChangeNotifier {
     return _inventoryService.getItemCount(_inventoryState, itemId);
   }
 
-  // the selection belonging to the crafting entity the player is viewing
-  String get selectedRecipeId =>
-      _craftingState.selectedRecipeByEntity[_playerState.currentEntityViewId] ??
-      "";
+  // the selection the viewed station holds for [skill]. a station offering
+  // several skills keeps one selection per skill.
+  String selectedRecipeIdFor(SkillId skill) {
+    return _craftingState
+            .selectedRecipeByEntity[_playerState.currentEntityViewId]?[skill] ??
+        "";
+  }
+
+  // the selection belonging to the crafting entity the player is viewing,
+  // for that station's own skill
+  String get selectedRecipeId => selectedRecipeIdFor(getCraftingEntitySkillId());
 
   String get activeRecipeId => _craftingState.activeRecipeId;
 
@@ -77,7 +88,10 @@ class CraftingController extends ChangeNotifier {
 
   // recipes for the crafting entity the player is viewing
   List<CraftingRecipe> availableRecipes() {
-    final skill = getCraftingEntitySkillId();
+    return availableRecipesFor(getCraftingEntitySkillId());
+  }
+
+  List<CraftingRecipe> availableRecipesFor(SkillId skill) {
     if (skill == SkillId.NULL) {
       return _recipeCatalog.recipes;
     }
@@ -132,9 +146,11 @@ class CraftingController extends ChangeNotifier {
   }
 
   void selectRecipe(String recipeId) {
-    // selections are stored per crafting entity
-    _craftingState.selectedRecipeByEntity[_playerState.currentEntityViewId] =
-        recipeId;
+    // selections are stored per crafting entity, then per skill. the skill
+    // comes from the recipe, so callers never have to pass it.
+    final skill = _recipeCatalog.recipeById(recipeId).skill;
+    (_craftingState.selectedRecipeByEntity[_playerState.currentEntityViewId] ??=
+        {})[skill] = recipeId;
 
     // player can view a recipe while crafting another
     // active recipe is what is being crafted.
@@ -210,6 +226,9 @@ class CraftingController extends ChangeNotifier {
     return _craftingSystem.craftableCount(recipeId, _inventoryState);
   }
 
+  /// The crafting station the player is looking at.
+  EntityId get stationEntityId => _playerState.currentEntityViewId;
+
   SkillId getCraftingEntitySkillId() {
     final entityId = _playerState.currentEntityViewId;
     final def = _entityCatalog.getDefinitionFor(entityId);
@@ -227,5 +246,30 @@ class CraftingController extends ChangeNotifier {
     return _entityCatalog
         .getDefinitionFor(_playerState.currentEntityViewId)
         .iconAsset;
+  }
+
+  // ---- firepits ----
+
+  /// The fire burning in the firepit being viewed, or null when it is cold.
+  FireItem? activeFire() {
+    return _firemakingSystem.activeFire(
+      _playerState.currentEntityViewId,
+      _playerState.currentZoneId,
+      _buffState,
+    );
+  }
+
+  /// Whether the viewed firepit's fire can cook on it.
+  bool canCook() => activeFire()?.canCook ?? false;
+
+  /// Puts out the viewed firepit's fire. A cooking action running on it stops
+  /// on its next tick, when its requirements re-check fails.
+  void putOutFire() {
+    _firemakingSystem.extinguish(
+      _playerState.currentEntityViewId,
+      _playerState.currentZoneId,
+      _buffState,
+    );
+    notifyListeners();
   }
 }

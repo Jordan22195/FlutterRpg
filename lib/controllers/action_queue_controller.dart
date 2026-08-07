@@ -12,7 +12,7 @@ import 'package:rpg/data/action_queue_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/data/world_data.dart';
-import 'package:rpg/services/world_service.dart';
+import 'package:rpg/services/exploration_service.dart';
 
 // runs queued tasks back to back through the action timing loop.
 //
@@ -40,7 +40,7 @@ class ActionQueueController extends ChangeNotifier {
   final WorldData _worldState;
 
   // services
-  final WorldService _worldService;
+  final ExplorationService _explorationService;
 
   // catalogs
   final EntityCatalog _entityCatalog;
@@ -57,7 +57,7 @@ class ActionQueueController extends ChangeNotifier {
     required WorldController worldController,
     required PlayerData playerState,
     required WorldData worldState,
-    required WorldService worldService,
+    required ExplorationService explorationService,
     required EntityCatalog entityCatalog,
     required RecipeCatalog recipeCatalog,
     required ZoneCatalog zoneCatalog,
@@ -67,7 +67,7 @@ class ActionQueueController extends ChangeNotifier {
        _worldController = worldController,
        _playerState = playerState,
        _worldState = worldState,
-       _worldService = worldService,
+       _explorationService = explorationService,
        _entityCatalog = entityCatalog,
        _recipeCatalog = recipeCatalog,
        _zoneCatalog = zoneCatalog {
@@ -252,7 +252,7 @@ class ActionQueueController extends ChangeNotifier {
         _worldController.startExplore();
         return true;
       case QueuedTaskType.ENCOUNTER:
-        final entity = _worldService.getEntity(
+        final entity = _explorationService.getEntity(
           task.entityId,
           task.zoneId,
           _worldState,
@@ -284,7 +284,7 @@ class ActionQueueController extends ChangeNotifier {
     final zoneName = _zoneCatalog.getDefinitionFor(task.zoneId).name;
     switch (task.type) {
       case QueuedTaskType.ENCOUNTER:
-        final entity = _worldService.getEntity(
+        final entity = _explorationService.getEntity(
           task.entityId,
           task.zoneId,
           _worldState,

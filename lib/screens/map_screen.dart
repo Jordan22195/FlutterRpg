@@ -63,9 +63,15 @@ class _MapScreenState extends State<MapScreen> {
     final isSelected = _selected == zoneId;
     final cost = world.travelCostTo(zoneId);
     final affordable = world.canAffordTravelTo(zoneId);
-    final meetsRequirement = world.meetsZoneRequirement(zoneId);
+    final meetsRequirement = world.meetsZoneSkillRequirement(zoneId);
     final hasRequirement =
         def.requiredSkill != SkillId.NULL && def.requiredLevel > 0;
+    // a zone's exploration difficulty is a separate gate from its skill
+    // requirement; both have to be met, so both are shown
+    final hasExplorationRequirement = def.explorationLevel > 0;
+    final meetsExplorationRequirement = world.meetsZoneExplorationRequirement(
+      zoneId,
+    );
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
@@ -111,7 +117,15 @@ class _MapScreenState extends State<MapScreen> {
               ],
             ),
 
-          // level requirement, red when unmet
+          // level requirements, red when unmet
+          if (hasExplorationRequirement)
+            Text(
+              'EXPLORATION ${def.explorationLevel}',
+              style: TextStyle(
+                fontSize: 10,
+                color: meetsExplorationRequirement ? null : Colors.red,
+              ),
+            ),
           if (hasRequirement)
             Text(
               '${def.requiredSkill.name} ${def.requiredLevel}',
@@ -166,11 +180,21 @@ class _MapScreenState extends State<MapScreen> {
     final isCurrent = world.currentZoneId == zoneId;
     final cost = world.travelCostTo(zoneId);
     final affordable = world.canAffordTravelTo(zoneId);
-    final meetsRequirement = world.meetsZoneRequirement(zoneId);
+    final meetsRequirement = world.meetsZoneSkillRequirement(zoneId);
     final hasRequirement =
         def.requiredSkill != SkillId.NULL && def.requiredLevel > 0;
+    // a zone's exploration difficulty is a separate gate from its skill
+    // requirement; both have to be met, so both are shown
+    final hasExplorationRequirement = def.explorationLevel > 0;
+    final meetsExplorationRequirement = world.meetsZoneExplorationRequirement(
+      zoneId,
+    );
     final canGo =
-        isCurrent || (meetsRequirement && affordable && !cost.isInfinite);
+        isCurrent ||
+        (meetsRequirement &&
+            meetsExplorationRequirement &&
+            affordable &&
+            !cost.isInfinite);
 
     return Card(
       child: Padding(
@@ -204,6 +228,14 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  if (hasExplorationRequirement)
+                    Text(
+                      'Requires Exploration ${def.explorationLevel}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: meetsExplorationRequirement ? null : Colors.red,
+                      ),
                     ),
                   if (hasRequirement)
                     Text(

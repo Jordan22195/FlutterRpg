@@ -7,11 +7,24 @@ import 'overflow_chip.dart';
 
 /// Active buffs as a labeled tile row. Shows at most [maxVisible] tiles;
 /// the rest fold into a +N chip that opens a sheet with every buff.
-/// Renders nothing when no buffs are active.
+/// Renders nothing when no buffs are active, unless [reserveWhenEmpty].
 class BuffRow extends StatelessWidget {
-  const BuffRow({super.key, this.maxVisible = 5});
+  const BuffRow({super.key, this.maxVisible = 5, this.reserveWhenEmpty = false});
 
   final int maxVisible;
+
+  /// Holds the row's slot open when no buffs are active. Screens where a
+  /// buff comes and goes while the player is looking at them — a firepit,
+  /// whose fire is the buff — would otherwise shove everything below down
+  /// by [height] the moment it appears.
+  final bool reserveWhenEmpty;
+
+  static const double _tileSize = 48;
+  static const double _labelHeight = 20;
+
+  /// The row's height whether or not any buff is active, so callers can
+  /// reason about the space it occupies.
+  static const double height = _labelHeight + _tileSize;
 
   @override
   Widget build(BuildContext context) {
@@ -21,40 +34,56 @@ class BuffRow extends StatelessWidget {
       ...controller.getGlobalBuffs(),
     ];
 
-    if (buffs.isEmpty) return const SizedBox.shrink();
+    if (buffs.isEmpty) {
+      return reserveWhenEmpty
+          ? const SizedBox(height: height, width: double.infinity)
+          : const SizedBox.shrink();
+    }
 
     final overflowing = buffs.length > maxVisible;
     final visible = overflowing ? buffs.sublist(0, maxVisible - 1) : buffs;
     final hidden = buffs.length - visible.length;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 4),
-          child: Text(
-            'Buffs · ${buffs.length}',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+    // fixed height so the populated and empty rows measure the same
+    return SizedBox(
+      height: height,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: _labelHeight,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Buffs · ${buffs.length}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-        Row(
-          children: [
-            for (final buff in visible)
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _buffTile(buff, 48),
-              ),
-            if (hidden > 0)
-              OverflowChip(
-                count: hidden,
-                size: 48,
-                onTap: () => _showAllBuffs(context, buffs),
-              ),
-          ],
-        ),
-      ],
+          Row(
+            children: [
+              for (final buff in visible)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _buffTile(buff, _tileSize),
+                ),
+              if (hidden > 0)
+                OverflowChip(
+                  count: hidden,
+                  size: _tileSize,
+                  onTap: () => _showAllBuffs(context, buffs),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

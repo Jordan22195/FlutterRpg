@@ -26,7 +26,7 @@ void main() {
     final session = buildSession();
     final save = session.saveGameData;
 
-    session.worldService.addEntityToCurrentZone(
+    session.explorationService.addEntityToCurrentZone(
       EntityId.GUAM,
       3,
       session.catalogBundle.entityCatalog,
@@ -34,7 +34,7 @@ void main() {
       save.worldData,
     );
     final herb =
-        session.worldService.getEntity(
+        session.explorationService.getEntity(
               EntityId.GUAM,
               save.playerData.currentZoneId,
               save.worldData,
@@ -77,7 +77,7 @@ void main() {
     final session = buildSession();
     final save = session.saveGameData;
 
-    session.worldService.addEntityToCurrentZone(
+    session.explorationService.addEntityToCurrentZone(
       EntityId.GUAM,
       1,
       session.catalogBundle.entityCatalog,
@@ -85,7 +85,7 @@ void main() {
       save.worldData,
     );
     final herb =
-        session.worldService.getEntity(
+        session.explorationService.getEntity(
               EntityId.GUAM,
               save.playerData.currentZoneId,
               save.worldData,
@@ -102,7 +102,7 @@ void main() {
 
     expect(herb.count, 0);
     expect(
-      session.worldService
+      session.explorationService
           .getEntity(
             EntityId.GUAM,
             save.playerData.currentZoneId,
@@ -119,7 +119,7 @@ void main() {
     final session = buildSession();
     final save = session.saveGameData;
 
-    session.worldService.addEntityToCurrentZone(
+    session.explorationService.addEntityToCurrentZone(
       EntityId.TORSTOL,
       3,
       session.catalogBundle.entityCatalog,
@@ -127,7 +127,7 @@ void main() {
       save.worldData,
     );
     final herb =
-        session.worldService.getEntity(
+        session.explorationService.getEntity(
               EntityId.TORSTOL,
               save.playerData.currentZoneId,
               save.worldData,

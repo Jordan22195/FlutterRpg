@@ -1,14 +1,22 @@
 import 'package:rpg/catalogs/entity_catalog.dart';
 
 import 'inventory_data.dart';
+import 'skill_data.dart';
 
 class CraftingState {
   CraftingState();
   EntityId craftingEntityId = EntityId.NULL;
 
   // each crafting entity remembers its own selected recipe; a selection
-  // made at the anvil must not show up at the campfire
-  Map<EntityId, String> selectedRecipeByEntity = {};
+  // made at the anvil must not show up at the firepit. the inner map is
+  // keyed by skill because a station can offer more than one: a firepit
+  // holds a fire selection and a cooking selection at the same time
+  Map<EntityId, Map<SkillId, String>> selectedRecipeByEntity = {};
+
+  // selections read from a save that predates the per-skill nesting. the
+  // skill they belong to is a recipe catalog lookup, which this class has
+  // no reference to, so GameSessionFactory files them and clears this.
+  Map<EntityId, String> legacySelections = {};
 
   String activeRecipeId = "";
 
@@ -17,7 +25,10 @@ class CraftingState {
   Map<String, dynamic> toJson() {
     return {
       'selectedRecipeByEntity': selectedRecipeByEntity.map(
-        (id, recipeId) => MapEntry(id.name, recipeId),
+        (id, bySkill) => MapEntry(
+          id.name,
+          bySkill.map((skill, recipeId) => MapEntry(skill.name, recipeId)),
+        ),
       ),
       'craftingEntityId': craftingEntityId.name,
       'activeRecipeId': activeRecipeId,
@@ -53,14 +64,28 @@ class CraftingState {
           EntityId.values.asNameMap()[rawCraftingEntity] ?? EntityId.NULL;
     }
 
-    // tolerated when missing: older saves stored a single global
+    // tolerated when missing: the oldest saves stored a single global
     // "selectedRecipeId", which is simply dropped
     if (rawSelectedByEntity is Map<String, dynamic>) {
       for (final entry in rawSelectedByEntity.entries) {
         final id = EntityId.values.asNameMap()[entry.key];
-        final recipeId = entry.value;
-        if (id != null && recipeId is String) {
-          state.selectedRecipeByEntity[id] = recipeId;
+        if (id == null) continue;
+
+        final value = entry.value;
+
+        // legacy flat shape: one recipe id per entity, no skill
+        if (value is String) {
+          state.legacySelections[id] = value;
+          continue;
+        }
+
+        if (value is! Map) continue;
+        for (final bySkill in value.entries) {
+          final skill = SkillId.values.asNameMap()[bySkill.key];
+          final recipeId = bySkill.value;
+          if (skill != null && recipeId is String) {
+            (state.selectedRecipeByEntity[id] ??= {})[skill] = recipeId;
+          }
         }
       }
     }

@@ -12,8 +12,8 @@ import 'package:rpg/services/inventory_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/services/skill_service.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
-import 'package:rpg/services/world_service.dart';
 import 'package:rpg/systems/crafting_system.dart';
+import 'package:rpg/systems/firemaking_system.dart';
 
 void main() {
   CraftingSystem buildSystem(SaveGameData save, GameCatalogBundle catalogs) {
@@ -36,9 +36,7 @@ void main() {
       craftingService: CraftingService(),
       inventoryService: InventoryService(),
       weightedDropTableService: WeightedDropTableService(),
-      worldService: WorldService(),
-      buffService: buffService,
-      entityCatalog: catalogs.entityCatalog,
+      firemakingSystem: FiremakingSystem(buffService: buffService),
     );
   }
 

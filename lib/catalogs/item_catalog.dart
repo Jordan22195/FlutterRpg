@@ -180,6 +180,13 @@ enum ItemId {
   OAK_LOGS,
   OAK_CAMPFIRE,
 
+  // fires. BASIC_CAMPFIRE and OAK_CAMPFIRE above are the campfire rows of
+  // the same matrix; they keep their ids so existing saves stay valid
+  COOKFIRE,
+  OAK_COOKFIRE,
+  BONFIRE,
+  OAK_BONFIRE,
+
   // enchanting materials, one per equipment quality tier
   ENCHANTING_DUST,
   ENCHANTING_ESSENCE,
@@ -324,14 +331,6 @@ ZoneId _parseZoneId(String rawValue, {String fieldName = 'zoneId'}) {
   );
 }
 
-EntityId _parseEntityId(String rawValue, {String fieldName = 'entityId'}) {
-  return EntityId.values.firstWhere(
-    (value) => value.name == rawValue,
-    orElse: () =>
-        throw FormatException('Invalid EntityId "$rawValue" for "$fieldName".'),
-  );
-}
-
 ArmorSlots _parseArmorSlot(String rawValue, {String fieldName = 'armorSlot'}) {
   return ArmorSlots.values.firstWhere(
     (value) => value.name == rawValue,
@@ -447,7 +446,12 @@ class BuffItem extends Item {
 
 class ZoneBuffItem extends BuffItem {
   ZoneId zoneId;
-  final EntityId entityId;
+
+  /// The zone entity this buff belongs to — for a fire, the firepit it is
+  /// burning in. Assigned when the buff is created, not by the definition,
+  /// because one definition can be applied at any number of entities.
+  EntityId ownerEntityId;
+
   ZoneBuffItem({
     required super.id,
     required super.name,
@@ -455,7 +459,7 @@ class ZoneBuffItem extends BuffItem {
     required super.skillBonus,
     required super.duration,
     this.zoneId = ZoneId.NULL,
-    required this.entityId,
+    this.ownerEntityId = EntityId.NULL,
   });
 
   @override
@@ -463,21 +467,18 @@ class ZoneBuffItem extends BuffItem {
     final json = super.toJson();
     json['runtimeType'] = 'ZoneBuffItem';
     json['zoneId'] = zoneId.name;
-    json['entityId'] = entityId.name;
+    json['ownerEntityId'] = ownerEntityId.name;
     return json;
   }
 
   factory ZoneBuffItem.fromJson(Map<String, dynamic> json) {
+    if (json['runtimeType'] == 'FireItem') return FireItem.fromJson(json);
+
     final baseItem = BuffItem.fromJson(json);
 
     final rawZoneId = json['zoneId'];
-    final rawEntityId = json['entityId'];
-
     if (rawZoneId is! String) {
       throw FormatException('Missing or invalid "zoneId". Expected String.');
-    }
-    if (rawEntityId is! String) {
-      throw FormatException('Missing or invalid "entityId". Expected String.');
     }
 
     final item = ZoneBuffItem(
@@ -487,7 +488,66 @@ class ZoneBuffItem extends BuffItem {
       skillBonus: Map<SkillId, int>.from(baseItem.skillBonus),
       duration: baseItem.duration,
       zoneId: _parseZoneId(rawZoneId),
-      entityId: _parseEntityId(rawEntityId),
+      ownerEntityId: _ownerEntityIdFromJson(json),
+    );
+
+    item.count = baseItem.count;
+    item.expirationTime = baseItem.expirationTime;
+    return item;
+  }
+}
+
+/// Older saves stored the field as "entityId" and pointed it at a campfire
+/// entity that no longer exists, so an unreadable owner is tolerated: the
+/// buff data migration re-attaches it to the firepit that owns it.
+EntityId _ownerEntityIdFromJson(Map<String, dynamic> json) {
+  final raw = json['ownerEntityId'] ?? json['entityId'];
+  if (raw is! String) return EntityId.NULL;
+  return EntityId.values.asNameMap()[raw] ?? EntityId.NULL;
+}
+
+/// A fire burning in a firepit. [canCook] is what opens the cooking half of
+/// the firepit screen; the COOKING entry in [skillBonus] is what makes a
+/// better fire burn less food, via the buffed stat totals.
+class FireItem extends ZoneBuffItem {
+  final bool canCook;
+
+  FireItem({
+    required super.id,
+    required super.name,
+    required super.value,
+    required super.skillBonus,
+    required super.duration,
+    super.zoneId,
+    super.ownerEntityId,
+    this.canCook = false,
+  });
+
+  @override
+  Map<String, dynamic> toJson() {
+    final json = super.toJson();
+    json['runtimeType'] = 'FireItem';
+    json['canCook'] = canCook;
+    return json;
+  }
+
+  factory FireItem.fromJson(Map<String, dynamic> json) {
+    final baseItem = BuffItem.fromJson(json);
+
+    final rawZoneId = json['zoneId'];
+    if (rawZoneId is! String) {
+      throw FormatException('Missing or invalid "zoneId". Expected String.');
+    }
+
+    final item = FireItem(
+      id: baseItem.id,
+      name: baseItem.name,
+      value: baseItem.value,
+      skillBonus: Map<SkillId, int>.from(baseItem.skillBonus),
+      duration: baseItem.duration,
+      zoneId: _parseZoneId(rawZoneId),
+      ownerEntityId: _ownerEntityIdFromJson(json),
+      canCook: json['canCook'] == true,
     );
 
     item.count = baseItem.count;
@@ -689,18 +749,17 @@ class BuffItemDefinition extends ItemDefinition {
 }
 
 class ZoneBuffItemDefinition extends BuffItemDefinition {
-  final EntityId entityId;
-
   ZoneBuffItemDefinition({
     required super.name,
     required super.value,
     required super.skillBonus,
     required super.duration,
-    required this.entityId,
     super.description,
     super.iconAsset,
   });
 
+  // zoneId and ownerEntityId are left unset: they belong to the moment the
+  // buff is applied, not to the definition
   @override
   ZoneBuffItem toItem(ItemId id) => ZoneBuffItem(
     id: id,
@@ -708,7 +767,30 @@ class ZoneBuffItemDefinition extends BuffItemDefinition {
     value: value,
     skillBonus: skillBonus,
     duration: duration,
-    entityId: entityId,
+  );
+}
+
+class FireItemDefinition extends ZoneBuffItemDefinition {
+  final bool canCook;
+
+  FireItemDefinition({
+    required super.name,
+    required super.value,
+    required super.skillBonus,
+    required super.duration,
+    this.canCook = false,
+    super.description,
+    super.iconAsset,
+  });
+
+  @override
+  FireItem toItem(ItemId id) => FireItem(
+    id: id,
+    name: name,
+    value: value,
+    skillBonus: skillBonus,
+    duration: duration,
+    canCook: canCook,
   );
 }
 
@@ -878,22 +960,58 @@ class ItemCatalog {
       iconAsset: "assets/icons/items/oak_logs.png",
     ),
 
-    // campfires
-    ItemId.BASIC_CAMPFIRE: ZoneBuffItemDefinition(
-      name: "Basic Campfire",
+    // fires. three types across two log tiers. cookfires open the cooking
+    // half of the firepit screen and carry a COOKING bonus, which feeds the
+    // burn chance through the buffed stat totals: a better fire burns less
+    // food with no extra code. campfires and bonfires are pure combat buffs.
+    //
+    // art lives in assets/images/entities/ rather than assets/icons/items/
+    // because a lit fire is drawn in the entity image slot. every sprite
+    // below is still to be drawn, so fires render the broken-image
+    // fallback until the art lands.
+    ItemId.COOKFIRE: FireItemDefinition(
+      name: "Cookfire",
+      value: 4,
+      skillBonus: {SkillId.COOKING: 3},
+      duration: Duration(minutes: 3),
+      canCook: true,
+      iconAsset: "assets/images/entities/cookfire.png",
+    ),
+    ItemId.OAK_COOKFIRE: FireItemDefinition(
+      name: "Oak Cookfire",
+      value: 10,
+      skillBonus: {SkillId.COOKING: 6},
+      duration: Duration(minutes: 5),
+      canCook: true,
+      iconAsset: "assets/images/entities/oak_cookfire.png",
+    ),
+    ItemId.BASIC_CAMPFIRE: FireItemDefinition(
+      name: "Campfire",
       value: 5,
       skillBonus: {SkillId.HITPOINTS: 5},
-      duration: Duration(minutes: 1),
-      entityId: EntityId.BASIC_CAMPIRE,
-      iconAsset: "assets/icons/items/basic_campfire.png",
+      duration: Duration(minutes: 5),
+      iconAsset: "assets/images/entities/campfire.png",
     ),
-    ItemId.OAK_CAMPFIRE: ZoneBuffItemDefinition(
+    ItemId.OAK_CAMPFIRE: FireItemDefinition(
       name: "Oak Campfire",
       value: 12,
       skillBonus: {SkillId.HITPOINTS: 10},
-      duration: Duration(minutes: 3),
-      entityId: EntityId.OAK_CAMPFIRE,
-      iconAsset: "assets/icons/items/basic_campfire.png",
+      duration: Duration(minutes: 8),
+      iconAsset: "assets/images/entities/oak_campfire.png",
+    ),
+    ItemId.BONFIRE: FireItemDefinition(
+      name: "Bonfire",
+      value: 18,
+      skillBonus: {SkillId.HITPOINTS: 12, SkillId.DEFENCE: 3},
+      duration: Duration(minutes: 10),
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+    ItemId.OAK_BONFIRE: FireItemDefinition(
+      name: "Oak Bonfire",
+      value: 40,
+      skillBonus: {SkillId.HITPOINTS: 25, SkillId.DEFENCE: 6},
+      duration: Duration(minutes: 15),
+      iconAsset: "assets/images/entities/oak_bonfire.png",
     ),
 
     // enchanting materials (from disenchanting equipment)

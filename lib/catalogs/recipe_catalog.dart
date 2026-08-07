@@ -30,16 +30,55 @@ class CraftingRecipe {
 class RecipeCatalog {
   // --- Recipes (start with blacksmithing examples) ---
   final List<CraftingRecipe> _recipes = [
-    // Firemaking
+    // Firemaking. three fire types across two log tiers: cookfires are cheap
+    // and open cooking, campfires and bonfires cost more logs for a bigger
+    // combat buff. the 'basic_campfire' and 'oak_campfire' ids are kept from
+    // the original two recipes so saved recipe selections stay valid.
     CraftingRecipe(
-      id: 'basic_campfire',
-      name: 'Basic Campfire',
+      id: 'cookfire',
+      name: 'Cookfire',
       skill: SkillId.FIREMAKING,
       levelRequirement: 1,
-      xp: 10,
-      inputs: {ItemId.LOGS: 1},
+      xp: 15,
+      inputs: {ItemId.LOGS: 2},
+      output: [
+        WeightedDropTableEntry(id: ItemId.COOKFIRE, count: 1, weight: 1),
+      ],
+    ),
+
+    CraftingRecipe(
+      id: 'basic_campfire',
+      name: 'Campfire',
+      skill: SkillId.FIREMAKING,
+      levelRequirement: 5,
+      xp: 40,
+      inputs: {ItemId.LOGS: 5},
       output: [
         WeightedDropTableEntry(id: ItemId.BASIC_CAMPFIRE, count: 1, weight: 1),
+      ],
+    ),
+
+    CraftingRecipe(
+      id: 'bonfire',
+      name: 'Bonfire',
+      skill: SkillId.FIREMAKING,
+      levelRequirement: 15,
+      xp: 130,
+      inputs: {ItemId.LOGS: 15},
+      output: [
+        WeightedDropTableEntry(id: ItemId.BONFIRE, count: 1, weight: 1),
+      ],
+    ),
+
+    CraftingRecipe(
+      id: 'oak_cookfire',
+      name: 'Oak Cookfire',
+      skill: SkillId.FIREMAKING,
+      levelRequirement: 20,
+      xp: 45,
+      inputs: {ItemId.OAK_LOGS: 2},
+      output: [
+        WeightedDropTableEntry(id: ItemId.OAK_COOKFIRE, count: 1, weight: 1),
       ],
     ),
 
@@ -47,11 +86,23 @@ class RecipeCatalog {
       id: 'oak_campfire',
       name: 'Oak Campfire',
       skill: SkillId.FIREMAKING,
-      levelRequirement: 10,
-      xp: 30,
-      inputs: {ItemId.OAK_LOGS: 1},
+      levelRequirement: 25,
+      xp: 110,
+      inputs: {ItemId.OAK_LOGS: 5},
       output: [
         WeightedDropTableEntry(id: ItemId.OAK_CAMPFIRE, count: 1, weight: 1),
+      ],
+    ),
+
+    CraftingRecipe(
+      id: 'oak_bonfire',
+      name: 'Oak Bonfire',
+      skill: SkillId.FIREMAKING,
+      levelRequirement: 35,
+      xp: 340,
+      inputs: {ItemId.OAK_LOGS: 15},
+      output: [
+        WeightedDropTableEntry(id: ItemId.OAK_BONFIRE, count: 1, weight: 1),
       ],
     ),
 

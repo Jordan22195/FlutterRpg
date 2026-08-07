@@ -184,6 +184,7 @@ class _MainShellState extends State<MainShell> {
         case EntityScreenRouterService.encounterRouteName:
         case EntityScreenRouterService.craftingRouteName:
         case EntityScreenRouterService.enchantingRouteName:
+        case EntityScreenRouterService.firepitRouteName:
         case EntityScreenRouterService.shopRouteName:
           if (!world.restoreEntityView(navContext)) return;
         default:

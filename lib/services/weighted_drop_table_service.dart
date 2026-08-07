@@ -10,12 +10,19 @@ class WeightedDropTableEntry<T> {
   /// the stack is always exactly [count].
   final int highCount;
 
+  /// Absolute skill level this entry becomes available at; 0 means always.
+  /// The table never filters itself — callers gate the list with
+  /// [WeightedDropTableService.availableAt] before rolling, so an entry
+  /// below the gate contributes no weight rather than a wasted roll.
+  final int unlockLevel;
+
   double weight;
 
   WeightedDropTableEntry({
     required this.id,
     this.count = 1,
     this.highCount = 0,
+    this.unlockLevel = 0,
     required this.weight,
   });
 }
@@ -34,6 +41,16 @@ class DropRoll<T> {
 }
 
 class WeightedDropTableService {
+  /// The subset of [entries] a player at [level] can roll. Entries with no
+  /// [WeightedDropTableEntry.unlockLevel] always survive, so an ungated
+  /// table passes through unchanged.
+  static List<WeightedDropTableEntry<T>> availableAt<T>(
+    List<WeightedDropTableEntry<T>> entries,
+    int level,
+  ) {
+    return entries.where((e) => level >= e.unlockLevel).toList();
+  }
+
   ObjectStack<T> roll<T>(
     List<WeightedDropTableEntry<T>> entries, {
     Random? rng,

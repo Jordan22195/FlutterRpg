@@ -39,9 +39,11 @@ import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/services/skill_service.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
-import 'package:rpg/services/world_service.dart';
+import 'package:rpg/services/exploration_service.dart';
 import 'package:rpg/systems/crafting_system.dart';
+import 'package:rpg/systems/firemaking_system.dart';
 import 'package:rpg/systems/encounter_system.dart';
+import 'package:rpg/systems/exploration_system.dart';
 import 'package:rpg/systems/equipment_system.dart';
 
 import 'data/inventory_data.dart';
@@ -248,6 +250,16 @@ class GameSessionFactory {
     required GameCatalogBundle catalogs,
     required TickerProvider vsync,
   }) {
+    // migration: saves created before a skill was added have no entry for
+    // it. PlayerDataService.applyXp silently drops xp for a missing skill,
+    // so backfill before anything can award any
+    for (final skillId in SkillId.values) {
+      save.playerData.skillData.putIfAbsent(
+        skillId,
+        () => SkillData(name: skillId.name, xp: 0),
+      );
+    }
+
     // migration: saves created before a zone was added have no entry for
     // it in world data; build the missing zones from their definitions
     for (final zoneId in ZoneId.values) {
@@ -264,6 +276,28 @@ class GameSessionFactory {
         discoveredEntities: [],
       );
     }
+
+    // migration: fires used to be a second entity standing next to the
+    // firepit. they are zone buffs owned by the firepit now, so any campfire
+    // entity left in a save is dropped. Zone.fromJson already skips the ones
+    // whose entity id no longer parses; this catches any that do.
+    const retiredFireEntityNames = {'BASIC_CAMPIRE', 'OAK_CAMPFIRE'};
+    for (final zone in save.worldData.zones.values) {
+      zone.discoveredEntities.removeWhere(
+        (e) => retiredFireEntityNames.contains(e.id.name),
+      );
+    }
+
+    // migration: recipe selections were one per station before a station
+    // could offer more than one skill. file each under the skill its recipe
+    // trains, which needs the catalog the data layer has no reference to.
+    for (final entry in save.craftingState.legacySelections.entries) {
+      final skill = catalogs.recipeCatalog.recipeById(entry.value).skill;
+      if (skill == SkillId.NULL) continue;
+      (save.craftingState.selectedRecipeByEntity[entry.key] ??= {})[skill] =
+          entry.value;
+    }
+    save.craftingState.legacySelections.clear();
 
     // migration: permanent entities added to a zone definition after the
     // save serialized that zone are synced in on load
@@ -366,7 +400,7 @@ class GameSessionFactory {
     final inventoryService = InventoryService();
     final skillService = SkillService();
     final weightedDropTableService = WeightedDropTableService();
-    final worldService = WorldService(inventoryService: inventoryService);
+    final explorationService = ExplorationService(inventoryService: inventoryService);
     ActionTimingService actionTimingService = ActionTimingService();
     final playerDataService = PlayerDataService(
       buffService: buffService,
@@ -386,6 +420,7 @@ class GameSessionFactory {
     );
 
     // systems
+    final firemakingSystem = FiremakingSystem(buffService: buffService);
     final craftingSystem = CraftingSystem(
       playerState: save.playerData,
       inventoryData: save.inventoryData,
@@ -397,19 +432,26 @@ class GameSessionFactory {
       craftingService: craftingService,
       inventoryService: inventoryService,
       weightedDropTableService: weightedDropTableService,
-      worldService: worldService,
-      buffService: buffService,
-      entityCatalog: catalogs.entityCatalog,
+      firemakingSystem: firemakingSystem,
     );
     final encounterSystem = EncounterSystem(
       encounterService: encounterService,
-      worldService: worldService,
+      explorationService: explorationService,
       playerDataService: playerDataService,
       dropTableService: weightedDropTableService,
       inventoryService: inventoryService,
       entityCatalog: catalogs.entityCatalog,
       itemCatalog: catalogs.itemCatalog,
       autoEatService: combatAutoEatService,
+    );
+    final explorationSystem = ExplorationSystem(
+      explorationService: explorationService,
+      playerDataService: playerDataService,
+      dropTableService: weightedDropTableService,
+      inventoryService: inventoryService,
+      entityCatalog: catalogs.entityCatalog,
+      itemCatalog: catalogs.itemCatalog,
+      zoneCatalog: catalogs.zoneCatalog,
     );
     final equipmentSystem = EquipmentSystem(
       inventoryService: inventoryService,
@@ -429,10 +471,6 @@ class GameSessionFactory {
       inventoryService: inventoryService,
       playerDataService: playerDataService,
       autoEatService: combatAutoEatService,
-    );
-    final zoneBuffSystem = ZoneBuffSystem(
-      worldService: worldService,
-      buffService: buffService,
     );
     ActionSpeedSystem actionSpeedSystem = ActionSpeedSystem(
       actionTimingService: actionTimingService,
@@ -461,7 +499,7 @@ class GameSessionFactory {
       encounterState: save.encounterData,
       encounterService: encounterService,
       worldState: save.worldData,
-      worldService: worldService,
+      explorationService: explorationService,
       actionTimingController: actionTimingController,
       entityCatalog: catalogs.entityCatalog,
       dropTableService: weightedDropTableService,
@@ -474,14 +512,13 @@ class GameSessionFactory {
     final buffController = BuffController(
       playerState: save.playerData,
       buffService: buffService,
-      zoneBuffSystem: zoneBuffSystem,
-      worldState: save.worldData,
     );
     final craftingController = CraftingController(
       actionTimingController: actionTimingController,
       inventoryData: save.inventoryData,
       inventoryService: inventoryService,
       craftingSystem: craftingSystem,
+      firemakingSystem: firemakingSystem,
       worldState: save.worldData,
       buffState: save.playerData.buffData,
       craftingService: craftingService,
@@ -506,16 +543,15 @@ class GameSessionFactory {
     );
     final worldController = WorldController(
       worldState: save.worldData,
-      worldService: worldService,
+      explorationService: explorationService,
       playerState: save.playerData,
       inventoryState: save.inventoryData,
-      inventoryService: inventoryService,
       zoneCatalog: catalogs.zoneCatalog,
-      dropTableService: weightedDropTableService,
       entityCatalog: catalogs.entityCatalog,
       entityScreenRouterService: entityScreenRouterService,
       playerDataService: playerDataService,
       encounterSystem: encounterSystem,
+      explorationSystem: explorationSystem,
       actionTimingController: actionTimingController,
       encounterController: encounterController,
       craftingController: craftingController,
@@ -537,7 +573,7 @@ class GameSessionFactory {
       inventoryState: save.inventoryData,
       entityCatalog: catalogs.entityCatalog,
       itemCatalog: catalogs.itemCatalog,
-      worldService: worldService,
+      explorationService: explorationService,
       inventoryService: inventoryService,
       shopService: shopService,
     );
@@ -548,7 +584,7 @@ class GameSessionFactory {
       worldController: worldController,
       playerState: save.playerData,
       worldState: save.worldData,
-      worldService: worldService,
+      explorationService: explorationService,
       entityCatalog: catalogs.entityCatalog,
       recipeCatalog: catalogs.recipeCatalog,
       zoneCatalog: catalogs.zoneCatalog,
@@ -575,6 +611,9 @@ class GameSessionFactory {
     // detail screen, status bars) rebuild as the xp lands
     encounterController.addListener(playerDataController.refresh);
     craftingController.addListener(playerDataController.refresh);
+    // firemaking changes the buff list as it crafts, so the buff row must
+    // not wait for the next expiry tick to show it
+    craftingController.addListener(buffController.refresh);
     enchantingController.addListener(playerDataController.refresh);
     dungeonController.addListener(playerDataController.refresh);
     equipmentController.addListener(playerDataController.refresh);
@@ -610,10 +649,12 @@ class GameSessionFactory {
       playerDataService: playerDataService,
       skillService: skillService,
       weightedDropTableService: weightedDropTableService,
-      worldService: worldService,
+      explorationService: explorationService,
       shopService: shopService,
       craftingSystem: craftingSystem,
+      firemakingSystem: firemakingSystem,
       encounterSystem: encounterSystem,
+      explorationSystem: explorationSystem,
       equipmentSystem: equipmentSystem,
       dungeonSystem: dungeonSystem,
     );
@@ -650,12 +691,14 @@ class GameSession {
   PlayerDataService playerDataService;
   SkillService skillService;
   WeightedDropTableService weightedDropTableService;
-  WorldService worldService;
+  ExplorationService explorationService;
   ShopService shopService;
 
   // systems
   CraftingSystem craftingSystem;
+  FiremakingSystem firemakingSystem;
   EncounterSystem encounterSystem;
+  ExplorationSystem explorationSystem;
   EquipmentSystem equipmentSystem;
   DungeonSystem dungeonSystem;
 
@@ -689,12 +732,14 @@ class GameSession {
     required this.playerDataService,
     required this.skillService,
     required this.weightedDropTableService,
-    required this.worldService,
+    required this.explorationService,
     required this.shopService,
 
     // systems
     required this.craftingSystem,
+    required this.firemakingSystem,
     required this.encounterSystem,
+    required this.explorationSystem,
     required this.equipmentSystem,
     required this.dungeonSystem,
   });

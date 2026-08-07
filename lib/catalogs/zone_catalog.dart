@@ -80,12 +80,21 @@ class Zone {
     //  return Entity.fromJson(e);
     // }).toList();
 
-    final discoveredEntities = rawDiscovered.map((e) {
+    // entities the current content no longer defines are skipped rather than
+    // rejecting the whole save. that is what lets an entity be retired — the
+    // campfires that became fire buffs, for instance — without a bespoke
+    // migration for every removal.
+    final discoveredEntities = <Entity>[];
+    for (final e in rawDiscovered) {
       if (e is! Map<String, dynamic>) {
         throw FormatException('Invalid discovered entity entry.');
       }
-      return Entity.fromJson(e);
-    }).toList();
+      try {
+        discoveredEntities.add(Entity.fromJson(e));
+      } on FormatException {
+        continue;
+      }
+    }
 
     // discoveredItems is explore-session state, so it isn't saved: a
     // reloaded zone starts with an empty find list
@@ -105,12 +114,26 @@ class ZoneDefinition {
   final List<WeightedDropTableEntry<EntityId>> discoverableEntities;
   // items are on a separate drop table and have a chance to drop when
   // an exploration action happens.
-  List<WeightedDropTableEntry<ItemId>> discoverableItems;
+  final List<WeightedDropTableEntry<ItemId>> discoverableItems;
   final String iconAsset;
 
   /// Skill level gate for entering the zone; NULL/0 means unrestricted.
+  /// Separate from (and additional to) [explorationLevel].
   final SkillId requiredSkill;
   final int requiredLevel;
+
+  /// The zone's base difficulty, as an Exploration level. It gates entry
+  /// and is the baseline every discoverable's [WeightedDropTableEntry
+  /// .unlockLevel] and the find-count curve are measured against. 0 means
+  /// unrestricted.
+  final int explorationLevel;
+
+  /// Average Exploration xp one explore action in this zone is worth. The
+  /// per-entity award divides this pool by drop weight, so rare finds pay
+  /// more while the expected rate stays exactly this number — extra finds
+  /// grant no xp, which keeps a zone's xp/hr flat however far it has been
+  /// outlevelled.
+  final double xpPerExplore;
 
   ZoneDefinition({
     required this.id,
@@ -121,6 +144,8 @@ class ZoneDefinition {
     required this.iconAsset,
     this.requiredSkill = SkillId.NULL,
     this.requiredLevel = 0,
+    this.explorationLevel = 0,
+    this.xpPerExplore = 0,
   });
 }
 
@@ -203,6 +228,8 @@ class ZoneCatalog {
       id: ZoneId.TUTORIAL_FARM,
       name: "Southglen Meadow",
       iconAsset: "assets/images/zones/farm.png",
+      explorationLevel: 1,
+      xpPerExplore: 8,
 
       permanentEntities: [
         EntityId.TRANQUIL_POND,
@@ -214,7 +241,18 @@ class ZoneCatalog {
         WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.CHICKEN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COW, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.BIG_RED, weight: .1),
+        // the skill's first payoff: an existing rare, now something you
+        // earn rather than something you stumble into on turn one
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.BIG_RED,
+          weight: .1,
+          unlockLevel: 4,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.ROTWOOD_SCARECROW,
+          weight: .05,
+          unlockLevel: 8,
+        ),
       ],
       discoverableItems: [
         WeightedDropTableEntry(
@@ -222,6 +260,14 @@ class ZoneCatalog {
           count: 1,
           highCount: 10,
           weight: .1,
+          unlockLevel: 3,
+        ),
+        // a lucky gem turned up in the dirt; feeds jewelcrafting from the
+        // starter zone
+        WeightedDropTableEntry(
+          id: ItemId.SAPPHIRE,
+          weight: .02,
+          unlockLevel: 6,
         ),
         WeightedDropTableEntry(id: ItemId.NULL, weight: 1),
       ],
@@ -229,39 +275,129 @@ class ZoneCatalog {
     _zones[ZoneId.SOUTHWOOD_FOREST] = ZoneDefinition(
       id: ZoneId.SOUTHWOOD_FOREST,
       iconAsset: 'assets/images/zones/forest.png',
+      explorationLevel: 5,
+      xpPerExplore: 20,
 
       name: "Southwood Forest",
-      permanentEntities: [EntityId.TRANQUIL_POND],
+      permanentEntities: [
+        EntityId.TRANQUIL_POND,
+        EntityId.FIREPIT,
+        EntityId.SPIDER_DEN_ENTRANCE,
+      ],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
         WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: .5),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
+        // herb geography: the low herbs grow here once you can spot them,
+        // which is what makes Herbalism reachable through Exploration
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GUAM,
+          weight: 1,
+          count: 3,
+          unlockLevel: 8,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MARRENTILL,
+          weight: .7,
+          count: 3,
+          unlockLevel: 8,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TARROMIN,
+          weight: .5,
+          count: 3,
+          unlockLevel: 8,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GIANT_SPIDER,
+          weight: .3,
+          unlockLevel: 11,
+        ),
+        // the valuable herb everyone wants, reserved for explorers who
+        // have really learned these woods
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.RANARR,
+          weight: .1,
+          count: 3,
+          unlockLevel: 17,
+        ),
+      ],
+      discoverableItems: [
+        WeightedDropTableEntry(
+          id: ItemId.LOGS,
+          count: 1,
+          highCount: 5,
+          weight: .15,
+          unlockLevel: 8,
+        ),
+        WeightedDropTableEntry(
+          id: ItemId.ENCHANTING_ESSENCE,
+          weight: .03,
+          unlockLevel: 14,
+        ),
+        WeightedDropTableEntry(id: ItemId.NULL, weight: 1),
       ],
     );
+    // a town: nothing to discover, so exploring here turns up nothing
     _zones[ZoneId.SOUTH_HAVEN] = ZoneDefinition(
       id: ZoneId.SOUTH_HAVEN,
       iconAsset: 'assets/images/zones/south_haven.png',
+      explorationLevel: 1,
 
       name: "South Haven",
-      permanentEntities: [EntityId.ANVIL, EntityId.TRADING_POST],
+      permanentEntities: [
+        EntityId.ANVIL,
+        EntityId.FIREPIT,
+        EntityId.TRADING_POST,
+      ],
       discoverableEntities: [],
     );
 
-    // a mine deeper in the forest; gated behind mining experience
+    // a mine deeper in the forest; gated behind mining experience on top
+    // of its exploration difficulty
     _zones[ZoneId.FOREST_MINE] = ZoneDefinition(
       id: ZoneId.FOREST_MINE,
       name: "Forest Mine",
       iconAsset: 'assets/images/zones/mine.png',
       requiredSkill: SkillId.MINING,
       requiredLevel: 5,
+      explorationLevel: 15,
+      xpPerExplore: 50,
 
       permanentEntities: [],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 2),
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 2),
         WeightedDropTableEntry<EntityId>(id: EntityId.GIANT_SPIDER, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.COAL_VEIN,
+          weight: .8,
+          unlockLevel: 21,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GEM_VEIN,
+          weight: .08,
+          unlockLevel: 25,
+        ),
+      ],
+      discoverableItems: [
+        // a lost miner's purse, kept off the ore/gem axis so it doesn't
+        // pre-empt either vein
+        WeightedDropTableEntry(
+          id: ItemId.COINS,
+          count: 5,
+          highCount: 50,
+          weight: .12,
+          unlockLevel: 18,
+        ),
+        WeightedDropTableEntry(
+          id: ItemId.SOUL_SHARD,
+          weight: .01,
+          unlockLevel: 30,
+        ),
+        WeightedDropTableEntry(id: ItemId.NULL, weight: 1),
       ],
     );
 
@@ -270,6 +406,7 @@ class ZoneCatalog {
       id: ZoneId.DEV_FOREST,
       name: "Dev Forest",
       iconAsset: 'assets/images/zones/forest.png',
+      xpPerExplore: 10,
 
       permanentEntities: [
         EntityId.FIREPIT,
@@ -369,6 +506,8 @@ class ZoneCatalog {
       id: ZoneId.CHALLENGING_MOUNTAIN,
       name: "The Mountain",
       iconAsset: "",
+      explorationLevel: 30,
+      xpPerExplore: 120,
 
       permanentEntities: [],
 

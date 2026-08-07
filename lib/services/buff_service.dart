@@ -1,7 +1,6 @@
+import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/catalogs/zone_catalog.dart';
 import 'package:rpg/data/skill_data.dart';
-import 'package:rpg/data/world_data.dart';
-import 'package:rpg/services/world_service.dart';
 import 'package:rpg/utilities/util.dart';
 import '../data/buff_data.dart';
 import '../catalogs/item_catalog.dart';
@@ -23,8 +22,14 @@ class BuffService {
     return buffState.zoneBuffs[zoneId]?.values.toList() ?? [];
   }
 
-  ZoneBuffItem? getZoneBuff(BuffData buffState, ZoneId zoneId, ItemId itemId) {
-    return buffState.zoneBuffs[zoneId]?[itemId];
+  /// The buff owned by [ownerEntityId] in [zoneId] — for a firepit, the fire
+  /// currently burning in it.
+  ZoneBuffItem? getZoneBuff(
+    BuffData buffState,
+    ZoneId zoneId,
+    EntityId ownerEntityId,
+  ) {
+    return buffState.zoneBuffs[zoneId]?[ownerEntityId];
   }
 
   // stat bonuses from all buffs affecting the player right now: global
@@ -48,19 +53,37 @@ class BuffService {
     return total;
   }
 
-  /// Set/refresh the campfire buff.
-  /// If the same buff is already active, extends its duration.
-  void setZoneBuff(BuffItem buffItem, BuffData buffState, ZoneId zoneId) {
-    if (!buffState.zoneBuffs.containsKey(zoneId)) {
-      buffState.zoneBuffs[zoneId] = {};
-    }
-    final buffs = buffState.zoneBuffs[zoneId] ?? {};
-    if (buffs.containsKey(buffItem.id)) {
-      final buff = buffs[buffItem.id] ?? nullBuff;
-      buff.expirationTime = _extendedExpiration(buff, buffItem.duration);
+  /// Set/refresh the buff owned by [ownerEntityId] in [zoneId].
+  ///
+  /// An owner holds one buff at a time. Applying the same buff again extends
+  /// it (adding logs to a burning fire); applying a different one replaces it
+  /// outright (lighting a new kind of fire in the same firepit).
+  void setZoneBuff(
+    ZoneBuffItem buffItem,
+    BuffData buffState,
+    ZoneId zoneId,
+    EntityId ownerEntityId,
+  ) {
+    final buffs = buffState.zoneBuffs.putIfAbsent(zoneId, () => {});
+
+    final existing = buffs[ownerEntityId];
+    if (existing != null && existing.id == buffItem.id) {
+      existing.expirationTime = _extendedExpiration(existing, buffItem.duration);
       return;
     }
-    buffs[buffItem.id] = buffItem as ZoneBuffItem;
+
+    buffItem.zoneId = zoneId;
+    buffItem.ownerEntityId = ownerEntityId;
+    buffs[ownerEntityId] = buffItem;
+  }
+
+  /// Removes an owner's buff early — putting out a fire.
+  void removeZoneBuff(
+    BuffData buffState,
+    ZoneId zoneId,
+    EntityId ownerEntityId,
+  ) {
+    buffState.zoneBuffs[zoneId]?.remove(ownerEntityId);
   }
 
   // extend from the current expiration, or from now if the buff already
@@ -93,10 +116,8 @@ class BuffService {
     checkGlobalBuffExpiration(buffState);
   }
 
-  // Decrement campfire buff.
-  // If it just expired, normalize the ID to NULL (keeps the name).
-  // return list of removed buffs so zone buff system can remove
-  // associated enitities from world state
+  // Sweep burnt-out zone buffs. Returns the removed buffs so the caller can
+  // react (a fire going out changes what its firepit offers).
   List<ZoneBuffItem> removeExpiredZoneBuffs(BuffData buffState) {
     final list = <ZoneBuffItem>[];
     for (final z in buffState.zoneBuffs.values) {
@@ -131,52 +152,15 @@ class BuffService {
 }
 
 /*
-how do zone buffs work with entites
+how do zone buffs work with entities
 
-a)
-buff data  controls life time of entity
-entity buff item definition has a reference to the associated 
-entity id
-a new system called zone buff system would control it. 
-on creation of buff create a new entity and add it to the zone.
-the buff item has a reference to zone id and entity id. when the buff expires
-the system removes the entity from the zone and removes the buff.
+a zone buff is owned by the entity that produced it, and is keyed by that
+entity id. a fire is a buff owned by the firepit it burns in — there is no
+separate fire entity to keep in sync, and no entity state to lose when
+permanent entities are rebuilt from the catalog on load. the firepit renders
+whatever its buff says is burning, and reverts to a bare firepit when the
+buff is swept.
 
-scenarios
--buffs createdvon exploartion like animals
-you need the reverse mapping, an entity to a buff.
-explore drops buff entity with buff item id. need to trigger 
-creation of new buff item. would need a system to tie it togeather.
-loke explore system. 
-then zone buff system manages the lifetime of it.
--buff created on crafting like campfire
-crafting creates the buff and entity follows. how to pass from crafting system to zone buff system?
-- a new system? special firemaking system to create the buffs.
-
-zone buff system manages the lifespan - runs on tick from the controller
-
-can the new campfire system extend the existing crafting system?
-its not that much code. i can just put in the crafting system
-
+FiremakingSystem is what creates and extends those buffs. BuffController's
+tick does the sweeping, so nothing else has to watch the clock.
 */
-
-class ZoneBuffSystem {
-  final WorldService _worldService;
-  final BuffService _buffService;
-
-  ZoneBuffSystem({
-    required WorldService worldService,
-    required BuffService buffService,
-  }) : _worldService = worldService,
-       _buffService = buffService;
-
-  void updateZoneBuffs(BuffData buffState, WorldData worldState) {
-    //check the duration of the zone buffs
-    final expiredBuffs = _buffService.removeExpiredZoneBuffs(buffState);
-
-    //if buffs are expired, remove associated entity from the world
-    for (final b in expiredBuffs) {
-      _worldService.removeEntityFromZone(b.entityId, b.zoneId, worldState);
-    }
-  }
-}

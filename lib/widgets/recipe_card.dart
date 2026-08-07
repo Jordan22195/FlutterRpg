@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
-import '../data/skill_data.dart';
 import '../catalogs/item_catalog.dart';
 import '../controllers/crafting_controller.dart';
-import '../controllers/buff_controller.dart';
 
 class RecipeOutputTile extends StatelessWidget {
   const RecipeOutputTile({
@@ -19,27 +17,20 @@ class RecipeOutputTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final crafting = context.watch<CraftingController>();
-    final buffs = context.watch<BuffController>();
     final recipe = crafting.getRecipe(recipeId);
     if (recipe.output.isEmpty) {
       return ItemStackTile(size: 1, count: 1, id: ItemId.NULL);
     }
     final output = recipe.output;
 
-    // Only show timer for firemaking recipes whose buff is active in
-    // the player's current zone.
-    final buffExpiration = recipe.skill == SkillId.FIREMAKING
-        ? buffs.getZoneBuffExpiration(output.first.id)
-        : null;
-
+    // a fire's burn time belongs to the firepit it is burning in, not to the
+    // recipe, so the countdown lives on the firepit screen's hero tile
     return ItemStackTile(
       size: 52,
       id: output.first.id,
       count: maxCraftable
           ? crafting.getMaxNumberCraftsForRecipe(recipeId)
           : crafting.getItemCountInPlayerInventory(output.first.id),
-      isTimerStackTile: buffExpiration != null,
-      expirationTime: buffExpiration,
     );
   }
 }
