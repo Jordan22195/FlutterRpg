@@ -71,14 +71,15 @@ class CraftingController extends ChangeNotifier {
   // the selection the viewed station holds for [skill]. a station offering
   // several skills keeps one selection per skill.
   String selectedRecipeIdFor(SkillId skill) {
-    return _craftingState
-            .selectedRecipeByEntity[_playerState.currentEntityViewId]?[skill] ??
+    return _craftingState.selectedRecipeByEntity[_playerState
+            .currentEntityViewId]?[skill] ??
         "";
   }
 
   // the selection belonging to the crafting entity the player is viewing,
   // for that station's own skill
-  String get selectedRecipeId => selectedRecipeIdFor(getCraftingEntitySkillId());
+  String get selectedRecipeId =>
+      selectedRecipeIdFor(getCraftingEntitySkillId());
 
   String get activeRecipeId => _craftingState.activeRecipeId;
 
@@ -150,7 +151,8 @@ class CraftingController extends ChangeNotifier {
     // comes from the recipe, so callers never have to pass it.
     final skill = _recipeCatalog.recipeById(recipeId).skill;
     (_craftingState.selectedRecipeByEntity[_playerState.currentEntityViewId] ??=
-        {})[skill] = recipeId;
+            {})[skill] =
+        recipeId;
 
     // player can view a recipe while crafting another
     // active recipe is what is being crafted.
@@ -224,6 +226,19 @@ class CraftingController extends ChangeNotifier {
 
   int getMaxNumberCraftsForRecipe(String recipeId) {
     return _craftingSystem.craftableCount(recipeId, _inventoryState);
+  }
+
+  /// Whether the player's level in the recipe's skill meets its requirement.
+  /// A recipe that fails this can never be crafted, so the picker locks it.
+  bool meetsRecipeLevelRequirement(String recipeId) {
+    return _craftingSystem.checkRecipeLevelRequirement(recipeId, _playerState);
+  }
+
+  /// Whether the inventory holds enough of every input for a single craft.
+  /// Unlike the level requirement this is a temporary shortfall, so the
+  /// recipe stays selectable and is only flagged.
+  bool hasMaterialsForRecipe(String recipeId) {
+    return getMaxNumberCraftsForRecipe(recipeId) > 0;
   }
 
   /// The crafting station the player is looking at.

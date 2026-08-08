@@ -55,24 +55,27 @@ void main() {
     }
   }
 
-  test('dying in an encounter ends the action and bumps the death sequence', () async {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    final session = buildSession();
-    final player = session.saveGameData.playerData;
-    final encounter = session.encounterController;
+  test(
+    'dying in an encounter ends the action and bumps the death sequence',
+    () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      final session = buildSession();
+      final player = session.saveGameData.playerData;
+      final encounter = session.encounterController;
 
-    expect(encounter.startEncounterActionFor(lethalEnemy()), isTrue);
-    expect(encounter.deathSequence, 0);
+      expect(encounter.startEncounterActionFor(lethalEnemy()), isTrue);
+      expect(encounter.deathSequence, 0);
 
-    await fightUntilDeath(encounter);
+      await fightUntilDeath(encounter);
 
-    expect(encounter.deathSequence, 1);
-    // the loop stops and the player is left on 1 hp, not 0
-    expect(session.actionTimingController.isRunning, isFalse);
-    expect(player.hitpoints, 1);
+      expect(encounter.deathSequence, 1);
+      // the loop stops and the player is left on 1 hp, not 0
+      expect(session.actionTimingController.isRunning, isFalse);
+      expect(player.hitpoints, 1);
 
-    session.dispose();
-  });
+      session.dispose();
+    },
+  );
 
   testWidgets('dying unwinds the map tab to the map screen and says so', (
     tester,

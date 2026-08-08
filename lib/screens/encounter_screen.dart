@@ -257,8 +257,9 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     final EntityId entityId = entity.id;
     final int entityCount = entity.count;
 
-    // skills this activity trains: combat awards xp to the weapon skill,
-    // hitpoints, and defence (blocked hits); gathering trains its own skill
+    // skills this encounter trains on its own: combat awards xp to the weapon
+    // skill, hitpoints, and defence (blocked hits); gathering trains its own
+    // skill. the action loop's own three are added by ActivitySkillRingRow
     final trainedSkills = isCombatEntity
         ? [skillType, SkillId.HITPOINTS, SkillId.DEFENCE]
         : [skillType];
@@ -364,7 +365,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                   const SizedBox(height: 6),
 
                   BuffRow(),
-                  SkillRingRow(skills: trainedSkills),
+                  ActivitySkillRingRow(skills: trainedSkills),
 
                   Padding(
                     padding: const EdgeInsets.only(left: 2, top: 12, bottom: 4),

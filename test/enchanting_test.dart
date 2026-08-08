@@ -45,15 +45,9 @@ void main() {
     expect(gained!.id, ItemId.ENCHANTING_RUNE); // rare -> runes
     expect(gained.count, greaterThan(0));
     expect(save.inventoryData.equipment, isEmpty);
-    expect(
-      save.inventoryData.itemMap[ItemId.ENCHANTING_RUNE],
-      gained.count,
-    );
+    expect(save.inventoryData.itemMap[ItemId.ENCHANTING_RUNE], gained.count);
     // enchanting xp was awarded
-    expect(
-      save.playerData.skillData[SkillId.ENCHANTING]!.xp,
-      greaterThan(0),
-    );
+    expect(save.playerData.skillData[SkillId.ENCHANTING]!.xp, greaterThan(0));
   });
 
   test('disenchant yield grows with stat total and level', () {

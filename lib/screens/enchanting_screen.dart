@@ -144,7 +144,7 @@ class EnchantingScreen extends StatelessWidget {
                   // same pair the encounter screen shows
                   const BuffRow(),
                   const SizedBox(height: 8),
-                  const SkillRingRow(skills: [SkillId.ENCHANTING]),
+                  const ActivitySkillRingRow(skills: [SkillId.ENCHANTING]),
                   const SizedBox(height: 4),
 
                   // material counts

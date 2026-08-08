@@ -43,10 +43,11 @@ class PlayerDataService {
       Util.addMap(equipmentStats, buffStats),
     );
 
-    if (playerState.skillBoost != SkillId.SPEED) {
-      totals[playerState.skillBoost] =
-          ((totals[playerState.skillBoost] ?? 0) * playerState.boostMultiplier)
-              .round();
+    // the boost scales the stats the stance acts on, which is not always the
+    // skill the stance is stored as - see [kBoostedStats]
+    for (final id
+        in kBoostedStats[playerState.skillBoost] ?? const <SkillId>[]) {
+      totals[id] = ((totals[id] ?? 0) * playerState.boostMultiplier).round();
     }
 
     return totals;
@@ -54,6 +55,13 @@ class PlayerDataService {
 
   void setBoostMultiplier(double boostValue, PlayerData playerState) {
     playerState.boostMultiplier = boostValue;
+  }
+
+  /// The skill the action loop's boost trains: speed in the fast stance,
+  /// strength in every other. Every activity that runs the loop trains it,
+  /// not just the ones that offer a stance picker.
+  SkillId getBoostSkill(PlayerData playerState) {
+    return boostTrainedSkill(playerState.skillBoost);
   }
 
   /// The stance is stored as the skill the action loop boosts.

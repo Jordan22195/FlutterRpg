@@ -40,10 +40,13 @@ void main() {
 
     // 80% -> no eat
     player.hitpoints = 8;
-    expect(session.encounterSystem.autoEat(
-      playerState: player,
-      playerInventory: session.saveGameData.inventoryData,
-    ), isFalse);
+    expect(
+      session.encounterSystem.autoEat(
+        playerState: player,
+        playerInventory: session.saveGameData.inventoryData,
+      ),
+      isFalse,
+    );
     expect(
       session.inventoryService.getItemCount(
         session.saveGameData.inventoryData,
@@ -54,10 +57,13 @@ void main() {
 
     // 70% (<=75%) -> eats one and heals
     player.hitpoints = 7;
-    expect(session.encounterSystem.autoEat(
-      playerState: player,
-      playerInventory: session.saveGameData.inventoryData,
-    ), isTrue);
+    expect(
+      session.encounterSystem.autoEat(
+        playerState: player,
+        playerInventory: session.saveGameData.inventoryData,
+      ),
+      isTrue,
+    );
     expect(player.hitpoints, greaterThan(7));
     expect(
       session.inventoryService.getItemCount(
@@ -74,10 +80,13 @@ void main() {
     final session = buildSession();
     final player = session.saveGameData.playerData;
     player.hitpoints = 1;
-    expect(session.encounterSystem.autoEat(
-      playerState: player,
-      playerInventory: session.saveGameData.inventoryData,
-    ), isFalse);
+    expect(
+      session.encounterSystem.autoEat(
+        playerState: player,
+        playerInventory: session.saveGameData.inventoryData,
+      ),
+      isFalse,
+    );
     session.dispose();
   });
 
@@ -88,10 +97,13 @@ void main() {
 
     // both systems delegate to the shared service: eat at 70%
     player.hitpoints = 7;
-    expect(session.dungeonSystem.autoEat(
-      playerState: player,
-      playerInventory: session.saveGameData.inventoryData,
-    ), isTrue);
+    expect(
+      session.dungeonSystem.autoEat(
+        playerState: player,
+        playerInventory: session.saveGameData.inventoryData,
+      ),
+      isTrue,
+    );
 
     session.dispose();
   });

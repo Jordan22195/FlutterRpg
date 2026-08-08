@@ -20,14 +20,8 @@ void main() {
 
     expect(restored.slotId, save.slotId);
     expect(restored.contentPackId, save.contentPackId);
-    expect(
-      restored.playerData.currentZoneId,
-      save.playerData.currentZoneId,
-    );
-    expect(
-      restored.worldData.zones.keys,
-      save.worldData.zones.keys,
-    );
+    expect(restored.playerData.currentZoneId, save.playerData.currentZoneId);
+    expect(restored.worldData.zones.keys, save.worldData.zones.keys);
     expect(
       restored.worldData.zones.values.map((z) => z.permanentEntities.length),
       save.worldData.zones.values.map((z) => z.permanentEntities.length),

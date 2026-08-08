@@ -20,29 +20,26 @@ void main() {
   ShopEntityDefinition shopDef(EntityId id) =>
       entityCatalog.getDefinitionFor(id) as ShopEntityDefinition;
 
-  test('the two dev-forest shops are shop definitions with expected config', () {
-    final post = shopDef(EntityId.TRADING_POST);
-    expect(post.restockInterval, const Duration(hours: 6));
-    expect(post.stockSlots, 10);
-    expect(post.priceMarkup, greaterThan(1.0));
+  test(
+    'the two dev-forest shops are shop definitions with expected config',
+    () {
+      final post = shopDef(EntityId.TRADING_POST);
+      expect(post.restockInterval, const Duration(hours: 6));
+      expect(post.stockSlots, 10);
+      expect(post.priceMarkup, greaterThan(1.0));
 
-    final merchant = shopDef(EntityId.WANDERING_MERCHANT);
-    expect(merchant.restockInterval, const Duration(hours: 1));
-    expect(merchant.priceMarkup, 1.5);
-  });
+      final merchant = shopDef(EntityId.WANDERING_MERCHANT);
+      expect(merchant.restockInterval, const Duration(hours: 1));
+      expect(merchant.priceMarkup, 1.5);
+    },
+  );
 
   test('restock fills 10 distinct items and buy price beats sell price', () {
     final shop = shopDef(EntityId.TRADING_POST).toEntity(EntityId.TRADING_POST);
     final def = shopDef(EntityId.TRADING_POST);
 
     final now = DateTime(2026, 1, 1);
-    shopService.restockIfDue(
-      shop,
-      def,
-      itemCatalog,
-      now: now,
-      rng: Random(42),
-    );
+    shopService.restockIfDue(shop, def, itemCatalog, now: now, rng: Random(42));
 
     expect(shop.stock.length, 10);
     // distinct items
@@ -117,13 +114,16 @@ void main() {
     final remaining = shop.stock
         .where((s) => identical(s, entry))
         .fold<int>(0, (sum, s) => sum + s.count);
-    expect(remaining == startCount - 1 || (startCount == 1 && remaining == 0),
-        isTrue);
+    expect(
+      remaining == startCount - 1 || (startCount == 1 && remaining == 0),
+      isTrue,
+    );
   });
 
   test('cannot buy without enough coins', () {
-    final shop = shopDef(EntityId.WANDERING_MERCHANT)
-        .toEntity(EntityId.WANDERING_MERCHANT);
+    final shop = shopDef(
+      EntityId.WANDERING_MERCHANT,
+    ).toEntity(EntityId.WANDERING_MERCHANT);
     final def = shopDef(EntityId.WANDERING_MERCHANT);
     final inventory = InventoryData(itemMap: {ItemId.COINS: 0});
 
@@ -141,8 +141,9 @@ void main() {
   });
 
   test('selling a stackable item pays the item value in coins', () {
-    final inventory =
-        InventoryData(itemMap: {ItemId.COPPER_ORE: 3, ItemId.COINS: 0});
+    final inventory = InventoryData(
+      itemMap: {ItemId.COPPER_ORE: 3, ItemId.COINS: 0},
+    );
     final value = ItemCatalog.buildItem(ItemId.COPPER_ORE).value;
 
     expect(shopService.sellItem(ItemId.COPPER_ORE, inventory), isTrue);
@@ -164,8 +165,7 @@ void main() {
       rng: Random(9),
     );
 
-    final restored =
-        Entity.fromJson(shop.toJson()) as ShopEntity;
+    final restored = Entity.fromJson(shop.toJson()) as ShopEntity;
     expect(restored.stock.length, shop.stock.length);
     expect(restored.stock.first.itemId, shop.stock.first.itemId);
     expect(restored.stock.first.count, shop.stock.first.count);
@@ -185,8 +185,7 @@ void main() {
     final devForest = save.worldData.zones.values.firstWhere(
       (z) => z.permanentEntities.any((e) => e is ShopEntity),
     );
-    final shops =
-        devForest.permanentEntities.whereType<ShopEntity>().toList();
+    final shops = devForest.permanentEntities.whereType<ShopEntity>().toList();
     expect(shops.length, 2);
 
     session.dispose();

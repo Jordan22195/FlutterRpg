@@ -92,36 +92,39 @@ void main() {
     session.dispose();
   });
 
-  test('manually starting an action hands control back to the player', () async {
-    final session = buildSession();
-    final save = session.saveGameData;
-    final queue = session.actionQueueController;
-    final timing = session.actionTimingController;
+  test(
+    'manually starting an action hands control back to the player',
+    () async {
+      final session = buildSession();
+      final save = session.saveGameData;
+      final queue = session.actionQueueController;
+      final timing = session.actionTimingController;
 
-    session.explorationService.addEntityToCurrentZone(
-      EntityId.TREE,
-      3,
-      session.catalogBundle.entityCatalog,
-      save.playerData,
-      save.worldData,
-    );
+      session.explorationService.addEntityToCurrentZone(
+        EntityId.TREE,
+        3,
+        session.catalogBundle.entityCatalog,
+        save.playerData,
+        save.worldData,
+      );
 
-    queue.enqueueEncounter(EntityId.TREE);
-    queue.startQueue();
-    expect(queue.activeTask, isNotNull);
+      queue.enqueueEncounter(EntityId.TREE);
+      queue.startQueue();
+      expect(queue.activeTask, isNotNull);
 
-    // player starts exploring by hand: stop + start in one call chain
-    session.worldController.startExplore();
-    await flushMicrotasks();
+      // player starts exploring by hand: stop + start in one call chain
+      session.worldController.startExplore();
+      await flushMicrotasks();
 
-    expect(queue.isQueueActive, isFalse);
-    expect(queue.activeTask, isNull);
-    // the interrupted task stays queued
-    expect(queue.tasks.length, 1);
-    expect(timing.isRunning, isTrue);
+      expect(queue.isQueueActive, isFalse);
+      expect(queue.activeTask, isNull);
+      // the interrupted task stays queued
+      expect(queue.tasks.length, 1);
+      expect(timing.isRunning, isTrue);
 
-    session.dispose();
-  });
+      session.dispose();
+    },
+  );
 
   test('finishing the last task deactivates the queue', () async {
     final session = buildSession();

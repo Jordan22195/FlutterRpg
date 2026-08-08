@@ -47,7 +47,10 @@ class ShopController extends ChangeNotifier {
   // the shop the player is viewing, restocked first when its timer is
   // due. null when the viewed entity isn't a shop
   ShopEntity? _currentShop() {
-    final entity = _explorationService.getSelectedEntity(_playerState, _worldState);
+    final entity = _explorationService.getSelectedEntity(
+      _playerState,
+      _worldState,
+    );
     if (entity is! ShopEntity) return null;
 
     final def = _shopDefinition(entity.id);

@@ -196,10 +196,8 @@ void main() {
 
   test('a better cookfire burns less food', () {
     final craftingService = CraftingService();
-    final cookfire =
-        ItemCatalog.buildItem(ItemId.COOKFIRE) as FireItem;
-    final oakCookfire =
-        ItemCatalog.buildItem(ItemId.OAK_COOKFIRE) as FireItem;
+    final cookfire = ItemCatalog.buildItem(ItemId.COOKFIRE) as FireItem;
+    final oakCookfire = ItemCatalog.buildItem(ItemId.OAK_COOKFIRE) as FireItem;
 
     // the cooking bonus reaches burn chance through the buffed stat totals,
     // so a higher-tier fire is simply a higher effective cooking level
@@ -266,10 +264,7 @@ void main() {
     expect((after as FireItem).canCook, isTrue);
     expect(after.id, ItemId.OAK_COOKFIRE);
     expect(after.ownerEntityId, EntityId.FIREPIT);
-    expect(
-      after.expirationTime.difference(before.expirationTime).inSeconds,
-      0,
-    );
+    expect(after.expirationTime.difference(before.expirationTime).inSeconds, 0);
 
     session.dispose();
   });
@@ -334,12 +329,14 @@ void main() {
 
       // the retired campfire entity is skipped rather than rejecting the save
       final zone = restored.worldData.zones[zoneId]!;
-      expect(zone.discoveredEntities.where((e) => e.name == 'Basic Campfire'),
-          isEmpty);
+      expect(
+        zone.discoveredEntities.where((e) => e.name == 'Basic Campfire'),
+        isEmpty,
+      );
 
       // and its buff now belongs to the firepit
-      final buff = restored.playerData.buffData.zoneBuffs[zoneId]![
-          EntityId.FIREPIT]!;
+      final buff =
+          restored.playerData.buffData.zoneBuffs[zoneId]![EntityId.FIREPIT]!;
       expect(buff.id, ItemId.BASIC_CAMPFIRE);
       expect(buff.ownerEntityId, EntityId.FIREPIT);
     });
@@ -357,8 +354,8 @@ void main() {
         vsync: const TestVSync(),
       );
 
-      final selections = session.saveGameData.craftingState
-          .selectedRecipeByEntity;
+      final selections =
+          session.saveGameData.craftingState.selectedRecipeByEntity;
       expect(
         selections[EntityId.ANVIL]?[SkillId.BLACKSMITHING],
         'smelt_copper_bar',

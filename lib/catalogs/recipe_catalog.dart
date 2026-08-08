@@ -65,9 +65,7 @@ class RecipeCatalog {
       levelRequirement: 15,
       xp: 130,
       inputs: {ItemId.LOGS: 15},
-      output: [
-        WeightedDropTableEntry(id: ItemId.BONFIRE, count: 1, weight: 1),
-      ],
+      output: [WeightedDropTableEntry(id: ItemId.BONFIRE, count: 1, weight: 1)],
     ),
 
     CraftingRecipe(

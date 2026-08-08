@@ -68,7 +68,10 @@ class BuffService {
 
     final existing = buffs[ownerEntityId];
     if (existing != null && existing.id == buffItem.id) {
-      existing.expirationTime = _extendedExpiration(existing, buffItem.duration);
+      existing.expirationTime = _extendedExpiration(
+        existing,
+        buffItem.duration,
+      );
       return;
     }
 

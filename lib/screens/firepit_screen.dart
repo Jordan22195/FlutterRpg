@@ -77,6 +77,7 @@ class _FirepitScreenState extends State<FirepitScreen>
                 final r = recipes[i];
                 return RecipeCard(
                   recipeId: r.id,
+                  lockWhenUnderLevel: true,
                   onTap: () {
                     controller.selectRecipe(r.id);
                     setState(() => _activeSection = skill);
@@ -237,7 +238,7 @@ class _FirepitScreenState extends State<FirepitScreen>
                   // the screen down by its height
                   const BuffRow(reserveWhenEmpty: true),
                   const SizedBox(height: 8),
-                  const SkillRingRow(skills: skills),
+                  const ActivitySkillRingRow(skills: skills),
 
                   _sectionLabel(
                     context,
@@ -274,7 +275,6 @@ class _FirepitScreenState extends State<FirepitScreen>
                                 activeSection == SkillId.COOKING,
                               ),
                               RecipeCard(
-                                maxCraftable: false,
                                 recipeId: cookRecipeId,
                                 onTap: () {
                                   setState(
@@ -319,9 +319,9 @@ class _FirepitScreenState extends State<FirepitScreen>
             Text(
               actionLabel,
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withValues(
-                  alpha: canAct ? 0.9 : 0.4,
-                ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: canAct ? 0.9 : 0.4),
                 letterSpacing: 0.5,
               ),
             ),
@@ -417,7 +417,7 @@ class _FireRecipeCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RecipeCard(maxCraftable: false, recipeId: recipeId, onTap: onTap),
+        RecipeCard(recipeId: recipeId, onTap: onTap),
         if (replaces)
           Padding(
             padding: const EdgeInsets.fromLTRB(10, 0, 10, 2),
@@ -426,9 +426,9 @@ class _FireRecipeCard extends StatelessWidget {
                 Icon(
                   Icons.swap_horiz,
                   size: 14,
-                  color: Theme.of(context).colorScheme.onSurface.withValues(
-                    alpha: 0.6,
-                  ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 4),
                 Text(

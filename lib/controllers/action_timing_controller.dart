@@ -151,6 +151,10 @@ class ActionTimingController extends ChangeNotifier {
   void stop() {
     _actionTimingService.stop(_actionTimingState);
     ticker.stop();
+    // the ticker is what feeds the multiplier back to the player, so stopping
+    // mid-boost would otherwise leave the boosted stats inflated until the
+    // next run
+    _actionSpeedSystem.clearBoost(_playerState);
     notifyListeners();
   }
 
@@ -184,6 +188,11 @@ class ActionSpeedSystem {
   }) : _actionTimingService = actionTimingService,
        _playerDataService = playerDataService;
 
+  /// Drops the boost back to 1x, so nothing stays scaled while idle.
+  void clearBoost(PlayerData playerState) {
+    _playerDataService.setBoostMultiplier(1.0, playerState);
+  }
+
   // the momentum loop, once per frame:
   // - the speed stat sets the boost ceiling
   // - holding the button accelerates toward the ceiling
@@ -206,14 +215,10 @@ class ActionSpeedSystem {
     // return if no time has passed.
     if (dt <= 0) return;
 
-    // refresh the boost ceiling from the speed stat
+    // refresh the boost ceiling from whichever stat the stance runs on
     final stats = _playerDataService.getStatTotals(playerState);
-    final skillBoost = playerState.skillBoost;
-    if (skillBoost == SkillId.SPEED) {
-      actionTimingState.boostingSpeed = true;
-    } else {
-      actionTimingState.boostingSpeed = false;
-    }
+    final boostSkill = _playerDataService.getBoostSkill(playerState);
+    actionTimingState.boostingSpeed = boostSkill == SkillId.SPEED;
     actionTimingState.maxBoostMultiplier = actionTimingState.boostingSpeed
         ? _actionTimingService.maxSpeedBoostForStat(stats[SkillId.SPEED] ?? 1)
         : _actionTimingService.maxStrengthBoostForStat(
@@ -265,12 +270,11 @@ class ActionSpeedSystem {
     } else {
       _playerDataService.changeStamina(-1 * drainPerSecond * dt, playerState);
     }
-    // xp: speed trains while boosting, stamina trains while draining,
-    // recovery trains while it has something to restore
+    // xp: the stance's boost skill trains while boosting, stamina trains
+    // while draining, recovery trains while it has something to restore
     if (boostMulitplier > 1) {
       _playerDataService.applyXp(playerState, {
-        actionTimingState.boostingSpeed ? SkillId.SPEED : SkillId.STRENGTH:
-            boostMulitplier * 1 * dt,
+        boostSkill: boostMulitplier * 1 * dt,
         SkillId.STAMINA: 1 * dt,
       });
     }

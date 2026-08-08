@@ -713,7 +713,7 @@ class EntityCatalog {
     EntityId.FARMER: ShopEntityDefinition(
       name: "Farmer John",
       iconAsset: "assets/images/entities/farmer_john.png",
-      stockSlots: 3,
+      stockSlots: 11,
       restockInterval: Duration(minutes: 30),
       shopStockPool: [
         ShopStockEntry(itemId: ItemId.COOKED_MINNOW, count: 10),
@@ -724,6 +724,9 @@ class EntityCatalog {
         ShopStockEntry(itemId: ItemId.LIGHT_LEATHER_PANTS, count: 1),
         ShopStockEntry(itemId: ItemId.LIGHT_LETHER_CHEST, count: 1),
         ShopStockEntry(itemId: ItemId.PITCHFORK, count: 1),
+        ShopStockEntry(itemId: ItemId.SIMPLE_FISHING_ROD, count: 1),
+        ShopStockEntry(itemId: ItemId.STONE_AXE, count: 1),
+        ShopStockEntry(itemId: ItemId.STONE_PICKAXE, count: 1),
       ],
 
       // defaults: 25% markup, 6 hour restock, 10 stock slots

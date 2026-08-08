@@ -400,7 +400,9 @@ class GameSessionFactory {
     final inventoryService = InventoryService();
     final skillService = SkillService();
     final weightedDropTableService = WeightedDropTableService();
-    final explorationService = ExplorationService(inventoryService: inventoryService);
+    final explorationService = ExplorationService(
+      inventoryService: inventoryService,
+    );
     ActionTimingService actionTimingService = ActionTimingService();
     final playerDataService = PlayerDataService(
       buffService: buffService,

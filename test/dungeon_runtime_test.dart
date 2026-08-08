@@ -24,18 +24,12 @@ void main() {
   // a full clear deterministic enough to loop to completion
   void makePlayerStrong(GameSession session) {
     final skills = session.saveGameData.playerData.skillData;
-    for (final id in [
-      SkillId.ATTACK,
-      SkillId.DEFENCE,
-      SkillId.HITPOINTS,
-    ]) {
+    for (final id in [SkillId.ATTACK, SkillId.DEFENCE, SkillId.HITPOINTS]) {
       final s = skills[id]!;
       s.xp = s.xpTable[99];
     }
-    session.saveGameData.playerData.hitpoints =
-        session.playerDataService.getStatTotals(
-          session.saveGameData.playerData,
-        )[SkillId.HITPOINTS]!;
+    session.saveGameData.playerData.hitpoints = session.playerDataService
+        .getStatTotals(session.saveGameData.playerData)[SkillId.HITPOINTS]!;
   }
 
   group('pure advancement', () {
@@ -238,9 +232,9 @@ void main() {
       );
       save.playerData.equipmentData.equipedFood = ItemId.COOKED_CHICKEN;
 
-      final maxHp =
-          session.playerDataService.getStatTotals(save.playerData)[SkillId
-              .HITPOINTS]!;
+      final maxHp = session.playerDataService.getStatTotals(
+        save.playerData,
+      )[SkillId.HITPOINTS]!;
 
       // healthy: no eating
       save.playerData.hitpoints = maxHp;

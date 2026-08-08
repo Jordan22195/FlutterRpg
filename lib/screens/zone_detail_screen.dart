@@ -144,7 +144,7 @@ class _SummaryCard extends StatelessWidget {
               context,
               'Your Exploration',
               '${details.explorationLevel}'
-              '${details.levelsAboveZone > 0 ? '  (+${details.levelsAboveZone})' : ''}',
+                  '${details.levelsAboveZone > 0 ? '  (+${details.levelsAboveZone})' : ''}',
             ),
             if (zone.requiredSkill != SkillId.NULL && zone.requiredLevel > 0)
               _statRow(
@@ -163,7 +163,7 @@ class _SummaryCard extends StatelessWidget {
                 context,
                 'Still hidden',
                 '${details.lockedCount} '
-                '${details.lockedCount == 1 ? 'discovery' : 'discoveries'}',
+                    '${details.lockedCount == 1 ? 'discovery' : 'discoveries'}',
               ),
           ],
         ),

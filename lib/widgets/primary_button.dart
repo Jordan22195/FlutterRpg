@@ -270,7 +270,7 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
                             // fast forward for as long as the hold lasts. the button
                             // no longer stops anything, so it never shows a pause.
                             Icon(
-                              controller.isButtonHeld
+                              controller.isButtonHeld || locked
                                   ? Icons.fast_forward
                                   : Icons.play_arrow,
                               size: _iconSize,

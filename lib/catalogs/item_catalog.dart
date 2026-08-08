@@ -41,6 +41,11 @@ enum ItemId {
   //  BLACKSMITHING
   //
 
+  // t0 tools
+  STONE_AXE,
+  STONE_PICKAXE,
+  SIMPLE_FISHING_ROD,
+
   // copper armor
   COPPER_HELMET,
   COPPER_CHESTPLATE,
@@ -1485,28 +1490,28 @@ class ItemCatalog {
     ItemId.LIGHT_LEATHER_BOOTS: EquipmentItemDefition(
       armorSlot: ArmorSlots.FEET,
       name: "Light Leather Boots",
-      value: 5,
+      value: 50,
       skillBonus: {SkillId.DEFENCE: 1},
       iconAsset: "assets/icons/items/light_leather_boots.png",
     ),
     ItemId.LIGHT_LEATHER_GLOVES: EquipmentItemDefition(
       armorSlot: ArmorSlots.HANDS,
       name: "Light Leather Gloves",
-      value: 5,
+      value: 50,
       skillBonus: {SkillId.DEFENCE: 1},
       iconAsset: "assets/icons/items/light_leather_gloves.png",
     ),
     ItemId.LIGHT_LEATHER_PANTS: EquipmentItemDefition(
       armorSlot: ArmorSlots.LEGS,
       name: "Light Leather Pants",
-      value: 10,
+      value: 100,
       skillBonus: {SkillId.DEFENCE: 2},
       iconAsset: "assets/icons/items/light_leather_pants.png",
     ),
     ItemId.LIGHT_LETHER_CHEST: EquipmentItemDefition(
       armorSlot: ArmorSlots.CHEST,
       name: "Light Leather Jerkin",
-      value: 10,
+      value: 150,
       skillBonus: {SkillId.DEFENCE: 2},
       iconAsset: "assets/icons/items/light_leather_chest.png",
     ),
@@ -1602,6 +1607,14 @@ class ItemCatalog {
     //weapons
 
     //
+    ItemId.STONE_AXE: WeaponItemDefition(
+      armorSlot: ArmorSlots.TOOL,
+      name: "Stone Axe",
+      value: 10,
+      skillBonus: {SkillId.ATTACK: 2, SkillId.WOODCUTTING: 1},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/stone_axe.png",
+    ),
     ItemId.COPPER_AXE: WeaponItemDefition(
       armorSlot: ArmorSlots.TOOL,
       name: "Bronze Axe",
@@ -1609,6 +1622,14 @@ class ItemCatalog {
       skillBonus: {SkillId.ATTACK: 2, SkillId.WOODCUTTING: 5},
       actionInterval: MediumAttackSpeed,
       iconAsset: "assets/icons/items/copper_axe.png",
+    ),
+    ItemId.STONE_PICKAXE: WeaponItemDefition(
+      armorSlot: ArmorSlots.TOOL,
+      name: "Stone Pickaxe",
+      value: 10,
+      skillBonus: {SkillId.ATTACK: 2, SkillId.MINING: 1},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/stone_pickaxe.png",
     ),
     ItemId.COPPER_PICKAXE: WeaponItemDefition(
       armorSlot: ArmorSlots.TOOL,
@@ -1667,6 +1688,16 @@ class ItemCatalog {
       skillBonus: {SkillId.ATTACK: 10},
       actionInterval: FastAttackSpeed,
       iconAsset: "assets/icons/items/iron_dagger.png",
+    ),
+
+    // RODS
+    ItemId.SIMPLE_FISHING_ROD: WeaponItemDefition(
+      armorSlot: ArmorSlots.TOOL,
+      name: "Simple Fishing Rod",
+      value: 5,
+      skillBonus: {SkillId.FISHING: 1},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/simple_fishing_rod.png",
     ),
 
     // UNIQUE WEAPONS

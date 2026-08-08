@@ -9,7 +9,11 @@ import 'overflow_chip.dart';
 /// the rest fold into a +N chip that opens a sheet with every buff.
 /// Renders nothing when no buffs are active, unless [reserveWhenEmpty].
 class BuffRow extends StatelessWidget {
-  const BuffRow({super.key, this.maxVisible = 5, this.reserveWhenEmpty = false});
+  const BuffRow({
+    super.key,
+    this.maxVisible = 5,
+    this.reserveWhenEmpty = false,
+  });
 
   final int maxVisible;
 

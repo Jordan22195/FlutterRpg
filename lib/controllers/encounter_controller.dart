@@ -161,7 +161,10 @@ class EncounterController extends ChangeNotifier {
   // binds the entity's encounter action to the periodic loop
   void startEncounterAction() {
     // get the player view entity
-    final entity = _explorationService.getSelectedEntity(_playerState, _worldState);
+    final entity = _explorationService.getSelectedEntity(
+      _playerState,
+      _worldState,
+    );
     if (entity is! EncounterEntity) {
       return;
     }
@@ -304,7 +307,10 @@ class EncounterController extends ChangeNotifier {
     if (active != null && active.id == _playerState.currentEntityViewId) {
       return active;
     }
-    final selected = _explorationService.getSelectedEntity(_playerState, _worldState);
+    final selected = _explorationService.getSelectedEntity(
+      _playerState,
+      _worldState,
+    );
     return selected is EncounterEntity ? selected : null;
   }
 

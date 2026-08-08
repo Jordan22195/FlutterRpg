@@ -47,6 +47,7 @@ class _CraftingScreenState extends State<CraftingScreen>
                 final r = recipes[i];
                 return RecipeCard(
                   recipeId: r.id,
+                  lockWhenUnderLevel: true,
                   onTap: () {
                     controller.selectRecipe(r.id);
                     Navigator.of(ctx).pop();
@@ -129,12 +130,11 @@ class _CraftingScreenState extends State<CraftingScreen>
                   // same pair the encounter screen shows
                   const BuffRow(),
                   const SizedBox(height: 8),
-                  SkillRingRow(skills: [skillId]),
+                  ActivitySkillRingRow(skills: [skillId]),
                   const SizedBox(height: 4),
 
                   // selectable recipe card
                   RecipeCard(
-                    maxCraftable: false,
                     recipeId: selectedRecipeId,
                     onTap: () =>
                         _showRecipePicker(context, controller, recipeList),

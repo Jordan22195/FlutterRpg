@@ -81,6 +81,12 @@ class PlayerDataController extends ChangeNotifier {
     return _playerDataService.getStance(_playerData);
   }
 
+  /// The skill the action loop's boost is currently training - speed when
+  /// running fast, strength in the strong stance.
+  SkillId getBoostSkill() {
+    return _playerDataService.getBoostSkill(_playerData);
+  }
+
   void setStance(Stance stance) {
     _playerDataService.setStance(stance, _playerData);
     notifyListeners();

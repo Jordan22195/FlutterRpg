@@ -15,6 +15,34 @@ const Map<Stance, SkillId> kStanceBoostSkill = {
   Stance.fast: SkillId.SPEED,
 };
 
+/// The skill the action loop's boost trains, and whose stat sets the boost
+/// ceiling.
+///
+/// Only the fast stance runs on speed. Every other stance spends strength -
+/// offensive and defensive included, where strength is what decides how far
+/// attack or defence can be pushed. So the pair toggles with the stance: fast
+/// trains speed, everything else trains strength.
+SkillId boostTrainedSkill(SkillId skillBoost) {
+  return skillBoost == SkillId.SPEED ? SkillId.SPEED : SkillId.STRENGTH;
+}
+
+/// Which stat totals a boosted skill scales - see
+/// [PlayerDataService.getStatTotals].
+///
+/// Attack and defence scale themselves: the rolls read those stats directly.
+/// Strength is different - no roll reads it, it is the stat the boost
+/// ceiling is derived from - so it scales the gathering skill the boost is
+/// being spent on instead. Boosting strength itself would feed the ceiling
+/// back into its own multiplier and run away.
+///
+/// Speed is absent: it shortens the action interval rather than scaling any
+/// stat.
+const Map<SkillId, List<SkillId>> kBoostedStats = {
+  SkillId.ATTACK: [SkillId.ATTACK],
+  SkillId.DEFENCE: [SkillId.DEFENCE],
+  SkillId.STRENGTH: [SkillId.MINING, SkillId.WOODCUTTING],
+};
+
 String stanceLabel(Stance stance) {
   switch (stance) {
     case Stance.offensive:

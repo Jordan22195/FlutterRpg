@@ -26,8 +26,8 @@ void main() {
   }
 
   void setExplorationLevel(GameSession session, int level) {
-    final skill = session.saveGameData.playerData.skillData[
-        SkillId.EXPLORATION]!;
+    final skill =
+        session.saveGameData.playerData.skillData[SkillId.EXPLORATION]!;
     skill.xp = skill.xpTable[level];
   }
 
@@ -48,8 +48,7 @@ void main() {
         0,
         (sum, e) =>
             sum +
-            service.findChance(e, table) *
-                service.xpForFind(e, table, pool),
+            service.findChance(e, table) * service.xpForFind(e, table, pool),
       );
 
       expect(expected, closeTo(pool, 1e-9));
@@ -85,10 +84,7 @@ void main() {
     });
 
     test('an empty table pays nothing', () {
-      final orphan = WeightedDropTableEntry<ItemId>(
-        id: ItemId.LOGS,
-        weight: 1,
-      );
+      final orphan = WeightedDropTableEntry<ItemId>(id: ItemId.LOGS, weight: 1);
       expect(service.xpForFind(orphan, [], 10), 0);
       expect(service.findChance(orphan, []), 0);
     });
@@ -285,9 +281,7 @@ void main() {
       expect(details.explorationLevel, 1);
       expect(details.findsPerExplore, closeTo(1.0, 1e-9));
 
-      final bigRed = details.entities.firstWhere(
-        (d) => d.name == 'Big Red',
-      );
+      final bigRed = details.entities.firstWhere((d) => d.name == 'Big Red');
       expect(bigRed.locked, isTrue);
       expect(bigRed.unlockLevel, 4);
       expect(bigRed.chance, 0);

@@ -78,7 +78,11 @@ void main() {
 
     // the sell section sits below the fold; drag the list up to reveal it
     final listView = find.byType(Scrollable).first;
-    for (int i = 0; i < 6 && find.textContaining('Sell ').evaluate().isEmpty; i++) {
+    for (
+      int i = 0;
+      i < 6 && find.textContaining('Sell ').evaluate().isEmpty;
+      i++
+    ) {
       await tester.drag(listView, const Offset(0, -300));
       await tester.pump();
     }
@@ -100,8 +104,11 @@ void main() {
       matching: find.byType(Card),
     );
 
-    expect(copperOreCard, findsOneWidget,
-        reason: 'Copper ore should be in a Card widget');
+    expect(
+      copperOreCard,
+      findsOneWidget,
+      reason: 'Copper ore should be in a Card widget',
+    );
 
     // Find the sell button within that Card
     final copperOreSellButton = find.descendant(
@@ -109,8 +116,11 @@ void main() {
       matching: find.textContaining('Sell '),
     );
 
-    expect(copperOreSellButton, findsWidgets,
-        reason: 'Copper ore Card should have a Sell button');
+    expect(
+      copperOreSellButton,
+      findsWidgets,
+      reason: 'Copper ore Card should have a Sell button',
+    );
 
     await tester.tap(copperOreSellButton.first);
     await tester.pump();

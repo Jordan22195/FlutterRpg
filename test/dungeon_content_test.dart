@@ -123,16 +123,19 @@ void main() {
       expect(d.bossEntityId, EntityId.GOBLIN_QUEEN);
     });
 
-    test('every entity the dungeon references exists in the entity catalog', () {
-      final entities = EntityCatalog();
-      final d = catalog.getDefinitionFor(DungeonId.GOBLIN_QUEEN_LAIR)!;
-      for (final floor in d.floors) {
-        for (final pack in floor.packs) {
-          final def = entities.getDefinitionFor(pack.entityId);
-          expect(def.name, isNotEmpty, reason: '${pack.entityId} missing');
-          expect(pack.count, greaterThan(0));
+    test(
+      'every entity the dungeon references exists in the entity catalog',
+      () {
+        final entities = EntityCatalog();
+        final d = catalog.getDefinitionFor(DungeonId.GOBLIN_QUEEN_LAIR)!;
+        for (final floor in d.floors) {
+          for (final pack in floor.packs) {
+            final def = entities.getDefinitionFor(pack.entityId);
+            expect(def.name, isNotEmpty, reason: '${pack.entityId} missing');
+            expect(pack.count, greaterThan(0));
+          }
         }
-      }
-    });
+      },
+    );
   });
 }

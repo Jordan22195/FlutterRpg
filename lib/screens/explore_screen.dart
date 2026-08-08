@@ -26,13 +26,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _structuresOnly = false;
   SkillId? _skillFilter;
 
-  /// Skills passively trained by the explore action itself.
-  static const _exploreSkills = [
-    SkillId.EXPLORATION,
-    SkillId.STAMINA,
-    SkillId.SPEED,
-    SkillId.RECOVERY,
-  ];
+  /// Skills trained by the explore action itself. The action loop's own
+  /// three come from [ActivitySkillRingRow].
+  static const _exploreSkills = [SkillId.EXPLORATION];
 
   void _selectAll() {
     setState(() {
@@ -104,9 +100,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     // lit. check first: FirepitEntity is also a CraftingEntity.
     if (e is FirepitEntity) {
       final fire = context.watch<BuffController>().getZoneBuffFor(e.id);
-      final lit = fire is FireItem && fire.expirationTime.isAfter(
-        DateTime.now(),
-      );
+      final lit =
+          fire is FireItem && fire.expirationTime.isAfter(DateTime.now());
 
       // the id is an ItemId when lit and an EntityId when cold, so the card
       // is built over Enum. art resolves dynamically either way.
@@ -117,10 +112,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         count: 0,
         expirationTime: lit ? fire.expirationTime : null,
         typeId: e.craftingSkill,
-        typeIds: [
-          e.craftingSkill,
-          if (lit && fire.canCook) SkillId.COOKING,
-        ],
+        typeIds: [e.craftingSkill, if (lit && fire.canCook) SkillId.COOKING],
         isStructure: true,
         onTap: () => worldController.navigateToEntity(e.id, context),
       );
@@ -279,7 +271,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       0, // Exploration + energy-system skills trained by exploring
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: SkillRingRow(
+        child: ActivitySkillRingRow(
           skills: _exploreSkills,
           alignment: MainAxisAlignment.spaceEvenly,
         ),
