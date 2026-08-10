@@ -22,6 +22,7 @@ void main() {
     WidgetTester tester, {
     required String recipeId,
     required bool lockWhenUnderLevel,
+    bool selected = false,
     VoidCallback? onTap,
   }) async {
     await tester.pumpWidget(
@@ -40,6 +41,7 @@ void main() {
             body: RecipeCard(
               recipeId: recipeId,
               lockWhenUnderLevel: lockWhenUnderLevel,
+              selected: selected,
               onTap: onTap ?? () {},
             ),
           ),
@@ -75,9 +77,12 @@ void main() {
     data.xp = data.xpTable[level];
   }
 
+  /// The card's own outline, or null when it carries none — which is now
+  /// every case: the shortfall is flagged on the short input tile instead.
   Color? cardBorderColor(WidgetTester tester) {
     final card = tester.widget<Card>(find.byType(Card));
-    final shape = card.shape as RoundedRectangleBorder;
+    final shape = card.shape;
+    if (shape is! RoundedRectangleBorder) return null;
     return shape.side.style == BorderStyle.none ? null : shape.side.color;
   }
 
@@ -158,14 +163,15 @@ void main() {
       onTap: () => taps++,
     );
 
-    final error = ThemeData().colorScheme.error;
-    expect(cardBorderColor(tester), error);
+    // the shortfall is marked on the short input alone, not on the card.
+    // an explicit red, not the scheme's error colour, which is a pale pink
+    // on a dark theme
+    expect(cardBorderColor(tester), isNull);
 
-    // the input tile itself is flagged
     final logsTile = tester.widget<ItemStackTile>(
       find.byWidgetPredicate((w) => w is ItemStackTile && w.id == ItemId.LOGS),
     );
-    expect(logsTile.borderColor, error);
+    expect(logsTile.borderColor, RecipeCard.missingMaterialColor);
 
     // a shortfall is fixable, so the recipe is still selectable
     await tester.tap(find.byType(RecipeCard));
@@ -214,7 +220,7 @@ void main() {
     expect(find.text('2'), findsOneWidget);
   });
 
-  testWidgets('nothing craftable shows a depleted zero on the output', (
+  testWidgets('nothing craftable reads as depleted, with no zero badge', (
     tester,
   ) async {
     setLevel(SkillId.FIREMAKING, 20);
@@ -228,7 +234,30 @@ void main() {
       ),
     );
     expect(output.count, 0);
+    // the darkened art is what says it is spent; a "0" badge would only
+    // add noise on top of that
     expect(output.depleted, isTrue);
-    expect(find.text('0'), findsOneWidget);
+    expect(find.text('0'), findsNothing);
+  });
+
+  testWidgets('only the picker marks the recipe already in play', (
+    tester,
+  ) async {
+    setLevel(SkillId.FIREMAKING, 20);
+    save.inventoryData.itemMap[ItemId.LOGS] = 10;
+
+    // the card that merely displays the selection is never marked: it is
+    // always showing the selection, so a highlight would say nothing
+    await pumpCard(tester, recipeId: 'cookfire', lockWhenUnderLevel: true);
+    expect(cardBorderColor(tester), isNull);
+
+    // a picker row for the recipe in play carries the mark
+    await pumpCard(
+      tester,
+      recipeId: 'cookfire',
+      lockWhenUnderLevel: true,
+      selected: true,
+    );
+    expect(cardBorderColor(tester), ThemeData().colorScheme.primary);
   });
 }

@@ -108,8 +108,9 @@ void main() {
     final session = await pumpFirepit(tester);
 
     expect(find.text('Firepit'), findsOneWidget);
-    expect(find.text('FIRE'), findsOneWidget);
-    expect(find.text('COOK'), findsNothing);
+    // nothing to split, so the pit shows the fire recipe with no tabs
+    expect(find.byType(SegmentedButton<SkillId>), findsNothing);
+    expect(find.text('Cooking'), findsNothing);
 
     // nothing is burning, so there is no timer and nothing to put out
     expect(find.byType(CountdownTimer), findsNothing);
@@ -119,13 +120,15 @@ void main() {
     session.dispose();
   });
 
-  testWidgets('a lit cookfire opens the cook section', (tester) async {
+  testWidgets('a lit cookfire splits the pit into tabs', (tester) async {
     final session = await pumpFirepit(tester, lightRecipeId: 'cookfire');
 
     // the header and hero become the fire
     expect(find.text('Cookfire'), findsOneWidget);
-    expect(find.text('FIRE'), findsOneWidget);
-    expect(find.text('COOK'), findsOneWidget);
+    // a pit doing two jobs offers both as tabs
+    expect(find.byType(SegmentedButton<SkillId>), findsOneWidget);
+    expect(find.text('Firemaking'), findsOneWidget);
+    expect(find.text('Cooking'), findsOneWidget);
 
     // burn time in the hero's corner, and the fire can be put out
     expect(find.byType(CountdownTimer), findsWidgets);
@@ -138,7 +141,8 @@ void main() {
     final session = await pumpFirepit(tester, lightRecipeId: 'basic_campfire');
 
     expect(find.text('Campfire'), findsOneWidget);
-    expect(find.text('COOK'), findsNothing);
+    // a campfire cannot cook, so there is nothing to split
+    expect(find.byType(SegmentedButton<SkillId>), findsNothing);
     expect(find.byIcon(Icons.water_drop_outlined), findsOneWidget);
 
     session.dispose();
@@ -146,7 +150,7 @@ void main() {
 
   testWidgets('putting the fire out closes cooking again', (tester) async {
     final session = await pumpFirepit(tester, lightRecipeId: 'cookfire');
-    expect(find.text('COOK'), findsOneWidget);
+    expect(find.byType(SegmentedButton<SkillId>), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.water_drop_outlined));
     await settle(tester);
@@ -154,7 +158,7 @@ void main() {
     await tester.tap(find.text('Put out'));
     await settle(tester);
 
-    expect(find.text('COOK'), findsNothing);
+    expect(find.byType(SegmentedButton<SkillId>), findsNothing);
     expect(find.text('Firepit'), findsOneWidget);
     expect(find.byType(CountdownTimer), findsNothing);
 
@@ -164,16 +168,17 @@ void main() {
   testWidgets('lighting a fire does not move the rest of the screen', (
     tester,
   ) async {
-    // the buff row slot and the skill rings are the two things that used to
-    // shift when a fire caught: the row appeared out of nothing, and the
-    // ring row re-centred as it grew from one ring to two
+    // the hero and the skill rings are what sit above the tabs, and neither
+    // may shift when a fire catches: the ring row used to re-centre as it
+    // grew from one ring to two. (the tab bar itself does appear below them,
+    // which is what pushes the recipe card down.)
     final session = await pumpFirepit(tester);
 
     Offset ringsAt() => tester.getTopLeft(find.byType(SkillRingRow));
-    Offset fireLabelAt() => tester.getTopLeft(find.text('FIRE'));
+    Size ringsSize() => tester.getSize(find.byType(SkillRingRow));
 
     final coldRings = ringsAt();
-    final coldFireLabel = fireLabelAt();
+    final coldRingsSize = ringsSize();
 
     // light a cookfire underneath the running screen
     final save = session.saveGameData;
@@ -189,9 +194,9 @@ void main() {
     session.buffController.refresh();
     await settle(tester);
 
-    expect(find.text('COOK'), findsOneWidget);
+    expect(find.byType(SegmentedButton<SkillId>), findsOneWidget);
     expect(ringsAt(), coldRings);
-    expect(fireLabelAt(), coldFireLabel);
+    expect(ringsSize(), coldRingsSize);
 
     session.dispose();
   });
@@ -205,10 +210,15 @@ void main() {
     // over to a burning fire to do
     expect(find.text('Cook'), findsOneWidget);
 
-    // picks the nth firemaking recipe out of the fire section's picker.
+    // picks the nth firemaking recipe out of the fire tab's picker.
     // recipe cards carry no name, so they are addressed by catalog order:
     // 0 = cookfire, 1 = campfire.
     Future<void> pickFire(int index) async {
+      // only the open tab's card is on screen, and a cookfire opens on
+      // cooking, so switch to firemaking before reaching for its card
+      await tester.tap(find.text('Firemaking'));
+      await settle(tester);
+
       await tester.tap(find.byType(RecipeCard).first);
       await settle(tester);
       final inPicker = find.descendant(

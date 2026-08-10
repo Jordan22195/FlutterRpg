@@ -13,6 +13,10 @@ import '../widgets/explore_card.dart';
 import '../widgets/skill_ring_row.dart';
 import 'zone_detail_screen.dart';
 
+/// What the zone list is showing: the permanent things you can walk into,
+/// the nodes you work for materials, or what exploring has turned up here.
+enum _ExploreTab { structures, resources, loot }
+
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
 
@@ -21,48 +25,27 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
-  /// Active list filter: everything, only structures (permanent zone
-  /// entities), or only one skill's resource nodes.
-  bool _structuresOnly = false;
-  SkillId? _skillFilter;
+  /// The zone list is one slot switched by tab, so the three kinds of thing
+  /// a zone holds don't compete for the same scroll.
+  _ExploreTab _tab = _ExploreTab.resources;
+
+  /// Which resource sub-tab is open, keyed the way [_resourceGroupKey] keys
+  /// them. Null is the All chip — every resource in the zone, which is where
+  /// the tab opens and where a group that leaves the zone falls back to.
+  SkillId? _resourceGroup;
 
   /// Skills trained by the explore action itself. The action loop's own
   /// three come from [ActivitySkillRingRow].
   static const _exploreSkills = [SkillId.EXPLORATION];
 
-  void _selectAll() {
-    setState(() {
-      _structuresOnly = false;
-      _skillFilter = null;
-    });
-  }
+  /// The sub-tab a resource node belongs to. Everything that fights back
+  /// pools under one Combat group whatever weapon skill it happens to
+  /// train; everything else groups by the skill that gathers it.
+  static SkillId _resourceGroupKey(EncounterEntity e) =>
+      e is CombatEntity ? SkillId.ATTACK : e.entityType;
 
-  void _selectStructures() {
-    setState(() {
-      _structuresOnly = true;
-      _skillFilter = null;
-    });
-  }
-
-  void _selectSkill(SkillId skill) {
-    setState(() {
-      _structuresOnly = false;
-      _skillFilter = skill;
-    });
-  }
-
-  Widget _sectionLabel(BuildContext context, String text) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 8, 4, 4),
-      child: Text(
-        text.toUpperCase(),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-          letterSpacing: 0.8,
-        ),
-      ),
-    );
-  }
+  static String _resourceGroupLabel(SkillId key) =>
+      key == SkillId.ATTACK ? 'Combat' : skillDisplayName(key);
 
   Widget _filterChip({
     required BuildContext context,
@@ -90,6 +73,62 @@ class _ExploreScreenState extends State<ExploreScreen> {
         showCheckmark: false,
         visualDensity: VisualDensity.compact,
         onSelected: (_) => onSelected(),
+      ),
+    );
+  }
+
+  /// The three top-level tabs, each carrying how much of that kind the zone
+  /// holds. The segments share the row's width evenly, so the labels are
+  /// kept compact enough to survive a narrow screen.
+  Widget _tabBar(BuildContext context, Map<_ExploreTab, int> counts) {
+    const labels = {
+      _ExploreTab.structures: 'Structures',
+      _ExploreTab.resources: 'Resources',
+      _ExploreTab.loot: 'Loot',
+    };
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: SizedBox(
+        width: double.infinity,
+        child: SegmentedButton<_ExploreTab>(
+          segments: [
+            for (final tab in _ExploreTab.values)
+              ButtonSegment<_ExploreTab>(
+                value: tab,
+                label: Text(
+                  '${labels[tab]} · ${counts[tab] ?? 0}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+          selected: {_tab},
+          // single-select: the set always holds exactly one tab
+          onSelectionChanged: (selection) =>
+              setState(() => _tab = selection.first),
+          // the label already says which tab is open; the checkmark only
+          // costs width the counts need
+          showSelectedIcon: false,
+          style: SegmentedButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+            textStyle: const TextStyle(fontSize: 12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyBody(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+        ),
       ),
     );
   }
@@ -214,58 +253,101 @@ class _ExploreScreenState extends State<ExploreScreen> {
       }
     }
 
-    // one chip per skill actually present in this zone, in SkillId order
-    final zoneSkills = resources.map((e) => e.entityType).toSet().toList()
-      ..sort((a, b) => a.index.compareTo(b.index));
-
-    // chip counters: resource nodes stack, so a skill's total is the sum of
-    // its node counts rather than the number of cards. structures are always
-    // one apiece.
-    final resourceCountBySkill = <SkillId, int>{};
+    // resource sub-tabs: one group per skill the zone's nodes train, with
+    // everything that fights back pooled under Combat
+    final groups = <SkillId, List<EncounterEntity>>{};
     for (final e in resources) {
-      resourceCountBySkill[e.entityType] =
-          (resourceCountBySkill[e.entityType] ?? 0) + e.count;
+      groups.putIfAbsent(_resourceGroupKey(e), () => []).add(e);
     }
-    final totalResourceCount = resourceCountBySkill.values.fold(
-      0,
-      (sum, c) => sum + c,
-    );
-    resources.sort((a, b) => a.entityType.index.compareTo(b.entityType.index));
+    final groupKeys = groups.keys.toList()
+      ..sort((a, b) {
+        // combat leads; the gathering skills follow in SkillId order
+        if (a == b) return 0;
+        if (a == SkillId.ATTACK) return -1;
+        if (b == SkillId.ATTACK) return 1;
+        return a.index.compareTo(b.index);
+      });
 
-    // a filtered skill that just vanished from the zone falls back to All
-    if (_skillFilter != null && !zoneSkills.contains(_skillFilter)) {
-      _skillFilter = null;
+    // counters: resource nodes stack, so a group's total is the sum of its
+    // node counts rather than the number of cards. structures are always
+    // one apiece, and loot is counted in stacks.
+    final groupTotals = <SkillId, int>{
+      for (final key in groupKeys)
+        key: groups[key]!.fold(0, (sum, e) => sum + e.count),
+    };
+    final totalResourceCount = groupTotals.values.fold(0, (sum, c) => sum + c);
+
+    // a sub-tab whose nodes just left the zone falls back to All
+    if (_resourceGroup != null && !groups.containsKey(_resourceGroup)) {
+      _resourceGroup = null;
     }
-
-    final showAll = !_structuresOnly && _skillFilter == null;
-    final visibleStructures = _structuresOnly || showAll
-        ? structures
-        : const <Entity>[];
-    final visibleResources = _structuresOnly
-        ? const <EncounterEntity>[]
-        : resources
-              .where(
-                (e) => _skillFilter == null || e.entityType == _skillFilter,
-              )
-              .toList();
+    // All lists every group in sub-tab order, so the kinds stay clustered
+    final openGroup = _resourceGroup != null
+        ? groups[_resourceGroup]!
+        : [for (final key in groupKeys) ...groups[key]!];
 
     final listChildren = <Widget>[
-      if (visibleStructures.isNotEmpty) ...[
-        if (showAll) _sectionLabel(context, "Structures"),
-        for (final e in visibleStructures)
-          _buildStructureCard(worldController, e),
-      ],
-      if (visibleResources.isNotEmpty) ...[
-        if (showAll) _sectionLabel(context, "Resources"),
-        for (final e in visibleResources)
-          _buildResourceCard(worldController, e),
-      ],
-      // items turned up by exploring, kept per-zone. shown under the
-      // entities regardless of the active filter
-      if (zoneItems.isNotEmpty) ...[
-        _sectionLabel(context, "Items"),
-        Card(child: InventoryGrid(items: zoneItems, shrinkWrap: true)),
-      ],
+      _tabBar(context, {
+        _ExploreTab.structures: structures.length,
+        _ExploreTab.resources: totalResourceCount,
+        _ExploreTab.loot: zoneItems.length,
+      }),
+
+      switch (_tab) {
+        _ExploreTab.structures =>
+          structures.isEmpty
+              ? _emptyBody(context, 'Nothing built here')
+              : Column(
+                  children: [
+                    for (final e in structures)
+                      _buildStructureCard(worldController, e),
+                  ],
+                ),
+
+        _ExploreTab.resources =>
+          resources.isEmpty
+              ? _emptyBody(context, 'No resources here')
+              : Column(
+                  children: [
+                    // sub-tabs, each with its own total node count
+                    SizedBox(
+                      height: 48,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        children: [
+                          _filterChip(
+                            context: context,
+                            label: 'All',
+                            count: totalResourceCount,
+                            selected: _resourceGroup == null,
+                            onSelected: () =>
+                                setState(() => _resourceGroup = null),
+                          ),
+                          for (final key in groupKeys)
+                            _filterChip(
+                              context: context,
+                              label: _resourceGroupLabel(key),
+                              count: groupTotals[key] ?? 0,
+                              selected: _resourceGroup == key,
+                              onSelected: () =>
+                                  setState(() => _resourceGroup = key),
+                              icon: IconRendererChipAvatar(skill: key),
+                            ),
+                        ],
+                      ),
+                    ),
+                    for (final e in openGroup)
+                      _buildResourceCard(worldController, e),
+                  ],
+                ),
+
+        // items turned up by exploring, kept per-zone
+        _ExploreTab.loot =>
+          zoneItems.isEmpty
+              ? _emptyBody(context, 'Nothing found here yet')
+              : Card(child: InventoryGrid(items: zoneItems, shrinkWrap: true)),
+      },
     ];
     listChildren.insert(
       0, // Exploration + energy-system skills trained by exploring
@@ -357,43 +439,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return SafeArea(
       child: Column(
         children: [
-          // Filter chips: All / Structures / one per zone skill
-          /*
-          SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              children: [
-                _filterChip(
-                  context: context,
-                  label: "All",
-                  count: totalResourceCount + structures.length,
-                  selected: showAll,
-                  onSelected: _selectAll,
-                ),
-                if (structures.isNotEmpty)
-                  _filterChip(
-                    context: context,
-                    label: "Structures",
-                    count: structures.length,
-                    selected: _structuresOnly,
-                    onSelected: _selectStructures,
-                  ),
-                for (final skill in zoneSkills)
-                  _filterChip(
-                    context: context,
-                    label: skillDisplayName(skill),
-                    count: resourceCountBySkill[skill] ?? 0,
-                    selected: _skillFilter == skill,
-                    onSelected: () => _selectSkill(skill),
-                    icon: IconRendererChipAvatar(skill: skill),
-                  ),
-              ],
-            ),
-          ),
-*/
-          // Filtered entity list
+          // Zone header, art and skill rings, then the tabbed zone list
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8),

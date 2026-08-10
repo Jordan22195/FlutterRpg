@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/catalogs/recipe_catalog.dart';
-import 'package:rpg/widgets/equipment_info_dialog.dart';
-import 'package:rpg/widgets/inventory_grid.dart';
-import 'package:rpg/widgets/item_stack_tile.dart';
+import 'package:rpg/widgets/crafting_info_panel.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';
-import 'package:rpg/widgets/buff_row.dart';
 import 'package:rpg/widgets/skill_ring_row.dart';
 
 class CraftingScreen extends StatefulWidget {
@@ -48,6 +45,7 @@ class _CraftingScreenState extends State<CraftingScreen>
                 return RecipeCard(
                   recipeId: r.id,
                   lockWhenUnderLevel: true,
+                  selected: r.id == controller.selectedRecipeId,
                   onTap: () {
                     controller.selectRecipe(r.id);
                     Navigator.of(ctx).pop();
@@ -126,10 +124,8 @@ class _CraftingScreenState extends State<CraftingScreen>
                   ),
                   SizedBox(height: 12),
 
-                  // active buffs, then the skills this station trains — the
-                  // same pair the encounter screen shows
-                  const BuffRow(),
-                  const SizedBox(height: 8),
+                  // the skills this station trains stay in view whichever
+                  // tab is open
                   ActivitySkillRingRow(skills: [skillId]),
                   const SizedBox(height: 4),
 
@@ -140,42 +136,11 @@ class _CraftingScreenState extends State<CraftingScreen>
                         _showRecipePicker(context, controller, recipeList),
                   ),
 
-                  // inventory grid of crafted items
-                  Card(
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: 80,
-                          child: InventoryGrid(
-                            items: controller.craftedItems(),
-                          ),
-                        ),
-                        // crafted equipment with quality borders
-                        if (controller.craftedEquipment().isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Wrap(
-                              spacing: 10,
-                              runSpacing: 10,
-                              children: [
-                                for (final item
-                                    in controller.craftedEquipment())
-                                  ItemStackTile(
-                                    size: 56,
-                                    count: item.count,
-                                    id: item.id,
-                                    showInfoDialogOnTap: false,
-                                    borderColor: qualityBorderColor(
-                                      item.quality,
-                                    ),
-                                    onTap: () =>
-                                        showEquipmentInfoDialog(context, item),
-                                  ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
+                  // this session's output, the active buffs and the recipe
+                  // stats share one slot, switched by tab
+                  CraftingInfoPanel(
+                    items: controller.craftedItems(),
+                    equipment: controller.craftedEquipment(),
                   ),
                 ],
               ),

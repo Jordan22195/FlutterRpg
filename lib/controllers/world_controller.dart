@@ -259,6 +259,8 @@ class WorldController extends ChangeNotifier {
     _actionTimingController.bindOnFireFunction(
       doExplore,
       activityIconId: SkillId.EXPLORATION,
+      // nothing is equipped to explore with, so this runs at the default
+      actionSkill: SkillId.EXPLORATION,
     );
 
     // start action timing

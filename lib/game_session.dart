@@ -463,6 +463,7 @@ class GameSessionFactory {
       enchantingService: enchantingService,
       inventoryService: inventoryService,
       playerDataService: playerDataService,
+      equipmentService: equipmentService,
       enchantmentCatalog: enchantmentCatalog,
     );
     final dungeonSystem = DungeonSystem(
@@ -477,6 +478,7 @@ class GameSessionFactory {
     ActionSpeedSystem actionSpeedSystem = ActionSpeedSystem(
       actionTimingService: actionTimingService,
       playerDataService: playerDataService,
+      equipmentService: equipmentService,
     );
 
     //controllers

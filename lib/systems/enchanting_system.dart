@@ -7,6 +7,7 @@ import '../data/inventory_data.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../services/enchanting_service.dart';
+import '../services/equipment_service.dart';
 import '../services/inventory_service.dart';
 import '../services/player_data_service.dart';
 
@@ -14,16 +15,19 @@ class EnchantingSystem {
   final EnchantingService _enchantingService;
   final InventoryService _inventoryService;
   final PlayerDataService _playerDataService;
+  final EquipmentService _equipmentService;
   final EnchantmentCatalog _enchantmentCatalog;
 
   EnchantingSystem({
     required EnchantingService enchantingService,
     required InventoryService inventoryService,
     required PlayerDataService playerDataService,
+    required EquipmentService equipmentService,
     required EnchantmentCatalog enchantmentCatalog,
   }) : _enchantingService = enchantingService,
        _inventoryService = inventoryService,
        _playerDataService = playerDataService,
+       _equipmentService = equipmentService,
        _enchantmentCatalog = enchantmentCatalog;
 
   EquipmentItem? _findInstance(InventoryData inventory, String instanceId) {
@@ -31,6 +35,42 @@ class EnchantingSystem {
       if (item.instanceId == instanceId) return item;
     }
     return null;
+  }
+
+  /// The bench works on worn gear as well as stock, so every lookup has to
+  /// check both: equipping takes an item out of the inventory entirely.
+  EquipmentItem? _findEquipped(PlayerData playerState, String instanceId) {
+    return _equipmentService.findEquippedInstance(
+      instanceId,
+      playerState.equipmentData,
+    );
+  }
+
+  /// Every instance the bench can act on: what the player is wearing first,
+  /// then the inventory's stacks.
+  List<EquipmentItem> benchTargets(
+    PlayerData playerState,
+    InventoryData inventory,
+  ) {
+    return [
+      ..._equipmentService.equippedItems(playerState.equipmentData),
+      ...inventory.equipment,
+    ];
+  }
+
+  /// Whether [instanceId] is on the player rather than in the inventory.
+  bool isEquipped(PlayerData playerState, String instanceId) {
+    return _findEquipped(playerState, instanceId) != null;
+  }
+
+  /// The bench's view of one instance, wherever it lives.
+  EquipmentItem? findTarget(
+    PlayerData playerState,
+    InventoryData inventory,
+    String instanceId,
+  ) {
+    return _findEquipped(playerState, instanceId) ??
+        _findInstance(inventory, instanceId);
   }
 
   int _enchantingLevel(PlayerData playerState) {
@@ -63,7 +103,14 @@ class EnchantingSystem {
     PlayerData playerState,
     InventoryData inventory,
   ) {
-    final item = _inventoryService.takeOneEquipment(inventory, instanceId);
+    // worn gear is consumed straight off the player: the slot empties,
+    // since the instance stops existing
+    final item =
+        _equipmentService.removeEquippedInstance(
+          instanceId,
+          playerState.equipmentData,
+        ) ??
+        _inventoryService.takeOneEquipment(inventory, instanceId);
     if (item == null) return null;
 
     final gained = previewDisenchant(item, playerState);
@@ -103,10 +150,16 @@ class EnchantingSystem {
     final recipe = _enchantmentCatalog.recipeById(recipeId);
     if (recipe == null) return null;
 
-    if (_findInstance(inventory, instanceId) == null) return null;
+    final equipped = _findEquipped(playerState, instanceId);
+    if (equipped == null && _findInstance(inventory, instanceId) == null) {
+      return null;
+    }
     if (!recipeRequirementsMet(recipe, playerState, inventory)) return null;
 
-    final item = _inventoryService.takeOneEquipment(inventory, instanceId);
+    // worn gear is enchanted in place and stays on the player: taking it
+    // out to the inventory and back would unequip it mid-action
+    final item =
+        equipped ?? _inventoryService.takeOneEquipment(inventory, instanceId);
     if (item == null) return null;
 
     for (final input in recipe.inputs.entries) {
@@ -122,7 +175,9 @@ class EnchantingSystem {
       recipe.statTotal,
       rng: random,
     );
-    _inventoryService.addEquipment(inventory, item);
+    if (equipped == null) {
+      _inventoryService.addEquipment(inventory, item);
+    }
 
     _playerDataService.applyXp(playerState, {SkillId.ENCHANTING: recipe.xp});
     return item;

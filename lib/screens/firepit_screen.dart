@@ -6,8 +6,7 @@ import '../controllers/action_timing_controller.dart';
 import '../controllers/buff_controller.dart';
 import '../controllers/crafting_controller.dart';
 import '../data/skill_data.dart';
-import '../widgets/buff_row.dart';
-import '../widgets/inventory_grid.dart';
+import '../widgets/crafting_info_panel.dart';
 import '../widgets/item_stack_tile.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/recipe_card.dart';
@@ -17,10 +16,10 @@ import '../widgets/skill_ring_row.dart';
 firepit screen contents:
 -header naming whatever is burning, or the firepit when it is cold
 -hero image of the fire, with its remaining burn time in the corner
--buff row and skill rings, matching the encounter screen
--a FIRE section (always) and a COOK section (only while a cookfire burns);
- whichever is active is what the action button runs
--inventory grid of items cooked this session
+-skill rings, matching the encounter screen
+-a firemaking recipe card, split into Firemaking/Cooking tabs while a
+ cookfire burns; the open tab is what the action button runs
+-tabbed panel of items cooked this session, active buffs, and recipe stats
 -put-out control in the action bar's trailing slot
 */
 
@@ -61,6 +60,8 @@ class _FirepitScreenState extends State<FirepitScreen>
     SkillId skill,
   ) {
     final recipes = controller.availableRecipesFor(skill);
+    // each skill keeps its own selection at a station offering several
+    final selectedId = controller.selectedRecipeIdFor(skill);
     showDialog(
       context: context,
       builder: (ctx) {
@@ -78,6 +79,7 @@ class _FirepitScreenState extends State<FirepitScreen>
                 return RecipeCard(
                   recipeId: r.id,
                   lockWhenUnderLevel: true,
+                  selected: r.id == selectedId,
                   onTap: () {
                     controller.selectRecipe(r.id);
                     setState(() => _activeSection = skill);
@@ -123,48 +125,6 @@ class _FirepitScreenState extends State<FirepitScreen>
       ),
     );
     if (confirmed == true) controller.putOutFire();
-  }
-
-  /// Section header with a marker on the one the action button will run.
-  Widget _sectionLabel(BuildContext context, String text, bool active) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(6, 10, 6, 4),
-      child: Row(
-        children: [
-          Text(
-            text,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: scheme.onSurface.withValues(alpha: active ? 0.9 : 0.5),
-              letterSpacing: 0.8,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-            ),
-          ),
-          const Spacer(),
-          if (active)
-            Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: scheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'ACTIVE',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.primary,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -233,80 +193,89 @@ class _FirepitScreenState extends State<FirepitScreen>
                   ),
                   const SizedBox(height: 12),
 
-                  // the buff slot stays open while the firepit is cold, so
-                  // lighting a fire fills it instead of pushing the rest of
-                  // the screen down by its height
-                  const BuffRow(reserveWhenEmpty: true),
-                  const SizedBox(height: 8),
+                  // the skills the pit trains stay in view whichever tab is
+                  // open; the buffs a fire grants moved into the panel below
                   const ActivitySkillRingRow(skills: skills),
 
-                  _sectionLabel(
-                    context,
-                    'FIRE',
-                    activeSection == SkillId.FIREMAKING,
-                  ),
-                  _FireRecipeCard(
-                    recipeId: fireRecipeId,
-                    burningFireId: fire?.id,
-                    onTap: () {
-                      setState(() => _activeSection = SkillId.FIREMAKING);
-                      _showRecipePicker(
-                        context,
-                        controller,
-                        SkillId.FIREMAKING,
-                      );
-                    },
-                  ),
+                  // a lit cookfire is a pit doing two jobs, so they split
+                  // into tabs. the open tab is the one the action button
+                  // runs, which is what the section markers used to say.
+                  // an ordinary fire has nothing to split.
+                  const SizedBox(height: 10),
+                  if (canCook) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<SkillId>(
+                        segments: const [
+                          ButtonSegment<SkillId>(
+                            value: SkillId.FIREMAKING,
+                            label: Text('Firemaking'),
+                          ),
+                          ButtonSegment<SkillId>(
+                            value: SkillId.COOKING,
+                            label: Text('Cooking'),
+                          ),
+                        ],
+                        selected: {activeSection},
+                        // single-select: the set always holds exactly one
+                        onSelectionChanged: (selection) =>
+                            setState(() => _activeSection = selection.first),
+                        showSelectedIcon: false,
+                        style: SegmentedButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 8,
+                          ),
+                          textStyle: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
 
-                  // cooking still appears only once a cookfire is lit, but it
-                  // grows into place rather than snapping, so the session
-                  // grid below it slides instead of teleporting
+                  // the open tab's recipe. sized rather than swapped outright
+                  // so switching tabs slides the panel below instead of
+                  // teleporting it
                   AnimatedSize(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutCubic,
                     alignment: Alignment.topCenter,
-                    child: canCook
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _sectionLabel(
+                    child: activeSection == SkillId.COOKING
+                        ? RecipeCard(
+                            recipeId: cookRecipeId,
+                            onTap: () {
+                              setState(() => _activeSection = SkillId.COOKING);
+                              _showRecipePicker(
                                 context,
-                                'COOK',
-                                activeSection == SkillId.COOKING,
-                              ),
-                              RecipeCard(
-                                recipeId: cookRecipeId,
-                                onTap: () {
-                                  setState(
-                                    () => _activeSection = SkillId.COOKING,
-                                  );
-                                  _showRecipePicker(
-                                    context,
-                                    controller,
-                                    SkillId.COOKING,
-                                  );
-                                },
-                              ),
-                            ],
+                                controller,
+                                SkillId.COOKING,
+                              );
+                            },
                           )
-                        : const SizedBox(width: double.infinity),
+                        : _FireRecipeCard(
+                            recipeId: fireRecipeId,
+                            burningFireId: fire?.id,
+                            onTap: () {
+                              setState(
+                                () => _activeSection = SkillId.FIREMAKING,
+                              );
+                              _showRecipePicker(
+                                context,
+                                controller,
+                                SkillId.FIREMAKING,
+                              );
+                            },
+                          ),
                   ),
 
-                  const SizedBox(height: 10),
-                  Text(
-                    'Cooked this session',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Card(
-                    child: SizedBox(
-                      height: 80,
-                      child: InventoryGrid(items: controller.craftedItems()),
-                    ),
+                  // what the session cooked, the fire's buffs and the recipe
+                  // stats share one slot, switched by tab
+                  CraftingInfoPanel(
+                    items: controller.craftedItems(),
+                    equipment: controller.craftedEquipment(),
+                    craftedLabel: 'Cooked',
+                    emptyCraftedLabel: 'Nothing cooked this session',
                   ),
                 ],
               ),

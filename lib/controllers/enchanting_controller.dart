@@ -6,6 +6,7 @@ import '../catalogs/item_catalog.dart';
 import '../data/ObjectStack.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';
+import '../data/skill_data.dart';
 import '../services/inventory_service.dart';
 import '../systems/enchanting_system.dart';
 import 'action_timing_controller.dart';
@@ -71,8 +72,19 @@ class EnchantingController extends ChangeNotifier {
     return _inventoryService.getItemCount(_inventoryState, id);
   }
 
+  /// Everything the bench can work on: what the player is wearing first,
+  /// then the inventory's stacks. Worn gear is enchanted in place, so it
+  /// leads the picker rather than having to be taken off first.
   List<EquipmentItem> equipmentList() {
-    return List.unmodifiable(_inventoryState.equipment);
+    return List.unmodifiable(
+      _enchantingSystem.benchTargets(_playerState, _inventoryState),
+    );
+  }
+
+  /// Whether [item] is on the player rather than in the inventory, so the
+  /// picker can say so.
+  bool isEquipped(EquipmentItem item) {
+    return _enchantingSystem.isEquipped(_playerState, item.instanceId);
   }
 
   List<EnchantRecipe> recipes() => _enchantmentCatalog.recipes;
@@ -87,10 +99,11 @@ class EnchantingController extends ChangeNotifier {
       _enchantmentCatalog.recipeById(_selectedRecipeId);
 
   EquipmentItem? get selectedTarget {
-    for (final item in _inventoryState.equipment) {
-      if (item.instanceId == _selectedTargetInstanceId) return item;
-    }
-    return null;
+    return _enchantingSystem.findTarget(
+      _playerState,
+      _inventoryState,
+      _selectedTargetInstanceId,
+    );
   }
 
   void selectRecipe(String recipeId) {
@@ -162,6 +175,8 @@ class EnchantingController extends ChangeNotifier {
       doEnchantingAction,
       activityIconId: EntityId.ENCHANTING_BENCH,
       activityCount: () => selectedTarget?.count ?? 0,
+      // bench work is done by hand, so it runs at the default interval
+      actionSkill: SkillId.ENCHANTING,
     );
 
     _actionTimingController.start();

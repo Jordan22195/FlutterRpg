@@ -13,9 +13,14 @@ class BuffRow extends StatelessWidget {
     super.key,
     this.maxVisible = 5,
     this.reserveWhenEmpty = false,
+    this.showLabel = true,
   });
 
   final int maxVisible;
+
+  /// Draws the 'Buffs · N' caption above the tiles. Off when the row sits
+  /// under a heading that already names it, such as a tabbed panel.
+  final bool showLabel;
 
   /// Holds the row's slot open when no buffs are active. Screens where a
   /// buff comes and goes while the player is looking at them — a firepit,
@@ -40,7 +45,10 @@ class BuffRow extends StatelessWidget {
 
     if (buffs.isEmpty) {
       return reserveWhenEmpty
-          ? const SizedBox(height: height, width: double.infinity)
+          ? SizedBox(
+              height: showLabel ? height : _tileSize,
+              width: double.infinity,
+            )
           : const SizedBox.shrink();
     }
 
@@ -50,27 +58,28 @@ class BuffRow extends StatelessWidget {
 
     // fixed height so the populated and empty rows measure the same
     return SizedBox(
-      height: height,
+      height: showLabel ? height : _tileSize,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            height: _labelHeight,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 2),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Buffs · ${buffs.length}',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.6),
+          if (showLabel)
+            SizedBox(
+              height: _labelHeight,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 2),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Buffs · ${buffs.length}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.6),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           Row(
             children: [
               for (final buff in visible)

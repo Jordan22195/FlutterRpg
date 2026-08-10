@@ -22,6 +22,7 @@ void main() {
         equpmentService: EquipmentService(),
         skillService: SkillService(),
       ),
+      equipmentService: EquipmentService(),
       enchantmentCatalog: EnchantmentCatalog(),
     );
   }
@@ -146,5 +147,69 @@ void main() {
     expect(restoredHelmet.enchantName, helmet.enchantName);
     expect(restoredHelmet.enchantBonus, helmet.enchantBonus);
     expect(restoredHelmet.displayName, helmet.displayName);
+  });
+
+  test('worn gear is enchanted in place and stays equipped', () {
+    final factory = GameSessionFactory();
+    final save = factory.newGame(factory.catalog1());
+    final system = buildSystem();
+
+    final helmet = ItemCatalog.buildItem(ItemId.COPPER_HELMET) as EquipmentItem;
+    save.playerData.equipmentData.armorEquipment[helmet.armorSlot] = helmet;
+    save.inventoryData.itemMap[ItemId.ENCHANTING_DUST] = 10;
+
+    // the bench lists what is worn ahead of the inventory's stacks
+    final spare = ItemCatalog.buildItem(ItemId.COPPER_HELMET) as EquipmentItem;
+    save.inventoryData.equipment.add(spare);
+    final targets = system.benchTargets(save.playerData, save.inventoryData);
+    expect(targets.first.instanceId, helmet.instanceId);
+    expect(system.isEquipped(save.playerData, helmet.instanceId), isTrue);
+    expect(system.isEquipped(save.playerData, spare.instanceId), isFalse);
+
+    final enchanted = system.enchant(
+      'minor_enchant',
+      helmet.instanceId,
+      save.playerData,
+      save.inventoryData,
+    );
+
+    // enchanted in place: still on the player, and never passed through
+    // the inventory on the way
+    expect(enchanted, isNotNull);
+    expect(enchanted!.enchantName, isNotEmpty);
+    expect(
+      save
+          .playerData
+          .equipmentData
+          .armorEquipment[helmet.armorSlot]
+          ?.instanceId,
+      helmet.instanceId,
+    );
+    expect(helmet.enchantName, isNotEmpty);
+    expect(save.inventoryData.equipment.single.instanceId, spare.instanceId);
+  });
+
+  test('disenchanting worn gear consumes it and empties the slot', () {
+    final factory = GameSessionFactory();
+    final save = factory.newGame(factory.catalog1());
+    final system = buildSystem();
+
+    final helmet = ItemCatalog.buildItem(ItemId.COPPER_HELMET) as EquipmentItem;
+    helmet.quality = ItemQuality.RARE;
+    save.playerData.equipmentData.armorEquipment[helmet.armorSlot] = helmet;
+
+    final gained = system.disenchant(
+      helmet.instanceId,
+      save.playerData,
+      save.inventoryData,
+    );
+
+    expect(gained, isNotNull);
+    expect(
+      save.playerData.equipmentData.armorEquipment[helmet.armorSlot],
+      isNull,
+    );
+    // consumed outright, not dropped back into the inventory
+    expect(save.inventoryData.equipment, isEmpty);
   });
 }

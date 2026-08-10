@@ -217,6 +217,9 @@ class CraftingController extends ChangeNotifier {
       activityIconId: stationEntityId,
       activityCount: () =>
           getMaxNumberCraftsForRecipe(_craftingState.activeRecipeId),
+      // crafting is done at the station by hand: nothing is equipped to
+      // set the pace, so it runs at the default interval
+      actionSkill: null,
     );
 
     // start action timing

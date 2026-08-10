@@ -24,6 +24,7 @@ void main() {
     system = ActionSpeedSystem(
       actionTimingService: ActionTimingService(),
       playerDataService: playerDataService,
+      equipmentService: EquipmentService(),
     );
   });
 
@@ -59,8 +60,10 @@ void main() {
     player.stamina = 100;
     playerDataService.setStance(Stance.strong, player);
 
+    // the stance alone already pays: +1% per point of strength, so 20
+    // mining at 10 strength reads 22 before any boost is held
     final baseline = playerDataService.getStatTotals(player);
-    expect(baseline[SkillId.MINING], 20);
+    expect(baseline[SkillId.MINING], 22);
 
     final state = ActionTimingData();
     state.buttonHeld = true;
@@ -68,9 +71,13 @@ void main() {
 
     expect(player.boostMultiplier, greaterThan(1.0));
 
+    // the held boost stacks on top of what the stance already gave
     final boosted = playerDataService.getStatTotals(player);
-    expect(boosted[SkillId.MINING], greaterThan(20));
-    expect(boosted[SkillId.WOODCUTTING], greaterThan(20));
+    expect(boosted[SkillId.MINING], greaterThan(baseline[SkillId.MINING]!));
+    expect(
+      boosted[SkillId.WOODCUTTING],
+      greaterThan(baseline[SkillId.WOODCUTTING]!),
+    );
     // strength itself stays raw, so the ceiling can't feed back into itself
     expect(boosted[SkillId.STRENGTH], 10);
     expect(state.maxBoostMultiplier, closeTo(1.0 + 0.1 * 10, 0.001));

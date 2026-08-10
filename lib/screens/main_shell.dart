@@ -260,6 +260,12 @@ class _MainShellState extends State<MainShell> {
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
+          // the bars are the whole banner, so the toolbar is sized to them
+          // rather than to the default title height: it keeps the status
+          // strip tight against the top of the screen and hands the space
+          // back to the screen below
+          toolbarHeight: 40,
+          titleSpacing: 12,
           title: ProgressBars(
             onActivityTap: _openActivityScreen,
             encounterScreenInView: _encounterScreenInView,

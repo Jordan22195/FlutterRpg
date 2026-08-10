@@ -39,6 +39,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     this.expirationTime,
     this.borderColor,
     this.depleted = false,
+    this.alwaysShowCount = false,
   });
 
   final double size;
@@ -63,6 +64,11 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   /// stays up even at zero, so a used-up entity reads as unusable rather
   /// than as an ordinary single-item stack.
   final bool depleted;
+
+  /// Keeps the count badge up even at 1. Off by default — a lone inventory
+  /// item needs no "1" — but a recipe's amounts are the point of the tile,
+  /// so a one-of input has to say so rather than read as unquantified.
+  final bool alwaysShowCount;
 
   void _showInfoDialog(BuildContext context) {
     final currentId = id;
@@ -234,6 +240,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
               child: _CountBadge(
                 count: count,
                 depleted: depleted,
+                alwaysShow: alwaysShowCount,
                 tileSize: size,
               ),
             ),
@@ -277,10 +284,12 @@ class _CountBadge extends StatelessWidget {
     required this.count,
     required this.tileSize,
     this.depleted = false,
+    this.alwaysShow = false,
   });
 
   final int count;
   final bool depleted;
+  final bool alwaysShow;
 
   /// The tile this badge sits on. The badge scales with it so the count is
   /// still readable on a 200px portrait, and the 9pt floor keeps the small
@@ -289,9 +298,13 @@ class _CountBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // a lone item needs no "1", but a depleted stack has to say "0" —
-    // that zero is the whole point of the badge
-    if (count <= 1 && !depleted) return const SizedBox.shrink();
+    // nothing left to count: a spent tile already reads as spent from its
+    // darkened art, so a "0" only adds noise to it
+    if (count <= 0) return const SizedBox.shrink();
+
+    // a lone item needs no "1", unless the tile is quantifying something
+    // (a recipe's amounts), where the number is the point
+    if (count <= 1 && !depleted && !alwaysShow) return const SizedBox.shrink();
 
     final fontSize = (tileSize * 0.16).clamp(9.0, 28.0);
 

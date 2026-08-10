@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/player_data.dart';
+import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/buff_service.dart';
@@ -25,6 +26,7 @@ void main() {
     system = ActionSpeedSystem(
       actionTimingService: ActionTimingService(),
       playerDataService: playerDataService,
+      equipmentService: EquipmentService(),
     );
   });
 
@@ -198,5 +200,95 @@ void main() {
 
     expect(player.stamina, 10); // recovery kept up; no net loss
     expect(state.percentOfMaxBoost, closeTo(0.5, 0.001)); // lock held
+  });
+
+  group('max action interval', () {
+    final service = ActionTimingService();
+
+    test('falls back to 3 seconds with nothing equipped for the action', () {
+      expect(
+        service.maxIntervalFor(
+          equippedInterval: null,
+          speedStance: false,
+          speedStat: 40,
+        ),
+        ActionTimingService.defaultMaxInterval,
+      );
+      expect(
+        ActionTimingService.defaultMaxInterval,
+        const Duration(seconds: 3),
+      );
+    });
+
+    test('uses the equipped item\'s own interval', () {
+      expect(
+        service.maxIntervalFor(
+          equippedInterval: const Duration(milliseconds: 1500),
+          speedStance: false,
+          speedStat: 30,
+        ),
+        // the strong stance pays nothing toward the interval
+        const Duration(milliseconds: 1500),
+      );
+    });
+
+    test('the fast stance takes 1% off per point of speed', () {
+      expect(
+        service.maxIntervalFor(
+          equippedInterval: const Duration(milliseconds: 2000),
+          speedStance: true,
+          speedStat: 25,
+        ),
+        // 25 speed => 25% off 2.0s
+        const Duration(milliseconds: 1500),
+      );
+    });
+
+    test('the reduction is floored rather than reaching zero', () {
+      final floored = service.maxIntervalFor(
+        equippedInterval: const Duration(seconds: 2),
+        speedStance: true,
+        speedStat: 500,
+      );
+      expect(
+        floored.inMicroseconds,
+        (const Duration(seconds: 2).inMicroseconds *
+                ActionTimingService.minIntervalFraction)
+            .round(),
+      );
+      expect(floored.inMicroseconds, greaterThan(0));
+    });
+
+    test('the equipped tool drives the interval of the bound action', () {
+      final player = newPlayer();
+      final equipment = EquipmentService();
+
+      // bare-handed: the default
+      expect(
+        equipment.actionIntervalFor(SkillId.WOODCUTTING, player.equipmentData),
+        isNull,
+      );
+
+      final axe = ItemCatalog.buildItem(ItemId.STONE_AXE) as EquipmentItem;
+      player.equipmentData.equipedTools[SkillId.WOODCUTTING] = axe;
+      expect(
+        equipment.actionIntervalFor(SkillId.WOODCUTTING, player.equipmentData),
+        (axe as WeaponItem).actionInterval,
+      );
+      // the axe is the woodcutting tool, not the mining one
+      expect(
+        equipment.actionIntervalFor(SkillId.MINING, player.equipmentData),
+        isNull,
+      );
+
+      // combat reads the equipped weapon instead of a per-skill tool
+      final dagger =
+          ItemCatalog.buildItem(ItemId.COPPER_DAGGER) as EquipmentItem;
+      player.equipmentData.armorEquipment[dagger.armorSlot] = dagger;
+      expect(
+        equipment.actionIntervalFor(SkillId.ATTACK, player.equipmentData),
+        (dagger as WeaponItem).actionInterval,
+      );
+    });
   });
 }

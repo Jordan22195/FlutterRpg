@@ -274,6 +274,7 @@ class _DungeonRunScreenState extends CombatScreenState<_DungeonRunScreen> {
       drops: controller.runLoot(),
       foodItemId: controller.getEquipedFoodItemId(),
       foodItemCount: controller.getEquipedFoodItemCount(),
+      entityActionProgress: controller.entityAttackProgress,
     );
   }
 

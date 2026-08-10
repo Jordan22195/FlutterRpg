@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/data/skill_data.dart';
 import '../controllers/player_data_controller.dart';
+import '../data/skill_category.dart';
 import '../widgets/icon_renderer.dart';
 import '../screens/skill_detail_screen.dart';
 
@@ -61,7 +62,9 @@ class SkillTile extends StatelessWidget {
                     strokeWidth: strokeWidth,
                     strokeCap: StrokeCap.butt,
                     backgroundColor: scheme.onSurface.withOpacity(0.14),
-                    color: scheme.primary,
+                    // each skill's ring carries its own icon's colour, so a
+                    // row of rings is readable at a glance
+                    color: skillRingColor(id),
                   ),
 
                   // Center icon/image, sized to fill the ring hole

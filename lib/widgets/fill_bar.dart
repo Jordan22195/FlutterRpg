@@ -10,6 +10,7 @@ class FillBar extends StatelessWidget {
     // Optional overrides
     this.backgroundColor,
     this.foregroundColor,
+    this.child,
   });
 
   final double value;
@@ -18,6 +19,11 @@ class FillBar extends StatelessWidget {
 
   final Color? backgroundColor;
   final Color? foregroundColor;
+
+  /// Optional content drawn centred on top of the fill, so a bar can carry
+  /// its own readout (e.g. the hp counter) instead of needing a label
+  /// beside it.
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +53,7 @@ class FillBar extends StatelessWidget {
                   width: fillWidth,
                   child: ColoredBox(color: fg),
                 ),
+                if (child != null) Positioned.fill(child: Center(child: child)),
               ],
             );
           },

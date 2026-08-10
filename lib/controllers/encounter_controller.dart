@@ -228,6 +228,9 @@ class EncounterController extends ChangeNotifier {
       action,
       activityIconId: entity.id,
       activityCount: () => _encounterState.entity?.count ?? 0,
+      // the weapon in combat, the skill's tool when gathering, sets how
+      // long each action takes
+      actionSkill: entity.entityType,
     );
 
     // fresh combat starts a fresh enemy swing timer
@@ -286,6 +289,26 @@ class EncounterController extends ChangeNotifier {
       deathSequence++;
     }
     notifyListeners();
+  }
+
+  // how far the combat entity is through its attack windup, 0..1. sampled
+  // by the ui every frame rather than pushed on notify, since the swing
+  // timer runs on wall clock between the attacks that do notify
+  double entityAttackProgress() {
+    if (!isViewingActiveEncounter()) return 0.0;
+    if (!_actionTimingController.isRunningAction(doEncounterAction)) return 0.0;
+
+    final entity = _encounterState.entity;
+    final lastAttack = _lastEntityAttackAt;
+    if (entity is! CombatEntity ||
+        lastAttack == null ||
+        entity.attackInterval <= 0 ||
+        _encounterState.respawning) {
+      return 0.0;
+    }
+
+    final elapsed = DateTime.now().difference(lastAttack).inMicroseconds / 1e6;
+    return (elapsed / entity.attackInterval).clamp(0.0, 1.0);
   }
 
   // function bound to eat button

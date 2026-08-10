@@ -11,11 +11,16 @@ class EquipmentCard extends StatelessWidget {
     required this.item,
     required this.onTap,
     this.height = 68,
+    this.equipped = false,
   });
 
   final EquipmentItem item;
   final VoidCallback? onTap;
   final double height;
+
+  /// Marks the card as gear the player is currently wearing, for lists
+  /// that mix worn items in with inventory stacks.
+  final bool equipped;
 
   @override
   Widget build(BuildContext context) {
@@ -55,15 +60,25 @@ class EquipmentCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        item.displayName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: qualityColor,
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              item.displayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: qualityColor,
+                              ),
+                            ),
+                          ),
+                          if (equipped) ...[
+                            const SizedBox(width: 6),
+                            const _EquippedPill(),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 2),
                       SingleChildScrollView(
@@ -99,6 +114,32 @@ class EquipmentCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The "Equipped" marker on a card for gear the player is wearing.
+class _EquippedPill extends StatelessWidget {
+  const _EquippedPill();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        'Equipped',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: scheme.onPrimaryContainer,
         ),
       ),
     );

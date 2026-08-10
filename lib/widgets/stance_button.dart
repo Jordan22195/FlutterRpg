@@ -21,17 +21,20 @@ class StanceButton extends StatelessWidget {
     final controller = context.watch<PlayerDataController>();
     final selected = controller.getStance();
 
+    // every stance gets the same share of the row, so the segments read as
+    // one control spanning the width of the action bar below them
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         for (final stance in stances)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: _StanceSegment(
-              stance: stance,
-              selected: stance == selected,
-              onTap: () =>
-                  context.read<PlayerDataController>().setStance(stance),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: _StanceSegment(
+                stance: stance,
+                selected: stance == selected,
+                onTap: () =>
+                    context.read<PlayerDataController>().setStance(stance),
+              ),
             ),
           ),
       ],
@@ -63,21 +66,26 @@ class _StanceSegment extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            // the segment is stretched to its share of the row, so its
+            // contents centre inside it
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconRenderer(id: kStanceBoostSkill[stance], size: 18),
               const SizedBox(width: 5),
-              Text(
-                stanceLabel(stance),
-                style: TextStyle(
-                  fontSize: 13,
-                  // the selected stance reads as the active one
-                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                  color: selected
-                      ? scheme.onPrimaryContainer
-                      : scheme.onSurface.withOpacity(0.7),
+              Flexible(
+                child: Text(
+                  stanceLabel(stance),
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    // the selected stance reads as the active one
+                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                    color: selected
+                        ? scheme.onPrimaryContainer
+                        : scheme.onSurface.withOpacity(0.7),
+                  ),
                 ),
               ),
             ],

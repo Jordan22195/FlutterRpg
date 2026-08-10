@@ -23,7 +23,12 @@ class ProgressBars extends StatelessWidget {
   /// numbers, so the activity icon stays quiet.
   final bool encounterScreenInView;
 
-  static const double _activityIconSize = 40;
+  // the banner is sized to this row, so everything in it is kept compact
+  // enough to sit inside the shortened toolbar
+  static const double _activityIconSize = 36;
+
+  /// Gap between the three stacked bars.
+  static const double _barGap = 5;
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +110,7 @@ class ProgressBars extends StatelessWidget {
                   const SizedBox(width: 6),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: _barGap),
 
               //Progress Bar
               SizedBox(
@@ -115,7 +120,7 @@ class ProgressBars extends StatelessWidget {
                   builder: (_, _) => FillBar(value: timing.percentMaxSpeed),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: _barGap),
               //Speed Bar
               SizedBox(
                 width: 50,

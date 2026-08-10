@@ -100,7 +100,11 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              FillBar(value: progress),
+              // the same colour this skill's ring is drawn in
+              FillBar(
+                value: progress,
+                foregroundColor: skillRingColor(widget.skillId),
+              ),
               const SizedBox(height: 4),
               Text(
                 '${xp.round()} xp'

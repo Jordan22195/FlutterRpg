@@ -6,20 +6,14 @@ import '../data/skill_data.dart';
 import '../screens/skill_detail_screen.dart';
 import 'icon_renderer.dart';
 
-/// A single skill in the grouped skills grid: a progress ring in the category
-/// accent, the skill art and level centred inside it, and the name below.
+/// A single skill in the grouped skills grid: a progress ring in the skill's
+/// own colour, the skill art and level centred inside it, and the name below.
 /// The art renders directly on the surface (no disc/shadow) so pixel sprites
 /// stay crisp and the tile reads clean.
 class SkillGridTile extends StatelessWidget {
-  const SkillGridTile({
-    required this.id,
-    required this.accent,
-    super.key,
-    this.ringSize = 58,
-  });
+  const SkillGridTile({required this.id, super.key, this.ringSize = 58});
 
   final SkillId id;
-  final Color accent;
   final double ringSize;
 
   @override
@@ -51,7 +45,9 @@ class SkillGridTile extends StatelessWidget {
                     strokeWidth: 5,
                     strokeCap: StrokeCap.round,
                     backgroundColor: scheme.onSurface.withOpacity(0.10),
-                    valueColor: AlwaysStoppedAnimation<Color>(accent),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      skillRingColor(id),
+                    ),
                   ),
                 ),
                 Column(

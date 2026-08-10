@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:rpg/data/player_data.dart';
+import 'package:rpg/services/equipment_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import '../data/skill_data.dart';
 
@@ -20,7 +21,15 @@ import '../data/skill_data.dart';
 class ActionTimingData {
   ActionTimingData();
   FutureOr<void> Function() onFire = () {};
-  Duration maxInterval = Duration(seconds: 1);
+
+  /// The unboosted action interval. Not a constant: it is refreshed every
+  /// frame from the item equipped for [actionSkill] and the speed stat, so
+  /// swapping gear mid-action is felt immediately.
+  Duration maxInterval = ActionTimingService.defaultMaxInterval;
+
+  /// What the bound action trains, which is how the equipped item driving
+  /// the interval is found. Null for actions performed with no item at all.
+  SkillId? actionSkill;
 
   bool boostingSpeed = true;
 
@@ -114,12 +123,17 @@ class ActionTimingController extends ChangeNotifier {
     _actionTimingService.setLockActionSpeed(false, _actionTimingState);
   }
 
+  /// Binds the action the loop fires. [actionSkill] is what the action
+  /// trains; the item equipped for it sets how long each action takes.
+  /// Leave it null for actions performed with no equipment.
   void bindOnFireFunction(
     FutureOr<void> Function() function, {
     Enum? activityIconId,
     int Function()? activityCount,
+    SkillId? actionSkill,
   }) {
     _actionTimingState.onFire = function;
+    _actionTimingState.actionSkill = actionSkill;
     _actionTimingState.activityIconId = activityIconId;
     _actionTimingState.activityCount = activityCount;
   }
@@ -181,12 +195,15 @@ class ActionTimingController extends ChangeNotifier {
 class ActionSpeedSystem {
   final ActionTimingService _actionTimingService;
   final PlayerDataService _playerDataService;
+  final EquipmentService _equipmentService;
 
   ActionSpeedSystem({
     required ActionTimingService actionTimingService,
     required PlayerDataService playerDataService,
+    required EquipmentService equipmentService,
   }) : _actionTimingService = actionTimingService,
-       _playerDataService = playerDataService;
+       _playerDataService = playerDataService,
+       _equipmentService = equipmentService;
 
   /// Drops the boost back to 1x, so nothing stays scaled while idle.
   void clearBoost(PlayerData playerState) {
@@ -224,6 +241,21 @@ class ActionSpeedSystem {
         : _actionTimingService.maxStrengthBoostForStat(
             stats[SkillId.STRENGTH] ?? 1,
           );
+
+    // and the interval itself from what is equipped to swing. refreshed
+    // per frame rather than at bind time, so swapping to a faster axe is
+    // felt without restarting the action
+    final actionSkill = actionTimingState.actionSkill;
+    actionTimingState.maxInterval = _actionTimingService.maxIntervalFor(
+      equippedInterval: actionSkill == null
+          ? null
+          : _equipmentService.actionIntervalFor(
+              actionSkill,
+              playerState.equipmentData,
+            ),
+      speedStance: actionTimingState.boostingSpeed,
+      speedStat: stats[SkillId.SPEED] ?? 1,
+    );
 
     _actionTimingService.accelerateActionBoostValue(
       dt,
@@ -284,6 +316,41 @@ class ActionSpeedSystem {
 class ActionTimingService {
   /// Stamina drained per second per point of boost (speed above 1x).
   static const double staminaDrainPerBoost = 2.0;
+
+  /// How long an action takes with nothing equipped to perform it —
+  /// bare-handed gathering, and everything done at a bench.
+  static const Duration defaultMaxInterval = Duration(seconds: 3);
+
+  /// Fraction of the action interval one point of the speed stat removes,
+  /// and only in the fast stance: the strong stance trades that speed for
+  /// the strength boost instead.
+  static const double speedIntervalReductionPerPoint = 0.01;
+
+  /// The floor that reduction can reach, as a fraction of the equipped
+  /// item's own interval. Without it a speed stat of 100 would take the
+  /// interval to zero and fire the action every frame.
+  static const double minIntervalFraction = 0.15;
+
+  /// The unboosted interval for an action: the speed of the item equipped
+  /// to perform it, cut by the speed stat while in the fast stance.
+  ///
+  /// This is the ceiling the momentum boost then works down from — holding
+  /// the button divides this further, so speed pays twice in the fast
+  /// stance: once here and again through the boost ceiling.
+  Duration maxIntervalFor({
+    required Duration? equippedInterval,
+    required bool speedStance,
+    required int speedStat,
+  }) {
+    final base = equippedInterval ?? defaultMaxInterval;
+    if (!speedStance) return base;
+
+    final factor = (1 - speedIntervalReductionPerPoint * speedStat).clamp(
+      minIntervalFraction,
+      1.0,
+    );
+    return Duration(microseconds: (base.inMicroseconds * factor).round());
+  }
 
   /// The boost ceiling granted by the speed stat.
   double maxSpeedBoostForStat(int speedStat) {
@@ -370,6 +437,8 @@ class ActionTimingService {
     actionTimingState.boostLocked = false;
     actionTimingState.activityIconId = null;
     actionTimingState.activityCount = null;
+    actionTimingState.actionSkill = null;
+    actionTimingState.maxInterval = defaultMaxInterval;
   }
 
   void start(ActionTimingData actionTimingState) {

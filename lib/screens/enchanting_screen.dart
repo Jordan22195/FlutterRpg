@@ -7,6 +7,7 @@ import '../data/skill_data.dart';
 import '../widgets/equipment_card.dart';
 import '../widgets/equipment_info_dialog.dart';
 import '../widgets/inventory_grid.dart';
+import '../widgets/recipe_card.dart';
 import '../widgets/item_stack_tile.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/buff_row.dart';
@@ -35,6 +36,7 @@ class EnchantingScreen extends StatelessWidget {
               shrinkWrap: true,
               children: [
                 _DisenchantRecipeCard(
+                  selected: controller.disenchantSelected,
                   onTap: () {
                     controller.selectRecipe(
                       EnchantingController.disenchantRecipeId,
@@ -45,6 +47,7 @@ class EnchantingScreen extends StatelessWidget {
                 for (final recipe in controller.recipes())
                   _EnchantRecipeCard(
                     recipe: recipe,
+                    selected: recipe.id == controller.selectedRecipeId,
                     onTap: () {
                       controller.selectRecipe(recipe.id);
                       Navigator.of(ctx).pop();
@@ -87,6 +90,9 @@ class EnchantingScreen extends StatelessWidget {
                       final item = equipment[i];
                       return EquipmentCard(
                         item: item,
+                        // worn gear leads the list; the pill says which
+                        // rows those are
+                        equipped: controller.isEquipped(item),
                         onTap: () {
                           controller.selectTarget(item);
                           Navigator.of(ctx).pop();
@@ -287,14 +293,24 @@ class EnchantingScreen extends StatelessWidget {
 /// Recipe card for an enchant tier, in the crafting recipe card format:
 /// effect on the left, material costs on the right, level requirement.
 class _EnchantRecipeCard extends StatelessWidget {
-  const _EnchantRecipeCard({required this.recipe, required this.onTap});
+  const _EnchantRecipeCard({
+    required this.recipe,
+    required this.onTap,
+    this.selected = false,
+  });
 
   final EnchantRecipe recipe;
   final VoidCallback onTap;
 
+  /// Marks the tier already in play, the same way the crafting picker marks
+  /// its rows.
+  final bool selected;
+
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: selected ? RecipeCard.selectedFill(context) : null,
+      shape: selected ? RecipeCard.selectedShape(context) : null,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -345,13 +361,16 @@ class _EnchantRecipeCard extends StatelessWidget {
 
 /// Recipe card for the disenchant action.
 class _DisenchantRecipeCard extends StatelessWidget {
-  const _DisenchantRecipeCard({required this.onTap});
+  const _DisenchantRecipeCard({required this.onTap, this.selected = false});
 
   final VoidCallback onTap;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: selected ? RecipeCard.selectedFill(context) : null,
+      shape: selected ? RecipeCard.selectedShape(context) : null,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),

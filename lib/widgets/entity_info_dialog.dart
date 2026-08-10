@@ -8,16 +8,11 @@ import 'explore_card.dart';
 import 'icon_renderer.dart';
 import 'item_stack_tile.dart';
 
-/// Details popup for a world entity: its stats, its drop table with
-/// per-kill odds, and the rolls both ways against the player's current
-/// stats (hit / miss / block chances and damage). Also carries the dev
-/// control for forcing the entity's remaining count.
+/// Details popup for a world entity, used where there is no room to show
+/// them inline — the explore screen's entity icons, and combat encounters.
+/// Gathering encounters render [EntityInfoBody] in their info tab instead.
 void showEntityInfoDialog(BuildContext context, EncounterEntity entity) {
   if (entity.id == EntityId.NULL) return;
-
-  final worldController = context.read<WorldController>();
-  final details = worldController.entityDetails(entity);
-  final devCountController = TextEditingController(text: '${entity.count}');
 
   showDialog<void>(
     context: context,
@@ -26,44 +21,9 @@ void showEntityInfoDialog(BuildContext context, EncounterEntity entity) {
       content: SingleChildScrollView(
         child: SizedBox(
           width: 320,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _Header(details: details),
-              _EntityStats(details: details),
-              _PlayerRolls(details: details),
-              if (details.isCombat) _IncomingDamage(details: details),
-              _DropTable(details: details),
-
-              // dev tool: force how many of this entity are left in the zone
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: devCountController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        labelText: 'Dev: entity count',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      final count = int.tryParse(devCountController.text);
-                      if (count != null) {
-                        worldController.devSetEntityCount(entity.id, count);
-                      }
-                      Navigator.of(dialogContext).pop();
-                    },
-                    child: const Text('Set'),
-                  ),
-                ],
-              ),
-            ],
+          child: EntityInfoBody(
+            entity: entity,
+            onDevSetCount: () => Navigator.of(dialogContext).pop(),
           ),
         ),
       ),
@@ -75,6 +35,84 @@ void showEntityInfoDialog(BuildContext context, EncounterEntity entity) {
       ],
     ),
   );
+}
+
+/// Everything there is to say about a world entity: its stats, its drop
+/// table with per-action odds, and the rolls both ways against the player's
+/// current stats (hit / miss / block chances and damage). Also carries the
+/// dev control for forcing the entity's remaining count.
+///
+/// Sizes to its content, so it can be dropped into a scrolling page as
+/// readily as into the details dialog.
+class EntityInfoBody extends StatefulWidget {
+  const EntityInfoBody({super.key, required this.entity, this.onDevSetCount});
+
+  final EncounterEntity entity;
+
+  /// Called after the dev count is applied — the dialog closes on it, an
+  /// inline panel has nothing to do.
+  final VoidCallback? onDevSetCount;
+
+  @override
+  State<EntityInfoBody> createState() => _EntityInfoBodyState();
+}
+
+class _EntityInfoBodyState extends State<EntityInfoBody> {
+  late final TextEditingController _devCountController = TextEditingController(
+    text: '${widget.entity.count}',
+  );
+
+  @override
+  void dispose() {
+    _devCountController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final worldController = context.read<WorldController>();
+    final details = worldController.entityDetails(widget.entity);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Header(details: details),
+        _EntityStats(details: details),
+        _PlayerRolls(details: details),
+        if (details.isCombat) _IncomingDamage(details: details),
+        _DropTable(details: details),
+
+        // dev tool: force how many of this entity are left in the zone
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _devCountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  isDense: true,
+                  labelText: 'Dev: entity count',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                final count = int.tryParse(_devCountController.text);
+                if (count != null) {
+                  worldController.devSetEntityCount(widget.entity.id, count);
+                }
+                widget.onDevSetCount?.call();
+              },
+              child: const Text('Set'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 String _percent(double value) => '${(value * 100).toStringAsFixed(1)}%';

@@ -7,6 +7,15 @@ import 'package:provider/provider.dart';
 import '../controllers/action_queue_controller.dart';
 import '../controllers/action_timing_controller.dart';
 
+/// Height shared by every control in the action bar. The primary button and
+/// the fixed-width side buttons flanking it all sit at this height, so the
+/// bar reads as one row of keys.
+const double kActionBarButtonHeight = 62.0;
+
+/// Footprint of a side button (stop on the left, eat on the right). Both are
+/// this size, and the primary button takes whatever is left between them.
+const double kActionBarSideButtonWidth = 76.0;
+
 class MomentumPrimaryButton extends StatefulWidget {
   const MomentumPrimaryButton({
     required this.enabled,
@@ -24,23 +33,17 @@ class MomentumPrimaryButton extends StatefulWidget {
 }
 
 class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
-  // fixed size so the button doesn't resize when the lock icon appears
-  // or the play/pause/fast-forward icon swaps out. it is the one control
-  // the player holds down for minutes at a time, so it is sized to be an
-  // easy thumb target at the centre of the action bar.
-  static const double _buttonWidth = 168.0;
-  // icon plus padding either side, plus the base lip the face sits on and
-  // slack so a larger icon theme can't overflow the fixed box
-  static const double _buttonHeight = 76.0;
+  // the button stretches to fill the middle of the action bar; only its
+  // height is fixed, so nothing shifts when the lock icon appears or the
+  // play/fast-forward icon swaps out. it is the one control the player
+  // holds down for minutes at a time, so it gets the widest target.
+  static const double _buttonHeight = kActionBarButtonHeight;
   static const double _iconSize = 34.0;
 
-  // how far above the button the empty lock slot sits. this doubles as the
-  // drag distance: dragging the button the full offset seats it in the slot
-  // and commits the lock.
-  static const double _lockSlotOffset = 20.0;
-
-  // how quickly the button springs back down when a drag is abandoned
-  static const Duration _snapDuration = Duration(milliseconds: 160);
+  // how far up the button has to be dragged to commit the speed lock. the
+  // drag has no visual of its own: the lock icon on the face is what says
+  // it landed.
+  static const double _lockDragDistance = 20.0;
 
   // how tall the base lip under the button face is. this is the distance the
   // face travels when pressed: it sinks until it sits flush on the base.
@@ -104,59 +107,35 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
     controller.onPrimaryButtonReleased();
   }
 
-  /// How far the button has been dragged from its resting spot, negative
-  /// upward, clamped to the slot offset. Zero whenever no drag is in flight.
-  double _dragOffsetY = 0.0;
-
   /// Cumulative drag distance for the pan path, which only reports deltas.
   double _panDy = 0.0;
 
-  /// True while a finger is dragging, so the slide tracks 1:1 instead of
-  /// animating behind the finger.
-  bool _dragging = false;
-
-  /// Drives the slide for both drag paths. [dy] is cumulative displacement
-  /// from where the press started, so a slow drag works as well as a flick.
+  /// Watches the drag for both paths. [dy] is cumulative displacement from
+  /// where the press started, negative upward, so a slow drag works as well
+  /// as a flick. Dragging up past [_lockDragDistance] commits the lock; the
+  /// button itself never moves.
   void _onDragTo(ActionTimingController controller, double dy) {
     if (!widget.enabled) return;
     if (controller.getActionSpeedLockState()) return;
     if (_lockTriggeredThisDrag) return;
+    if (dy > -_lockDragDistance) return;
 
-    final offset = dy.clamp(-_lockSlotOffset, 0.0);
-
-    // seated in the slot: commit the lock. a drag that never pressed long
-    // enough to start anything still needs something running for the lock
-    // to hold onto.
-    if (offset <= -_lockSlotOffset) {
-      _lockTriggeredThisDrag = true;
-      if (!controller.isRunning) {
-        widget.startActionFunction();
-      }
-      controller.lockActionSpeed();
-      // the button stays seated in the slot under the finger. it only
-      // springs back down to rest once the finger comes off, in _onDragEnd,
-      // so the lock lands where you put it rather than snapping away
-      // mid-gesture.
-      setState(() => _dragOffsetY = -_lockSlotOffset);
-      return;
+    // far enough up: commit the lock. a drag that never pressed long enough
+    // to start anything still needs something running for the lock to hold
+    // onto.
+    _lockTriggeredThisDrag = true;
+    if (!controller.isRunning) {
+      widget.startActionFunction();
     }
-
-    if (offset != _dragOffsetY) {
-      setState(() => _dragOffsetY = offset);
-    }
+    controller.lockActionSpeed();
   }
 
-  /// Ends a drag: wherever the button was left, including seated in the lock
-  /// slot, it springs back down to rest. Called on release from both the pan
-  /// recognizer and the pointer handler, since a gesture that never travelled
-  /// far enough to become a pan still has to put the button back.
+  /// Ends a drag. Called on release from both the pan recognizer and the
+  /// pointer handler, since a gesture that never travelled far enough to
+  /// become a pan still has to clear the drag state.
   void _onDragEnd() {
     _lockTriggeredThisDrag = false;
     _panDy = 0.0;
-    setState(() {
-      _dragging = false;
-      _dragOffsetY = 0.0;
-    });
   }
 
   // a 'start' action is bound to the button. The start action
@@ -175,166 +154,98 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
-        // the button rides in a stack under an empty slot: dragging it up
-        // seats it in the slot and locks the speed there.
-        return SizedBox(
-          width: _buttonWidth,
-          height: _buttonHeight + _lockSlotOffset,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // nothing to lock when the action can't be taken at all, and
-              // nothing to drag into once the lock is committed
-              if (widget.enabled && !locked)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: _buttonHeight,
-                  child: _buildLockSlot(context),
-                ),
-
-              AnimatedPositioned(
-                // 1:1 with the finger while dragging, eased when springing
-                // back. committing the lock springs it back too: the button
-                // rests where it always does and the lock icon on its face
-                // is what says the speed is held
-                duration: _dragging ? Duration.zero : _snapDuration,
-                curve: Curves.easeOut,
-                top: _lockSlotOffset + _dragOffsetY,
-                left: 0,
-                right: 0,
-                height: _buttonHeight,
-                // the face tracks the finger itself, ahead of any recognizer
-                // claiming the gesture, so the button is down the moment it
-                // is touched and back up the moment it is let go
-                child: Listener(
-                  // press and release drive the whole interaction, straight
-                  // off the raw pointer: pressing down starts the action and
-                  // begins the boost, and letting go lets the boost fall.
-                  // there is no hold timer to wait out.
-                  onPointerDown: (_) => _onPressed(controller, locked),
-                  onPointerUp: (_) => _onReleased(controller),
-                  onPointerCancel: (_) => _onReleased(controller),
-                  child: RawGestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    gestures: <Type, GestureRecognizerFactory>{
-                      // Drag up to lock: the button follows the finger toward the empty
-                      // slot above it and stays seated there once it commits the lock,
-                      // so the boost holds after the finger comes off.
-                      PanGestureRecognizer:
-                          GestureRecognizerFactoryWithHandlers<
-                            PanGestureRecognizer
-                          >(() => PanGestureRecognizer(debugOwner: this), (
-                            recognizer,
-                          ) {
-                            recognizer
-                              ..onStart = (_) {
-                                _lockTriggeredThisDrag = false;
-                                _panDy = 0.0;
-                                _dragging = true;
-                              }
-                              ..onUpdate = (details) {
-                                _panDy += details.delta.dy;
-                                _onDragTo(controller, _panDy);
-                              }
-                              ..onEnd = (_) {
-                                _onDragEnd();
-                              }
-                              ..onCancel = () {
-                                _onDragEnd();
-                              };
-                          }),
+        // the face tracks the finger itself, ahead of any recognizer
+        // claiming the gesture, so the button is down the moment it is
+        // touched and back up the moment it is let go
+        return Listener(
+          // press and release drive the whole interaction, straight off the
+          // raw pointer: pressing down starts the action and begins the
+          // boost, and letting go lets the boost fall. there is no hold
+          // timer to wait out.
+          onPointerDown: (_) => _onPressed(controller, locked),
+          onPointerUp: (_) => _onReleased(controller),
+          onPointerCancel: (_) => _onReleased(controller),
+          child: RawGestureDetector(
+            behavior: HitTestBehavior.opaque,
+            gestures: <Type, GestureRecognizerFactory>{
+              // Drag up to lock: dragging the button upward holds the boost
+              // after the finger comes off. The gesture is invisible — the
+              // lock icon on the face is the only thing that reports it.
+              PanGestureRecognizer:
+                  GestureRecognizerFactoryWithHandlers<PanGestureRecognizer>(
+                    () => PanGestureRecognizer(debugOwner: this),
+                    (recognizer) {
+                      recognizer
+                        ..onStart = (_) {
+                          _lockTriggeredThisDrag = false;
+                          _panDy = 0.0;
+                        }
+                        ..onUpdate = (details) {
+                          _panDy += details.delta.dy;
+                          _onDragTo(controller, _panDy);
+                        }
+                        ..onEnd = (_) {
+                          _onDragEnd();
+                        }
+                        ..onCancel = () {
+                          _onDragEnd();
+                        };
                     },
-
-                    // button container. a disabled button keeps its footprint
-                    // and greys out, so the action bar doesn't reflow when the
-                    // action becomes available again
-                    child: Opacity(
-                      opacity: widget.enabled ? 1.0 : 0.35,
-                      child: RaisedSurface(
-                        pressed: _pressed,
-                        height: _buttonHeight,
-                        depth: _pressDepth,
-                        color: Theme.of(context).colorScheme.primaryContainer,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 16,
-                        ),
-                        // the button is a fixed width, so the icons center in it
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // holding the button boosts the speed, so the icon shows
-                            // fast forward for as long as the hold lasts. the button
-                            // no longer stops anything, so it never shows a pause.
-                            Icon(
-                              controller.isButtonHeld || locked
-                                  ? Icons.fast_forward
-                                  : Icons.play_arrow,
-                              size: _iconSize,
-                            ),
-                            if (locked) ...[
-                              const SizedBox(width: 8),
-                              const Icon(
-                                Icons.lock,
-                                size: 18,
-                                color: Colors.white,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
                   ),
+            },
+
+            // button container. a disabled button keeps its footprint and
+            // greys out, so the action bar doesn't reflow when the action
+            // becomes available again
+            child: Opacity(
+              opacity: widget.enabled ? 1.0 : 0.35,
+              child: RaisedSurface(
+                pressed: _pressed,
+                height: _buttonHeight,
+                depth: _pressDepth,
+                color: Theme.of(context).colorScheme.primaryContainer,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                // the button fills the middle of the bar, so the icons
+                // center in it
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // holding the button boosts the speed, so the icon shows
+                    // fast forward for as long as the hold lasts. the button
+                    // no longer stops anything, so it never shows a pause.
+                    Icon(
+                      controller.isButtonHeld || locked
+                          ? Icons.fast_forward
+                          : Icons.play_arrow,
+                      size: _iconSize,
+                    ),
+                    if (locked) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.lock, size: 18, color: Colors.white),
+                    ],
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         );
       },
     );
   }
-
-  /// The empty slot the button drags up into. Its lock icon sits in the strip
-  /// left exposed above the button. Once the lock commits the slot is gone
-  /// and the button drops back to rest.
-  Widget _buildLockSlot(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: scheme.primaryContainer.withValues(alpha: 0.55),
-          width: 1.5,
-        ),
-      ),
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: Padding(
-          padding: const EdgeInsets.only(top: 5),
-          child: Icon(
-            Icons.lock,
-            size: 14,
-            color: scheme.onSurface.withValues(alpha: 0.45),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
-/// The row of controls at the bottom of an action screen: the primary button
-/// centred, the stop button to its left, and any screen-specific controls to
-/// its right.
+/// The row of controls at the bottom of an action screen: the stop button
+/// anchored to the left edge, any screen-specific controls anchored to the
+/// right, and the primary button filling everything between them.
 ///
-/// The two side slots are equal-width flexes, so the primary button holds the
-/// centre of the row whatever the sides happen to be showing — including the
-/// stop button appearing and disappearing with the action. Everything is
-/// bottom aligned, so the controls line up along one baseline even though the
-/// primary button carries the taller lock slot above it.
+/// Both side slots keep their fixed footprint whether or not anything is in
+/// them — the stop button only renders while an action runs, and a screen
+/// with no trailing control still reserves the slot — so the primary button
+/// stays centred on every screen and never changes width mid-action.
 class ActionButtonRow extends StatelessWidget {
   const ActionButtonRow({
     super.key,
@@ -355,31 +266,26 @@ class ActionButtonRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Expanded(
-            child: Align(
-              alignment: Alignment.bottomRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: const StopPrimaryButton(),
-              ),
-            ),
+          // left anchor: the stop button's slot, held open while idle
+          const SizedBox(
+            width: kActionBarSideButtonWidth,
+            child: StopPrimaryButton(),
           ),
+          const SizedBox(width: 10),
 
-          actionButton,
+          Expanded(child: actionButton),
 
-          Expanded(
-            child: Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: trailing,
-                ),
-              ),
-            ),
-          ),
+          // right anchor: screen-specific controls, each the same footprint
+          // as the stop button. a screen with none still reserves one slot,
+          // so the two sides stay symmetric and the primary button sits
+          // centred on every screen rather than sliding right
+          if (trailing.isEmpty)
+            const SizedBox(width: 10 + kActionBarSideButtonWidth)
+          else
+            for (final control in trailing) ...[
+              const SizedBox(width: 10),
+              SizedBox(width: kActionBarSideButtonWidth, child: control),
+            ],
         ],
       ),
     );
@@ -501,10 +407,9 @@ class StopPrimaryButton extends StatefulWidget {
 }
 
 class _StopPrimaryButtonState extends State<StopPrimaryButton> {
-  // shorter than the primary button, and bottom aligned against it, so the
-  // action bar reads as one row of controls with the big one at the centre
-  static const double _height = 56.0;
-  static const double _width = 72.0;
+  // the same height as the primary button it sits beside, so the action bar
+  // reads as one row of controls
+  static const double _height = kActionBarButtonHeight;
 
   bool _pressed = false;
 
@@ -529,15 +434,14 @@ class _StopPrimaryButtonState extends State<StopPrimaryButton> {
           controller.stop();
           widget.onTap?.call();
         },
-        child: SizedBox(
-          width: _width,
-          child: RaisedSurface(
-            pressed: _pressed,
-            height: _height,
-            color: scheme.errorContainer,
-            radius: 14,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Icon(Icons.stop, size: 26, color: scheme.onErrorContainer),
+        child: RaisedSurface(
+          pressed: _pressed,
+          height: _height,
+          color: scheme.errorContainer,
+          radius: 14,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Center(
+            child: Icon(Icons.stop, size: 28, color: scheme.onErrorContainer),
           ),
         ),
       ),

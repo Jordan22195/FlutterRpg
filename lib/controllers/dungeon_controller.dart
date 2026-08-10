@@ -124,6 +124,8 @@ class DungeonController extends ChangeNotifier {
       doDungeonAction,
       activityIconId: _run.dungeonId,
       activityCount: () => _run.fight.entity?.count ?? 0,
+      // a dungeon run is combat: the equipped weapon sets the pace
+      actionSkill: SkillId.ATTACK,
     );
     _actionTimingController.start();
   }
@@ -197,6 +199,25 @@ class DungeonController extends ChangeNotifier {
       _actionTimingController.stop();
     }
     notifyListeners();
+  }
+
+  /// How far the current enemy is through its attack windup, 0..1. Sampled
+  /// by the ui every frame rather than pushed on notify, since the swing
+  /// timer runs on wall clock between the attacks that do notify.
+  double entityAttackProgress() {
+    if (!_actionTimingController.isRunningAction(doDungeonAction)) return 0.0;
+
+    final entity = _run.fight.entity;
+    final lastAttack = _lastEntityAttackAt;
+    if (entity is! CombatEntity ||
+        lastAttack == null ||
+        entity.attackInterval <= 0 ||
+        _run.awaitingFloorChoice) {
+      return 0.0;
+    }
+
+    final elapsed = DateTime.now().difference(lastAttack).inMicroseconds / 1e6;
+    return (elapsed / entity.attackInterval).clamp(0.0, 1.0);
   }
 
   // ---- inspect (read-only, no run required) ----

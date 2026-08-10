@@ -42,7 +42,15 @@ class PlayerDataService {
       skillStats,
       Util.addMap(equipmentStats, buffStats),
     );
+    // a strength based stance raises the stats strength lends itself to by
+    // 1% per point of strength. each stat scales from its own total, and
+    // strength itself is left alone so it can't compound on itself.
+    if (playerState.skillBoost == SkillId.ATTACK) {
+      final strengthScale = 1 + 0.01 * (totals[SkillId.STRENGTH] ?? 0);
 
+      final newStat = (totals[playerState.skillBoost] ?? 0) * strengthScale;
+      totals[playerState.skillBoost] = newStat.round();
+    }
     // the boost scales the stats the stance acts on, which is not always the
     // skill the stance is stored as - see [kBoostedStats]
     for (final id

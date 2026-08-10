@@ -60,8 +60,7 @@ class SkillsScreen extends StatelessWidget {
           mainAxisSpacing: 4,
         ),
         itemCount: skills.length,
-        itemBuilder: (context, i) =>
-            SkillGridTile(id: skills[i], accent: accent),
+        itemBuilder: (context, i) => SkillGridTile(id: skills[i]),
       ),
     ];
   }
