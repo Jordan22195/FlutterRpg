@@ -492,6 +492,7 @@ class GameSessionFactory {
       playerData: save.playerData,
       playerDataService: playerDataService,
       actionTimingController: actionTimingController,
+      entityCatalog: catalogs.entityCatalog,
     );
     final inventoryController = InventoryController(
       inventoryData: save.inventoryData,

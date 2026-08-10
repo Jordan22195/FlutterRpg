@@ -10,6 +10,7 @@ import '../catalogs/entity_catalog.dart';
 import '../controllers/action_timing_controller.dart';
 import '../controllers/encounter_controller.dart';
 import '../controllers/equipment_controller.dart';
+import '../controllers/player_data_controller.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/primary_button.dart';
 import '../data/player_data.dart';
@@ -218,6 +219,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       padding: const EdgeInsets.only(top: 2, bottom: 6),
       child: Row(
         children: [
+          SizedBox(width: 10),
           buildRowLabel(context, label),
           if (hp != null) ...[
             SizedBox(width: _damageSlotWidth, child: damageSlot),
@@ -579,6 +581,9 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
   @override
   CombatViewState resolveView(BuildContext context) {
     final controller = context.watch<EncounterController>();
+    // the stat chips read player totals, which the stance (and gear, xp,
+    // buffs) move without the encounter controller ever notifying
+    context.watch<PlayerDataController>();
     final entity = controller.getActiveEntity();
 
     return CombatViewState(

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../catalogs/dungeon_catalog.dart';
 import '../catalogs/entity_catalog.dart';
 import '../controllers/dungeon_controller.dart';
+import '../controllers/player_data_controller.dart';
 import '../data/skill_data.dart';
 import '../widgets/icon_renderer.dart';
 import '../widgets/item_stack_tile.dart';
@@ -247,6 +248,9 @@ class _DungeonRunScreenState extends CombatScreenState<_DungeonRunScreen> {
   @override
   CombatViewState resolveView(BuildContext context) {
     final controller = context.watch<DungeonController>();
+    // the stat chips read player totals, which the stance (and gear, xp,
+    // buffs) move without the dungeon controller ever notifying
+    context.watch<PlayerDataController>();
 
     final entity =
         controller.currentEntity ??

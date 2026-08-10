@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/player_data.dart';
+import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/buff_service.dart';
@@ -52,18 +53,25 @@ void main() {
     }
   }
 
-  test('strong stance boosts mining and woodcutting, not strength', () {
+  test('strong stance boosts what the open entity is worked with', () {
     final player = newPlayer();
     setLevel(player, SkillId.STRENGTH, 10);
     setLevel(player, SkillId.MINING, 20);
     setLevel(player, SkillId.WOODCUTTING, 20);
-    player.stamina = 100;
-    playerDataService.setStance(Stance.strong, player);
+    // enough stamina to hold the boost for the whole run
+    setLevel(player, SkillId.STAMINA, 20);
+    player.stamina = 200;
+    // the stance is resolved against whatever is open: a copper rock is
+    // mined, so mining is what strength lends itself to here
+    player.currentEntityViewId = EntityId.COPPER;
+    playerDataService.setStance(Stance.strong, player, EntityCatalog());
 
     // the stance alone already pays: +1% per point of strength, so 20
     // mining at 10 strength reads 22 before any boost is held
     final baseline = playerDataService.getStatTotals(player);
     expect(baseline[SkillId.MINING], 22);
+    // and only that one stat - woodcutting isn't what is being worked
+    expect(baseline[SkillId.WOODCUTTING], 20);
 
     final state = ActionTimingData();
     state.buttonHeld = true;
@@ -71,13 +79,10 @@ void main() {
 
     expect(player.boostMultiplier, greaterThan(1.0));
 
-    // the held boost stacks on top of what the stance already gave
+    // the held boost takes over from the resting 1% per point
     final boosted = playerDataService.getStatTotals(player);
     expect(boosted[SkillId.MINING], greaterThan(baseline[SkillId.MINING]!));
-    expect(
-      boosted[SkillId.WOODCUTTING],
-      greaterThan(baseline[SkillId.WOODCUTTING]!),
-    );
+    expect(boosted[SkillId.WOODCUTTING], 20);
     // strength itself stays raw, so the ceiling can't feed back into itself
     expect(boosted[SkillId.STRENGTH], 10);
     expect(state.maxBoostMultiplier, closeTo(1.0 + 0.1 * 10, 0.001));
@@ -88,7 +93,7 @@ void main() {
     setLevel(player, SkillId.STRENGTH, 10);
     setLevel(player, SkillId.MINING, 20);
     player.stamina = 100;
-    playerDataService.setStance(Stance.fast, player);
+    playerDataService.setStance(Stance.fast, player, EntityCatalog());
 
     final state = ActionTimingData();
     state.buttonHeld = true;
@@ -106,7 +111,7 @@ void main() {
       setLevel(player, SkillId.STRENGTH, 10);
       setLevel(player, SkillId.SPEED, 50);
       player.stamina = 100;
-      playerDataService.setStance(stance, player);
+      playerDataService.setStance(stance, player, EntityCatalog());
 
       final speedBefore = playerDataService.getSkillXp(SkillId.SPEED, player);
       final strengthBefore = playerDataService.getSkillXp(
@@ -136,7 +141,7 @@ void main() {
     setLevel(player, SkillId.STRENGTH, 50);
     setLevel(player, SkillId.SPEED, 10);
     player.stamina = 100;
-    playerDataService.setStance(Stance.fast, player);
+    playerDataService.setStance(Stance.fast, player, EntityCatalog());
 
     final speedBefore = playerDataService.getSkillXp(SkillId.SPEED, player);
     final strengthBefore = playerDataService.getSkillXp(

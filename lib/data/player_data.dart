@@ -81,6 +81,7 @@ class PlayerData {
   Map<SkillId, SkillData> skillData;
   EquipmentData equipmentData;
   SkillId skillBoost = SkillId.SPEED;
+  Stance stance = Stance.fast;
 
   // mutable stats
   int hitpoints = 10;

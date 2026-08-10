@@ -108,6 +108,18 @@ class ActionTimingController extends ChangeNotifier {
   double get actionProgress => _actionTimingState.actionProgressPercentComplete;
 
   Duration getCurrentActionDuration() {
+    // the frame loop keeps the stored interval fresh while an action runs.
+    // idle, nothing is ticking to refresh it - and stopping resets it to the
+    // default - so it is computed live instead, or switching stance would
+    // leave the status bar reading whatever the last action left behind.
+    // the boost sits at 1x with nothing held, so the unboosted interval is
+    // the whole answer here.
+    if (!_actionTimingState.running) {
+      return _actionSpeedSystem.currentMaxInterval(
+        _actionTimingState,
+        _playerState,
+      );
+    }
     return _actionTimingService.getCurrentActionDuration(_actionTimingState);
   }
 
@@ -210,6 +222,44 @@ class ActionSpeedSystem {
     _playerDataService.setBoostMultiplier(1.0, playerState);
   }
 
+  /// The unboosted interval the bound action would run at right now: the
+  /// speed of the item equipped to perform it, cut by the speed stat while in
+  /// the fast stance.
+  ///
+  /// [frameUpdate] writes this into [ActionTimingData.maxInterval] every frame
+  /// while the loop runs. Idle, nothing writes it, so the status bar readout
+  /// asks for it directly - the stance moves it, and a stance can be switched
+  /// with the loop stopped.
+  Duration currentMaxInterval(ActionTimingData state, PlayerData playerState) {
+    return _maxIntervalFor(
+      state,
+      playerState,
+      _playerDataService.getStatTotals(playerState),
+      _playerDataService.getBoostSkill(playerState) == SkillId.SPEED,
+    );
+  }
+
+  /// [stats] and [speedStance] are passed in because the frame loop has
+  /// already worked both out by the time it needs the interval.
+  Duration _maxIntervalFor(
+    ActionTimingData state,
+    PlayerData playerState,
+    Map<SkillId, int> stats,
+    bool speedStance,
+  ) {
+    final actionSkill = state.actionSkill;
+    return _actionTimingService.maxIntervalFor(
+      equippedInterval: actionSkill == null
+          ? null
+          : _equipmentService.actionIntervalFor(
+              actionSkill,
+              playerState.equipmentData,
+            ),
+      speedStance: speedStance,
+      speedStat: stats[SkillId.SPEED] ?? 1,
+    );
+  }
+
   // the momentum loop, once per frame:
   // - the speed stat sets the boost ceiling
   // - holding the button accelerates toward the ceiling
@@ -245,16 +295,11 @@ class ActionSpeedSystem {
     // and the interval itself from what is equipped to swing. refreshed
     // per frame rather than at bind time, so swapping to a faster axe is
     // felt without restarting the action
-    final actionSkill = actionTimingState.actionSkill;
-    actionTimingState.maxInterval = _actionTimingService.maxIntervalFor(
-      equippedInterval: actionSkill == null
-          ? null
-          : _equipmentService.actionIntervalFor(
-              actionSkill,
-              playerState.equipmentData,
-            ),
-      speedStance: actionTimingState.boostingSpeed,
-      speedStat: stats[SkillId.SPEED] ?? 1,
+    actionTimingState.maxInterval = _maxIntervalFor(
+      actionTimingState,
+      playerState,
+      stats,
+      actionTimingState.boostingSpeed,
     );
 
     _actionTimingService.accelerateActionBoostValue(

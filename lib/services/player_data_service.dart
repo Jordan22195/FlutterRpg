@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:rpg/services/buff_service.dart';
 import 'package:rpg/utilities/util.dart';
 import '../catalogs/entity_catalog.dart';
@@ -45,17 +47,16 @@ class PlayerDataService {
     // a strength based stance raises the stats strength lends itself to by
     // 1% per point of strength. each stat scales from its own total, and
     // strength itself is left alone so it can't compound on itself.
-    if (playerState.skillBoost == SkillId.ATTACK) {
+    if (playerState.skillBoost != SkillId.SPEED &&
+        playerState.skillBoost != SkillId.STRENGTH) {
+      // 1% per strengh stat
       final strengthScale = 1 + 0.01 * (totals[SkillId.STRENGTH] ?? 0);
 
-      final newStat = (totals[playerState.skillBoost] ?? 0) * strengthScale;
-      totals[playerState.skillBoost] = newStat.round();
-    }
-    // the boost scales the stats the stance acts on, which is not always the
-    // skill the stance is stored as - see [kBoostedStats]
-    for (final id
-        in kBoostedStats[playerState.skillBoost] ?? const <SkillId>[]) {
-      totals[id] = ((totals[id] ?? 0) * playerState.boostMultiplier).round();
+      final newBaseStat = (totals[playerState.skillBoost] ?? 0) * strengthScale;
+      final newBoostStat =
+          (totals[playerState.skillBoost] ?? 0) * playerState.boostMultiplier;
+
+      totals[playerState.skillBoost] = max(newBaseStat, newBoostStat).round();
     }
 
     return totals;
@@ -73,16 +74,36 @@ class PlayerDataService {
   }
 
   /// The stance is stored as the skill the action loop boosts.
-  void setStance(Stance stance, PlayerData playerState) {
-    playerState.skillBoost = kStanceBoostSkill[stance]!;
+  void setStance(
+    Stance stance,
+    PlayerData playerState,
+    EntityCatalog entityCatalog,
+  ) {
+    playerState.stance = stance;
+    if (stance == Stance.strong) {
+      // the strong stance spends strength on whatever the open entity is
+      // worked with - mining on a rock, woodcutting on a tree
+      final definition = entityCatalog.getDefinitionFor(
+        playerState.currentEntityViewId,
+      );
+      // a bench, a shop or no entity at all has no skill to lend the boost
+      // to. strength stands in, and getStatTotals leaves it unscaled so it
+      // can't compound on itself
+      playerState.skillBoost = definition is EncounterEntityDefinition
+          ? definition.entityType
+          : SkillId.STRENGTH;
+    } else if (stance == Stance.defensive) {
+      playerState.skillBoost = SkillId.DEFENCE;
+    } else if (stance == Stance.offensive) {
+      playerState.skillBoost = SkillId.ATTACK;
+    } else {
+      playerState.skillBoost = SkillId.SPEED;
+    }
   }
 
   /// Null when the boosted skill isn't one of the stance skills.
   Stance? getStance(PlayerData playerState) {
-    for (final entry in kStanceBoostSkill.entries) {
-      if (entry.value == playerState.skillBoost) return entry.key;
-    }
-    return null;
+    return playerState.stance;
   }
 
   /// Called when an encounter starts: an entity that doesn't offer the
@@ -92,7 +113,8 @@ class PlayerDataService {
     final allowed = stancesForEntity(entity);
     final current = getStance(playerState);
     if (current != null && allowed.contains(current)) return;
-    setStance(Stance.fast, playerState);
+    playerState.skillBoost = SkillId.SPEED;
+    playerState.stance = Stance.fast;
   }
 
   SkillData getSkillData(SkillId id, PlayerData playerState) {

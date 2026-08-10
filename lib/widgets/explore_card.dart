@@ -279,15 +279,6 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
               ),
             ),
 
-            // Accent stripe marking permanent structures.
-            if (widget.isStructure)
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                child: Container(width: 3, color: scheme.primary),
-              ),
-
             SizedBox(
               width: double.infinity,
               height: widget.height,
