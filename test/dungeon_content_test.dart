@@ -102,40 +102,59 @@ void main() {
     });
   });
 
-  group('Goblin Queen dungeon definition', () {
+  group('dungeon definitions', () {
     final catalog = DungeonCatalog();
 
-    test('is a keyed, non-repeatable landmark', () {
+    test('the lair is a keyed, one-shot landmark', () {
       final d = catalog.getDefinitionFor(DungeonId.GOBLIN_QUEEN_LAIR)!;
       expect(d.type, DungeonType.LANDMARK);
       expect(d.isKeyed, isTrue);
       expect(d.keyItemId, ItemId.GOBLIN_QUEEN_KEY);
-      expect(d.repeatable, isFalse);
+      expect(d.repeatableEntries, isFalse);
       expect(catalog.landmarks, contains(d));
     });
 
-    test('floors are ordered and the boss is the final pack', () {
+    test('entries are ordered and the boss is the last member of the last', () {
       final d = catalog.getDefinitionFor(DungeonId.GOBLIN_QUEEN_LAIR)!;
-      expect(d.floors, isNotEmpty);
-      for (final floor in d.floors) {
-        expect(floor.packs, isNotEmpty);
+      expect(d.entries, isNotEmpty);
+      for (final entry in d.entries) {
+        expect(entry.entities, isNotEmpty);
       }
-      expect(d.bossEntityId, EntityId.GOBLIN_QUEEN);
+      expect(d.entries.last.entities.last.entityId, EntityId.GOBLIN_QUEEN);
     });
 
-    test(
-      'every entity the dungeon references exists in the entity catalog',
-      () {
-        final entities = EntityCatalog();
-        final d = catalog.getDefinitionFor(DungeonId.GOBLIN_QUEEN_LAIR)!;
-        for (final floor in d.floors) {
-          for (final pack in floor.packs) {
-            final def = entities.getDefinitionFor(pack.entityId);
-            expect(def.name, isNotEmpty, reason: '${pack.entityId} missing');
-            expect(pack.count, greaterThan(0));
+    test('every entry is named and holds something', () {
+      for (final d in catalog.all) {
+        expect(d.entries, isNotEmpty, reason: '${d.id} has no cards');
+        for (final entry in d.entries) {
+          expect(entry.name, isNotEmpty, reason: '${d.id} has an unnamed card');
+          expect(entry.entities, isNotEmpty, reason: '${entry.name} is empty');
+        }
+      }
+    });
+
+    test('every member is a depleting encounter entity', () {
+      final entities = EntityCatalog();
+      for (final d in catalog.all) {
+        for (final entry in d.entries) {
+          for (final ref in entry.entities) {
+            final def = entities.getDefinitionFor(ref.entityId);
+            // the kill path casts the definition to an encounter definition
+            // without a guard, and a card that never depletes never clears
+            expect(
+              def,
+              isA<EncounterEntityDefinition>(),
+              reason: '${ref.entityId} in ${d.id}/${entry.name}',
+            );
+            expect(
+              def,
+              isNot(isA<FishingEntityDefinition>()),
+              reason: '${ref.entityId} never depletes',
+            );
+            expect(ref.count, greaterThan(0));
           }
         }
-      },
-    );
+      }
+    });
   });
 }

@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/main.dart';
+import 'package:rpg/catalogs/dungeon_catalog.dart';
 import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/catalogs/zone_catalog.dart';
 import 'package:rpg/game_session.dart';
+import 'package:rpg/screens/encounter_screen.dart';
 import 'package:rpg/screens/inventory_screen.dart';
 import 'package:rpg/services/file_manager_service.dart';
 
@@ -71,6 +73,44 @@ void main() {
     // explore screen restored, encounter screen skipped
     expect(find.text('The Forest'), findsOneWidget);
     expect(find.text('Action'), findsNothing);
+  });
+
+  testWidgets('relaunch restores a dungeon card mid-fight', (tester) async {
+    // a card's entity lives in the run, not in any zone, so restoring the
+    // encounter above a dungeon can't go through the zone entity lookup
+    final save = newSave();
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final session = factory.create(
+      save: save,
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+    session.dungeonController.openDungeon(DungeonId.SPIDER_DEN);
+    session.dungeonController.startSlot(0);
+    session.encounterController.doEncounterAction();
+    save.uiState.tabIndex = 0;
+    save.uiState.mapRouteStack = ['dungeon', 'encounter'];
+    save.uiState.dungeonId = DungeonId.SPIDER_DEN;
+    save.uiState.dungeonSlot = 0;
+    final raw = toRawSave(save);
+    session.dispose();
+
+    await tester.pumpWidget(
+      MyApp(rawSave: raw, fileManagerService: FileManagerService()),
+    );
+    await settle(tester);
+
+    // back on the card's encounter, not stopped at the card list
+    expect(find.byType(EncounterScreen), findsOneWidget);
+    expect(find.text('Giant Spider'), findsWidgets);
+
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.arrow_back));
+    await settle(tester);
+    expect(find.text('Webbed Thicket'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
   });
 
   testWidgets('relaunch restores the active tab', (tester) async {

@@ -11,6 +11,7 @@ enum ZoneId {
   FOREST_MINE,
   CHALLENGING_MOUNTAIN,
   DEV_FOREST,
+  DEV_DUNGEON_TESTING,
   NULL,
 }
 
@@ -178,12 +179,18 @@ class ZoneCatalog {
     return edges;
   }
 
+  /// Zones outside the travel graph, reachable from anywhere at no cost.
+  static const Set<ZoneId> _devZones = {
+    ZoneId.DEV_FOREST,
+    ZoneId.DEV_DUNGEON_TESTING,
+  };
+
   /// Total stamina cost to travel from [from] to [to], summing the edge
-  /// costs along the path. The dev forest is always free to enter and
+  /// costs along the path. The dev zones are always free to enter and
   /// leave. Returns [double.infinity] when no path exists.
   double travelCost(ZoneId from, ZoneId to) {
     if (from == to) return 0;
-    if (from == ZoneId.DEV_FOREST || to == ZoneId.DEV_FOREST) return 0;
+    if (_devZones.contains(from) || _devZones.contains(to)) return 0;
 
     final visited = <ZoneId>{from};
     final queue = <(ZoneId, double)>[(from, 0)];
@@ -290,6 +297,7 @@ class ZoneCatalog {
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
+        WeightedDropTableEntry(id: EntityId.GOBLIN_CAMP, weight: .1),
         // herb geography: the low herbs grow here once you can spot them,
         // which is what makes Herbalism reachable through Exploration
         WeightedDropTableEntry<EntityId>(
@@ -515,6 +523,25 @@ class ZoneCatalog {
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
+      ],
+    );
+
+    // dev/test zone for transient dungeons. The entrance is discoverable
+    // rather than permanent, because a transient dungeon consumes its
+    // entrance on leave — exploring again is how you get another one.
+    _zones[ZoneId.DEV_DUNGEON_TESTING] = ZoneDefinition(
+      id: ZoneId.DEV_DUNGEON_TESTING,
+      name: "Dev Dungeons",
+      iconAsset: 'assets/images/zones/forest.png',
+      xpPerExplore: 10,
+
+      permanentEntities: [EntityId.SPIDER_DEN_ENTRANCE],
+
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.DEV_DUNGEON_ENTRANCE,
+          weight: 10,
+        ),
       ],
     );
   }

@@ -46,6 +46,10 @@ class CombatViewState {
   /// Drops collected this session (world) or this run (dungeon).
   final List<ObjectStack> drops;
 
+  /// Entities still queued behind the one on screen, in queue order. Empty
+  /// for a world encounter, which has no queue behind it.
+  final List<EncounterEntity> queueRemaining;
+
   final ItemId foodItemId;
   final int foodItemCount;
 
@@ -72,6 +76,7 @@ class CombatViewState {
     required this.drops,
     required this.foodItemId,
     required this.foodItemCount,
+    this.queueRemaining = const [],
     this.requiredLevel = 0,
     this.locked = false,
     this.entityActionProgress,
@@ -374,6 +379,62 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     );
   }
 
+  /// Width of the queue rail beside the portrait. Reserved on both sides so
+  /// the portrait sits on the screen's centre line whether or not there is
+  /// a queue behind it.
+  static const double _queueRailWidth = 52;
+
+  /// The entity being worked, with the rest of its queue beside it.
+  ///
+  /// The rail runs bottom-up: the next entity sits at the bottom, closest
+  /// to the portrait it is about to replace, and the tail of the queue
+  /// climbs away from the fight. Tiles open their details, which is how a
+  /// boss's drops are read before you reach it.
+  Widget buildPortrait(BuildContext context, CombatViewState view) {
+    final entity = view.entity;
+    final portrait = SizedBox(
+      width: 180,
+      height: 180,
+      child: ItemStackTile(
+        size: 200,
+        count: entity.count,
+        id: entity.id,
+        onTap: portraitTap(context, entity),
+        // nothing left to gather or fight: the action conditions already
+        // reject it, so the portrait reads as spent
+        depleted: entity.count <= 0,
+      ),
+    );
+
+    if (view.queueRemaining.isEmpty) return Center(child: portrait);
+
+    return Row(
+      children: [
+        SizedBox(
+          width: _queueRailWidth,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              for (final queued in view.queueRemaining.reversed)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: ItemStackTile(
+                    size: 44,
+                    count: queued.count,
+                    id: queued.id,
+                    showInfoDialogOnTap: false,
+                    onTap: () => showEntityInfoDialog(context, queued),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Expanded(child: Center(child: portrait)),
+        const SizedBox(width: _queueRailWidth),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final view = resolveView(context);
@@ -382,7 +443,6 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     final SkillId skillType = entity.entityType;
     final bool isCombatEntity = entity is CombatEntity;
     final EntityId entityId = entity.id;
-    final int entityCount = entity.count;
 
     // skills this encounter trains on its own: combat awards xp to the weapon
     // skill, hitpoints, and defence (blocked hits); gathering trains its own
@@ -427,26 +487,12 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
 
                   const SizedBox(height: 8),
 
-                  // Centered entity portrait. The damage the player deals
+                  // Centered entity portrait, with whatever is queued behind
+                  // it stacked to the left. The damage the player deals
                   // reports beside the entity's hp bar below, where the
                   // damage coming back reports beside the player's, so the
                   // portrait itself carries nothing but the entity.
-                  Center(
-                    child: SizedBox(
-                      width: 180,
-                      height: 180,
-                      child: ItemStackTile(
-                        size: 200,
-                        count: entityCount,
-                        id: entityId,
-                        onTap: portraitTap(context, entity),
-                        // nothing left to gather or fight: the action
-                        // conditions already reject it, so the portrait
-                        // reads as spent
-                        depleted: entityCount <= 0,
-                      ),
-                    ),
-                  ),
+                  buildPortrait(context, view),
                   const SizedBox(height: 12),
 
                   buildEntityStatusRow(
@@ -599,6 +645,8 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
       // damage feedback belongs only to the encounter the actions fire on
       showActionFeedback: controller.isViewingActiveEncounter(),
       drops: controller.itemDrops(),
+      // a dungeon card's queue; empty for a zone entity
+      queueRemaining: controller.queueRemaining(),
       foodItemId: controller.getEquipedFoodItemId(),
       foodItemCount: controller.getEquipedFoodItemCount(),
       // herbalism level gate: locked herbs stay visible but can't be picked

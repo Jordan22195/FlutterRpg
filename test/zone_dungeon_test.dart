@@ -4,7 +4,6 @@ import 'package:rpg/catalogs/dungeon_catalog.dart';
 import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/catalogs/zone_catalog.dart';
-import 'package:rpg/data/dungeon_run.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 
@@ -32,15 +31,11 @@ void main() {
         .getStatTotals(session.saveGameData.playerData)[SkillId.HITPOINTS]!;
   }
 
-  // ticks combat until the run pauses for a floor choice or ends
-  void tickUntilPauseOrEnd(GameSession session, DungeonRun run) {
+  // ticks the encounter loop until it stops (a card cleared, or a death)
+  void fightUntilStopped(GameSession session) {
     var n = 0;
-    while (run.active && !run.awaitingFloorChoice && n < 20000) {
-      session.dungeonSystem.executeDungeonAction(
-        run: run,
-        playerState: session.saveGameData.playerData,
-        playerInventory: session.saveGameData.inventoryData,
-      );
+    while (session.actionTimingController.isRunning && n < 20000) {
+      session.encounterController.doEncounterAction();
       n++;
     }
   }
@@ -48,12 +43,13 @@ void main() {
   group('Spider Den definition', () {
     final catalog = DungeonCatalog();
 
-    test('is a free, repeatable zone dungeon with the Broodmother boss', () {
+    test('is a free zone dungeon with refightable cards', () {
       final d = catalog.getDefinitionFor(DungeonId.SPIDER_DEN)!;
       expect(d.type, DungeonType.ZONE);
-      expect(d.repeatable, isTrue);
+      expect(d.repeatableEntries, isTrue);
       expect(d.isKeyed, isFalse);
-      expect(d.bossEntityId, EntityId.SPIDER_BROODMOTHER);
+      expect(d.entries.last.entities.last.entityId,
+          EntityId.SPIDER_BROODMOTHER);
     });
   });
 
@@ -79,67 +75,94 @@ void main() {
     });
   });
 
-  group('repeatable run (loop / continue)', () {
-    test('enters free, loops a floor, then continues to the boss', () {
+  group('working down the card list', () {
+    test('clearing a card unlocks the next and refights on demand', () {
       final session = buildSession();
       final save = session.saveGameData;
+      final dungeons = session.dungeonController;
       makePlayerStrong(session);
 
-      // free entry, no key needed
-      expect(
-        session.dungeonSystem.canEnter(
-          run: save.dungeonRun,
-          dungeonId: DungeonId.SPIDER_DEN,
-          playerState: save.playerData,
-          playerInventory: save.inventoryData,
-        ),
-        isTrue,
-      );
-      session.dungeonSystem.enterDungeon(
-        run: save.dungeonRun,
-        dungeonId: DungeonId.SPIDER_DEN,
-        playerState: save.playerData,
-        playerInventory: save.inventoryData,
-      );
+      // free entry: no key, and the first card is open straight away
+      dungeons.openDungeon(DungeonId.SPIDER_DEN);
+      expect(save.dungeonRun.active, isTrue);
+      expect(dungeons.lockReason(0), isNull);
+      expect(dungeons.lockReason(2), isNotNull);
 
-      // clear floor 0 -> pauses for the loop/continue choice
-      tickUntilPauseOrEnd(session, save.dungeonRun);
-      expect(save.dungeonRun.awaitingFloorChoice, isTrue);
-      expect(save.dungeonRun.floorIndex, 0);
-      expect(save.dungeonRun.maxClearedFloor, 0);
+      // card 2 waits on the seam directly above it
+      dungeons.startSlot(1);
+      fightUntilStopped(session);
 
-      // loop it: back to floor 0, fighting again
-      session.dungeonSystem.loopFloor(save.dungeonRun);
-      expect(save.dungeonRun.awaitingFloorChoice, isFalse);
-      expect(save.dungeonRun.floorIndex, 0);
-      expect(save.dungeonRun.fight.entity?.id, EntityId.GIANT_SPIDER);
+      expect(save.dungeonRun.cleared, contains(1));
+      expect(dungeons.lockReason(2), isNull);
 
-      // clear floor 0 again, then descend through the floors to the boss
-      tickUntilPauseOrEnd(session, save.dungeonRun);
-      expect(save.dungeonRun.awaitingFloorChoice, isTrue);
+      // re-tapping a cleared card refills it; the cleared mark stays, so
+      // the card below it does not re-lock
+      expect(dungeons.startSlot(1), isTrue);
+      expect(save.dungeonRun.slots[1].cleared, isFalse);
+      expect(save.dungeonRun.slots[1].members.first.count, greaterThan(0));
+      expect(dungeons.lockReason(2), isNull);
 
-      session.dungeonSystem.continueFloor(save.dungeonRun); // -> floor 1
-      tickUntilPauseOrEnd(session, save.dungeonRun);
-      expect(save.dungeonRun.floorIndex, 1);
+      session.dispose();
+    });
 
-      session.dungeonSystem.continueFloor(save.dungeonRun); // -> floor 2 (boss)
-      tickUntilPauseOrEnd(session, save.dungeonRun);
-      expect(save.dungeonRun.floorIndex, 2);
+    test('the boss card pays out its guaranteed drop', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      final dungeons = session.dungeonController;
+      makePlayerStrong(session);
 
-      // boss floor cleared: the choice is loop-the-boss or finish
-      expect(save.dungeonRun.awaitingFloorChoice, isTrue);
-      // (uses the controller helper for the boss-floor flag)
-      expect(session.dungeonController.atBossFloorChoice, isTrue);
+      dungeons.openDungeon(DungeonId.SPIDER_DEN);
+      // the boss sits behind the cards above it
+      for (int i = 0; i < 3; i++) {
+        dungeons.startSlot(i);
+        fightUntilStopped(session);
+      }
+      dungeons.startSlot(3);
+      fightUntilStopped(session);
 
-      // the Broodmother died at least once -> its guaranteed 100-coin drop
+      expect(save.dungeonRun.slots[3].cleared, isTrue);
       expect(
         session.inventoryService.getItemCount(save.inventoryData, ItemId.COINS),
         greaterThanOrEqualTo(100),
       );
 
-      // finishing ends the run
-      session.dungeonSystem.continueFloor(save.dungeonRun);
-      expect(save.dungeonRun.active, isFalse);
+      session.dispose();
+    });
+  });
+
+  group('transient entrance', () {
+    test('is discoverable in the dev zone and consumed by a run', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+
+      save.playerData.currentZoneId = ZoneId.DEV_DUNGEON_TESTING;
+      session.explorationService.addEntityToCurrentZone(
+        EntityId.DEV_DUNGEON_ENTRANCE,
+        1,
+        session.catalogBundle.entityCatalog,
+        save.playerData,
+        save.worldData,
+      );
+
+      final zone = save.worldData.zones[ZoneId.DEV_DUNGEON_TESTING]!;
+      bool hasEntrance() => zone.discoveredEntities.any(
+            (e) => e.id == EntityId.DEV_DUNGEON_ENTRANCE,
+          );
+      expect(hasEntrance(), isTrue);
+
+      session.dungeonController.openDungeon(DungeonId.DEV_TRANSIENT_DUNGEON);
+      session.dungeonController.leaveDungeon();
+      expect(hasEntrance(), isFalse);
+
+      // exploring again is how you get another one
+      session.explorationService.addEntityToCurrentZone(
+        EntityId.DEV_DUNGEON_ENTRANCE,
+        1,
+        session.catalogBundle.entityCatalog,
+        save.playerData,
+        save.worldData,
+      );
+      expect(hasEntrance(), isTrue);
 
       session.dispose();
     });

@@ -4,35 +4,50 @@ import 'entity_catalog.dart';
 import 'item_catalog.dart';
 import '../data/skill_data.dart';
 
-enum DungeonId { NULL, GOBLIN_QUEEN_LAIR, SPIDER_DEN }
+enum DungeonId {
+  NULL,
+  GOBLIN_QUEEN_LAIR,
+  SPIDER_DEN,
+  GOBLIN_CAMP,
+  DEV_TRANSIENT_DUNGEON,
+}
 
-/// How a dungeon is reached and how it behaves on entry/exit.
-/// - [TRANSIENT]: stumbled on while exploring; free entry; one-shot (not
-///   repeatable); a guaranteed reward on the boss; does not expire.
-/// - [ZONE]: a permanent entity inside a zone; free entry; floors are
-///   repeatable for targeted grinding.
-/// - [LANDMARK]: shown on the world map; entry consumes a key; not
-///   repeatable; high reward.
+/// How a dungeon is reached, and what leaving it costs. A dungeon is a list
+/// of cards worked through in order; a run lives only while you stay in the
+/// dungeon, and every type resets its run on leave.
+/// - [TRANSIENT]: discovered while exploring; free; cards are one-shot.
+///   Leaving consumes the entrance — the dungeon is gone from the zone.
+/// - [ZONE]: a permanent entrance inside a zone; free; cards are
+///   repeatable, so a cleared card can be re-tapped to farm it.
+/// - [LANDMARK]: shown on the world map; the first card costs a key; cards
+///   are one-shot. Leaving spends the run, so re-entry costs another key.
 enum DungeonType { TRANSIENT, ZONE, LANDMARK }
 
-/// One group of enemies within a floor: [count] copies of [entityId]
-/// fought back to back. The dungeon's boss is simply the final pack of
-/// the final floor.
-class DungeonPack {
+/// One member of a card's queue: [count] copies of [entityId] worked back
+/// to back. A card's boss is simply its final member.
+class DungeonEntityRef {
   final EntityId entityId;
   final int count;
 
-  const DungeonPack(this.entityId, {this.count = 1});
+  const DungeonEntityRef(this.entityId, {this.count = 1});
 }
 
-/// An ordered set of packs. Clearing every pack clears the floor. In a
-/// repeatable dungeon, clearing a floor unlocks the in-run loop/continue
-/// choice for that floor.
-class DungeonFloor {
+/// One card in the dungeon list: an ordered queue of entities. Clearing
+/// every member clears the card.
+///
+/// [requiresPrevious] gates the card behind the one above it, which is the
+/// default march-down-the-floors behaviour. Set it false for a card that
+/// sits beside the critical path — an ore vein you may mine or walk past.
+class DungeonEntry {
   final String name;
-  final List<DungeonPack> packs;
+  final List<DungeonEntityRef> entities;
+  final bool requiresPrevious;
 
-  const DungeonFloor({required this.name, required this.packs});
+  const DungeonEntry({
+    required this.name,
+    required this.entities,
+    this.requiresPrevious = true,
+  });
 }
 
 class DungeonDefinition {
@@ -41,98 +56,160 @@ class DungeonDefinition {
   final String iconAsset;
   final DungeonType type;
 
-  /// Landmark dungeons consume this item on entry. NULL for free-entry
-  /// (transient/zone) dungeons.
+  /// Landmark dungeons consume this item to start the first card. NULL for
+  /// free-entry (transient/zone) dungeons.
   final ItemId keyItemId;
-
-  /// When true, clearing a floor offers the in-run loop/continue choice.
-  /// Zone dungeons are repeatable; transient and landmark are not.
-  final bool repeatable;
 
   /// Optional soft/hard level gate, mirroring the zone gate convention.
   /// NULL/0 means no explicit requirement.
   final SkillId requiredSkill;
   final int requiredLevel;
 
-  final List<DungeonFloor> floors;
+  final List<DungeonEntry> entries;
 
   const DungeonDefinition({
     required this.id,
     required this.name,
     required this.iconAsset,
     required this.type,
-    required this.floors,
+    required this.entries,
     this.keyItemId = ItemId.NULL,
-    this.repeatable = false,
     this.requiredSkill = SkillId.NULL,
     this.requiredLevel = 0,
   });
 
-  /// The boss entity: the final pack of the final floor.
-  EntityId get bossEntityId => floors.last.packs.last.entityId;
-
-  /// Whether entry requires (and consumes) a key.
+  /// Whether the first card requires (and consumes) a key.
   bool get isKeyed => keyItemId != ItemId.NULL;
+
+  /// Whether a cleared card can be re-tapped to fight it again. Only the
+  /// permanent zone dungeons farm; keyed and transient runs are one-shot.
+  bool get repeatableEntries => type == DungeonType.ZONE;
 }
 
 class DungeonCatalog {
   final _defs = <DungeonId, DungeonDefinition>{
-    // Landmark dungeon: keyed by the Goblin Queen Key (5% goblin drop),
-    // not repeatable, high reward. Fight down through goblin warrens to
-    // the Goblin Queen in her chamber.
+    // Landmark dungeon: the first card costs a Goblin Queen Key (5% goblin
+    // drop), cards are one-shot, and leaving ends the run. Fight down
+    // through goblin warrens to the Goblin Queen in her chamber.
     DungeonId.GOBLIN_QUEEN_LAIR: const DungeonDefinition(
       id: DungeonId.GOBLIN_QUEEN_LAIR,
       name: "Goblin Queen's Lair",
       iconAsset: "assets/images/dungeons/goblin_queen_lair.png",
       type: DungeonType.LANDMARK,
       keyItemId: ItemId.GOBLIN_QUEEN_KEY,
-      repeatable: false,
-      floors: [
-        DungeonFloor(
+      entries: [
+        DungeonEntry(
           name: "Warren Entrance",
-          packs: [DungeonPack(EntityId.GOBLIN, count: 5)],
+          entities: [DungeonEntityRef(EntityId.GOBLIN, count: 5)],
         ),
-        DungeonFloor(
+        DungeonEntry(
           name: "Deep Warren",
-          packs: [
-            DungeonPack(EntityId.GOBLIN, count: 4),
-            DungeonPack(EntityId.GIANT_SPIDER, count: 2),
+          entities: [
+            DungeonEntityRef(EntityId.GOBLIN, count: 4),
+            DungeonEntityRef(EntityId.GIANT_SPIDER, count: 2),
           ],
         ),
-        DungeonFloor(
+        DungeonEntry(
           name: "Queen's Chamber",
-          packs: [
-            DungeonPack(EntityId.GOBLIN, count: 2),
-            DungeonPack(EntityId.GOBLIN_QUEEN),
+          entities: [
+            DungeonEntityRef(EntityId.GOBLIN, count: 2),
+            DungeonEntityRef(EntityId.GOBLIN_QUEEN),
           ],
         ),
       ],
     ),
 
-    // Zone dungeon: a permanent entrance inside the forest. Free to enter
-    // and REPEATABLE — clear down to the Broodmother, then loop the boss
-    // floor to farm the Spider Silk Necklace.
+    DungeonId.GOBLIN_CAMP: const DungeonDefinition(
+      id: DungeonId.GOBLIN_CAMP,
+      name: "Goblin Camp",
+      iconAsset: "assets/images/dungeons/goblin_camp.png",
+      type: DungeonType.TRANSIENT,
+      entries: [
+        DungeonEntry(
+          name: "Camp",
+          entities: [
+            DungeonEntityRef(EntityId.GOBLIN, count: 5),
+            DungeonEntityRef(EntityId.GOBLIN_SCOUT, count: 3),
+            DungeonEntityRef(EntityId.GOBLIN_SEARGENT, count: 1),
+          ],
+        ),
+        DungeonEntry(
+          name: "Campfire",
+          entities: [DungeonEntityRef(EntityId.FIREPIT)],
+        ),
+      ],
+    ),
+
+    // Zone dungeon: a permanent entrance inside the forest. Free, and its
+    // cards are repeatable — clear down to the Broodmother, then re-tap her
+    // card to farm the Spider Silk Necklace. The iron seam is off the
+    // critical path: mine it or walk past it.
     DungeonId.SPIDER_DEN: const DungeonDefinition(
       id: DungeonId.SPIDER_DEN,
       name: "Spider Den",
       iconAsset: "assets/images/dungeons/spider_den.png",
       type: DungeonType.ZONE,
-      repeatable: true,
-      floors: [
-        DungeonFloor(
+      entries: [
+        DungeonEntry(
           name: "Webbed Thicket",
-          packs: [DungeonPack(EntityId.GIANT_SPIDER, count: 4)],
-        ),
-        DungeonFloor(
-          name: "Deep Nest",
-          packs: [DungeonPack(EntityId.GIANT_SPIDER, count: 5)],
-        ),
-        DungeonFloor(
-          name: "Broodmother's Lair",
-          packs: [
-            DungeonPack(EntityId.GIANT_SPIDER, count: 2),
-            DungeonPack(EntityId.SPIDER_BROODMOTHER),
+          entities: [
+            DungeonEntityRef(EntityId.GIANT_SPIDER, count: 10),
+            DungeonEntityRef(EntityId.GOBLIN, count: 10),
+            DungeonEntityRef(EntityId.BIG_RED, count: 15),
+            DungeonEntityRef(EntityId.GEM_VEIN, count: 10),
+            DungeonEntityRef(EntityId.COW, count: 15),
           ],
+        ),
+        DungeonEntry(
+          name: "Collapsed Seam",
+          entities: [DungeonEntityRef(EntityId.IRON, count: 8)],
+          requiresPrevious: false,
+        ),
+        DungeonEntry(
+          name: "Deep Nest",
+          entities: [DungeonEntityRef(EntityId.GIANT_SPIDER, count: 5)],
+        ),
+        DungeonEntry(
+          name: "Broodmother's Lair",
+          entities: [
+            DungeonEntityRef(EntityId.GIANT_SPIDER, count: 2),
+            DungeonEntityRef(EntityId.SPIDER_BROODMOTHER),
+          ],
+        ),
+      ],
+    ),
+
+    // Dev content. Exists to exercise the transient leave path (the
+    // entrance is consumed on leave) and, in one place, every card feature:
+    // a multi-member queue, a skippable non-combat card, a card repeating
+    // an EntityId used earlier in the list, and a boss.
+    DungeonId.DEV_TRANSIENT_DUNGEON: const DungeonDefinition(
+      id: DungeonId.DEV_TRANSIENT_DUNGEON,
+      name: "Dev Transient Dungeon",
+      iconAsset: "assets/images/entities/spider_den.png",
+      type: DungeonType.TRANSIENT,
+      entries: [
+        DungeonEntry(
+          name: "Test Queue",
+          entities: [
+            DungeonEntityRef(EntityId.GOBLIN, count: 3),
+            DungeonEntityRef(EntityId.GIANT_SPIDER),
+          ],
+        ),
+        DungeonEntry(
+          name: "Test Skippable Ore",
+          entities: [DungeonEntityRef(EntityId.IRON, count: 10)],
+          requiresPrevious: false,
+        ),
+        // deliberately the same EntityId as the first card: this is the
+        // case that breaks resolving the live entity by id
+        DungeonEntry(
+          name: "Test Duplicate",
+          entities: [DungeonEntityRef(EntityId.GOBLIN, count: 3)],
+        ),
+        DungeonEntry(
+          name: "Test Boss",
+          entities: [DungeonEntityRef(EntityId.SPIDER_BROODMOTHER)],
         ),
       ],
     ),

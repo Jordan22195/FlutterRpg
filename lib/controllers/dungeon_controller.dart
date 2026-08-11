@@ -1,315 +1,223 @@
 import 'package:flutter/foundation.dart';
 
 import '../catalogs/dungeon_catalog.dart';
-import '../catalogs/entity_catalog.dart';
 import '../catalogs/item_catalog.dart';
 import '../controllers/action_timing_controller.dart';
-import '../data/action_result.dart';
+import '../controllers/encounter_controller.dart';
 import '../data/dungeon_run.dart';
+import '../data/entity_queue.dart';
 import '../data/inventory_data.dart';
 import '../data/ObjectStack.dart';
 import '../data/player_data.dart';
-import '../data/skill_data.dart';
+import '../data/ui_state.dart';
+import '../data/world_data.dart';
+import '../services/dungeon_service.dart';
 import '../services/inventory_service.dart';
-import '../services/player_data_service.dart';
 import '../systems/dungeon_system.dart';
 
-/// Status of a floor for the run screen's floor list.
-enum FloorStatus { cleared, current, upcoming }
-
-/// Drives a dungeon run through the action-timing loop. A cousin of
-/// EncounterController: it owns the run, binds one auto-advancing combat
-/// action to the loop, and runs enemy attacks per frame. Fights flow
-/// pack→pack and floor→floor without the player re-pressing anything;
-/// clearing a floor in a repeatable dungeon pauses for the loop/continue
-/// choice.
+/// The dungeon list screen's controller: which cards exist, which are open,
+/// and what happens when one is tapped.
+///
+/// It owns no combat. Starting a card hands off to [EncounterController],
+/// which runs it as an ordinary encounter — the dungeon's only additions
+/// are the queue behind the card and the gating in front of it.
 class DungeonController extends ChangeNotifier {
   final DungeonRun _run;
+  final UiState _uiState;
 
   // controllers
   final ActionTimingController _actionTimingController;
+  final EncounterController _encounterController;
 
   // data
   final PlayerData _playerState;
   final InventoryData _inventoryState;
-
-  // catalogs
-  final EntityCatalog _entityCatalog;
+  final WorldData _worldState;
 
   // services / systems
   final DungeonSystem _dungeonSystem;
-  final PlayerDataService _playerDataService;
+  final DungeonService _dungeonService;
   final InventoryService _inventoryService;
-
-  ActionResult latestActionResult = ActionResult();
-  int actionSequence = 0;
-
-  int latestEntityDamage = 0;
-  int entityAttackSequence = 0;
-  DateTime? _lastEntityAttackAt;
 
   DungeonController({
     required DungeonRun dungeonRun,
+    required UiState uiState,
     required ActionTimingController actionTimingController,
+    required EncounterController encounterController,
     required PlayerData playerState,
     required InventoryData inventoryState,
-    required EntityCatalog entityCatalog,
+    required WorldData worldState,
     required DungeonSystem dungeonSystem,
-    required PlayerDataService playerDataService,
+    required DungeonService dungeonService,
     required InventoryService inventoryService,
   }) : _run = dungeonRun,
+       _uiState = uiState,
        _actionTimingController = actionTimingController,
+       _encounterController = encounterController,
        _playerState = playerState,
        _inventoryState = inventoryState,
-       _entityCatalog = entityCatalog,
+       _worldState = worldState,
        _dungeonSystem = dungeonSystem,
-       _playerDataService = playerDataService,
+       _dungeonService = dungeonService,
        _inventoryService = inventoryService;
 
-  // ---- run lifecycle ----
-
-  /// Begins a run at [dungeonId] (consuming a key if the dungeon is keyed)
-  /// and starts the auto-advancing action loop. Returns false when entry
-  /// isn't allowed (no key, level gate, or a run already in progress).
-  bool enterDungeon(DungeonId dungeonId) {
-    final started = _dungeonSystem.enterDungeon(
-      run: _run,
-      dungeonId: dungeonId,
-      playerState: _playerState,
-      playerInventory: _inventoryState,
-    );
-    if (!started) return false;
-    _lastEntityAttackAt = null;
-    _bindAndStart();
-    notifyListeners();
-    return true;
-  }
-
-  /// Abandons the run. For a keyed dungeon the key is already spent.
-  void leaveDungeon() {
-    _dungeonSystem.leaveDungeon(_run);
-    _actionTimingController.stop();
-    notifyListeners();
-  }
-
-  /// Re-runs the just-cleared floor (repeatable dungeons).
-  void loopFloor() {
-    _dungeonSystem.loopFloor(_run);
-    _lastEntityAttackAt = null;
-    if (_run.active && !_run.awaitingFloorChoice) _bindAndStart();
-    notifyListeners();
-  }
-
-  /// Descends to the next floor, or finishes after the boss floor.
-  void continueFloor() {
-    _dungeonSystem.continueFloor(_run);
-    _lastEntityAttackAt = null;
-    if (_run.active && !_run.awaitingFloorChoice) {
-      _bindAndStart();
-    } else {
-      _actionTimingController.stop();
-    }
-    notifyListeners();
-  }
-
-  void _bindAndStart() {
-    _actionTimingController.stop();
-
-    // a stance carried in from gathering isn't offered by a dungeon fight
-    final entity = _run.fight.entity;
-    if (entity != null) {
-      _playerDataService.coerceStanceFor(entity, _playerState);
-    }
-    _actionTimingController.bindOnFireFunction(
-      doDungeonAction,
-      activityIconId: _run.dungeonId,
-      activityCount: () => _run.fight.entity?.count ?? 0,
-      // a dungeon run is combat: the equipped weapon sets the pace
-      actionSkill: SkillId.ATTACK,
-    );
-    _actionTimingController.start();
-  }
-
-  /// Resumes the action loop for a run restored from a save (e.g. app was
-  /// closed mid-run). Safe to call when there's no active/live run.
-  void resumeIfRunning() {
-    if (!_run.active || _run.awaitingFloorChoice) return;
-    if (_run.fight.entity == null) return;
-    _lastEntityAttackAt = null;
-    _bindAndStart();
-    notifyListeners();
-  }
-
-  // ---- the loop ----
-
-  void doDungeonAction() {
-    latestActionResult = _dungeonSystem.executeDungeonAction(
-      run: _run,
-      playerState: _playerState,
-      playerInventory: _inventoryState,
-    );
-    actionSequence++;
-
-    // heal between hits when hp runs low and food is equipped
-    _dungeonSystem.autoEat(
-      playerState: _playerState,
-      playerInventory: _inventoryState,
-    );
-
-    // stop the loop when the run can't take another tick: paused for a
-    // floor choice, completed, player down, or (defensively) inactive
-    if (!_dungeonSystem.runConditionsMet(_run, _playerState)) {
-      _actionTimingController.stop();
-    }
-    notifyListeners();
-  }
-
-  /// Per-frame hook (wired in GameSessionFactory): drives enemy attacks on
-  /// the enemy's own interval while the dungeon action is running.
-  void onActionTimingFrame() {
-    if (!_actionTimingController.isRunningAction(doDungeonAction)) {
-      _lastEntityAttackAt = null;
-      return;
-    }
-    final entity = _run.fight.entity;
-    if (entity is! CombatEntity || _run.awaitingFloorChoice) return;
-
-    final now = DateTime.now();
-    _lastEntityAttackAt ??= now;
-
-    final interval = Duration(
-      milliseconds: (entity.attackInterval * 1000).round(),
-    );
-    if (now.difference(_lastEntityAttackAt!) < interval) return;
-    _lastEntityAttackAt = now;
-
-    latestEntityDamage = _dungeonSystem.executeEnemyAttack(
-      run: _run,
-      playerState: _playerState,
-    );
-    entityAttackSequence++;
-
-    // react to the hit: auto-eat, and end the run on death
-    _dungeonSystem.autoEat(
-      playerState: _playerState,
-      playerInventory: _inventoryState,
-    );
-    if (_playerState.hitpoints <= 0) {
-      _dungeonSystem.leaveDungeon(_run);
-      _actionTimingController.stop();
-    }
-    notifyListeners();
-  }
-
-  /// How far the current enemy is through its attack windup, 0..1. Sampled
-  /// by the ui every frame rather than pushed on notify, since the swing
-  /// timer runs on wall clock between the attacks that do notify.
-  double entityAttackProgress() {
-    if (!_actionTimingController.isRunningAction(doDungeonAction)) return 0.0;
-
-    final entity = _run.fight.entity;
-    final lastAttack = _lastEntityAttackAt;
-    if (entity is! CombatEntity ||
-        lastAttack == null ||
-        entity.attackInterval <= 0 ||
-        _run.awaitingFloorChoice) {
-      return 0.0;
-    }
-
-    final elapsed = DateTime.now().difference(lastAttack).inMicroseconds / 1e6;
-    return (elapsed / entity.attackInterval).clamp(0.0, 1.0);
-  }
-
-  // ---- inspect (read-only, no run required) ----
+  // ---- inspect ----
 
   DungeonDefinition? definitionFor(DungeonId id) =>
       _dungeonSystem.definitionFor(id);
 
-  bool canEnter(DungeonId id) => _dungeonSystem.canEnter(
-    run: _run,
-    dungeonId: id,
-    playerState: _playerState,
-    playerInventory: _inventoryState,
-  );
+  bool get hasActiveRun => _run.active;
+  DungeonId get activeDungeonId => _run.dungeonId;
+  int get runningSlot => _run.runningSlot;
 
-  /// Count of the entry key the player owns for [id] (0 if the dungeon is
-  /// free to enter).
+  /// Cards of the open run, in list order. Empty until [openDungeon].
+  List<EntityQueue> get slots => _run.slots;
+
+  EntityQueue? slotAt(int index) => _dungeonService.slotAt(_run, index);
+
+  bool isCleared(int index) => _dungeonService.isCleared(_run, index);
+
+  /// Everything the run has dropped so far, across every card. Reset when
+  /// the run is (leaving, or dying in it).
+  List<ObjectStack> runLoot() =>
+      _inventoryService.getObjectStackList(_run.loot);
+
+  /// Why card [index] can't be started, or null when it can.
+  String? lockReason(int index) {
+    final def = definitionFor(_run.dungeonId);
+    if (def == null) return 'Unavailable';
+    return _dungeonSystem.lockReason(
+      run: _run,
+      def: def,
+      index: index,
+      playerState: _playerState,
+      playerInventory: _inventoryState,
+    );
+  }
+
+  bool unlocked(int index) => lockReason(index) == null;
+
+  /// Count of the entry key the player owns for [id] (0 when free).
   int keyCount(DungeonId id) {
-    final def = _dungeonSystem.definitionFor(id);
+    final def = definitionFor(id);
     if (def == null || !def.isKeyed) return 0;
     return _inventoryService.getItemCount(_inventoryState, def.keyItemId);
   }
 
-  /// The distinct items the boss can drop, for the inspect reward preview.
-  List<ItemId> bossRewardItemIds(DungeonId id) {
-    final def = _dungeonSystem.definitionFor(id);
-    if (def == null) return const [];
-    final bossDef = _entityCatalog.getDefinitionFor(def.bossEntityId);
-    if (bossDef is! EncounterEntityDefinition) return const [];
-    final ids = <ItemId>{
-      ...bossDef.itemDrops.map((e) => e.id),
-      for (final roll in bossDef.bonusDrops) ...roll.entries.map((e) => e.id),
-    };
-    return ids.toList();
+  /// The entry key of the open dungeon, or NULL when it is free.
+  ItemId get keyItemId => definitionFor(_run.dungeonId)?.keyItemId ?? ItemId.NULL;
+
+  /// This run has already paid its key.
+  bool get keySpent => _run.keySpent;
+
+  /// Whether the key gate applies to card [index] at all — a keyed
+  /// dungeon's first card, before the key has been paid. True whether or
+  /// not the player actually holds one, so the card can say "No key".
+  bool showsKeyNote(int index) {
+    final def = definitionFor(_run.dungeonId);
+    return def != null && def.isKeyed && index == 0;
   }
 
-  // ---- active run state ----
-
-  bool get hasActiveRun => _run.active;
-  bool get awaitingFloorChoice => _run.awaitingFloorChoice;
-  DungeonId get activeDungeonId => _run.dungeonId;
-  DungeonDefinition? get activeDefinition =>
-      _dungeonSystem.definitionFor(_run.dungeonId);
-
-  int get currentFloorIndex => _run.floorIndex;
-
-  String get currentFloorName {
-    final def = activeDefinition;
-    if (def == null || _run.floorIndex >= def.floors.length) return '';
-    return def.floors[_run.floorIndex].name;
+  /// Whether starting card [index] would spend a key right now. Drives the
+  /// confirm, so an irreversible charge is never silent.
+  bool willSpendKey(int index) {
+    return showsKeyNote(index) && !_run.keySpent && keyCount(_run.dungeonId) > 0;
   }
 
-  /// True when the run is paused after clearing the final (boss) floor of a
-  /// repeatable dungeon — the choice is loop-the-boss or finish.
-  bool get atBossFloorChoice {
-    final def = activeDefinition;
-    if (def == null) return false;
-    return _run.awaitingFloorChoice && _run.floorIndex + 1 >= def.floors.length;
+  /// Whether card [index] can be started at all — a one-shot card already
+  /// cleared can't, and shouldn't offer a play button.
+  bool startable(int index) {
+    if (!unlocked(index)) return false;
+    final slot = _dungeonService.slotAt(_run, index);
+    if (slot == null) return false;
+    if (!slot.cleared) return true;
+    return definitionFor(_run.dungeonId)?.repeatableEntries ?? false;
   }
 
-  FloorStatus floorStatus(int floorIndex) {
-    if (!_run.active) return FloorStatus.upcoming;
-    if (floorIndex < _run.floorIndex) return FloorStatus.cleared;
-    if (floorIndex == _run.floorIndex) {
-      return _run.awaitingFloorChoice
-          ? FloorStatus.cleared
-          : FloorStatus.current;
+  /// Clearing a card runs straight into the next one instead of dropping
+  /// back to the list. A preference, so it outlives the run.
+  bool get autoAdvance => _uiState.dungeonAutoAdvance;
+
+  set autoAdvance(bool value) {
+    if (_uiState.dungeonAutoAdvance == value) return;
+    _uiState.dungeonAutoAdvance = value;
+    notifyListeners();
+  }
+
+  // ---- lifecycle ----
+
+  /// Opens [dungeonId]'s card list, starting a run if one isn't already
+  /// under way here. Called when the dungeon screen mounts, so walking out
+  /// to the list and back in doesn't reset anything.
+  void openDungeon(DungeonId dungeonId) {
+    if (_run.active && _run.dungeonId == dungeonId) return;
+    _dungeonSystem.beginRun(_run, dungeonId);
+    notifyListeners();
+  }
+
+  /// Starts card [index]: pays the key if this is the first card of a keyed
+  /// dungeon, refills a cleared card in a repeatable dungeon, and hands the
+  /// queue to the encounter loop. Returns false when the card is locked or
+  /// has nothing left to fight.
+  bool startSlot(int index) {
+    final def = definitionFor(_run.dungeonId);
+    if (def == null || !unlocked(index)) return false;
+
+    _dungeonSystem.spendKey(
+      run: _run,
+      def: def,
+      index: index,
+      playerInventory: _inventoryState,
+    );
+
+    if (_dungeonService.needsRefill(
+      _run,
+      index,
+      repeatable: def.repeatableEntries,
+    )) {
+      _dungeonSystem.refillSlot(_run, index);
     }
-    return FloorStatus.upcoming;
+
+    final started = _encounterController.startDungeonSlot(index);
+    notifyListeners();
+    return started;
   }
 
-  EncounterEntity? get currentEntity => _run.fight.entity;
-
-  double currentEntityHealthPercent() {
-    final e = _run.fight.entity;
-    if (e == null || e.maxHitPoints <= 0) return 0;
-    return (e.hitpoints / e.maxHitPoints).clamp(0.0, 1.0);
+  /// Leaves the dungeon: the run resets, and the type's exit cost applies
+  /// (a spent key stays spent, a transient entrance is consumed).
+  void leaveDungeon() {
+    _actionTimingController.stop();
+    _dungeonSystem.endRun(
+      _run,
+      playerState: _playerState,
+      worldState: _worldState,
+    );
+    notifyListeners();
   }
 
-  List<ObjectStack> runLoot() =>
-      _inventoryService.getObjectStackList(_run.loot);
-
-  ItemId getEquipedFoodItemId() {
-    return _playerState.equipmentData.equipedFood;
+  /// The next card the auto-advance toggle should run after [index], or
+  /// null when there isn't one.
+  int? nextStartableSlot(int index) {
+    for (int i = index + 1; i < _run.slots.length; i++) {
+      if (unlocked(i) && !_dungeonService.slotAt(_run, i)!.cleared) return i;
+    }
+    return null;
   }
 
-  int getEquipedFoodItemCount() {
-    final id = _playerState.equipmentData.equipedFood;
-    return _inventoryService.getItemCount(_inventoryState, id);
+  /// Text for the leave confirmation, spelling out what this dungeon type
+  /// charges for walking out.
+  String leaveWarningFor(DungeonId id) {
+    final def = definitionFor(id);
+    if (def == null) return 'Your progress is lost.';
+    switch (def.type) {
+      case DungeonType.LANDMARK:
+        return 'Your progress is lost, and the key is already spent — '
+            're-entering costs another one.';
+      case DungeonType.TRANSIENT:
+        return 'Your progress is lost and the entrance collapses behind '
+            'you — this dungeon is gone.';
+      case DungeonType.ZONE:
+        return 'Your progress resets to the first floor.';
+    }
   }
-
-  Map<SkillId, int> getPlayerStats() =>
-      _playerDataService.getStatTotals(_playerState);
-
-  int getPlayerHp() => _playerState.hitpoints;
 }

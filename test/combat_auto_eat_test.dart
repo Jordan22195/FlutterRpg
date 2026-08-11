@@ -90,21 +90,7 @@ void main() {
     session.dispose();
   });
 
-  test('dungeon and world combat share the same auto-eat rule', () {
-    final session = buildSession();
-    final player = session.saveGameData.playerData;
-    equipFood(session);
-
-    // both systems delegate to the shared service: eat at 70%
-    player.hitpoints = 7;
-    expect(
-      session.dungeonSystem.autoEat(
-        playerState: player,
-        playerInventory: session.saveGameData.inventoryData,
-      ),
-      isTrue,
-    );
-
-    session.dispose();
-  });
+  // dungeon cards run through the encounter loop, so they get this rule by
+  // construction rather than through a second implementation — which is
+  // what the two assertions above already cover.
 }

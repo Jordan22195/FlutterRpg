@@ -10,7 +10,9 @@ import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/services/exploration_service.dart';
+import '../data/dungeon_run.dart';
 import '../data/encounter_data.dart';
+import '../services/dungeon_service.dart';
 import '../services/encounter_service.dart';
 import '../systems/encounter_system.dart';
 import '../services/inventory_service.dart';
@@ -30,12 +32,14 @@ class EncounterController extends ChangeNotifier {
   final PlayerData _playerState;
   final WorldData _worldState;
   final InventoryData _inventoryState;
+  final DungeonRun _dungeonRun;
 
   // services
   final EncounterService _encounterService;
   final ExplorationService _explorationService;
   final PlayerDataService _playerDataService;
   final InventoryService _inventoryService;
+  final DungeonService _dungeonService;
 
   //systems
   final EncounterSystem _encounterSystem;
@@ -57,9 +61,19 @@ class EncounterController extends ChangeNotifier {
   // a sequence (rather than a flag) so repeat deaths always register
   int deathSequence = 0;
 
+  // increments each time a dungeon card is fully cleared. the shell watches
+  // this to drop back to the dungeon list (or run the next card); a
+  // sequence, so clearing the same card twice always registers
+  int slotClearedSequence = 0;
+
+  /// The card index that [slotClearedSequence] last reported.
+  int lastClearedSlot = -1;
+
   EncounterController({
     required PlayerData playerData,
     required EncounterData encounterState,
+    required DungeonRun dungeonRun,
+    required DungeonService dungeonService,
 
     required EncounterService encounterService,
     required WorldData worldState,
@@ -74,6 +88,8 @@ class EncounterController extends ChangeNotifier {
     required EncounterSystem encounterSystem,
   }) : _playerState = playerData,
        _encounterState = encounterState,
+       _dungeonRun = dungeonRun,
+       _dungeonService = dungeonService,
        _encounterService = encounterService,
        _worldState = worldState,
        _explorationService = explorationService,
@@ -91,6 +107,9 @@ class EncounterController extends ChangeNotifier {
       playerInventory: _inventoryState,
     );
     actionSequence++;
+
+    // fishing spots never deplete, so they are barred from dungeon cards
+    // and there is no queue to advance here
 
     // check action conditions are met before the action fires again
     if (!_encounterService.fishingConditionsMet(
@@ -110,6 +129,12 @@ class EncounterController extends ChangeNotifier {
       playerInventory: _inventoryState,
     );
     actionSequence++;
+    _recordDungeonDrops();
+
+    if (_advanceDungeonQueue()) {
+      notifyListeners();
+      return;
+    }
 
     // check action conditions are met before the action fires again
     if (!_herbalismConditionsMet()) {
@@ -141,8 +166,17 @@ class EncounterController extends ChangeNotifier {
       encounter: _encounterState,
       worldState: _worldState,
       playerInventory: _inventoryState,
+      instantRespawn: _dungeonService.runningEntity(_dungeonRun) != null,
     );
     actionSequence++;
+    _recordDungeonDrops();
+
+    // a dungeon card is a queue: a spent member hands off to the next one
+    // before the conditions below get a chance to stop the loop
+    if (_advanceDungeonQueue()) {
+      notifyListeners();
+      return;
+    }
 
     // check action conditions are met before the action fires again
     if (!_encounterService.encounterConditionsMet(
@@ -156,10 +190,107 @@ class EncounterController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---- dungeon cards ----
+
+  /// Starts dungeon card [index] — the encounter behind a card tap. Only
+  /// one card runs at a time, so this drops whatever was running.
+  ///
+  /// The encounter panel's drop log is a card's own haul, so a new card
+  /// starts it fresh; the run's cumulative haul lives on the run.
+  bool startDungeonSlot(int index) {
+    final entity = _dungeonService.slotAt(_dungeonRun, index)?.current;
+    if (entity == null) return false;
+
+    _actionTimingController.stop();
+    // set before delegating: startEncounterActionFor reads the running card
+    // to decide whether this start is leaving the dungeon
+    _dungeonRun.runningSlot = index;
+    _playerState.currentEntityViewId = entity.id;
+
+    return startEncounterActionFor(entity);
+  }
+
+  /// Copies this tick's drops into the run's cumulative haul. The encounter
+  /// panel's own log resets with each card, so the run total has to be kept
+  /// separately — the dungeon list's loot tab reads it.
+  void _recordDungeonDrops() {
+    if (_dungeonService.runningEntity(_dungeonRun) == null) return;
+    _inventoryService.addItems(_dungeonRun.loot, latestActionResult.items);
+  }
+
+  /// Hands the running card off to its next member, keeping the loop
+  /// running. Returns true when it did — the caller then skips its own
+  /// conditions check, which would otherwise see the spent member and stop.
+  ///
+  /// Clearing the last member marks the card and stops the loop, reporting
+  /// through [slotClearedSequence].
+  bool _advanceDungeonQueue() {
+    final slot = _dungeonService.runningSlot(_dungeonRun);
+    final current = slot?.current;
+    if (current == null) return false;
+
+    // only the member the loop is actually firing on can advance the queue
+    if (!identical(_encounterState.entity, current)) return false;
+    if (current.count > 0) return false;
+
+    final next = _dungeonService.advanceRunning(_dungeonRun);
+    if (next != null) {
+      _startDungeonMember(next);
+      return true;
+    }
+
+    _dungeonService.markCleared(_dungeonRun, _dungeonRun.runningSlot);
+    _actionTimingController.stop();
+    lastClearedSlot = _dungeonRun.runningSlot;
+    slotClearedSequence++;
+    return false;
+  }
+
+  /// Swaps the live encounter onto [entity] without restarting the loop.
+  ///
+  /// The bound icon and action skill are captured by value when the action
+  /// is bound, so they have to be re-bound to follow the new member — but
+  /// in place: stop() would wipe the boost and momentum the player has
+  /// built up mid-card, and start() is a no-op while already running.
+  void _startDungeonMember(EncounterEntity entity) {
+    _encounterService.setEncounterEntity(_encounterState, entity);
+    _playerState.currentEntityViewId = entity.id;
+    // the next member may not offer the stance the last one did
+    _playerDataService.coerceStanceFor(entity, _playerState);
+
+    _actionTimingController.bindOnFireFunction(
+      _actionFor(entity),
+      activityIconId: entity.id,
+      activityCount: () => _encounterState.entity?.count ?? 0,
+      actionSkill: entity.entityType,
+    );
+
+    // a fresh enemy starts a fresh swing timer
+    _lastEntityAttackAt = null;
+  }
+
+  /// Releases the dungeon card context, so the encounter screen stops
+  /// resolving through the run.
+  void _releaseDungeonSlot() => _dungeonService.clearRunningSlot(_dungeonRun);
+
+  /// The members still queued behind the one on screen, in queue order.
+  /// Empty for an ordinary world encounter.
+  List<EncounterEntity> queueRemaining() =>
+      _dungeonService.runningSlot(_dungeonRun)?.remaining ?? const [];
+
   // todo move this logic to the enoucnter system
   // fires a single time when action button is pressed
   // binds the entity's encounter action to the periodic loop
   void startEncounterAction() {
+    // inside a dungeon card the button re-starts THAT card's member. the
+    // zone lookup below can't see it — and with the same EntityId sitting
+    // in the zone it would happily start the wrong fight
+    final inCard = _dungeonService.runningEntity(_dungeonRun);
+    if (inCard != null) {
+      startEncounterActionFor(inCard);
+      return;
+    }
+
     // get the player view entity
     final entity = _explorationService.getSelectedEntity(
       _playerState,
@@ -171,20 +302,35 @@ class EncounterController extends ChangeNotifier {
     startEncounterActionFor(entity);
   }
 
+  // the tick an entity's encounter runs on. fishing spots don't deplete or
+  // fight back, and herbs are picked in one action with a level gate, so
+  // each runs its own action with its own start conditions
+  VoidCallback _actionFor(EncounterEntity entity) {
+    switch (entity.entityType) {
+      case SkillId.FISHING:
+        return doFishingEncounterAction;
+      case SkillId.HERBALISM:
+        return doHerbalismEncounterAction;
+      default:
+        return doEncounterAction;
+    }
+  }
+
   // starts the encounter action on [entity] directly (used by the action
   // button via startEncounterAction and by the action queue). returns
   // true when the action is running when this returns
   bool startEncounterActionFor(EncounterEntity entity) {
-    // fishing spots don't deplete or fight back, and herbs are picked in
-    // one action with a level gate, so each runs its own action with its
-    // own start conditions
+    // starting anything that isn't the running card's own member leaves the
+    // dungeon behind. this is the one place that decides it, because every
+    // way of starting an encounter — the action button, the action queue,
+    // a card tap — comes through here
+    if (!identical(entity, _dungeonService.runningEntity(_dungeonRun))) {
+      _releaseDungeonSlot();
+    }
+
     final isFishing = entity.entityType == SkillId.FISHING;
     final isHerbalism = entity.entityType == SkillId.HERBALISM;
-    final action = isFishing
-        ? doFishingEncounterAction
-        : isHerbalism
-        ? doHerbalismEncounterAction
-        : doEncounterAction;
+    final action = _actionFor(entity);
 
     final isNew = _encounterService.isNewEntity(_encounterState, entity);
 
@@ -326,6 +472,12 @@ class EncounterController extends ChangeNotifier {
   // entity so in-progress state is shown; before the first action starts
   // (or after viewing a different entity) falls back to the selected world entity
   EncounterEntity? _resolveViewedEntity() {
+    // a dungeon card owns the entity being worked. the same EntityId can
+    // sit in several cards of the same dungeon, so it resolves through the
+    // running card rather than through currentEntityViewId
+    final inCard = _dungeonService.runningEntity(_dungeonRun);
+    if (inCard != null) return inCard;
+
     final active = _encounterState.entity;
     if (active != null && active.id == _playerState.currentEntityViewId) {
       return active;
@@ -368,8 +520,12 @@ class EncounterController extends ChangeNotifier {
   // firing on, so per-action feedback belongs on this screen
   bool isViewingActiveEncounter() {
     final active = _encounterState.entity;
-    return active != null &&
-        _encounterState.isActive &&
+    if (active == null) return false;
+
+    final inCard = _dungeonService.runningEntity(_dungeonRun);
+    if (inCard != null) return identical(active, inCard);
+
+    return _encounterState.isActive &&
         active.id == _playerState.currentEntityViewId;
   }
 
@@ -390,6 +546,10 @@ class EncounterController extends ChangeNotifier {
   // action is running the previous session is over, so its drops are
   // cleared; a still-running session keeps its drops
   void onEntityViewChanged() {
+    // navigating to a zone entity leaves the dungeon card behind. dungeon
+    // cards don't route through here, so this only ever fires on the way out
+    _releaseDungeonSlot();
+
     final sessionRunning =
         _actionTimingController.isRunningAction(doEncounterAction) ||
         _actionTimingController.isRunningAction(doFishingEncounterAction) ||

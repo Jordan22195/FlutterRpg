@@ -26,6 +26,7 @@ import 'package:rpg/services/buff_service.dart';
 import 'package:rpg/services/combat_auto_eat_service.dart';
 import 'package:rpg/services/entity_screen_router_service.dart';
 import 'package:rpg/services/crafting_service.dart';
+import 'package:rpg/services/dungeon_service.dart';
 import 'package:rpg/services/encounter_service.dart';
 import 'package:rpg/services/equipment_service.dart';
 import 'package:rpg/services/inventory_service.dart';
@@ -469,12 +470,12 @@ class GameSessionFactory {
     final dungeonSystem = DungeonSystem(
       dungeonCatalog: catalogs.dungeonCatalog,
       entityCatalog: catalogs.entityCatalog,
-      encounterService: encounterService,
-      dropTableService: weightedDropTableService,
+      itemCatalog: catalogs.itemCatalog,
+      explorationService: explorationService,
       inventoryService: inventoryService,
       playerDataService: playerDataService,
-      autoEatService: combatAutoEatService,
     );
+    final dungeonService = DungeonService();
     ActionSpeedSystem actionSpeedSystem = ActionSpeedSystem(
       actionTimingService: actionTimingService,
       playerDataService: playerDataService,
@@ -502,6 +503,8 @@ class GameSessionFactory {
     final encounterController = EncounterController(
       playerData: save.playerData,
       encounterState: save.encounterData,
+      dungeonRun: save.dungeonRun,
+      dungeonService: dungeonService,
       encounterService: encounterService,
       worldState: save.worldData,
       explorationService: explorationService,
@@ -564,12 +567,14 @@ class GameSessionFactory {
     );
     final dungeonController = DungeonController(
       dungeonRun: save.dungeonRun,
+      uiState: save.uiState,
       actionTimingController: actionTimingController,
+      encounterController: encounterController,
       playerState: save.playerData,
       inventoryState: save.inventoryData,
-      entityCatalog: catalogs.entityCatalog,
+      worldState: save.worldData,
       dungeonSystem: dungeonSystem,
-      playerDataService: playerDataService,
+      dungeonService: dungeonService,
       inventoryService: inventoryService,
     );
     final shopController = ShopController(
@@ -624,12 +629,9 @@ class GameSessionFactory {
     equipmentController.addListener(playerDataController.refresh);
 
     // the action timing loop notifies every frame while running; the
-    // encounter and dungeon controllers use it to drive enemy attacks
+    // encounter controller uses it to drive enemy attacks. dungeon cards
+    // run through that same encounter loop, so there is nothing extra here
     actionTimingController.addListener(encounterController.onActionTimingFrame);
-    actionTimingController.addListener(dungeonController.onActionTimingFrame);
-
-    // a run restored from a save (app closed mid-dungeon) resumes its loop
-    dungeonController.resumeIfRunning();
 
     return GameSession(
       saveGameData: save,

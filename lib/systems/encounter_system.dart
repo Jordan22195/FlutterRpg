@@ -69,6 +69,9 @@ class EncounterSystem {
     required EncounterData encounter,
     required WorldData worldState,
     required InventoryData playerInventory,
+    // a dungeon card's queue has the next enemy step straight up, with no
+    // respawn pause between them
+    bool instantRespawn = false,
   }) {
     final result = ActionResult();
 
@@ -106,7 +109,7 @@ class EncounterSystem {
       // decrement world entity count
       encounter.entity!.count--;
       if (encounter.entity!.count > 0) {
-        _encounterService.respawn(encounter, e);
+        _encounterService.respawn(encounter, e, instant: instantRespawn);
       } else {
         //_explorationService.removeEntityFromZone(
         //  e.id,

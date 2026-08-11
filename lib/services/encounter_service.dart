@@ -14,10 +14,21 @@ class EncounterService {
   // set respawn flag for ui for 200ms then reset entity hp. the dying
   // entity is captured at call time: the active encounter can switch
   // during the delay, and the reset must land on the entity that died
+  //
+  // [instant] skips the pause entirely. the flash sells a resource node
+  // repopulating; the next member of a queue is a different enemy stepping
+  // up, which shouldn't stall — and a deferred reset would land 200ms later
+  // on an enemy the player has already started hitting
   Future<void> respawn(
     EncounterData encounterState,
-    EncounterEntity entity,
-  ) async {
+    EncounterEntity entity, {
+    bool instant = false,
+  }) async {
+    if (instant) {
+      entity.hitpoints = entity.maxHitPoints;
+      return;
+    }
+
     encounterState.respawning = true;
 
     await Future.delayed(const Duration(milliseconds: 200));

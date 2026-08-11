@@ -26,6 +26,7 @@ class _MapScreenState extends State<MapScreen> {
     ZoneId.SOUTH_HAVEN: Offset(80, 320),
     ZoneId.FOREST_MINE: Offset(200, 500),
     ZoneId.DEV_FOREST: Offset(220, 420),
+    ZoneId.DEV_DUNGEON_TESTING: Offset(220, 500),
   };
 
   /// Landmark dungeons sit on the map from the start as aspirational

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'dungeon_screen.dart';
+import 'encounter_screen.dart';
 import 'explore_screen.dart';
 import 'gear_screen.dart';
 import 'inventory_screen.dart';
@@ -51,10 +52,13 @@ class _MainShellState extends State<MainShell> {
   // save in initState before route changes start overwriting the ui state
   List<String> _restoreRoutes = const [];
   DungeonId _restoreDungeonId = DungeonId.NULL;
+  int _restoreDungeonSlot = -1;
 
-  // the encounter controller's death counter as of the last one handled
+  // the encounter controller's death and card-cleared counters as of the
+  // last ones handled
   late final EncounterController _encounter;
   int _handledDeathSequence = 0;
+  int _handledSlotClearedSequence = 0;
 
   void _onMapTabRouteChanged() {
     _captureUiState();
@@ -75,9 +79,11 @@ class _MainShellState extends State<MainShell> {
     }
     _restoreRoutes = List.of(ui.mapRouteStack);
     _restoreDungeonId = ui.dungeonId;
+    _restoreDungeonSlot = ui.dungeonSlot;
 
     _encounter = context.read<EncounterController>();
     _handledDeathSequence = _encounter.deathSequence;
+    _handledSlotClearedSequence = _encounter.slotClearedSequence;
     _encounter.addListener(_onEncounterChanged);
 
     // the tab navigators don't exist until after the first build
@@ -92,20 +98,82 @@ class _MainShellState extends State<MainShell> {
     super.dispose();
   }
 
-  // dying in an encounter unwinds the map tab back to the map screen and
-  // says so; the encounter itself is already stopped by the controller
+  // both of the encounter loop's out-of-band events land here, and they
+  // land mid-frame inside the action tick — navigating or showing a dialog
+  // has to wait for the frame to finish. death is checked first: dying
+  // inside a dungeon card must not also advance to the next card.
   void _onEncounterChanged() {
-    if (_encounter.deathSequence == _handledDeathSequence) return;
-    _handledDeathSequence = _encounter.deathSequence;
+    if (_encounter.deathSequence != _handledDeathSequence) {
+      _handledDeathSequence = _encounter.deathSequence;
+      // the death also consumed whatever a cleared card would have reported
+      _handledSlotClearedSequence = _encounter.slotClearedSequence;
+      _onDeath();
+      return;
+    }
 
-    // the death lands mid-frame, inside the action loop's tick; navigating
-    // and showing a dialog have to wait for the frame to finish
+    if (_encounter.slotClearedSequence != _handledSlotClearedSequence) {
+      final slot = _encounter.lastClearedSlot;
+      _handledSlotClearedSequence = _encounter.slotClearedSequence;
+      _onDungeonSlotCleared(slot);
+    }
+  }
+
+  // dying unwinds the map tab back to the map screen and says so; the
+  // encounter itself is already stopped by the controller. dying in a
+  // dungeon is leaving it, so the run ends here too — with everything that
+  // costs (a spent key stays spent, a transient entrance is consumed)
+  void _onDeath() {
+    final dungeons = context.read<DungeonController>();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      if (dungeons.hasActiveRun) dungeons.leaveDungeon();
       setState(() => index = 0);
       _navKeys[0].currentState?.popUntil((route) => route.isFirst);
       _captureUiState();
       _showDeathDialog();
+    });
+  }
+
+  // a dungeon card ran dry. by default that drops back to the card list so
+  // the newly unlocked card is in view; with the toggle on it runs straight
+  // into the next one. the card can clear while the encounter screen is
+  // unmounted (backing out doesn't stop the loop), which is why this lives
+  // on the shell rather than the screen
+  void _onDungeonSlotCleared(int slot) {
+    final dungeons = context.read<DungeonController>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final nav = _navKeys[0].currentState;
+      if (nav == null) return;
+
+      final onEncounter =
+          _mapTabObserver.topRouteName ==
+          EntityScreenRouterService.encounterRouteName;
+      if (!onEncounter) return;
+
+      final next = dungeons.autoAdvance ? dungeons.nextStartableSlot(slot) : null;
+      if (next == null) {
+        nav.maybePop();
+        return;
+      }
+
+      // swap the encounter route rather than stacking a second one, so
+      // backing out of card three still lands on the card list
+      if (!dungeons.startSlot(next)) {
+        nav.maybePop();
+        return;
+      }
+      nav.pushReplacement(
+        MaterialPageRoute(
+          settings: RouteSettings(
+            name: EntityScreenRouterService.encounterRouteName,
+            arguments: next,
+          ),
+          builder: (_) => const EncounterScreen(),
+        ),
+      );
     });
   }
 
@@ -133,11 +201,18 @@ class _MainShellState extends State<MainShell> {
     ui.tabIndex = index;
     ui.mapRouteStack = [];
     ui.dungeonId = DungeonId.NULL;
+    ui.dungeonSlot = -1;
     for (final settings in _mapTabObserver.namedRouteSettings) {
       ui.mapRouteStack.add(settings.name!);
       if (settings.name == EntityScreenRouterService.dungeonRouteName &&
           settings.arguments is DungeonId) {
         ui.dungeonId = settings.arguments as DungeonId;
+      }
+      // an encounter pushed from a dungeon carries its card index; that is
+      // the only way back to it, since the entity isn't in any zone
+      if (settings.name == EntityScreenRouterService.encounterRouteName &&
+          settings.arguments is int) {
+        ui.dungeonSlot = settings.arguments as int;
       }
     }
 
@@ -154,6 +229,7 @@ class _MainShellState extends State<MainShell> {
 
     final world = context.read<WorldController>();
     final dungeons = context.read<DungeonController>();
+    bool inDungeon = false;
 
     for (final name in _restoreRoutes) {
       switch (name) {
@@ -172,6 +248,7 @@ class _MainShellState extends State<MainShell> {
               ? _restoreDungeonId
               : dungeons.activeDungeonId;
           if (dungeons.definitionFor(dungeonId) == null) return;
+          inDungeon = true;
           nav.push(
             MaterialPageRoute(
               settings: RouteSettings(
@@ -182,6 +259,22 @@ class _MainShellState extends State<MainShell> {
             ),
           );
         case EntityScreenRouterService.encounterRouteName:
+          // an encounter above a dungeon is one of its cards; a zone
+          // entity lookup would never find that entity
+          if (inDungeon) {
+            if (!dungeons.startSlot(_restoreDungeonSlot)) return;
+            nav.push(
+              MaterialPageRoute(
+                settings: RouteSettings(
+                  name: EntityScreenRouterService.encounterRouteName,
+                  arguments: _restoreDungeonSlot,
+                ),
+                builder: (_) => const EncounterScreen(),
+              ),
+            );
+            break;
+          }
+          if (!world.restoreEntityView(navContext)) return;
         case EntityScreenRouterService.craftingRouteName:
         case EntityScreenRouterService.enchantingRouteName:
         case EntityScreenRouterService.firepitRouteName:
@@ -202,16 +295,28 @@ class _MainShellState extends State<MainShell> {
     final nav = _navKeys[0].currentState!;
     nav.popUntil((route) => route.isFirst);
 
-    // a running dungeon opens straight to its screen; other activities
-    // rebuild the Map -> Explore (-> entity) stack
-    if (activityIconId is DungeonId) {
+    // a dungeon card fight rebuilds Map -> Dungeon -> Encounter: the entity
+    // it is running lives in the card, not in any zone, so the explore
+    // route below could never reach it
+    final dungeons = context.read<DungeonController>();
+    if (dungeons.hasActiveRun && dungeons.runningSlot >= 0) {
+      final dungeonId = dungeons.activeDungeonId;
       nav.push(
         MaterialPageRoute(
           settings: RouteSettings(
             name: EntityScreenRouterService.dungeonRouteName,
-            arguments: activityIconId,
+            arguments: dungeonId,
           ),
-          builder: (_) => DungeonScreen(dungeonId: activityIconId),
+          builder: (_) => DungeonScreen(dungeonId: dungeonId),
+        ),
+      );
+      nav.push(
+        MaterialPageRoute(
+          settings: RouteSettings(
+            name: EntityScreenRouterService.encounterRouteName,
+            arguments: dungeons.runningSlot,
+          ),
+          builder: (_) => const EncounterScreen(),
         ),
       );
       return;
@@ -236,7 +341,9 @@ class _MainShellState extends State<MainShell> {
 
   Future<bool> _onWillPop() async {
     if (_currentNavigator.canPop()) {
-      _currentNavigator.pop();
+      // maybePop, not pop: a screen can refuse the back (leaving a dungeon
+      // abandons the run, so it asks first)
+      _currentNavigator.maybePop();
       return false; // handled here; don't pop the app
     }
     return true; // allow system back to close app / pop shell

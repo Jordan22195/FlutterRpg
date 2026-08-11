@@ -15,6 +15,8 @@ enum EntityId {
 
   // MONSTERS
   GOBLIN,
+  GOBLIN_SCOUT,
+  GOBLIN_SEARGENT,
   GOBLIN_QUEEN,
   SPIDER_BROODMOTHER,
   CHICKEN,
@@ -40,6 +42,8 @@ enum EntityId {
   WANDERING_MERCHANT,
   // dungeon entrances that live inside a zone (zone dungeons)
   SPIDER_DEN_ENTRANCE,
+  GOBLIN_CAMP,
+  DEV_DUNGEON_ENTRANCE,
   // herbs (herbalism), ascending level order
   GUAM,
   MARRENTILL,
@@ -295,6 +299,9 @@ class EncounterEntity extends Entity {
       orElse: () => throw FormatException('Invalid SkillId "$rawEntityType".'),
     );
 
+    // the constructor derives maxHitPoints from hitpoints, so build at full
+    // health and then restore both — a half-killed entity has to come back
+    // half-killed, or closing the app mid-fight heals it
     final entity = EncounterEntity(
       id: baseEntity.id,
       name: baseEntity.name,
@@ -305,6 +312,7 @@ class EncounterEntity extends Entity {
     );
 
     entity.maxHitPoints = rawMaxHitPoints;
+    entity.hitpoints = rawHitpoints;
     return entity;
   }
 }
@@ -772,6 +780,19 @@ class EntityCatalog {
       dungeonId: DungeonId.SPIDER_DEN,
     ),
 
+    // dev only: a discoverable (transient) entrance, so the consume-on-leave
+    // path has content behind it. Lives in the dev dungeon zone.
+    EntityId.DEV_DUNGEON_ENTRANCE: DungeonEntityDefinition(
+      name: "Dev Transient Dungeon",
+      iconAsset: "assets/images/entities/spider_den.png",
+      dungeonId: DungeonId.DEV_TRANSIENT_DUNGEON,
+    ),
+    EntityId.GOBLIN_CAMP: DungeonEntityDefinition(
+      name: "Goblin Camp",
+      iconAsset: "assets/images/entities/goblin_camp.png",
+      dungeonId: DungeonId.GOBLIN_CAMP,
+    ),
+
     //
     //
     //  GATHERING
@@ -811,6 +832,84 @@ class EntityCatalog {
       attack: 2,
       attackInterval: 2.0,
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1)],
+      // 5% chance, on top of the coin drop, to yield the key that opens
+      // the Goblin Queen's Lair landmark dungeon
+      bonusDrops: [
+        DropRoll<ItemId>(
+          chance: 0.05,
+          entries: [
+            WeightedDropTableEntry<ItemId>(
+              id: ItemId.GOBLIN_QUEEN_KEY,
+              weight: 1,
+            ),
+          ],
+        ),
+      ],
+    ),
+    EntityId.GOBLIN_SCOUT: CombatEntityDefinition(
+      name: "Goblin",
+      iconAsset: "assets/images/entities/goblin_scout.png",
+
+      entityType: SkillId.ATTACK,
+      defence: 5,
+      hitpoints: 20,
+      attack: 10,
+      attackInterval: 2.0,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.COINS,
+          count: 5,
+          highCount: 15,
+          weight: 1,
+        ),
+        WeightedDropTableEntry(id: ItemId.IRON_DAGGER, weight: 1),
+        WeightedDropTableEntry(
+          id: ItemId.COOKED_BLUEGILL,
+          count: 1,
+          highCount: 3,
+          weight: 1,
+        ),
+      ],
+      // 5% chance, on top of the coin drop, to yield the key that opens
+      // the Goblin Queen's Lair landmark dungeon
+      bonusDrops: [
+        DropRoll<ItemId>(
+          chance: 0.05,
+          entries: [
+            WeightedDropTableEntry<ItemId>(
+              id: ItemId.GOBLIN_QUEEN_KEY,
+              weight: 1,
+            ),
+          ],
+        ),
+      ],
+    ),
+    EntityId.GOBLIN_SEARGENT: CombatEntityDefinition(
+      name: "Goblin",
+      iconAsset: "assets/images/entities/goblin_scout.png",
+
+      entityType: SkillId.ATTACK,
+      defence: 10,
+      hitpoints: 50,
+      attack: 15,
+      attackInterval: 2.0,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.COINS,
+          count: 5,
+          highCount: 15,
+          weight: 1,
+        ),
+        WeightedDropTableEntry(id: ItemId.IRON_DAGGER, weight: 1),
+        WeightedDropTableEntry(id: ItemId.GUAM_LEAF, weight: 1),
+        WeightedDropTableEntry(id: ItemId.LIGHT_LEATHER_BOOTS, weight: 1),
+        WeightedDropTableEntry(
+          id: ItemId.COOKED_BLUEGILL,
+          count: 1,
+          highCount: 3,
+          weight: 1,
+        ),
+      ],
       // 5% chance, on top of the coin drop, to yield the key that opens
       // the Goblin Queen's Lair landmark dungeon
       bonusDrops: [
