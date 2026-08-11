@@ -26,7 +26,8 @@ class DungeonService {
 
   /// Moves the running card to its next member and returns it, or null
   /// when that clears the card.
-  EncounterEntity? advanceRunning(DungeonRun run) => runningSlot(run)?.advance();
+  EncounterEntity? advanceRunning(DungeonRun run) =>
+      runningSlot(run)?.advance();
 
   bool isCleared(DungeonRun run, int index) => run.cleared.contains(index);
 

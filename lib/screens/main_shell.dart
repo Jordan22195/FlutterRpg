@@ -153,7 +153,9 @@ class _MainShellState extends State<MainShell> {
           EntityScreenRouterService.encounterRouteName;
       if (!onEncounter) return;
 
-      final next = dungeons.autoAdvance ? dungeons.nextStartableSlot(slot) : null;
+      final next = dungeons.autoAdvance
+          ? dungeons.nextStartableSlot(slot)
+          : null;
       if (next == null) {
         nav.maybePop();
         return;

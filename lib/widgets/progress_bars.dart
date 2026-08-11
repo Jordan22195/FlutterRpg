@@ -27,8 +27,19 @@ class ProgressBars extends StatelessWidget {
   // enough to sit inside the shortened toolbar
   static const double _activityIconSize = 36;
 
-  /// Gap between the three stacked bars.
-  static const double _barGap = 5;
+  /// Gap between the two stacked bars.
+  static const double _barGap = 6;
+
+  /// The banner carries character-level state only: energy, and how much of
+  /// the boost is left. Both run the full width of the banner, and the count
+  /// never changes, so moving between screens never resizes the banner.
+  /// Per-action progress is encounter state and lives on the acting entity's
+  /// row instead — see [ActionTimer].
+  static const double _barHeight = 7;
+  static const double _barRadius = 4;
+
+  static const Color _energyColor = Color(0xFF188CEB);
+  static const Color _boostColor = Color(0xFFB5A3DA);
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +83,12 @@ class ProgressBars extends StatelessWidget {
                       ? null
                       : () => onActivityTap!(iconId),
                 ),
+                // presence, not progress: the pulse says the loop is still
+                // turning without repeating the action bar the acting
+                // entity's own row now carries. it is what the screens
+                // with no encounter on them — inventory, skills, gear —
+                // are glanced at for.
+                const Positioned(top: -3, left: -3, child: _ActivityPulseDot()),
                 if (damageOnIcon)
                   IgnorePointer(
                     child: FadingNumber(
@@ -95,41 +112,26 @@ class ProgressBars extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              //Stamina Bar
-              Row(
-                children: [
-                  Expanded(
-                    child: AnimatedBuilder(
-                      animation: timing,
-                      builder: (_, _) => FillBar(
-                        value: playerController.getStaminaPercent(),
-                        foregroundColor: Colors.blue,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-              ),
-              const SizedBox(height: _barGap),
-
-              //Progress Bar
-              SizedBox(
-                width: 200,
-                child: AnimatedBuilder(
-                  animation: timing,
-                  builder: (_, _) => FillBar(value: timing.percentMaxSpeed),
+              // Energy
+              AnimatedBuilder(
+                animation: timing,
+                builder: (_, _) => FillBar(
+                  value: playerController.getStaminaPercent(),
+                  height: _barHeight,
+                  borderRadius: _barRadius,
+                  foregroundColor: _energyColor,
                 ),
               ),
               const SizedBox(height: _barGap),
-              //Speed Bar
-              SizedBox(
-                width: 50,
-                child: AnimatedBuilder(
-                  animation: timing,
-                  builder: (_, _) => FillBar(
-                    value: timing.actionProgress,
-                    foregroundColor: Theme.of(context).colorScheme.secondary,
-                  ),
+
+              // Boost remaining
+              AnimatedBuilder(
+                animation: timing,
+                builder: (_, _) => FillBar(
+                  value: timing.percentMaxSpeed,
+                  height: _barHeight,
+                  borderRadius: _barRadius,
+                  foregroundColor: _boostColor,
                 ),
               ),
             ],
@@ -149,6 +151,90 @@ class ProgressBars extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// The heartbeat on the activity tile: a dot pulsing once per action, so the
+/// banner still answers "am I still working?" from a screen that has no
+/// encounter on it. Deliberately not a progress readout — one action's worth
+/// of progress belongs to the acting entity's row, and drawing it twice was
+/// what put the player's timer 900px from the enemy's.
+class _ActivityPulseDot extends StatefulWidget {
+  const _ActivityPulseDot();
+
+  static const double _size = 8;
+  static const Color _color = Color(0xFFC0ABE9);
+
+  /// The trough of the pulse. Never fully out: the dot is presence, and
+  /// blinking it off would read as stopped.
+  static const double _minOpacity = 0.35;
+
+  @override
+  State<_ActivityPulseDot> createState() => _ActivityPulseDotState();
+}
+
+class _ActivityPulseDotState extends State<_ActivityPulseDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 500),
+  )..repeat(reverse: true);
+
+  ActionTimingController? _timing;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final timing = context.read<ActionTimingController>();
+    if (identical(timing, _timing)) return;
+    _timing?.removeListener(_onTick);
+    _timing = timing..addListener(_onTick);
+    _onTick();
+  }
+
+  // the interval is re-read off the loop's own ticks rather than in build:
+  // restarting an animation mid-build is a good way to fight the framework
+  void _onTick() => _matchInterval(_timing!.getCurrentActionDuration());
+
+  @override
+  void dispose() {
+    _timing?.removeListener(_onTick);
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  /// One full 0.35 -> 1 -> 0.35 cycle spans the action interval, so the dot
+  /// visibly speeds up as the boost does. The controller runs half of that
+  /// and mirrors, and is only restarted when the interval has actually
+  /// moved — otherwise every frame's re-read would reset the phase.
+  void _matchInterval(Duration interval) {
+    final half = Duration(microseconds: interval.inMicroseconds ~/ 2);
+    if (half <= Duration.zero) return;
+    if ((half - _pulse.duration!).abs() < const Duration(milliseconds: 20)) {
+      return;
+    }
+    _pulse.duration = half;
+    _pulse.repeat(reverse: true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: FadeTransition(
+        opacity: Tween<double>(
+          begin: _ActivityPulseDot._minOpacity,
+          end: 1.0,
+        ).animate(_pulse),
+        child: Container(
+          width: _ActivityPulseDot._size,
+          height: _ActivityPulseDot._size,
+          decoration: const BoxDecoration(
+            color: _ActivityPulseDot._color,
+            shape: BoxShape.circle,
+          ),
+        ),
+      ),
     );
   }
 }

@@ -270,7 +270,10 @@ class _DungeonScreenState extends State<DungeonScreen> {
     // so it is never charged on a stray tap
     if (controller.willSpendKey(i)) {
       final keyName =
-          context.read<GameSession>().catalogBundle.itemCatalog
+          context
+              .read<GameSession>()
+              .catalogBundle
+              .itemCatalog
               .definitionFor(controller.keyItemId)
               ?.name ??
           'key';

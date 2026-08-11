@@ -1,11 +1,17 @@
 import 'package:rpg/catalogs/entity_catalog.dart';
 
 import 'inventory_data.dart';
+import 'package:rpg/catalogs/zone_catalog.dart';
 import 'skill_data.dart';
 
 class CraftingState {
   CraftingState();
   EntityId craftingEntityId = EntityId.NULL;
+
+  // the zone that station stands in. an EntityId is a kind, not an
+  // instance: a firepit sits in several zones, so the id alone would let a
+  // craft running at one of them claim every other firepit's screen
+  ZoneId craftingZoneId = ZoneId.NULL;
 
   // each crafting entity remembers its own selected recipe; a selection
   // made at the anvil must not show up at the firepit. the inner map is
@@ -31,6 +37,7 @@ class CraftingState {
         ),
       ),
       'craftingEntityId': craftingEntityId.name,
+      'craftingZoneId': craftingZoneId.name,
       'activeRecipeId': activeRecipeId,
       'craftedItems': craftedItems.toJson(),
     };
@@ -62,6 +69,13 @@ class CraftingState {
     if (rawCraftingEntity is String) {
       state.craftingEntityId =
           EntityId.values.asNameMap()[rawCraftingEntity] ?? EntityId.NULL;
+    }
+
+    // tolerated when missing: saves predating per-zone stations
+    final rawCraftingZone = json['craftingZoneId'];
+    if (rawCraftingZone is String) {
+      state.craftingZoneId =
+          ZoneId.values.asNameMap()[rawCraftingZone] ?? ZoneId.NULL;
     }
 
     // tolerated when missing: the oldest saves stored a single global

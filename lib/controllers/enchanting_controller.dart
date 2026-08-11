@@ -8,6 +8,7 @@ import '../data/inventory_data.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../services/inventory_service.dart';
+import '../services/player_data_service.dart';
 import '../systems/enchanting_system.dart';
 import 'action_timing_controller.dart';
 
@@ -27,6 +28,7 @@ class EnchantingController extends ChangeNotifier {
 
   // services
   final InventoryService _inventoryService;
+  final PlayerDataService _playerDataService;
 
   // systems
   final EnchantingSystem _enchantingSystem;
@@ -52,11 +54,13 @@ class EnchantingController extends ChangeNotifier {
     required EnchantmentCatalog enchantmentCatalog,
     required InventoryService inventoryService,
     required EnchantingSystem enchantingSystem,
+    required PlayerDataService playerDataService,
   }) : _actionTimingController = actionTimingController,
        _playerState = playerState,
        _inventoryState = inventoryState,
        _enchantmentCatalog = enchantmentCatalog,
        _inventoryService = inventoryService,
+       _playerDataService = playerDataService,
        _enchantingSystem = enchantingSystem;
 
   /// Material items shown in the bench header, in tier order.
@@ -171,6 +175,10 @@ class EnchantingController extends ChangeNotifier {
 
     _runningTargetStackKey = selectedTarget?.stackKey ?? '';
 
+    // the bench offers no stance and shows no picker, so one carried in
+    // from an encounter starts fast here
+    _playerDataService.resetStanceToFast(_playerState);
+
     _actionTimingController.bindOnFireFunction(
       doEnchantingAction,
       activityIconId: EntityId.ENCHANTING_BENCH,
@@ -180,6 +188,23 @@ class EnchantingController extends ChangeNotifier {
     );
 
     _actionTimingController.start();
+  }
+
+  /// How far the bench is through its current action, 0..1 — zero unless
+  /// enchanting is the action running.
+  double enchantProgress() {
+    if (!_actionTimingController.isRunningAction(doEnchantingAction))
+      return 0.0;
+    return _actionTimingController.actionProgress;
+  }
+
+  /// The interval the bench's timer fills over: live while enchanting, and
+  /// what starting here would cost otherwise.
+  Duration enchantInterval() {
+    if (_actionTimingController.isRunningAction(doEnchantingAction)) {
+      return _actionTimingController.getCurrentActionDuration();
+    }
+    return _actionTimingController.idleActionDurationFor(SkillId.ENCHANTING);
   }
 
   // function bound to the action button. executes periodically: each

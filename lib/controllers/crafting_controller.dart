@@ -7,6 +7,7 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/services/crafting_service.dart';
 import '../services/inventory_service.dart';
+import '../services/player_data_service.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import '../systems/crafting_system.dart';
 import '../systems/firemaking_system.dart';
@@ -33,6 +34,7 @@ class CraftingController extends ChangeNotifier {
   //services
   final InventoryService _inventoryService;
   final CraftingService _craftingService;
+  final PlayerDataService _playerDataService;
 
   // systems
   final CraftingSystem _craftingSystem;
@@ -51,7 +53,9 @@ class CraftingController extends ChangeNotifier {
     required PlayerData playerState,
     required RecipeCatalog reciepeCatalog,
     required EntityCatalog entityCatalog,
+    required PlayerDataService playerDataService,
   }) : _actionTimingController = actionTimingController,
+       _playerDataService = playerDataService,
        _firemakingSystem = firemakingSystem,
        _inventoryState = inventoryData,
        _inventoryService = inventoryService,
@@ -99,10 +103,20 @@ class CraftingController extends ChangeNotifier {
     return _recipeCatalog.recipesForSkill(skill);
   }
 
+  /// True when the station on screen is the one the crafting session
+  /// belongs to. Keyed on the zone as well as the id: the same firepit id
+  /// stands in several zones, and only the one being worked owns the
+  /// session's output and progress.
+  bool _isViewingSessionStation() {
+    return _craftingState.craftingEntityId ==
+            _playerState.currentEntityViewId &&
+        _craftingState.craftingZoneId == _playerState.currentZoneId;
+  }
+
   // items crafted during the current crafting session. stations that are
   // not the session's station show an empty list
   List<ObjectStack> craftedItems() {
-    if (_craftingState.craftingEntityId != _playerState.currentEntityViewId) {
+    if (!_isViewingSessionStation()) {
       return [];
     }
     return _inventoryService.getObjectStackList(_craftingState.craftedItems);
@@ -110,10 +124,34 @@ class CraftingController extends ChangeNotifier {
 
   // unique equipment crafted during the current session (with quality)
   List<EquipmentItem> craftedEquipment() {
-    if (_craftingState.craftingEntityId != _playerState.currentEntityViewId) {
+    if (!_isViewingSessionStation()) {
       return [];
     }
     return List.unmodifiable(_craftingState.craftedItems.equipment);
+  }
+
+  /// True when the crafting loop is running at the station on screen. A
+  /// craft running at a different bench is not this screen's.
+  bool _isCraftingHere() {
+    return _isViewingSessionStation() &&
+        _actionTimingController.isRunningAction(doCraftingAction);
+  }
+
+  /// How far this station is through its current craft, 0..1 — zero unless
+  /// the craft running is this station's.
+  double craftProgress() {
+    if (!_isCraftingHere()) return 0.0;
+    return _actionTimingController.actionProgress;
+  }
+
+  /// The interval the station's timer fills over: live while it is the one
+  /// working, and what starting a craft here would cost otherwise.
+  Duration craftInterval() {
+    if (_isCraftingHere()) {
+      return _actionTimingController.getCurrentActionDuration();
+    }
+    // crafting is done by hand, so nothing equipped sets the pace
+    return _actionTimingController.idleActionDurationFor(null);
   }
 
   // called when the player navigates to view an entity. if no crafting
@@ -192,9 +230,13 @@ class CraftingController extends ChangeNotifier {
 
     // crafting at a new station starts a new session: crafted items
     // shown in the crafting screen belong to the previous session
-    if (_craftingState.craftingEntityId != stationEntityId) {
+    // a different station — or the same station in a different zone — is a
+    // new session, so the previous one's output is cleared
+    if (_craftingState.craftingEntityId != stationEntityId ||
+        _craftingState.craftingZoneId != _playerState.currentZoneId) {
       _inventoryService.clearItems(_craftingState.craftedItems);
       _craftingState.craftingEntityId = stationEntityId;
+      _craftingState.craftingZoneId = _playerState.currentZoneId;
     }
 
     _craftingService.setActiveRecipe(recipeId, _craftingState, _recipeCatalog);
@@ -208,6 +250,10 @@ class CraftingController extends ChangeNotifier {
     )) {
       return false;
     }
+
+    // bench work offers no stance, and this screen has no picker to put one
+    // back, so a stance carried in from an encounter starts fast here
+    _playerDataService.resetStanceToFast(_playerState);
 
     // bind Encounter action to action timing controller.
     // icon is the crafting station; the badge counts how many more

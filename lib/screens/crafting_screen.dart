@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/widgets/action_timer.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/catalogs/recipe_catalog.dart';
@@ -123,6 +124,16 @@ class _CraftingScreenState extends State<CraftingScreen>
                           ),
                   ),
                   SizedBox(height: 12),
+
+                  // the station has no target and no health, so the action
+                  // timer is a row of its own above the rings — the same
+                  // slot the explore screen gives it
+                  ActionTimerRow(
+                    label: 'Crafting',
+                    progress: controller.craftProgress,
+                    interval: controller.craftInterval,
+                  ),
+                  const SizedBox(height: 8),
 
                   // the skills this station trains stay in view whichever
                   // tab is open

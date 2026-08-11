@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/widgets/action_timer.dart';
 import 'package:provider/provider.dart';
 
 import '../catalogs/enchantment_catalog.dart';
@@ -149,6 +150,14 @@ class EnchantingScreen extends StatelessWidget {
                   // active buffs, then the skills this station trains — the
                   // same pair the encounter screen shows
                   const BuffRow(),
+                  const SizedBox(height: 8),
+                  // the bench's action timer, in the row of its own the
+                  // explore and crafting screens give it
+                  ActionTimerRow(
+                    label: 'Enchanting',
+                    progress: controller.enchantProgress,
+                    interval: controller.enchantInterval,
+                  ),
                   const SizedBox(height: 8),
                   const ActivitySkillRingRow(skills: [SkillId.ENCHANTING]),
                   const SizedBox(height: 4),

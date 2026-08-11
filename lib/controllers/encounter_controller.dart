@@ -457,6 +457,43 @@ class EncounterController extends ChangeNotifier {
     return (elapsed / entity.attackInterval).clamp(0.0, 1.0);
   }
 
+  /// True while the loop is running any of the encounter actions. Fishing
+  /// and herbalism bind their own, so a check against [doEncounterAction]
+  /// alone reads "not running" on exactly those two screens.
+  bool _isRunningAnyEncounterAction() {
+    return _actionTimingController.isRunningAction(doEncounterAction) ||
+        _actionTimingController.isRunningAction(doFishingEncounterAction) ||
+        _actionTimingController.isRunningAction(doHerbalismEncounterAction);
+  }
+
+  /// True when the encounter actions are firing on the entity currently on
+  /// screen — the one predicate behind every piece of per-action feedback
+  /// this screen draws. Viewing a different entity while an action runs
+  /// elsewhere is not acting here.
+  bool _isActingOnViewedEntity() {
+    return isViewingActiveEncounter() && _isRunningAnyEncounterAction();
+  }
+
+  /// How far the player is through the action being performed on the entity
+  /// in view, 0..1. Zero unless the action is firing on *this* entity, so a
+  /// run against one target never draws progress on another's screen.
+  double playerActionProgress() {
+    if (!_isActingOnViewedEntity()) return 0.0;
+    return _actionTimingController.actionProgress;
+  }
+
+  /// The interval the timer on this screen is filling over: the running
+  /// action's live interval while this is the entity being worked, and what
+  /// starting on it would cost otherwise.
+  Duration playerActionInterval() {
+    if (_isActingOnViewedEntity()) {
+      return _actionTimingController.getCurrentActionDuration();
+    }
+    return _actionTimingController.idleActionDurationFor(
+      _resolveViewedEntity()?.entityType,
+    );
+  }
+
   // function bound to eat button
   void eatSingleEquipedFood() {
     final ate = _encounterSystem.eatEquipedFood(
@@ -468,9 +505,15 @@ class EncounterController extends ChangeNotifier {
     }
   }
 
-  // resolves the entity the player is viewing. prefers the live encounter
-  // entity so in-progress state is shown; before the first action starts
-  // (or after viewing a different entity) falls back to the selected world entity
+  /// Resolves the entity the player is viewing, as the object the zone
+  /// actually holds.
+  ///
+  /// An EntityId is a *kind*, not an instance: the same Oak Tree id sits in
+  /// several zones, each with its own count and hitpoints. So the zone's own
+  /// instance is the answer, and the live encounter entity is only fallen
+  /// back to when the zone no longer has one — a depleted node is removed
+  /// from the zone, and its screen still has to show the encounter that just
+  /// finished rather than going blank.
   EncounterEntity? _resolveViewedEntity() {
     // a dungeon card owns the entity being worked. the same EntityId can
     // sit in several cards of the same dungeon, so it resolves through the
@@ -478,15 +521,19 @@ class EncounterController extends ChangeNotifier {
     final inCard = _dungeonService.runningEntity(_dungeonRun);
     if (inCard != null) return inCard;
 
-    final active = _encounterState.entity;
-    if (active != null && active.id == _playerState.currentEntityViewId) {
-      return active;
-    }
+    // keyed on zone as well as id, so a tree in one zone never resolves to
+    // the identical-looking tree being worked in another
     final selected = _explorationService.getSelectedEntity(
       _playerState,
       _worldState,
     );
-    return selected is EncounterEntity ? selected : null;
+    if (selected is EncounterEntity) return selected;
+
+    final active = _encounterState.entity;
+    if (active != null && active.id == _playerState.currentEntityViewId) {
+      return active;
+    }
+    return null;
   }
 
   // populates encounter hp bar percentage - needs to move to entity view controller
@@ -525,8 +572,10 @@ class EncounterController extends ChangeNotifier {
     final inCard = _dungeonService.runningEntity(_dungeonRun);
     if (inCard != null) return identical(active, inCard);
 
+    // identity, not id: two zones can each hold an Oak Tree, and working
+    // one must not light up the other's progress bar and damage numbers
     return _encounterState.isActive &&
-        active.id == _playerState.currentEntityViewId;
+        identical(active, _resolveViewedEntity());
   }
 
   bool isCombatEntity() {
@@ -550,11 +599,7 @@ class EncounterController extends ChangeNotifier {
     // cards don't route through here, so this only ever fires on the way out
     _releaseDungeonSlot();
 
-    final sessionRunning =
-        _actionTimingController.isRunningAction(doEncounterAction) ||
-        _actionTimingController.isRunningAction(doFishingEncounterAction) ||
-        _actionTimingController.isRunningAction(doHerbalismEncounterAction);
-    if (!sessionRunning) {
+    if (!_isRunningAnyEncounterAction()) {
       _inventoryService.clearItems(_encounterState.itemDrops);
       notifyListeners();
     }

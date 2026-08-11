@@ -4,6 +4,7 @@ import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/widgets/action_timer.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 
 import '../data/skill_data.dart';
@@ -361,6 +362,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
     listChildren.insert(
       0,
+      // exploring has no target and no health, so the action timer is a row
+      // of its own — same label column and same slot on the screen the
+      // combat and gathering timers occupy, so it never moves between them
+      Padding(
+        padding: const EdgeInsets.fromLTRB(8, 10, 8, 2),
+        child: ActionTimerRow(
+          label: 'Exploring',
+          // empty unless exploring is the action running: working an entity
+          // must not fill this zone's timer
+          progress: worldController.exploreProgress,
+          interval: worldController.exploreInterval,
+        ),
+      ),
+    );
+    listChildren.insert(
+      0,
       // the zone art doubles as the way into the zone's detail screen,
       // where its discoveries and exploration gates are listed
       InkWell(
@@ -412,33 +429,30 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
       ),
     );
-    listChildren.insert(
-      0, // Top "app bar" row with a back button that pops the MAP tab navigator
-      Padding(
-        padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
-        child: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).maybePop(),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                zoneDef.name,
-                style: Theme.of(context).textTheme.titleLarge,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
 
     // IMPORTANT: no Scaffold here — MainShell owns the Scaffold + BottomNav.
     return SafeArea(
       child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    zoneDef.name,
+                    style: Theme.of(context).textTheme.titleLarge,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
           // Zone header, art and skill rings, then the tabbed zone list
           Expanded(
             child: ListView(

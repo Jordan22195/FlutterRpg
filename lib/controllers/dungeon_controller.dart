@@ -105,7 +105,8 @@ class DungeonController extends ChangeNotifier {
   }
 
   /// The entry key of the open dungeon, or NULL when it is free.
-  ItemId get keyItemId => definitionFor(_run.dungeonId)?.keyItemId ?? ItemId.NULL;
+  ItemId get keyItemId =>
+      definitionFor(_run.dungeonId)?.keyItemId ?? ItemId.NULL;
 
   /// This run has already paid its key.
   bool get keySpent => _run.keySpent;
@@ -121,7 +122,9 @@ class DungeonController extends ChangeNotifier {
   /// Whether starting card [index] would spend a key right now. Drives the
   /// confirm, so an irreversible charge is never silent.
   bool willSpendKey(int index) {
-    return showsKeyNote(index) && !_run.keySpent && keyCount(_run.dungeonId) > 0;
+    return showsKeyNote(index) &&
+        !_run.keySpent &&
+        keyCount(_run.dungeonId) > 0;
   }
 
   /// Whether card [index] can be started at all — a one-shot card already

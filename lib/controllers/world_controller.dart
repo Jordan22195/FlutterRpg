@@ -97,13 +97,25 @@ class WorldController extends ChangeNotifier {
   // other action running means the explore session is over
   bool _exploreSessionActive = false;
 
+  /// The zone the running explore belongs to. A zone is a place, not a kind
+  /// of place: an explore started in one zone is not this zone's explore,
+  /// and must not fill this zone's timer or claim its finds.
+  ZoneId? _exploreZoneId;
+
   bool _isExploreSessionActive() {
     if (_exploreSessionActive &&
         _actionTimingController.isRunning &&
         !_actionTimingController.isRunningAction(doExplore)) {
       _exploreSessionActive = false;
     }
-    return _exploreSessionActive;
+    return _exploreSessionActive &&
+        _exploreZoneId == _playerState.currentZoneId;
+  }
+
+  /// True when the explore loop is running, and running on this zone.
+  bool _isExploringHere() {
+    return _actionTimingController.isRunningAction(doExplore) &&
+        _exploreZoneId == _playerState.currentZoneId;
   }
 
   /// Items turned up by the current explore session in this zone. Mirrors
@@ -229,9 +241,25 @@ class WorldController extends ChangeNotifier {
     if (cost.isInfinite || _playerState.stamina < cost) return false;
 
     _playerDataService.changeStamina(-cost, _playerState);
+
+    // an explore runs on whatever zone the player is standing in, so it
+    // follows them: walking into a new zone carries the session over rather
+    // than ending it, and the loop keeps turning without a second tap.
+    final wasExploring = _isExploringHere();
     _playerDataService.setCurrentZone(target, _playerState);
-    // finds belong to the zone they were made in; leaving ends the session
-    _exploreSessionActive = false;
+
+    if (wasExploring) {
+      // the session is the new zone's now, so the timer belongs to it
+      _exploreZoneId = target;
+      // finds still belong to the zone they were made in: the new zone
+      // starts on a clean sheet rather than showing what an older visit
+      // turned up there
+      _explorationService.clearCurrentZoneItems(_playerState, _worldState);
+    } else {
+      // not exploring: any earlier session is over and its finds go with it
+      _exploreSessionActive = false;
+      _exploreZoneId = null;
+    }
     notifyListeners();
     return true;
   }
@@ -239,8 +267,10 @@ class WorldController extends ChangeNotifier {
   // fires a single time when the explore button is pressed
   // binds doExplore to the periodic loop
   void startExplore() {
-    // if already exploring, continue the current explore action
-    if (_actionTimingController.isRunningAction(doExplore)) {
+    // if already exploring this zone, continue the current explore action.
+    // an explore belonging to a different zone is not this one's, so it
+    // falls through and starts a fresh session here
+    if (_isExploringHere()) {
       return;
     }
 
@@ -254,6 +284,12 @@ class WorldController extends ChangeNotifier {
       _explorationService.clearCurrentZoneItems(_playerState, _worldState);
     }
     _exploreSessionActive = true;
+    _exploreZoneId = _playerState.currentZoneId;
+
+    // exploring offers no stance, so nothing on this screen could put one
+    // back: a strong or defensive stance carried in from a fight would
+    // otherwise keep boosting that skill for the whole explore session
+    _playerDataService.resetStanceToFast(_playerState);
 
     // bind explore action to action timing controller
     _actionTimingController.bindOnFireFunction(
@@ -265,6 +301,23 @@ class WorldController extends ChangeNotifier {
 
     // start action timing
     _actionTimingController.start();
+  }
+
+  /// How far the player is through the current explore action, 0..1. Zero
+  /// unless exploring is the action running — working an entity leaves the
+  /// explore screen's timer empty rather than mirroring that entity's.
+  double exploreProgress() {
+    if (!_isExploringHere()) return 0.0;
+    return _actionTimingController.actionProgress;
+  }
+
+  /// The interval the explore timer fills over: live while exploring here,
+  /// and what starting an explore in this zone would cost otherwise.
+  Duration exploreInterval() {
+    if (_isExploringHere()) {
+      return _actionTimingController.getCurrentActionDuration();
+    }
+    return _actionTimingController.idleActionDurationFor(SkillId.EXPLORATION);
   }
 
   // function bound to action button in startExplore.

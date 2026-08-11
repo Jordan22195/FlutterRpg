@@ -107,6 +107,13 @@ class ActionTimingController extends ChangeNotifier {
 
   double get actionProgress => _actionTimingState.actionProgressPercentComplete;
 
+  /// The interval an action training [skill] would run at from a standing
+  /// start. A screen showing a timer for an action that is *not* the one
+  /// running asks for this rather than [getCurrentActionDuration], so an
+  /// idle timer never reports another screen's live interval.
+  Duration idleActionDurationFor(SkillId? skill) =>
+      _actionSpeedSystem.intervalFor(skill, _playerState);
+
   Duration getCurrentActionDuration() {
     // the frame loop keeps the stored interval fresh while an action runs.
     // idle, nothing is ticking to refresh it - and stopping resets it to the
@@ -231,11 +238,28 @@ class ActionSpeedSystem {
   /// asks for it directly - the stance moves it, and a stance can be switched
   /// with the loop stopped.
   Duration currentMaxInterval(ActionTimingData state, PlayerData playerState) {
-    return _maxIntervalFor(
-      state,
-      playerState,
-      _playerDataService.getStatTotals(playerState),
-      _playerDataService.getBoostSkill(playerState) == SkillId.SPEED,
+    return intervalFor(state.actionSkill, playerState);
+  }
+
+  /// The unboosted interval an action training [actionSkill] would run at
+  /// from a standing start, with whatever is equipped to perform it.
+  ///
+  /// Asked for by name rather than off the running action's state, so a
+  /// screen that is not the one acting can show what starting *there* would
+  /// cost instead of echoing the interval some other screen's action is
+  /// currently running at.
+  Duration intervalFor(SkillId? actionSkill, PlayerData playerState) {
+    final stats = _playerDataService.getStatTotals(playerState);
+    return _actionTimingService.maxIntervalFor(
+      equippedInterval: actionSkill == null
+          ? null
+          : _equipmentService.actionIntervalFor(
+              actionSkill,
+              playerState.equipmentData,
+            ),
+      speedStance:
+          _playerDataService.getBoostSkill(playerState) == SkillId.SPEED,
+      speedStat: stats[SkillId.SPEED] ?? 1,
     );
   }
 

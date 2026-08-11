@@ -56,7 +56,9 @@ class DungeonSystem {
 
     run.active = true;
     run.dungeonId = dungeonId;
-    run.slots = [for (int i = 0; i < def.entries.length; i++) _buildSlot(def, i)];
+    run.slots = [
+      for (int i = 0; i < def.entries.length; i++) _buildSlot(def, i),
+    ];
     run.cleared = [];
     run.runningSlot = -1;
     run.keySpent = false;

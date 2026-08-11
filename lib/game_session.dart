@@ -534,6 +534,7 @@ class GameSessionFactory {
       playerState: save.playerData,
       reciepeCatalog: catalogs.recipeCatalog,
       entityCatalog: catalogs.entityCatalog,
+      playerDataService: playerDataService,
     );
     final equipmentController = EquipmentController(
       playerState: save.playerData,
@@ -548,6 +549,7 @@ class GameSessionFactory {
       enchantmentCatalog: enchantmentCatalog,
       inventoryService: inventoryService,
       enchantingSystem: enchantingSystem,
+      playerDataService: playerDataService,
     );
     final worldController = WorldController(
       worldState: save.worldData,

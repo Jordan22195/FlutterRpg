@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/widgets/action_timer.dart';
 import 'package:rpg/widgets/encounter_info_panel.dart';
 import 'package:rpg/widgets/entity_info_dialog.dart';
 import 'package:rpg/widgets/eat_food_button.dart';
@@ -7,7 +8,6 @@ import 'package:rpg/widgets/equipment_picker.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entity_catalog.dart';
-import '../controllers/action_timing_controller.dart';
 import '../controllers/encounter_controller.dart';
 import '../controllers/equipment_controller.dart';
 import '../controllers/player_data_controller.dart';
@@ -62,6 +62,12 @@ class CombatViewState {
   /// notify, so the bar samples it every frame.
   final double Function()? entityActionProgress;
 
+  /// The player's action timer on this screen, sampled per frame like the
+  /// entity's. Both read zero unless the action loop is firing on the entity
+  /// in view, so a run against one target draws nothing on another's screen.
+  final double Function() playerActionProgress;
+  final Duration Function() playerActionInterval;
+
   const CombatViewState({
     required this.title,
     required this.entity,
@@ -76,6 +82,8 @@ class CombatViewState {
     required this.drops,
     required this.foodItemId,
     required this.foodItemCount,
+    required this.playerActionProgress,
+    required this.playerActionInterval,
     this.queueRemaining = const [],
     this.requiredLevel = 0,
     this.locked = false,
@@ -116,7 +124,6 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// Every slot on a status row except the bar itself is a fixed width, so
   /// the entity's bar and the player's bar start and end at the same x no
   /// matter how many digits their numbers run to.
-  static const double _rowLabelWidth = 50;
   static const double _damageSlotWidth = 28;
   static const double _statTextWidth = 28;
   static const double _statGap = 10;
@@ -125,9 +132,17 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// counter legibly.
   static const double _hpBarHeight = 20;
 
-  /// The enemy's swing timer under the hp bar: a hairline, since it is a
-  /// warning rather than a headline.
-  static const double _actionBarHeight = 4;
+  /// Gap between a row's hp bar and the action timer beneath it.
+  static const double _timerGap = 5;
+
+  /// Gap between the two participant rows. Wide enough that each row's timer
+  /// reads as belonging to the bar above it rather than the row below.
+  static const double _rowGap = 12;
+
+  /// The band at the top of a gathering row's column that the 5px timer is
+  /// centred in — as tall as the stat chip's icon beside it, so the label,
+  /// the timer and the chip all read as sitting on one line.
+  static const double _gatheringTimerBand = 22;
 
   /// The player's own hp bar. Red like a hostile entity's — it is the same
   /// kind of bar, measuring the same thing — but a deeper shade, so the two
@@ -158,20 +173,10 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   }
 
   /// Who a row belongs to, in the fixed-width slot every row starts with so
-  /// the bars and rings below it all line up on the same x.
-  Widget buildRowLabel(BuildContext context, String label) {
-    return SizedBox(
-      width: _rowLabelWidth,
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-        ),
-      ),
-    );
-  }
+  /// the bars and rings below it all line up on the same x — here and on the
+  /// explore screen, which shares the column.
+  Widget buildRowLabel(BuildContext context, String label) =>
+      EncounterRowLabel(label);
 
   /// One stat chip on a status row: icon plus a fixed-width value.
   Widget buildStatChip(BuildContext context, SkillId icon, String text) {
@@ -203,9 +208,10 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// null [hp] for entities without hitpoints; the bar collapses and the
   /// stats stay right-aligned.
   ///
-  /// [actionProgress], when given, adds a hairline under the hp bar tracking
-  /// the entity's swing timer. It is sampled every frame off the action
-  /// timing loop rather than read once at build.
+  /// [timer], when given, is the row's [ActionTimer], drawn directly under the
+  /// hp bar. Both fighters get one, in the same slot of the same shared row,
+  /// so the two racing timers sit one above the other rather than a screen
+  /// apart.
   Widget buildStatusRow(
     BuildContext context, {
     required String label,
@@ -213,7 +219,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     int? maxHp,
     Widget? damageSlot,
     Color? barColor,
-    double Function()? actionProgress,
+    Widget? timer,
     required List<Widget> stats,
   }) {
     final double hpPercent = (hp == null || maxHp == null || maxHp <= 0)
@@ -221,7 +227,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         : (hp / maxHp).clamp(0.0, 1.0);
 
     return Padding(
-      padding: const EdgeInsets.only(top: 2, bottom: 6),
+      padding: const EdgeInsets.only(top: 2, bottom: _rowGap - 2),
       child: Row(
         children: [
           SizedBox(width: 10),
@@ -256,9 +262,9 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                       );
                     },
                   ),
-                  if (actionProgress != null) ...[
-                    const SizedBox(height: 3),
-                    _EntityActionProgressBar(progress: actionProgress),
+                  if (timer != null) ...[
+                    const SizedBox(height: _timerGap),
+                    timer,
                   ],
                 ],
               ),
@@ -287,6 +293,14 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       hp: view.playerHp,
       maxHp: maxHp,
       barColor: _playerHpColor,
+      // the player's own action timer, in the same slot under the hp bar the
+      // entity's sits in on the row above — the two are read against each
+      // other, so they are drawn identically apart from hue
+      timer: ActionTimer(
+        actor: ActionTimerActor.player,
+        progress: view.playerActionProgress,
+        interval: view.playerActionInterval,
+      ),
       // damage taken from the entity's attacks. the slot is fixed-width so
       // the flash doesn't shift the hp bar
       damageSlot: FadingNumber(
@@ -316,6 +330,10 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// row label and stat slots the rows above it use. Nothing gathered fights
   /// back, so the only stat that applies is the level being rolled — the
   /// total with gear and buffs, which is what the roll actually uses.
+  ///
+  /// With no hp bar to hang it under, the action timer takes the bar slot at
+  /// the top of the column — the same place on the row combat's player timer
+  /// sits, so moving between the two screens never moves the timer.
   Widget buildGatheringStatusRow(
     BuildContext context,
     CombatViewState view,
@@ -323,11 +341,37 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     List<SkillId> trainedSkills,
   ) {
     return Padding(
-      padding: const EdgeInsets.only(top: 2, bottom: 6),
+      padding: const EdgeInsets.only(top: 2, bottom: _rowGap - 2),
       child: Row(
+        // the rings make this column far taller than the combat row's, so the
+        // label and stat chip are pinned to the top band the timer sits in
+        // rather than centred against the whole thing — centred, the label
+        // drifts down beside the rings and the timer reads as the target's
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(width: 10),
           buildRowLabel(context, 'You'),
-          Expanded(child: ActivitySkillRingRow(skills: trainedSkills)),
+          // no damage comes back from a gathering target, but the slot is
+          // kept so this column starts where the target's bar above it does
+          const SizedBox(width: _damageSlotWidth),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: _gatheringTimerBand,
+                  child: Center(
+                    child: ActionTimer(
+                      progress: view.playerActionProgress,
+                      interval: view.playerActionInterval,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ActivitySkillRingRow(skills: trainedSkills),
+              ],
+            ),
+          ),
           buildStatChip(
             context,
             gatheringSkill,
@@ -366,8 +410,18 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       // player's row keeps for the damage coming back the other way
       damageSlot: damageSlot,
       barColor: entityBarColor(context, entity),
-      // only a combat entity has a swing to wind up
-      actionProgress: isCombatEntity ? actionProgress : null,
+      // only a combat entity has a swing to wind up. a gathering target has
+      // no timer of its own: the timer on this screen belongs to the player,
+      // and is drawn on the player's row
+      timer: entity is CombatEntity && actionProgress != null
+          ? ActionTimer(
+              actor: ActionTimerActor.enemy,
+              progress: actionProgress,
+              interval: () => Duration(
+                milliseconds: (entity.attackInterval * 1000).round(),
+              ),
+            )
+          : null,
       stats: [
         buildStatChip(context, SkillId.DEFENCE, '${entity.defence}'),
         // level needed to gather this entity (herbs)
@@ -462,27 +516,27 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         padding: const EdgeInsets.all(1),
         child: Column(
           children: [
+            Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    view.title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
             // scrollable middle so short screens don't overflow; the
             // header above and action buttons below stay pinned
             Expanded(
               child: ListView(
                 children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: () => Navigator.of(context).maybePop(),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          view.title,
-                          style: Theme.of(context).textTheme.titleLarge,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
                   if (aboveFight != null) aboveFight,
 
                   const SizedBox(height: 8),
@@ -582,32 +636,6 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   }
 }
 
-/// The enemy's swing timer, drawn under its hp bar. The windup runs on wall
-/// clock between the attacks that notify, so the bar rides the action timing
-/// loop's per-frame ticks and re-samples [progress] on each one — and only
-/// this hairline rebuilds, not the screen around it.
-class _EntityActionProgressBar extends StatelessWidget {
-  const _EntityActionProgressBar({required this.progress});
-
-  final double Function() progress;
-
-  @override
-  Widget build(BuildContext context) {
-    final timing = context.read<ActionTimingController>();
-
-    return AnimatedBuilder(
-      animation: timing,
-      builder: (context, _) => FillBar(
-        value: progress(),
-        height: CombatScreenState._actionBarHeight,
-        // amber rather than red: it sits directly under a red combat hp bar,
-        // and a winding-up swing has to read as its own thing
-        foregroundColor: const Color(0xFFF2A93B),
-      ),
-    );
-  }
-}
-
 class EncounterScreen extends StatefulWidget {
   const EncounterScreen({super.key});
 
@@ -653,6 +681,9 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
       requiredLevel: controller.viewedHerbRequiredLevel(),
       locked: controller.viewedHerbLocked(),
       entityActionProgress: controller.entityAttackProgress,
+      // both gated on this screen being the one the actions fire on
+      playerActionProgress: controller.playerActionProgress,
+      playerActionInterval: controller.playerActionInterval,
     );
   }
 

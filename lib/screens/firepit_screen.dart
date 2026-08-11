@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/widgets/action_timer.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entity_catalog.dart';
 import '../catalogs/item_catalog.dart';
@@ -192,6 +193,15 @@ class _FirepitScreenState extends State<FirepitScreen>
                     ),
                   ),
                   const SizedBox(height: 12),
+
+                  // the pit's action timer, in the row of its own the other
+                  // station screens give it
+                  ActionTimerRow(
+                    label: 'Tending',
+                    progress: controller.craftProgress,
+                    interval: controller.craftInterval,
+                  ),
+                  const SizedBox(height: 8),
 
                   // the skills the pit trains stay in view whichever tab is
                   // open; the buffs a fire grants moved into the panel below

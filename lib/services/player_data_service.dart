@@ -113,6 +113,15 @@ class PlayerDataService {
     final allowed = stancesForEntity(entity);
     final current = getStance(playerState);
     if (current != null && allowed.contains(current)) return;
+    resetStanceToFast(playerState);
+  }
+
+  /// Called when an activity that offers no stance at all starts: exploring
+  /// and bench work. Only encounters coerce their own stance, so without
+  /// this the stance a fight or a rock left behind keeps boosting the wrong
+  /// skill — and keeps the action at its unreduced interval — for the whole
+  /// session, with no picker on screen to put it back.
+  void resetStanceToFast(PlayerData playerState) {
     playerState.skillBoost = SkillId.SPEED;
     playerState.stance = Stance.fast;
   }
