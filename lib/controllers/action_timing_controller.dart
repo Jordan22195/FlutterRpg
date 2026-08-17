@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/services/equipment_service.dart';
 import 'package:rpg/services/player_data_service.dart';
+import '../data/bound_action.dart';
 import '../data/skill_data.dart';
 
 // primary button sets the on fire function and max interval in the controller.
@@ -59,6 +60,80 @@ class ActionTimingData {
       0.0; // 0 to 1 percentage of action progress
 
   Duration lastElapsed = Duration.zero;
+
+  /// What [onFire] is, in a form a save can hold. Set alongside the closure
+  /// in [ActionTimingController.bindOnFireFunction] and cleared with it in
+  /// [ActionTimingService.stop], so it always describes the bound action.
+  BoundAction? boundAction;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'maxInterval': maxInterval.inMicroseconds,
+      'actionSkill': actionSkill?.name,
+      'boostingSpeed': boostingSpeed,
+      'maxBoostMultiplier': maxBoostMultiplier,
+      'boostLocked': boostLocked,
+      'running': running,
+      'percentOfMaxBoost': percentOfMaxBoost,
+      'actionProgressPercentComplete': actionProgressPercentComplete,
+      'boundAction': boundAction?.toJson(),
+    };
+  }
+
+  /// Tolerant by design: a malformed key falls back to its default rather
+  /// than failing the save load. Nothing here is worth losing a game over -
+  /// the worst case is the player reopens idle and presses the button again.
+  ///
+  /// [onFire], [activityIconId] and [activityCount] are absent because they
+  /// are references; the resume path rebinds them. [buttonHeld],
+  /// [actionInFlight] and [lastElapsed] are absent because they are
+  /// frame-transient: no finger is down at launch, and a fresh Ticker
+  /// restarts its elapsed clock from zero, which [ActionTimingSystem
+  /// .frameUpdate] reads as its first-frame sentinel.
+  factory ActionTimingData.fromJson(Map<String, dynamic> json) {
+    final state = ActionTimingData();
+
+    final rawInterval = json['maxInterval'];
+    if (rawInterval is int) {
+      state.maxInterval = Duration(microseconds: rawInterval);
+    }
+
+    final rawSkill = json['actionSkill'];
+    if (rawSkill is String) {
+      state.actionSkill = SkillId.values.asNameMap()[rawSkill];
+    }
+
+    final rawMaxBoost = json['maxBoostMultiplier'];
+    if (rawMaxBoost is num) {
+      state.maxBoostMultiplier = rawMaxBoost.toDouble();
+    }
+
+    final rawPercent = json['percentOfMaxBoost'];
+    if (rawPercent is num) {
+      state.percentOfMaxBoost = rawPercent.toDouble().clamp(0.0, 1.0);
+    }
+
+    final rawProgress = json['actionProgressPercentComplete'];
+    if (rawProgress is num) {
+      state.actionProgressPercentComplete = rawProgress.toDouble().clamp(
+        0.0,
+        1.0,
+      );
+    }
+
+    if (json['boostingSpeed'] is bool) {
+      state.boostingSpeed = json['boostingSpeed'] as bool;
+    }
+    state.boostLocked = json['boostLocked'] == true;
+    state.running = json['running'] == true;
+
+    final rawBound = json['boundAction'];
+    if (rawBound is Map<String, dynamic>) {
+      state.boundAction = BoundAction.fromJson(rawBound);
+    }
+
+    return state;
+  }
 }
 
 //
@@ -69,7 +144,7 @@ class ActionTimingController extends ChangeNotifier {
   // internal state
   final TickerProvider _vsync;
   late Ticker ticker;
-  final ActionTimingData _actionTimingState = ActionTimingData();
+  final ActionTimingData _actionTimingState;
 
   // data
   final PlayerData _playerState;
@@ -78,18 +153,20 @@ class ActionTimingController extends ChangeNotifier {
   final ActionTimingService _actionTimingService;
 
   //systems
-  final ActionSpeedSystem _actionSpeedSystem;
+  final ActionTimingSystem _actionSpeedSystem;
 
   ActionTimingController({
     required TickerProvider vsync,
 
     required ActionTimingService actionTimingService,
     required PlayerData playerState,
-    required ActionSpeedSystem actionSpeedSystem,
+    required ActionTimingSystem actionSpeedSystem,
+    required ActionTimingData actionTimingState,
   }) : _actionTimingService = actionTimingService,
        _playerState = playerState,
        _vsync = vsync,
-       _actionSpeedSystem = actionSpeedSystem {
+       _actionSpeedSystem = actionSpeedSystem,
+       _actionTimingState = actionTimingState {
     ticker = _vsync.createTicker(_onTick);
   }
 
@@ -145,16 +222,20 @@ class ActionTimingController extends ChangeNotifier {
   /// Binds the action the loop fires. [actionSkill] is what the action
   /// trains; the item equipped for it sets how long each action takes.
   /// Leave it null for actions performed with no equipment.
+  /// [boundAction] describes [function] in a form the save can hold, so the
+  /// same action can be rebound after an app restart.
   void bindOnFireFunction(
     FutureOr<void> Function(int) function, {
     Enum? activityIconId,
     int Function()? activityCount,
     SkillId? actionSkill,
+    BoundAction? boundAction,
   }) {
     _actionTimingState.onFire = function;
     _actionTimingState.actionSkill = actionSkill;
     _actionTimingState.activityIconId = activityIconId;
     _actionTimingState.activityCount = activityCount;
+    _actionTimingState.boundAction = boundAction;
   }
 
   // icon id of the currently running activity; null when idle
@@ -171,6 +252,11 @@ class ActionTimingController extends ChangeNotifier {
 
   /// True while the action loop is running (any action).
   bool get isRunning => _actionTimingState.running;
+
+  /// True only once frames are actually arriving. A save restores [isRunning]
+  /// before anything has been bound to fire, so that flag alone cannot tell a
+  /// live loop from one still waiting to be resumed; the ticker can.
+  bool get isTicking => ticker.isActive;
 
   /// True while the primary button is held down and boosting the speed.
   bool get isButtonHeld => _actionTimingState.buttonHeld;
@@ -216,12 +302,12 @@ class ActionTimingController extends ChangeNotifier {
   }
 }
 
-class ActionSpeedSystem {
+class ActionTimingSystem {
   final ActionTimingService _actionTimingService;
   final PlayerDataService _playerDataService;
   final EquipmentService _equipmentService;
 
-  ActionSpeedSystem({
+  ActionTimingSystem({
     required ActionTimingService actionTimingService,
     required PlayerDataService playerDataService,
     required EquipmentService equipmentService,
@@ -413,9 +499,12 @@ class ActionSpeedSystem {
       offlineProgressUpdate(playerState, actionTimingState);
       return;
     }
-    playerState.lastActionTime = DateTime.now();
-    // return if no time has passed.
+    // return if no time has passed. this sits above the stamp because the
+    // first frame of a run always has a dt of zero: stamping there would
+    // move lastActionTime forward before the offline check above ever gets
+    // a frame it can act on, swallowing the whole gap on resume.
     if (dt <= 0) return;
+    playerState.lastActionTime = DateTime.now();
 
     // refresh the boost ceiling from whichever stat the stance runs on
     final stats = _playerDataService.getStatTotals(playerState);
@@ -623,6 +712,7 @@ class ActionTimingService {
     actionTimingState.activityIconId = null;
     actionTimingState.activityCount = null;
     actionTimingState.actionSkill = null;
+    actionTimingState.boundAction = null;
     actionTimingState.maxInterval = defaultMaxInterval;
   }
 
@@ -665,7 +755,7 @@ class ActionTimingService {
   ///
   /// [PlayerData.lastActionTime] is deliberately left alone: the offline
   /// window ends when the catch-up was calculated, not whenever an async
-  /// action happens to settle, so [ActionSpeedSystem.offlineProgressUpdate]
+  /// action happens to settle, so [ActionTimingSystem.offlineProgressUpdate]
   /// owns it.
   void fireOffline(ActionTimingData actionTimingState, int count) {
     if (count <= 0) return;

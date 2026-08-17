@@ -9,6 +9,7 @@ import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/inventory_data.dart';
+import '../data/bound_action.dart';
 import '../catalogs/zone_catalog.dart';
 import '../services/player_data_service.dart';
 import '../services/exploration_service.dart';
@@ -295,6 +296,7 @@ class WorldController extends ChangeNotifier {
       activityIconId: SkillId.EXPLORATION,
       // nothing is equipped to explore with, so this runs at the default
       actionSkill: SkillId.EXPLORATION,
+      boundAction: BoundAction.explore(zoneId: _playerState.currentZoneId),
     );
 
     // start action timing

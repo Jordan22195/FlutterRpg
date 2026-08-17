@@ -88,7 +88,11 @@ class _MainShellState extends State<MainShell> {
 
     // the tab navigators don't exist until after the first build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _restoreMapTabStack();
+      if (!mounted) return;
+      _restoreMapTabStack();
+      // after the stack, so a dungeon card that restored by starting itself
+      // is left running rather than started over
+      context.read<GameSession>().resumeBoundAction();
     });
   }
 

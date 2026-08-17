@@ -4,6 +4,7 @@ import '../catalogs/enchantment_catalog.dart';
 import '../catalogs/entity_catalog.dart';
 import '../catalogs/item_catalog.dart';
 import '../data/ObjectStack.dart';
+import '../data/bound_action.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
@@ -164,11 +165,21 @@ class EnchantingController extends ChangeNotifier {
 
   // fires a single time when the action button is pressed
   void startEnchantingAction() {
-    if (!selectionReady()) return;
+    startEnchantingActionFor(_selectedRecipeId, _selectedTargetInstanceId);
+  }
+
+  /// Starts the bench on [recipeId] against [targetInstanceId] directly.
+  /// The selection lives only on this controller, so a resume has to put it
+  /// back before it can start anything. Returns true when the action is
+  /// running when this returns.
+  bool startEnchantingActionFor(String recipeId, String targetInstanceId) {
+    _selectedRecipeId = recipeId;
+    _selectedTargetInstanceId = targetInstanceId;
+    if (!selectionReady()) return false;
 
     // already running this bench's action: let it continue
     if (_actionTimingController.isRunningAction(doEnchantingAction)) {
-      return;
+      return true;
     }
 
     _actionTimingController.stop();
@@ -185,9 +196,14 @@ class EnchantingController extends ChangeNotifier {
       activityCount: () => selectedTarget?.count ?? 0,
       // bench work is done by hand, so it runs at the default interval
       actionSkill: SkillId.ENCHANTING,
+      boundAction: BoundAction.enchant(
+        recipeId: recipeId,
+        targetInstanceId: targetInstanceId,
+      ),
     );
 
     _actionTimingController.start();
+    return true;
   }
 
   /// How far the bench is through its current action, 0..1 — zero unless

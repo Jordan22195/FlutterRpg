@@ -17,7 +17,7 @@ void main() {
 
   late PlayerDataService playerDataService;
   late ActionTimingService timingService;
-  late ActionSpeedSystem system;
+  late ActionTimingSystem system;
 
   setUp(() {
     playerDataService = PlayerDataService(
@@ -26,7 +26,7 @@ void main() {
       skillService: SkillService(),
     );
     timingService = ActionTimingService();
-    system = ActionSpeedSystem(
+    system = ActionTimingSystem(
       actionTimingService: timingService,
       playerDataService: playerDataService,
       equipmentService: EquipmentService(),
@@ -175,11 +175,7 @@ void main() {
       boosted.maxBoostMultiplier = timingService.maxSpeedBoostForStat(
         playerDataService.getStatTotals(player)[SkillId.SPEED] ?? 1,
       );
-      system.offlineProgressUpdate(
-        player,
-        boosted,
-        now: goOffline(player, 60),
-      );
+      system.offlineProgressUpdate(player, boosted, now: goOffline(player, 60));
 
       final idlePlayer = newPlayer();
       final (idle, idleFired) = recordingState();
@@ -265,6 +261,29 @@ void main() {
       goOffline(player, 60);
 
       tick(state, player);
+
+      expect(fired, [20]);
+    });
+
+    // the first frame of a resumed run reports a dt of zero, which is not a
+    // frame the offline check can act on. it must not stamp the timestamp
+    // either, or the gap is gone before the frame that could settle it
+    test('the first frame of a run leaves the gap for the next one', () {
+      final player = newPlayer();
+      final (state, fired) = recordingState();
+      state.running = true;
+      goOffline(player, 60);
+      final gapStart = player.lastActionTime;
+
+      // a fresh ticker starts its elapsed clock at zero
+      state.lastElapsed = Duration.zero;
+      system.frameUpdate(const Duration(milliseconds: 16), state, player);
+
+      expect(fired, isEmpty);
+      expect(player.lastActionTime, gapStart);
+
+      // the next frame carries a real dt and settles the whole 60s
+      system.frameUpdate(const Duration(milliseconds: 32), state, player);
 
       expect(fired, [20]);
     });

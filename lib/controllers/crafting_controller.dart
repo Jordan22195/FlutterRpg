@@ -11,6 +11,7 @@ import '../services/player_data_service.dart';
 import 'package:rpg/catalogs/item_catalog.dart';
 import '../systems/crafting_system.dart';
 import '../systems/firemaking_system.dart';
+import '../data/bound_action.dart';
 import '../data/player_data.dart';
 import '../data/crafting_state.dart';
 import '../data/world_data.dart';
@@ -266,6 +267,11 @@ class CraftingController extends ChangeNotifier {
       // crafting is done at the station by hand: nothing is equipped to
       // set the pace, so it runs at the default interval
       actionSkill: null,
+      boundAction: BoundAction.craft(
+        zoneId: _craftingState.craftingZoneId,
+        entityId: stationEntityId,
+        recipeId: recipeId,
+      ),
     );
 
     // start action timing

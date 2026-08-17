@@ -47,6 +47,7 @@ import 'package:rpg/systems/encounter_system.dart';
 import 'package:rpg/systems/exploration_system.dart';
 import 'package:rpg/systems/equipment_system.dart';
 
+import 'data/bound_action.dart';
 import 'data/inventory_data.dart';
 import 'data/ui_state.dart';
 
@@ -62,6 +63,7 @@ class SaveGameData {
   final EncounterData encounterData;
   final DungeonRun dungeonRun;
   final UiState uiState;
+  final ActionTimingData actionTimingData;
 
   SaveGameData({
     required this.slotId,
@@ -75,8 +77,10 @@ class SaveGameData {
     required this.encounterData,
     DungeonRun? dungeonRun,
     UiState? uiState,
+    ActionTimingData? actionTimingData,
   }) : dungeonRun = dungeonRun ?? DungeonRun(),
-       uiState = uiState ?? UiState();
+       uiState = uiState ?? UiState(),
+       actionTimingData = actionTimingData ?? ActionTimingData();
 
   Map<String, dynamic> toJson() {
     return {
@@ -91,6 +95,7 @@ class SaveGameData {
       'encounterData': encounterData.toJson(),
       'dungeonRun': dungeonRun.toJson(),
       'uiState': uiState.toJson(),
+      'actionTimingData': actionTimingData.toJson(),
     };
   }
 
@@ -162,6 +167,13 @@ class SaveGameData {
       uiState: json['uiState'] is Map<String, dynamic>
           ? UiState.fromJson(json['uiState'] as Map<String, dynamic>)
           : UiState(),
+      // optional: saves from before the action loop was persisted have no
+      // timing state; default to an idle loop
+      actionTimingData: json['actionTimingData'] is Map<String, dynamic>
+          ? ActionTimingData.fromJson(
+              json['actionTimingData'] as Map<String, dynamic>,
+            )
+          : ActionTimingData(),
     );
   }
 }
@@ -476,7 +488,7 @@ class GameSessionFactory {
       playerDataService: playerDataService,
     );
     final dungeonService = DungeonService();
-    ActionSpeedSystem actionSpeedSystem = ActionSpeedSystem(
+    ActionTimingSystem actionSpeedSystem = ActionTimingSystem(
       actionTimingService: actionTimingService,
       playerDataService: playerDataService,
       equipmentService: equipmentService,
@@ -488,6 +500,7 @@ class GameSessionFactory {
       actionTimingService: actionTimingService,
       playerState: save.playerData,
       actionSpeedSystem: actionSpeedSystem,
+      actionTimingState: save.actionTimingData,
     );
     final playerDataController = PlayerDataController(
       playerData: save.playerData,
@@ -752,6 +765,69 @@ class GameSession {
     required this.equipmentSystem,
     required this.dungeonSystem,
   });
+
+  /// Rebinds and restarts whatever action the save was running.
+  ///
+  /// The loop fires a closure, which no save can hold, so the timing state
+  /// comes back with [ActionTimingData.running] set and nothing bound to
+  /// fire. This re-runs the controller's own start path for the recorded
+  /// [BoundAction], which is what actually rebinds it.
+  ///
+  /// Call after the screens have been restored: a dungeon card restores by
+  /// starting its own slot, and this must not start a second action over it.
+  void resumeBoundAction() {
+    final timing = saveGameData.actionTimingData;
+    final bound = timing.boundAction;
+    if (!timing.running || bound == null) return;
+
+    // something is already firing - the dungeon card the screen restore
+    // started. it is the same action this would resume, so leave it alone
+    if (actionTimingController.isTicking) return;
+
+    // every start path below stops the loop first, which resets progress and
+    // boost, and stamps lastActionTime to now so a deliberate pause never
+    // pays out offline progress. a resume is the opposite case on both
+    // counts: the momentum was real and the gap is exactly what is owed. so
+    // they are taken now and put back once the action is running again.
+    final progress = timing.actionProgressPercentComplete;
+    final boost = timing.percentOfMaxBoost;
+    final locked = timing.boostLocked;
+    final offlineSince = saveGameData.playerData.lastActionTime;
+
+    switch (bound.kind) {
+      case BoundActionKind.EXPLORE:
+        worldController.startExplore();
+      case BoundActionKind.ENCOUNTER:
+        final entity = explorationService.getEntity(
+          bound.entityId,
+          bound.zoneId,
+          saveGameData.worldData,
+        );
+        if (entity is! EncounterEntity) return;
+        encounterController.startEncounterActionFor(entity);
+      case BoundActionKind.CRAFT:
+        craftingController.startCraftingActionFor(
+          bound.recipeId,
+          bound.entityId,
+        );
+      case BoundActionKind.ENCHANT:
+        enchantingController.startEnchantingActionFor(
+          bound.recipeId,
+          bound.targetInstanceId,
+        );
+      case BoundActionKind.DUNGEON_SLOT:
+        dungeonController.startSlot(bound.dungeonSlot);
+    }
+
+    // the action could not be restarted - the entity is gone, the materials
+    // ran out, the card is locked. the player comes back idle
+    if (!actionTimingController.isTicking) return;
+
+    timing.actionProgressPercentComplete = progress;
+    timing.percentOfMaxBoost = boost;
+    timing.boostLocked = locked;
+    saveGameData.playerData.lastActionTime = offlineSince;
+  }
 
   void dispose() {
     // the queue listens to the action timing controller; drop the

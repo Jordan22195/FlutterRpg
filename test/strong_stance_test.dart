@@ -14,7 +14,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late PlayerDataService playerDataService;
-  late ActionSpeedSystem system;
+  late ActionTimingSystem system;
 
   setUp(() {
     playerDataService = PlayerDataService(
@@ -22,7 +22,7 @@ void main() {
       equpmentService: EquipmentService(),
       skillService: SkillService(),
     );
-    system = ActionSpeedSystem(
+    system = ActionTimingSystem(
       actionTimingService: ActionTimingService(),
       playerDataService: playerDataService,
       equipmentService: EquipmentService(),

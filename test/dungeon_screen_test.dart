@@ -175,9 +175,7 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('a locked card still opens its entities details', (
-    tester,
-  ) async {
+  testWidgets('a locked card still opens its entities details', (tester) async {
     await tester.pumpWidget(
       MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
     );

@@ -12,6 +12,7 @@ import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/services/exploration_service.dart';
+import '../data/bound_action.dart';
 import '../data/dungeon_run.dart';
 import '../data/encounter_data.dart';
 import '../services/dungeon_service.dart';
@@ -265,6 +266,11 @@ class EncounterController extends ChangeNotifier {
       activityIconId: entity.id,
       activityCount: () => _encounterState.entity?.count ?? 0,
       actionSkill: entity.entityType,
+      // the card, not the entity: a dungeon member is rebuilt from the run's
+      // queue, which a zone lookup would never find
+      boundAction: BoundAction.dungeonSlot(
+        dungeonSlot: _dungeonRun.runningSlot,
+      ),
     );
 
     // a fresh enemy starts a fresh swing timer
@@ -379,6 +385,15 @@ class EncounterController extends ChangeNotifier {
       // the weapon in combat, the skill's tool when gathering, sets how
       // long each action takes
       actionSkill: entity.entityType,
+      // the slot release above has already zeroed runningSlot for anything
+      // that is not the running card's own member, so this still standing
+      // means the fight belongs to the dungeon rather than the zone
+      boundAction: _dungeonRun.runningSlot >= 0
+          ? BoundAction.dungeonSlot(dungeonSlot: _dungeonRun.runningSlot)
+          : BoundAction.encounter(
+              zoneId: _playerState.currentZoneId,
+              entityId: entity.id,
+            ),
     );
 
     // fresh combat starts a fresh enemy swing timer

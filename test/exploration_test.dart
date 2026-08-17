@@ -177,11 +177,29 @@ void main() {
       session.dispose();
     });
 
+    test('timing test of single explores', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+
+      expect(explorationXp(session), 0);
+      final start = DateTime.now();
+      for (int i = 0; i < 10000000; i++) {
+        session.worldController.doExplore(1);
+      }
+      final end = DateTime.now();
+      print(start.difference(end));
+
+      // the meadow's baseline table is uniform, so every find pays the
+      // zone's whole pool
+      session.dispose();
+    });
+
     test('exploring awards exploration xp', () {
       final session = buildSession();
       final save = session.saveGameData;
 
       expect(explorationXp(session), 0);
+
       session.worldController.doExplore(1);
 
       // the meadow's baseline table is uniform, so every find pays the
