@@ -47,7 +47,7 @@ void main() {
     session.playerDataController.addListener(() => notifications++);
 
     final xpBefore = session.playerDataController.getSkillXp(SkillId.HERBALISM);
-    session.encounterController.doHerbalismEncounterAction();
+    session.encounterController.doHerbalismEncounterAction(1);
 
     expect(
       session.playerDataController.getSkillXp(SkillId.HERBALISM),

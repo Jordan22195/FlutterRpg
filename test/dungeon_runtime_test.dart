@@ -45,7 +45,7 @@ void main() {
   int fightUntilStopped(GameSession session, {int limit = 20000}) {
     var ticks = 0;
     while (session.actionTimingController.isRunning && ticks < limit) {
-      session.encounterController.doEncounterAction();
+      session.encounterController.doEncounterAction(1);
       ticks++;
     }
     return ticks;
@@ -149,7 +149,7 @@ void main() {
       // fight until the first member is spent and the second is live
       var ticks = 0;
       while (slot.index == 0 && ticks < 20000) {
-        session.encounterController.doEncounterAction();
+        session.encounterController.doEncounterAction(1);
         ticks++;
       }
 
@@ -226,7 +226,7 @@ void main() {
       expect(identical(first, duplicate), isFalse);
 
       dungeons.startSlot(0);
-      session.encounterController.doEncounterAction();
+      session.encounterController.doEncounterAction(1);
 
       // the screen resolves through the running card, not the shared id
       expect(
@@ -265,7 +265,7 @@ void main() {
       final slot = save.dungeonRun.slots[0];
       var ticks = 0;
       while (slot.index == 0 && ticks < 20000) {
-        session.encounterController.doEncounterAction();
+        session.encounterController.doEncounterAction(1);
         ticks++;
       }
       expect(slot.index, 1);
@@ -519,7 +519,7 @@ void main() {
 
         dungeons.openDungeon(DungeonId.DEV_TRANSIENT_DUNGEON);
         dungeons.startSlot(0);
-        session.encounterController.doEncounterAction();
+        session.encounterController.doEncounterAction(1);
 
         if (byDeath) {
           // the shell ends the run on death, the same call leaving makes
@@ -562,7 +562,7 @@ void main() {
     dungeons.openDungeon(DungeonId.GOBLIN_QUEEN_LAIR);
     dungeons.startSlot(0);
     // one hit so the live enemy has partial hp to preserve
-    session.encounterController.doEncounterAction();
+    session.encounterController.doEncounterAction(1);
 
     final live = save.dungeonRun.slots[0].members.first;
     final restored = SaveGameData.fromJson(save.toJson());

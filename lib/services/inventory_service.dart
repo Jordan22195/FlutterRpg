@@ -11,7 +11,7 @@ class InventoryService {
 
   void addItems(InventoryData inventoryState, List<ObjectStack> items) {
     for (final item in items) {
-      if (item.count <= 0) continue;
+      if (item.count <= 0 || item.id == ItemId.NULL) continue;
       inventoryState.itemMap.update(
         item.id,
         (count) => count + item.count,

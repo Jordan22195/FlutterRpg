@@ -162,7 +162,7 @@ void main() {
     session.dungeonController.startSlot(0);
     var ticks = 0;
     while (session.actionTimingController.isRunning && ticks < 20000) {
-      session.encounterController.doEncounterAction();
+      session.encounterController.doEncounterAction(1);
       ticks++;
     }
     await settle(tester);

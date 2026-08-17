@@ -181,6 +181,30 @@ class ExplorationService {
     }
   }
 
+  /// Adds every stack in [items] to the current zone's explore find list,
+  /// merging onto existing stacks. NULL ids are the drop table's "found
+  /// nothing" entry and are skipped — a batch roll almost always contains
+  /// one, and it must not stop the real finds behind it from landing.
+  /// Returns true when anything was added, so the caller knows whether to
+  /// credit the player inventory too.
+  bool addItemsToCurrentZone(
+    List<ObjectStack<ItemId>> items,
+    PlayerData playerState,
+    WorldData worldState,
+  ) {
+    final zone = worldState.zones[playerState.currentZoneId];
+    if (zone == null) return false;
+
+    var added = false;
+    for (final i in items) {
+      if (i.id == ItemId.NULL || i.count <= 0) continue;
+
+      _inventoryService.addItems(zone.discoveredItems, [i]);
+      added = true;
+    }
+    return added;
+  }
+
   /// Adds [count] of [itemId] to the current zone's explore find list,
   /// merging onto an existing stack. NULL ids are the drop table's "found
   /// nothing" entry and are ignored. Returns true when something was added,

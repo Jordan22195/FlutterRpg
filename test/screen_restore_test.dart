@@ -88,7 +88,7 @@ void main() {
     );
     session.dungeonController.openDungeon(DungeonId.SPIDER_DEN);
     session.dungeonController.startSlot(0);
-    session.encounterController.doEncounterAction();
+    session.encounterController.doEncounterAction(1);
     save.uiState.tabIndex = 0;
     save.uiState.mapRouteStack = ['dungeon', 'encounter'];
     save.uiState.dungeonId = DungeonId.SPIDER_DEN;

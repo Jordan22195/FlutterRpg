@@ -177,7 +177,7 @@ void main() {
 
     // while the loop runs, the ambient tick stands down (the frame loop
     // applies recovery itself)
-    timing.bindOnFireFunction(() {});
+    timing.bindOnFireFunction((_) {});
     timing.start();
     final before = player.stamina;
     controller.tickAmbientRecovery();

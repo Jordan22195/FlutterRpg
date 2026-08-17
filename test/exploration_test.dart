@@ -182,7 +182,7 @@ void main() {
       final save = session.saveGameData;
 
       expect(explorationXp(session), 0);
-      session.worldController.doExplore();
+      session.worldController.doExplore(1);
 
       // the meadow's baseline table is uniform, so every find pays the
       // zone's whole pool
@@ -213,7 +213,7 @@ void main() {
         final before = explorationXp(session);
 
         for (var i = 0; i < explores; i++) {
-          session.worldController.doExplore();
+          session.worldController.doExplore(1);
         }
 
         final gained = explorationXp(session) - before;

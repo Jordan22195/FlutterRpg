@@ -21,7 +21,7 @@ void main() {
 
     world.startExplore();
     for (var i = 0; i < 300; i++) {
-      world.doExplore();
+      world.doExplore(1);
     }
 
     final finds = world.getCurrentZoneItems();
@@ -36,7 +36,7 @@ void main() {
 
     // another activity takes over the action loop
     session.actionTimingController.stop();
-    session.actionTimingController.bindOnFireFunction(() {});
+    session.actionTimingController.bindOnFireFunction((_) {});
     session.actionTimingController.start();
     expect(world.getCurrentZoneItems(), isEmpty);
 
@@ -47,7 +47,7 @@ void main() {
     expect(inventory.itemMap, isNotEmpty);
 
     // pausing and resuming the same session keeps the finds on screen
-    world.doExplore();
+    world.doExplore(1);
     final resumed = world.getCurrentZoneItems();
     world.stopExplore();
     world.startExplore();

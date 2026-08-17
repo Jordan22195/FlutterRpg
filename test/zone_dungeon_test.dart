@@ -35,7 +35,7 @@ void main() {
   void fightUntilStopped(GameSession session) {
     var n = 0;
     while (session.actionTimingController.isRunning && n < 20000) {
-      session.encounterController.doEncounterAction();
+      session.encounterController.doEncounterAction(1);
       n++;
     }
   }

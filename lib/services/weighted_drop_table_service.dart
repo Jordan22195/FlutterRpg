@@ -51,6 +51,65 @@ class WeightedDropTableService {
     return entries.where((e) => level >= e.unlockLevel).toList();
   }
 
+  /// Resolves [numberOfRolls] weighted rolls in one pass, aggregated into one
+  /// stack per distinct id.
+  ///
+  /// Rather than calling [roll] N times, each entry is handed its whole-number
+  /// share of the rolls up front and only the leftover — always fewer rolls
+  /// than there are entries — is rolled randomly. Over many rolls that lands
+  /// on the same distribution as rolling individually, at a fraction of the
+  /// cost, which is what makes settling thousands of offline actions cheap.
+  ///
+  /// Each allocated roll still draws its own stack size, so an entry with a
+  /// [WeightedDropTableEntry.highCount] range varies exactly as it would when
+  /// rolled one at a time.
+  List<ObjectStack<T>> rollMulitpleTimes<T>(
+    int numberOfRolls,
+    List<WeightedDropTableEntry<T>> entries, {
+    Random? rng,
+  }) {
+    if (numberOfRolls <= 0 || entries.isEmpty) return [];
+
+    final random = rng ?? Random();
+
+    double totalWeight = 0;
+    for (final e in entries) {
+      if (e.weight <= 0) {
+        throw ArgumentError('All weights must be > 0. Got weight=${e.weight}');
+      }
+      totalWeight += e.weight;
+    }
+
+    final outMap = <T, int>{};
+    void add(T id, int count) {
+      if (count <= 0) return;
+      outMap[id] = (outMap[id] ?? 0) + count;
+    }
+
+    // hand out the guaranteed whole share of the rolls
+    int rollsAllocated = 0;
+    for (final e in entries) {
+      final rollsForEntry = (e.weight / totalWeight * numberOfRolls).floor();
+      for (var i = 0; i < rollsForEntry; i++) {
+        add(e.id, _rollCount(e, random));
+      }
+      rollsAllocated += rollsForEntry;
+    }
+
+    // a table of 6 equally weighted entries rolled a hundred times allocates
+    // only 96 above, since each entry floors to 16. roll the remaining 4
+    // randomly so the total is exactly [numberOfRolls] and the leftover is
+    // still distributed by weight.
+    for (var i = rollsAllocated; i < numberOfRolls; i++) {
+      final rollResult = roll<T>(entries, rng: random);
+      add(rollResult.id, rollResult.count);
+    }
+
+    return [
+      for (final e in outMap.entries) ObjectStack<T>(id: e.key, count: e.value),
+    ];
+  }
+
   ObjectStack<T> roll<T>(
     List<WeightedDropTableEntry<T>> entries, {
     Random? rng,

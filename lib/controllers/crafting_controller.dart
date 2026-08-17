@@ -165,7 +165,7 @@ class CraftingController extends ChangeNotifier {
   }
 
   // function bound to action button. executes periodically.
-  void doCraftingAction() {
+  void doCraftingAction(int count) {
     _craftingSystem.craftActiveRecipeOnce(
       _craftingState,
       _playerState,

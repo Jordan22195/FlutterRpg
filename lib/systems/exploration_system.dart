@@ -64,16 +64,24 @@ class ExplorationSystem {
         1;
   }
 
-  /// Runs exactly ONE explore action in the player's current zone.
+  /// Runs [numTimesToExplore] explore actions in the player's current zone,
+  /// defaulting to one.
   ///
-  /// Rolls [ExplorationService.rollFindCount] finds; each find rolls the
-  /// zone's unlocked entity table and its unlocked item table. Only the
-  /// first find pays exploration xp, so outlevelling a zone multiplies its
-  /// loot without touching its xp rate.
+  /// One explore rolls [ExplorationService.rollFindCount] finds; each find
+  /// rolls the zone's unlocked entity table and its unlocked item table.
+  /// Only the first find of an explore pays exploration xp, so outlevelling
+  /// a zone multiplies its loot without touching its xp rate.
+  ///
+  /// Above one, the whole batch is settled in a single pass: the find count
+  /// is the exact mean rather than a per-explore roll, and each table is
+  /// rolled through [WeightedDropTableService.rollMulitpleTimes]. That pays
+  /// the same xp and the same expected loot as looping, which is what lets
+  /// hours of offline progress resolve in one call.
   ExploreResult explore({
     required PlayerData playerState,
     required WorldData worldState,
     required InventoryData playerInventory,
+    int numTimesToExplore = 1,
   }) {
     final result = ExploreResult();
     final zone = _zoneCatalog.getDefinitionFor(playerState.currentZoneId);
@@ -94,49 +102,105 @@ class ExplorationSystem {
     // locked) yields nothing rather than rolling an empty table
     if (entityEntries.isEmpty) return result;
 
-    result.findCount = _explorationService.rollFindCount(
-      level,
-      zone.explorationLevel,
-    );
-
-    for (var find = 0; find < result.findCount; find++) {
-      final rolled = _dropTableService.roll(entityEntries);
-      _explorationService.addEntityToCurrentZone(
-        rolled.id,
-        rolled.count,
-        _entityCatalog,
-        playerState,
-        worldState,
+    if (numTimesToExplore > 1) {
+      result.findCount =
+          (_explorationService.findsPerExplore(level, zone.explorationLevel) *
+                  numTimesToExplore)
+              .floor();
+    } else {
+      result.findCount = _explorationService.rollFindCount(
+        level,
+        zone.explorationLevel,
       );
-      result.entities.add(rolled);
+    }
 
-      // only the first find is worth xp, which is what keeps a zone's
-      // xp/hr flat however far the player has outlevelled it
-      if (find == 0) {
-        final entry = entityEntries.firstWhere((e) => e.id == rolled.id);
-        result.xp = _explorationService.xpForFind(
-          entry,
-          entityEntries,
-          zone.xpPerExplore,
+    if (numTimesToExplore > 1) {
+      // both tables are rolled once per FIND, not once per explore - the
+      // same as the loop below. an outlevelled zone yields several finds an
+      // explore, and batching must not quietly drop them.
+      result.entities.addAll(
+        _dropTableService.rollMulitpleTimes(result.findCount, entityEntries),
+      );
+      // add new entities to the zone.
+      for (final ent in result.entities) {
+        _explorationService.addEntityToCurrentZone(
+          ent.id,
+          ent.count,
+          _entityCatalog,
+          playerState,
+          worldState,
         );
       }
+      // one explore's worth of xp per explore. the loop below splits the
+      // pool inversely to drop weight, which averages to exactly this.
+      result.xp = zone.xpPerExplore * numTimesToExplore;
 
       // zones without an item table yield nothing; rolling an empty table
       // has no meaningful result
-      if (itemEntries.isEmpty) continue;
+      if (itemEntries.isNotEmpty) {
+        // the item table carries a NULL "found nothing" entry, so a batch
+        // roll of it is mostly nothing. it is dropped rather than reported.
+        final rolledItems = _dropTableService
+            .rollMulitpleTimes(result.findCount, itemEntries)
+            .where((i) => i.id != ItemId.NULL && i.count > 0)
+            .toList();
 
-      final rolledItem = _dropTableService.roll(itemEntries);
-      final found = _explorationService.addItemToCurrentZone(
-        rolledItem.id,
-        rolledItem.count,
-        playerState,
-        worldState,
-      );
-      // a find is kept by the player; the zone list is just the session's
-      // running tally of what this explore turned up
-      if (found) {
-        _inventoryService.addItems(playerInventory, [rolledItem]);
-        result.items.add(rolledItem);
+        // add items to zone
+        final found = _explorationService.addItemsToCurrentZone(
+          rolledItems,
+          playerState,
+          worldState,
+        );
+        // a find is kept by the player; the zone list is just the session's
+        // running tally of what this explore turned up
+        if (found) {
+          _inventoryService.addItems(playerInventory, rolledItems);
+          result.items.addAll(rolledItems);
+        }
+      }
+    } else {
+      for (var find = 0; find < result.findCount; find++) {
+        final rolled = _dropTableService.roll(entityEntries);
+        _explorationService.addEntityToCurrentZone(
+          rolled.id,
+          rolled.count,
+          _entityCatalog,
+          playerState,
+          worldState,
+        );
+        result.entities.add(rolled);
+
+        // only the first find is worth xp, which is what keeps a zone's
+        // xp/hr flat however far the player has outlevelled it
+        if (find == 0) {
+          final entry = entityEntries.firstWhere((e) => e.id == rolled.id);
+          result.xp = _explorationService.xpForFind(
+            entry,
+            entityEntries,
+            zone.xpPerExplore,
+          );
+        }
+
+        // zones without an item table yield nothing; rolling an empty table
+        // has no meaningful result
+        if (itemEntries.isEmpty) continue;
+
+        final rolledItem = _dropTableService.roll(itemEntries);
+        // the item table has a null item entry so item are not found
+        // on every explore action. exploration services checks for null item
+        // id before adding it to the inventory
+        final found = _explorationService.addItemToCurrentZone(
+          rolledItem.id,
+          rolledItem.count,
+          playerState,
+          worldState,
+        );
+        // a find is kept by the player; the zone list is just the session's
+        // running tally of what this explore turned up
+        if (found) {
+          _inventoryService.addItems(playerInventory, [rolledItem]);
+          result.items.add(rolledItem);
+        }
       }
     }
 

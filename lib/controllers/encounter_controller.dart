@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/action_result.dart';
@@ -99,7 +101,7 @@ class EncounterController extends ChangeNotifier {
        _encounterSystem = encounterSystem,
        _inventoryService = inventoryService;
 
-  void doFishingEncounterAction() {
+  void doFishingEncounterAction(int count) {
     latestActionResult = _encounterSystem.executeFishingAction(
       playerState: _playerState,
       encounter: _encounterState,
@@ -121,7 +123,7 @@ class EncounterController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void doHerbalismEncounterAction() {
+  void doHerbalismEncounterAction(int count) {
     latestActionResult = _encounterSystem.executeHerbalismAction(
       playerState: _playerState,
       encounter: _encounterState,
@@ -160,7 +162,7 @@ class EncounterController extends ChangeNotifier {
   // function bound to action button in startEncounterAction.
   // This executes periodically.
   //
-  void doEncounterAction() {
+  void doEncounterAction(int count) {
     latestActionResult = _encounterSystem.executePlayerAction(
       playerState: _playerState,
       encounter: _encounterState,
@@ -305,7 +307,7 @@ class EncounterController extends ChangeNotifier {
   // the tick an entity's encounter runs on. fishing spots don't deplete or
   // fight back, and herbs are picked in one action with a level gate, so
   // each runs its own action with its own start conditions
-  VoidCallback _actionFor(EncounterEntity entity) {
+  FutureOr<void> Function(int) _actionFor(EncounterEntity entity) {
     switch (entity.entityType) {
       case SkillId.FISHING:
         return doFishingEncounterAction;

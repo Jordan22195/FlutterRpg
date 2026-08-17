@@ -9,12 +9,10 @@ import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/inventory_data.dart';
-import '../services/inventory_service.dart';
 import '../catalogs/zone_catalog.dart';
 import '../services/player_data_service.dart';
 import '../services/exploration_service.dart';
 import '../catalogs/entity_catalog.dart';
-import '../services/weighted_drop_table_service.dart';
 import '../services/entity_screen_router_service.dart';
 import '../systems/encounter_system.dart';
 import '../systems/exploration_system.dart';
@@ -321,12 +319,15 @@ class WorldController extends ChangeNotifier {
   }
 
   // function bound to action button in startExplore.
-  // This executes periodically.
-  void doExplore() {
+  // This executes periodically. [count] is how many explores the tick is
+  // settling at once - one during normal play, and however many the player
+  // was away for when the loop is catching up on offline progress.
+  void doExplore(int count) {
     _explorationSystem.explore(
       playerState: _playerState,
       worldState: _worldState,
       playerInventory: _inventoryState,
+      numTimesToExplore: count,
     );
     notifyListeners();
   }

@@ -83,6 +83,8 @@ class PlayerData {
   SkillId skillBoost = SkillId.SPEED;
   Stance stance = Stance.fast;
 
+  DateTime lastActionTime = DateTime.now();
+
   // mutable stats
   int hitpoints = 10;
   double stamina = 0;
@@ -109,6 +111,7 @@ class PlayerData {
       'equipmentData': equipmentData.toJson(),
       'hitpoints': hitpoints,
       'stamina': stamina,
+      'lastActionTime': lastActionTime.toIso8601String(),
     };
   }
 
@@ -148,6 +151,11 @@ class PlayerData {
     if (rawStamina is! num) {
       throw FormatException('Missing or invalid "stamina".');
     }
+
+    final rawLastActionTime = json['lastActionTime'];
+    final lastActionTime = rawLastActionTime is String
+        ? DateTime.parse(rawLastActionTime)
+        : DateTime.now();
 
     final skillData = <SkillId, SkillData>{};
 
@@ -197,6 +205,6 @@ class PlayerData {
       ),
       hitpoints: rawHitpoints,
       stamina: rawStamina.toDouble(),
-    );
+    )..lastActionTime = lastActionTime;
   }
 }
