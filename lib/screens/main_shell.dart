@@ -11,12 +11,14 @@ import 'queue_screen.dart';
 import 'skills_screen.dart';
 import '../catalogs/dungeon_catalog.dart';
 import '../catalogs/entity_catalog.dart';
+import '../controllers/action_timing_controller.dart';
 import '../controllers/dungeon_controller.dart';
 import '../controllers/encounter_controller.dart';
 import '../controllers/world_controller.dart';
 import '../game_session.dart';
 import '../services/entity_screen_router_service.dart';
 import '../utilities/top_route_observer.dart';
+import '../widgets/offline_progress_dialog.dart';
 import '../widgets/progress_bars.dart';
 
 class MainShell extends StatefulWidget {
@@ -60,6 +62,12 @@ class _MainShellState extends State<MainShell> {
   int _handledDeathSequence = 0;
   int _handledSlotClearedSequence = 0;
 
+  // the timing controller's offline-report counter as of the last one shown,
+  // and whether its dialog is currently up
+  late final ActionTimingController _timing;
+  int _handledOfflineSequence = 0;
+  bool _offlineDialogOpen = false;
+
   void _onMapTabRouteChanged() {
     _captureUiState();
 
@@ -86,6 +94,12 @@ class _MainShellState extends State<MainShell> {
     _handledSlotClearedSequence = _encounter.slotClearedSequence;
     _encounter.addListener(_onEncounterChanged);
 
+    // offline progress settles on the first tick after the action resumes
+    // below, so the listener is in place before anything can report
+    _timing = context.read<ActionTimingController>();
+    _handledOfflineSequence = _timing.offlineReportSequence;
+    _timing.addListener(_onTimingChanged);
+
     // the tab navigators don't exist until after the first build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -99,7 +113,31 @@ class _MainShellState extends State<MainShell> {
   @override
   void dispose() {
     _encounter.removeListener(_onEncounterChanged);
+    _timing.removeListener(_onTimingChanged);
     super.dispose();
+  }
+
+  // the timing controller notifies every frame, so this stays an int
+  // compare until a settle actually produces a report worth showing
+  void _onTimingChanged() {
+    if (_timing.offlineReportSequence == _handledOfflineSequence) return;
+    _handledOfflineSequence = _timing.offlineReportSequence;
+
+    final report = _timing.pendingOfflineReport;
+    if (report == null || _offlineDialogOpen) return;
+
+    // the settle lands mid-frame inside the action tick, same as a death:
+    // showing a dialog has to wait for the frame to finish
+    _offlineDialogOpen = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        _offlineDialogOpen = false;
+        return;
+      }
+      await showOfflineProgressDialog(context, report);
+      _offlineDialogOpen = false;
+      _timing.consumeOfflineReport();
+    });
   }
 
   // both of the encounter loop's out-of-band events land here, and they

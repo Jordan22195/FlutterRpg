@@ -5,10 +5,13 @@ import '../catalogs/entity_catalog.dart';
 import '../catalogs/item_catalog.dart';
 import '../data/ObjectStack.dart';
 import '../data/bound_action.dart';
+import '../data/action_result.dart';
 import '../data/inventory_data.dart';
+import '../data/offline_progress_data.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../services/inventory_service.dart';
+import '../services/offline_progress_service.dart';
 import '../services/player_data_service.dart';
 import '../systems/enchanting_system.dart';
 import 'action_timing_controller.dart';
@@ -23,6 +26,7 @@ class EnchantingController extends ChangeNotifier {
   // data
   final PlayerData _playerState;
   final InventoryData _inventoryState;
+  final OfflineProgressData _offlineProgressData;
 
   // catalogs
   final EnchantmentCatalog _enchantmentCatalog;
@@ -30,6 +34,7 @@ class EnchantingController extends ChangeNotifier {
   // services
   final InventoryService _inventoryService;
   final PlayerDataService _playerDataService;
+  final OfflineProgressService _offlineProgressService;
 
   // systems
   final EnchantingSystem _enchantingSystem;
@@ -56,7 +61,11 @@ class EnchantingController extends ChangeNotifier {
     required InventoryService inventoryService,
     required EnchantingSystem enchantingSystem,
     required PlayerDataService playerDataService,
+    required OfflineProgressData offlineProgressData,
+    required OfflineProgressService offlineProgressService,
   }) : _actionTimingController = actionTimingController,
+       _offlineProgressData = offlineProgressData,
+       _offlineProgressService = offlineProgressService,
        _playerState = playerState,
        _inventoryState = inventoryState,
        _enchantmentCatalog = enchantmentCatalog,
@@ -233,6 +242,10 @@ class EnchantingController extends ChangeNotifier {
       return;
     }
 
+    // what this fire produced, reported when the timing system is settling
+    // time away and ignored otherwise
+    final result = ActionResult();
+
     if (disenchantSelected) {
       final gained = _enchantingSystem.disenchant(
         target.instanceId,
@@ -241,6 +254,7 @@ class EnchantingController extends ChangeNotifier {
       );
       if (gained != null) {
         _inventoryService.addItems(_sessionResults, [gained]);
+        result.items.add(gained);
       }
     } else {
       final recipe = selectedRecipe;
@@ -260,7 +274,10 @@ class EnchantingController extends ChangeNotifier {
       // session grid gets its own copy: sharing one object between two
       // inventories would double-count when stacks merge
       _inventoryService.addEquipment(_sessionResults, enchanted.copy());
+      result.equipment.add(enchanted);
     }
+
+    _offlineProgressService.record(_offlineProgressData, result);
 
     // stop when the stack ran out or the next action can't be afforded
     if (!selectionReady()) {

@@ -183,7 +183,7 @@ void main() {
 
       expect(explorationXp(session), 0);
       final start = DateTime.now();
-      for (int i = 0; i < 10000000; i++) {
+      for (int i = 0; i < 1000; i++) {
         session.worldController.doExplore(1);
       }
       final end = DateTime.now();

@@ -1,5 +1,6 @@
 import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/data/buff_data.dart';
+import '../data/action_result.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../data/crafting_state.dart';
@@ -45,21 +46,26 @@ class CraftingSystem {
        _weightedDropTableService = weightedDropTableService,
        _firemakingSystem = firemakingSystem;
 
-  void craftActiveRecipeOnce(
+  /// Crafts the active recipe once, returning what it produced so callers
+  /// can report it. An empty result means nothing was made - the level or
+  /// the materials were not there.
+  ///
+  ActionResult craftActiveRecipeOnce(
     CraftingState craftingState,
     PlayerData playerState,
     InventoryData inventoryState,
     BuffData buffState,
     WorldData worldState,
   ) {
+    final result = ActionResult();
     final r = _recipeCatalog.recipeById(craftingState.activeRecipeId);
 
     if (!checkRecipeLevelRequirement(r.id, playerState)) {
-      return;
+      return result;
     }
 
     // Check again
-    if (craftableCount(r.id, inventoryState) <= 0) return;
+    if (craftableCount(r.id, inventoryState) <= 0) return result;
 
     // Consume inputs
     for (final entry in r.inputs.entries) {
@@ -93,15 +99,19 @@ class CraftingSystem {
         final sessionCopy = built.copy();
         _inventoryService.addEquipment(inventoryState, built);
         _inventoryService.addEquipment(craftingState.craftedItems, sessionCopy);
+        result.equipment.add(built.copy());
       } else {
         _inventoryService.addItems(inventoryState, [craftedItemObjectStack]);
         _inventoryService.addItems(craftingState.craftedItems, [
           craftedItemObjectStack,
         ]);
+        result.items.add(craftedItemObjectStack);
       }
     }
 
-    _playerDataService.applyXp(playerState, {r.skill: r.xp});
+    result.xp = {r.skill: r.xp};
+    _playerDataService.applyXp(playerState, result.xp);
+    return result;
   }
 
   /// Rolls the quality tier for a crafted piece of equipment. Common is

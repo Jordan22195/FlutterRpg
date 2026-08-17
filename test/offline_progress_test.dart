@@ -5,7 +5,10 @@ import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/buff_service.dart';
+import 'package:rpg/data/offline_progress_data.dart';
 import 'package:rpg/services/equipment_service.dart';
+import 'package:rpg/services/inventory_service.dart';
+import 'package:rpg/services/offline_progress_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/services/skill_service.dart';
 
@@ -18,6 +21,7 @@ void main() {
   late PlayerDataService playerDataService;
   late ActionTimingService timingService;
   late ActionTimingSystem system;
+  late OfflineProgressData offlineProgressData;
 
   setUp(() {
     playerDataService = PlayerDataService(
@@ -26,10 +30,13 @@ void main() {
       skillService: SkillService(),
     );
     timingService = ActionTimingService();
+    offlineProgressData = OfflineProgressData();
     system = ActionTimingSystem(
       actionTimingService: timingService,
       playerDataService: playerDataService,
       equipmentService: EquipmentService(),
+      offlineProgressService: OfflineProgressService(InventoryService()),
+      offlineProgressData: offlineProgressData,
     );
   });
 

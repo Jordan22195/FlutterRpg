@@ -12,6 +12,8 @@ import 'package:rpg/catalogs/item_catalog.dart';
 import '../systems/crafting_system.dart';
 import '../systems/firemaking_system.dart';
 import '../data/bound_action.dart';
+import '../data/offline_progress_data.dart';
+import '../services/offline_progress_service.dart';
 import '../data/player_data.dart';
 import '../data/crafting_state.dart';
 import '../data/world_data.dart';
@@ -27,6 +29,7 @@ class CraftingController extends ChangeNotifier {
   final CraftingState _craftingState;
   final WorldData _worldState;
   final BuffData _buffState;
+  final OfflineProgressData _offlineProgressData;
 
   // catalogs
   final RecipeCatalog _recipeCatalog;
@@ -36,6 +39,7 @@ class CraftingController extends ChangeNotifier {
   final InventoryService _inventoryService;
   final CraftingService _craftingService;
   final PlayerDataService _playerDataService;
+  final OfflineProgressService _offlineProgressService;
 
   // systems
   final CraftingSystem _craftingSystem;
@@ -55,8 +59,12 @@ class CraftingController extends ChangeNotifier {
     required RecipeCatalog reciepeCatalog,
     required EntityCatalog entityCatalog,
     required PlayerDataService playerDataService,
+    required OfflineProgressData offlineProgressData,
+    required OfflineProgressService offlineProgressService,
   }) : _actionTimingController = actionTimingController,
        _playerDataService = playerDataService,
+       _offlineProgressData = offlineProgressData,
+       _offlineProgressService = offlineProgressService,
        _firemakingSystem = firemakingSystem,
        _inventoryState = inventoryData,
        _inventoryService = inventoryService,
@@ -167,13 +175,15 @@ class CraftingController extends ChangeNotifier {
 
   // function bound to action button. executes periodically.
   void doCraftingAction(int count) {
-    _craftingSystem.craftActiveRecipeOnce(
+    final result = _craftingSystem.craftActiveRecipeOnce(
       _craftingState,
       _playerState,
       _inventoryState,
       _buffState,
       _worldState,
     );
+    // a no-op unless the timing system is settling time away
+    _offlineProgressService.record(_offlineProgressData, result);
     if (!_craftingSystem.recipeRequirementsMet(
       _craftingState.activeRecipeId,
       _playerState,

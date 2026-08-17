@@ -1,0 +1,269 @@
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/controllers/action_timing_controller.dart';
+import 'package:rpg/data/offline_progress_data.dart';
+import 'package:rpg/data/player_data.dart';
+import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/game_session.dart';
+import 'package:rpg/services/buff_service.dart';
+import 'package:rpg/services/equipment_service.dart';
+import 'package:rpg/services/inventory_service.dart';
+import 'package:rpg/services/offline_progress_service.dart';
+import 'package:rpg/services/player_data_service.dart';
+import 'package:rpg/services/skill_service.dart';
+
+// What the player is told when they come back: an offline settle buffers
+// everything its actions produce into one report, and the shell shows it.
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  final factory = GameSessionFactory();
+
+  // a gap comfortably past the report threshold, whatever it is tuned to
+  final longGap =
+      OfflineProgressService.reportThreshold + const Duration(seconds: 60);
+
+  // how many actions a gap is worth at the default (unboosted) interval
+  int actionsIn(Duration gap) =>
+      gap.inMicroseconds ~/
+      ActionTimingService.defaultMaxInterval.inMicroseconds;
+
+  GameSession newSession() {
+    final catalogs = factory.catalog1();
+    return factory.create(
+      save: factory.newGame(catalogs),
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+  }
+
+  // puts [gap] of wall clock between the player's last action and the instant
+  // handed to the system, without actually waiting
+  DateTime goOffline(PlayerData player, Duration gap) {
+    final now = DateTime.now();
+    player.lastActionTime = now.subtract(gap);
+    return now;
+  }
+
+  /// Settles [gap] of time away on a session, the way the first frame back
+  /// does.
+  void settle(GameSession session, Duration gap) {
+    final save = session.saveGameData;
+    final now = goOffline(save.playerData, gap);
+    session.actionTimingSystem.offlineProgressUpdate(
+      save.playerData,
+      save.actionTimingData,
+      now: now,
+    );
+  }
+
+  group('a settle reports what it paid out', () {
+    test('an explore reports its actions, its finds and its xp', () {
+      final session = newSession();
+      session.worldController.startExplore();
+
+      settle(session, longGap);
+
+      final report = session.actionTimingController.pendingOfflineReport;
+      expect(report, isNotNull);
+      expect(report!.actionCount, actionsIn(longGap));
+      expect(report.timeAway.inSeconds, longGap.inSeconds);
+      // the meadow pays a flat 8 xp an explore, and the batch pays one
+      // explore's worth per explore
+      expect(report.xp[SkillId.EXPLORATION], 8.0 * actionsIn(longGap));
+      // every explore finds at least once, so the walk turned entities up
+      expect(report.entities, isNotEmpty);
+      expect(
+        report.entities.values.fold<int>(0, (sum, count) => sum + count),
+        greaterThanOrEqualTo(actionsIn(longGap)),
+      );
+      expect(session.actionTimingController.offlineReportSequence, 1);
+
+      session.actionTimingController.stop();
+      session.dispose();
+    });
+
+    test('a craft reports the item it made', () {
+      final session = newSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.COPPER_ORE] = 100;
+
+      expect(
+        session.craftingController.startCraftingActionFor(
+          'smelt_copper_bar',
+          EntityId.ANVIL,
+        ),
+        isTrue,
+      );
+
+      settle(session, longGap);
+
+      final report = session.actionTimingController.pendingOfflineReport;
+      expect(report, isNotNull);
+      // crafting settles one action per fire regardless of the count it is
+      // handed: a boosted and an unboosted stretch at most, and this gap has
+      // only the unboosted one
+      expect(report!.items.itemMap[ItemId.COPPER_BAR], 1);
+      expect(report.xp[SkillId.BLACKSMITHING], 5.0);
+
+      session.actionTimingController.stop();
+      session.dispose();
+    });
+
+    test('the report is cleared once the ui has shown it', () {
+      final session = newSession();
+      session.worldController.startExplore();
+      settle(session, longGap);
+      expect(session.actionTimingController.pendingOfflineReport, isNotNull);
+
+      session.actionTimingController.consumeOfflineReport();
+
+      expect(session.actionTimingController.pendingOfflineReport, isNull);
+      // the counter is not rewound: it is what the shell compares against
+      expect(session.actionTimingController.offlineReportSequence, 1);
+
+      session.actionTimingController.stop();
+      session.dispose();
+    });
+
+    test('normal play reports nothing', () {
+      final session = newSession();
+      session.worldController.startExplore();
+
+      // the online path: a frame close enough behind the last one that the
+      // loop never reaches for the offline settle
+      session.saveGameData.playerData.lastActionTime = DateTime.now();
+      session.saveGameData.actionTimingData.lastElapsed = const Duration(
+        milliseconds: 16,
+      );
+      session.actionTimingSystem.frameUpdate(
+        const Duration(milliseconds: 32),
+        session.saveGameData.actionTimingData,
+        session.saveGameData.playerData,
+      );
+
+      expect(session.offlineProgressData.processing, isFalse);
+      expect(session.offlineProgressData.report.isEmpty, isTrue);
+      expect(session.actionTimingController.pendingOfflineReport, isNull);
+
+      session.actionTimingController.stop();
+      session.dispose();
+    });
+  });
+
+  group('what is worth interrupting the player for', () {
+    late PlayerDataService playerDataService;
+    late ActionTimingService timingService;
+    late ActionTimingSystem system;
+    late OfflineProgressData offlineProgressData;
+
+    setUp(() {
+      playerDataService = PlayerDataService(
+        buffService: BuffService(),
+        equpmentService: EquipmentService(),
+        skillService: SkillService(),
+      );
+      timingService = ActionTimingService();
+      offlineProgressData = OfflineProgressData();
+      system = ActionTimingSystem(
+        actionTimingService: timingService,
+        playerDataService: playerDataService,
+        equipmentService: EquipmentService(),
+        offlineProgressService: OfflineProgressService(InventoryService()),
+        offlineProgressData: offlineProgressData,
+      );
+    });
+
+    PlayerData newPlayer() => factory.newGame(factory.catalog1()).playerData;
+
+    (ActionTimingData, List<int>) recordingState() {
+      final fired = <int>[];
+      final state = ActionTimingData();
+      state.onFire = fired.add;
+      return (state, fired);
+    }
+
+    test('a gap too short to be worth a popup still settles', () {
+      final player = newPlayer();
+      final (state, fired) = recordingState();
+      // a fast action, so the short gap is still worth firing for
+      state.maxInterval = const Duration(milliseconds: 100);
+      final shortGap = OfflineProgressService.reportThreshold ~/ 2;
+
+      system.offlineProgressUpdate(
+        player,
+        state,
+        now: goOffline(player, shortGap),
+      );
+
+      // the actions were paid out
+      expect(fired.single, greaterThan(0));
+      // but nothing is raised for them
+      expect(offlineProgressData.pending, isNull);
+      expect(offlineProgressData.reportSequence, 0);
+    });
+
+    test('a gap with nothing to show for it raises nothing', () {
+      final player = newPlayer();
+      final (state, fired) = recordingState();
+      // an action slower than the whole gap: no action completes
+      state.maxInterval = longGap * 2;
+
+      system.offlineProgressUpdate(
+        player,
+        state,
+        now: goOffline(player, longGap),
+      );
+
+      expect(fired, isEmpty);
+      expect(offlineProgressData.pending, isNull);
+      expect(offlineProgressData.reportSequence, 0);
+    });
+
+    test('a locked boost counts both of its stretches under one report', () {
+      final player = newPlayer();
+      final speed = player.skillData[SkillId.SPEED]!;
+      speed.xp = speed.xpTable[20]; // ceiling 2x
+      player.stamina = 10;
+
+      final (state, fired) = recordingState();
+      state.boostLocked = true;
+      state.percentOfMaxBoost = 1.0;
+      state.maxBoostMultiplier = timingService.maxSpeedBoostForStat(
+        playerDataService.getStatTotals(player)[SkillId.SPEED] ?? 1,
+      );
+
+      system.offlineProgressUpdate(
+        player,
+        state,
+        now: goOffline(player, const Duration(hours: 1)),
+      );
+
+      // the stamina runs out partway, so a boosted stretch and an unboosted
+      // one fire separately - and land in the same report
+      expect(fired, hasLength(2));
+      expect(offlineProgressData.pending, isNotNull);
+      expect(
+        offlineProgressData.pending!.actionCount,
+        fired.first + fired.last,
+      );
+      expect(offlineProgressData.reportSequence, 1);
+    });
+
+    test('a settle with the loop stopped reports nothing', () {
+      final player = newPlayer();
+      final (state, fired) = recordingState();
+      state.running = false;
+      state.lastElapsed = const Duration(milliseconds: 16);
+      goOffline(player, longGap);
+
+      // through frameUpdate, which is what checks [running]
+      system.frameUpdate(const Duration(milliseconds: 32), state, player);
+
+      expect(fired, isEmpty);
+      expect(offlineProgressData.pending, isNull);
+    });
+  });
+}

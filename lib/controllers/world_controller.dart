@@ -10,6 +10,8 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/inventory_data.dart';
 import '../data/bound_action.dart';
+import '../data/offline_progress_data.dart';
+import '../services/offline_progress_service.dart';
 import '../catalogs/zone_catalog.dart';
 import '../services/player_data_service.dart';
 import '../services/exploration_service.dart';
@@ -30,6 +32,7 @@ class WorldController extends ChangeNotifier {
   final PlayerData _playerState;
   final WorldData _worldState;
   final InventoryData _inventoryState;
+  final OfflineProgressData _offlineProgressData;
 
   // catalogs
   final ZoneCatalog _zoneCatalog;
@@ -37,6 +40,7 @@ class WorldController extends ChangeNotifier {
 
   // services
   final ExplorationService _explorationService;
+  final OfflineProgressService _offlineProgressService;
   final EntityScreenRouterService _entityScreenRouterService;
   final PlayerDataService _playerDataService;
 
@@ -59,7 +63,11 @@ class WorldController extends ChangeNotifier {
     required EncounterController encounterController,
     required CraftingController craftingController,
     required EnchantingController enchantingController,
+    required OfflineProgressData offlineProgressData,
+    required OfflineProgressService offlineProgressService,
   }) : _playerDataService = playerDataService,
+       _offlineProgressData = offlineProgressData,
+       _offlineProgressService = offlineProgressService,
        _inventoryState = inventoryState,
        _explorationService = explorationService,
        _zoneCatalog = zoneCatalog,
@@ -325,12 +333,14 @@ class WorldController extends ChangeNotifier {
   // settling at once - one during normal play, and however many the player
   // was away for when the loop is catching up on offline progress.
   void doExplore(int count) {
-    _explorationSystem.explore(
+    final result = _explorationSystem.explore(
       playerState: _playerState,
       worldState: _worldState,
       playerInventory: _inventoryState,
       numTimesToExplore: count,
     );
+    // a no-op unless the timing system is settling time away
+    _offlineProgressService.recordExplore(_offlineProgressData, result);
     notifyListeners();
   }
 

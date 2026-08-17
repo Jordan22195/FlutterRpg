@@ -13,6 +13,8 @@ import 'package:rpg/data/world_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/services/exploration_service.dart';
 import '../data/bound_action.dart';
+import '../data/offline_progress_data.dart';
+import '../services/offline_progress_service.dart';
 import '../data/dungeon_run.dart';
 import '../data/encounter_data.dart';
 import '../services/dungeon_service.dart';
@@ -36,9 +38,11 @@ class EncounterController extends ChangeNotifier {
   final WorldData _worldState;
   final InventoryData _inventoryState;
   final DungeonRun _dungeonRun;
+  final OfflineProgressData _offlineProgressData;
 
   // services
   final EncounterService _encounterService;
+  final OfflineProgressService _offlineProgressService;
   final ExplorationService _explorationService;
   final PlayerDataService _playerDataService;
   final InventoryService _inventoryService;
@@ -89,7 +93,11 @@ class EncounterController extends ChangeNotifier {
     required InventoryService inventoryService,
     required ItemCatalog itemCatalog,
     required EncounterSystem encounterSystem,
+    required OfflineProgressData offlineProgressData,
+    required OfflineProgressService offlineProgressService,
   }) : _playerState = playerData,
+       _offlineProgressData = offlineProgressData,
+       _offlineProgressService = offlineProgressService,
        _encounterState = encounterState,
        _dungeonRun = dungeonRun,
        _dungeonService = dungeonService,
@@ -110,6 +118,7 @@ class EncounterController extends ChangeNotifier {
       playerInventory: _inventoryState,
     );
     actionSequence++;
+    _recordOfflineResult();
 
     // fishing spots never deplete, so they are barred from dungeon cards
     // and there is no queue to advance here
@@ -132,6 +141,7 @@ class EncounterController extends ChangeNotifier {
       playerInventory: _inventoryState,
     );
     actionSequence++;
+    _recordOfflineResult();
     _recordDungeonDrops();
 
     if (_advanceDungeonQueue()) {
@@ -172,6 +182,7 @@ class EncounterController extends ChangeNotifier {
       instantRespawn: _dungeonService.runningEntity(_dungeonRun) != null,
     );
     actionSequence++;
+    _recordOfflineResult();
     _recordDungeonDrops();
 
     // a dungeon card is a queue: a spent member hands off to the next one
@@ -211,6 +222,13 @@ class EncounterController extends ChangeNotifier {
     _playerState.currentEntityViewId = entity.id;
 
     return startEncounterActionFor(entity);
+  }
+
+  /// Adds this tick's result to the offline progress report. A no-op unless
+  /// the timing system is settling time away, so normal play costs a call
+  /// and a flag check.
+  void _recordOfflineResult() {
+    _offlineProgressService.record(_offlineProgressData, latestActionResult);
   }
 
   /// Copies this tick's drops into the run's cumulative haul. The encounter

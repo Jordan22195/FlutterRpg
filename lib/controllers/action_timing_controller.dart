@@ -5,7 +5,9 @@ import 'package:rpg/data/player_data.dart';
 import 'package:rpg/services/equipment_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import '../data/bound_action.dart';
+import '../data/offline_progress_data.dart';
 import '../data/skill_data.dart';
+import '../services/offline_progress_service.dart';
 
 // primary button sets the on fire function and max interval in the controller.
 // the primary button triggers startIfNeeded which starts the ticker.
@@ -149,8 +151,11 @@ class ActionTimingController extends ChangeNotifier {
   // data
   final PlayerData _playerState;
 
+  final OfflineProgressData _offlineProgressData;
+
   // services
   final ActionTimingService _actionTimingService;
+  final OfflineProgressService _offlineProgressService;
 
   //systems
   final ActionTimingSystem _actionSpeedSystem;
@@ -162,13 +167,30 @@ class ActionTimingController extends ChangeNotifier {
     required PlayerData playerState,
     required ActionTimingSystem actionSpeedSystem,
     required ActionTimingData actionTimingState,
+    required OfflineProgressData offlineProgressData,
+    required OfflineProgressService offlineProgressService,
   }) : _actionTimingService = actionTimingService,
        _playerState = playerState,
        _vsync = vsync,
        _actionSpeedSystem = actionSpeedSystem,
-       _actionTimingState = actionTimingState {
+       _actionTimingState = actionTimingState,
+       _offlineProgressData = offlineProgressData,
+       _offlineProgressService = offlineProgressService {
     ticker = _vsync.createTicker(_onTick);
   }
+
+  /// Bumped when an offline settle produces a report worth showing. The
+  /// shell watches this counter rather than the report, so two identical
+  /// settles still raise the popup twice.
+  int get offlineReportSequence => _offlineProgressData.reportSequence;
+
+  /// The report waiting to be shown, if any. Valid until [consumeOfflineReport].
+  OfflineProgressReport? get pendingOfflineReport =>
+      _offlineProgressData.pending;
+
+  /// Called once the report has been shown to the player.
+  void consumeOfflineReport() =>
+      _offlineProgressService.consume(_offlineProgressData);
 
   @override
   void dispose() {
@@ -306,14 +328,23 @@ class ActionTimingSystem {
   final ActionTimingService _actionTimingService;
   final PlayerDataService _playerDataService;
   final EquipmentService _equipmentService;
+  final OfflineProgressService _offlineProgressService;
+
+  // the buffer offline actions report into. shared with the action
+  // controllers, which record their results while it is open
+  final OfflineProgressData _offlineProgressData;
 
   ActionTimingSystem({
     required ActionTimingService actionTimingService,
     required PlayerDataService playerDataService,
     required EquipmentService equipmentService,
+    required OfflineProgressService offlineProgressService,
+    required OfflineProgressData offlineProgressData,
   }) : _actionTimingService = actionTimingService,
        _playerDataService = playerDataService,
-       _equipmentService = equipmentService;
+       _equipmentService = equipmentService,
+       _offlineProgressService = offlineProgressService,
+       _offlineProgressData = offlineProgressData;
 
   /// Drops the boost back to 1x, so nothing stays scaled while idle.
   void clearBoost(PlayerData playerState) {
@@ -394,9 +425,17 @@ class ActionTimingSystem {
     // get elapsed time
     final at = now ?? DateTime.now();
     double secondsOfBoost = 0;
-    final timeOfflineInSeconds =
-        at.difference(playerState.lastActionTime).inMicroseconds / 1e6;
+    final timeOffline = at.difference(playerState.lastActionTime);
+    final timeOfflineInSeconds = timeOffline.inMicroseconds / 1e6;
     if (timeOfflineInSeconds <= 0) return;
+
+    // open the buffer: everything the actions below produce is collected
+    // into one report rather than passing silently into the player's data
+    _offlineProgressService.begin(
+      _offlineProgressData,
+      timeOffline,
+      playerState,
+    );
 
     // get action interval duration. read in microseconds: a boosted
     // interval is routinely under a second, and truncating it to whole
@@ -439,6 +478,10 @@ class ActionTimingSystem {
           ? 0
           : (secondsOfBoost / actionInterval).floor();
       // do boosted actions
+      _offlineProgressService.recordActions(
+        _offlineProgressData,
+        numberOfBoostedActions,
+      );
       _actionTimingService.fireOffline(
         actionTimingState,
         numberOfBoostedActions,
@@ -462,12 +505,19 @@ class ActionTimingSystem {
     int numberUnboostedActions = unboostedInterval <= 0
         ? 0
         : (secondsUnboosted / unboostedInterval).floor();
-    print(
-      "offline $secondsUnboosted s - $numberUnboostedActions actions performed",
+    _offlineProgressService.recordActions(
+      _offlineProgressData,
+      numberUnboostedActions,
     );
     _actionTimingService.fireOffline(actionTimingState, numberUnboostedActions);
 
     playerState.lastActionTime = at;
+
+    // closes the buffer and promotes the report for the ui. safe here
+    // because every bound action runs synchronously: fireOffline wraps the
+    // call in a Future.sync, so an action that ever went async would settle
+    // after this and report nothing.
+    _offlineProgressService.finish(_offlineProgressData, playerState);
   }
 
   // the momentum loop, once per frame:

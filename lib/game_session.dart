@@ -21,7 +21,9 @@ import 'package:rpg/catalogs/dungeon_catalog.dart';
 import 'package:rpg/controllers/dungeon_controller.dart';
 import 'package:rpg/systems/dungeon_system.dart';
 import 'package:rpg/data/equipment_data.dart';
+import 'package:rpg/data/offline_progress_data.dart';
 import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/services/offline_progress_service.dart';
 import 'package:rpg/services/buff_service.dart';
 import 'package:rpg/services/combat_auto_eat_service.dart';
 import 'package:rpg/services/entity_screen_router_service.dart';
@@ -405,6 +407,10 @@ class GameSessionFactory {
       }
     }
 
+    // session-scoped data: offline progress is recalculated on resume, so
+    // the report it collects never has to survive a save
+    final offlineProgressData = OfflineProgressData();
+
     // services
     final buffService = BuffService();
     final craftingService = CraftingService();
@@ -428,6 +434,7 @@ class GameSessionFactory {
     final enchantingService = EnchantingService();
     final enchantmentCatalog = EnchantmentCatalog();
     final shopService = ShopService(inventoryService: inventoryService);
+    final offlineProgressService = OfflineProgressService(inventoryService);
     final combatAutoEatService = CombatAutoEatService(
       itemCatalog: catalogs.itemCatalog,
       inventoryService: inventoryService,
@@ -492,6 +499,8 @@ class GameSessionFactory {
       actionTimingService: actionTimingService,
       playerDataService: playerDataService,
       equipmentService: equipmentService,
+      offlineProgressService: offlineProgressService,
+      offlineProgressData: offlineProgressData,
     );
 
     //controllers
@@ -501,6 +510,8 @@ class GameSessionFactory {
       playerState: save.playerData,
       actionSpeedSystem: actionSpeedSystem,
       actionTimingState: save.actionTimingData,
+      offlineProgressData: offlineProgressData,
+      offlineProgressService: offlineProgressService,
     );
     final playerDataController = PlayerDataController(
       playerData: save.playerData,
@@ -529,6 +540,8 @@ class GameSessionFactory {
       inventoryService: inventoryService,
       itemCatalog: catalogs.itemCatalog,
       encounterSystem: encounterSystem,
+      offlineProgressData: offlineProgressData,
+      offlineProgressService: offlineProgressService,
     );
     final buffController = BuffController(
       playerState: save.playerData,
@@ -548,6 +561,8 @@ class GameSessionFactory {
       reciepeCatalog: catalogs.recipeCatalog,
       entityCatalog: catalogs.entityCatalog,
       playerDataService: playerDataService,
+      offlineProgressData: offlineProgressData,
+      offlineProgressService: offlineProgressService,
     );
     final equipmentController = EquipmentController(
       playerState: save.playerData,
@@ -563,6 +578,8 @@ class GameSessionFactory {
       inventoryService: inventoryService,
       enchantingSystem: enchantingSystem,
       playerDataService: playerDataService,
+      offlineProgressData: offlineProgressData,
+      offlineProgressService: offlineProgressService,
     );
     final worldController = WorldController(
       worldState: save.worldData,
@@ -579,6 +596,8 @@ class GameSessionFactory {
       encounterController: encounterController,
       craftingController: craftingController,
       enchantingController: enchantingController,
+      offlineProgressData: offlineProgressData,
+      offlineProgressService: offlineProgressService,
     );
     final dungeonController = DungeonController(
       dungeonRun: save.dungeonRun,
@@ -650,6 +669,7 @@ class GameSessionFactory {
 
     return GameSession(
       saveGameData: save,
+      offlineProgressData: offlineProgressData,
       catalogBundle: catalogs,
       playerDataController: playerDataController,
       actionTimingController: actionTimingController,
@@ -679,6 +699,7 @@ class GameSessionFactory {
       explorationSystem: explorationSystem,
       equipmentSystem: equipmentSystem,
       dungeonSystem: dungeonSystem,
+      actionTimingSystem: actionSpeedSystem,
     );
   }
 }
@@ -686,6 +707,10 @@ class GameSessionFactory {
 class GameSession {
   // game state data
   SaveGameData saveGameData;
+
+  /// The buffer offline settles report into. Session-scoped, so it is not
+  /// part of [saveGameData].
+  OfflineProgressData offlineProgressData;
 
   // catalogs
   GameCatalogBundle catalogBundle;
@@ -723,10 +748,12 @@ class GameSession {
   ExplorationSystem explorationSystem;
   EquipmentSystem equipmentSystem;
   DungeonSystem dungeonSystem;
+  ActionTimingSystem actionTimingSystem;
 
   GameSession({
     // data
     required this.saveGameData,
+    required this.offlineProgressData,
 
     // catalogs
     required this.catalogBundle,
@@ -764,6 +791,7 @@ class GameSession {
     required this.explorationSystem,
     required this.equipmentSystem,
     required this.dungeonSystem,
+    required this.actionTimingSystem,
   });
 
   /// Rebinds and restarts whatever action the save was running.

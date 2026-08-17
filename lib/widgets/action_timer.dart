@@ -191,6 +191,7 @@ class ActionTimerRow extends StatelessWidget {
     return Row(
       children: [
         EncounterRowLabel(label),
+        SizedBox(width: 2),
         Expanded(
           child: ActionTimer(
             actor: actor,
