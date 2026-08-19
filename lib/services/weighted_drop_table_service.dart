@@ -54,15 +54,27 @@ class WeightedDropTableService {
   /// Resolves [numberOfRolls] weighted rolls in one pass, aggregated into one
   /// stack per distinct id.
   ///
-  /// Rather than calling [roll] N times, each entry is handed its whole-number
-  /// share of the rolls up front and only the leftover — always fewer rolls
-  /// than there are entries — is rolled randomly. Over many rolls that lands
-  /// on the same distribution as rolling individually, at a fraction of the
-  /// cost, which is what makes settling thousands of offline actions cheap.
+  /// Rather than calling [roll] N times, the whole batch is settled by a
+  /// single random draw. Each entry's share of the batch is
+  /// `weight / totalWeight * N`; those shares are laid end to end and cut at
+  /// the integers, with one uniform offset deciding where the cuts land. An
+  /// entry gets the number of integers its slice covers.
   ///
-  /// Each allocated roll still draws its own stack size, so an entry with a
-  /// [WeightedDropTableEntry.highCount] range varies exactly as it would when
-  /// rolled one at a time.
+  /// That hands out exactly [numberOfRolls] rolls, always — the cuts
+  /// telescope, so what one entry loses to the offset the next one gains —
+  /// while still paying every entry its exact expected share. An entry worth
+  /// 0.1 of a roll takes one roll a tenth of the time instead of flooring
+  /// away to nothing. The one thing given up is independence between
+  /// entries: the leftover roll goes wherever the offset points rather than
+  /// being contested. No batch can have all three.
+  ///
+  /// An entry with a [WeightedDropTableEntry.highCount] range pays the mean of
+  /// that range per allocated roll, not a fresh draw each time: across a batch
+  /// the draws average out anyway, so this trades away variance that nobody
+  /// can see for a per-roll random call. A single [roll] still varies.
+  ///
+  /// Note this is exactly [numberOfRolls] *rolls*, not items — a roll of a
+  /// stacking entry pays a whole stack.
   List<ObjectStack<T>> rollMulitpleTimes<T>(
     int numberOfRolls,
     List<WeightedDropTableEntry<T>> entries, {
@@ -72,44 +84,69 @@ class WeightedDropTableService {
 
     final random = rng ?? Random();
 
+    // sort a copy. the caller usually hands over a catalog's own drop table,
+    // and sorting in place would permanently reorder the catalog. the order
+    // does not change the allocation, only which entry the offset lands in.
+    final ordered = [...entries]..sort((a, b) => a.weight.compareTo(b.weight));
+
+    // summed over `ordered` rather than `entries` so that the running total
+    // below ends on a value bitwise identical to this one. that is what lets
+    // the last entry's cumulative share be exactly numberOfRolls instead of
+    // a hair under it, which would quietly cost the table its final roll.
     double totalWeight = 0;
-    for (final e in entries) {
+    for (final e in ordered) {
       if (e.weight <= 0) {
         throw ArgumentError('All weights must be > 0. Got weight=${e.weight}');
       }
       totalWeight += e.weight;
     }
 
-    entries.sort((a, b) => a.weight.compareTo(b.weight));
+    // 100 rolls over a 1 / 99 / 100 table lays out as
+    //   a [0, 0.5)   b [0.5, 50)   c [50, 100)
+    // with an offset of 0.3 the cuts fall at 0.8 / 50.3 / 100.3, giving
+    // 0 / 50 / 50; at 0.7 they fall at 1.2 / 50.7 / 100.7, giving 1 / 49 / 50.
+    // either way the three add to 100, and a averages its true 0.5.
+    final offset = random.nextDouble();
 
     final outMap = <T, int>{};
-    void add(T id, int count) {
-      if (count <= 0) return;
-      outMap[id] = (outMap[id] ?? 0) + count;
+    double cumulativeWeight = 0;
+    // floor(0 + offset) is 0 for any offset in [0, 1), so the first cut is
+    // measured from zero
+    int allocated = 0;
+    for (final e in ordered) {
+      cumulativeWeight += e.weight;
+      final cut = ((cumulativeWeight / totalWeight) * numberOfRolls + offset)
+          .floor();
+      final rollsForEntry = cut - allocated;
+      allocated = cut;
+      if (rollsForEntry <= 0) continue;
+
+      // an entry can appear twice in one table, so accumulate rather than
+      // overwrite
+      final count = _meanStackSize(e, rollsForEntry);
+      if (count <= 0) continue;
+      outMap.update(e.id, (value) => value + count, ifAbsent: () => count);
     }
 
-    // hand out the guaranteed whole share of the rolls
-    int rollsAllocated = 0;
-    for (final e in entries) {
-      final rollsForEntry = (e.weight / totalWeight * numberOfRolls).floor();
-      for (var i = 0; i < rollsForEntry; i++) {
-        add(e.id, _rollCount(e, random));
-      }
-      rollsAllocated += rollsForEntry;
-    }
-
-    // a table of 6 equally weighted entries rolled a hundred times allocates
-    // only 96 above, since each entry floors to 16. roll the remaining 4
-    // randomly so the total is exactly [numberOfRolls] and the leftover is
-    // still distributed by weight.
-    for (var i = rollsAllocated; i < numberOfRolls; i++) {
-      final rollResult = roll<T>(entries, rng: random);
-      add(rollResult.id, rollResult.count);
-    }
+    assert(
+      allocated == numberOfRolls,
+      'allocated $allocated of $numberOfRolls rolls',
+    );
 
     return [
       for (final e in outMap.entries) ObjectStack<T>(id: e.key, count: e.value),
     ];
+  }
+
+  /// The stack size [rolls] allocated rolls of [entry] are worth. A fixed
+  /// entry is just count * rolls; a variable one pays its mean, since over
+  /// a batch the individual draws average out anyway and sampling each one
+  /// would cost a random draw per roll for no visible difference.
+  static int _meanStackSize<T>(WeightedDropTableEntry<T> entry, int rolls) {
+    if (entry.highCount <= 0 || entry.highCount <= entry.count) {
+      return entry.count * rolls;
+    }
+    return ((entry.count + entry.highCount) / 2 * rolls).round();
   }
 
   ObjectStack<T> roll<T>(

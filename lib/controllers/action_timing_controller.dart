@@ -436,7 +436,6 @@ class ActionTimingSystem {
       timeOffline,
       playerState,
     );
-    print("start xp ${playerState.skillData[SkillId.WOODCUTTING]?.xp}");
 
     // get action interval duration. read in microseconds: a boosted
     // interval is routinely under a second, and truncating it to whole
@@ -519,7 +518,6 @@ class ActionTimingSystem {
     // call in a Future.sync, so an action that ever went async would settle
     // after this and report nothing.
     _offlineProgressService.finish(_offlineProgressData, playerState);
-    print("finish xp ${playerState.skillData[SkillId.WOODCUTTING]?.xp}");
   }
 
   // the momentum loop, once per frame:
