@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:rpg/catalogs/entity_catalog.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/main.dart';
 import 'package:rpg/services/file_manager_service.dart';
@@ -44,6 +45,32 @@ Map<String, dynamic> savedMidExplore(Duration away) {
   return raw;
 }
 
+// a save force-closed mid-fight, [away] ago: a tree in the starting zone
+// with the woodcutting encounter bound to it
+Map<String, dynamic> savedMidEncounter(Duration away) {
+  final factory = GameSessionFactory();
+  final catalogs = factory.catalog1();
+  final save = factory.newGame(catalogs);
+  final session = factory.create(
+    save: save,
+    catalogs: catalogs,
+    vsync: const TestVSync(),
+  );
+
+  final tree =
+      catalogs.entityCatalog.buildEntity(EntityId.TREE) as EncounterEntity;
+  save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities.add(
+    tree,
+  );
+  session.encounterController.startEncounterActionFor(tree);
+  save.playerData.lastActionTime = DateTime.now().subtract(away);
+
+  final raw = toRawSave(save);
+  session.actionTimingController.stop();
+  session.dispose();
+  return raw;
+}
+
 void main() {
   testWidgets('coming back to a running explore reports what it earned', (
     tester,
@@ -61,6 +88,26 @@ void main() {
     expect(find.text('Exploration'), findsOneWidget);
     // what the walk turned up: the meadow's entities, counted
     expect(find.text('DISCOVERED'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('coming back to a running encounter reports its kills', (
+    tester,
+  ) async {
+    final raw = savedMidEncounter(const Duration(minutes: 5));
+
+    await tester.pumpWidget(
+      MyApp(rawSave: raw, fileManagerService: FileManagerService()),
+    );
+    await settle(tester);
+
+    expect(find.text('While you were away'), findsOneWidget);
+    // what it felled: a total on the away line, and tiles of its own
+    expect(find.text('Defeated'), findsOneWidget);
+    expect(find.text('DEFEATED'), findsOneWidget);
+    expect(find.text('Woodcutting'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();

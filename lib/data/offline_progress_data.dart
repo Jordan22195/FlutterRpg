@@ -26,7 +26,13 @@ class OfflineProgressReport {
   /// this is what to tell the player they walked into while away.
   Map<EntityId, int> entities = {};
 
-  int enemiesDefeated = 0;
+  /// Entities the bound action killed, counted by kind. Combat kills and
+  /// gathering nodes both land here - anything an encounter took down.
+  Map<EntityId, int> entitiesDefeated = {};
+
+  /// How many kills that adds up to, for the summary line above the tiles.
+  int get enemiesDefeated =>
+      entitiesDefeated.values.fold(0, (sum, count) => sum + count);
 
   /// Nothing worth showing the player. A settle can land here legitimately:
   /// a gap too short to complete an action, or one where the action's
@@ -36,7 +42,8 @@ class OfflineProgressReport {
       xp.isEmpty &&
       items.itemMap.isEmpty &&
       items.equipment.isEmpty &&
-      entities.isEmpty;
+      entities.isEmpty &&
+      entitiesDefeated.isEmpty;
 }
 
 /// The buffer offline progress is collected into.

@@ -244,7 +244,7 @@ class EnchantingController extends ChangeNotifier {
 
     // what this fire produced, reported when the timing system is settling
     // time away and ignored otherwise
-    final result = ActionResult();
+    final result = EncounterActionResult();
 
     if (disenchantSelected) {
       final gained = _enchantingSystem.disenchant(

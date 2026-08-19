@@ -85,6 +85,33 @@ void main() {
       session.dispose();
     });
 
+    test('an encounter reports what it killed', () {
+      final session = newSession();
+      // a tree in the starting zone, the way exploring would leave one
+      final save = session.saveGameData;
+      final tree =
+          session.catalogBundle.entityCatalog.buildEntity(EntityId.TREE)
+              as EncounterEntity;
+      save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities
+          .add(tree);
+      expect(
+        session.encounterController.startEncounterActionFor(tree),
+        isTrue,
+      );
+
+      settle(session, longGap);
+
+      final report = session.actionTimingController.pendingOfflineReport;
+      expect(report, isNotNull);
+      // the kills are reported by kind, and the total the dialog's stat row
+      // shows is the sum of them
+      expect(report!.entitiesDefeated[EntityId.TREE], greaterThan(0));
+      expect(report.enemiesDefeated, report.entitiesDefeated[EntityId.TREE]);
+
+      session.actionTimingController.stop();
+      session.dispose();
+    });
+
     test('a craft reports the item it made', () {
       final session = newSession();
       final save = session.saveGameData;

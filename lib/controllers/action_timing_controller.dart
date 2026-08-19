@@ -436,6 +436,7 @@ class ActionTimingSystem {
       timeOffline,
       playerState,
     );
+    print("start xp ${playerState.skillData[SkillId.WOODCUTTING]?.xp}");
 
     // get action interval duration. read in microseconds: a boosted
     // interval is routinely under a second, and truncating it to whole
@@ -518,6 +519,7 @@ class ActionTimingSystem {
     // call in a Future.sync, so an action that ever went async would settle
     // after this and report nothing.
     _offlineProgressService.finish(_offlineProgressData, playerState);
+    print("finish xp ${playerState.skillData[SkillId.WOODCUTTING]?.xp}");
   }
 
   // the momentum loop, once per frame:
@@ -639,7 +641,7 @@ class ActionTimingService {
   /// How long a gap between frames has to be before it is treated as time
   /// spent away rather than a slow frame. Frames stop arriving when the app
   /// is backgrounded, so a gap this size means the loop was not running.
-  static const Duration offlineThreshold = Duration(seconds: 4);
+  static const Duration offlineThreshold = Duration(seconds: 1);
 
   /// How long an action takes with nothing equipped to perform it —
   /// bare-handed gathering, and everything done at a bench.

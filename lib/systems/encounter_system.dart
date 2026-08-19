@@ -62,9 +62,9 @@ class EncounterSystem {
     );
   }
 
-  /// Runs exactly ONE tick of the currently active encounter.
+  /// Runs n ticks of the currently active encounter.
   /// Mutates player/world/inventories/encounterState as needed.
-  ActionResult executePlayerAction({
+  EncounterActionResult executePlayerAction({
     required PlayerData playerState,
     required EncounterData encounter,
     required WorldData worldState,
@@ -72,8 +72,9 @@ class EncounterSystem {
     // a dungeon card's queue has the next enemy step straight up, with no
     // respawn pause between them
     bool instantRespawn = false,
+    int actionCount = 1,
   }) {
-    final result = ActionResult();
+    final result = EncounterActionResult();
 
     final stats = _playerDataService.getStatTotals(playerState);
 
@@ -82,6 +83,65 @@ class EncounterSystem {
     }
 
     final e = encounter.entity!;
+
+    if (actionCount > 1) {
+      // calculate average damage per action
+      double avgDamage = _encounterService.playerAverageDamage(
+        stats,
+        playerState,
+        encounter,
+      );
+
+      // calculate actions to kill
+      double actionToKill = _encounterService.actionsToKill(
+        e.maxHitPoints,
+        avgDamage,
+      );
+
+      // calulate total enemies defeated
+      // todo use the remainder to put damage on the last entity
+      int enemiesToKill = (actionCount / actionToKill).floor();
+      if (enemiesToKill > e.count) {
+        enemiesToKill = e.count;
+      }
+      // roll loot on x enemies
+      // roll drops: the guaranteed main drop plus any layered bonus rolls
+      // (rare uniques, bulk stacks) the entity defines
+      final def =
+          _entityCatalog.getDefinitionFor(e.id) as EncounterEntityDefinition;
+      final drops = _dropTableService.rollMulitpleTimes(
+        enemiesToKill,
+        def.itemDrops,
+      );
+      drops.addAll(
+        _dropTableService.rollBonusMulitpleTimes(enemiesToKill, def.bonusDrops),
+      );
+
+      result.items.addAll(drops);
+
+      // add drops to inventories (player + encounter history)
+      _inventoryService.addItems(playerInventory, drops);
+      _inventoryService.addItems(encounter.itemDrops, drops);
+
+      // decrement entity count by x
+      encounter.entity!.count -= enemiesToKill;
+      result.entitiesDefeated = [
+        ObjectStack<EntityId>(id: e.id, count: enemiesToKill),
+      ];
+
+      // reward xp
+      // todo give defence xp based on stance
+      result.xp[e.entityType] = xpPerDamage * enemiesToKill * e.maxHitPoints;
+      if (e is CombatEntity) {
+        result.xp[SkillId.HITPOINTS] = (xpPerDamage * result.damageDone) / 3.0;
+      }
+      // Apply XP to player
+      if (result.xp.isNotEmpty) {
+        _playerDataService.applyXp(playerState, result.xp);
+      }
+
+      return result;
+    }
 
     // do damage
     final r = _encounterService.resolvePlayerDamage(
@@ -100,12 +160,16 @@ class EncounterSystem {
     result.xp[e.entityType] = xpPerDamage * result.damageDone;
 
     // combat also trains hitpoints, at a third of the attack xp rate
+    // todo give defence xp based on stance
+
     if (e is CombatEntity) {
       result.xp[SkillId.HITPOINTS] = (xpPerDamage * result.damageDone) / 3.0;
     }
 
     // Handle death
     if (result.enemyDied) {
+      result.entitiesDefeated = [ObjectStack<EntityId>(id: e.id, count: 1)];
+
       // decrement world entity count
       encounter.entity!.count--;
       if (encounter.entity!.count > 0) {
@@ -316,13 +380,13 @@ class EncounterSystem {
 
   /// One herbalism gather tick: always succeeds, consumes one count from
   /// the herb node, and rolls yield against the herb's difficulty.
-  ActionResult executeHerbalismAction({
+  EncounterActionResult executeHerbalismAction({
     required PlayerData playerState,
     required EncounterData encounter,
     required WorldData worldState,
     required InventoryData playerInventory,
   }) {
-    final result = ActionResult();
+    final result = EncounterActionResult();
     final stats = _playerDataService.getStatTotals(playerState);
 
     if (!_encounterService.herbalismConditionsMet(playerState, encounter)) {
@@ -361,13 +425,13 @@ class EncounterSystem {
     return result;
   }
 
-  ActionResult executeFishingAction({
+  EncounterActionResult executeFishingAction({
     required PlayerData playerState,
     required EncounterData encounter,
     required WorldData world,
     required InventoryData playerInventory,
   }) {
-    final result = ActionResult();
+    final result = EncounterActionResult();
     final stats = _playerDataService.getStatTotals(playerState);
 
     if (!_encounterService.fishingConditionsMet(playerState, encounter)) {

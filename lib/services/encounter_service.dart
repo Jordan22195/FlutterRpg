@@ -37,12 +37,58 @@ class EncounterService {
     encounterState.respawning = false;
   }
 
-  ActionResult resolvePlayerDamage(
+  /// Expected damage per action: the to-hit roll times the uniform
+  /// 1..maxHit damage roll.
+  double playerAverageDamage(
     Map<SkillId, int> playerStatTotals,
     PlayerData playerState,
     EncounterData encounterState,
   ) {
-    ActionResult res = ActionResult();
+    if (encounterState.isActive == false) {
+      return 0;
+    }
+    final entity =
+        encounterState.entity ??
+        EncounterEntity(
+          id: EntityId.NULL,
+          name: "",
+          count: 0,
+          entityType: SkillId.NULL,
+          defence: 0,
+          hitpoints: 0,
+        );
+
+    final skillId = entity.entityType;
+
+    int playerOffenseSkillStat = playerStatTotals[skillId] ?? 0;
+
+    int encounterDefence = encounterState.entity!.defence;
+    double avgDamage =
+        chanceToHit(playerOffenseSkillStat, encounterDefence) *
+        (1 +
+            computeMaxHit(
+              attack: playerOffenseSkillStat,
+              defense: encounterDefence,
+            )) /
+        2.0;
+    return avgDamage;
+  }
+
+  /// Actions needed to take one count down from full hitpoints. Infinite
+  /// when the player can't damage it at all.
+  double actionsToKill(int maxHitPoints, double averageDamage) {
+    if (maxHitPoints <= 0 || averageDamage <= 0) {
+      return double.infinity;
+    }
+    return maxHitPoints / averageDamage;
+  }
+
+  EncounterActionResult resolvePlayerDamage(
+    Map<SkillId, int> playerStatTotals,
+    PlayerData playerState,
+    EncounterData encounterState,
+  ) {
+    EncounterActionResult res = EncounterActionResult();
 
     if (encounterState.isActive == false) {
       return res;
@@ -196,11 +242,11 @@ class EncounterService {
   // calculate enemy attack roll against player. a blocked hit deals 0
   // damage; when that happens the player earns defence xp equal to the
   // damage the blow would have dealt had it landed.
-  ActionResult entityAttack(
+  EncounterActionResult entityAttack(
     EncounterData encounterState,
     Map<SkillId, int> playerStatTotals,
   ) {
-    final result = ActionResult();
+    final result = EncounterActionResult();
     if (encounterState.entity is! CombatEntity) {
       return result;
     }
@@ -237,14 +283,14 @@ class EncounterService {
     encounterState.respawning = false;
   }
 
-  ActionResult doFishingAction(
+  EncounterActionResult doFishingAction(
     Map<SkillId, int> playerStatTotals,
     PlayerData playerState,
     EncounterData encounterState,
   ) {
     int playerSkillStatTotal = playerStatTotals[SkillId.FISHING] ?? 1;
     final e = encounterState.entity;
-    ActionResult r = ActionResult();
+    EncounterActionResult r = EncounterActionResult();
     if (e == null) {
       return r;
     }

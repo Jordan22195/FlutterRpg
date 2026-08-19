@@ -2,6 +2,7 @@ import '../catalogs/entity_catalog.dart';
 import '../catalogs/item_catalog.dart';
 import '../catalogs/zone_catalog.dart';
 import '../data/ObjectStack.dart';
+import '../data/action_result.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
@@ -11,23 +12,6 @@ import '../services/exploration_service.dart';
 import '../services/inventory_service.dart';
 import '../services/player_data_service.dart';
 import '../services/weighted_drop_table_service.dart';
-
-/// What one explore action turned up.
-class ExploreResult {
-  /// Entities discovered, in the order they were found.
-  final List<ObjectStack<EntityId>> entities = [];
-
-  /// Items found, already credited to the player and the zone tally.
-  final List<ObjectStack<ItemId>> items = [];
-
-  /// Exploration xp awarded. Only the first find is worth xp, so this is
-  /// the xp of [entities].first and nothing else.
-  double xp = 0;
-
-  /// How many finds the action rolled — 1 plus whatever the player's
-  /// exploration level over the zone earned.
-  int findCount = 0;
-}
 
 /// Owns the explore action: resolving what a zone can currently yield,
 /// rolling it, and paying out xp and loot. Sits above the services because

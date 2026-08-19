@@ -45,7 +45,7 @@ class OfflineProgressService {
     data.report.actionCount += count;
   }
 
-  void record(OfflineProgressData data, ActionResult result) {
+  void record(OfflineProgressData data, EncounterActionResult result) {
     if (!data.processing) return;
     _inventoryService.addItems(data.report.items, result.items);
     for (final item in result.equipment) {
@@ -53,7 +53,14 @@ class OfflineProgressService {
       // double-count when stacks merge
       _inventoryService.addEquipment(data.report.items, item.copy());
     }
-    if (result.enemyDied) data.report.enemiesDefeated++;
+    for (final entity in result.entitiesDefeated) {
+      if (entity.count <= 0) continue;
+      data.report.entitiesDefeated.update(
+        entity.id,
+        (count) => count + entity.count,
+        ifAbsent: () => entity.count,
+      );
+    }
   }
 
   /// Explore has its own result type: it settles a whole batch in one fire

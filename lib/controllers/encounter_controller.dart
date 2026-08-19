@@ -51,7 +51,7 @@ class EncounterController extends ChangeNotifier {
   //systems
   final EncounterSystem _encounterSystem;
 
-  ActionResult latestActionResult = ActionResult();
+  EncounterActionResult latestActionResult = EncounterActionResult();
 
   // increments every time an encounter action fires; lets the ui replay
   // per-action feedback (damage numbers) even when the value repeats
@@ -180,6 +180,7 @@ class EncounterController extends ChangeNotifier {
       worldState: _worldState,
       playerInventory: _inventoryState,
       instantRespawn: _dungeonService.runningEntity(_dungeonRun) != null,
+      actionCount: count,
     );
     actionSequence++;
     _recordOfflineResult();

@@ -50,14 +50,14 @@ class CraftingSystem {
   /// can report it. An empty result means nothing was made - the level or
   /// the materials were not there.
   ///
-  ActionResult craftActiveRecipeOnce(
+  EncounterActionResult craftActiveRecipeOnce(
     CraftingState craftingState,
     PlayerData playerState,
     InventoryData inventoryState,
     BuffData buffState,
     WorldData worldState,
   ) {
-    final result = ActionResult();
+    final result = EncounterActionResult();
     final r = _recipeCatalog.recipeById(craftingState.activeRecipeId);
 
     if (!checkRecipeLevelRequirement(r.id, playerState)) {

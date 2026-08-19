@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../catalogs/entity_catalog.dart';
 import '../data/offline_progress_data.dart';
 import '../data/skill_category.dart';
 import '../data/skill_data.dart';
@@ -94,29 +95,15 @@ class OfflineProgressBody extends StatelessWidget {
                 ),
             ],
           ),
+        if (report.entitiesDefeated.isNotEmpty)
+          _Section(
+            title: 'Defeated',
+            children: [_EntityTiles(counts: report.entitiesDefeated)],
+          ),
         if (report.entities.isNotEmpty)
           _Section(
             title: 'Discovered',
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    for (final entry in report.entities.entries)
-                      ItemStackTile(
-                        size: 48,
-                        id: entry.key,
-                        count: entry.value,
-                        // the tile only knows how to open an item's popup
-                        showInfoDialogOnTap: false,
-                        alwaysShowCount: true,
-                      ),
-                  ],
-                ),
-              ),
-            ],
+            children: [_EntityTiles(counts: report.entities)],
           ),
         if (xp.isNotEmpty)
           _Section(
@@ -126,6 +113,36 @@ class OfflineProgressBody extends StatelessWidget {
             ],
           ),
       ],
+    );
+  }
+}
+
+/// A row of entity tiles with their counts, shared by the sections that
+/// report entities by kind - what the walk turned up, and what it killed.
+class _EntityTiles extends StatelessWidget {
+  const _EntityTiles({required this.counts});
+
+  final Map<EntityId, int> counts;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(10),
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: [
+          for (final entry in counts.entries)
+            ItemStackTile(
+              size: 48,
+              id: entry.key,
+              count: entry.value,
+              // the tile only knows how to open an item's popup
+              showInfoDialogOnTap: false,
+              alwaysShowCount: true,
+            ),
+        ],
+      ),
     );
   }
 }

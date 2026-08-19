@@ -80,6 +80,8 @@ class WeightedDropTableService {
       totalWeight += e.weight;
     }
 
+    entries.sort((a, b) => a.weight.compareTo(b.weight));
+
     final outMap = <T, int>{};
     void add(T id, int count) {
       if (count <= 0) return;
@@ -161,6 +163,26 @@ class WeightedDropTableService {
         out.add(roll<T>(dropRoll.entries, rng: random));
       }
     }
+    return out;
+  }
+
+  // todo make this deterministic
+  List<ObjectStack<T>> rollBonusMulitpleTimes<T>(
+    int rollCount,
+    List<DropRoll<T>> rolls, {
+    Random? rng,
+  }) {
+    final random = rng ?? Random();
+    final out = <ObjectStack<T>>[];
+    for (int i = 0; i < rollCount; i++) {
+      for (final dropRoll in rolls) {
+        if (dropRoll.entries.isEmpty) continue;
+        if (random.nextDouble() <= dropRoll.chance) {
+          out.add(roll<T>(dropRoll.entries, rng: random));
+        }
+      }
+    }
+
     return out;
   }
 
