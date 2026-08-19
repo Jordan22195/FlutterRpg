@@ -173,14 +173,18 @@ class CraftingController extends ChangeNotifier {
     }
   }
 
-  // function bound to action button. executes periodically.
+  // function bound to action button. executes periodically. [count] is how
+  // many crafts the tick is settling at once - one during normal play, and
+  // however many the player was away for when the loop is catching up on
+  // offline progress.
   void doCraftingAction(int count) {
-    final result = _craftingSystem.craftActiveRecipeOnce(
+    final result = _craftingSystem.craftActiveRecipe(
       _craftingState,
       _playerState,
       _inventoryState,
       _buffState,
       _worldState,
+      craftCount: count,
     );
     // a no-op unless the timing system is settling time away
     _offlineProgressService.record(_offlineProgressData, result);

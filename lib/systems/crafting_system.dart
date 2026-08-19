@@ -46,17 +46,28 @@ class CraftingSystem {
        _weightedDropTableService = weightedDropTableService,
        _firemakingSystem = firemakingSystem;
 
-  /// Crafts the active recipe once, returning what it produced so callers
-  /// can report it. An empty result means nothing was made - the level or
-  /// the materials were not there.
+  /// Crafts the active recipe, once by default and [craftCount] times when a
+  /// stretch of time away is being settled in one go. Returns what it
+  /// produced so callers can report it. An empty result means nothing was
+  /// made - the level or the materials were not there.
   ///
-  EncounterActionResult craftActiveRecipeOnce(
+  /// Above one, the whole batch is settled in a single pass: every craft's
+  /// inputs are consumed at once, and the output table is rolled through
+  /// [WeightedDropTableService.rollMulitpleTimes] rather than once per craft.
+  /// That pays the same xp and the same expected output as looping, which is
+  /// what lets hours of offline progress resolve in one call.
+  ///
+  /// The batch is capped at what the inventory can actually pay for, so a
+  /// long stretch away crafts until the materials run out rather than on
+  /// credit - which is exactly where the loop would have stopped.
+  EncounterActionResult craftActiveRecipe(
     CraftingState craftingState,
     PlayerData playerState,
     InventoryData inventoryState,
     BuffData buffState,
-    WorldData worldState,
-  ) {
+    WorldData worldState, {
+    int craftCount = 1,
+  }) {
     final result = EncounterActionResult();
     final r = _recipeCatalog.recipeById(craftingState.activeRecipeId);
 
@@ -65,41 +76,57 @@ class CraftingSystem {
     }
 
     // Check again
-    if (craftableCount(r.id, inventoryState) <= 0) return result;
+    final craftable = craftableCount(r.id, inventoryState);
+    final crafts = craftCount < craftable ? craftCount : craftable;
+    if (crafts <= 0) return result;
 
-    // Consume inputs
+    // Consume inputs, a whole batch's worth at a time
     for (final entry in r.inputs.entries) {
-      _inventoryService.removeItems(inventoryState, entry.key, entry.value);
+      _inventoryService.removeItems(
+        inventoryState,
+        entry.key,
+        entry.value * crafts,
+      );
     }
 
     adjustDropTable(r.id, craftingState, playerState);
 
-    final craftedItemObjectStack = _weightedDropTableService.roll(r.output);
+    // one stack per distinct output. a single craft still rolls its own
+    // stack size rather than taking the table's mean, so nothing about
+    // normal play changes.
+    final rolled = crafts > 1
+        ? _weightedDropTableService.rollMulitpleTimes(crafts, r.output)
+        : [_weightedDropTableService.roll(r.output)];
 
-    // a fire is not an item: it becomes a buff on the firepit being worked
-    // at. that is the session's station, not whatever the player happens to
-    // be looking at — crafting keeps running after you navigate away.
-    if (r.skill == SkillId.FIREMAKING) {
-      _firemakingSystem.lightOrExtend(
-        craftedItemObjectStack.id,
-        craftingState.craftingEntityId,
-        playerState.currentZoneId,
-        buffState,
-      );
-    } else {
-      final built = ItemCatalog.buildItem(craftedItemObjectStack.id);
-      if (built is EquipmentItem) {
-        // equipment is a unique instance with a rolled quality; higher
-        // crafting levels raise the odds of the upper tiers
-        final skillLevel =
-            _playerDataService.getStatTotals(playerState)[r.skill] ?? 1;
-        built.quality = rollQuality(skillLevel, r.levelRequirement);
-        // the session grid gets its own copy: sharing one object between
-        // two inventories would double-count when stacks merge
-        final sessionCopy = built.copy();
-        _inventoryService.addEquipment(inventoryState, built);
-        _inventoryService.addEquipment(craftingState.craftedItems, sessionCopy);
-        result.equipment.add(built.copy());
+    for (final craftedItemObjectStack in rolled) {
+      if (craftedItemObjectStack.count <= 0) continue;
+
+      // a fire is not an item: it becomes a buff on the firepit being worked
+      // at. that is the session's station, not whatever the player happens to
+      // be looking at — crafting keeps running after you navigate away.
+      if (r.skill == SkillId.FIREMAKING) {
+        _firemakingSystem.lightOrExtend(
+          craftedItemObjectStack.id,
+          craftingState.craftingEntityId,
+          playerState.currentZoneId,
+          buffState,
+          count: craftedItemObjectStack.count,
+        );
+        continue;
+      }
+
+      // equipment takes its own path: it is a unique instance carrying a
+      // rolled quality, and never stacks with a plain item
+      if (ItemCatalog.buildItem(craftedItemObjectStack.id) is EquipmentItem) {
+        _addCraftedEquipment(
+          craftedItemObjectStack.id,
+          craftedItemObjectStack.count,
+          r,
+          craftingState,
+          playerState,
+          inventoryState,
+          result,
+        );
       } else {
         _inventoryService.addItems(inventoryState, [craftedItemObjectStack]);
         _inventoryService.addItems(craftingState.craftedItems, [
@@ -109,17 +136,70 @@ class CraftingSystem {
       }
     }
 
-    result.xp = {r.skill: r.xp};
+    result.xp = {r.skill: r.xp * crafts};
     _playerDataService.applyXp(playerState, result.xp);
     return result;
+  }
+
+  /// Builds [count] crafted copies of equipment [itemId] into the player's
+  /// inventory, the session grid and [result].
+  ///
+  /// Equipment is a unique instance with a rolled quality, so a batch rolls
+  /// the quality table [count] times and builds one instance per tier that
+  /// came up - the same pieces the loop would produce, and the same stacks
+  /// they merge into, without a random draw each.
+  void _addCraftedEquipment(
+    ItemId itemId,
+    int count,
+    CraftingRecipe recipe,
+    CraftingState craftingState,
+    PlayerData playerState,
+    InventoryData inventoryState,
+    EncounterActionResult result,
+  ) {
+    // higher crafting levels raise the odds of the upper tiers
+    final skillLevel =
+        _playerDataService.getStatTotals(playerState)[recipe.skill] ?? 1;
+    final entries = _qualityEntries(skillLevel, recipe.levelRequirement);
+    final tiers = count > 1
+        ? _weightedDropTableService.rollMulitpleTimes(count, entries)
+        : [_weightedDropTableService.roll(entries)];
+
+    for (final tier in tiers) {
+      if (tier.count <= 0) continue;
+      // every inventory gets its own instance: sharing one object between
+      // two of them would double-count when stacks merge
+      for (final target in [inventoryState, craftingState.craftedItems]) {
+        final piece = ItemCatalog.buildItem(itemId) as EquipmentItem;
+        piece.quality = tier.id;
+        piece.count = tier.count;
+        _inventoryService.addEquipment(target, piece);
+      }
+      final reported = ItemCatalog.buildItem(itemId) as EquipmentItem;
+      reported.quality = tier.id;
+      reported.count = tier.count;
+      result.equipment.add(reported);
+    }
   }
 
   /// Rolls the quality tier for a crafted piece of equipment. Common is
   /// always the most likely outcome; levels above the recipe requirement
   /// shift weight toward the higher tiers.
   ItemQuality rollQuality(int skillLevel, int levelRequirement) {
+    return _weightedDropTableService
+        .roll(_qualityEntries(skillLevel, levelRequirement))
+        .id;
+  }
+
+  /// The quality table a craft at [skillLevel] rolls against. Handed out as
+  /// a table rather than a single roll so a batch can settle every piece it
+  /// made in one pass.
+  List<WeightedDropTableEntry<ItemQuality>> _qualityEntries(
+    int skillLevel,
+    int levelRequirement,
+  ) {
     final levelBonus = (skillLevel - levelRequirement).clamp(0, 99).toDouble();
-    final entries = [
+    return [
       WeightedDropTableEntry<ItemQuality>(id: ItemQuality.COMMON, weight: 100),
       WeightedDropTableEntry<ItemQuality>(
         id: ItemQuality.UNCOMMON,
@@ -138,7 +218,6 @@ class CraftingSystem {
         weight: 0.5 + levelBonus * 0.1,
       ),
     ];
-    return _weightedDropTableService.roll(entries).id;
   }
 
   // right now just scales drop chance for burnt food

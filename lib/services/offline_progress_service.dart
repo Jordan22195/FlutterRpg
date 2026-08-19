@@ -50,8 +50,12 @@ class OfflineProgressService {
     _inventoryService.addItems(data.report.items, result.items);
     for (final item in result.equipment) {
       // its own copy: sharing one instance between two inventories would
-      // double-count when stacks merge
-      _inventoryService.addEquipment(data.report.items, item.copy());
+      // double-count when stacks merge. a copy is a single piece, so a
+      // batch's stack size is carried across explicitly.
+      _inventoryService.addEquipment(
+        data.report.items,
+        item.copy()..count = item.count,
+      );
     }
     for (final entity in result.entitiesDefeated) {
       if (entity.count <= 0) continue;

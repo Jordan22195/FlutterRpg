@@ -75,7 +75,7 @@ void main() {
     craftingState.activeRecipeId = 'forge_copper_dagger';
 
     for (var i = 0; i < 100; i++) {
-      system.craftActiveRecipeOnce(
+      system.craftActiveRecipe(
         craftingState,
         save.playerData,
         save.inventoryData,

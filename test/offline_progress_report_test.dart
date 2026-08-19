@@ -129,11 +129,11 @@ void main() {
 
       final report = session.actionTimingController.pendingOfflineReport;
       expect(report, isNotNull);
-      // crafting settles one action per fire regardless of the count it is
-      // handed: a boosted and an unboosted stretch at most, and this gap has
-      // only the unboosted one
-      expect(report!.items.itemMap[ItemId.COPPER_BAR], 1);
-      expect(report.xp[SkillId.BLACKSMITHING], 5.0);
+      // crafting settles the whole count a fire is handed, so the report
+      // carries every bar the gap was worth
+      final crafts = actionsIn(longGap);
+      expect(report!.items.itemMap[ItemId.COPPER_BAR], crafts);
+      expect(report.xp[SkillId.BLACKSMITHING], 5.0 * crafts);
 
       session.actionTimingController.stop();
       session.dispose();

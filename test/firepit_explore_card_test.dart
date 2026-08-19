@@ -54,7 +54,7 @@ void main() {
     if (lightRecipeId != null) {
       save.craftingState.craftingEntityId = EntityId.FIREPIT;
       save.craftingState.activeRecipeId = lightRecipeId;
-      session.craftingSystem.craftActiveRecipeOnce(
+      session.craftingSystem.craftActiveRecipe(
         save.craftingState,
         save.playerData,
         save.inventoryData,

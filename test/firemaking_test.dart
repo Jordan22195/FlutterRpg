@@ -40,7 +40,7 @@ void main() {
     final save = session.saveGameData;
     save.craftingState.craftingEntityId = firepit;
     save.craftingState.activeRecipeId = recipeId;
-    session.craftingSystem.craftActiveRecipeOnce(
+    session.craftingSystem.craftActiveRecipe(
       save.craftingState,
       save.playerData,
       save.inventoryData,

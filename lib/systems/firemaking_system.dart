@@ -35,14 +35,28 @@ class FiremakingSystem {
   /// Lights [fireId] in [firepitId]: adds to the fire already burning when it
   /// is the same kind, and replaces it outright when it is not. This is the
   /// whole "add more logs, or start a different fire" rule.
+  ///
+  /// [count] lights the same fire that many times at once, which is how an
+  /// offline stretch of firemaking settles: burn time is what a fire craft
+  /// pays out, so n crafts are worth n durations however they are applied.
   void lightOrExtend(
     ItemId fireId,
     EntityId firepitId,
     ZoneId zoneId,
-    BuffData buffState,
-  ) {
+    BuffData buffState, {
+    int count = 1,
+  }) {
+    if (count <= 0) return;
     final fire = ItemCatalog.buildItem(fireId);
     if (fire is! FireItem) return;
+
+    // this instance is one application of the fire, so a batched one is
+    // worth the whole batch's burn time - both when it extends the fire
+    // already burning and when it replaces a different one
+    if (count > 1) {
+      fire.duration = fire.duration * count;
+      fire.expirationTime = DateTime.now().add(fire.duration);
+    }
 
     _buffService.setZoneBuff(fire, buffState, zoneId, firepitId);
   }
