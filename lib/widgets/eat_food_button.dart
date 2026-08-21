@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import 'icon_renderer.dart';
 import 'primary_button.dart';
 

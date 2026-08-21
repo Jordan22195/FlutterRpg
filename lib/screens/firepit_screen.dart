@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/widgets/action_timer.dart';
 import 'package:provider/provider.dart';
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
 import '../controllers/action_timing_controller.dart';
 import '../controllers/buff_controller.dart';
 import '../controllers/crafting_controller.dart';

@@ -1,4 +1,4 @@
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 import 'inventory_data.dart';
 import 'skill_data.dart';
 

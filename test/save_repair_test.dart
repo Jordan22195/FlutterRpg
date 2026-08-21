@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/game_session.dart';
 
 void main() {
@@ -15,14 +15,14 @@ void main() {
     // corrupt the save the way older versions did: the pond (permanent)
     // also sits in the discovered list with a non-zero count
     final duplicate =
-        catalogs.entityCatalog.buildEntity(EntityId.TRANQUIL_POND)
+        EntityId.TRANQUIL_POND.build()
             as EncounterEntity;
     duplicate.count = 3;
     farm.discoveredEntities.add(duplicate);
 
     // and a doubled permanent entry
     farm.permanentEntities.add(
-      catalogs.entityCatalog.buildEntity(EntityId.TRANQUIL_POND),
+      EntityId.TRANQUIL_POND.build(),
     );
 
     final session = factory.create(
@@ -42,7 +42,7 @@ void main() {
     );
 
     // legitimately discovered entities are untouched
-    final tree = catalogs.entityCatalog.buildEntity(EntityId.TREE);
+    final tree = EntityId.TREE.build();
     farm.discoveredEntities.add(tree);
     expect(farm.discoveredEntities, contains(tree));
 

@@ -1,7 +1,7 @@
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import '../data/inventory_data.dart';
 
 class InventoryService {
@@ -51,20 +51,20 @@ class InventoryService {
   }
 
   // get list of food items sorted by healing amount
-  List<ItemId> getFoodItemsSortedByHealing(
-    InventoryData inventoryState,
-    ItemCatalog itemCatalog,
-  ) {
+  List<ItemId> getFoodItemsSortedByHealing(InventoryData inventoryState) {
     List<ItemId> foodItems = [];
     for (MapEntry entry in inventoryState.itemMap.entries) {
-      final def = itemCatalog.definitionFor(entry.key);
+      final def = entry.key.definition;
       if (def is FoodItemDefinition) {
         foodItems.add(entry.key);
       }
     }
     foodItems.sort((a, b) {
-      final defA = itemCatalog.definitionFor(a) as FoodItemDefinition;
-      final defB = itemCatalog.definitionFor(b) as FoodItemDefinition;
+      final defA = a.definition;
+      final defB = b.definition;
+      // the list was built by filtering on FoodItemDefinition above, so this
+      // only has to satisfy the type system
+      if (defA is! FoodItemDefinition || defB is! FoodItemDefinition) return 0;
       return defB.restoreAmount.compareTo(defA.restoreAmount);
     });
     return foodItems;

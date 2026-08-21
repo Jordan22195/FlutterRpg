@@ -1,6 +1,5 @@
-import '../catalogs/dungeon_catalog.dart';
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/dungeons/dungeons.dart';
+import '../catalogs/entities/entities.dart';
 import '../data/dungeon_run.dart';
 import '../data/entity_queue.dart';
 import '../data/inventory_data.dart';
@@ -19,29 +18,19 @@ import '../services/player_data_service.dart';
 /// through EncounterController/EncounterSystem like any other encounter —
 /// this system only decides what is in the cards and when you may open one.
 class DungeonSystem {
-  final DungeonCatalog _dungeonCatalog;
-  final EntityCatalog _entityCatalog;
-  final ItemCatalog _itemCatalog;
   final ExplorationService _explorationService;
   final InventoryService _inventoryService;
   final PlayerDataService _playerDataService;
 
   DungeonSystem({
-    required DungeonCatalog dungeonCatalog,
-    required EntityCatalog entityCatalog,
-    required ItemCatalog itemCatalog,
     required ExplorationService explorationService,
     required InventoryService inventoryService,
     required PlayerDataService playerDataService,
-  }) : _dungeonCatalog = dungeonCatalog,
-       _entityCatalog = entityCatalog,
-       _itemCatalog = itemCatalog,
-       _explorationService = explorationService,
+  }) : _explorationService = explorationService,
        _inventoryService = inventoryService,
        _playerDataService = playerDataService;
 
-  DungeonDefinition? definitionFor(DungeonId id) =>
-      _dungeonCatalog.getDefinitionFor(id);
+  DungeonDefinition? definitionFor(DungeonId id) => id.definition;
 
   // ---- run lifecycle ----
 
@@ -51,8 +40,8 @@ class DungeonSystem {
   /// (or a death) does.
   void beginRun(DungeonRun run, DungeonId dungeonId) {
     if (run.active && run.dungeonId == dungeonId) return;
-    final def = _dungeonCatalog.getDefinitionFor(dungeonId);
-    if (def == null) return;
+    if (!dungeonId.isReal) return;
+    final def = dungeonId.definition;
 
     run.active = true;
     run.dungeonId = dungeonId;
@@ -69,8 +58,10 @@ class DungeonSystem {
   /// being fought again. The cleared mark stays: it is what keeps the next
   /// card open.
   void refillSlot(DungeonRun run, int index) {
-    final def = _dungeonCatalog.getDefinitionFor(run.dungeonId);
-    if (def == null || index < 0 || index >= run.slots.length) return;
+    if (!run.dungeonId.isReal || index < 0 || index >= run.slots.length) {
+      return;
+    }
+    final def = run.dungeonId.definition;
     run.slots[index] = _buildSlot(def, index);
   }
 
@@ -82,9 +73,9 @@ class DungeonSystem {
     required PlayerData playerState,
     required WorldData worldState,
   }) {
-    final def = _dungeonCatalog.getDefinitionFor(run.dungeonId);
-    if (def != null && def.type == DungeonType.TRANSIENT) {
-      _consumeEntrance(def.id, playerState, worldState);
+    final def = run.dungeonId.definition;
+    if (run.dungeonId.isReal && def.type == DungeonType.TRANSIENT) {
+      _consumeEntrance(run.dungeonId, playerState, worldState);
     }
 
     run.active = false;
@@ -133,8 +124,7 @@ class DungeonSystem {
 
     // the entry key gates the first card only, and only until it is paid
     if (index == 0 && def.isKeyed && !run.keySpent) {
-      final keyName =
-          _itemCatalog.definitionFor(def.keyItemId)?.name ?? 'a key';
+      final keyName = def.keyItemId.definition.name;
       if (_inventoryService.getItemCount(playerInventory, def.keyItemId) <= 0) {
         return 'Requires $keyName';
       }
@@ -168,7 +158,7 @@ class DungeonSystem {
     final entry = def.entries[index];
     final members = <EncounterEntity>[];
     for (final ref in entry.entities) {
-      final entity = _entityCatalog.buildEntity(ref.entityId);
+      final entity = ref.entityId.build();
       // a card can only hold something that depletes: anything else would
       // never clear, and the drop roll on kill casts to an encounter
       // definition unguarded
@@ -196,7 +186,7 @@ class DungeonSystem {
     WorldData worldState,
   ) {
     for (final id in EntityId.values) {
-      final def = _entityCatalog.getDefinitionFor(id);
+      final def = id.definition;
       if (def is DungeonEntityDefinition && def.dungeonId == dungeonId) {
         _explorationService.removeEntityFromZone(
           id,

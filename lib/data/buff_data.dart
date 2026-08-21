@@ -1,6 +1,6 @@
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
+import '../catalogs/zones/zones.dart';
 import '../utilities/json_utils.dart';
 
 class BuffData {

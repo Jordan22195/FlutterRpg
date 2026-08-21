@@ -2,8 +2,8 @@ import 'dart:math';
 
 import 'package:rpg/services/buff_service.dart';
 import 'package:rpg/utilities/util.dart';
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/entities/entities.dart';
+import '../catalogs/zones/zones.dart';
 
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
@@ -74,18 +74,12 @@ class PlayerDataService {
   }
 
   /// The stance is stored as the skill the action loop boosts.
-  void setStance(
-    Stance stance,
-    PlayerData playerState,
-    EntityCatalog entityCatalog,
-  ) {
+  void setStance(Stance stance, PlayerData playerState) {
     playerState.stance = stance;
     if (stance == Stance.strong) {
       // the strong stance spends strength on whatever the open entity is
       // worked with - mining on a rock, woodcutting on a tree
-      final definition = entityCatalog.getDefinitionFor(
-        playerState.currentEntityViewId,
-      );
+      final definition = playerState.currentEntityViewId.definition;
       // a bench, a shop or no entity at all has no skill to lend the boost
       // to. strength stands in, and getStatTotals leaves it unscaled so it
       // can't compound on itself

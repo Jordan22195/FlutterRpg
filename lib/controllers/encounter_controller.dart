@@ -5,9 +5,9 @@ import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/player_data_service.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/inventory_data.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
@@ -86,12 +86,10 @@ class EncounterController extends ChangeNotifier {
     required WorldData worldState,
     required ExplorationService explorationService,
     required ActionTimingController actionTimingController,
-    required EntityCatalog entityCatalog,
     required WeightedDropTableService dropTableService,
     required PlayerDataService playerDataService,
     required InventoryData inventoryState,
     required InventoryService inventoryService,
-    required ItemCatalog itemCatalog,
     required EncounterSystem encounterSystem,
     required OfflineProgressData offlineProgressData,
     required OfflineProgressService offlineProgressService,

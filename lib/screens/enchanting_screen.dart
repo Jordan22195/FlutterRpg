@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rpg/widgets/action_timer.dart';
 import 'package:provider/provider.dart';
 
-import '../catalogs/enchantment_catalog.dart';
+import '../catalogs/enchantments/enchantments.dart';
 import '../controllers/enchanting_controller.dart';
 import '../data/skill_data.dart';
 import '../widgets/equipment_card.dart';

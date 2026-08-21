@@ -1,9 +1,10 @@
+import 'package:rpg/catalogs/catalog_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
@@ -42,11 +43,8 @@ void main() {
     );
 
     // icon resolvers so IconRenderer doesn't throw
-    ItemCatalog.init();
+    registerCatalogIconResolvers();
     EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
-    EnumImageProviderLookup.register<EntityId>(
-      session.catalogBundle.entityCatalog.imageProviderFor,
-    );
 
     // tall enough that the whole ListView is built: the COOK section sits
     // below the fold at the default 800x600 surface

@@ -4,8 +4,8 @@ import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'explore_screen.dart';
 import 'dungeon_screen.dart';
-import '../catalogs/dungeon_catalog.dart';
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/dungeons/dungeons.dart';
+import '../catalogs/zones/zones.dart';
 import '../controllers/dungeon_controller.dart';
 import '../data/skill_data.dart';
 import '../services/entity_screen_router_service.dart';
@@ -143,8 +143,8 @@ class _MapScreenState extends State<MapScreen> {
   Widget _landmarkMarker(DungeonId dungeonId) {
     final scheme = Theme.of(context).colorScheme;
     final dungeons = context.read<DungeonController>();
-    final def = dungeons.definitionFor(dungeonId);
-    if (def == null) return const SizedBox.shrink();
+    if (!dungeonId.isReal) return const SizedBox.shrink();
+    final def = dungeonId.definition;
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(

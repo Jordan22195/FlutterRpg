@@ -1,4 +1,4 @@
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 
 /// An ordered run of entities worked through one at a time — the thing a
 /// dungeon card holds, and the shape any future "do these in order" content

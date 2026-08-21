@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:rpg/data/ObjectStack.dart';
-import 'package:rpg/game_session.dart';
 import 'item_stack_tile.dart';
 
 class InventoryGrid extends StatelessWidget {
@@ -41,8 +39,6 @@ class InventoryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final itemCatalog = context.read<GameSession>().catalogBundle.itemCatalog;
-
     return GridView.builder(
       shrinkWrap: shrinkWrap,
       physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
@@ -61,12 +57,10 @@ class InventoryGrid extends StatelessWidget {
           id: stack.id,
           count: stack.count,
           showInfoDialogOnTap: showInfoDialogOnTap && onItemTap == null,
-          title:
-              titleForItem?.call(stack) ??
-              itemCatalog.definitionFor(stack.id)?.name,
+          title: titleForItem?.call(stack) ?? stack.id.definition?.name,
           description:
               descriptionForItem?.call(stack) ??
-              itemCatalog.definitionFor(stack.id)?.description,
+              stack.id.definition?.description,
           //onTap: onItemTap != null ? () => onItemTap!(stack) : null,
         );
       },

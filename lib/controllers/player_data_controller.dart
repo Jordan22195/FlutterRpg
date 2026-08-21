@@ -4,8 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:rpg/services/player_data_service.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/zones/zones.dart';
 import 'action_timing_controller.dart';
 
 class PlayerDataController extends ChangeNotifier {
@@ -14,18 +13,15 @@ class PlayerDataController extends ChangeNotifier {
   final ActionTimingController _actionTimingController;
   // the stance is resolved against the entity the player has open, so
   // setting one needs the catalog to look that entity up
-  final EntityCatalog _entityCatalog;
   late final Timer _heartbeatTimer;
 
   PlayerDataController({
     required PlayerData playerData,
     required PlayerDataService playerDataService,
     required ActionTimingController actionTimingController,
-    required EntityCatalog entityCatalog,
   }) : _playerData = playerData,
        _playerDataService = playerDataService,
-       _actionTimingController = actionTimingController,
-       _entityCatalog = entityCatalog {
+       _actionTimingController = actionTimingController {
     _heartbeatTimer = Timer.periodic(
       const Duration(seconds: 1),
       (_) => _tick(),
@@ -94,7 +90,7 @@ class PlayerDataController extends ChangeNotifier {
   }
 
   void setStance(Stance stance) {
-    _playerDataService.setStance(stance, _playerData, _entityCatalog);
+    _playerDataService.setStance(stance, _playerData);
     notifyListeners();
   }
 

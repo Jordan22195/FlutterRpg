@@ -3,10 +3,54 @@
 Art referenced by the catalogs that does not exist on disk yet.
 Each file below renders as a broken-image placeholder in game until added.
 
-Verified against actual references in `lib/catalogs/*.dart` on 2026-07-15 — most
-items from the previous pass now exist (fish, cooked fish, tier 2 gear/materials,
-gems, most jewelry, enchanting materials, dungeon uniques, herb sickles, benches,
-farm/mine zone headers, herb nodes). Remaining gaps below.
+**The authoritative list is now generated, not hand-maintained.** Run:
+
+```
+python3 tools/generate_assets_rd.py --list
+```
+
+`test/catalog_integrity_test.dart` asserts the same set via its
+`knownMissingArt` allowlist, and fails if an entry there has quietly been
+drawn — so that allowlist and this file should only ever shrink.
+
+Verified against actual references in `lib/catalogs/**` on 2026-08-20 — the
+catalogs moved to one file per type and the item/entity definitions now hang
+off their id enums, so references live in `lib/catalogs/items/item_id.dart`
+and friends rather than one big map.
+
+## New this pass — the steel and mithril tiers
+
+The 31 `ItemId` values that had no definition now have one, so their icons are
+referenced and generatable. Prompts for all of them are in
+`tools/rd_prompt_overrides.json`.
+
+Ores and bars: `gold_ore`, `mithril_ore`, `adamantite_ore`, `runeite_ore`,
+`steel_bar`, `gold_bar`, `mithril_bar`, `adamantite_bar`, `runite_bar`.
+
+Steel set: `steel_helmet`, `steel_chestplate`, `steel_legs`, `steel_boots`,
+`steel_gloves`, `steel_shield`, `steel_dagger`, `steel_axe`, `steel_pickaxe`,
+`steel_sickle`.
+
+Mithril set: the same ten slots, `mithril_*`.
+
+Boss unique: `goblin_scepter` — the Goblin Queen's second guaranteed drop, and
+the Wandering Merchant's stock item. Until this pass it had no definition at
+all, so both handed the player a junk "Null" item.
+
+## Known wrong art (not missing, just wrong)
+
+- `GOLD_RING` and `GOLD_NECKLACE` display as gold and are consumed as gold
+  bases by the jewelcrafting recipes, but still point at `copper_ring.png` and
+  `copper_necklace.png`. Point them at `gold_ring.png` / `gold_necklace.png`
+  once that art exists.
+
+## Undeclared directories
+
+`assets/images/dungeons/` is referenced by every `DungeonDefinition` but is
+**not declared in `pubspec.yaml`**, so files placed there would not ship even
+once drawn. `assets/images/zones/` is declared but empty. Fixing either means
+adding the art *and* the pubspec entry in the same change — Flutter treats a
+declared-but-empty directory as a build error.
 
 ## Item icons — `assets/icons/items/`
 

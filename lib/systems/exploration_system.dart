@@ -1,7 +1,5 @@
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
-import '../catalogs/zone_catalog.dart';
-import '../data/ObjectStack.dart';
+import '../catalogs/items/items.dart';
+import '../catalogs/zones/zones.dart';
 import '../data/action_result.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';
@@ -21,25 +19,16 @@ class ExplorationSystem {
   final PlayerDataService _playerDataService;
   final WeightedDropTableService _dropTableService;
   final InventoryService _inventoryService;
-  final EntityCatalog _entityCatalog;
-  final ItemCatalog _itemCatalog;
-  final ZoneCatalog _zoneCatalog;
 
   ExplorationSystem({
     required ExplorationService explorationService,
     required PlayerDataService playerDataService,
     required WeightedDropTableService dropTableService,
     required InventoryService inventoryService,
-    required EntityCatalog entityCatalog,
-    required ItemCatalog itemCatalog,
-    required ZoneCatalog zoneCatalog,
   }) : _explorationService = explorationService,
        _playerDataService = playerDataService,
        _dropTableService = dropTableService,
-       _inventoryService = inventoryService,
-       _entityCatalog = entityCatalog,
-       _itemCatalog = itemCatalog,
-       _zoneCatalog = zoneCatalog;
+       _inventoryService = inventoryService;
 
   /// The player's Exploration level including gear and buffs, matching the
   /// convention every other level gate in the game uses.
@@ -68,17 +57,15 @@ class ExplorationSystem {
     int numTimesToExplore = 1,
   }) {
     final result = ExploreResult();
-    final zone = _zoneCatalog.getDefinitionFor(playerState.currentZoneId);
+    final zone = playerState.currentZoneId.definition;
     final level = explorationLevel(playerState);
 
     final entityEntries = _explorationService.getZoneEntityDropTableEntries(
       playerState,
-      _zoneCatalog,
       level,
     );
     final itemEntries = _explorationService.getZoneItemDropTableEntries(
       playerState,
-      _zoneCatalog,
       level,
     );
 
@@ -110,7 +97,6 @@ class ExplorationSystem {
         _explorationService.addEntityToCurrentZone(
           ent.id,
           ent.count,
-          _entityCatalog,
           playerState,
           worldState,
         );
@@ -148,7 +134,6 @@ class ExplorationSystem {
         _explorationService.addEntityToCurrentZone(
           rolled.id,
           rolled.count,
-          _entityCatalog,
           playerState,
           worldState,
         );
@@ -200,7 +185,7 @@ class ExplorationSystem {
   /// including the ones still locked, so the screen can show what the
   /// skill still has to offer here.
   ZoneDetails buildZoneDetails(PlayerData playerState, ZoneId zoneId) {
-    final zone = _zoneCatalog.getDefinitionFor(zoneId);
+    final zone = zoneId.definition;
     final level = explorationLevel(playerState);
 
     final unlockedEntities = WeightedDropTableService.availableAt(
@@ -214,7 +199,7 @@ class ExplorationSystem {
 
     final entities = <ZoneDiscovery>[];
     for (final entry in zone.discoverableEntities) {
-      final def = _entityCatalog.getDefinitionFor(entry.id);
+      final def = entry.id.definition;
       final locked = level < entry.unlockLevel;
       entities.add(
         ZoneDiscovery(
@@ -244,12 +229,12 @@ class ExplorationSystem {
     for (final entry in zone.discoverableItems) {
       // the NULL entry is the table's "found nothing" filler, not content
       if (entry.id == ItemId.NULL) continue;
-      final def = _itemCatalog.definitionFor(entry.id);
+      final def = entry.id.definition;
       final locked = level < entry.unlockLevel;
       items.add(
         ZoneDiscovery(
-          name: def?.name ?? entry.id.name,
-          iconAsset: def?.iconAsset ?? '',
+          name: def.name,
+          iconAsset: def.iconAsset ?? '',
           unlockLevel: entry.unlockLevel,
           locked: locked,
           chance: locked

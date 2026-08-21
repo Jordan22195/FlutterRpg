@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/services/inventory_service.dart';
@@ -14,13 +14,13 @@ class ShopService {
 
   /// Buy price for one unit: the item's value plus the shop's markup.
   int buyPrice(ItemId itemId, ShopEntityDefinition def) {
-    final value = ItemCatalog.buildItem(itemId).value;
+    final value = itemId.build().value;
     return (value * def.priceMarkup).ceil();
   }
 
   /// Sell price for one unit: the item's value.
   int sellPrice(ItemId itemId) {
-    return ItemCatalog.buildItem(itemId).value;
+    return itemId.build().value;
   }
 
   /// Rerolls the shop's stock when its restock time has passed (or it
@@ -29,8 +29,7 @@ class ShopService {
   /// stock 1-10 units.
   void restockIfDue(
     ShopEntity shop,
-    ShopEntityDefinition def,
-    ItemCatalog itemCatalog, {
+    ShopEntityDefinition def, {
     DateTime? now,
     Random? rng,
   }) {
@@ -41,14 +40,16 @@ class ShopService {
 
     final random = rng ?? Random();
 
-    // sellable pool: every defined item except the currency itself
-    final candidates = def.shopStockPool;
+    // draw without replacement from a *copy* of the pool — the pool belongs
+    // to the catalog definition and is shared by every shop of this kind, so
+    // draining it here would leave later restocks with nothing to stock.
+    final candidates = [...def.shopStockPool];
 
     shop.stock.clear();
     final slots = min(def.stockSlots, candidates.length);
     for (int i = 0; i < slots; i++) {
       final pick = candidates.removeAt(random.nextInt(candidates.length));
-      shop.stock.add(pick);
+      shop.stock.add(pick.toSlot());
     }
 
     shop.nextRestockAt = time.add(def.restockInterval);
@@ -58,7 +59,7 @@ class ShopService {
   /// is out of stock or the player can't afford it.
   bool buyItem(
     ShopEntity shop,
-    ShopStockEntry entry,
+    ShopStockSlot entry,
     ShopEntityDefinition def,
     InventoryData inventoryState,
   ) {
@@ -76,7 +77,7 @@ class ShopService {
     }
 
     // equipment is a unique instance; everything else is a stackable count
-    final item = ItemCatalog.buildItem(entry.itemId);
+    final item = entry.itemId.build();
     if (item is EquipmentItem) {
       _inventoryService.addEquipment(inventoryState, item);
     } else {

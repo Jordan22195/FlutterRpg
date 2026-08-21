@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import '../data/skill_data.dart';
 
 class EnchantingService {

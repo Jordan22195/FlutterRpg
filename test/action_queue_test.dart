@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/action_queue_data.dart';
 import 'package:rpg/game_session.dart';
 
@@ -31,7 +31,6 @@ void main() {
     session.explorationService.addEntityToCurrentZone(
       EntityId.TREE,
       3,
-      session.catalogBundle.entityCatalog,
       save.playerData,
       save.worldData,
     );
@@ -103,7 +102,6 @@ void main() {
       session.explorationService.addEntityToCurrentZone(
         EntityId.TREE,
         3,
-        session.catalogBundle.entityCatalog,
         save.playerData,
         save.worldData,
       );

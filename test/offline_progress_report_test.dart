@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/offline_progress_data.dart';
 import 'package:rpg/data/player_data.dart';
@@ -90,7 +90,7 @@ void main() {
       // a tree in the starting zone, the way exploring would leave one
       final save = session.saveGameData;
       final tree =
-          session.catalogBundle.entityCatalog.buildEntity(EntityId.TREE)
+          EntityId.TREE.build()
               as EncounterEntity;
       save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities
           .add(tree);

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 import '../data/skill_data.dart';
 import '../screens/crafting_screen.dart';
 import '../screens/dungeon_screen.dart';
@@ -19,16 +19,9 @@ class EntityScreenRouterService {
   static const String shopRouteName = 'shop';
   static const String dungeonRouteName = 'dungeon';
 
-  final EntityCatalog _entityCatalog;
-
-  EntityScreenRouterService({required EntityCatalog entityCatalog})
-    : _entityCatalog = entityCatalog;
-
   //
   void navigateToEntity(EntityId entityId, BuildContext context) {
-    final enitity = _entityCatalog
-        .getDefinitionFor(entityId)
-        .toEntity(entityId);
+    final enitity = entityId.build();
 
     if (enitity is ShopEntity) {
       Navigator.of(context).push(
@@ -59,7 +52,7 @@ class EntityScreenRouterService {
     } else if (enitity is CraftingEntity) {
       // a firepit has its own screen: it offers firemaking and, while a
       // cookfire burns, cooking too
-      if (enitity is FirepitEntity) {
+      if (enitity is FirePitEntity) {
         Navigator.of(context).push(
           MaterialPageRoute(
             settings: const RouteSettings(name: firepitRouteName),

@@ -12,10 +12,10 @@ import 'package:rpg/data/inventory_data.dart';
 import '../data/bound_action.dart';
 import '../data/offline_progress_data.dart';
 import '../services/offline_progress_service.dart';
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/zones/zones.dart';
 import '../services/player_data_service.dart';
 import '../services/exploration_service.dart';
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 import '../services/entity_screen_router_service.dart';
 import '../systems/encounter_system.dart';
 import '../systems/exploration_system.dart';
@@ -34,9 +34,8 @@ class WorldController extends ChangeNotifier {
   final InventoryData _inventoryState;
   final OfflineProgressData _offlineProgressData;
 
-  // catalogs
-  final ZoneCatalog _zoneCatalog;
-  final EntityCatalog _entityCatalog;
+  // the world map as a graph; travel cost is a computation, not a lookup
+  final ZoneTravelGraph _travelGraph = ZoneTravelGraph();
 
   // services
   final ExplorationService _explorationService;
@@ -53,8 +52,6 @@ class WorldController extends ChangeNotifier {
     required ExplorationService explorationService,
     required PlayerData playerState,
     required InventoryData inventoryState,
-    required ZoneCatalog zoneCatalog,
-    required EntityCatalog entityCatalog,
     required EntityScreenRouterService entityScreenRouterService,
     required PlayerDataService playerDataService,
     required EncounterSystem encounterSystem,
@@ -70,9 +67,7 @@ class WorldController extends ChangeNotifier {
        _offlineProgressService = offlineProgressService,
        _inventoryState = inventoryState,
        _explorationService = explorationService,
-       _zoneCatalog = zoneCatalog,
        _worldState = worldState,
-       _entityCatalog = entityCatalog,
        _playerState = playerState,
        _entityScreenRouterService = entityScreenRouterService,
        _encounterSystem = encounterSystem,
@@ -135,7 +130,7 @@ class WorldController extends ChangeNotifier {
   }
 
   ZoneDefinition getCurrentZoneDefinition() {
-    return _zoneCatalog.getDefinitionFor(_playerState.currentZoneId);
+    return _playerState.currentZoneId.definition;
   }
 
   // ---- explore screen card data ----
@@ -163,14 +158,14 @@ class WorldController extends ChangeNotifier {
 
   /// Level required to interact with [id] (herb gates); 0 when ungated.
   int requiredLevelFor(EntityId id) {
-    final def = _entityCatalog.getDefinitionFor(id);
+    final def = id.definition;
     return def is HerbEntityDefinition ? def.requiredLevel : 0;
   }
 
   /// Whether the player's stats (with gear/buffs, matching the zone-gate
   /// convention) meet [id]'s level requirement. True for ungated entities.
   bool meetsEntityRequirement(EntityId id) {
-    final def = _entityCatalog.getDefinitionFor(id);
+    final def = id.definition;
     if (def is! HerbEntityDefinition) return true;
     final level =
         _playerDataService.getStatTotals(_playerState)[def.entityType] ?? 0;
@@ -182,18 +177,18 @@ class WorldController extends ChangeNotifier {
   ZoneId get currentZoneId => _playerState.currentZoneId;
 
   ZoneDefinition zoneDefinition(ZoneId zoneId) {
-    return _zoneCatalog.getDefinitionFor(zoneId);
+    return zoneId.definition;
   }
 
   /// The zone graph's edges, for drawing the travel paths on the map.
   List<(ZoneId, ZoneId, double)> travelEdges() {
-    return ZoneCatalog.travelEdges();
+    return ZoneTravelGraph.travelEdges();
   }
 
   /// Stamina cost to travel from the player's zone to [target], summed
   /// along the path through the zone tree.
   double travelCostTo(ZoneId target) {
-    return _zoneCatalog.travelCost(_playerState.currentZoneId, target);
+    return _travelGraph.travelCost(_playerState.currentZoneId, target);
   }
 
   bool canAffordTravelTo(ZoneId target) {
@@ -202,12 +197,12 @@ class WorldController extends ChangeNotifier {
 
   /// Exploration level [target] demands to enter; 0 when ungated.
   int requiredExplorationLevel(ZoneId target) {
-    return _zoneCatalog.getDefinitionFor(target).explorationLevel;
+    return target.definition.explorationLevel;
   }
 
   /// Whether the player's exploration reaches [target]'s base difficulty.
   bool meetsZoneExplorationRequirement(ZoneId target) {
-    final def = _zoneCatalog.getDefinitionFor(target);
+    final def = target.definition;
     if (def.explorationLevel <= 0) return true;
     return _explorationSystem.explorationLevel(_playerState) >=
         def.explorationLevel;
@@ -216,7 +211,7 @@ class WorldController extends ChangeNotifier {
   /// Whether the player meets [target]'s extra skill gate (the mine's
   /// mining requirement, say), independent of its exploration level.
   bool meetsZoneSkillRequirement(ZoneId target) {
-    final def = _zoneCatalog.getDefinitionFor(target);
+    final def = target.definition;
     if (def.requiredSkill == SkillId.NULL || def.requiredLevel <= 0) {
       return true;
     }

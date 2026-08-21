@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 import '../data/offline_progress_data.dart';
 import '../data/skill_category.dart';
 import '../data/skill_data.dart';

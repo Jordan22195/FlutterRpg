@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/dungeon_catalog.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/dungeons/dungeons.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/dungeon_run.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -284,9 +284,7 @@ void main() {
       expect(save.dungeonRun.runningSlot, 0);
 
       // the action queue starts world entities through the same entry point
-      final zoneEntity = session.catalogBundle.entityCatalog.buildEntity(
-        EntityId.TREE,
-      );
+      final zoneEntity = EntityId.TREE.build();
       session.encounterController.startEncounterActionFor(
         zoneEntity as EncounterEntity,
       );
@@ -425,12 +423,7 @@ void main() {
       expect(save.dungeonRun.slots[1].cleared, isFalse);
       expect(save.dungeonRun.cleared, contains(1));
 
-      expect(
-        session.catalogBundle.dungeonCatalog
-            .getDefinitionFor(DungeonId.GOBLIN_QUEEN_LAIR)!
-            .repeatableEntries,
-        isFalse,
-      );
+      expect(DungeonId.GOBLIN_QUEEN_LAIR.definition.repeatableEntries, isFalse);
 
       session.dispose();
     });
@@ -474,7 +467,6 @@ void main() {
       session.explorationService.addEntityToCurrentZone(
         EntityId.DEV_DUNGEON_ENTRANCE,
         1,
-        session.catalogBundle.entityCatalog,
         save.playerData,
         save.worldData,
       );
@@ -512,7 +504,6 @@ void main() {
         session.explorationService.addEntityToCurrentZone(
           EntityId.DEV_DUNGEON_ENTRANCE,
           1,
-          session.catalogBundle.entityCatalog,
           save.playerData,
           save.worldData,
         );

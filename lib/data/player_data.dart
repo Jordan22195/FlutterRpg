@@ -1,7 +1,7 @@
-import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'skill_data.dart';
 import 'equipment_data.dart';
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/zones/zones.dart';
 import '../data/buff_data.dart';
 
 /// Stance: which skill the action loop boosts during an encounter.

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:rpg/data/player_data.dart';
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
 import '../services/buff_service.dart';
 
 class BuffController extends ChangeNotifier {

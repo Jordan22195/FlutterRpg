@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/widgets/action_timer.dart';
 import 'package:rpg/widgets/encounter_info_panel.dart';
 import 'package:rpg/widgets/entity_info_dialog.dart';
@@ -7,7 +7,7 @@ import 'package:rpg/widgets/eat_food_button.dart';
 import 'package:rpg/widgets/equipment_picker.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:provider/provider.dart';
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 import '../controllers/encounter_controller.dart';
 import '../controllers/equipment_controller.dart';
 import '../controllers/player_data_controller.dart';

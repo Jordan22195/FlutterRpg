@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
-import '../catalogs/dungeon_catalog.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/dungeons/dungeons.dart';
+import '../catalogs/items/items.dart';
 import '../controllers/action_timing_controller.dart';
 import '../controllers/encounter_controller.dart';
 import '../data/dungeon_run.dart';
@@ -63,8 +63,7 @@ class DungeonController extends ChangeNotifier {
 
   // ---- inspect ----
 
-  DungeonDefinition? definitionFor(DungeonId id) =>
-      _dungeonSystem.definitionFor(id);
+  DungeonDefinition? definitionFor(DungeonId id) => id.definition;
 
   bool get hasActiveRun => _run.active;
   DungeonId get activeDungeonId => _run.dungeonId;
@@ -84,8 +83,8 @@ class DungeonController extends ChangeNotifier {
 
   /// Why card [index] can't be started, or null when it can.
   String? lockReason(int index) {
-    final def = definitionFor(_run.dungeonId);
-    if (def == null) return 'Unavailable';
+    if (!_run.dungeonId.isReal) return 'Unavailable';
+    final def = _run.dungeonId.definition;
     return _dungeonSystem.lockReason(
       run: _run,
       def: def,
@@ -99,14 +98,13 @@ class DungeonController extends ChangeNotifier {
 
   /// Count of the entry key the player owns for [id] (0 when free).
   int keyCount(DungeonId id) {
-    final def = definitionFor(id);
-    if (def == null || !def.isKeyed) return 0;
+    final def = id.definition;
+    if (!id.isReal || !def.isKeyed) return 0;
     return _inventoryService.getItemCount(_inventoryState, def.keyItemId);
   }
 
   /// The entry key of the open dungeon, or NULL when it is free.
-  ItemId get keyItemId =>
-      definitionFor(_run.dungeonId)?.keyItemId ?? ItemId.NULL;
+  ItemId get keyItemId => _run.dungeonId.definition.keyItemId;
 
   /// This run has already paid its key.
   bool get keySpent => _run.keySpent;
@@ -115,8 +113,7 @@ class DungeonController extends ChangeNotifier {
   /// dungeon's first card, before the key has been paid. True whether or
   /// not the player actually holds one, so the card can say "No key".
   bool showsKeyNote(int index) {
-    final def = definitionFor(_run.dungeonId);
-    return def != null && def.isKeyed && index == 0;
+    return _run.dungeonId.definition.isKeyed && index == 0;
   }
 
   /// Whether starting card [index] would spend a key right now. Drives the
@@ -134,7 +131,7 @@ class DungeonController extends ChangeNotifier {
     final slot = _dungeonService.slotAt(_run, index);
     if (slot == null) return false;
     if (!slot.cleared) return true;
-    return definitionFor(_run.dungeonId)?.repeatableEntries ?? false;
+    return _run.dungeonId.definition.repeatableEntries;
   }
 
   /// Clearing a card runs straight into the next one instead of dropping
@@ -163,8 +160,8 @@ class DungeonController extends ChangeNotifier {
   /// queue to the encounter loop. Returns false when the card is locked or
   /// has nothing left to fight.
   bool startSlot(int index) {
-    final def = definitionFor(_run.dungeonId);
-    if (def == null || !unlocked(index)) return false;
+    if (!_run.dungeonId.isReal || !unlocked(index)) return false;
+    final def = _run.dungeonId.definition;
 
     _dungeonSystem.spendKey(
       run: _run,
@@ -210,8 +207,8 @@ class DungeonController extends ChangeNotifier {
   /// Text for the leave confirmation, spelling out what this dungeon type
   /// charges for walking out.
   String leaveWarningFor(DungeonId id) {
-    final def = definitionFor(id);
-    if (def == null) return 'Your progress is lost.';
+    if (!id.isReal) return 'Your progress is lost.';
+    final def = id.definition;
     switch (def.type) {
       case DungeonType.LANDMARK:
         return 'Your progress is lost, and the key is already spent — '

@@ -1,9 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
@@ -269,9 +269,7 @@ void main() {
       setExplorationLevel(session, 50);
 
       const explores = 20;
-      final zone = session.catalogBundle.zoneCatalog.getDefinitionFor(
-        ZoneId.DEV_FOREST,
-      );
+      final zone = ZoneId.DEV_FOREST.definition;
       final expectedFinds =
           (service.findsPerExplore(
                     session.explorationSystem.explorationLevel(save.playerData),

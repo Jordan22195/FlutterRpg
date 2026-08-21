@@ -1,26 +1,33 @@
 import '../data/skill_data.dart';
 import '../data/crafting_state.dart';
-import '../catalogs/item_catalog.dart';
-import '../catalogs/recipe_catalog.dart';
+import '../catalogs/items/items.dart';
+import '../catalogs/recipes/recipes.dart';
+import 'weighted_drop_table_service.dart';
 
 class CraftingService {
-  void adjustActiveRecipeDropTable(
+  /// The recipe's output table with the burn entry reweighted for the
+  /// player's cooking level. Returns a new list: the recipe belongs to the
+  /// catalog and is shared by every caller, so reweighting in place would
+  /// leave the last crafter's burn odds baked into it for everyone.
+  List<WeightedDropTableEntry<ItemId>> adjustActiveRecipeDropTable(
     CraftingRecipe recipe,
     Map<SkillId, int> skillLevels,
   ) {
     final skillLevel = skillLevels[SkillId.COOKING] ?? 1;
 
-    recipe.output.forEach((entry) {
-      if (entry.id == ItemId.BURNT_FOOD) {
-        final burnChance = calculateBurnChance(
-          level: skillLevel,
-          difficultyScale: recipe.levelRequirement
-              .toDouble(), // Adjust based on recipe difficulty if needed
-        );
-        entry.weight =
-            burnChance; // Higher burnChance means more likely to get burnt food
-      }
-    });
+    return [
+      for (final entry in recipe.output)
+        if (entry.id == ItemId.BURNT_FOOD)
+          entry.copyWith(
+            // Higher burnChance means more likely to get burnt food.
+            weight: calculateBurnChance(
+              level: skillLevel,
+              difficultyScale: recipe.levelRequirement.toDouble(),
+            ),
+          )
+        else
+          entry,
+    ];
   }
 
   bool setActiveRecipe(

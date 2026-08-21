@@ -1,4 +1,4 @@
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/zones/zones.dart';
 
 /// One row of a zone's discovery list: something an explore can turn up,
 /// and what it takes to be able to turn it up. Covers both the entity and

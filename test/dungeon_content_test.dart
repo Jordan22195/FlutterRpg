@@ -2,9 +2,9 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/dungeon_catalog.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/dungeons/dungeons.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
@@ -54,9 +54,7 @@ void main() {
 
   group('goblin key drop', () {
     test('goblin has a 5% bonus roll for the Goblin Queen key', () {
-      final catalog = EntityCatalog();
-      final def =
-          catalog.getDefinitionFor(EntityId.GOBLIN) as CombatEntityDefinition;
+      final def = EntityId.GOBLIN.definition as CombatEntityDefinition;
 
       // main drop is unchanged (coins)
       expect(def.itemDrops.single.id, ItemId.COINS);
@@ -69,21 +67,16 @@ void main() {
   });
 
   group('Goblin Queen boss', () {
-    final catalog = EntityCatalog();
     final service = WeightedDropTableService();
 
     test('is a stat-check combat boss', () {
-      final def =
-          catalog.getDefinitionFor(EntityId.GOBLIN_QUEEN)
-              as CombatEntityDefinition;
+      final def = EntityId.GOBLIN_QUEEN.definition as CombatEntityDefinition;
       expect(def.entityType, SkillId.ATTACK);
       expect(def.hitpoints, greaterThan(100));
     });
 
     test('every kill yields a guaranteed unique plus bulk coins', () {
-      final def =
-          catalog.getDefinitionFor(EntityId.GOBLIN_QUEEN)
-              as CombatEntityDefinition;
+      final def = EntityId.GOBLIN_QUEEN.definition as CombatEntityDefinition;
       final rng = Random(7);
 
       const uniques = {ItemId.GOBLIN_CROWN, ItemId.GOBLIN_SCEPTER};
@@ -103,19 +96,17 @@ void main() {
   });
 
   group('dungeon definitions', () {
-    final catalog = DungeonCatalog();
-
     test('the lair is a keyed, one-shot landmark', () {
-      final d = catalog.getDefinitionFor(DungeonId.GOBLIN_QUEEN_LAIR)!;
+      final d = DungeonId.GOBLIN_QUEEN_LAIR.definition;
       expect(d.type, DungeonType.LANDMARK);
       expect(d.isKeyed, isTrue);
       expect(d.keyItemId, ItemId.GOBLIN_QUEEN_KEY);
       expect(d.repeatableEntries, isFalse);
-      expect(catalog.landmarks, contains(d));
+      expect(DungeonId.landmarks, contains(DungeonId.GOBLIN_QUEEN_LAIR));
     });
 
     test('entries are ordered and the boss is the last member of the last', () {
-      final d = catalog.getDefinitionFor(DungeonId.GOBLIN_QUEEN_LAIR)!;
+      final d = DungeonId.GOBLIN_QUEEN_LAIR.definition;
       expect(d.entries, isNotEmpty);
       for (final entry in d.entries) {
         expect(entry.entities, isNotEmpty);
@@ -124,42 +115,43 @@ void main() {
     });
 
     test('every entry is named and holds something', () {
-      for (final d in catalog.all) {
-        expect(d.entries, isNotEmpty, reason: '${d.id} has no cards');
+      for (final id in DungeonId.values) {
+        if (id == DungeonId.NULL) continue;
+        final d = id.definition;
+        expect(d.entries, isNotEmpty, reason: '${id.name} has no cards');
         for (final entry in d.entries) {
-          expect(entry.name, isNotEmpty, reason: '${d.id} has an unnamed card');
+          expect(
+            entry.name,
+            isNotEmpty,
+            reason: '${id.name} has an unnamed card',
+          );
           expect(entry.entities, isNotEmpty, reason: '${entry.name} is empty');
         }
       }
     });
 
-    test(
-      'every member is a depleting encounter entity',
-      () {
-        final entities = EntityCatalog();
-        for (final d in catalog.all) {
-          for (final entry in d.entries) {
-            for (final ref in entry.entities) {
-              final def = entities.getDefinitionFor(ref.entityId);
-              // the kill path casts the definition to an encounter definition
-              // without a guard, and a card that never depletes never clears
-              expect(
-                def,
-                isA<EncounterEntityDefinition>(),
-                reason: '${ref.entityId} in ${d.id}/${entry.name}',
-              );
-              expect(
-                def,
-                isNot(isA<FishingEntityDefinition>()),
-                reason: '${ref.entityId} never depletes',
-              );
-              expect(ref.count, greaterThan(0));
-            }
+    test('every member is a depleting encounter entity', () {
+      for (final id in DungeonId.values) {
+        if (id == DungeonId.NULL) continue;
+        for (final entry in id.definition.entries) {
+          for (final ref in entry.entities) {
+            final def = ref.entityId.definition;
+            // the kill path casts the definition to an encounter definition
+            // without a guard, and a card that never depletes never clears
+            expect(
+              def,
+              isA<EncounterEntityDefinition>(),
+              reason: '${ref.entityId} in ${id.name}/${entry.name}',
+            );
+            expect(
+              def,
+              isNot(isA<FishingEntityDefinition>()),
+              reason: '${ref.entityId} never depletes',
+            );
+            expect(ref.count, greaterThan(0));
           }
         }
-      },
-      skip:
-          'pre-existing failure, also fails at commit e642bb3 - predates the batch-explore and offline-progress work',
-    );
+      }
+    });
   });
 }

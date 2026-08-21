@@ -1,4 +1,4 @@
-import '../catalogs/dungeon_catalog.dart';
+import '../catalogs/dungeons/dungeons.dart';
 
 /// Which screen the player was looking at, serialized with the save so a
 /// force-closed app reopens where it left off. Only the map tab's nested

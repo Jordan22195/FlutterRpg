@@ -1,7 +1,8 @@
+import 'package:rpg/catalogs/catalog_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/eat_food_button.dart';
@@ -14,9 +15,8 @@ import 'package:rpg/widgets/primary_button.dart';
 // overflow, which a RenderFlex reports through FlutterError.
 void main() {
   setUpAll(() {
-    ItemCatalog.init();
+    registerCatalogIconResolvers();
     EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
-    EnumImageProviderLookup.register<ItemId>(ItemCatalog.imageProviderFor);
   });
 
   /// Renders [child] in the exact slot ActionButtonRow gives a side button.

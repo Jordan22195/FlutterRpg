@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
@@ -30,7 +30,6 @@ void main() {
     session.explorationService.addEntityToCurrentZone(
       EntityId.GUAM,
       3,
-      session.catalogBundle.entityCatalog,
       save.playerData,
       save.worldData,
     );

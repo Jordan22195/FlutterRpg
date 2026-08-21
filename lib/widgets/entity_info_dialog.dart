@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 import '../controllers/world_controller.dart';
 import '../data/entity_details.dart';
 import '../data/skill_data.dart';

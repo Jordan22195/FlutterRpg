@@ -1,9 +1,8 @@
+import 'package:rpg/catalogs/catalog_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -60,11 +59,8 @@ void main() {
       vsync: const TestVSync(),
     );
 
-    ItemCatalog.init();
+    registerCatalogIconResolvers();
     EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
-    EnumImageProviderLookup.register<EntityId>(
-      session.catalogBundle.entityCatalog.imageProviderFor,
-    );
   });
 
   tearDown(() => session.dispose());

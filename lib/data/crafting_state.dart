@@ -1,7 +1,7 @@
-import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 
 import 'inventory_data.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/zones/zones.dart';
 import 'skill_data.dart';
 
 class CraftingState {

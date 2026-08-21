@@ -1,3 +1,4 @@
+import 'package:rpg/catalogs/catalog_icons.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -6,9 +7,6 @@ import 'package:provider/provider.dart';
 import 'services/file_manager_service.dart';
 import 'game_session.dart';
 
-import 'catalogs/item_catalog.dart';
-import 'catalogs/entity_catalog.dart';
-import 'catalogs/dungeon_catalog.dart';
 import 'controllers/action_queue_controller.dart';
 import 'controllers/dungeon_controller.dart';
 import 'controllers/action_timing_controller.dart';
@@ -94,14 +92,8 @@ class _GameBootstrapState extends State<GameBootstrap>
     session = factory.create(save: saveData, catalogs: catalogs, vsync: this);
 
     // register icon resolvers for data-driven widgets
-    ItemCatalog.init();
+    registerCatalogIconResolvers();
     EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
-    EnumImageProviderLookup.register<EntityId>(
-      session.catalogBundle.entityCatalog.imageProviderFor,
-    );
-    EnumImageProviderLookup.register<DungeonId>(
-      session.catalogBundle.dungeonCatalog.imageProviderFor,
-    );
 
     // autosave safety net for platforms where lifecycle events are
     // unreliable (e.g. closing a desktop window)

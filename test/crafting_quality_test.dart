@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/crafting_state.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -31,7 +31,6 @@ void main() {
       craftingState: save.craftingState,
       worldState: save.worldData,
       recipeCatalog: catalogs.recipeCatalog,
-      zoneCatalog: catalogs.zoneCatalog,
       playerDataService: playerDataService,
       craftingService: CraftingService(),
       inventoryService: InventoryService(),
@@ -123,8 +122,8 @@ void main() {
     final save = factory.newGame(factory.catalog1());
     final inventoryService = InventoryService();
 
-    final a = ItemCatalog.buildItem(ItemId.COPPER_DAGGER) as EquipmentItem;
-    final b = ItemCatalog.buildItem(ItemId.COPPER_DAGGER) as EquipmentItem;
+    final a = ItemId.COPPER_DAGGER.build() as EquipmentItem;
+    final b = ItemId.COPPER_DAGGER.build() as EquipmentItem;
     inventoryService.addEquipment(save.inventoryData, a);
     inventoryService.addEquipment(save.inventoryData, b);
 
@@ -133,7 +132,7 @@ void main() {
     expect(save.inventoryData.equipment.single.count, 2);
 
     // a different quality does not stack with commons
-    final rare = ItemCatalog.buildItem(ItemId.COPPER_DAGGER) as EquipmentItem;
+    final rare = ItemId.COPPER_DAGGER.build() as EquipmentItem;
     rare.quality = ItemQuality.RARE;
     inventoryService.addEquipment(save.inventoryData, rare);
     expect(save.inventoryData.equipment.length, 2);

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/main.dart';
 import 'package:rpg/services/file_manager_service.dart';
@@ -58,7 +58,7 @@ Map<String, dynamic> savedMidEncounter(Duration away) {
   );
 
   final tree =
-      catalogs.entityCatalog.buildEntity(EntityId.TREE) as EncounterEntity;
+      EntityId.TREE.build() as EncounterEntity;
   save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities.add(
     tree,
   );

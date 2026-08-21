@@ -3,11 +3,11 @@ import 'dart:math';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/ObjectStack.dart';
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
 import 'inventory_service.dart';
 import 'weighted_drop_table_service.dart';
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/zones/zones.dart';
 
 class ExplorationService {
   // zone item finds are stored as an InventoryData, so stacking and
@@ -86,10 +86,9 @@ class ExplorationService {
   /// simply are not in the table until the player has earned them.
   List<WeightedDropTableEntry<EntityId>> getZoneEntityDropTableEntries(
     PlayerData playerState,
-    ZoneCatalog zoneCatalog,
     int explorationLevel,
   ) {
-    final zone = zoneCatalog.getDefinitionFor(playerState.currentZoneId);
+    final zone = playerState.currentZoneId.definition;
     return WeightedDropTableService.availableAt(
       zone.discoverableEntities,
       explorationLevel,
@@ -98,10 +97,9 @@ class ExplorationService {
 
   List<WeightedDropTableEntry<ItemId>> getZoneItemDropTableEntries(
     PlayerData playerState,
-    ZoneCatalog zoneCatalog,
     int explorationLevel,
   ) {
-    final zone = zoneCatalog.getDefinitionFor(playerState.currentZoneId);
+    final zone = playerState.currentZoneId.definition;
     return WeightedDropTableService.availableAt(
       zone.discoverableItems,
       explorationLevel,
@@ -151,7 +149,6 @@ class ExplorationService {
   void addEntityToCurrentZone(
     EntityId entityId,
     int entityCount,
-    EntityCatalog entityCatalog,
     PlayerData playerState,
     WorldData worldState,
   ) {
@@ -167,9 +164,7 @@ class ExplorationService {
     final e = getDiscoveredEntity(entityId, zone);
 
     if (e == null) {
-      final newEnt = entityCatalog
-          .getDefinitionFor(entityId)
-          .toEntity(entityId);
+      final newEnt = entityId.build();
 
       if (newEnt is EncounterEntity) {
         newEnt.count = entityCount;

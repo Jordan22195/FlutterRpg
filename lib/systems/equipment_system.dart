@@ -1,4 +1,4 @@
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import '../services/equipment_service.dart';
 import '../services/inventory_service.dart';
 import '../data/equipment_data.dart';

@@ -1,9 +1,9 @@
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/utilities/util.dart';
 import '../data/buff_data.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 
 class BuffService {
   final nullBuff = BuffItem(

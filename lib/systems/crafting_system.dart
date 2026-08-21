@@ -1,4 +1,4 @@
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/buff_data.dart';
 import '../data/action_result.dart';
 import '../data/player_data.dart';
@@ -6,8 +6,7 @@ import '../data/skill_data.dart';
 import '../data/crafting_state.dart';
 import '../data/world_data.dart';
 import '../data/inventory_data.dart';
-import '../catalogs/recipe_catalog.dart';
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/recipes/recipes.dart';
 import '../services/player_data_service.dart';
 import '../services/crafting_service.dart';
 import '../services/inventory_service.dart';
@@ -33,7 +32,6 @@ class CraftingSystem {
     required CraftingState craftingState,
     required WorldData worldState,
     required RecipeCatalog recipeCatalog,
-    required ZoneCatalog zoneCatalog,
     required PlayerDataService playerDataService,
     required CraftingService craftingService,
     required InventoryService inventoryService,
@@ -89,14 +87,14 @@ class CraftingSystem {
       );
     }
 
-    adjustDropTable(r.id, craftingState, playerState);
+    final outputTable = adjustDropTable(r.id, playerState);
 
     // one stack per distinct output. a single craft still rolls its own
     // stack size rather than taking the table's mean, so nothing about
     // normal play changes.
     final rolled = crafts > 1
-        ? _weightedDropTableService.rollMulitpleTimes(crafts, r.output)
-        : [_weightedDropTableService.roll(r.output)];
+        ? _weightedDropTableService.rollMulitpleTimes(crafts, outputTable)
+        : [_weightedDropTableService.roll(outputTable)];
 
     for (final craftedItemObjectStack in rolled) {
       if (craftedItemObjectStack.count <= 0) continue;
@@ -117,7 +115,7 @@ class CraftingSystem {
 
       // equipment takes its own path: it is a unique instance carrying a
       // rolled quality, and never stacks with a plain item
-      if (ItemCatalog.buildItem(craftedItemObjectStack.id) is EquipmentItem) {
+      if (craftedItemObjectStack.id.build() is EquipmentItem) {
         _addCraftedEquipment(
           craftedItemObjectStack.id,
           craftedItemObjectStack.count,
@@ -170,12 +168,12 @@ class CraftingSystem {
       // every inventory gets its own instance: sharing one object between
       // two of them would double-count when stacks merge
       for (final target in [inventoryState, craftingState.craftedItems]) {
-        final piece = ItemCatalog.buildItem(itemId) as EquipmentItem;
+        final piece = itemId.build() as EquipmentItem;
         piece.quality = tier.id;
         piece.count = tier.count;
         _inventoryService.addEquipment(target, piece);
       }
-      final reported = ItemCatalog.buildItem(itemId) as EquipmentItem;
+      final reported = itemId.build() as EquipmentItem;
       reported.quality = tier.id;
       reported.count = tier.count;
       result.equipment.add(reported);
@@ -222,14 +220,13 @@ class CraftingSystem {
 
   // right now just scales drop chance for burnt food
   // todo expand on this for all recipies and crafting qualities
-  void adjustDropTable(
+  List<WeightedDropTableEntry<ItemId>> adjustDropTable(
     String recipeId,
-    CraftingState craftingState,
     PlayerData playerState,
   ) {
     final skillLevels = _playerDataService.getStatTotals(playerState);
     final recipe = _recipeCatalog.recipeById(recipeId);
-    _craftingService.adjustActiveRecipeDropTable(recipe, skillLevels);
+    return _craftingService.adjustActiveRecipeDropTable(recipe, skillLevels);
   }
 
   int craftableCount(String recipeId, InventoryData inventoryData) {

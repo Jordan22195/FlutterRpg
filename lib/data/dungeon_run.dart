@@ -1,6 +1,6 @@
 import 'entity_queue.dart';
 import 'inventory_data.dart';
-import '../catalogs/dungeon_catalog.dart';
+import '../catalogs/dungeons/dungeons.dart';
 
 /// Live state of a dungeon run: the cards built from the definition, which
 /// of them are cleared, and which one the action loop is firing into.

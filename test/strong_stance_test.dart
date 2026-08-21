@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/player_data.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/buff_service.dart';
@@ -71,7 +71,7 @@ void main() {
     // the stance is resolved against whatever is open: a copper rock is
     // mined, so mining is what strength lends itself to here
     player.currentEntityViewId = EntityId.COPPER;
-    playerDataService.setStance(Stance.strong, player, EntityCatalog());
+    playerDataService.setStance(Stance.strong, player);
 
     // the stance alone already pays: +1% per point of strength, so 20
     // mining at 10 strength reads 22 before any boost is held
@@ -100,7 +100,7 @@ void main() {
     setLevel(player, SkillId.STRENGTH, 10);
     setLevel(player, SkillId.MINING, 20);
     player.stamina = 100;
-    playerDataService.setStance(Stance.fast, player, EntityCatalog());
+    playerDataService.setStance(Stance.fast, player);
 
     final state = ActionTimingData();
     state.buttonHeld = true;
@@ -118,7 +118,7 @@ void main() {
       setLevel(player, SkillId.STRENGTH, 10);
       setLevel(player, SkillId.SPEED, 50);
       player.stamina = 100;
-      playerDataService.setStance(stance, player, EntityCatalog());
+      playerDataService.setStance(stance, player);
 
       final speedBefore = playerDataService.getSkillXp(SkillId.SPEED, player);
       final strengthBefore = playerDataService.getSkillXp(
@@ -148,7 +148,7 @@ void main() {
     setLevel(player, SkillId.STRENGTH, 50);
     setLevel(player, SkillId.SPEED, 10);
     player.stamina = 100;
-    playerDataService.setStance(Stance.fast, player, EntityCatalog());
+    playerDataService.setStance(Stance.fast, player);
 
     final speedBefore = playerDataService.getSkillXp(SkillId.SPEED, player);
     final strengthBefore = playerDataService.getSkillXp(

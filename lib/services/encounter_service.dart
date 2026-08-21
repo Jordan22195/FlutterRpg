@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import '../services/inventory_service.dart';

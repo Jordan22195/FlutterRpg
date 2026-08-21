@@ -1,6 +1,6 @@
 import '../data/equipment_data.dart';
 import '../data/skill_data.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import '../utilities/util.dart';
 
 class EquipmentService {

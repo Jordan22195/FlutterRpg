@@ -1,6 +1,6 @@
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
+import '../catalogs/zones/zones.dart';
 import '../data/buff_data.dart';
 import '../services/buff_service.dart';
 
@@ -47,7 +47,7 @@ class FiremakingSystem {
     int count = 1,
   }) {
     if (count <= 0) return;
-    final fire = ItemCatalog.buildItem(fireId);
+    final fire = fireId.build();
     if (fire is! FireItem) return;
 
     // this instance is one application of the fire, so a batched one is

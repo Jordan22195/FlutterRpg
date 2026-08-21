@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/zones/zones.dart';
 import '../controllers/world_controller.dart';
 import '../data/skill_category.dart';
 import '../data/skill_data.dart';

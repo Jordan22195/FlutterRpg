@@ -1,4 +1,4 @@
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 import '../data/dungeon_run.dart';
 import '../data/entity_queue.dart';
 

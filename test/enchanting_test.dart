@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/enchantment_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/enchantments/enchantments.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/buff_service.dart';
@@ -32,7 +32,7 @@ void main() {
     final save = factory.newGame(factory.catalog1());
     final system = buildSystem();
 
-    final helmet = ItemCatalog.buildItem(ItemId.COPPER_HELMET) as EquipmentItem;
+    final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
     helmet.quality = ItemQuality.RARE;
     save.inventoryData.equipment.add(helmet);
 
@@ -69,7 +69,7 @@ void main() {
     final save = factory.newGame(factory.catalog1());
     final system = buildSystem();
 
-    final dagger = ItemCatalog.buildItem(ItemId.COPPER_DAGGER) as EquipmentItem;
+    final dagger = ItemId.COPPER_DAGGER.build() as EquipmentItem;
     save.inventoryData.equipment.add(dagger);
     save.inventoryData.itemMap[ItemId.ENCHANTING_DUST] = 25;
 
@@ -95,7 +95,7 @@ void main() {
     final save = factory.newGame(factory.catalog1());
     final system = buildSystem();
 
-    final dagger = ItemCatalog.buildItem(ItemId.COPPER_DAGGER) as EquipmentItem;
+    final dagger = ItemId.COPPER_DAGGER.build() as EquipmentItem;
     save.inventoryData.equipment.add(dagger);
 
     // no materials
@@ -129,7 +129,7 @@ void main() {
     final save = factory.newGame(factory.catalog1());
     final system = buildSystem();
 
-    final helmet = ItemCatalog.buildItem(ItemId.COPPER_HELMET) as EquipmentItem;
+    final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
     helmet.quality = ItemQuality.EPIC;
     save.inventoryData.equipment.add(helmet);
     save.inventoryData.itemMap[ItemId.ENCHANTING_DUST] = 10;
@@ -154,12 +154,12 @@ void main() {
     final save = factory.newGame(factory.catalog1());
     final system = buildSystem();
 
-    final helmet = ItemCatalog.buildItem(ItemId.COPPER_HELMET) as EquipmentItem;
+    final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
     save.playerData.equipmentData.armorEquipment[helmet.armorSlot] = helmet;
     save.inventoryData.itemMap[ItemId.ENCHANTING_DUST] = 10;
 
     // the bench lists what is worn ahead of the inventory's stacks
-    final spare = ItemCatalog.buildItem(ItemId.COPPER_HELMET) as EquipmentItem;
+    final spare = ItemId.COPPER_HELMET.build() as EquipmentItem;
     save.inventoryData.equipment.add(spare);
     final targets = system.benchTargets(save.playerData, save.inventoryData);
     expect(targets.first.instanceId, helmet.instanceId);
@@ -194,7 +194,7 @@ void main() {
     final save = factory.newGame(factory.catalog1());
     final system = buildSystem();
 
-    final helmet = ItemCatalog.buildItem(ItemId.COPPER_HELMET) as EquipmentItem;
+    final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
     helmet.quality = ItemQuality.RARE;
     save.playerData.equipmentData.armorEquipment[helmet.armorSlot] = helmet;
 

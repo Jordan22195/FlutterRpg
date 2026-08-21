@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import '../catalogs/enchantment_catalog.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/enchantments/enchantments.dart';
+import '../catalogs/items/items.dart';
 import '../data/ObjectStack.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';

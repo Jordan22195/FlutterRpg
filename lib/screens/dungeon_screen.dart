@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../catalogs/dungeon_catalog.dart';
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/dungeons/dungeons.dart';
+import '../catalogs/entities/entities.dart';
 import '../controllers/dungeon_controller.dart';
 import '../data/ObjectStack.dart';
-import '../game_session.dart';
 import '../services/entity_screen_router_service.dart';
 import '../widgets/entity_info_dialog.dart';
 import '../widgets/entity_queue_card.dart';
@@ -52,11 +51,10 @@ class _DungeonScreenState extends State<DungeonScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<DungeonController>();
-    final def = controller.definitionFor(widget.dungeonId);
-
-    if (def == null) {
+    if (!widget.dungeonId.isReal) {
       return const SafeArea(child: Center(child: Text('Unknown dungeon')));
     }
+    final def = widget.dungeonId.definition;
 
     final onThisDungeon =
         controller.hasActiveRun &&
@@ -68,7 +66,7 @@ class _DungeonScreenState extends State<DungeonScreen> {
       // backing out abandons the run, so the pop has to be confirmed first
       canPop: !onThisDungeon,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _leave(context, controller, def.id);
+        if (!didPop) _leave(context, controller, widget.dungeonId);
       },
       child: SafeArea(
         child: Padding(
@@ -125,7 +123,7 @@ class _DungeonScreenState extends State<DungeonScreen> {
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => _leave(context, controller, def.id),
+            onPressed: () => _leave(context, controller, widget.dungeonId),
           ),
           const SizedBox(width: 4),
           Expanded(
@@ -269,14 +267,7 @@ class _DungeonScreenState extends State<DungeonScreen> {
     // spending the key is irreversible and re-entering costs another one,
     // so it is never charged on a stray tap
     if (controller.willSpendKey(i)) {
-      final keyName =
-          context
-              .read<GameSession>()
-              .catalogBundle
-              .itemCatalog
-              .definitionFor(controller.keyItemId)
-              ?.name ??
-          'key';
+      final keyName = controller.keyItemId.definition.name;
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(

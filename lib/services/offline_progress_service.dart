@@ -2,7 +2,6 @@ import '../data/action_result.dart';
 import '../data/offline_progress_data.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
-import '../systems/exploration_system.dart';
 import 'inventory_service.dart';
 
 /// Collects what an offline settle paid out into one report, and hands the

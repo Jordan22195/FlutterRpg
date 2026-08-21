@@ -1,6 +1,8 @@
-import '../catalogs/enchantment_catalog.dart';
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/zones/zone_id.dart';
+import 'package:rpg/catalogs/dungeons/dungeon_id.dart';
+import '../catalogs/enchantments/enchantments.dart';
+import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
 import '../game_session.dart';
 import 'skill_data.dart';
 
@@ -31,7 +33,9 @@ List<SkillUnlock> unlocksForSkill(SkillId skill, GameCatalogBundle catalogs) {
     );
   }
 
-  for (final dungeon in catalogs.dungeonCatalog.all) {
+  for (final dungeonId in DungeonId.values) {
+    if (dungeonId == DungeonId.NULL) continue;
+    final dungeon = dungeonId.definition;
     if (dungeon.requiredSkill != skill) continue;
     unlocks.add(
       SkillUnlock(
@@ -42,7 +46,9 @@ List<SkillUnlock> unlocksForSkill(SkillId skill, GameCatalogBundle catalogs) {
     );
   }
 
-  for (final zone in catalogs.zoneCatalog.all) {
+  for (final zoneId in ZoneId.values) {
+    if (zoneId == ZoneId.NULL) continue;
+    final zone = zoneId.definition;
     if (zone.requiredSkill == skill) {
       unlocks.add(
         SkillUnlock(
@@ -69,7 +75,7 @@ List<SkillUnlock> unlocksForSkill(SkillId skill, GameCatalogBundle catalogs) {
     if (skill == SkillId.EXPLORATION) {
       for (final entry in zone.discoverableEntities) {
         if (entry.unlockLevel <= 0) continue;
-        final def = catalogs.entityCatalog.getDefinitionFor(entry.id);
+        final def = entry.id.definition;
         unlocks.add(
           SkillUnlock(
             name: '${def.name} · ${zone.name}',
@@ -80,10 +86,10 @@ List<SkillUnlock> unlocksForSkill(SkillId skill, GameCatalogBundle catalogs) {
       }
       for (final entry in zone.discoverableItems) {
         if (entry.unlockLevel <= 0 || entry.id == ItemId.NULL) continue;
-        final def = catalogs.itemCatalog.definitionFor(entry.id);
+        final def = entry.id.definition;
         unlocks.add(
           SkillUnlock(
-            name: '${def?.name ?? entry.id.name} · ${zone.name}',
+            name: '${def.name} · ${zone.name}',
             levelRequirement: entry.unlockLevel,
             category: 'Find',
           ),
@@ -92,7 +98,8 @@ List<SkillUnlock> unlocksForSkill(SkillId skill, GameCatalogBundle catalogs) {
     }
   }
 
-  for (final def in catalogs.entityCatalog.all) {
+  for (final entityId in EntityId.values) {
+    final def = entityId.definition;
     if (def is! HerbEntityDefinition || def.entityType != skill) continue;
     unlocks.add(
       SkillUnlock(

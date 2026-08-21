@@ -9,8 +9,8 @@ import 'inventory_screen.dart';
 import 'map_screen.dart';
 import 'queue_screen.dart';
 import 'skills_screen.dart';
-import '../catalogs/dungeon_catalog.dart';
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/dungeons/dungeons.dart';
+import '../catalogs/entities/entities.dart';
 import '../controllers/action_timing_controller.dart';
 import '../controllers/dungeon_controller.dart';
 import '../controllers/encounter_controller.dart';
@@ -291,7 +291,7 @@ class _MainShellState extends State<MainShell> {
           final dungeonId = _restoreDungeonId != DungeonId.NULL
               ? _restoreDungeonId
               : dungeons.activeDungeonId;
-          if (dungeons.definitionFor(dungeonId) == null) return;
+          if (!dungeonId.isReal) return;
           inDungeon = true;
           nav.push(
             MaterialPageRoute(

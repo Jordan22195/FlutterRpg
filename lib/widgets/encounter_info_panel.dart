@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 import '../controllers/buff_controller.dart';
 import '../data/ObjectStack.dart';
 import '../data/skill_data.dart';

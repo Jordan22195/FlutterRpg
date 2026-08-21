@@ -1,10 +1,11 @@
+import 'package:rpg/catalogs/catalog_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/shop_controller.dart';
 import 'package:rpg/game_session.dart';
@@ -16,8 +17,6 @@ import 'package:rpg/data/skill_data.dart';
 // trading post, and renders the actual ShopScreen through the provider
 // tree to verify buy/sell wiring end to end.
 void main() {
-  // skipped: pre-existing failure, also fails at commit e642bb3 - predates
-  // the batch-explore and offline-progress work
   testWidgets('shop screen lists stock and trades with the player', (
     tester,
   ) async {
@@ -31,11 +30,8 @@ void main() {
     );
 
     // icon resolvers so ItemStackTile/IconRenderer don't throw
-    ItemCatalog.init();
+    registerCatalogIconResolvers();
     EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
-    EnumImageProviderLookup.register<EntityId>(
-      session.catalogBundle.entityCatalog.imageProviderFor,
-    );
 
     // give the player coins + a sellable stack and move them to the dev
     // forest, viewing the trading post
@@ -130,5 +126,5 @@ void main() {
     expect(save.inventoryData.itemMap[ItemId.COPPER_ORE] ?? 0, oreBefore - 1);
 
     session.dispose();
-  }, skip: true);
+  });
 }

@@ -1,5 +1,5 @@
-import '../catalogs/item_catalog.dart';
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/items/items.dart';
+import '../catalogs/zones/zones.dart';
 
 class JsonUtils {
   static Map<String, dynamic> requireMap(

@@ -1,4 +1,4 @@
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 
 class InventoryData {
   /// Stackable items (materials, food, ...), stored as counts.

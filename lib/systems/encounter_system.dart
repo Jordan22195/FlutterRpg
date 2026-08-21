@@ -5,7 +5,7 @@ import '../services/encounter_service.dart';
 import '../services/exploration_service.dart';
 import '../services/player_data_service.dart';
 import '../services/weighted_drop_table_service.dart';
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 import '../data/action_result.dart';
 import '../data/entity_details.dart';
 import '../data/player_data.dart';
@@ -14,7 +14,7 @@ import '../data/world_data.dart';
 import '../data/inventory_data.dart';
 import '../data/ObjectStack.dart';
 import '../services/inventory_service.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 
 class EncounterSystem {
   /// XP awarded per point of damage done by damage-based skills (combat,
@@ -27,8 +27,6 @@ class EncounterSystem {
   final PlayerDataService _playerDataService;
   final WeightedDropTableService _dropTableService;
   final InventoryService _inventoryService;
-  final EntityCatalog _entityCatalog;
-  final ItemCatalog _itemCatalog;
   final CombatAutoEatService _autoEatService;
 
   EncounterSystem({
@@ -37,12 +35,8 @@ class EncounterSystem {
     required PlayerDataService playerDataService,
     required WeightedDropTableService dropTableService,
     required InventoryService inventoryService,
-    required EntityCatalog entityCatalog,
-    required ItemCatalog itemCatalog,
     required CombatAutoEatService autoEatService,
-  }) : _itemCatalog = itemCatalog,
-       _entityCatalog = entityCatalog,
-       _inventoryService = inventoryService,
+  }) : _inventoryService = inventoryService,
        _dropTableService = dropTableService,
        _playerDataService = playerDataService,
        _explorationService = explorationService,
@@ -106,9 +100,11 @@ class EncounterSystem {
       }
       // roll loot on x enemies
       // roll drops: the guaranteed main drop plus any layered bonus rolls
-      // (rare uniques, bulk stacks) the entity defines
-      final def =
-          _entityCatalog.getDefinitionFor(e.id) as EncounterEntityDefinition;
+      // (rare uniques, bulk stacks) the entity defines. a non-encounter
+      // entity has no drop table and cannot be fought — guard rather than
+      // cast, so bad content is an empty result instead of a crash mid-fight
+      final def = e.id.definition;
+      if (def is! EncounterEntityDefinition) return result;
       final drops = _dropTableService.rollMulitpleTimes(
         enemiesToKill,
         def.itemDrops,
@@ -184,8 +180,8 @@ class EncounterSystem {
 
       // roll drops: the guaranteed main drop plus any layered bonus rolls
       // (rare uniques, bulk stacks) the entity defines
-      final def =
-          _entityCatalog.getDefinitionFor(e.id) as EncounterEntityDefinition;
+      final def = e.id.definition;
+      if (def is! EncounterEntityDefinition) return result;
       final drops = <ObjectStack<ItemId>>[
         _dropTableService.roll(def.itemDrops),
         ..._dropTableService.rollBonus(def.bonusDrops),
@@ -216,7 +212,7 @@ class EncounterSystem {
     final foodId = playerState.equipmentData.equipedFood;
     if (foodId == ItemId.NULL) return false;
 
-    final def = _itemCatalog.definitionFor(foodId);
+    final def = foodId.definition;
     if (def is! FoodItemDefinition) return false;
 
     if (_inventoryService.getItemCount(playerInventory, foodId) <= 0) {
@@ -252,7 +248,7 @@ class EncounterSystem {
 
   /// Herbalism level required to pick [id]; 0 for non-herb entities.
   int herbRequiredLevel(EntityId id) {
-    final def = _entityCatalog.getDefinitionFor(id);
+    final def = id.definition;
     return def is HerbEntityDefinition ? def.requiredLevel : 0;
   }
 
@@ -271,7 +267,7 @@ class EncounterSystem {
   /// hitpoints), while fishing and herbalism award the caught item's
   /// xpValue (weighted average across the drop table).
   double xpPerUnit(EncounterEntity e) {
-    final def = _entityCatalog.getDefinitionFor(e.id);
+    final def = e.id.definition;
     if (def is! EncounterEntityDefinition) return 0;
 
     switch (e.entityType) {
@@ -280,7 +276,7 @@ class EncounterSystem {
         double weightSum = 0;
         double xpSum = 0;
         for (final entry in def.itemDrops) {
-          final xp = _itemCatalog.definitionFor(entry.id)?.xpValue ?? 0;
+          final xp = entry.id.definition.xpValue;
           weightSum += entry.weight;
           xpSum += entry.weight * xp * entry.count;
         }
@@ -344,7 +340,7 @@ class EncounterSystem {
   /// always yields exactly one pick, and each layered bonus roll
   /// contributes its own pick with its own firing chance.
   List<EntityDropChance> _buildDropChances(EntityId id) {
-    final def = _entityCatalog.getDefinitionFor(id);
+    final def = id.definition;
     if (def is! EncounterEntityDefinition) return const [];
 
     return [
@@ -366,7 +362,7 @@ class EncounterSystem {
       for (final e in entries)
         EntityDropChance(
           itemId: e.id,
-          name: _itemCatalog.definitionFor(e.id)?.name ?? e.id.name,
+          name: e.id.definition.name,
           chance: rollChance * (e.weight / total),
           minCount: e.count,
           maxCount: e.highCount > e.count ? e.highCount : e.count,
@@ -394,7 +390,7 @@ class EncounterSystem {
     }
 
     final e = encounter.entity!;
-    final def = _entityCatalog.getDefinitionFor(e.id);
+    final def = e.id.definition;
     if (def is! HerbEntityDefinition) return result;
     if (!meetsHerbRequirement(playerState, e.id)) return result;
 
@@ -418,8 +414,7 @@ class EncounterSystem {
     result.damageDone = gathered;
 
     result.xp[SkillId.HERBALISM] =
-        ((_itemCatalog.definitionFor(drop.id)?.xpValue ?? 0) * gathered)
-            .toDouble();
+        (drop.id.definition.xpValue * gathered).toDouble();
     _playerDataService.applyXp(playerState, result.xp);
 
     return result;
@@ -460,10 +455,9 @@ class EncounterSystem {
     }
 
     // roll drops
-    final entries =
-        (_entityCatalog.getDefinitionFor(e.id) as EncounterEntityDefinition)
-            .itemDrops;
-    final drop = _dropTableService.roll(entries);
+    final def = e.id.definition;
+    if (def is! EncounterEntityDefinition) return result;
+    final drop = _dropTableService.roll(def.itemDrops);
     result.items.add(drop);
 
     // add drops to inventories (player + encounter history)
@@ -471,8 +465,7 @@ class EncounterSystem {
     _inventoryService.addItems(encounter.itemDrops, [drop]);
 
     result.xp[SkillId.FISHING] =
-        ((_itemCatalog.definitionFor(drop.id)?.xpValue ?? 0) * drop.count)
-            .toDouble();
+        (drop.id.definition.xpValue * drop.count).toDouble();
 
     // Apply XP to player
     if (result.xp.isNotEmpty) {

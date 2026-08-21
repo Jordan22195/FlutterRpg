@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 
-import '../catalogs/enchantment_catalog.dart';
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/enchantments/enchantments.dart';
+import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
 import '../data/ObjectStack.dart';
 import '../data/bound_action.dart';
 import '../data/action_result.dart';

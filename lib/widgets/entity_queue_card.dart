@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 import 'item_stack_tile.dart';
 import 'primary_button.dart';
 

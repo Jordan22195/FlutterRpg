@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import '../controllers/crafting_controller.dart';
 
 /// The recipe's product, badged with how many of it the inventory can

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rpg/widgets/action_timer.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
-import 'package:rpg/catalogs/recipe_catalog.dart';
+import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/widgets/crafting_info_panel.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';

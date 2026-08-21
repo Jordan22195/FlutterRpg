@@ -1,4 +1,4 @@
-import '../catalogs/zone_catalog.dart';
+import '../catalogs/zones/zones.dart';
 
 class WorldData {
   final Map<ZoneId, Zone> zones;

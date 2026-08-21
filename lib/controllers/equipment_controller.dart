@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import '../data/equipment_data.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';

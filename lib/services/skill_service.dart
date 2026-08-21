@@ -1,5 +1,4 @@
 import '../data/skill_data.dart';
-import 'package:flutter/foundation.dart';
 
 class SkillService {
   double percentProgressToLevelUp(SkillData skillState) {

@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/main.dart';
-import 'package:rpg/catalogs/dungeon_catalog.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/dungeons/dungeons.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/encounter_screen.dart';
 import 'package:rpg/screens/inventory_screen.dart';

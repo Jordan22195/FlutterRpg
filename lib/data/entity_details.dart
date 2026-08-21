@@ -1,5 +1,5 @@
-import '../catalogs/entity_catalog.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
 import 'skill_data.dart';
 
 /// One row of an entity's drop table: how likely the item is to land on a

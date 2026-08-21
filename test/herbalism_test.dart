@@ -2,8 +2,8 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
@@ -29,7 +29,6 @@ void main() {
     session.explorationService.addEntityToCurrentZone(
       EntityId.GUAM,
       3,
-      session.catalogBundle.entityCatalog,
       save.playerData,
       save.worldData,
     );
@@ -82,7 +81,6 @@ void main() {
       session.explorationService.addEntityToCurrentZone(
         EntityId.GUAM,
         1,
-        session.catalogBundle.entityCatalog,
         save.playerData,
         save.worldData,
       );
@@ -127,7 +125,6 @@ void main() {
     session.explorationService.addEntityToCurrentZone(
       EntityId.TORSTOL,
       3,
-      session.catalogBundle.entityCatalog,
       save.playerData,
       save.worldData,
     );

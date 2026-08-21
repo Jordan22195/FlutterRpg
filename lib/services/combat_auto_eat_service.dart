@@ -1,4 +1,4 @@
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
@@ -12,17 +12,13 @@ import 'player_data_service.dart';
 class CombatAutoEatService {
   /// Eat when hp is at or below this fraction of max hp.
   static const double defaultThreshold = 0.75;
-
-  final ItemCatalog _itemCatalog;
   final InventoryService _inventoryService;
   final PlayerDataService _playerDataService;
 
   CombatAutoEatService({
-    required ItemCatalog itemCatalog,
     required InventoryService inventoryService,
     required PlayerDataService playerDataService,
-  }) : _itemCatalog = itemCatalog,
-       _inventoryService = inventoryService,
+  }) : _inventoryService = inventoryService,
        _playerDataService = playerDataService;
 
   /// Eats one equipped food when hp is at/below [threshold] of max hp and
@@ -36,7 +32,7 @@ class CombatAutoEatService {
     final foodId = playerState.equipmentData.equipedFood;
     if (foodId == ItemId.NULL) return false;
 
-    final def = _itemCatalog.definitionFor(foodId);
+    final def = foodId.definition;
     if (def is! FoodItemDefinition) return false;
     if (_inventoryService.getItemCount(playerInventory, foodId) <= 0) {
       return false;

@@ -3,8 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/player_data.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/buff_service.dart';
@@ -182,7 +181,6 @@ void main() {
       playerData: player,
       playerDataService: playerDataService,
       actionTimingController: timing,
-      entityCatalog: EntityCatalog(),
     );
 
     // idle: one tick restores one second of recovery (0.1 at level 1)
@@ -291,7 +289,7 @@ void main() {
         isNull,
       );
 
-      final axe = ItemCatalog.buildItem(ItemId.STONE_AXE) as EquipmentItem;
+      final axe = ItemId.STONE_AXE.build() as EquipmentItem;
       player.equipmentData.equipedTools[SkillId.WOODCUTTING] = axe;
       expect(
         equipment.actionIntervalFor(SkillId.WOODCUTTING, player.equipmentData),
@@ -305,7 +303,7 @@ void main() {
 
       // combat reads the equipped weapon instead of a per-skill tool
       final dagger =
-          ItemCatalog.buildItem(ItemId.COPPER_DAGGER) as EquipmentItem;
+          ItemId.COPPER_DAGGER.build() as EquipmentItem;
       player.equipmentData.armorEquipment[dagger.armorSlot] = dagger;
       expect(
         equipment.actionIntervalFor(SkillId.ATTACK, player.equipmentData),

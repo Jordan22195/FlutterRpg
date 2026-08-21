@@ -1,4 +1,4 @@
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import 'skill_data.dart';
 
 enum ArmorSlots {
@@ -56,7 +56,7 @@ class EquipmentData {
     if (rawValue is String) {
       final itemId = ItemId.values.asNameMap()[rawValue];
       if (itemId == null || itemId == ItemId.NULL) return null;
-      final item = ItemCatalog.buildItem(itemId);
+      final item = itemId.build();
       return item is EquipmentItem ? item : null;
     }
     return null;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/shop_controller.dart';
 import 'package:rpg/widgets/countdown_timer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';

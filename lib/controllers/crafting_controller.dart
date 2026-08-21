@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/recipe_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -8,7 +8,7 @@ import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/services/crafting_service.dart';
 import '../services/inventory_service.dart';
 import '../services/player_data_service.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import '../systems/crafting_system.dart';
 import '../systems/firemaking_system.dart';
 import '../data/bound_action.dart';
@@ -33,7 +33,6 @@ class CraftingController extends ChangeNotifier {
 
   // catalogs
   final RecipeCatalog _recipeCatalog;
-  final EntityCatalog _entityCatalog;
 
   //services
   final InventoryService _inventoryService;
@@ -57,7 +56,6 @@ class CraftingController extends ChangeNotifier {
     required CraftingState craftingState,
     required PlayerData playerState,
     required RecipeCatalog reciepeCatalog,
-    required EntityCatalog entityCatalog,
     required PlayerDataService playerDataService,
     required OfflineProgressData offlineProgressData,
     required OfflineProgressService offlineProgressService,
@@ -74,7 +72,6 @@ class CraftingController extends ChangeNotifier {
        _playerState = playerState,
        _recipeCatalog = reciepeCatalog,
        _craftingState = craftingState,
-       _entityCatalog = entityCatalog,
        _buffState = buffState;
 
   int getItemCountInPlayerInventory(ItemId itemId) {
@@ -315,7 +312,7 @@ class CraftingController extends ChangeNotifier {
 
   SkillId getCraftingEntitySkillId() {
     final entityId = _playerState.currentEntityViewId;
-    final def = _entityCatalog.getDefinitionFor(entityId);
+    final def = entityId.definition;
     if (def is CraftingEntityDefinition) {
       return def.craftingSkill;
     }
@@ -327,9 +324,7 @@ class CraftingController extends ChangeNotifier {
   }
 
   String entityIconAsset() {
-    return _entityCatalog
-        .getDefinitionFor(_playerState.currentEntityViewId)
-        .iconAsset;
+    return _playerState.currentEntityViewId.definition.iconAsset;
   }
 
   // ---- firepits ----

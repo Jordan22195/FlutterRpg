@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import '../controllers/inventory_controller.dart';
 import 'icon_renderer.dart';
 import 'item_stack_tile.dart';

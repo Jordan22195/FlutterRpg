@@ -1,9 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/recipe_catalog.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
@@ -43,9 +42,7 @@ class ActionQueueController extends ChangeNotifier {
   final ExplorationService _explorationService;
 
   // catalogs
-  final EntityCatalog _entityCatalog;
   final RecipeCatalog _recipeCatalog;
-  final ZoneCatalog _zoneCatalog;
 
   bool _wasRunning = false;
   bool _advancePending = false;
@@ -58,9 +55,7 @@ class ActionQueueController extends ChangeNotifier {
     required PlayerData playerState,
     required WorldData worldState,
     required ExplorationService explorationService,
-    required EntityCatalog entityCatalog,
     required RecipeCatalog recipeCatalog,
-    required ZoneCatalog zoneCatalog,
   }) : _actionTimingController = actionTimingController,
        _encounterController = encounterController,
        _craftingController = craftingController,
@@ -68,9 +63,7 @@ class ActionQueueController extends ChangeNotifier {
        _playerState = playerState,
        _worldState = worldState,
        _explorationService = explorationService,
-       _entityCatalog = entityCatalog,
-       _recipeCatalog = recipeCatalog,
-       _zoneCatalog = zoneCatalog {
+       _recipeCatalog = recipeCatalog {
     _actionTimingController.addListener(_onTimingChanged);
   }
 
@@ -272,7 +265,7 @@ class ActionQueueController extends ChangeNotifier {
   String taskTitle(QueuedTask task) {
     switch (task.type) {
       case QueuedTaskType.ENCOUNTER:
-        return _entityCatalog.getDefinitionFor(task.entityId).name;
+        return task.entityId.definition.name;
       case QueuedTaskType.CRAFT:
         return _recipeCatalog.recipeById(task.recipeId).name;
       case QueuedTaskType.EXPLORE:
@@ -281,7 +274,7 @@ class ActionQueueController extends ChangeNotifier {
   }
 
   String taskSubtitle(QueuedTask task) {
-    final zoneName = _zoneCatalog.getDefinitionFor(task.zoneId).name;
+    final zoneName = task.zoneId.definition.name;
     switch (task.type) {
       case QueuedTaskType.ENCOUNTER:
         final entity = _explorationService.getEntity(
@@ -292,7 +285,7 @@ class ActionQueueController extends ChangeNotifier {
         final count = entity is EncounterEntity ? entity.count : 0;
         return "$zoneName · $count left";
       case QueuedTaskType.CRAFT:
-        final station = _entityCatalog.getDefinitionFor(task.entityId).name;
+        final station = task.entityId.definition.name;
         return "$zoneName · $station";
       case QueuedTaskType.EXPLORE:
         return zoneName;

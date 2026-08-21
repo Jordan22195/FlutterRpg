@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/dungeon_catalog.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/dungeons/dungeons.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 
@@ -41,10 +41,8 @@ void main() {
   }
 
   group('Spider Den definition', () {
-    final catalog = DungeonCatalog();
-
     test('is a free zone dungeon with refightable cards', () {
-      final d = catalog.getDefinitionFor(DungeonId.SPIDER_DEN)!;
+      final d = DungeonId.SPIDER_DEN.definition;
       expect(d.type, DungeonType.ZONE);
       expect(d.repeatableEntries, isTrue);
       expect(d.isKeyed, isFalse);
@@ -146,7 +144,6 @@ void main() {
       session.explorationService.addEntityToCurrentZone(
         EntityId.DEV_DUNGEON_ENTRANCE,
         1,
-        session.catalogBundle.entityCatalog,
         save.playerData,
         save.worldData,
       );
@@ -165,7 +162,6 @@ void main() {
       session.explorationService.addEntityToCurrentZone(
         EntityId.DEV_DUNGEON_ENTRANCE,
         1,
-        session.catalogBundle.entityCatalog,
         save.playerData,
         save.worldData,
       );

@@ -1,5 +1,5 @@
 import 'inventory_data.dart';
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 
 class EncounterData {
   EncounterData();

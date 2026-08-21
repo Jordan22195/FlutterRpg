@@ -2,9 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/crafting_service.dart';
@@ -139,7 +138,7 @@ void main() {
     expect(zoneBuffs.keys, containsAll([EntityId.FIREPIT, EntityId.ANVIL]));
 
     final campfireBonus =
-        (ItemCatalog.buildItem(ItemId.BASIC_CAMPFIRE) as FireItem)
+        (ItemId.BASIC_CAMPFIRE.build() as FireItem)
             .skillBonus[SkillId.HITPOINTS]!;
     final total = session.buffService.getBuffedStatTotal(
       save.playerData.buffData,
@@ -196,8 +195,8 @@ void main() {
 
   test('a better cookfire burns less food', () {
     final craftingService = CraftingService();
-    final cookfire = ItemCatalog.buildItem(ItemId.COOKFIRE) as FireItem;
-    final oakCookfire = ItemCatalog.buildItem(ItemId.OAK_COOKFIRE) as FireItem;
+    final cookfire = ItemId.COOKFIRE.build() as FireItem;
+    final oakCookfire = ItemId.OAK_COOKFIRE.build() as FireItem;
 
     // the cooking bonus reaches burn chance through the buffed stat totals,
     // so a higher-tier fire is simply a higher effective cooking level

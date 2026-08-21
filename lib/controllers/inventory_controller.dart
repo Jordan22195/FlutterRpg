@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/inventory_data.dart';
@@ -11,15 +11,11 @@ class InventoryController extends ChangeNotifier {
 
   final InventoryService _inventoryService;
 
-  final ItemCatalog _itemCatalog;
-
   InventoryController({
     required InventoryData inventoryData,
     required InventoryService inventoryService,
-    required ItemCatalog itemCatalog,
   }) : _inventoryData = inventoryData,
-       _inventoryService = inventoryService,
-       _itemCatalog = itemCatalog;
+       _inventoryService = inventoryService;
 
   // inventory data is mutated by other domains (encounter drops, crafting,
   // equipment). those controllers are wired to call this in GameSessionFactory
@@ -53,14 +49,11 @@ class InventoryController extends ChangeNotifier {
   }
 
   ItemDefinition? getItemDefinition(ItemId id) {
-    return _itemCatalog.definitionFor(id);
+    return id.definition;
   }
 
   List<ItemId> getFoodItems() {
-    return _inventoryService.getFoodItemsSortedByHealing(
-      _inventoryData,
-      _itemCatalog,
-    );
+    return _inventoryService.getFoodItemsSortedByHealing(_inventoryData);
   }
 
   // unique equipment instances in the inventory (unequipped)

@@ -16,15 +16,35 @@ class WeightedDropTableEntry<T> {
   /// below the gate contributes no weight rather than a wasted roll.
   final int unlockLevel;
 
-  double weight;
+  final double weight;
 
-  WeightedDropTableEntry({
+  const WeightedDropTableEntry({
     required this.id,
     this.count = 1,
     this.highCount = 0,
     this.unlockLevel = 0,
     required this.weight,
   });
+
+  /// A variant of this entry. Entries live inside `const` catalog
+  /// definitions, so a caller that needs a different weight (a burn chance
+  /// scaled to the player's level, say) builds a new entry rather than
+  /// writing back into the catalog.
+  WeightedDropTableEntry<T> copyWith({
+    T? id,
+    int? count,
+    int? highCount,
+    int? unlockLevel,
+    double? weight,
+  }) {
+    return WeightedDropTableEntry<T>(
+      id: id ?? this.id,
+      count: count ?? this.count,
+      highCount: highCount ?? this.highCount,
+      unlockLevel: unlockLevel ?? this.unlockLevel,
+      weight: weight ?? this.weight,
+    );
+  }
 }
 
 /// One layered-drop roll. The roll fires with probability [chance]; when

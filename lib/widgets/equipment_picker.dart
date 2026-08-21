@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/data/skill_data.dart';
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import '../widgets/food_card.dart';
 import 'icon_renderer.dart';
 import 'item_stack_tile.dart';

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
-import 'package:rpg/game_session.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import '../utilities/image_resolver.dart';
 import '../data/skill_data.dart';
@@ -73,11 +72,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   void _showInfoDialog(BuildContext context) {
     final currentId = id;
     if (currentId is! ItemId) return;
-    final itemDef =
-        context.read<GameSession>().catalogBundle.itemCatalog.definitionFor(
-          currentId,
-        ) ??
-        ItemDefinition(name: "error", value: -1);
+    final itemDef = currentId.definition;
     final inventoryController = context.read<InventoryController>();
     final devCountController = TextEditingController(
       text: '${inventoryController.getItemCount(currentId)}',
@@ -106,9 +101,9 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
                     Text("${itemDef.duration.inSeconds}s"),
                   ],
                 ),
-              if (itemDef is EquipmentItemDefition)
+              if (itemDef is EquipmentItemDefinition)
                 Text("Slot: ${itemDef.armorSlot}"),
-              if (itemDef is EquipmentItemDefition)
+              if (itemDef is EquipmentItemDefinition)
                 for (var stat in itemDef.skillBonus.entries)
                   Row(
                     children: [

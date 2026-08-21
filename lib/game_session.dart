@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
-import 'package:rpg/catalogs/recipe_catalog.dart';
-import 'package:rpg/catalogs/zone_catalog.dart';
-import 'package:rpg/catalogs/enchantment_catalog.dart';
+import 'package:rpg/catalogs/recipes/recipes.dart';
+import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/catalogs/enchantments/enchantments.dart';
 import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
@@ -17,7 +17,6 @@ import 'package:rpg/data/buff_data.dart';
 import 'package:rpg/data/crafting_state.dart';
 import 'package:rpg/data/dungeon_run.dart';
 import 'package:rpg/data/encounter_data.dart';
-import 'package:rpg/catalogs/dungeon_catalog.dart';
 import 'package:rpg/controllers/dungeon_controller.dart';
 import 'package:rpg/systems/dungeon_system.dart';
 import 'package:rpg/data/equipment_data.dart';
@@ -36,9 +35,9 @@ import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/services/shop_service.dart';
 import 'package:rpg/controllers/shop_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/world_data.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/services/skill_service.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
@@ -180,23 +179,24 @@ class SaveGameData {
   }
 }
 
+/// The content pack a save was created against.
+///
+/// Item, entity, zone and dungeon definitions now hang off their id enums, so
+/// there is nothing to bundle for them. What remains are the two catalogs
+/// still keyed by `String` id — recipes and enchantments, whose ids are
+/// written into save data — plus the pack identity that `SaveGameData`
+/// records.
 class GameCatalogBundle {
   final String id;
   final int version;
-  final ItemCatalog itemCatalog;
-  final EntityCatalog entityCatalog;
   final RecipeCatalog recipeCatalog;
-  final ZoneCatalog zoneCatalog;
-  final DungeonCatalog dungeonCatalog;
+  final EnchantmentCatalog enchantmentCatalog;
 
   GameCatalogBundle({
     required this.id,
     required this.version,
-    required this.itemCatalog,
-    required this.entityCatalog,
     required this.recipeCatalog,
-    required this.zoneCatalog,
-    required this.dungeonCatalog,
+    required this.enchantmentCatalog,
   });
 }
 
@@ -205,11 +205,8 @@ class GameSessionFactory {
     return GameCatalogBundle(
       id: "1",
       version: 1,
-      itemCatalog: ItemCatalog(),
-      entityCatalog: EntityCatalog(),
       recipeCatalog: RecipeCatalog(),
-      zoneCatalog: ZoneCatalog(),
-      dungeonCatalog: DungeonCatalog(),
+      enchantmentCatalog: EnchantmentCatalog(),
     );
   }
 
@@ -219,13 +216,12 @@ class GameSessionFactory {
     final zones = <ZoneId, Zone>{};
     for (final zoneId in ZoneId.values) {
       if (zoneId == ZoneId.NULL) continue;
-      final def = catalogs.zoneCatalog.getDefinitionFor(zoneId);
-      if (def.id == ZoneId.NULL) continue;
+      final def = zoneId.definition;
       zones[zoneId] = Zone(
         id: zoneId,
         name: def.name,
         permanentEntities: def.permanentEntities
-            .map((id) => catalogs.entityCatalog.buildEntity(id))
+            .map((id) => id.build())
             .toList(),
         discoveredEntities: [],
       );
@@ -280,13 +276,12 @@ class GameSessionFactory {
     for (final zoneId in ZoneId.values) {
       if (zoneId == ZoneId.NULL) continue;
       if (save.worldData.zones.containsKey(zoneId)) continue;
-      final def = catalogs.zoneCatalog.getDefinitionFor(zoneId);
-      if (def.id == ZoneId.NULL) continue;
+      final def = zoneId.definition;
       save.worldData.zones[zoneId] = Zone(
         id: zoneId,
         name: def.name,
         permanentEntities: def.permanentEntities
-            .map((id) => catalogs.entityCatalog.buildEntity(id))
+            .map((id) => id.build())
             .toList(),
         discoveredEntities: [],
       );
@@ -317,12 +312,10 @@ class GameSessionFactory {
     // migration: permanent entities added to a zone definition after the
     // save serialized that zone are synced in on load
     for (final zone in save.worldData.zones.values) {
-      final def = catalogs.zoneCatalog.getDefinitionFor(zone.id);
+      final def = zone.id.definition;
       for (final entityId in def.permanentEntities) {
         if (zone.permanentEntities.any((e) => e.id == entityId)) continue;
-        zone.permanentEntities.add(
-          catalogs.entityCatalog.buildEntity(entityId),
-        );
+        zone.permanentEntities.add(entityId.build());
       }
     }
 
@@ -335,7 +328,7 @@ class GameSessionFactory {
         for (var i = 0; i < list.length; i++) {
           final entity = list[i];
           if (entity is FishingEntity) continue;
-          final def = catalogs.entityCatalog.getDefinitionFor(entity.id);
+          final def = entity.id.definition;
           if (def is! FishingEntityDefinition) continue;
           list[i] = def.toEntity(entity.id);
         }
@@ -360,15 +353,12 @@ class GameSessionFactory {
     // migration: equipment used to be stored as stackable counts in the
     // item map; convert those counts into unique equipment instances
     final legacyEquipmentIds = save.inventoryData.itemMap.keys
-        .where(
-          (id) =>
-              catalogs.itemCatalog.definitionFor(id) is EquipmentItemDefition,
-        )
+        .where((id) => id.definition is EquipmentItemDefinition)
         .toList();
     for (final id in legacyEquipmentIds) {
       final count = save.inventoryData.itemMap.remove(id) ?? 0;
       if (count <= 0) continue;
-      final item = ItemCatalog.buildItem(id);
+      final item = id.build();
       if (item is EquipmentItem) {
         item.count = count;
         save.inventoryData.equipment.add(item);
@@ -428,15 +418,12 @@ class GameSessionFactory {
       equpmentService: equipmentService,
       skillService: skillService,
     );
-    final entityScreenRouterService = EntityScreenRouterService(
-      entityCatalog: catalogs.entityCatalog,
-    );
+    final entityScreenRouterService = EntityScreenRouterService();
     final enchantingService = EnchantingService();
     final enchantmentCatalog = EnchantmentCatalog();
     final shopService = ShopService(inventoryService: inventoryService);
     final offlineProgressService = OfflineProgressService(inventoryService);
     final combatAutoEatService = CombatAutoEatService(
-      itemCatalog: catalogs.itemCatalog,
       inventoryService: inventoryService,
       playerDataService: playerDataService,
     );
@@ -449,7 +436,6 @@ class GameSessionFactory {
       craftingState: save.craftingState,
       worldState: save.worldData,
       recipeCatalog: catalogs.recipeCatalog,
-      zoneCatalog: catalogs.zoneCatalog,
       playerDataService: playerDataService,
       craftingService: craftingService,
       inventoryService: inventoryService,
@@ -462,8 +448,6 @@ class GameSessionFactory {
       playerDataService: playerDataService,
       dropTableService: weightedDropTableService,
       inventoryService: inventoryService,
-      entityCatalog: catalogs.entityCatalog,
-      itemCatalog: catalogs.itemCatalog,
       autoEatService: combatAutoEatService,
     );
     final explorationSystem = ExplorationSystem(
@@ -471,9 +455,6 @@ class GameSessionFactory {
       playerDataService: playerDataService,
       dropTableService: weightedDropTableService,
       inventoryService: inventoryService,
-      entityCatalog: catalogs.entityCatalog,
-      itemCatalog: catalogs.itemCatalog,
-      zoneCatalog: catalogs.zoneCatalog,
     );
     final equipmentSystem = EquipmentSystem(
       inventoryService: inventoryService,
@@ -487,9 +468,6 @@ class GameSessionFactory {
       enchantmentCatalog: enchantmentCatalog,
     );
     final dungeonSystem = DungeonSystem(
-      dungeonCatalog: catalogs.dungeonCatalog,
-      entityCatalog: catalogs.entityCatalog,
-      itemCatalog: catalogs.itemCatalog,
       explorationService: explorationService,
       inventoryService: inventoryService,
       playerDataService: playerDataService,
@@ -517,12 +495,10 @@ class GameSessionFactory {
       playerData: save.playerData,
       playerDataService: playerDataService,
       actionTimingController: actionTimingController,
-      entityCatalog: catalogs.entityCatalog,
     );
     final inventoryController = InventoryController(
       inventoryData: save.inventoryData,
       inventoryService: inventoryService,
-      itemCatalog: catalogs.itemCatalog,
     );
     final encounterController = EncounterController(
       playerData: save.playerData,
@@ -533,12 +509,10 @@ class GameSessionFactory {
       worldState: save.worldData,
       explorationService: explorationService,
       actionTimingController: actionTimingController,
-      entityCatalog: catalogs.entityCatalog,
       dropTableService: weightedDropTableService,
       playerDataService: playerDataService,
       inventoryState: save.inventoryData,
       inventoryService: inventoryService,
-      itemCatalog: catalogs.itemCatalog,
       encounterSystem: encounterSystem,
       offlineProgressData: offlineProgressData,
       offlineProgressService: offlineProgressService,
@@ -559,7 +533,6 @@ class GameSessionFactory {
       craftingState: save.craftingState,
       playerState: save.playerData,
       reciepeCatalog: catalogs.recipeCatalog,
-      entityCatalog: catalogs.entityCatalog,
       playerDataService: playerDataService,
       offlineProgressData: offlineProgressData,
       offlineProgressService: offlineProgressService,
@@ -586,8 +559,6 @@ class GameSessionFactory {
       explorationService: explorationService,
       playerState: save.playerData,
       inventoryState: save.inventoryData,
-      zoneCatalog: catalogs.zoneCatalog,
-      entityCatalog: catalogs.entityCatalog,
       entityScreenRouterService: entityScreenRouterService,
       playerDataService: playerDataService,
       encounterSystem: encounterSystem,
@@ -615,8 +586,6 @@ class GameSessionFactory {
       playerState: save.playerData,
       worldState: save.worldData,
       inventoryState: save.inventoryData,
-      entityCatalog: catalogs.entityCatalog,
-      itemCatalog: catalogs.itemCatalog,
       explorationService: explorationService,
       inventoryService: inventoryService,
       shopService: shopService,
@@ -629,9 +598,7 @@ class GameSessionFactory {
       playerState: save.playerData,
       worldState: save.worldData,
       explorationService: explorationService,
-      entityCatalog: catalogs.entityCatalog,
       recipeCatalog: catalogs.recipeCatalog,
-      zoneCatalog: catalogs.zoneCatalog,
     );
 
     // encounter, crafting, and equipment actions mutate inventory data;

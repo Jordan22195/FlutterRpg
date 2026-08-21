@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/widgets/action_timer.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 
@@ -137,8 +137,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget _buildStructureCard(WorldController worldController, Entity e) {
     // a firepit shows whatever is burning in it — the fire's art, its name
     // and its remaining time — and advertises cooking while a cookfire is
-    // lit. check first: FirepitEntity is also a CraftingEntity.
-    if (e is FirepitEntity) {
+    // lit. check first: FirePitEntity is also a CraftingEntity.
+    if (e is FirePitEntity) {
       final fire = context.watch<BuffController>().getZoneBuffFor(e.id);
       final lit =
           fire is FireItem && fire.expirationTime.isAfter(DateTime.now());
@@ -383,7 +383,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
       InkWell(
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ZoneDetailScreen(zoneId: zoneDef.id),
+            builder: (_) =>
+                ZoneDetailScreen(zoneId: worldController.currentZoneId),
           ),
         ),
         child: Stack(

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:rpg/catalogs/entity_catalog.dart';
-import 'package:rpg/catalogs/item_catalog.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/data/player_data.dart';
@@ -18,8 +18,6 @@ class ShopController extends ChangeNotifier {
   final InventoryData _inventoryState;
 
   // catalogs
-  final EntityCatalog _entityCatalog;
-  final ItemCatalog _itemCatalog;
 
   // services
   final ExplorationService _explorationService;
@@ -30,16 +28,12 @@ class ShopController extends ChangeNotifier {
     required PlayerData playerState,
     required WorldData worldState,
     required InventoryData inventoryState,
-    required EntityCatalog entityCatalog,
-    required ItemCatalog itemCatalog,
     required ExplorationService explorationService,
     required InventoryService inventoryService,
     required ShopService shopService,
   }) : _playerState = playerState,
        _worldState = worldState,
        _inventoryState = inventoryState,
-       _entityCatalog = entityCatalog,
-       _itemCatalog = itemCatalog,
        _explorationService = explorationService,
        _inventoryService = inventoryService,
        _shopService = shopService;
@@ -55,13 +49,13 @@ class ShopController extends ChangeNotifier {
 
     final def = _shopDefinition(entity.id);
     if (def != null) {
-      _shopService.restockIfDue(entity, def, _itemCatalog);
+      _shopService.restockIfDue(entity, def);
     }
     return entity;
   }
 
   ShopEntityDefinition? _shopDefinition(EntityId id) {
-    final def = _entityCatalog.getDefinitionFor(id);
+    final def = id.definition;
     return def is ShopEntityDefinition ? def : null;
   }
 
@@ -70,12 +64,10 @@ class ShopController extends ChangeNotifier {
   }
 
   String shopIconAsset() {
-    return _entityCatalog
-        .getDefinitionFor(_playerState.currentEntityViewId)
-        .iconAsset;
+    return _playerState.currentEntityViewId.definition.iconAsset;
   }
 
-  List<ShopStockEntry> stock() {
+  List<ShopStockSlot> stock() {
     return List.unmodifiable(_currentShop()?.stock ?? const []);
   }
 
@@ -88,7 +80,7 @@ class ShopController extends ChangeNotifier {
   }
 
   String itemName(ItemId itemId) {
-    return ItemCatalog.buildItem(itemId).name;
+    return itemId.build().name;
   }
 
   int buyPrice(ItemId itemId) {
@@ -105,7 +97,7 @@ class ShopController extends ChangeNotifier {
     return playerCoins() >= buyPrice(itemId);
   }
 
-  bool buy(ShopStockEntry entry) {
+  bool buy(ShopStockSlot entry) {
     final shop = _currentShop();
     final def = _shopDefinition(_playerState.currentEntityViewId);
     if (shop == null || def == null) return false;

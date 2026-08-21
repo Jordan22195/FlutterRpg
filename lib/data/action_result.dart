@@ -1,7 +1,7 @@
-import '../catalogs/item_catalog.dart';
+import '../catalogs/items/items.dart';
 import 'ObjectStack.dart';
 import 'skill_data.dart';
-import '../catalogs/entity_catalog.dart';
+import '../catalogs/entities/entities.dart';
 
 class EncounterActionResult {
   Map<SkillId, double> xp = {};
