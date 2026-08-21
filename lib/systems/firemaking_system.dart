@@ -16,20 +16,36 @@ class FiremakingSystem {
   FiremakingSystem({required BuffService buffService})
     : _buffService = buffService;
 
-  /// The fire burning in [firepitId], or null when it is cold. A non-fire
-  /// zone buff owned by the same entity is not a fire and reads as null.
-  FireItem? activeFire(EntityId firepitId, ZoneId zoneId, BuffData buffState) {
+  /// The fire burning in [firepitId] at [at], or null when it is cold. A
+  /// non-fire zone buff owned by the same entity is not a fire and reads as
+  /// null.
+  ///
+  /// [at] defaults to now. An offline settle replays the gap segment by
+  /// segment and asks at the instant of the segment, not at the wall clock,
+  /// which by then is hours past the stretch being settled.
+  FireItem? activeFire(
+    EntityId firepitId,
+    ZoneId zoneId,
+    BuffData buffState, {
+    DateTime? at,
+  }) {
     final buff = _buffService.getZoneBuff(buffState, zoneId, firepitId);
     if (buff is! FireItem) return null;
     // the sweep runs on a 1s tick, so a fire can be a moment past its end
     // while still in the map. treat it as out.
-    if (buff.expirationTime.isBefore(DateTime.now())) return null;
+    if (buff.expirationTime.isBefore(at ?? DateTime.now())) return null;
     return buff;
   }
 
-  /// Whether cooking recipes are available at [firepitId] right now.
-  bool canCookAt(EntityId firepitId, ZoneId zoneId, BuffData buffState) {
-    return activeFire(firepitId, zoneId, buffState)?.canCook ?? false;
+  /// Whether cooking recipes are available at [firepitId] at [at],
+  /// defaulting to now.
+  bool canCookAt(
+    EntityId firepitId,
+    ZoneId zoneId,
+    BuffData buffState, {
+    DateTime? at,
+  }) {
+    return activeFire(firepitId, zoneId, buffState, at: at)?.canCook ?? false;
   }
 
   /// Lights [fireId] in [firepitId]: adds to the fire already burning when it

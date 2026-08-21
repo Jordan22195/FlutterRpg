@@ -1,6 +1,5 @@
 import '../data/action_result.dart';
 import '../data/offline_progress_data.dart';
-import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import 'inventory_service.dart';
 
@@ -11,10 +10,11 @@ import 'inventory_service.dart';
 /// is down, so the action controllers can call in unconditionally: the
 /// buffer only opens for the stretch of a settle.
 ///
-/// Items and kills come from the action results; xp does not. Xp is read off
-/// the player's own totals across the settle ([begin] to [finish]) because
-/// the systems apply it internally - a disenchant rolls its xp from the item
-/// it just consumed, and no result carries the number back out.
+/// Everything in the report comes from the action results: the items, the
+/// kills, the xp, and the count of actions that actually happened. Nothing
+/// is inferred from the player's own totals, and nothing is counted before
+/// the action has had its say - an action that declines to act (its fire
+/// went out, its materials ran out) reports the nothing it did.
 class OfflineProgressService {
   final InventoryService _inventoryService;
 
@@ -27,25 +27,15 @@ class OfflineProgressService {
   static const Duration reportThreshold = Duration(seconds: 5);
 
   /// Opens the buffer for one settle, discarding whatever the last one left.
-  void begin(
-    OfflineProgressData data,
-    Duration timeAway,
-    PlayerData playerState,
-  ) {
+  void begin(OfflineProgressData data, Duration timeAway) {
     data.report = OfflineProgressReport()..timeAway = timeAway;
-    data.xpAtStart = _xpTotals(playerState);
     data.processing = true;
-  }
-
-  /// Counts the actions one stretch of the settle paid for. Called with the
-  /// count handed to the action, not once per action.
-  void recordActions(OfflineProgressData data, int count) {
-    if (!data.processing || count <= 0) return;
-    data.report.actionCount += count;
   }
 
   void record(OfflineProgressData data, EncounterActionResult result) {
     if (!data.processing) return;
+    _recordActions(data, result.actionsPerformed);
+    _recordXp(data, result.xp);
     _inventoryService.addItems(data.report.items, result.items);
     for (final item in result.equipment) {
       // its own copy: sharing one instance between two inventories would
@@ -71,6 +61,10 @@ class OfflineProgressService {
   /// entities as loot.
   void recordExplore(OfflineProgressData data, ExploreResult result) {
     if (!data.processing) return;
+    _recordActions(data, result.actionsPerformed);
+    // explore trains one skill, so its result carries a bare number rather
+    // than a map
+    _recordXp(data, {SkillId.EXPLORATION: result.xp});
     _inventoryService.addItems(data.report.items, result.items);
     for (final entity in result.entities) {
       if (entity.count <= 0) continue;
@@ -84,9 +78,8 @@ class OfflineProgressService {
 
   /// Closes the buffer. A report that is empty, or covers too short a gap to
   /// be worth interrupting the player over, is dropped rather than shown.
-  void finish(OfflineProgressData data, PlayerData playerState) {
+  void finish(OfflineProgressData data) {
     data.processing = false;
-    data.report.xp = _xpGainedSince(data.xpAtStart, playerState);
     if (data.report.isEmpty) return;
     if (data.report.timeAway < reportThreshold) return;
     data.pending = data.report;
@@ -98,22 +91,21 @@ class OfflineProgressService {
     data.pending = null;
   }
 
-  Map<SkillId, double> _xpTotals(PlayerData playerState) {
-    return {
-      for (final entry in playerState.skillData.entries)
-        entry.key: entry.value.xp,
-    };
+  /// The actions one fire actually performed, which is not always the count
+  /// it was handed.
+  void _recordActions(OfflineProgressData data, int count) {
+    if (count <= 0) return;
+    data.report.actionCount += count;
   }
 
-  Map<SkillId, double> _xpGainedSince(
-    Map<SkillId, double> before,
-    PlayerData playerState,
-  ) {
-    final gained = <SkillId, double>{};
-    for (final entry in playerState.skillData.entries) {
-      final delta = entry.value.xp - (before[entry.key] ?? 0);
-      if (delta > 0) gained[entry.key] = delta;
+  void _recordXp(OfflineProgressData data, Map<SkillId, double> xp) {
+    for (final entry in xp.entries) {
+      if (entry.value <= 0) continue;
+      data.report.xp.update(
+        entry.key,
+        (total) => total + entry.value,
+        ifAbsent: () => entry.value,
+      );
     }
-    return gained;
   }
 }

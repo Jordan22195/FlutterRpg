@@ -108,12 +108,19 @@ class EncounterController extends ChangeNotifier {
        _encounterSystem = encounterSystem,
        _inventoryService = inventoryService;
 
-  void doFishingEncounterAction(int count) {
+  void doFishingEncounterAction(
+    int count, {
+    bool offline = false,
+    DateTime? at,
+  }) {
     latestActionResult = _encounterSystem.executeFishingAction(
       playerState: _playerState,
       encounter: _encounterState,
       world: _worldState,
       playerInventory: _inventoryState,
+      actionCount: count,
+      offline: offline,
+      at: at,
     );
     actionSequence++;
     _recordOfflineResult();
@@ -131,12 +138,19 @@ class EncounterController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void doHerbalismEncounterAction(int count) {
+  void doHerbalismEncounterAction(
+    int count, {
+    bool offline = false,
+    DateTime? at,
+  }) {
     latestActionResult = _encounterSystem.executeHerbalismAction(
       playerState: _playerState,
       encounter: _encounterState,
       worldState: _worldState,
       playerInventory: _inventoryState,
+      actionCount: count,
+      offline: offline,
+      at: at,
     );
     actionSequence++;
     _recordOfflineResult();
@@ -171,7 +185,7 @@ class EncounterController extends ChangeNotifier {
   // function bound to action button in startEncounterAction.
   // This executes periodically.
   //
-  void doEncounterAction(int count) {
+  void doEncounterAction(int count, {bool offline = false, DateTime? at}) {
     latestActionResult = _encounterSystem.executePlayerAction(
       playerState: _playerState,
       encounter: _encounterState,
@@ -179,6 +193,8 @@ class EncounterController extends ChangeNotifier {
       playerInventory: _inventoryState,
       instantRespawn: _dungeonService.runningEntity(_dungeonRun) != null,
       actionCount: count,
+      offline: offline,
+      at: at,
     );
     actionSequence++;
     _recordOfflineResult();
@@ -330,7 +346,9 @@ class EncounterController extends ChangeNotifier {
   // the tick an entity's encounter runs on. fishing spots don't deplete or
   // fight back, and herbs are picked in one action with a level gate, so
   // each runs its own action with its own start conditions
-  FutureOr<void> Function(int) _actionFor(EncounterEntity entity) {
+  FutureOr<void> Function(int, {bool offline, DateTime? at}) _actionFor(
+    EncounterEntity entity,
+  ) {
     switch (entity.entityType) {
       case SkillId.FISHING:
         return doFishingEncounterAction;

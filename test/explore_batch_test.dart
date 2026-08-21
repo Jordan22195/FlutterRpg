@@ -70,7 +70,8 @@ void main() {
     final session = buildSession();
     session.saveGameData.playerData.currentZoneId = ZoneId.DEV_FOREST;
     setExplorationLevel(session, level);
-    session.worldController.doExplore(explores);
+    // an offline settle is the only thing that batches, and it says so
+    session.worldController.doExplore(explores, offline: true);
     return session;
   }
 
@@ -251,7 +252,7 @@ void main() {
 
       final batched = buildSession();
       batched.saveGameData.playerData.currentZoneId = ZoneId.DEV_FOREST;
-      batched.worldController.doExplore(explores);
+      batched.worldController.doExplore(explores, offline: true);
       final batchedXp = explorationXp(batched);
       batched.dispose();
 
@@ -283,6 +284,7 @@ void main() {
         worldState: save.worldData,
         playerInventory: save.inventoryData,
         numTimesToExplore: explores,
+        offline: true,
       );
 
       expect(expectedFinds, greaterThan(explores));
@@ -344,7 +346,7 @@ void main() {
       setExplorationLevel(session, 5);
 
       world.startExplore();
-      world.doExplore(300);
+      world.doExplore(300, offline: true);
 
       final finds = world.getCurrentZoneItems();
       expect(
@@ -379,6 +381,7 @@ void main() {
         worldState: save.worldData,
         playerInventory: save.inventoryData,
         numTimesToExplore: 50,
+        offline: true,
       );
 
       expect(result.entities, isEmpty);

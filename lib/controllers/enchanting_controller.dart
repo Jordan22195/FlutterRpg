@@ -234,7 +234,7 @@ class EnchantingController extends ChangeNotifier {
 
   // function bound to the action button. executes periodically: each
   // fire disenchants or enchants ONE item from the selected stack
-  void doEnchantingAction(int count) {
+  void doEnchantingAction(int count, {bool offline = false, DateTime? at}) {
     final target = selectedTarget;
     if (target == null || target.stackKey != _runningTargetStackKey) {
       _actionTimingController.stop();
@@ -244,37 +244,38 @@ class EnchantingController extends ChangeNotifier {
 
     // what this fire produced, reported when the timing system is settling
     // time away and ignored otherwise
-    final result = EncounterActionResult();
+    final EncounterActionResult result;
 
     if (disenchantSelected) {
-      final gained = _enchantingSystem.disenchant(
+      result = _enchantingSystem.disenchant(
         target.instanceId,
         _playerState,
         _inventoryState,
+        at: at,
       );
-      if (gained != null) {
-        _inventoryService.addItems(_sessionResults, [gained]);
-        result.items.add(gained);
-      }
+      _inventoryService.addItems(_sessionResults, result.items);
     } else {
       final recipe = selectedRecipe;
-      final enchanted = recipe == null
-          ? null
+      result = recipe == null
+          ? EncounterActionResult()
           : _enchantingSystem.enchant(
               recipe.id,
               target.instanceId,
               _playerState,
               _inventoryState,
+              at: at,
             );
-      if (enchanted == null) {
+      if (result.equipment.isEmpty) {
         _actionTimingController.stop();
         notifyListeners();
         return;
       }
       // session grid gets its own copy: sharing one object between two
       // inventories would double-count when stacks merge
-      _inventoryService.addEquipment(_sessionResults, enchanted.copy());
-      result.equipment.add(enchanted);
+      _inventoryService.addEquipment(
+        _sessionResults,
+        result.equipment.first.copy(),
+      );
     }
 
     _offlineProgressService.record(_offlineProgressData, result);

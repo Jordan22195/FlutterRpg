@@ -32,8 +32,11 @@ class ExplorationSystem {
 
   /// The player's Exploration level including gear and buffs, matching the
   /// convention every other level gate in the game uses.
-  int explorationLevel(PlayerData playerState) {
-    return _playerDataService.getStatTotals(playerState)[SkillId.EXPLORATION] ??
+  int explorationLevel(PlayerData playerState, {DateTime? at}) {
+    return _playerDataService.getStatTotals(
+          playerState,
+          at: at,
+        )[SkillId.EXPLORATION] ??
         1;
   }
 
@@ -45,20 +48,22 @@ class ExplorationSystem {
   /// Only the first find of an explore pays exploration xp, so outlevelling
   /// a zone multiplies its loot without touching its xp rate.
   ///
-  /// Above one, the whole batch is settled in a single pass: the find count
-  /// is the exact mean rather than a per-explore roll, and each table is
-  /// rolled through [WeightedDropTableService.rollMulitpleTimes]. That pays
-  /// the same xp and the same expected loot as looping, which is what lets
-  /// hours of offline progress resolve in one call.
+  /// With [offline] set the whole batch is settled in a single pass: the
+  /// find count is the exact mean rather than a per-explore roll, and each
+  /// table is rolled through [WeightedDropTableService.rollMulitpleTimes].
+  /// That pays the same xp and the same expected loot as looping, which is
+  /// what lets hours of offline progress resolve in one call.
   ExploreResult explore({
     required PlayerData playerState,
     required WorldData worldState,
     required InventoryData playerInventory,
     int numTimesToExplore = 1,
+    bool offline = false,
+    DateTime? at,
   }) {
     final result = ExploreResult();
     final zone = playerState.currentZoneId.definition;
-    final level = explorationLevel(playerState);
+    final level = explorationLevel(playerState, at: at);
 
     final entityEntries = _explorationService.getZoneEntityDropTableEntries(
       playerState,
@@ -73,7 +78,9 @@ class ExplorationSystem {
     // locked) yields nothing rather than rolling an empty table
     if (entityEntries.isEmpty) return result;
 
-    if (numTimesToExplore > 1) {
+    result.actionsPerformed = numTimesToExplore;
+
+    if (offline) {
       result.findCount =
           (_explorationService.findsPerExplore(level, zone.explorationLevel) *
                   numTimesToExplore)
@@ -85,7 +92,7 @@ class ExplorationSystem {
       );
     }
 
-    if (numTimesToExplore > 1) {
+    if (offline) {
       // both tables are rolled once per FIND, not once per explore - the
       // same as the loop below. an outlevelled zone yields several finds an
       // explore, and batching must not quietly drop them.

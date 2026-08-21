@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/crafting_service.dart';
@@ -137,9 +138,8 @@ void main() {
         save.playerData.buffData.zoneBuffs[save.playerData.currentZoneId]!;
     expect(zoneBuffs.keys, containsAll([EntityId.FIREPIT, EntityId.ANVIL]));
 
-    final campfireBonus =
-        (ItemId.BASIC_CAMPFIRE.build() as FireItem)
-            .skillBonus[SkillId.HITPOINTS]!;
+    final campfireBonus = (ItemId.BASIC_CAMPFIRE.build() as FireItem)
+        .skillBonus[SkillId.HITPOINTS]!;
     final total = session.buffService.getBuffedStatTotal(
       save.playerData.buffData,
       save.playerData.currentZoneId,
@@ -368,5 +368,214 @@ void main() {
 
       session.dispose();
     });
+  });
+
+  test('the sweep judges expiry at the instant it is given', () {
+    final session = buildSession();
+    final save = session.saveGameData;
+    final buffData = save.playerData.buffData;
+    stockForFiremaking(session);
+
+    craftAt(session, 'cookfire', EntityId.FIREPIT);
+    final fire =
+        buffData.zoneBuffs[save.playerData.currentZoneId]![EntityId.FIREPIT]!;
+    final wentOut = fire.expirationTime;
+
+    // a settle replays the gap segment by segment and sweeps at each
+    // segment's own instant, so a fire is still there for the stretch it
+    // was burning in
+    session.buffService.removeExpiredZoneBuffs(
+      buffData,
+      at: wentOut.subtract(const Duration(seconds: 1)),
+    );
+    expect(
+      session.buffService.getZoneBuff(
+        buffData,
+        save.playerData.currentZoneId,
+        EntityId.FIREPIT,
+      ),
+      isNotNull,
+    );
+
+    // and gone from the instant it went out - inclusive, because a segment
+    // ends exactly on the expiry it was cut at
+    session.buffService.removeExpiredZoneBuffs(buffData, at: wentOut);
+    expect(
+      session.buffService.getZoneBuff(
+        buffData,
+        save.playerData.currentZoneId,
+        EntityId.FIREPIT,
+      ),
+      isNull,
+    );
+
+    session.dispose();
+  });
+
+  test('a fire answers whether it was lit at a given instant', () {
+    final session = buildSession();
+    final save = session.saveGameData;
+    final zone = save.playerData.currentZoneId;
+    final buffData = save.playerData.buffData;
+    stockForFiremaking(session);
+
+    craftAt(session, 'cookfire', EntityId.FIREPIT);
+    final wentOut = session.firemakingSystem
+        .activeFire(EntityId.FIREPIT, zone, buffData)!
+        .expirationTime;
+
+    final before = wentOut.subtract(const Duration(seconds: 1));
+    final after = wentOut.add(const Duration(seconds: 1));
+
+    expect(
+      session.firemakingSystem.activeFire(
+        EntityId.FIREPIT,
+        zone,
+        buffData,
+        at: before,
+      ),
+      isNotNull,
+    );
+    expect(
+      session.firemakingSystem.activeFire(
+        EntityId.FIREPIT,
+        zone,
+        buffData,
+        at: after,
+      ),
+      isNull,
+    );
+    expect(
+      session.firemakingSystem.canCookAt(
+        EntityId.FIREPIT,
+        zone,
+        buffData,
+        at: before,
+      ),
+      isTrue,
+    );
+    expect(
+      session.firemakingSystem.canCookAt(
+        EntityId.FIREPIT,
+        zone,
+        buffData,
+        at: after,
+      ),
+      isFalse,
+    );
+
+    // a firepit that never held a fire has no answer either way
+    expect(
+      session.firemakingSystem.canCookAt(
+        EntityId.ANVIL,
+        zone,
+        buffData,
+        at: before,
+      ),
+      isFalse,
+    );
+
+    session.dispose();
+  });
+
+  test('the next expiration is the earliest still to come, in this zone', () {
+    final session = buildSession();
+    final save = session.saveGameData;
+    final zone = save.playerData.currentZoneId;
+    final buffData = save.playerData.buffData;
+    final start = DateTime.now();
+
+    expect(
+      session.buffService.nextExpiration(buffData, zone, after: start),
+      isNull,
+    );
+
+    stockForFiremaking(session);
+    craftAt(session, 'cookfire', EntityId.FIREPIT);
+    final cookfire = buffData.zoneBuffs[zone]![EntityId.FIREPIT]! as FireItem;
+    cookfire.expirationTime = start.add(const Duration(minutes: 5));
+
+    // a second fire in another zone is nothing to do with this one
+    final elsewhere = ItemId.BONFIRE.build() as FireItem;
+    elsewhere.expirationTime = start.add(const Duration(minutes: 1));
+    session.buffService.setZoneBuff(
+      elsewhere,
+      buffData,
+      ZoneId.values.firstWhere((z) => z != zone),
+      EntityId.FIREPIT,
+    );
+
+    expect(
+      session.buffService.nextExpiration(buffData, zone, after: start),
+      cookfire.expirationTime,
+    );
+    // strictly after: asking from the instant it went out looks past it
+    expect(
+      session.buffService.nextExpiration(
+        buffData,
+        zone,
+        after: cookfire.expirationTime,
+      ),
+      isNull,
+    );
+
+    session.dispose();
+  });
+
+  test('stat totals include a fire that was lit at the instant asked', () {
+    final session = buildSession();
+    final save = session.saveGameData;
+    final zone = save.playerData.currentZoneId;
+    final buffData = save.playerData.buffData;
+    stockForFiremaking(session);
+
+    final baseline =
+        session.playerDataService.getStatTotals(
+          save.playerData,
+        )[SkillId.COOKING] ??
+        0;
+
+    craftAt(session, 'cookfire', EntityId.FIREPIT);
+    final wentOut = session.firemakingSystem
+        .activeFire(EntityId.FIREPIT, zone, buffData)!
+        .expirationTime;
+    final bonus = ItemId.COOKFIRE.build() as FireItem;
+
+    // while it burns, the fire lends its cooking bonus
+    expect(
+      session.playerDataService.getStatTotals(save.playerData)[SkillId.COOKING],
+      baseline + bonus.skillBonus[SkillId.COOKING]!,
+    );
+
+    // and it still does when a settle asks about an instant it was burning
+    // at, hours after it went out
+    expect(
+      session.buffService.getBuffedStatTotal(
+        buffData,
+        zone,
+        at: wentOut.subtract(const Duration(seconds: 1)),
+      )[SkillId.COOKING],
+      bonus.skillBonus[SkillId.COOKING],
+    );
+    expect(
+      session.buffService.getBuffedStatTotal(
+        buffData,
+        zone,
+        at: wentOut.add(const Duration(seconds: 1)),
+      )[SkillId.COOKING],
+      isNull,
+    );
+
+    // a buff in another zone never counts, whenever it is asked about
+    expect(
+      session.buffService.getBuffedStatTotal(
+        buffData,
+        ZoneId.values.firstWhere((z) => z != zone),
+        at: wentOut.subtract(const Duration(seconds: 1)),
+      ),
+      isEmpty,
+    );
+
+    session.dispose();
   });
 }

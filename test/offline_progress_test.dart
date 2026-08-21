@@ -2,26 +2,22 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/player_data.dart';
-import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/buff_service.dart';
-import 'package:rpg/data/offline_progress_data.dart';
 import 'package:rpg/services/equipment_service.dart';
-import 'package:rpg/services/inventory_service.dart';
-import 'package:rpg/services/offline_progress_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/services/skill_service.dart';
 
-// frames stop arriving when the app is backgrounded, so the loop settles the
-// gap in one pass when they start again: the actions that would have fired,
-// and the stamina that would have drained or recovered.
+// Frames stop arriving when the app is backgrounded. The frame loop's job is
+// only to notice that - it hands the gap to OfflineProgressSystem rather than
+// running it as a frame. What the settle then pays out is covered in
+// offline_progress_system_test.dart.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late PlayerDataService playerDataService;
   late ActionTimingService timingService;
   late ActionTimingSystem system;
-  late OfflineProgressData offlineProgressData;
 
   setUp(() {
     playerDataService = PlayerDataService(
@@ -30,13 +26,10 @@ void main() {
       skillService: SkillService(),
     );
     timingService = ActionTimingService();
-    offlineProgressData = OfflineProgressData();
     system = ActionTimingSystem(
       actionTimingService: timingService,
       playerDataService: playerDataService,
       equipmentService: EquipmentService(),
-      offlineProgressService: OfflineProgressService(InventoryService()),
-      offlineProgressData: offlineProgressData,
     );
   });
 
@@ -46,17 +39,14 @@ void main() {
         .playerData;
   }
 
-  void setLevel(PlayerData player, SkillId skill, int level) {
-    final data = player.skillData[skill]!;
-    data.xp = data.xpTable[level];
-  }
 
   // an action state with a recording onFire. every count the loop fires is
   // appended, so a test can tell one batch of 20 from two batches of 10.
   (ActionTimingData, List<int>) recordingState() {
     final fired = <int>[];
     final state = ActionTimingData();
-    state.onFire = fired.add;
+    state.onFire = (count, {bool offline = false, DateTime? at}) =>
+        fired.add(count);
     return (state, fired);
   }
 
@@ -70,179 +60,16 @@ void main() {
     return now;
   }
 
-  group('offlineProgressUpdate', () {
-    test('fires the actions the gap was worth, at the idle interval', () {
-      final player = newPlayer();
-      final (state, fired) = recordingState();
-      // 60s away at the 3s default interval is 20 actions
-      final now = goOffline(player, 60);
-
-      system.offlineProgressUpdate(player, state, now: now);
-
-      expect(state.maxInterval, ActionTimingService.defaultMaxInterval);
-      expect(fired, [20]);
-    });
-
-    test('recovers stamina while away with no boost held', () {
-      final player = newPlayer();
-      setLevel(player, SkillId.RECOVERY, 20); // 2.0 stamina/sec
-      setLevel(player, SkillId.STAMINA, 20); // room to recover into
-      player.stamina = 5;
-      final (state, _) = recordingState();
-      final now = goOffline(player, 10);
-
-      system.offlineProgressUpdate(player, state, now: now);
-
-      // 10s * 2.0/sec on top of the 5 it started with
-      expect(player.stamina, closeTo(25.0, 1e-6));
-    });
-
-    test('caps recovered stamina at the maximum', () {
-      final player = newPlayer();
-      setLevel(player, SkillId.RECOVERY, 20);
-      player.stamina = 5;
-      final (state, _) = recordingState();
-      final now = goOffline(player, 3600); // an hour away
-
-      system.offlineProgressUpdate(player, state, now: now);
-
-      expect(player.stamina, playerDataService.getMaxStamina(player));
-    });
-
-    test('a locked boost burns stamina and stops when it runs out', () {
-      final player = newPlayer();
-      setLevel(player, SkillId.SPEED, 20); // ceiling 2x
-      player.stamina = 10;
-
-      final (state, fired) = recordingState();
-      state.boostLocked = true;
-      state.percentOfMaxBoost = 1.0;
-      state.maxBoostMultiplier = timingService.maxSpeedBoostForStat(
-        playerDataService.getStatTotals(player)[SkillId.SPEED] ?? 1,
-      );
-
-      // drain is staminaDrainPerBoost * (multiplier - 1), so 10 stamina
-      // buys a fixed number of seconds well short of the hour spent away
-      final multiplier = timingService.getCurrentSpeedMultiplier(state);
-      final drainPerSecond =
-          ActionTimingService.staminaDrainPerBoost * (multiplier - 1);
-      final affordableSeconds = 10 / drainPerSecond;
-
-      final now = goOffline(player, 3600);
-      system.offlineProgressUpdate(player, state, now: now);
-
-      expect(affordableSeconds, lessThan(3600));
-      expect(player.stamina, closeTo(0, 1e-6));
-      // a boosted stretch then an unboosted one, fired separately
-      expect(fired, hasLength(2));
-      expect(fired.first, greaterThan(0));
-      expect(fired.last, greaterThan(0));
-    });
-
-    test('a locked boost never outlasts the time actually spent away', () {
-      final player = newPlayer();
-      setLevel(player, SkillId.SPEED, 20);
-      setLevel(player, SkillId.STAMINA, 99); // far more than the gap can burn
-      player.stamina = playerDataService.getMaxStamina(player);
-      final staminaBefore = player.stamina;
-
-      final (state, fired) = recordingState();
-      state.boostLocked = true;
-      state.percentOfMaxBoost = 1.0;
-      state.maxBoostMultiplier = timingService.maxSpeedBoostForStat(
-        playerDataService.getStatTotals(player)[SkillId.SPEED] ?? 1,
-      );
-
-      final multiplier = timingService.getCurrentSpeedMultiplier(state);
-      final drainPerSecond =
-          ActionTimingService.staminaDrainPerBoost * (multiplier - 1);
-
-      const seconds = 10.0;
-      final now = goOffline(player, seconds);
-      system.offlineProgressUpdate(player, state, now: now);
-
-      // exactly 10s of drain - not the ~1000s the stamina pool could fund
-      expect(
-        player.stamina,
-        closeTo(staminaBefore - seconds * drainPerSecond, 1e-6),
-      );
-      // the boost covered the whole gap, so there is no unboosted remainder
-      expect(fired, hasLength(1));
-    });
-
-    test('a boosted stretch fires more actions than an unboosted one', () {
-      final player = newPlayer();
-      setLevel(player, SkillId.SPEED, 20);
-      setLevel(player, SkillId.STAMINA, 99);
-      player.stamina = playerDataService.getMaxStamina(player);
-
-      final (boosted, boostedFired) = recordingState();
-      boosted.boostLocked = true;
-      boosted.percentOfMaxBoost = 1.0;
-      boosted.maxBoostMultiplier = timingService.maxSpeedBoostForStat(
-        playerDataService.getStatTotals(player)[SkillId.SPEED] ?? 1,
-      );
-      system.offlineProgressUpdate(player, boosted, now: goOffline(player, 60));
-
-      final idlePlayer = newPlayer();
-      final (idle, idleFired) = recordingState();
-      system.offlineProgressUpdate(
-        idlePlayer,
-        idle,
-        now: goOffline(idlePlayer, 60),
-      );
-
-      expect(boostedFired.first, greaterThan(idleFired.first));
-    });
-
-    test('a sub-second interval does not divide by zero', () {
-      final player = newPlayer();
-      final (state, fired) = recordingState();
-      // half a second an action: truncating to whole seconds would make
-      // this a division by zero and an infinite action count
-      state.maxInterval = const Duration(milliseconds: 500);
-      final now = goOffline(player, 10);
-
-      system.offlineProgressUpdate(player, state, now: now);
-
-      expect(fired, [20]);
-    });
-
-    test('a locked boost worth nothing does not divide by zero', () {
-      final player = newPlayer();
-      final (state, fired) = recordingState();
-      // locked at zero boost: the multiplier is exactly 1, so the drain
-      // rate is 0 and the boost can never be exhausted
-      state.boostLocked = true;
-      state.percentOfMaxBoost = 0.0;
-      final now = goOffline(player, 60);
-
-      system.offlineProgressUpdate(player, state, now: now);
-
-      expect(fired, [20]);
-      expect(player.stamina, isNot(isNaN));
-    });
-
-    test('closes the window, so an immediate second pass does nothing', () {
-      final player = newPlayer();
-      final (state, fired) = recordingState();
-      final now = goOffline(player, 60);
-
-      system.offlineProgressUpdate(player, state, now: now);
-      expect(fired, [20]);
-      expect(player.lastActionTime, now);
-
-      // no further time has passed
-      system.offlineProgressUpdate(player, state, now: now);
-      expect(fired, [20]);
-    });
-  });
-
   group('frameUpdate offline handover', () {
-    // one frame, far enough after the last for [dt] to be non-zero
-    void tick(ActionTimingData state, PlayerData player) {
+    // one frame, far enough after the last for [dt] to be non-zero. returns
+    // whether the frame turned out to be a gap for the caller to settle.
+    bool tick(ActionTimingData state, PlayerData player) {
       state.lastElapsed = const Duration(milliseconds: 16);
-      system.frameUpdate(const Duration(milliseconds: 32), state, player);
+      return system.frameUpdate(
+        const Duration(milliseconds: 32),
+        state,
+        player,
+      );
     }
 
     test('a short gap stays on the normal per-frame path', () {
@@ -251,7 +78,7 @@ void main() {
       state.running = true;
       goOffline(player, ActionTimingService.offlineThreshold.inSeconds - 1);
 
-      tick(state, player);
+      expect(tick(state, player), isFalse);
 
       expect(fired, isEmpty);
       // the frame path refreshes the timestamp rather than settling a gap
@@ -261,15 +88,23 @@ void main() {
       );
     });
 
-    test('a gap past the threshold settles as offline progress', () {
+    test('a gap past the threshold is handed back to be settled', () {
       final player = newPlayer();
       final (state, fired) = recordingState();
       state.running = true;
+      final gapStart = player.lastActionTime;
       goOffline(player, 60);
 
-      tick(state, player);
+      expect(tick(state, player), isTrue);
 
-      expect(fired, [20]);
+      // the frame does none of the settling itself, and leaves the window
+      // open for whoever does
+      expect(fired, isEmpty);
+      expect(player.lastActionTime, isNot(gapStart));
+      expect(
+        DateTime.now().difference(player.lastActionTime).inSeconds,
+        greaterThanOrEqualTo(60),
+      );
     });
 
     // the first frame of a resumed run reports a dt of zero, which is not a
@@ -284,15 +119,19 @@ void main() {
 
       // a fresh ticker starts its elapsed clock at zero
       state.lastElapsed = Duration.zero;
-      system.frameUpdate(const Duration(milliseconds: 16), state, player);
+      expect(
+        system.frameUpdate(const Duration(milliseconds: 16), state, player),
+        isFalse,
+      );
 
       expect(fired, isEmpty);
       expect(player.lastActionTime, gapStart);
 
-      // the next frame carries a real dt and settles the whole 60s
-      system.frameUpdate(const Duration(milliseconds: 32), state, player);
-
-      expect(fired, [20]);
+      // the next frame carries a real dt, and hands the whole 60s on
+      expect(
+        system.frameUpdate(const Duration(milliseconds: 32), state, player),
+        isTrue,
+      );
     });
 
     test('a gap while the loop is stopped settles nothing', () {
@@ -301,7 +140,7 @@ void main() {
       state.running = false;
       goOffline(player, 60);
 
-      tick(state, player);
+      expect(tick(state, player), isFalse);
 
       expect(fired, isEmpty);
     });
@@ -317,7 +156,9 @@ void main() {
 
       final fired = <int>[];
       final timing = game.actionTimingController;
-      timing.bindOnFireFunction(fired.add);
+      timing.bindOnFireFunction(
+        (count, {bool offline = false, DateTime? at}) => fired.add(count),
+      );
 
       // the player was on another screen for a minute, not backgrounded
       goOffline(game.saveGameData.playerData, 60);

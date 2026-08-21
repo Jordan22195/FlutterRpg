@@ -9,6 +9,7 @@ import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/enchanting_controller.dart';
 import 'package:rpg/services/enchanting_service.dart';
 import 'package:rpg/systems/enchanting_system.dart';
+import 'package:rpg/systems/offline_progress_system.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/equipment_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
@@ -477,6 +478,13 @@ class GameSessionFactory {
       actionTimingService: actionTimingService,
       playerDataService: playerDataService,
       equipmentService: equipmentService,
+    );
+    final offlineProgressSystem = OfflineProgressSystem(
+      actionTimingService: actionTimingService,
+      actionTimingSystem: actionSpeedSystem,
+      playerDataService: playerDataService,
+      skillService: skillService,
+      buffService: buffService,
       offlineProgressService: offlineProgressService,
       offlineProgressData: offlineProgressData,
     );
@@ -487,6 +495,7 @@ class GameSessionFactory {
       actionTimingService: actionTimingService,
       playerState: save.playerData,
       actionSpeedSystem: actionSpeedSystem,
+      offlineProgressSystem: offlineProgressSystem,
       actionTimingState: save.actionTimingData,
       offlineProgressData: offlineProgressData,
       offlineProgressService: offlineProgressService,
@@ -520,6 +529,8 @@ class GameSessionFactory {
     final buffController = BuffController(
       playerState: save.playerData,
       buffService: buffService,
+      actionTimingState: save.actionTimingData,
+      offlineProgressSystem: offlineProgressSystem,
     );
     final craftingController = CraftingController(
       actionTimingController: actionTimingController,
@@ -667,6 +678,7 @@ class GameSessionFactory {
       equipmentSystem: equipmentSystem,
       dungeonSystem: dungeonSystem,
       actionTimingSystem: actionSpeedSystem,
+      offlineProgressSystem: offlineProgressSystem,
     );
   }
 }
@@ -716,6 +728,7 @@ class GameSession {
   EquipmentSystem equipmentSystem;
   DungeonSystem dungeonSystem;
   ActionTimingSystem actionTimingSystem;
+  OfflineProgressSystem offlineProgressSystem;
 
   GameSession({
     // data
@@ -759,6 +772,7 @@ class GameSession {
     required this.equipmentSystem,
     required this.dungeonSystem,
     required this.actionTimingSystem,
+    required this.offlineProgressSystem,
   });
 
   /// Rebinds and restarts whatever action the save was running.

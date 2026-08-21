@@ -8,6 +8,7 @@ import '../data/bound_action.dart';
 import '../data/offline_progress_data.dart';
 import '../data/skill_data.dart';
 import '../services/offline_progress_service.dart';
+import '../systems/offline_progress_system.dart';
 
 // primary button sets the on fire function and max interval in the controller.
 // the primary button triggers startIfNeeded which starts the ticker.
@@ -23,7 +24,14 @@ import '../services/offline_progress_service.dart';
 //
 class ActionTimingData {
   ActionTimingData();
-  FutureOr<void> Function(int) onFire = (_) {};
+
+  /// The action the loop fires. [count] is how many actions the fire is
+  /// worth; [offline] tells the action to settle them as one batch rather
+  /// than one at a time; [at] is the instant being replayed, which is what
+  /// an action asks when it needs to know whether some state was still live
+  /// then. Live play fires one action, now, with neither flag set.
+  FutureOr<void> Function(int count, {bool offline, DateTime? at}) onFire =
+      (_, {bool offline = false, DateTime? at}) {};
 
   /// The unboosted action interval. Not a constant: it is refreshed every
   /// frame from the item equipped for [actionSkill] and the speed stat, so
@@ -159,6 +167,7 @@ class ActionTimingController extends ChangeNotifier {
 
   //systems
   final ActionTimingSystem _actionSpeedSystem;
+  final OfflineProgressSystem _offlineProgressSystem;
 
   ActionTimingController({
     required TickerProvider vsync,
@@ -166,6 +175,7 @@ class ActionTimingController extends ChangeNotifier {
     required ActionTimingService actionTimingService,
     required PlayerData playerState,
     required ActionTimingSystem actionSpeedSystem,
+    required OfflineProgressSystem offlineProgressSystem,
     required ActionTimingData actionTimingState,
     required OfflineProgressData offlineProgressData,
     required OfflineProgressService offlineProgressService,
@@ -173,6 +183,7 @@ class ActionTimingController extends ChangeNotifier {
        _playerState = playerState,
        _vsync = vsync,
        _actionSpeedSystem = actionSpeedSystem,
+       _offlineProgressSystem = offlineProgressSystem,
        _actionTimingState = actionTimingState,
        _offlineProgressData = offlineProgressData,
        _offlineProgressService = offlineProgressService {
@@ -247,7 +258,7 @@ class ActionTimingController extends ChangeNotifier {
   /// [boundAction] describes [function] in a form the save can hold, so the
   /// same action can be rebound after an app restart.
   void bindOnFireFunction(
-    FutureOr<void> Function(int) function, {
+    FutureOr<void> Function(int, {bool offline, DateTime? at}) function, {
     Enum? activityIconId,
     int Function()? activityCount,
     SkillId? actionSkill,
@@ -268,7 +279,9 @@ class ActionTimingController extends ChangeNotifier {
   int get activityCount => _actionTimingState.activityCount?.call() ?? 0;
 
   // true when the loop is running with [function] bound as its action
-  bool isRunningAction(FutureOr<void> Function(int) function) {
+  bool isRunningAction(
+    FutureOr<void> Function(int, {bool offline, DateTime? at}) function,
+  ) {
     return _actionTimingState.running && _actionTimingState.onFire == function;
   }
 
@@ -319,7 +332,16 @@ class ActionTimingController extends ChangeNotifier {
   // if action progress is 100% fire the action
   // drain stamina and apply xp based on speed mulitplier
   void _onTick(Duration elapsed) {
-    _actionSpeedSystem.frameUpdate(elapsed, _actionTimingState, _playerState);
+    // a frame that arrives long after the last one is not a frame at all -
+    // it is the app coming back, and the gap behind it is settled rather
+    // than run
+    if (_actionSpeedSystem.frameUpdate(
+      elapsed,
+      _actionTimingState,
+      _playerState,
+    )) {
+      _offlineProgressSystem.settle(_playerState, _actionTimingState);
+    }
     notifyListeners();
   }
 }
@@ -328,23 +350,14 @@ class ActionTimingSystem {
   final ActionTimingService _actionTimingService;
   final PlayerDataService _playerDataService;
   final EquipmentService _equipmentService;
-  final OfflineProgressService _offlineProgressService;
-
-  // the buffer offline actions report into. shared with the action
-  // controllers, which record their results while it is open
-  final OfflineProgressData _offlineProgressData;
 
   ActionTimingSystem({
     required ActionTimingService actionTimingService,
     required PlayerDataService playerDataService,
     required EquipmentService equipmentService,
-    required OfflineProgressService offlineProgressService,
-    required OfflineProgressData offlineProgressData,
   }) : _actionTimingService = actionTimingService,
        _playerDataService = playerDataService,
-       _equipmentService = equipmentService,
-       _offlineProgressService = offlineProgressService,
-       _offlineProgressData = offlineProgressData;
+       _equipmentService = equipmentService;
 
   /// Drops the boost back to 1x, so nothing stays scaled while idle.
   void clearBoost(PlayerData playerState) {
@@ -370,8 +383,12 @@ class ActionTimingSystem {
   /// screen that is not the one acting can show what starting *there* would
   /// cost instead of echoing the interval some other screen's action is
   /// currently running at.
-  Duration intervalFor(SkillId? actionSkill, PlayerData playerState) {
-    final stats = _playerDataService.getStatTotals(playerState);
+  Duration intervalFor(
+    SkillId? actionSkill,
+    PlayerData playerState, {
+    DateTime? at,
+  }) {
+    final stats = _playerDataService.getStatTotals(playerState, at: at);
     return _actionTimingService.maxIntervalFor(
       equippedInterval: actionSkill == null
           ? null
@@ -406,120 +423,6 @@ class ActionTimingSystem {
     );
   }
 
-  /// Settles the time the app spent backgrounded while an action was
-  /// running: the actions that would have fired, and the stamina that would
-  /// have drained or recovered.
-  ///
-  /// A locked boost keeps running while away, but only for as long as the
-  /// stamina it burns lasts - so the window splits into a boosted stretch at
-  /// the boosted interval, then whatever is left at the unboosted one. The
-  /// two stretches fire separately, each with its own action count.
-  ///
-  /// [now] defaults to the wall clock and exists so tests can hand over a
-  /// fixed instant instead of sleeping.
-  void offlineProgressUpdate(
-    PlayerData playerState,
-    ActionTimingData actionTimingState, {
-    DateTime? now,
-  }) {
-    // get elapsed time
-    final at = now ?? DateTime.now();
-    double secondsOfBoost = 0;
-    final timeOffline = at.difference(playerState.lastActionTime);
-    final timeOfflineInSeconds = timeOffline.inMicroseconds / 1e6;
-    if (timeOfflineInSeconds <= 0) return;
-
-    // open the buffer: everything the actions below produce is collected
-    // into one report rather than passing silently into the player's data
-    _offlineProgressService.begin(
-      _offlineProgressData,
-      timeOffline,
-      playerState,
-    );
-
-    // get action interval duration. read in microseconds: a boosted
-    // interval is routinely under a second, and truncating it to whole
-    // seconds would divide by zero.
-    final actionInterval =
-        _actionTimingService
-            .getCurrentActionDuration(actionTimingState)
-            .inMicroseconds /
-        1e6;
-
-    //  if boost was locked,
-    if (actionTimingState.boostLocked) {
-      //    calculate duration of boost
-      final boostMulitplier = _actionTimingService.getCurrentSpeedMultiplier(
-        actionTimingState,
-      );
-      final drainPerSecond =
-          ActionTimingService.staminaDrainPerBoost * (boostMulitplier - 1);
-
-      // a boost that costs nothing (multiplier of exactly 1) never runs out,
-      // so it covers the whole window rather than dividing by zero
-      secondsOfBoost = drainPerSecond <= 0
-          ? timeOfflineInSeconds
-          : playerState.stamina / drainPerSecond;
-
-      // the boost cannot outlast the time actually spent away
-      if (secondsOfBoost > timeOfflineInSeconds) {
-        secondsOfBoost = timeOfflineInSeconds;
-      }
-
-      // do stamina drain
-      _playerDataService.changeStamina(
-        -1 * secondsOfBoost * drainPerSecond,
-        playerState,
-      );
-      // apply stamina xp
-
-      // calculate number of actions boosted
-      int numberOfBoostedActions = actionInterval <= 0
-          ? 0
-          : (secondsOfBoost / actionInterval).floor();
-      // do boosted actions
-      _offlineProgressService.recordActions(
-        _offlineProgressData,
-        numberOfBoostedActions,
-      );
-      _actionTimingService.fireOffline(
-        actionTimingState,
-        numberOfBoostedActions,
-      );
-    } else {
-      // if boost was not locked, caculate stamina recovery
-      final recoveryPerSecond = _playerDataService.staminaRecoveryPerSecond(
-        playerState,
-      );
-      _playerDataService.changeStamina(
-        timeOfflineInSeconds * recoveryPerSecond,
-        playerState,
-      );
-      // apply recovery xp
-    }
-
-    // calculate number of actions unboosted
-    final unboostedInterval =
-        actionTimingState.maxInterval.inMicroseconds / 1e6;
-    double secondsUnboosted = timeOfflineInSeconds - secondsOfBoost;
-    int numberUnboostedActions = unboostedInterval <= 0
-        ? 0
-        : (secondsUnboosted / unboostedInterval).floor();
-    _offlineProgressService.recordActions(
-      _offlineProgressData,
-      numberUnboostedActions,
-    );
-    _actionTimingService.fireOffline(actionTimingState, numberUnboostedActions);
-
-    playerState.lastActionTime = at;
-
-    // closes the buffer and promotes the report for the ui. safe here
-    // because every bound action runs synchronously: fireOffline wraps the
-    // call in a Future.sync, so an action that ever went async would settle
-    // after this and report nothing.
-    _offlineProgressService.finish(_offlineProgressData, playerState);
-  }
-
   // the momentum loop, once per frame:
   // - the speed stat sets the boost ceiling
   // - holding the button accelerates toward the ceiling
@@ -529,7 +432,12 @@ class ActionTimingSystem {
   //   the boost up: neither a finger on the button nor the speed lock
   // - draining to empty breaks the lock, so the boost falls off rather than
   //   snapping back as soon as stamina trickles in
-  void frameUpdate(
+  ///
+  /// Returns true when the frame revealed a gap rather than a frame's worth
+  /// of time - the caller settles it through [OfflineProgressSystem], which
+  /// is what keeps the two systems from depending on each other. Nothing
+  /// else in this method has run when it returns true.
+  bool frameUpdate(
     Duration elapsed,
     ActionTimingData actionTimingState,
     PlayerData playerState,
@@ -546,14 +454,13 @@ class ActionTimingSystem {
     if (actionTimingState.running &&
         sinceLastAction >= ActionTimingService.offlineThreshold &&
         dt > 0) {
-      offlineProgressUpdate(playerState, actionTimingState);
-      return;
+      return true;
     }
     // return if no time has passed. this sits above the stamp because the
     // first frame of a run always has a dt of zero: stamping there would
     // move lastActionTime forward before the offline check above ever gets
     // a frame it can act on, swallowing the whole gap on resume.
-    if (dt <= 0) return;
+    if (dt <= 0) return false;
     playerState.lastActionTime = DateTime.now();
 
     // refresh the boost ceiling from whichever stat the stance runs on
@@ -629,6 +536,7 @@ class ActionTimingSystem {
         SkillId.STAMINA: 1 * dt,
       });
     }
+    return false;
   }
 }
 
@@ -805,13 +713,16 @@ class ActionTimingService {
   ///
   /// [PlayerData.lastActionTime] is deliberately left alone: the offline
   /// window ends when the catch-up was calculated, not whenever an async
-  /// action happens to settle, so [ActionTimingSystem.offlineProgressUpdate]
-  /// owns it.
-  void fireOffline(ActionTimingData actionTimingState, int count) {
+  /// action happens to settle, so [OfflineProgressSystem.settle] owns it.
+  void fireOffline(
+    ActionTimingData actionTimingState,
+    int count, {
+    required DateTime at,
+  }) {
     if (count <= 0) return;
     actionTimingState.actionInFlight = true;
     Future.sync(
-      () => actionTimingState.onFire(count),
+      () => actionTimingState.onFire(count, offline: true, at: at),
     ).whenComplete(() => actionTimingState.actionInFlight = false);
   }
 }

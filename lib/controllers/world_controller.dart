@@ -327,12 +327,14 @@ class WorldController extends ChangeNotifier {
   // This executes periodically. [count] is how many explores the tick is
   // settling at once - one during normal play, and however many the player
   // was away for when the loop is catching up on offline progress.
-  void doExplore(int count) {
+  void doExplore(int count, {bool offline = false, DateTime? at}) {
     final result = _explorationSystem.explore(
       playerState: _playerState,
       worldState: _worldState,
       playerInventory: _inventoryState,
       numTimesToExplore: count,
+      offline: offline,
+      at: at,
     );
     // a no-op unless the timing system is settling time away
     _offlineProgressService.recordExplore(_offlineProgressData, result);

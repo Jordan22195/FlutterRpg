@@ -174,7 +174,7 @@ class CraftingController extends ChangeNotifier {
   // many crafts the tick is settling at once - one during normal play, and
   // however many the player was away for when the loop is catching up on
   // offline progress.
-  void doCraftingAction(int count) {
+  void doCraftingAction(int count, {bool offline = false, DateTime? at}) {
     final result = _craftingSystem.craftActiveRecipe(
       _craftingState,
       _playerState,
@@ -182,6 +182,8 @@ class CraftingController extends ChangeNotifier {
       _buffState,
       _worldState,
       craftCount: count,
+      offline: offline,
+      at: at,
     );
     // a no-op unless the timing system is settling time away
     _offlineProgressService.record(_offlineProgressData, result);
@@ -190,6 +192,7 @@ class CraftingController extends ChangeNotifier {
       _playerState,
       _inventoryState,
       _craftingState,
+      at: at,
     )) {
       _actionTimingController.stop();
     }

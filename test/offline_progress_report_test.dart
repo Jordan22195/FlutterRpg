@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
+import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/offline_progress_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -13,6 +14,7 @@ import 'package:rpg/services/inventory_service.dart';
 import 'package:rpg/services/offline_progress_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/services/skill_service.dart';
+import 'package:rpg/systems/offline_progress_system.dart';
 
 // What the player is told when they come back: an offline settle buffers
 // everything its actions produce into one report, and the shell shows it.
@@ -52,7 +54,7 @@ void main() {
   void settle(GameSession session, Duration gap) {
     final save = session.saveGameData;
     final now = goOffline(save.playerData, gap);
-    session.actionTimingSystem.offlineProgressUpdate(
+    session.offlineProgressSystem.settle(
       save.playerData,
       save.actionTimingData,
       now: now,
@@ -183,7 +185,9 @@ void main() {
   group('what is worth interrupting the player for', () {
     late PlayerDataService playerDataService;
     late ActionTimingService timingService;
-    late ActionTimingSystem system;
+    late ActionTimingSystem timingSystem;
+    late OfflineProgressService offlineProgressService;
+    late OfflineProgressSystem system;
     late OfflineProgressData offlineProgressData;
 
     setUp(() {
@@ -194,39 +198,56 @@ void main() {
       );
       timingService = ActionTimingService();
       offlineProgressData = OfflineProgressData();
-      system = ActionTimingSystem(
+      offlineProgressService = OfflineProgressService(InventoryService());
+      timingSystem = ActionTimingSystem(
         actionTimingService: timingService,
         playerDataService: playerDataService,
         equipmentService: EquipmentService(),
-        offlineProgressService: OfflineProgressService(InventoryService()),
+      );
+      system = OfflineProgressSystem(
+        actionTimingService: timingService,
+        actionTimingSystem: timingSystem,
+        playerDataService: playerDataService,
+        skillService: SkillService(),
+        buffService: BuffService(),
+        offlineProgressService: offlineProgressService,
         offlineProgressData: offlineProgressData,
       );
     });
 
     PlayerData newPlayer() => factory.newGame(factory.catalog1()).playerData;
 
-    (ActionTimingData, List<int>) recordingState() {
+    // a stand-in action that reports what it did, the way a real one does:
+    // the report is built out of results, so an action that says nothing
+    // has nothing to show for itself.
+    (ActionTimingData, List<int>) recordingState({bool reports = true}) {
       final fired = <int>[];
       final state = ActionTimingData();
-      state.onFire = fired.add;
+      state.running = true;
+      state.onFire = (count, {bool offline = false, DateTime? at}) {
+        fired.add(count);
+        offlineProgressService.record(
+          offlineProgressData,
+          EncounterActionResult()..actionsPerformed = reports ? count : 0,
+        );
+      };
       return (state, fired);
     }
 
     test('a gap too short to be worth a popup still settles', () {
       final player = newPlayer();
       final (state, fired) = recordingState();
-      // a fast action, so the short gap is still worth firing for
-      state.maxInterval = const Duration(milliseconds: 100);
+      // a fast action, so the short gap is still worth firing for: the
+      // speed stat cuts the interval well under a second
+      final speed = player.skillData[SkillId.SPEED]!;
+      speed.xp = speed.xpTable[99];
       final shortGap = OfflineProgressService.reportThreshold ~/ 2;
 
-      system.offlineProgressUpdate(
-        player,
-        state,
-        now: goOffline(player, shortGap),
-      );
+      system.settle(player, state, now: goOffline(player, shortGap));
 
       // the actions were paid out
-      expect(fired.single, greaterThan(0));
+      expect(fired, isNotEmpty);
+      expect(fired.first, greaterThan(0));
       // but nothing is raised for them
       expect(offlineProgressData.pending, isNull);
       expect(offlineProgressData.reportSequence, 0);
@@ -234,17 +255,14 @@ void main() {
 
     test('a gap with nothing to show for it raises nothing', () {
       final player = newPlayer();
-      final (state, fired) = recordingState();
-      // an action slower than the whole gap: no action completes
-      state.maxInterval = longGap * 2;
+      final (state, fired) = recordingState(reports: false);
 
-      system.offlineProgressUpdate(
-        player,
-        state,
-        now: goOffline(player, longGap),
-      );
+      system.settle(player, state, now: goOffline(player, longGap));
 
-      expect(fired, isEmpty);
+      // the actions fired, but the action reported nothing for them - it
+      // had nothing to work with, and the report says so rather than
+      // announcing a gap's worth of actions that produced nothing
+      expect(fired, isNotEmpty);
       expect(offlineProgressData.pending, isNull);
       expect(offlineProgressData.reportSequence, 0);
     });
@@ -262,19 +280,19 @@ void main() {
         playerDataService.getStatTotals(player)[SkillId.SPEED] ?? 1,
       );
 
-      system.offlineProgressUpdate(
+      system.settle(
         player,
         state,
         now: goOffline(player, const Duration(hours: 1)),
       );
 
-      // the stamina runs out partway, so a boosted stretch and an unboosted
-      // one fire separately - and land in the same report
-      expect(fired, hasLength(2));
+      // the stamina runs out partway, so the boosted segments and the
+      // unboosted ones fire separately - and land in one report
+      expect(fired.length, greaterThan(2));
       expect(offlineProgressData.pending, isNotNull);
       expect(
         offlineProgressData.pending!.actionCount,
-        fired.first + fired.last,
+        fired.fold<int>(0, (sum, count) => sum + count),
       );
       expect(offlineProgressData.reportSequence, 1);
     });
@@ -283,11 +301,9 @@ void main() {
       final player = newPlayer();
       final (state, fired) = recordingState();
       state.running = false;
-      state.lastElapsed = const Duration(milliseconds: 16);
       goOffline(player, longGap);
 
-      // through frameUpdate, which is what checks [running]
-      system.frameUpdate(const Duration(milliseconds: 32), state, player);
+      system.settle(player, state, now: DateTime.now());
 
       expect(fired, isEmpty);
       expect(offlineProgressData.pending, isNull);

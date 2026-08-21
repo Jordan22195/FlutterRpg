@@ -13,6 +13,7 @@ import 'package:rpg/services/inventory_service.dart';
 import 'package:rpg/services/offline_progress_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/services/skill_service.dart';
+import 'package:rpg/systems/offline_progress_system.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -32,8 +33,6 @@ void main() {
       actionTimingService: ActionTimingService(),
       playerDataService: playerDataService,
       equipmentService: EquipmentService(),
-      offlineProgressService: OfflineProgressService(InventoryService()),
-      offlineProgressData: offlineProgressData,
     );
   });
 
@@ -168,14 +167,25 @@ void main() {
     final player = newPlayer();
     player.stamina = 2;
 
+    final timingService = ActionTimingService();
+    final offlineProgressService = OfflineProgressService(InventoryService());
     final timing = ActionTimingController(
       vsync: const TestVSync(),
-      actionTimingService: ActionTimingService(),
+      actionTimingService: timingService,
       playerState: player,
       actionSpeedSystem: system,
+      offlineProgressSystem: OfflineProgressSystem(
+        actionTimingService: timingService,
+        actionTimingSystem: system,
+        playerDataService: playerDataService,
+        skillService: SkillService(),
+        buffService: BuffService(),
+        offlineProgressService: offlineProgressService,
+        offlineProgressData: offlineProgressData,
+      ),
       actionTimingState: ActionTimingData(),
       offlineProgressData: offlineProgressData,
-      offlineProgressService: OfflineProgressService(InventoryService()),
+      offlineProgressService: offlineProgressService,
     );
     final controller = PlayerDataController(
       playerData: player,
@@ -190,7 +200,7 @@ void main() {
 
     // while the loop runs, the ambient tick stands down (the frame loop
     // applies recovery itself)
-    timing.bindOnFireFunction((_) {});
+    timing.bindOnFireFunction((_, {offline = false, at}) {});
     timing.start();
     final before = player.stamina;
     controller.tickAmbientRecovery();

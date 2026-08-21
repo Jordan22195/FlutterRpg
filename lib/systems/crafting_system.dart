@@ -47,13 +47,19 @@ class CraftingSystem {
   /// Crafts the active recipe, once by default and [craftCount] times when a
   /// stretch of time away is being settled in one go. Returns what it
   /// produced so callers can report it. An empty result means nothing was
-  /// made - the level or the materials were not there.
+  /// made - the level, the materials or the fire were not there.
   ///
-  /// Above one, the whole batch is settled in a single pass: every craft's
-  /// inputs are consumed at once, and the output table is rolled through
-  /// [WeightedDropTableService.rollMulitpleTimes] rather than once per craft.
-  /// That pays the same xp and the same expected output as looping, which is
-  /// what lets hours of offline progress resolve in one call.
+  /// With [offline] set the whole batch is settled in a single pass: every
+  /// craft's inputs are consumed at once, and the output table is rolled
+  /// through [WeightedDropTableService.rollMulitpleTimes] rather than once
+  /// per craft. That pays the same xp and the same expected output as
+  /// looping, which is what lets hours of offline progress resolve in one
+  /// call - and it holds for a batch of one, so a settle can measure its own
+  /// rate off a single deterministic craft.
+  ///
+  /// [at] is the instant being crafted at, which for a settle is the segment
+  /// being replayed rather than the wall clock hours later. It is what the
+  /// cooking fire is judged against.
   ///
   /// The batch is capped at what the inventory can actually pay for, so a
   /// long stretch away crafts until the materials run out rather than on
@@ -65,11 +71,20 @@ class CraftingSystem {
     BuffData buffState,
     WorldData worldState, {
     int craftCount = 1,
+    bool offline = false,
+    DateTime? at,
   }) {
     final result = EncounterActionResult();
     final r = _recipeCatalog.recipeById(craftingState.activeRecipeId);
 
-    if (!checkRecipeLevelRequirement(r.id, playerState)) {
+    if (!checkRecipeLevelRequirement(r.id, playerState, at: at)) {
+      return result;
+    }
+
+    // cooking needs a fire that can cook, at the moment being crafted. a
+    // live craft asks about now; a settle asks about the segment it is
+    // replaying, when the fire may still have been burning.
+    if (!_cookingConditionsMet(r, craftingState, playerState, at)) {
       return result;
     }
 
@@ -87,12 +102,12 @@ class CraftingSystem {
       );
     }
 
-    final outputTable = adjustDropTable(r.id, playerState);
+    final outputTable = adjustDropTable(r.id, playerState, at: at);
 
-    // one stack per distinct output. a single craft still rolls its own
-    // stack size rather than taking the table's mean, so nothing about
-    // normal play changes.
-    final rolled = crafts > 1
+    // one stack per distinct output. a live craft still rolls its own stack
+    // size rather than taking the table's mean, so nothing about normal
+    // play changes.
+    final rolled = offline
         ? _weightedDropTableService.rollMulitpleTimes(crafts, outputTable)
         : [_weightedDropTableService.roll(outputTable)];
 
@@ -124,6 +139,8 @@ class CraftingSystem {
           playerState,
           inventoryState,
           result,
+          offline: offline,
+          at: at,
         );
       } else {
         _inventoryService.addItems(inventoryState, [craftedItemObjectStack]);
@@ -134,9 +151,27 @@ class CraftingSystem {
       }
     }
 
+    result.actionsPerformed = crafts;
     result.xp = {r.skill: r.xp * crafts};
     _playerDataService.applyXp(playerState, result.xp);
     return result;
+  }
+
+  /// Whether a cooking recipe has its fire at [at]. Anything that is not
+  /// cooking is unconditionally true - it is worked at a bench.
+  bool _cookingConditionsMet(
+    CraftingRecipe recipe,
+    CraftingState craftingState,
+    PlayerData playerState,
+    DateTime? at,
+  ) {
+    if (recipe.skill != SkillId.COOKING) return true;
+    return _firemakingSystem.canCookAt(
+      craftingState.craftingEntityId,
+      playerState.currentZoneId,
+      playerState.buffData,
+      at: at,
+    );
   }
 
   /// Builds [count] crafted copies of equipment [itemId] into the player's
@@ -153,13 +188,16 @@ class CraftingSystem {
     CraftingState craftingState,
     PlayerData playerState,
     InventoryData inventoryState,
-    EncounterActionResult result,
-  ) {
+    EncounterActionResult result, {
+    required bool offline,
+    DateTime? at,
+  }) {
     // higher crafting levels raise the odds of the upper tiers
     final skillLevel =
-        _playerDataService.getStatTotals(playerState)[recipe.skill] ?? 1;
+        _playerDataService.getStatTotals(playerState, at: at)[recipe.skill] ??
+        1;
     final entries = _qualityEntries(skillLevel, recipe.levelRequirement);
-    final tiers = count > 1
+    final tiers = offline
         ? _weightedDropTableService.rollMulitpleTimes(count, entries)
         : [_weightedDropTableService.roll(entries)];
 
@@ -222,9 +260,12 @@ class CraftingSystem {
   // todo expand on this for all recipies and crafting qualities
   List<WeightedDropTableEntry<ItemId>> adjustDropTable(
     String recipeId,
-    PlayerData playerState,
-  ) {
-    final skillLevels = _playerDataService.getStatTotals(playerState);
+    PlayerData playerState, {
+    DateTime? at,
+  }) {
+    // the cooking level the burn chance reads includes the fire's own bonus,
+    // so a settle has to ask for it at the segment the fire was burning in
+    final skillLevels = _playerDataService.getStatTotals(playerState, at: at);
     final recipe = _recipeCatalog.recipeById(recipeId);
     return _craftingService.adjustActiveRecipeDropTable(recipe, skillLevels);
   }
@@ -242,10 +283,14 @@ class CraftingSystem {
     return min ?? 0;
   }
 
-  bool checkRecipeLevelRequirement(String recipeId, PlayerData playerState) {
+  bool checkRecipeLevelRequirement(
+    String recipeId,
+    PlayerData playerState, {
+    DateTime? at,
+  }) {
     final r = _recipeCatalog.recipeById(recipeId);
     final skillLevel =
-        _playerDataService.getStatTotals(playerState)[r.skill] ?? 0;
+        _playerDataService.getStatTotals(playerState, at: at)[r.skill] ?? 0;
     if (skillLevel < r.levelRequirement) return false;
     return true;
   }
@@ -254,23 +299,19 @@ class CraftingSystem {
     String recipeId,
     PlayerData playerState,
     InventoryData inventoryState,
-    CraftingState craftingState,
-  ) {
-    if (!checkRecipeLevelRequirement(recipeId, playerState)) return false;
+    CraftingState craftingState, {
+    DateTime? at,
+  }) {
+    if (!checkRecipeLevelRequirement(recipeId, playerState, at: at)) {
+      return false;
+    }
     if (craftableCount(recipeId, inventoryState) <= 0) return false;
 
     // cooking needs a fire that can cook. checking it here is what stops a
     // running cook loop the moment the fire burns out, via the requirements
     // re-check in CraftingController.doCraftingAction
     final r = _recipeCatalog.recipeById(recipeId);
-    if (r.skill == SkillId.COOKING &&
-        !_firemakingSystem.canCookAt(
-          craftingState.craftingEntityId,
-          playerState.currentZoneId,
-          playerState.buffData,
-        )) {
-      return false;
-    }
+    if (!_cookingConditionsMet(r, craftingState, playerState, at)) return false;
 
     return true;
   }

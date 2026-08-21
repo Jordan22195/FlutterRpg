@@ -58,6 +58,10 @@ class EncounterSystem {
 
   /// Runs n ticks of the currently active encounter.
   /// Mutates player/world/inventories/encounterState as needed.
+  ///
+  /// With [offline] set the whole count is settled in one pass off average
+  /// damage rather than rolled tick by tick, which is what lets a stretch of
+  /// time away resolve in a single call.
   EncounterActionResult executePlayerAction({
     required PlayerData playerState,
     required EncounterData encounter,
@@ -67,10 +71,12 @@ class EncounterSystem {
     // respawn pause between them
     bool instantRespawn = false,
     int actionCount = 1,
+    bool offline = false,
+    DateTime? at,
   }) {
     final result = EncounterActionResult();
 
-    final stats = _playerDataService.getStatTotals(playerState);
+    final stats = _playerDataService.getStatTotals(playerState, at: at);
 
     if (!_encounterService.encounterConditionsMet(playerState, encounter)) {
       return result;
@@ -78,7 +84,7 @@ class EncounterSystem {
 
     final e = encounter.entity!;
 
-    if (actionCount > 1) {
+    if (offline) {
       // calculate average damage per action
       double avgDamage = _encounterService.playerAverageDamage(
         stats,
@@ -125,6 +131,12 @@ class EncounterSystem {
         ObjectStack<EntityId>(id: e.id, count: enemiesToKill),
       ];
 
+      // the actions those kills actually consumed. a batch too short to
+      // finish even one kill did nothing, and says so - the loop settling
+      // time away reports what happened, not what it asked for
+      final spent = (enemiesToKill * actionToKill).round();
+      result.actionsPerformed = spent < actionCount ? spent : actionCount;
+
       // reward xp
       // todo give defence xp based on stance
       result.xp[e.entityType] = xpPerDamage * enemiesToKill * e.maxHitPoints;
@@ -138,6 +150,9 @@ class EncounterSystem {
 
       return result;
     }
+
+    // a swing is a swing whether or not it lands
+    result.actionsPerformed = 1;
 
     // do damage
     final r = _encounterService.resolvePlayerDamage(
@@ -255,9 +270,17 @@ class EncounterSystem {
   /// Whether the player's herbalism (with tool bonuses, matching the
   /// zone-gate convention) meets the herb's level requirement. True for
   /// non-herb entities.
-  bool meetsHerbRequirement(PlayerData playerState, EntityId id) {
+  bool meetsHerbRequirement(
+    PlayerData playerState,
+    EntityId id, {
+    DateTime? at,
+  }) {
     final level =
-        _playerDataService.getStatTotals(playerState)[SkillId.HERBALISM] ?? 0;
+        _playerDataService.getStatTotals(
+          playerState,
+          at: at,
+        )[SkillId.HERBALISM] ??
+        0;
     return level >= herbRequiredLevel(id);
   }
 
@@ -376,14 +399,23 @@ class EncounterSystem {
 
   /// One herbalism gather tick: always succeeds, consumes one count from
   /// the herb node, and rolls yield against the herb's difficulty.
+  ///
+  /// With [offline] set, [actionCount] picks are settled in one pass: the
+  /// node gives up as many herbs as it has left, the drop table is rolled
+  /// once per pick, and each pick pays the mean of its yield range rather
+  /// than a fresh roll. That is the same expected haul as looping, which is
+  /// what lets a stretch of time away resolve in one call.
   EncounterActionResult executeHerbalismAction({
     required PlayerData playerState,
     required EncounterData encounter,
     required WorldData worldState,
     required InventoryData playerInventory,
+    int actionCount = 1,
+    bool offline = false,
+    DateTime? at,
   }) {
     final result = EncounterActionResult();
-    final stats = _playerDataService.getStatTotals(playerState);
+    final stats = _playerDataService.getStatTotals(playerState, at: at);
 
     if (!_encounterService.herbalismConditionsMet(playerState, encounter)) {
       return result;
@@ -392,7 +424,18 @@ class EncounterSystem {
     final e = encounter.entity!;
     final def = e.id.definition;
     if (def is! HerbEntityDefinition) return result;
-    if (!meetsHerbRequirement(playerState, e.id)) return result;
+    if (!meetsHerbRequirement(playerState, e.id, at: at)) return result;
+
+    if (offline) {
+      return _settleHerbalism(
+        playerState: playerState,
+        encounter: encounter,
+        playerInventory: playerInventory,
+        def: def,
+        actionCount: actionCount,
+        herbalismStat: stats[SkillId.HERBALISM] ?? 1,
+      );
+    }
 
     final gathered = _encounterService.rollHerbYield(
       herbalismStat: stats[SkillId.HERBALISM] ?? 1,
@@ -401,6 +444,7 @@ class EncounterSystem {
 
     // one pick consumes one herb from the node; no hp/respawn cycle
     e.count--;
+    result.actionsPerformed = 1;
 
     final rolled = _dropTableService.roll(def.itemDrops);
     final drop = ObjectStack<ItemId>(id: rolled.id, count: gathered);
@@ -413,21 +457,92 @@ class EncounterSystem {
     // shown as the per-action feedback number on the encounter screen
     result.damageDone = gathered;
 
-    result.xp[SkillId.HERBALISM] =
-        (drop.id.definition.xpValue * gathered).toDouble();
+    result.xp[SkillId.HERBALISM] = (drop.id.definition.xpValue * gathered)
+        .toDouble();
     _playerDataService.applyXp(playerState, result.xp);
 
     return result;
   }
 
+  /// A batch of [actionCount] picks, settled in one pass.
+  ///
+  /// A pick always succeeds and always costs one herb, so the node caps the
+  /// batch: what it cannot pay for is where the loop would have stopped, and
+  /// the controller's conditions re-check stops it there.
+  EncounterActionResult _settleHerbalism({
+    required PlayerData playerState,
+    required EncounterData encounter,
+    required InventoryData playerInventory,
+    required HerbEntityDefinition def,
+    required int actionCount,
+    required int herbalismStat,
+  }) {
+    final result = EncounterActionResult();
+    final e = encounter.entity!;
+
+    final picks = actionCount < e.count ? actionCount : e.count;
+    if (picks <= 0) return result;
+
+    // one guaranteed herb plus one per successful bonus roll. across a batch
+    // those rolls average out, so the mean is paid per pick instead of a
+    // random draw each - the same haul, without the draws.
+    final meanYield =
+        1 +
+        EncounterService.herbBonusRolls *
+            _encounterService.chanceToHit(herbalismStat, e.defence);
+
+    // the table is rolled once per pick; each roll's stack is then worth a
+    // pick's yield, the way a single pick's stack is
+    final drops = _dropTableService
+        .rollMulitpleTimes(picks, def.itemDrops)
+        .map(
+          (stack) => ObjectStack<ItemId>(
+            id: stack.id,
+            count: (stack.count * meanYield).round(),
+          ),
+        )
+        .where((stack) => stack.count > 0)
+        .toList();
+
+    e.count -= picks;
+    result.actionsPerformed = picks;
+    result.items.addAll(drops);
+
+    // add drops to inventories (player + encounter history)
+    _inventoryService.addItems(playerInventory, drops);
+    _inventoryService.addItems(encounter.itemDrops, drops);
+
+    double xp = 0;
+    for (final drop in drops) {
+      xp += drop.id.definition.xpValue * drop.count;
+      result.damageDone += drop.count;
+    }
+    if (xp > 0) {
+      result.xp[SkillId.HERBALISM] = xp;
+      _playerDataService.applyXp(playerState, result.xp);
+    }
+
+    return result;
+  }
+
+  /// One fishing cast: rolls against the spot's difficulty and, when it
+  /// catches, rolls what it caught.
+  ///
+  /// With [offline] set, [actionCount] casts are settled in one pass: the
+  /// catches are the exact expected share of the casts rather than a roll
+  /// each, and the drop table is rolled once per catch. A fishing spot never
+  /// runs dry, so nothing caps the batch but the casts themselves.
   EncounterActionResult executeFishingAction({
     required PlayerData playerState,
     required EncounterData encounter,
     required WorldData world,
     required InventoryData playerInventory,
+    int actionCount = 1,
+    bool offline = false,
+    DateTime? at,
   }) {
     final result = EncounterActionResult();
-    final stats = _playerDataService.getStatTotals(playerState);
+    final stats = _playerDataService.getStatTotals(playerState, at: at);
 
     if (!_encounterService.fishingConditionsMet(playerState, encounter)) {
       return result;
@@ -435,11 +550,24 @@ class EncounterSystem {
 
     final e = encounter.entity!;
 
+    if (offline) {
+      return _settleFishing(
+        playerState: playerState,
+        encounter: encounter,
+        playerInventory: playerInventory,
+        actionCount: actionCount,
+        fishingStat: stats[SkillId.FISHING] ?? 1,
+      );
+    }
+
     // fishing spots replenish rather than deplete: a spot at 0 hp would cap
     // every damage roll at 0 and never yield another catch
     if (e.hitpoints <= 0) {
       e.hitpoints = e.maxHitPoints;
     }
+
+    // a cast is a cast whether or not it catches
+    result.actionsPerformed = 1;
 
     // do damage
     final r = _encounterService.resolvePlayerDamage(
@@ -464,11 +592,55 @@ class EncounterSystem {
     _inventoryService.addItems(playerInventory, [drop]);
     _inventoryService.addItems(encounter.itemDrops, [drop]);
 
-    result.xp[SkillId.FISHING] =
-        (drop.id.definition.xpValue * drop.count).toDouble();
+    result.xp[SkillId.FISHING] = (drop.id.definition.xpValue * drop.count)
+        .toDouble();
 
     // Apply XP to player
     if (result.xp.isNotEmpty) {
+      _playerDataService.applyXp(playerState, result.xp);
+    }
+
+    return result;
+  }
+
+  /// A batch of [actionCount] casts, settled in one pass.
+  ///
+  /// A cast catches when its roll against the spot beats the spot, so the
+  /// catches are the casts times that chance - the exact mean rather than a
+  /// roll each. The spot's hitpoints are left alone: they are the cadence of
+  /// a single cast, and a spot replenishes rather than depleting.
+  EncounterActionResult _settleFishing({
+    required PlayerData playerState,
+    required EncounterData encounter,
+    required InventoryData playerInventory,
+    required int actionCount,
+    required int fishingStat,
+  }) {
+    final result = EncounterActionResult();
+    final e = encounter.entity!;
+
+    // every cast is an action, whether or not it caught anything
+    result.actionsPerformed = actionCount;
+
+    final catches =
+        (actionCount * _encounterService.chanceToHit(fishingStat, e.defence))
+            .round();
+    if (catches <= 0) return result;
+
+    final def = e.id.definition as EncounterEntityDefinition;
+    final drops = _dropTableService.rollMulitpleTimes(catches, def.itemDrops);
+    result.items.addAll(drops);
+
+    // add drops to inventories (player + encounter history)
+    _inventoryService.addItems(playerInventory, drops);
+    _inventoryService.addItems(encounter.itemDrops, drops);
+
+    double xp = 0;
+    for (final drop in drops) {
+      xp += drop.id.definition.xpValue * drop.count;
+    }
+    if (xp > 0) {
+      result.xp[SkillId.FISHING] = xp;
       _playerDataService.applyXp(playerState, result.xp);
     }
 

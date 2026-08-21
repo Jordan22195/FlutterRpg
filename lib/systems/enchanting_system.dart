@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../catalogs/enchantments/enchantments.dart';
+import '../data/action_result.dart';
 import '../catalogs/items/items.dart';
 import '../data/ObjectStack.dart';
 import '../data/inventory_data.dart';
@@ -73,8 +74,11 @@ class EnchantingSystem {
         _findInstance(inventory, instanceId);
   }
 
-  int _enchantingLevel(PlayerData playerState) {
-    return _playerDataService.getStatTotals(playerState)[SkillId.ENCHANTING] ??
+  int _enchantingLevel(PlayerData playerState, {DateTime? at}) {
+    return _playerDataService.getStatTotals(
+          playerState,
+          at: at,
+        )[SkillId.ENCHANTING] ??
         1;
   }
 
@@ -85,24 +89,32 @@ class EnchantingSystem {
   /// The materials disenchanting [item] would yield right now.
   ObjectStack<ItemId> previewDisenchant(
     EquipmentItem item,
-    PlayerData playerState,
-  ) {
+    PlayerData playerState, {
+    DateTime? at,
+  }) {
     return ObjectStack(
       id: _enchantingService.materialForQuality(item.quality),
       count: _enchantingService.disenchantYield(
         _statTotal(item),
-        _enchantingLevel(playerState),
+        _enchantingLevel(playerState, at: at),
       ),
     );
   }
 
   /// Destroys ONE item from the stack and adds its materials to the
-  /// inventory. Returns what was gained, or null if the stack is gone.
-  ObjectStack<ItemId>? disenchant(
+  /// inventory. An empty result means the stack was gone.
+  ///
+  /// The xp comes back on the result rather than only landing on the player,
+  /// because a settle reports what its actions produced and this is the one
+  /// action whose xp a caller cannot work out for itself - it is rolled from
+  /// the item that has just been consumed.
+  EncounterActionResult disenchant(
     String instanceId,
     PlayerData playerState,
-    InventoryData inventory,
-  ) {
+    InventoryData inventory, {
+    DateTime? at,
+  }) {
+    final result = EncounterActionResult();
     // worn gear is consumed straight off the player: the slot empties,
     // since the instance stops existing
     final item =
@@ -111,23 +123,27 @@ class EnchantingSystem {
           playerState.equipmentData,
         ) ??
         _inventoryService.takeOneEquipment(inventory, instanceId);
-    if (item == null) return null;
+    if (item == null) return result;
 
-    final gained = previewDisenchant(item, playerState);
+    final gained = previewDisenchant(item, playerState, at: at);
 
     _inventoryService.addItems(inventory, [gained]);
-    _playerDataService.applyXp(playerState, {
-      SkillId.ENCHANTING: _statTotal(item) * 2.0,
-    });
-    return gained;
+    result.items.add(gained);
+    result.actionsPerformed = 1;
+    result.xp = {SkillId.ENCHANTING: _statTotal(item) * 2.0};
+    _playerDataService.applyXp(playerState, result.xp);
+    return result;
   }
 
   bool recipeRequirementsMet(
     EnchantRecipe recipe,
     PlayerData playerState,
-    InventoryData inventory,
-  ) {
-    if (_enchantingLevel(playerState) < recipe.levelRequirement) return false;
+    InventoryData inventory, {
+    DateTime? at,
+  }) {
+    if (_enchantingLevel(playerState, at: at) < recipe.levelRequirement) {
+      return false;
+    }
     for (final input in recipe.inputs.entries) {
       if (_inventoryService.getItemCount(inventory, input.key) < input.value) {
         return false;
@@ -139,28 +155,33 @@ class EnchantingSystem {
   /// Takes ONE item off the stack, consumes the recipe's materials, and
   /// applies a random enchant (random name, random stat spread with the
   /// recipe's fixed total). The enchanted item returns to the inventory
-  /// as its own stack. Returns the enchanted item, or null on failure.
-  EquipmentItem? enchant(
+  /// as its own stack, and comes back on the result; an empty result means
+  /// the enchant did not happen.
+  EncounterActionResult enchant(
     String recipeId,
     String instanceId,
     PlayerData playerState,
     InventoryData inventory, {
     Random? rng,
+    DateTime? at,
   }) {
+    final result = EncounterActionResult();
     final recipe = _enchantmentCatalog.recipeById(recipeId);
-    if (recipe == null) return null;
+    if (recipe == null) return result;
 
     final equipped = _findEquipped(playerState, instanceId);
     if (equipped == null && _findInstance(inventory, instanceId) == null) {
-      return null;
+      return result;
     }
-    if (!recipeRequirementsMet(recipe, playerState, inventory)) return null;
+    if (!recipeRequirementsMet(recipe, playerState, inventory, at: at)) {
+      return result;
+    }
 
     // worn gear is enchanted in place and stays on the player: taking it
     // out to the inventory and back would unequip it mid-action
     final item =
         equipped ?? _inventoryService.takeOneEquipment(inventory, instanceId);
-    if (item == null) return null;
+    if (item == null) return result;
 
     for (final input in recipe.inputs.entries) {
       _inventoryService.removeItems(inventory, input.key, input.value);
@@ -179,7 +200,10 @@ class EnchantingSystem {
       _inventoryService.addEquipment(inventory, item);
     }
 
-    _playerDataService.applyXp(playerState, {SkillId.ENCHANTING: recipe.xp});
-    return item;
+    result.equipment.add(item);
+    result.actionsPerformed = 1;
+    result.xp = {SkillId.ENCHANTING: recipe.xp};
+    _playerDataService.applyXp(playerState, result.xp);
+    return result;
   }
 }

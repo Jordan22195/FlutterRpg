@@ -36,19 +36,26 @@ void main() {
     helmet.quality = ItemQuality.RARE;
     save.inventoryData.equipment.add(helmet);
 
-    final gained = system.disenchant(
+    final result = system.disenchant(
       helmet.instanceId,
       save.playerData,
       save.inventoryData,
     );
 
-    expect(gained, isNotNull);
-    expect(gained!.id, ItemId.ENCHANTING_RUNE); // rare -> runes
+    final gained = result.items.single;
+    expect(gained.id, ItemId.ENCHANTING_RUNE); // rare -> runes
     expect(gained.count, greaterThan(0));
     expect(save.inventoryData.equipment, isEmpty);
     expect(save.inventoryData.itemMap[ItemId.ENCHANTING_RUNE], gained.count);
-    // enchanting xp was awarded
-    expect(save.playerData.skillData[SkillId.ENCHANTING]!.xp, greaterThan(0));
+    // enchanting xp was awarded, and reported: an offline settle builds its
+    // report out of results, and this is the one action whose xp it cannot
+    // work out for itself
+    expect(result.xp[SkillId.ENCHANTING], greaterThan(0));
+    expect(result.actionsPerformed, 1);
+    expect(
+      save.playerData.skillData[SkillId.ENCHANTING]!.xp,
+      result.xp[SkillId.ENCHANTING],
+    );
   });
 
   test('disenchant yield grows with stat total and level', () {
@@ -80,7 +87,8 @@ void main() {
       save.inventoryData,
     );
 
-    expect(enchanted, isNotNull);
+    expect(enchanted.equipment, hasLength(1));
+    expect(enchanted.actionsPerformed, 1);
     expect(save.inventoryData.itemMap[ItemId.ENCHANTING_DUST], 15);
     expect(dagger.enchantName, isNotEmpty);
     expect(dagger.displayName, contains('of the'));
@@ -100,26 +108,30 @@ void main() {
 
     // no materials
     expect(
-      system.enchant(
-        'minor_enchant',
-        dagger.instanceId,
-        save.playerData,
-        save.inventoryData,
-      ),
-      isNull,
+      system
+          .enchant(
+            'minor_enchant',
+            dagger.instanceId,
+            save.playerData,
+            save.inventoryData,
+          )
+          .equipment,
+      isEmpty,
     );
 
     // materials but level too low for a higher tier
     save.inventoryData.itemMap[ItemId.ENCHANTING_ESSENCE] = 100;
     save.inventoryData.itemMap[ItemId.ENCHANTING_RUNE] = 100;
     expect(
-      system.enchant(
-        'greater_enchant',
-        dagger.instanceId,
-        save.playerData,
-        save.inventoryData,
-      ),
-      isNull,
+      system
+          .enchant(
+            'greater_enchant',
+            dagger.instanceId,
+            save.playerData,
+            save.inventoryData,
+          )
+          .equipment,
+      isEmpty,
     );
     expect(dagger.enchantName, isEmpty);
   });
@@ -175,8 +187,7 @@ void main() {
 
     // enchanted in place: still on the player, and never passed through
     // the inventory on the way
-    expect(enchanted, isNotNull);
-    expect(enchanted!.enchantName, isNotEmpty);
+    expect(enchanted.equipment.single.enchantName, isNotEmpty);
     expect(
       save
           .playerData
@@ -204,7 +215,7 @@ void main() {
       save.inventoryData,
     );
 
-    expect(gained, isNotNull);
+    expect(gained.items, hasLength(1));
     expect(
       save.playerData.equipmentData.armorEquipment[helmet.armorSlot],
       isNull,

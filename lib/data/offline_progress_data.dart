@@ -60,9 +60,6 @@ class OfflineProgressData {
   /// The report being filled.
   OfflineProgressReport report = OfflineProgressReport();
 
-  /// Xp totals as the settle started, so the report can be the difference.
-  Map<SkillId, double> xpAtStart = {};
-
   /// A finished report waiting for the ui to show it.
   OfflineProgressReport? pending;
 

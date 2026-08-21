@@ -27,7 +27,11 @@ class PlayerDataService {
   // player data service is the excepiton of services not talkting to other services
   // becuase of the stat total calculation. Player data service will use buff, skill, and equipment
   // services to get stat totals.
-  Map<SkillId, int> getStatTotals(PlayerData playerState) {
+  /// The player's stats as they stood at [at], defaulting to now. Only the
+  /// buff half of the total moves with the clock, and only an offline settle
+  /// asks about any instant but this one: it replays each segment of the gap
+  /// against the buffs that were up for it.
+  Map<SkillId, int> getStatTotals(PlayerData playerState, {DateTime? at}) {
     Map<SkillId, int> skillStats = {};
     for (final s in playerState.skillData.entries) {
       skillStats[s.key] = _skillService.getLevel(s.value);
@@ -38,6 +42,7 @@ class PlayerDataService {
     final buffStats = _buffService.getBuffedStatTotal(
       playerState.buffData,
       playerState.currentZoneId,
+      at: at,
     );
 
     final totals = Util.addMap(
@@ -175,8 +180,9 @@ class PlayerDataService {
   }
 
   // each point of stamina skill adds 10 to the stamina bar
-  double getMaxStamina(PlayerData playerState) {
-    final staminaStat = getStatTotals(playerState)[SkillId.STAMINA] ?? 1;
+  double getMaxStamina(PlayerData playerState, {DateTime? at}) {
+    final staminaStat =
+        getStatTotals(playerState, at: at)[SkillId.STAMINA] ?? 1;
     return 10.0 * (staminaStat < 1 ? 1 : staminaStat);
   }
 
@@ -207,14 +213,15 @@ class PlayerDataService {
   static const double staminaRecoveryPerStat = 0.1;
 
   // the passive stamina regeneration rate from the recovery stat
-  double staminaRecoveryPerSecond(PlayerData playerState) {
-    final recoveryStat = getStatTotals(playerState)[SkillId.RECOVERY] ?? 1;
+  double staminaRecoveryPerSecond(PlayerData playerState, {DateTime? at}) {
+    final recoveryStat =
+        getStatTotals(playerState, at: at)[SkillId.RECOVERY] ?? 1;
     return staminaRecoveryPerStat * recoveryStat;
   }
 
   // clamped stamina adjustment: positive recovers, negative drains
-  void changeStamina(double delta, PlayerData playerState) {
-    final max = getMaxStamina(playerState);
+  void changeStamina(double delta, PlayerData playerState, {DateTime? at}) {
+    final max = getMaxStamina(playerState, at: at);
     playerState.stamina = (playerState.stamina + delta).clamp(0.0, max);
   }
 
