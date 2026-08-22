@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/main.dart';
 import 'package:rpg/services/file_manager_service.dart';
@@ -108,8 +109,20 @@ void main() {
     await settle(tester);
 
     expect(find.text('While you were away'), findsOneWidget);
-    // 5 minutes at the 3s default interval, and the xp it paid
-    expect(find.text('100'), findsOneWidget);
+    // five minutes at the interval a fresh player explores at - the bench
+    // default, divided by the fast stance's speed curve
+    final service = ActionTimingService();
+    final interval = service.getCurrentActionDuration(
+      ActionTimingData()
+        ..maxInterval = service.maxIntervalFor(
+          equippedInterval: null,
+          speedStance: true,
+          speedStat: 1,
+        ),
+    );
+    final explores =
+        const Duration(minutes: 5).inMicroseconds ~/ interval.inMicroseconds;
+    expect(find.text('$explores'), findsOneWidget);
     expect(find.text('Exploration'), findsOneWidget);
     // what the walk turned up: the meadow's entities, counted
     expect(find.text('DISCOVERED'), findsOneWidget);

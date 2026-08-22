@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'auto_eat_rule.dart';
 import 'skill_data.dart';
@@ -26,6 +27,32 @@ const Map<Stance, SkillId> kStanceBoostSkill = {
 SkillId boostTrainedSkill(SkillId skillBoost) {
   return skillBoost == SkillId.SPEED ? SkillId.SPEED : SkillId.STRENGTH;
 }
+
+/// What a boost stat is worth at full tilt, as a fraction of what it acts
+/// on: strength on the stat it is spent on, speed on the action rate.
+///
+/// Square root rather than linear. A linear ceiling made a hundred points
+/// worth eleven times, which is not a bonus so much as a different game;
+/// the root keeps every point paying while landing a hundred of them at
+/// about triple. Nothing caps it - past the useful range it simply climbs
+/// slowly rather than hitting a wall.
+double boostStatBonus(int stat) => 0.2 * sqrt(stat < 0 ? 0 : stat);
+
+/// Speed's half of that curve. Speed pays twice - once by shortening the
+/// interval and again through the boost ceiling - so each half carries
+/// half the exponent, and the two multiply back to [boostStatBonus]'s
+/// shape at the top end.
+double speedStatBonus(int stat) => 0.1 * sqrt(stat < 0 ? 0 : stat);
+
+/// How much of the interval speed takes off standing still, before any of
+/// the boost bar is filled. The interval is divided by `1 + this`, so it
+/// approaches zero without ever arriving - which is what lets the old hard
+/// floor go.
+double speedIdleBonus(int stat) => 0.05 * sqrt(stat < 0 ? 0 : stat);
+
+/// The share of [boostStatBonus] a strength stance is worth standing
+/// still. Small but always on; the boost bar buys the rest.
+const double kBoostIdleShare = 0.15;
 
 /// Which stat totals a boosted skill scales - see
 /// [PlayerDataService.getStatTotals].

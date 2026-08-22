@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -108,21 +110,31 @@ void main() {
     return now;
   }
 
-  // the unboosted interval the loop will run [player] at, in seconds
-  double idleInterval(PlayerData player) =>
-      timingSystem.intervalFor(null, player).inMicroseconds / 1e6;
+  // the unboosted interval the loop will run [player] at, in seconds -
+  // taken through getCurrentActionDuration, which rounds to whole
+  // milliseconds, so a test counting actions counts the same ones the loop
+  // does right down to the boundary
+  double idleInterval(PlayerData player) {
+    final scratch = ActionTimingData()
+      ..maxInterval = timingSystem.intervalFor(null, player);
+    return timingService.getCurrentActionDuration(scratch).inMicroseconds / 1e6;
+  }
+
+  // how many actions a gap of [seconds] is worth at that interval
+  int actionsIn(PlayerData player, double seconds) =>
+      (seconds / idleInterval(player)).floor();
 
   group('segments', () {
     test('a gap with nothing in its way is a probe and then the rest', () {
       final player = newPlayer();
       final (state, fired) = recordingState();
-      // 60s away at the 3s default interval is 20 actions: one to measure
-      // the action's xp rate, then the other 19
+      // one action to measure the rate, then the rest of the gap
       final now = goOffline(player, 60);
+      final worth = actionsIn(player, 60);
 
       system.settle(player, state, now: now);
 
-      expect(counts(fired), [1, 19]);
+      expect(counts(fired), [1, worth - 1]);
       expect(player.lastActionTime, now);
     });
 
@@ -140,11 +152,10 @@ void main() {
       // exactly one action later - the replay's own clock, not the wall's
       expect(fired.every((f) => f.offline), isTrue);
       expect(fired.first.at, windowStart);
+      // one action later - the loop's own clock rounds to the millisecond
       expect(
-        fired.last.at,
-        windowStart.add(
-          Duration(microseconds: (idleInterval(player) * 1e6).round()),
-        ),
+        fired.last.at!.difference(windowStart).inMicroseconds / 1e6,
+        closeTo(idleInterval(player), 0.001),
       );
     });
 
@@ -164,21 +175,26 @@ void main() {
       final (state, fired) = recordingState();
       final now = goOffline(player, 60);
 
+      final worth = actionsIn(player, 60);
       system.settle(player, state, now: now);
-      expect(totalActions(fired), 20);
+      expect(totalActions(fired), worth);
       expect(player.lastActionTime, now);
 
       // no further time has passed
       system.settle(player, state, now: now);
-      expect(totalActions(fired), 20);
+      expect(totalActions(fired), worth);
     });
   });
 
   group('the boost', () {
     test('a locked boost burns stamina and the rest runs unboosted', () {
       final player = newPlayer();
-      setLevel(player, SkillId.SPEED, 20); // ceiling 2x
-      player.stamina = 10;
+      setLevel(player, SkillId.SPEED, 20);
+      // enough of a pool to boost for a stretch: burst length is the ratio
+      // of stamina to boost stat, so 20 speed against 1 stamina would be
+      // over before a single action landed
+      setLevel(player, SkillId.STAMINA, 20);
+      player.stamina = playerDataService.getMaxStamina(player);
 
       final (state, fired) = recordingState();
       state.boostLocked = true;
@@ -215,9 +231,10 @@ void main() {
         playerDataService.getStatTotals(player)[SkillId.SPEED] ?? 1,
       );
 
-      final multiplier = timingService.getCurrentSpeedMultiplier(state);
-      final drainPerSecond =
-          ActionTimingService.staminaDrainPerBoost * (multiplier - 1);
+      final drainPerSecond = timingService.boostDrain(
+        timingService.getCurrentSpeedMultiplier(state),
+        speedStance: true,
+      );
 
       const seconds = 10.0;
       final now = goOffline(player, seconds);
@@ -261,10 +278,11 @@ void main() {
       state.boostLocked = true;
       state.percentOfMaxBoost = 0.0;
       final now = goOffline(player, 60);
+      final worth = actionsIn(player, 60);
 
       system.settle(player, state, now: now);
 
-      expect(totalActions(fired), 20);
+      expect(totalActions(fired), worth);
       expect(player.stamina, isNot(isNaN));
     });
 
@@ -277,9 +295,10 @@ void main() {
       state.maxBoostMultiplier = 2.0;
       player.stamina = 0;
 
+      final worth = actionsIn(player, 60);
       system.settle(player, state, now: goOffline(player, 60));
 
-      expect(totalActions(fired), 20);
+      expect(totalActions(fired), worth);
       expect(state.boostLocked, isFalse);
     });
   });
@@ -551,10 +570,12 @@ void main() {
       final fast = actionsOver(Stance.fast);
       final strong = actionsOver(Stance.strong);
 
-      // 300s at the 3s bench interval is 100 actions; the fast stance's
-      // 50 speed takes 50% off that interval and buys exactly twice as many
+      // a strength stance pays nothing toward the interval, so 300s is
+      // 300s worth of the bench default; the fast stance's 50 speed divides
+      // that interval by 1 + 0.05*sqrt(50) and buys the difference
       expect(strong, 100);
-      expect(fast, 200);
+      expect(fast, greaterThan(strong));
+      expect(fast, closeTo(strong * (1 + 0.05 * sqrt(50)), 2));
     });
 
     test('a locked boost takes its ceiling from the stance offline', () {
@@ -577,13 +598,13 @@ void main() {
       // point, and the boost buys damage rather than speed
       final strong = settleWith(Stance.strong);
       expect(strong.boostingSpeed, isFalse);
-      expect(strong.maxBoostMultiplier, closeTo(1.0 + 0.1 * 10, 0.001));
+      expect(strong.maxBoostMultiplier, closeTo(1 + boostStatBonus(10), 1e-9));
 
       // the fast stance runs on speed: 1 + 0.05 a point, and it is the only
       // one the action interval divides by
       final fast = settleWith(Stance.fast);
       expect(fast.boostingSpeed, isTrue);
-      expect(fast.maxBoostMultiplier, closeTo(1.0 + 0.05 * 20, 0.001));
+      expect(fast.maxBoostMultiplier, closeTo(1 + speedStatBonus(20), 1e-9));
     });
 
     test('a locked boost trains the stance it runs on, offline', () {
@@ -622,12 +643,13 @@ void main() {
             );
           };
 
+      final worth = actionsIn(player, 60);
       system.settle(player, state, now: goOffline(player, 60));
 
       final report = offlineProgressData.pending;
       expect(report, isNotNull);
-      expect(report!.actionCount, 20);
-      expect(report.xp[SkillId.WOODCUTTING], 40.0);
+      expect(report!.actionCount, worth);
+      expect(report.xp[SkillId.WOODCUTTING], 2.0 * worth);
     });
 
     test('a settle whose action did nothing raises no report', () {

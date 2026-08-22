@@ -4,6 +4,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/game_session.dart';
 
 // Fishing and herbalism settle a whole stretch of time away in one fire, the
@@ -41,6 +42,19 @@ void main() {
             as EncounterEntity;
     session.encounterService.setEncounterEntity(save.encounterData, entity);
     return entity;
+  }
+
+  // how many actions a gap of [seconds] is worth at the interval the loop
+  // will run at: the bench default divided by the fast stance's speed
+  // curve, rounded to the millisecond the way getCurrentActionDuration does
+  int actionsIn(GameSession session, double seconds) {
+    final scratch = ActionTimingData()
+      ..maxInterval = session.actionTimingSystem.intervalFor(
+        null,
+        session.saveGameData.playerData,
+      );
+    final interval = ActionTimingService().getCurrentActionDuration(scratch);
+    return (seconds * 1e6 ~/ interval.inMicroseconds);
   }
 
   int itemsIn(EncounterActionResult result) =>
@@ -304,8 +318,8 @@ void main() {
 
       final report = session.actionTimingController.pendingOfflineReport;
       expect(report, isNotNull);
-      // a spot never runs dry, so all 20 casts happen
-      expect(report!.actionCount, 20);
+      // a spot never runs dry, so every cast the gap was worth happens
+      expect(report!.actionCount, actionsIn(session, 60));
       expect(
         report.items.itemMap.values.fold<int>(0, (a, b) => a + b),
         greaterThan(0),

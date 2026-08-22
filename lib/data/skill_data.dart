@@ -4,10 +4,12 @@ import 'package:flutter/widgets.dart';
 enum SkillId {
   STAMINA, // each point increaes stamina bar by 10.
   // each point of stam spent is 1xp
-  SPEED, // each point increases max speed (reduces min action interval) by a percent
+  SPEED, // the fast stance's stat: shortens the action interval and raises
+  // the boost ceiling, both on a root curve - see boostStatBonus.
   // actions done at near top speed give xp
-  STRENGTH, // alternate boost stat: each point raises the boost ceiling like speed does.
-  // the boost behaviour itself is not wired yet - see ActionSpeedSystem.frameUpdate
+  STRENGTH, // every other stance's stat: raises the stat the stance is spent
+  // on, a little standing still and a lot at full boost - see
+  // PlayerDataService.getStatTotals
   RECOVERY, // stamina recovers over time at a rate set by this stat
   // trains while stamina is actively being restored
   // COMBAT

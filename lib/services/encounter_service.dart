@@ -367,21 +367,14 @@ class EncounterService {
 
     final defence = playerStatTotals[SkillId.DEFENCE] ?? 1;
 
-    int damageDone = calculateAttackDamage(
+    // a block pays nothing. defence trains from the damage the player deals
+    // in the defensive stance - see EncounterSystem._damageXp - rather than
+    // from being missed, which was untrainable and rewarded standing still.
+    result.damageDone = calculateAttackDamage(
       attackerAttack: e.attack,
       defenderDefense: defence,
       defenderHp: playerStatTotals[SkillId.HITPOINTS] ?? 0,
     );
-    result.damageDone = damageDone;
-
-    // blocked hit: reward defence xp for the damage that was avoided
-    if (damageDone <= 0) {
-      final wouldHaveDone = rollDamageUniform(
-        attack: e.attack,
-        defense: defence,
-      );
-      result.xp[SkillId.DEFENCE] = wouldHaveDone.toDouble();
-    }
 
     return result;
   }

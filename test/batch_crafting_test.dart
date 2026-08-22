@@ -4,6 +4,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
@@ -27,6 +28,19 @@ void main() {
   void setLevel(GameSession session, SkillId skill, int level) {
     final data = session.saveGameData.playerData.skillData[skill]!;
     data.xp = data.xpTable[level];
+  }
+
+  // how many actions a gap of [seconds] is worth at the interval the loop
+  // will run at: the bench default divided by the fast stance's speed
+  // curve, rounded to the millisecond the way getCurrentActionDuration does
+  int actionsIn(GameSession session, double seconds) {
+    final scratch = ActionTimingData()
+      ..maxInterval = session.actionTimingSystem.intervalFor(
+        null,
+        session.saveGameData.playerData,
+      );
+    final interval = ActionTimingService().getCurrentActionDuration(scratch);
+    return (seconds * 1e6 ~/ interval.inMicroseconds);
   }
 
   double xpFor(GameSession session, SkillId skill) =>
@@ -209,7 +223,7 @@ void main() {
         isTrue,
       );
 
-      // 60s away at the 3s bench interval is 20 crafts
+      final crafts = actionsIn(session, 60);
       final now = goOffline(session, 60);
       session.offlineProgressSystem.settle(
         save.playerData,
@@ -217,14 +231,14 @@ void main() {
         now: now,
       );
 
-      expect(save.inventoryData.itemMap[ItemId.COPPER_ORE], 180);
-      expect(save.inventoryData.itemMap[ItemId.COPPER_BAR], 20);
+      expect(save.inventoryData.itemMap[ItemId.COPPER_ORE], 200 - crafts);
+      expect(save.inventoryData.itemMap[ItemId.COPPER_BAR], crafts);
 
       final report = session.actionTimingController.pendingOfflineReport;
       expect(report, isNotNull);
-      expect(report!.actionCount, 20);
-      expect(report.items.itemMap[ItemId.COPPER_BAR], 20);
-      expect(report.xp[SkillId.BLACKSMITHING], 5 * 20);
+      expect(report!.actionCount, crafts);
+      expect(report.items.itemMap[ItemId.COPPER_BAR], crafts);
+      expect(report.xp[SkillId.BLACKSMITHING], 5 * crafts);
 
       session.actionTimingController.stop();
       session.dispose();
@@ -244,6 +258,7 @@ void main() {
         isTrue,
       );
 
+      final crafts = actionsIn(session, 60);
       final now = goOffline(session, 60);
       session.offlineProgressSystem.settle(
         save.playerData,
@@ -255,7 +270,7 @@ void main() {
       expect(report, isNotNull);
       expect(
         report!.items.equipment.fold<int>(0, (sum, e) => sum + e.count),
-        20,
+        crafts,
       );
 
       session.actionTimingController.stop();

@@ -17,7 +17,9 @@ class CombatSegmentOutcome {
   /// Food the auto-eater got through.
   final int foodEaten;
 
-  /// Swings that missed. Live combat pays defence xp for each one.
+  /// Swings that missed. Nothing is paid for them - defence trains from
+  /// damage dealt in the defensive stance - but the walk counts them for
+  /// free and they are the clearest read on how a fight actually went.
   final int blocks;
 
   final bool died;

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
@@ -111,8 +112,11 @@ void main() {
 
   test('a locked boost drains stamina with no finger on the button', () {
     final player = newPlayer();
-    setLevel(player, SkillId.SPEED, 20); // ceiling 2x -> 1.0/sec at full
-    player.stamina = 10;
+    setLevel(player, SkillId.SPEED, 20);
+    // a pool deep enough to hold a boost up for the window: at 20 speed
+    // against 1 stamina the burst would be over in under two seconds
+    setLevel(player, SkillId.STAMINA, 20);
+    player.stamina = playerDataService.getMaxStamina(player);
 
     final state = ActionTimingData();
     state.percentOfMaxBoost = 1.0;
@@ -120,8 +124,8 @@ void main() {
     state.buttonHeld = false;
     run(state, player, seconds: 2);
 
-    // lvl-1 recovery (0.1/sec) is nowhere near the drain
-    expect(player.stamina, lessThan(10));
+    // recovery is nowhere near the drain
+    expect(player.stamina, lessThan(playerDataService.getMaxStamina(player)));
     // and the lock held the boost up while it drained
     expect(state.percentOfMaxBoost, 1.0);
   });
@@ -262,31 +266,39 @@ void main() {
       );
     });
 
-    test('the fast stance takes 1% off per point of speed', () {
-      expect(
-        service.maxIntervalFor(
-          equippedInterval: const Duration(milliseconds: 2000),
-          speedStance: true,
-          speedStat: 25,
-        ),
-        // 25 speed => 25% off 2.0s
-        const Duration(milliseconds: 1500),
+    test('the fast stance divides the interval by the speed curve', () {
+      Duration at(int speedStat) => service.maxIntervalFor(
+        equippedInterval: const Duration(milliseconds: 2000),
+        speedStance: true,
+        speedStat: speedStat,
       );
+
+      // 25 speed is a quarter off: 2000 / (1 + 0.05*sqrt(25))
+      expect(at(25).inMilliseconds, 1600);
+      // and it keeps paying at the top of the range rather than flattening
+      expect(at(99).inMilliseconds, closeTo(2000 / 1.4975, 1));
+      expect(at(99), lessThan(at(50)));
+      expect(at(50), lessThan(at(25)));
     });
 
-    test('the reduction is floored rather than reaching zero', () {
-      final floored = service.maxIntervalFor(
+    test('the curve never reaches zero, so there is no floor to hit', () {
+      // the old formula subtracted a percent a point and had to be floored
+      // at 85% off, where every further point was worth nothing. dividing
+      // approaches zero without arriving, so absurd stats stay finite and
+      // still improve.
+      final absurd = service.maxIntervalFor(
         equippedInterval: const Duration(seconds: 2),
         speedStance: true,
-        speedStat: 500,
+        speedStat: 10000,
       );
-      expect(
-        floored.inMicroseconds,
-        (const Duration(seconds: 2).inMicroseconds *
-                ActionTimingService.minIntervalFraction)
-            .round(),
+      final moreAbsurd = service.maxIntervalFor(
+        equippedInterval: const Duration(seconds: 2),
+        speedStance: true,
+        speedStat: 40000,
       );
-      expect(floored.inMicroseconds, greaterThan(0));
+
+      expect(absurd.inMicroseconds, greaterThan(0));
+      expect(moreAbsurd, lessThan(absurd));
     });
 
     test('the equipped tool drives the interval of the bound action', () {
@@ -312,13 +324,105 @@ void main() {
       );
 
       // combat reads the equipped weapon instead of a per-skill tool
-      final dagger =
-          ItemId.COPPER_DAGGER.build() as EquipmentItem;
+      final dagger = ItemId.COPPER_DAGGER.build() as EquipmentItem;
       player.equipmentData.armorEquipment[dagger.armorSlot] = dagger;
       expect(
         equipment.actionIntervalFor(SkillId.ATTACK, player.equipmentData),
         (dagger as WeaponItem).actionInterval,
       );
+    });
+  });
+
+  // Stamina is a burst you spend rather than a mode you leave on: drain
+  // goes as the square of the boost, which cancels against a pool that
+  // grows linearly with the stamina stat. What is left is a build ratio.
+  group('the cost of a boost', () {
+    // holds a full locked boost until the pool runs dry, and reports how
+    // long that took. running out is what breaks the lock - stamina itself
+    // starts climbing again the moment it does, so the lock is the signal
+    double burstSeconds(PlayerData player, {double limit = 300}) {
+      final state = ActionTimingData();
+      state.boostLocked = true;
+      state.percentOfMaxBoost = 1.0;
+
+      var elapsed = 0.0;
+      const step = 0.25;
+      while (elapsed < limit) {
+        run(state, player, seconds: step);
+        elapsed += step;
+        if (!state.boostLocked) return elapsed;
+      }
+      return limit;
+    }
+
+    PlayerData built({required int stamina, required int speed}) {
+      final player = newPlayer();
+      setLevel(player, SkillId.STAMINA, stamina);
+      setLevel(player, SkillId.SPEED, speed);
+      player.stamina = playerDataService.getMaxStamina(player);
+      return player;
+    }
+
+    test('a full bar is about thirty seconds at any level', () {
+      // the pool grows with the stamina stat and the drain grows with the
+      // boost it funds, so the two cancel: level does not change the burst
+      expect(burstSeconds(built(stamina: 5, speed: 5)), closeTo(30, 6));
+      expect(burstSeconds(built(stamina: 95, speed: 95)), closeTo(30, 6));
+    });
+
+    test('the burst is a build ratio, not a level', () {
+      final even = burstSeconds(built(stamina: 20, speed: 20));
+      final stamina = burstSeconds(built(stamina: 40, speed: 20));
+      final speed = burstSeconds(built(stamina: 20, speed: 40));
+
+      // twice the stamina is twice the burst; twice the speed instead is
+      // half of it, for a stronger boost while it lasts
+      expect(stamina, closeTo(even * 2, even * 0.35));
+      expect(speed, closeTo(even / 2, even * 0.35));
+    });
+
+    test('easing off is disproportionately cheap', () {
+      final service = ActionTimingService();
+      final full = service.boostDrain(1.4, speedStance: true);
+      final half = service.boostDrain(1.2, speedStance: true);
+
+      // half the boost costs a quarter of the drain - the square is what
+      // makes full tilt a decision rather than a default
+      expect(half, closeTo(full / 4, 1e-9));
+      expect(service.boostDrain(1.0, speedStance: true), 0);
+    });
+
+    test('a strength stance pays by the action, not by the second', () {
+      final service = ActionTimingService();
+      // the same multiplier costs differently because the currencies
+      // differ: speed buys seconds, strength buys swings
+      expect(
+        service.boostDrain(1.5, speedStance: false),
+        closeTo(ActionTimingService.strengthDrainPerAction * 0.25, 1e-9),
+      );
+      expect(
+        service.boostDrain(1.5, speedStance: true),
+        closeTo(ActionTimingService.speedDrainPerSecond * 0.25, 1e-9),
+      );
+
+      // and holding one without the action ever firing costs nothing: the
+      // frame loop charges a strength boost when the swing lands
+      final player = newPlayer();
+      setLevel(player, SkillId.STRENGTH, 20);
+      setLevel(player, SkillId.STAMINA, 20);
+      player.currentEntityViewId = EntityId.COPPER;
+      playerDataService.setStance(Stance.strong, player);
+      player.stamina = playerDataService.getMaxStamina(player);
+      final before = player.stamina;
+
+      final state = ActionTimingData();
+      state.boostLocked = true;
+      state.percentOfMaxBoost = 1.0;
+      // an interval far longer than the window, so no action ever fires
+      state.maxInterval = const Duration(minutes: 10);
+      run(state, player, seconds: 2);
+
+      expect(player.stamina, before);
     });
   });
 }

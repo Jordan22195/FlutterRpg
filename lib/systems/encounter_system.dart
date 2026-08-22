@@ -177,8 +177,7 @@ class EncounterSystem {
       result.damageDone = enemiesToKill * e.maxHitPoints;
 
       // reward xp
-      // todo give defence xp based on stance
-      result.xp[e.entityType] = xpPerDamage * enemiesToKill * e.maxHitPoints;
+      result.xp.addAll(_damageXp(e, playerState, result.damageDone));
       if (e is CombatEntity) {
         result.xp[SkillId.HITPOINTS] = (xpPerDamage * result.damageDone) / 3.0;
       }
@@ -207,11 +206,9 @@ class EncounterSystem {
     }
 
     // xp accrues on every damaging action, scaled by the damage done
-    result.xp[e.entityType] = xpPerDamage * result.damageDone;
+    result.xp.addAll(_damageXp(e, playerState, result.damageDone));
 
     // combat also trains hitpoints, at a third of the attack xp rate
-    // todo give defence xp based on stance
-
     if (e is CombatEntity) {
       result.xp[SkillId.HITPOINTS] = (xpPerDamage * result.damageDone) / 3.0;
     }
@@ -297,20 +294,36 @@ class EncounterSystem {
     }
     _playerDataService.setHitpoints(outcome.hitpoints, playerState);
 
-    // blocked hits pay defence xp for the damage they avoided, the same as
-    // live - averaged over the blocks rather than rolled one at a time
-    if (outcome.blocks > 0) {
-      final maxHit = _encounterService.computeMaxHit(
-        attack: entity.attack,
-        defense: defence,
-      );
-      result.xp[SkillId.DEFENCE] =
-          (result.xp[SkillId.DEFENCE] ?? 0) +
-          outcome.blocks * (1 + maxHit) / 2.0;
-    }
-
     result.playerDied = outcome.died;
     return outcome.elapsed;
+  }
+
+  /// Where a point of damage's xp lands, at [xpPerDamage] a point.
+  ///
+  /// A fight pays the stance that fought it: offensive trains the weapon
+  /// skill, defensive trains defence, and anything else splits the two
+  /// evenly. The total is the same either way - a stance decides where the
+  /// xp goes, not how much of it there is - so a player who wants defence
+  /// trains it by fighting defensively rather than by waiting to be missed.
+  ///
+  /// Only combat is routed. A tree pays woodcutting whatever the stance,
+  /// because there is no second skill to give half of it to.
+  Map<SkillId, double> _damageXp(
+    EncounterEntity entity,
+    PlayerData playerState,
+    int damage,
+  ) {
+    final total = xpPerDamage * damage;
+    if (entity is! CombatEntity) return {entity.entityType: total};
+
+    switch (playerState.stance) {
+      case Stance.offensive:
+        return {entity.entityType: total};
+      case Stance.defensive:
+        return {SkillId.DEFENCE: total};
+      default:
+        return {entity.entityType: total / 2, SkillId.DEFENCE: total / 2};
+    }
   }
 
   /// Eats one of the equipped food items: consumes it from the player

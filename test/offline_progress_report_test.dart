@@ -27,10 +27,18 @@ void main() {
   final longGap =
       OfflineProgressService.reportThreshold + const Duration(seconds: 60);
 
-  // how many actions a gap is worth at the default (unboosted) interval
-  int actionsIn(Duration gap) =>
-      gap.inMicroseconds ~/
-      ActionTimingService.defaultMaxInterval.inMicroseconds;
+  // how many actions a gap is worth at the interval the loop will actually
+  // run at - the bench default, divided by the fast stance's speed curve,
+  // and rounded to the millisecond the way getCurrentActionDuration does
+  int actionsIn(GameSession session, Duration gap) {
+    final scratch = ActionTimingData()
+      ..maxInterval = session.actionTimingSystem.intervalFor(
+        null,
+        session.saveGameData.playerData,
+      );
+    final interval = ActionTimingService().getCurrentActionDuration(scratch);
+    return gap.inMicroseconds ~/ interval.inMicroseconds;
+  }
 
   GameSession newSession() {
     final catalogs = factory.catalog1();
@@ -70,16 +78,16 @@ void main() {
 
       final report = session.actionTimingController.pendingOfflineReport;
       expect(report, isNotNull);
-      expect(report!.actionCount, actionsIn(longGap));
+      expect(report!.actionCount, actionsIn(session, longGap));
       expect(report.timeAway.inSeconds, longGap.inSeconds);
       // the meadow pays a flat 8 xp an explore, and the batch pays one
       // explore's worth per explore
-      expect(report.xp[SkillId.EXPLORATION], 8.0 * actionsIn(longGap));
+      expect(report.xp[SkillId.EXPLORATION], 8.0 * actionsIn(session, longGap));
       // every explore finds at least once, so the walk turned entities up
       expect(report.entities, isNotEmpty);
       expect(
         report.entities.values.fold<int>(0, (sum, count) => sum + count),
-        greaterThanOrEqualTo(actionsIn(longGap)),
+        greaterThanOrEqualTo(actionsIn(session, longGap)),
       );
       expect(session.actionTimingController.offlineReportSequence, 1);
 
@@ -128,7 +136,7 @@ void main() {
       expect(report, isNotNull);
       // crafting settles the whole count a fire is handed, so the report
       // carries every bar the gap was worth
-      final crafts = actionsIn(longGap);
+      final crafts = actionsIn(session, longGap);
       expect(report!.items.itemMap[ItemId.COPPER_BAR], crafts);
       expect(report.xp[SkillId.BLACKSMITHING], 5.0 * crafts);
 
@@ -266,8 +274,12 @@ void main() {
     test('a locked boost counts both of its stretches under one report', () {
       final player = newPlayer();
       final speed = player.skillData[SkillId.SPEED]!;
-      speed.xp = speed.xpTable[20]; // ceiling 2x
-      player.stamina = 10;
+      speed.xp = speed.xpTable[20];
+      // a pool worth boosting with: burst length is stamina against boost
+      // stat, so 20 speed on a level-1 pool is over in a second and a half
+      final stamina = player.skillData[SkillId.STAMINA]!;
+      stamina.xp = stamina.xpTable[20];
+      player.stamina = playerDataService.getMaxStamina(player);
 
       final (state, fired) = recordingState();
       state.boostLocked = true;

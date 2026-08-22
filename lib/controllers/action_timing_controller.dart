@@ -507,6 +507,17 @@ class ActionTimingSystem {
       actionTimingState.actionProgressPercentComplete =
           actionTimingState.actionProgressPercentComplete % 1.0;
       _actionTimingService.tryFire(actionTimingState, playerState, 1);
+
+      // a strength boost is paid for by the swing, not by the second
+      if (!actionTimingState.boostingSpeed) {
+        _playerDataService.changeStamina(
+          -_actionTimingService.boostDrain(
+            _actionTimingService.getCurrentSpeedMultiplier(actionTimingState),
+            speedStance: false,
+          ),
+          playerState,
+        );
+      }
     }
 
     // calculate stamina drain and xp gains
@@ -517,9 +528,11 @@ class ActionTimingSystem {
 
     // stamina flow: drain scales with how boosted you are; recovery is a
     // steady rate from the recovery stat. the net is applied clamped to
-    // [0, max stamina]
-    final drainPerSecond =
-        ActionTimingService.staminaDrainPerBoost * (boostMulitplier - 1);
+    // [0, max stamina]. only a speed boost is charged by the second - a
+    // strength one paid for itself when the action fired, below.
+    final drainPerSecond = actionTimingState.boostingSpeed
+        ? _actionTimingService.boostDrain(boostMulitplier, speedStance: true)
+        : 0.0;
     final recoveryPerSecond = _playerDataService.staminaRecoveryPerSecond(
       playerState,
     );
@@ -551,8 +564,31 @@ class ActionTimingSystem {
 }
 
 class ActionTimingService {
-  /// Stamina drained per second per point of boost (speed above 1x).
-  static const double staminaDrainPerBoost = 2.0;
+  /// Stamina a speed boost burns per second, per unit of boost squared.
+  ///
+  /// Squared because the boost bonus grows as the root of the stat while
+  /// the stamina pool grows linearly with it - so the two cancel, and how
+  /// long a full bar lasts stops depending on level and starts depending on
+  /// how the player built. Equal stamina and speed is about thirty seconds
+  /// of full tilt at any level; twice the stamina doubles it, twice the
+  /// speed halves it for a stronger boost.
+  static const double speedDrainPerSecond = 33.3;
+
+  /// Stamina a strength boost burns per action, per unit of boost squared.
+  ///
+  /// Per action rather than per second because that is what strength buys:
+  /// a slow weapon should not cost more to boost than a fast one. Equal
+  /// stamina and strength is about ten boosted actions.
+  static const double strengthDrainPerAction = 25.0;
+
+  /// What a boost of [multiplier] costs, per second in the fast stance and
+  /// per action in a strength one.
+  double boostDrain(double multiplier, {required bool speedStance}) {
+    final bonus = multiplier - 1;
+    if (bonus <= 0) return 0;
+    final rate = speedStance ? speedDrainPerSecond : strengthDrainPerAction;
+    return rate * bonus * bonus;
+  }
 
   /// How long a gap between frames has to be before it is treated as time
   /// spent away rather than a slow frame. Frames stop arriving when the app
@@ -563,22 +599,16 @@ class ActionTimingService {
   /// bare-handed gathering, and everything done at a bench.
   static const Duration defaultMaxInterval = Duration(seconds: 3);
 
-  /// Fraction of the action interval one point of the speed stat removes,
-  /// and only in the fast stance: the strong stance trades that speed for
-  /// the strength boost instead.
-  static const double speedIntervalReductionPerPoint = 0.01;
-
-  /// The floor that reduction can reach, as a fraction of the equipped
-  /// item's own interval. Without it a speed stat of 100 would take the
-  /// interval to zero and fire the action every frame.
-  static const double minIntervalFraction = 0.15;
-
   /// The unboosted interval for an action: the speed of the item equipped
   /// to perform it, cut by the speed stat while in the fast stance.
   ///
   /// This is the ceiling the momentum boost then works down from — holding
   /// the button divides this further, so speed pays twice in the fast
   /// stance: once here and again through the boost ceiling.
+  ///
+  /// Divided rather than subtracted, so the interval approaches zero
+  /// without arriving. That is what replaced the old hard floor, where
+  /// every point of speed past 85 was worth exactly nothing.
   Duration maxIntervalFor({
     required Duration? equippedInterval,
     required bool speedStance,
@@ -587,21 +617,18 @@ class ActionTimingService {
     final base = equippedInterval ?? defaultMaxInterval;
     if (!speedStance) return base;
 
-    final factor = (1 - speedIntervalReductionPerPoint * speedStat).clamp(
-      minIntervalFraction,
-      1.0,
-    );
-    return Duration(microseconds: (base.inMicroseconds * factor).round());
+    final rate = 1 + speedIdleBonus(speedStat);
+    return Duration(microseconds: (base.inMicroseconds / rate).round());
   }
 
   /// The boost ceiling granted by the speed stat.
   double maxSpeedBoostForStat(int speedStat) {
-    return 1.0 + 0.05 * speedStat;
+    return 1.0 + speedStatBonus(speedStat);
   }
 
   /// The boost ceiling granted by the strength stat.
   double maxStrengthBoostForStat(int strengthStat) {
-    return 1.0 + 0.1 * strengthStat;
+    return 1.0 + boostStatBonus(strengthStat);
   }
 
   // increase or decrease boost based on if button is held or not

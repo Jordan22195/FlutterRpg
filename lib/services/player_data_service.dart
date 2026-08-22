@@ -49,19 +49,27 @@ class PlayerDataService {
       skillStats,
       Util.addMap(equipmentStats, buffStats),
     );
-    // a strength based stance raises the stats strength lends itself to by
-    // 1% per point of strength. each stat scales from its own total, and
-    // strength itself is left alone so it can't compound on itself.
+    // a strength stance raises the stat it is spent on. the idle share is
+    // always on and the boost bar buys the rest, composed rather than taken
+    // as the larger of the two - competing is what left the bottom of the
+    // bar doing nothing until it beat standing still.
+    //
+    // only the skill half is scaled. multiplying the geared total meant a
+    // stance was worth more the better your equipment, which is where most
+    // of the old overpowering lived. strength itself is left alone so it
+    // can't compound on itself.
     if (playerState.skillBoost != SkillId.SPEED &&
         playerState.skillBoost != SkillId.STRENGTH) {
-      // 1% per strengh stat
-      final strengthScale = 1 + 0.01 * (totals[SkillId.STRENGTH] ?? 0);
+      final bonus = boostStatBonus(totals[SkillId.STRENGTH] ?? 0);
+      // boostMultiplier is 1 + fill * bonus, so the fill is already in it
+      final scale =
+          1 +
+          bonus * kBoostIdleShare +
+          (playerState.boostMultiplier - 1) * (1 - kBoostIdleShare);
 
-      final newBaseStat = (totals[playerState.skillBoost] ?? 0) * strengthScale;
-      final newBoostStat =
-          (totals[playerState.skillBoost] ?? 0) * playerState.boostMultiplier;
-
-      totals[playerState.skillBoost] = max(newBaseStat, newBoostStat).round();
+      final base = skillStats[playerState.skillBoost] ?? 0;
+      final gear = (totals[playerState.skillBoost] ?? 0) - base;
+      totals[playerState.skillBoost] = (base * scale).round() + gear;
     }
 
     return totals;
@@ -219,7 +227,7 @@ class PlayerDataService {
   }
 
   /// Stamina recovered per second per point of the recovery stat.
-  static const double staminaRecoveryPerStat = 0.1;
+  static const double staminaRecoveryPerStat = 0.5;
 
   // the passive stamina regeneration rate from the recovery stat
   double staminaRecoveryPerSecond(PlayerData playerState, {DateTime? at}) {

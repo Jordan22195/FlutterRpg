@@ -106,7 +106,10 @@ class OfflineProgressSystem {
 
       // ---- cut the segment at the nearest threshold
       var segment = remaining;
-      segment = _min(segment, _boostEndsIn(playerState, timingState));
+      segment = _min(
+        segment,
+        _boostEndsIn(playerState, timingState, intervalSeconds),
+      );
       segment = _min(segment, _nextBuffExpiryIn(playerState));
       segment = _min(
         segment,
@@ -141,7 +144,7 @@ class OfflineProgressSystem {
           ? segment * performedThisSegment / actions
           : segment;
 
-      _applyStamina(playerState, timingState, spanUsed);
+      _applyStamina(playerState, timingState, spanUsed, performedThisSegment);
       playerState.lastActionTime = playerState.lastActionTime.add(
         Duration(microseconds: (spanUsed * 1e6).round()),
       );
@@ -226,19 +229,37 @@ class OfflineProgressSystem {
       playerState,
       at: at,
     );
+
+    // the stats a strength stance scales are read off this, and nothing
+    // else in a settle sets it - left alone it would carry whatever the
+    // last live frame happened to leave behind, possibly from another
+    // stance entirely
+    _playerDataService.setBoostMultiplier(
+      _actionTimingService.getCurrentSpeedMultiplier(timingState),
+      playerState,
+    );
   }
 
   /// How long a locked boost can hold out, or null when nothing is burning
   /// stamina. A boost that costs nothing never runs out.
-  double? _boostEndsIn(PlayerData playerState, ActionTimingData timingState) {
+  ///
+  /// A speed boost burns by the second, so the answer is a division; a
+  /// strength one burns by the action, so its stamina buys a number of
+  /// actions which [intervalSeconds] turns back into time.
+  double? _boostEndsIn(
+    PlayerData playerState,
+    ActionTimingData timingState,
+    double intervalSeconds,
+  ) {
     if (!timingState.boostLocked) return null;
-    final multiplier = _actionTimingService.getCurrentSpeedMultiplier(
-      timingState,
+    final drain = _actionTimingService.boostDrain(
+      _actionTimingService.getCurrentSpeedMultiplier(timingState),
+      speedStance: timingState.boostingSpeed,
     );
-    final drainPerSecond =
-        ActionTimingService.staminaDrainPerBoost * (multiplier - 1);
-    if (drainPerSecond <= 0) return null;
-    return playerState.stamina / drainPerSecond;
+    if (drain <= 0) return null;
+    if (timingState.boostingSpeed) return playerState.stamina / drain;
+    if (intervalSeconds <= 0) return null;
+    return (playerState.stamina / drain) * intervalSeconds;
   }
 
   /// How long until the next buff runs out — a fire going cold is what stops
@@ -274,13 +295,15 @@ class OfflineProgressSystem {
     return soonest;
   }
 
-  /// The stamina one segment's worth of time moves, on the same rules the
-  /// frame loop runs on: a held boost drains, anything else recovers.
+  /// The stamina one segment moves, on the same rules the frame loop runs
+  /// on: a held boost drains, anything else recovers. A speed boost is
+  /// charged for [seconds], a strength one for the [actions] fired in them.
   /// Draining to empty breaks the lock, so later segments run unboosted.
   void _applyStamina(
     PlayerData playerState,
     ActionTimingData timingState,
     double seconds,
+    int actions,
   ) {
     final at = playerState.lastActionTime;
     if (!timingState.boostLocked) {
@@ -293,23 +316,21 @@ class OfflineProgressSystem {
       return;
     }
 
-    final multiplier = _actionTimingService.getCurrentSpeedMultiplier(
-      timingState,
+    // a speed boost is charged for the stretch, a strength one for the
+    // actions fired in it
+    final drain = _actionTimingService.boostDrain(
+      _actionTimingService.getCurrentSpeedMultiplier(timingState),
+      speedStance: timingState.boostingSpeed,
     );
-    final drainPerSecond =
-        ActionTimingService.staminaDrainPerBoost * (multiplier - 1);
-    _playerDataService.changeStamina(
-      -seconds * drainPerSecond,
-      playerState,
-      at: at,
-    );
+    final spent = timingState.boostingSpeed ? drain * seconds : drain * actions;
+    _playerDataService.changeStamina(-spent, playerState, at: at);
 
     // spent once it cannot fund another microsecond. the exact-zero case is
     // not reachable by arithmetic - draining a boost window computed from
     // the stamina it costs leaves a float's worth behind either way - and a
     // residue that small would otherwise cut segments too short to hold a
     // single action, over and over.
-    if (playerState.stamina < drainPerSecond * 1e-6) {
+    if (playerState.stamina < drain * 1e-6) {
       _playerDataService.changeStamina(
         -playerState.stamina,
         playerState,
