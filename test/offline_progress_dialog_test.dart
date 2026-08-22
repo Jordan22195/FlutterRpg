@@ -57,12 +57,37 @@ Map<String, dynamic> savedMidEncounter(Duration away) {
     vsync: const TestVSync(),
   );
 
-  final tree =
-      EntityId.TREE.build() as EncounterEntity;
+  final tree = EntityId.TREE.build() as EncounterEntity;
   save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities.add(
     tree,
   );
   session.encounterController.startEncounterActionFor(tree);
+  save.playerData.lastActionTime = DateTime.now().subtract(away);
+
+  final raw = toRawSave(save);
+  session.actionTimingController.stop();
+  session.dispose();
+  return raw;
+}
+
+// a save force-closed mid-fight against something that fights back, [away]
+// ago: a flock of chickens, and no food to see the player through them
+Map<String, dynamic> savedMidCombat(Duration away) {
+  final factory = GameSessionFactory();
+  final catalogs = factory.catalog1();
+  final save = factory.newGame(catalogs);
+  final session = factory.create(
+    save: save,
+    catalogs: catalogs,
+    vsync: const TestVSync(),
+  );
+
+  final chicken = EntityId.CHICKEN.build() as EncounterEntity;
+  chicken.count = 1000;
+  save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities.add(
+    chicken,
+  );
+  session.encounterController.startEncounterActionFor(chicken);
   save.playerData.lastActionTime = DateTime.now().subtract(away);
 
   final raw = toRawSave(save);
@@ -108,6 +133,25 @@ void main() {
     expect(find.text('Defeated'), findsOneWidget);
     expect(find.text('DEFEATED'), findsOneWidget);
     expect(find.text('Woodcutting'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('dying while away is reported once, not twice', (tester) async {
+    final raw = savedMidCombat(const Duration(hours: 1));
+
+    await tester.pumpWidget(
+      MyApp(rawSave: raw, fileManagerService: FileManagerService()),
+    );
+    await settle(tester);
+
+    // one modal, and it says what happened
+    expect(find.text('While you were away'), findsOneWidget);
+    expect(find.text('Died'), findsOneWidget);
+    expect(find.textContaining('Chicken'), findsWidgets);
+    // the shell's own bare death dialog stands down for it
+    expect(find.text('You died'), findsNothing);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();

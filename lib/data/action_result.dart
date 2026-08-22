@@ -23,6 +23,10 @@ class EncounterActionResult {
   /// reports what it actually did, which is not always the count it was
   /// handed: materials run out, a fire goes out, a node is stripped.
   int actionsPerformed = 0;
+
+  /// The fight killed the player. Only a batch settling time away sets it -
+  /// live, the frame loop notices a death the moment the swing lands.
+  bool playerDied = false;
 }
 
 /// What one explore action turned up.

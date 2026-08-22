@@ -3,6 +3,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import '../services/inventory_service.dart';
+import '../data/combat_segment_outcome.dart';
 import '../data/encounter_data.dart';
 import '../data/action_result.dart';
 
@@ -183,6 +184,118 @@ class EncounterService {
     encounterState.entity = entity;
 
     encounterState.isActive = true;
+  }
+
+  /// Resolves the enemy's swings over [seconds], one at a time.
+  ///
+  /// Sampled per swing rather than averaged, because what ends a fight is
+  /// variance and not the mean: an enemy averaging 6 against a 10hp player
+  /// looks survivable forever, while the same enemy rolling its max of 12
+  /// ends it outright. Averaging the player's own damage is fine - killing
+  /// an enemy faster or slower than the mean does not change how the fight
+  /// ends - but averaging the enemy's is what made offline combat free.
+  ///
+  /// The order mirrors the live frame exactly (damage, death, then the eat,
+  /// see [EncounterController.onActionTimingFrame]), so a replayed fight and
+  /// one watched on screen are the same fight.
+  ///
+  /// Cost is a couple of integer operations and an inline xorshift step per
+  /// swing, with nothing allocated: ten million swings - about seven months
+  /// away at a two second attack interval - resolve in well under a second.
+  /// [rng] seeds it; tests pass a seeded one to pin a sequence.
+  CombatSegmentOutcome resolveIncomingDamage({
+    required int hitpoints,
+    required int maxHp,
+    required double eatThreshold,
+    required int foodCount,
+    required int restoreAmount,
+    required int enemyAttack,
+    required int playerDefence,
+    required double attackInterval,
+    required double seconds,
+    Random? rng,
+  }) {
+    CombatSegmentOutcome none(double elapsed) => CombatSegmentOutcome(
+      swings: 0,
+      elapsed: elapsed,
+      hitpoints: hitpoints,
+      foodEaten: 0,
+      blocks: 0,
+      died: false,
+    );
+
+    if (seconds <= 0 || attackInterval <= 0 || maxHp <= 0) {
+      return none(seconds <= 0 ? 0 : seconds);
+    }
+
+    final swingCount = (seconds / attackInterval).floor();
+    if (swingCount <= 0) return none(seconds);
+
+    // the two numbers the whole fight runs on: how often a swing lands, and
+    // how hard it can land. both are the live formulas.
+    final hitChance = chanceToHit(enemyAttack, playerDefence);
+    final maxHit = computeMaxHit(attack: enemyAttack, defense: playerDefence);
+    // entityAttack caps a roll at the player's max hp, so a max hit above
+    // the pool is not worth more than the pool
+    final damageCap = maxHit < maxHp ? maxHit : maxHp;
+    // the hit roll as a 16 bit fraction, so a swing costs integer compares
+    // rather than a double divide
+    final hitCutoff = (hitChance * 0x10000).round();
+    final eatAt = maxHp * eatThreshold;
+
+    var state = ((rng ?? Random()).nextInt(0x7FFFFFFF) | 1) & 0xFFFFFFFF;
+    var hp = hitpoints;
+    var food = foodCount;
+    var eaten = 0;
+    var blocks = 0;
+    var resolved = 0;
+    var died = false;
+
+    for (var i = 0; i < swingCount; i++) {
+      resolved = i + 1;
+
+      // xorshift32: a fresh Random.nextInt a swing would cost more than the
+      // rest of the loop put together
+      state ^= (state << 13) & 0xFFFFFFFF;
+      state ^= state >> 17;
+      state ^= (state << 5) & 0xFFFFFFFF;
+
+      if ((state & 0xFFFF) >= hitCutoff) {
+        // a miss. live pays defence xp for the damage it avoided
+        blocks++;
+        continue;
+      }
+
+      state ^= (state << 13) & 0xFFFFFFFF;
+      state ^= state >> 17;
+      state ^= (state << 5) & 0xFFFFFFFF;
+
+      var damage = 1 + (state % maxHit);
+      if (damage > damageCap) damage = damageCap;
+
+      hp -= damage;
+      if (hp <= 0) {
+        hp = 0;
+        died = true;
+        break;
+      }
+
+      if (food > 0 && hp <= eatAt && restoreAmount > 0) {
+        food--;
+        eaten++;
+        hp += restoreAmount;
+        if (hp > maxHp) hp = maxHp;
+      }
+    }
+
+    return CombatSegmentOutcome(
+      swings: resolved,
+      elapsed: died ? resolved * attackInterval : seconds,
+      hitpoints: hp,
+      foodEaten: eaten,
+      blocks: blocks,
+      died: died,
+    );
   }
 
   // calculate hit chance for a given attack and defense.

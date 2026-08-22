@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/data/auto_eat_rule.dart';
 import 'package:rpg/data/bound_action.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
@@ -128,6 +129,37 @@ void main() {
       };
 
       expect(SaveGameData.fromJson(json).actionTimingData.boundAction, isNull);
+    });
+  });
+
+  group('the auto-eat rule', () {
+    SaveGameData roundTrip(SaveGameData save) {
+      return SaveGameData.fromJson(
+        jsonDecode(jsonEncode(save.toJson())) as Map<String, dynamic>,
+      );
+    }
+
+    test('a changed threshold survives a round trip', () {
+      final factory = GameSessionFactory();
+      final save = factory.newGame(factory.catalog1());
+      save.playerData.autoEatRule = const AutoEatRule(threshold: 0.4);
+
+      expect(roundTrip(save).playerData.autoEatRule.threshold, 0.4);
+    });
+
+    test('a save written before the rule existed loads the standard one', () {
+      final factory = GameSessionFactory();
+      final save = factory.newGame(factory.catalog1());
+      final json =
+          jsonDecode(jsonEncode(save.toJson())) as Map<String, dynamic>;
+      (json['playerData'] as Map).remove('autoEatRule');
+
+      final restored = SaveGameData.fromJson(json);
+
+      expect(
+        restored.playerData.autoEatRule.threshold,
+        AutoEatRule.standard.threshold,
+      );
     });
   });
 }

@@ -63,6 +63,7 @@ class OfflineProgressBody extends StatelessWidget {
             _StatRow(label: 'Actions', value: '${report.actionCount}'),
             if (report.enemiesDefeated > 0)
               _StatRow(label: 'Defeated', value: '${report.enemiesDefeated}'),
+            if (report.died) _StatRow(label: 'Died', value: _death(report)),
           ],
         ),
         if (items.isNotEmpty || equipment.isNotEmpty)
@@ -149,6 +150,20 @@ class _EntityTiles extends StatelessWidget {
 
 /// "3h 20m" / "12m" / "45s" - the coarse unit is enough here, and a long
 /// absence should not read as a four-part duration.
+/// What killed the player and how far into the gap, for the death row.
+/// Either half can be missing - a fight with no entity left to name, or a
+/// settle that ended before it could time the death.
+String _death(OfflineProgressReport report) {
+  final killer = report.killedBy?.definition.name;
+  final after = report.diedAfter;
+  if (killer != null && after != null) {
+    return 'to a $killer after ${_formatDuration(after)}';
+  }
+  if (killer != null) return 'to a $killer';
+  if (after != null) return 'after ${_formatDuration(after)}';
+  return 'yes';
+}
+
 String _formatDuration(Duration away) {
   if (away.inHours > 0) {
     final minutes = away.inMinutes % 60;

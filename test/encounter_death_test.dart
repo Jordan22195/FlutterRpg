@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/main.dart';
@@ -133,5 +134,41 @@ void main() {
     // unmount so the session disposes its timers and ticker
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
+  });
+
+  test('a hit the player cannot survive kills through a bag of food', () async {
+    final session = buildSession();
+    final save = session.saveGameData;
+
+    // a full bag of the best food in reach
+    session.inventoryService.setItemCount(
+      save.inventoryData,
+      ItemId.COOKED_CHICKEN,
+      50,
+    );
+    save.playerData.equipmentData.equipedFood = ItemId.COOKED_CHICKEN;
+
+    final entity = lethalEnemy();
+    save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities.add(
+      entity,
+    );
+    expect(session.encounterController.startEncounterActionFor(entity), isTrue);
+
+    await fightUntilDeath(session.encounterController);
+
+    // the death check runs before the eat, so food cannot pull the player
+    // back from a swing they had no hp for
+    expect(session.encounterController.deathSequence, 1);
+    expect(save.playerData.hitpoints, 1);
+    expect(
+      session.inventoryService.getItemCount(
+        save.inventoryData,
+        ItemId.COOKED_CHICKEN,
+      ),
+      50,
+      reason: 'the killing blow left no room to eat',
+    );
+
+    session.dispose();
   });
 }

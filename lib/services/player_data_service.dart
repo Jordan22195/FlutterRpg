@@ -192,6 +192,15 @@ class PlayerDataService {
     return (playerState.stamina / max).clamp(0.0, 1.0);
   }
 
+  /// Puts hp at [hp] outright, clamped to the pool. An offline settle
+  /// resolves a whole stretch of a fight at once and writes the hp it
+  /// arrived at, rather than replaying every hit and heal through
+  /// [applyDamage] and [heal].
+  void setHitpoints(int hp, PlayerData playerState, {DateTime? at}) {
+    final maxHp = getStatTotals(playerState, at: at)[SkillId.HITPOINTS] ?? 1;
+    playerState.hitpoints = hp.clamp(0, maxHp);
+  }
+
   void applyDamage(int damage, PlayerData playerState) {
     playerState.hitpoints -= damage;
     if (playerState.hitpoints < 0) {

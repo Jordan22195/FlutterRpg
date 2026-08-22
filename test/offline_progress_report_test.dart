@@ -91,15 +91,10 @@ void main() {
       final session = newSession();
       // a tree in the starting zone, the way exploring would leave one
       final save = session.saveGameData;
-      final tree =
-          EntityId.TREE.build()
-              as EncounterEntity;
+      final tree = EntityId.TREE.build() as EncounterEntity;
       save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities
           .add(tree);
-      expect(
-        session.encounterController.startEncounterActionFor(tree),
-        isTrue,
-      );
+      expect(session.encounterController.startEncounterActionFor(tree), isTrue);
 
       settle(session, longGap);
 
@@ -224,13 +219,14 @@ void main() {
       final fired = <int>[];
       final state = ActionTimingData();
       state.running = true;
-      state.onFire = (count, {bool offline = false, DateTime? at}) {
-        fired.add(count);
-        offlineProgressService.record(
-          offlineProgressData,
-          EncounterActionResult()..actionsPerformed = reports ? count : 0,
-        );
-      };
+      state.onFire =
+          (count, {bool offline = false, DateTime? at, Duration? span}) {
+            fired.add(count);
+            offlineProgressService.record(
+              offlineProgressData,
+              EncounterActionResult()..actionsPerformed = reports ? count : 0,
+            );
+          };
       return (state, fired);
     }
 
@@ -295,6 +291,35 @@ void main() {
         fired.fold<int>(0, (sum, count) => sum + count),
       );
       expect(offlineProgressData.reportSequence, 1);
+    });
+
+    test('a death is always worth a report, however short the gap', () {
+      final player = newPlayer();
+
+      // a gap far too short to be worth interrupting anyone over, and a
+      // fight that ended in it
+      offlineProgressService.begin(
+        offlineProgressData,
+        OfflineProgressService.reportThreshold ~/ 2,
+      );
+      offlineProgressService.recordDeath(
+        offlineProgressData,
+        killedBy: EntityId.CHICKEN,
+      );
+      offlineProgressService.recordDeathTime(
+        offlineProgressData,
+        const Duration(seconds: 2),
+      );
+      offlineProgressService.finish(offlineProgressData);
+
+      final report = offlineProgressData.pending;
+      expect(report, isNotNull);
+      // nothing was gained, but a death is not an empty report
+      expect(report!.isEmpty, isFalse);
+      expect(report.died, isTrue);
+      expect(report.killedBy, EntityId.CHICKEN);
+      expect(report.diedAfter, const Duration(seconds: 2));
+      expect(player.hitpoints, isNotNull);
     });
 
     test('a settle with the loop stopped reports nothing', () {

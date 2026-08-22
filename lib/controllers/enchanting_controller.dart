@@ -234,7 +234,12 @@ class EnchantingController extends ChangeNotifier {
 
   // function bound to the action button. executes periodically: each
   // fire disenchants or enchants ONE item from the selected stack
-  void doEnchantingAction(int count, {bool offline = false, DateTime? at}) {
+  void doEnchantingAction(
+    int count, {
+    bool offline = false,
+    DateTime? at,
+    Duration? span,
+  }) {
     final target = selectedTarget;
     if (target == null || target.stackKey != _runningTargetStackKey) {
       _actionTimingController.stop();

@@ -86,8 +86,9 @@ void main() {
     final fired = <({int count, bool offline, DateTime? at})>[];
     final state = ActionTimingData();
     state.running = true;
-    state.onFire = (count, {bool offline = false, DateTime? at}) =>
-        fired.add(fire(count, offline, at));
+    state.onFire =
+        (count, {bool offline = false, DateTime? at, Duration? span}) =>
+            fired.add(fire(count, offline, at));
     return (state, fired);
   }
 
@@ -445,14 +446,15 @@ void main() {
       final fired = <int>[];
       final state = ActionTimingData();
       state.running = true;
-      state.onFire = (count, {bool offline = false, DateTime? at}) {
-        fired.add(count);
-        final result = EncounterActionResult()
-          ..actionsPerformed = count
-          ..xp = {SkillId.WOODCUTTING: xpPerAction * count};
-        playerDataService.applyXp(player, result.xp);
-        offlineProgressService.record(offlineProgressData, result);
-      };
+      state.onFire =
+          (count, {bool offline = false, DateTime? at, Duration? span}) {
+            fired.add(count);
+            final result = EncounterActionResult()
+              ..actionsPerformed = count
+              ..xp = {SkillId.WOODCUTTING: xpPerAction * count};
+            playerDataService.applyXp(player, result.xp);
+            offlineProgressService.record(offlineProgressData, result);
+          };
 
       system.settle(player, state, now: goOffline(player, 60));
 
@@ -474,11 +476,12 @@ void main() {
       final fired = <int>[];
       final state = ActionTimingData();
       state.running = true;
-      state.onFire = (count, {bool offline = false, DateTime? at}) {
-        fired.add(count);
-        // the second fire is the one whose requirements fail
-        if (fired.length >= 2) timingService.stop(state);
-      };
+      state.onFire =
+          (count, {bool offline = false, DateTime? at, Duration? span}) {
+            fired.add(count);
+            // the second fire is the one whose requirements fail
+            if (fired.length >= 2) timingService.stop(state);
+          };
 
       system.settle(player, state, now: goOffline(player, 3600));
 
@@ -489,19 +492,135 @@ void main() {
     });
   });
 
+  group('crediting the time a batch used', () {
+    test('a batch that stops short reports only what it did', () {
+      final player = newPlayer();
+      final fired = <int>[];
+
+      // an action that manages half of what it was asked for and stops
+      final state = ActionTimingData();
+      state.running = true;
+      state.onFire =
+          (count, {bool offline = false, DateTime? at, Duration? span}) {
+            fired.add(count);
+            final done = count > 1 ? count ~/ 2 : count;
+            offlineProgressService.record(
+              offlineProgressData,
+              EncounterActionResult()..actionsPerformed = done,
+            );
+            // the probe measures the rate; the segment after it stops short
+            if (count > 1) timingService.stop(state);
+          };
+
+      const gap = 100.0;
+      system.settle(player, state, now: goOffline(player, gap));
+
+      // the probe, then half of what the segment after it asked for. the
+      // stretch it did not use is charged as idle instead - what that buys
+      // is pinned end to end by the offline death in
+      // offline_encounter_damage_test, where the time it saves is the
+      // difference between dying two minutes in and dying an hour in.
+      final interval =
+          timingService.getCurrentActionDuration(state).inMicroseconds / 1e6;
+      expect(fired, hasLength(2));
+      expect(
+        offlineProgressData.report.actionCount,
+        closeTo((gap / interval).floor() / 2, 2),
+      );
+      expect(player.lastActionTime.isAtSameMomentAs(DateTime.now()), isFalse);
+    });
+  });
+
+  group('stances', () {
+    // a settle re-reads the stance every segment, the same way the frame
+    // loop does: only the fast stance runs on speed, and only the fast
+    // stance shortens the interval. get that wrong and a settle pays a
+    // strength stance at speed-stance rates for the whole gap.
+    test('only the fast stance shortens the interval offline', () {
+      int actionsOver(Stance stance) {
+        final player = newPlayer();
+        setLevel(player, SkillId.SPEED, 50); // 50% off in the fast stance
+        setLevel(player, SkillId.STRENGTH, 50);
+        playerDataService.setStance(stance, player);
+
+        final (state, fired) = recordingState();
+        system.settle(player, state, now: goOffline(player, 300));
+        return totalActions(fired);
+      }
+
+      final fast = actionsOver(Stance.fast);
+      final strong = actionsOver(Stance.strong);
+
+      // 300s at the 3s bench interval is 100 actions; the fast stance's
+      // 50 speed takes 50% off that interval and buys exactly twice as many
+      expect(strong, 100);
+      expect(fast, 200);
+    });
+
+    test('a locked boost takes its ceiling from the stance offline', () {
+      ActionTimingData settleWith(Stance stance) {
+        final player = newPlayer();
+        setLevel(player, SkillId.SPEED, 20);
+        setLevel(player, SkillId.STRENGTH, 10);
+        setLevel(player, SkillId.STAMINA, 99);
+        player.stamina = playerDataService.getMaxStamina(player);
+        playerDataService.setStance(stance, player);
+
+        final (state, _) = recordingState();
+        state.boostLocked = true;
+        state.percentOfMaxBoost = 1.0;
+        system.settle(player, state, now: goOffline(player, 60));
+        return state;
+      }
+
+      // the strength stances spend strength: their ceiling is 1 + 0.1 a
+      // point, and the boost buys damage rather than speed
+      final strong = settleWith(Stance.strong);
+      expect(strong.boostingSpeed, isFalse);
+      expect(strong.maxBoostMultiplier, closeTo(1.0 + 0.1 * 10, 0.001));
+
+      // the fast stance runs on speed: 1 + 0.05 a point, and it is the only
+      // one the action interval divides by
+      final fast = settleWith(Stance.fast);
+      expect(fast.boostingSpeed, isTrue);
+      expect(fast.maxBoostMultiplier, closeTo(1.0 + 0.05 * 20, 0.001));
+    });
+
+    test('a locked boost trains the stance it runs on, offline', () {
+      final player = newPlayer();
+      setLevel(player, SkillId.STRENGTH, 10);
+      setLevel(player, SkillId.STAMINA, 99);
+      player.stamina = playerDataService.getMaxStamina(player);
+      playerDataService.setStance(Stance.offensive, player);
+
+      final speedBefore = player.skillData[SkillId.SPEED]!.xp;
+
+      final (state, _) = recordingState();
+      state.boostLocked = true;
+      state.percentOfMaxBoost = 1.0;
+      system.settle(player, state, now: goOffline(player, 600));
+
+      // the settle does not pay boost xp at all - that is a per-frame thing
+      // the frame loop does - so neither stat moves, and speed least of all
+      expect(player.skillData[SkillId.SPEED]!.xp, speedBefore);
+      expect(state.boostingSpeed, isFalse);
+    });
+  });
+
   group('the report', () {
     test('is the sum of what every segment reported', () {
       final player = newPlayer();
       final state = ActionTimingData();
       state.running = true;
-      state.onFire = (count, {bool offline = false, DateTime? at}) {
-        offlineProgressService.record(
-          offlineProgressData,
-          EncounterActionResult()
-            ..actionsPerformed = count
-            ..xp = {SkillId.WOODCUTTING: 2.0 * count},
-        );
-      };
+      state.onFire =
+          (count, {bool offline = false, DateTime? at, Duration? span}) {
+            offlineProgressService.record(
+              offlineProgressData,
+              EncounterActionResult()
+                ..actionsPerformed = count
+                ..xp = {SkillId.WOODCUTTING: 2.0 * count},
+            );
+          };
 
       system.settle(player, state, now: goOffline(player, 60));
 

@@ -112,6 +112,7 @@ class EncounterController extends ChangeNotifier {
     int count, {
     bool offline = false,
     DateTime? at,
+    Duration? span,
   }) {
     latestActionResult = _encounterSystem.executeFishingAction(
       playerState: _playerState,
@@ -142,6 +143,7 @@ class EncounterController extends ChangeNotifier {
     int count, {
     bool offline = false,
     DateTime? at,
+    Duration? span,
   }) {
     latestActionResult = _encounterSystem.executeHerbalismAction(
       playerState: _playerState,
@@ -185,7 +187,12 @@ class EncounterController extends ChangeNotifier {
   // function bound to action button in startEncounterAction.
   // This executes periodically.
   //
-  void doEncounterAction(int count, {bool offline = false, DateTime? at}) {
+  void doEncounterAction(
+    int count, {
+    bool offline = false,
+    DateTime? at,
+    Duration? span,
+  }) {
     latestActionResult = _encounterSystem.executePlayerAction(
       playerState: _playerState,
       encounter: _encounterState,
@@ -195,10 +202,28 @@ class EncounterController extends ChangeNotifier {
       actionCount: count,
       offline: offline,
       at: at,
+      span: span,
     );
     actionSequence++;
     _recordOfflineResult();
     _recordDungeonDrops();
+
+    // the fight killed the player while they were away. this sits above the
+    // queue advance for the same reason the shell checks death first: a
+    // death inside a dungeon card ends the run, it does not hand off to the
+    // next card. from here it is the live death path - the loop stops, they
+    // come back on 1 hp, and the shell unwinds the map and leaves the run.
+    if (latestActionResult.playerDied) {
+      _offlineProgressService.recordDeath(
+        _offlineProgressData,
+        killedBy: _encounterState.entity?.id,
+      );
+      _actionTimingController.stop();
+      _playerDataService.heal(1, _playerState);
+      deathSequence++;
+      notifyListeners();
+      return;
+    }
 
     // a dungeon card is a queue: a spent member hands off to the next one
     // before the conditions below get a chance to stop the loop
@@ -346,9 +371,8 @@ class EncounterController extends ChangeNotifier {
   // the tick an entity's encounter runs on. fishing spots don't deplete or
   // fight back, and herbs are picked in one action with a level gate, so
   // each runs its own action with its own start conditions
-  FutureOr<void> Function(int, {bool offline, DateTime? at}) _actionFor(
-    EncounterEntity entity,
-  ) {
+  FutureOr<void> Function(int, {bool offline, DateTime? at, Duration? span})
+  _actionFor(EncounterEntity entity) {
     switch (entity.entityType) {
       case SkillId.FISHING:
         return doFishingEncounterAction;
@@ -470,6 +494,20 @@ class EncounterController extends ChangeNotifier {
     );
     entityAttackSequence++;
 
+    // a swing that takes the player to zero kills, before any food can be
+    // reached for. checking this ahead of the eat is what makes a big max
+    // hit dangerous: food tops the player up between hits, it does not pull
+    // them back from a hit they could not survive.
+    //
+    // when the player dies the encounter ends and their hp is reset to 1.
+    if (_playerState.hitpoints <= 0) {
+      _actionTimingController.stop();
+      _playerDataService.heal(1, _playerState);
+      deathSequence++;
+      notifyListeners();
+      return;
+    }
+
     // heal between hits when hp runs low and food is equipped; this is why
     // queued/automated combat can sustain itself
     _encounterSystem.autoEat(
@@ -477,15 +515,6 @@ class EncounterController extends ChangeNotifier {
       playerInventory: _inventoryState,
     );
 
-    // player death ends the encounter
-    // when the player dies, the encounter end and
-    // the player's hp is reset to 1.
-
-    if (_playerState.hitpoints <= 0) {
-      _actionTimingController.stop();
-      _playerDataService.heal(1, _playerState);
-      deathSequence++;
-    }
     notifyListeners();
   }
 

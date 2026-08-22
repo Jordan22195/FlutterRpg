@@ -173,6 +173,10 @@ class _MainShellState extends State<MainShell> {
       setState(() => index = 0);
       _navKeys[0].currentState?.popUntil((route) => route.isFirst);
       _captureUiState();
+      // a death while away is already the headline of the offline report,
+      // which is about to be raised. one modal saying it is enough - the
+      // unwinding above still has to happen either way.
+      if (_timing.pendingOfflineReport?.died == true) return;
       _showDeathDialog();
     });
   }

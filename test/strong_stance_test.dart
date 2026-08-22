@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rpg/catalogs/items/items.dart';
 
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/player_data.dart';
@@ -164,5 +165,86 @@ void main() {
       playerDataService.getSkillXp(SkillId.STRENGTH, player),
       strengthBefore,
     );
+  });
+
+  // an activity with no stance to pick must not leave a combat stance
+  // running in the background: it would boost the wrong skill and hold the
+  // action at its unreduced interval, with no picker on screen to fix it
+  group('stances follow the activity', () {
+    GameSession buildSession() {
+      final factory = GameSessionFactory();
+      final catalogs = factory.catalog1();
+      return factory.create(
+        save: factory.newGame(catalogs),
+        catalogs: catalogs,
+        vsync: const TestVSync(),
+      );
+    }
+
+    test('starting a craft drops a stance carried in from a fight', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.COPPER_ORE] = 50;
+      session.playerDataService.setStance(Stance.offensive, save.playerData);
+
+      expect(
+        session.craftingController.startCraftingActionFor(
+          'smelt_copper_bar',
+          EntityId.ANVIL,
+        ),
+        isTrue,
+      );
+
+      // bench work offers no stance, so it runs fast
+      expect(save.playerData.stance, Stance.fast);
+      expect(save.playerData.skillBoost, SkillId.SPEED);
+
+      session.actionTimingController.stop();
+      session.dispose();
+    });
+
+    test('a node coerces a stance it does not offer', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      // a fishing spot offers nothing to choose between
+      final pond = EntityId.TRANQUIL_POND.build() as EncounterEntity;
+      save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities
+          .add(pond);
+      session.playerDataService.setStance(Stance.offensive, save.playerData);
+
+      expect(session.encounterController.startEncounterActionFor(pond), isTrue);
+
+      expect(save.playerData.stance, Stance.fast);
+
+      session.actionTimingController.stop();
+      session.dispose();
+    });
+
+    test('a tree keeps the strong stance, a chicken keeps a combat one', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+
+      final tree = EntityId.TREE.build() as EncounterEntity;
+      save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities
+          .add(tree);
+      session.playerDataService.setStance(Stance.strong, save.playerData);
+      expect(session.encounterController.startEncounterActionFor(tree), isTrue);
+      // woodcutting trades power for pace, so strong is on the menu
+      expect(save.playerData.stance, Stance.strong);
+      expect(save.playerData.skillBoost, isNot(SkillId.SPEED));
+
+      final chicken = EntityId.CHICKEN.build() as EncounterEntity;
+      save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities
+          .add(chicken);
+      session.playerDataService.setStance(Stance.defensive, save.playerData);
+      expect(
+        session.encounterController.startEncounterActionFor(chicken),
+        isTrue,
+      );
+      expect(save.playerData.stance, Stance.defensive);
+
+      session.actionTimingController.stop();
+      session.dispose();
+    });
   });
 }

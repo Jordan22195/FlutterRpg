@@ -126,14 +126,26 @@ class OfflineProgressSystem {
         timingState,
         actions,
         at: playerState.lastActionTime,
+        span: Duration(microseconds: (segment * 1e6).round()),
       );
 
-      // ---- spend the time the segment cost
-      _applyStamina(playerState, timingState, segment);
+      // ---- spend the time the segment cost. an action that stopped the
+      // loop did not use the whole segment - its materials ran out, its
+      // node was stripped, it was killed - and the rest of that stretch was
+      // spent idle, so only the share it reported is charged. the actions a
+      // batch reports are proportional to the time it consumed, which is
+      // what makes this share meaningful.
+      final performedThisSegment =
+          _offlineProgressData.report.actionCount - actionsBefore;
+      final spanUsed = (!timingState.running && actions > 0)
+          ? segment * performedThisSegment / actions
+          : segment;
+
+      _applyStamina(playerState, timingState, spanUsed);
       playerState.lastActionTime = playerState.lastActionTime.add(
-        Duration(microseconds: (segment * 1e6).round()),
+        Duration(microseconds: (spanUsed * 1e6).round()),
       );
-      remaining -= segment;
+      remaining -= spanUsed;
 
       // ---- expire what this segment outlived, at the moment it did
       _buffService.checkBuffExpriations(
@@ -146,7 +158,7 @@ class OfflineProgressSystem {
       );
 
       // ---- what the batch paid per action, for the next threshold
-      final performed = _offlineProgressData.report.actionCount - actionsBefore;
+      final performed = performedThisSegment;
       if (performed > 0) {
         xpPerAction = {
           for (final entry in _offlineProgressData.report.xp.entries)
@@ -168,6 +180,14 @@ class OfflineProgressSystem {
     }
 
     playerState.lastActionTime = at;
+
+    // where in the gap the fight ended, for the report to tell the player
+    if (_offlineProgressData.report.died) {
+      _offlineProgressService.recordDeathTime(
+        _offlineProgressData,
+        timeAway - Duration(microseconds: (remaining * 1e6).round()),
+      );
+    }
 
     // closes the buffer and promotes the report for the ui. safe here
     // because every bound action runs synchronously: fireOffline wraps the

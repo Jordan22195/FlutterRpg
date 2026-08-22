@@ -174,7 +174,12 @@ class CraftingController extends ChangeNotifier {
   // many crafts the tick is settling at once - one during normal play, and
   // however many the player was away for when the loop is catching up on
   // offline progress.
-  void doCraftingAction(int count, {bool offline = false, DateTime? at}) {
+  void doCraftingAction(
+    int count, {
+    bool offline = false,
+    DateTime? at,
+    Duration? span,
+  }) {
     final result = _craftingSystem.craftActiveRecipe(
       _craftingState,
       _playerState,

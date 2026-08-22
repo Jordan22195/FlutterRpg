@@ -1,3 +1,4 @@
+import '../catalogs/entities/entities.dart';
 import '../data/action_result.dart';
 import '../data/offline_progress_data.dart';
 import '../data/skill_data.dart';
@@ -76,12 +77,27 @@ class OfflineProgressService {
     }
   }
 
+  /// The fight that killed the player, and when. A death always earns a
+  /// report, however short the gap that held it.
+  void recordDeath(OfflineProgressData data, {EntityId? killedBy}) {
+    if (!data.processing) return;
+    data.report.died = true;
+    data.report.killedBy = killedBy;
+  }
+
+  /// How far into the gap the death landed. Known only once the settle has
+  /// finished walking, so it arrives separately from [recordDeath].
+  void recordDeathTime(OfflineProgressData data, Duration after) {
+    data.report.diedAfter = after;
+  }
+
   /// Closes the buffer. A report that is empty, or covers too short a gap to
   /// be worth interrupting the player over, is dropped rather than shown.
   void finish(OfflineProgressData data) {
     data.processing = false;
     if (data.report.isEmpty) return;
-    if (data.report.timeAway < reportThreshold) return;
+    // dying is always worth saying, however brief the gap
+    if (!data.report.died && data.report.timeAway < reportThreshold) return;
     data.pending = data.report;
     data.reportSequence++;
   }

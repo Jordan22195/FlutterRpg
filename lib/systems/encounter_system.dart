@@ -7,6 +7,7 @@ import '../services/player_data_service.dart';
 import '../services/weighted_drop_table_service.dart';
 import '../catalogs/entities/entities.dart';
 import '../data/action_result.dart';
+import '../data/auto_eat_rule.dart';
 import '../data/entity_details.dart';
 import '../data/player_data.dart';
 import '../data/encounter_data.dart';
@@ -49,10 +50,12 @@ class EncounterSystem {
   bool autoEat({
     required PlayerData playerState,
     required InventoryData playerInventory,
+    AutoEatRule? rule,
   }) {
     return _autoEatService.autoEat(
       playerState: playerState,
       playerInventory: playerInventory,
+      rule: rule,
     );
   }
 
@@ -73,6 +76,7 @@ class EncounterSystem {
     int actionCount = 1,
     bool offline = false,
     DateTime? at,
+    Duration? span,
   }) {
     final result = EncounterActionResult();
 
@@ -98,9 +102,44 @@ class EncounterSystem {
         avgDamage,
       );
 
+      // the enemy swings back for as long as the fight lasts, which is
+      // however much of the stretch the player spends fighting: the whole
+      // of it, or up to the moment the last one drops
+      final playerInterval = span == null || actionCount <= 0
+          ? 0.0
+          : (span.inMicroseconds / 1e6) / actionCount;
+      // the fight lasts until the action that finishes the last one, and
+      // actions only land on the interval - a kill worth two thirds of an
+      // action still takes the whole action to arrive
+      final timeToClear = (e.count * actionToKill).ceil() * playerInterval;
+      final window = playerInterval <= 0
+          ? 0.0
+          : (timeToClear < span!.inMicroseconds / 1e6
+                ? timeToClear
+                : span.inMicroseconds / 1e6);
+
+      var elapsed = window;
+      if (window > 0 && e is CombatEntity) {
+        elapsed = _settleIncomingDamage(
+          playerState: playerState,
+          playerInventory: playerInventory,
+          entity: e,
+          stats: stats,
+          seconds: window,
+          result: result,
+        );
+      }
+
+      // actions are what the elapsed time bought: a fight cut short by the
+      // player's death pays only for the part they were alive for
+      int actions = playerInterval <= 0
+          ? actionCount
+          : (elapsed / playerInterval).floor();
+      if (actions > actionCount) actions = actionCount;
+
       // calulate total enemies defeated
       // todo use the remainder to put damage on the last entity
-      int enemiesToKill = (actionCount / actionToKill).floor();
+      int enemiesToKill = (actions / actionToKill).floor();
       if (enemiesToKill > e.count) {
         enemiesToKill = e.count;
       }
@@ -131,11 +170,11 @@ class EncounterSystem {
         ObjectStack<EntityId>(id: e.id, count: enemiesToKill),
       ];
 
-      // the actions those kills actually consumed. a batch too short to
-      // finish even one kill did nothing, and says so - the loop settling
-      // time away reports what happened, not what it asked for
-      final spent = (enemiesToKill * actionToKill).round();
-      result.actionsPerformed = spent < actionCount ? spent : actionCount;
+      // what the batch actually did. the loop settling time away credits
+      // only the time these actions were worth, so this has to stay
+      // proportional to the stretch they covered.
+      result.actionsPerformed = actions;
+      result.damageDone = enemiesToKill * e.maxHitPoints;
 
       // reward xp
       // todo give defence xp based on stance
@@ -214,6 +253,64 @@ class EncounterSystem {
     }
 
     return result;
+  }
+
+  /// Runs the enemy's side of a batched fight over [seconds] and applies what
+  /// it came to: the damage taken, the food eaten keeping up with it, the
+  /// defence xp the blocks paid, and whether it killed the player.
+  ///
+  /// Returns the seconds actually fought, which is the whole window unless
+  /// the player died partway through it - the caller pays actions and kills
+  /// for that stretch and no more.
+  double _settleIncomingDamage({
+    required PlayerData playerState,
+    required InventoryData playerInventory,
+    required CombatEntity entity,
+    required Map<SkillId, int> stats,
+    required double seconds,
+    required EncounterActionResult result,
+  }) {
+    final maxHp = stats[SkillId.HITPOINTS] ?? 1;
+    final defence = stats[SkillId.DEFENCE] ?? 1;
+    final food = _autoEatService.equippedFood(playerState);
+
+    final outcome = _encounterService.resolveIncomingDamage(
+      hitpoints: playerState.hitpoints,
+      maxHp: maxHp,
+      eatThreshold: playerState.autoEatRule.threshold,
+      foodCount: food == null
+          ? 0
+          : _autoEatService.availableFood(playerState, playerInventory),
+      restoreAmount: food?.restoreAmount ?? 0,
+      enemyAttack: entity.attack,
+      playerDefence: defence,
+      attackInterval: entity.attackInterval,
+      seconds: seconds,
+    );
+
+    if (outcome.foodEaten > 0) {
+      _inventoryService.removeItems(
+        playerInventory,
+        playerState.equipmentData.equipedFood,
+        outcome.foodEaten,
+      );
+    }
+    _playerDataService.setHitpoints(outcome.hitpoints, playerState);
+
+    // blocked hits pay defence xp for the damage they avoided, the same as
+    // live - averaged over the blocks rather than rolled one at a time
+    if (outcome.blocks > 0) {
+      final maxHit = _encounterService.computeMaxHit(
+        attack: entity.attack,
+        defense: defence,
+      );
+      result.xp[SkillId.DEFENCE] =
+          (result.xp[SkillId.DEFENCE] ?? 0) +
+          outcome.blocks * (1 + maxHit) / 2.0;
+    }
+
+    result.playerDied = outcome.died;
+    return outcome.elapsed;
   }
 
   /// Eats one of the equipped food items: consumes it from the player

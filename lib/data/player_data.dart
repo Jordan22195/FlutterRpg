@@ -1,4 +1,5 @@
 import 'package:rpg/catalogs/entities/entities.dart';
+import 'auto_eat_rule.dart';
 import 'skill_data.dart';
 import 'equipment_data.dart';
 import '../catalogs/zones/zones.dart';
@@ -83,6 +84,10 @@ class PlayerData {
   SkillId skillBoost = SkillId.SPEED;
   Stance stance = Stance.fast;
 
+  /// When automated combat eats. Read by the live frame loop and by an
+  /// offline settle alike.
+  AutoEatRule autoEatRule = AutoEatRule.standard;
+
   DateTime lastActionTime = DateTime.now();
 
   // mutable stats
@@ -111,6 +116,7 @@ class PlayerData {
       'equipmentData': equipmentData.toJson(),
       'hitpoints': hitpoints,
       'stamina': stamina,
+      'autoEatRule': autoEatRule.toJson(),
       'lastActionTime': lastActionTime.toIso8601String(),
     };
   }
@@ -189,22 +195,26 @@ class PlayerData {
     }
 
     return PlayerData(
-      currentZoneId: ZoneId.values.firstWhere(
-        (z) => z.name == rawZoneId,
-        orElse: () => throw FormatException('Invalid ZoneId "\$rawZoneId".'),
-      ),
-      currentEntityViewId: EntityId.values.firstWhere(
-        (e) => e.name == rawEntityId,
-        orElse: () =>
-            throw FormatException('Invalid EntityId "\$rawEntityId".'),
-      ),
-      buffData: BuffData.fromJson(Map<String, dynamic>.from(rawBuffData)),
-      skillData: skillData,
-      equipmentData: EquipmentData.fromJson(
-        Map<String, dynamic>.from(rawEquipmentData),
-      ),
-      hitpoints: rawHitpoints,
-      stamina: rawStamina.toDouble(),
-    )..lastActionTime = lastActionTime;
+        currentZoneId: ZoneId.values.firstWhere(
+          (z) => z.name == rawZoneId,
+          orElse: () => throw FormatException('Invalid ZoneId "\$rawZoneId".'),
+        ),
+        currentEntityViewId: EntityId.values.firstWhere(
+          (e) => e.name == rawEntityId,
+          orElse: () =>
+              throw FormatException('Invalid EntityId "\$rawEntityId".'),
+        ),
+        buffData: BuffData.fromJson(Map<String, dynamic>.from(rawBuffData)),
+        skillData: skillData,
+        equipmentData: EquipmentData.fromJson(
+          Map<String, dynamic>.from(rawEquipmentData),
+        ),
+        hitpoints: rawHitpoints,
+        stamina: rawStamina.toDouble(),
+      )
+      ..lastActionTime = lastActionTime
+      ..autoEatRule = json['autoEatRule'] is Map<String, dynamic>
+          ? AutoEatRule.fromJson(json['autoEatRule'] as Map<String, dynamic>)
+          : AutoEatRule.standard;
   }
 }

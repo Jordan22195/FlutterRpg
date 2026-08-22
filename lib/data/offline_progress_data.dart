@@ -30,6 +30,14 @@ class OfflineProgressReport {
   /// gathering nodes both land here - anything an encounter took down.
   Map<EntityId, int> entitiesDefeated = {};
 
+  /// The fight killed the player while they were away. They come back on
+  /// 1 hp with the loop stopped, exactly as a death on screen leaves them.
+  bool died = false;
+
+  /// What killed them, and how far into the gap it happened.
+  EntityId? killedBy;
+  Duration? diedAfter;
+
   /// How many kills that adds up to, for the summary line above the tiles.
   int get enemiesDefeated =>
       entitiesDefeated.values.fold(0, (sum, count) => sum + count);
@@ -38,6 +46,7 @@ class OfflineProgressReport {
   /// a gap too short to complete an action, or one where the action's
   /// conditions were already unmet.
   bool get isEmpty =>
+      !died &&
       actionCount == 0 &&
       xp.isEmpty &&
       items.itemMap.isEmpty &&

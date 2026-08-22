@@ -29,9 +29,17 @@ class ActionTimingData {
   /// worth; [offline] tells the action to settle them as one batch rather
   /// than one at a time; [at] is the instant being replayed, which is what
   /// an action asks when it needs to know whether some state was still live
-  /// then. Live play fires one action, now, with neither flag set.
-  FutureOr<void> Function(int count, {bool offline, DateTime? at}) onFire =
-      (_, {bool offline = false, DateTime? at}) {};
+  /// then; [span] is how much wall clock those actions cover, which is what
+  /// an action asks when something else in the world moves on its own clock
+  /// - an enemy swinging back. Live play fires one action, now, with none
+  /// of them set.
+  FutureOr<void> Function(
+    int count, {
+    bool offline,
+    DateTime? at,
+    Duration? span,
+  })
+  onFire = (_, {bool offline = false, DateTime? at, Duration? span}) {};
 
   /// The unboosted action interval. Not a constant: it is refreshed every
   /// frame from the item equipped for [actionSkill] and the speed stat, so
@@ -258,7 +266,8 @@ class ActionTimingController extends ChangeNotifier {
   /// [boundAction] describes [function] in a form the save can hold, so the
   /// same action can be rebound after an app restart.
   void bindOnFireFunction(
-    FutureOr<void> Function(int, {bool offline, DateTime? at}) function, {
+    FutureOr<void> Function(int, {bool offline, DateTime? at, Duration? span})
+    function, {
     Enum? activityIconId,
     int Function()? activityCount,
     SkillId? actionSkill,
@@ -280,7 +289,8 @@ class ActionTimingController extends ChangeNotifier {
 
   // true when the loop is running with [function] bound as its action
   bool isRunningAction(
-    FutureOr<void> Function(int, {bool offline, DateTime? at}) function,
+    FutureOr<void> Function(int, {bool offline, DateTime? at, Duration? span})
+    function,
   ) {
     return _actionTimingState.running && _actionTimingState.onFire == function;
   }
@@ -718,11 +728,12 @@ class ActionTimingService {
     ActionTimingData actionTimingState,
     int count, {
     required DateTime at,
+    required Duration span,
   }) {
     if (count <= 0) return;
     actionTimingState.actionInFlight = true;
     Future.sync(
-      () => actionTimingState.onFire(count, offline: true, at: at),
+      () => actionTimingState.onFire(count, offline: true, at: at, span: span),
     ).whenComplete(() => actionTimingState.actionInFlight = false);
   }
 }

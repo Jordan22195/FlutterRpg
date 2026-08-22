@@ -45,7 +45,7 @@ void main() {
   (ActionTimingData, List<int>) recordingState() {
     final fired = <int>[];
     final state = ActionTimingData();
-    state.onFire = (count, {bool offline = false, DateTime? at}) =>
+    state.onFire = (count, {bool offline = false, DateTime? at, Duration? span}) =>
         fired.add(count);
     return (state, fired);
   }
@@ -157,7 +157,7 @@ void main() {
       final fired = <int>[];
       final timing = game.actionTimingController;
       timing.bindOnFireFunction(
-        (count, {bool offline = false, DateTime? at}) => fired.add(count),
+        (count, {bool offline = false, DateTime? at, Duration? span}) => fired.add(count),
       );
 
       // the player was on another screen for a minute, not backgrounded
