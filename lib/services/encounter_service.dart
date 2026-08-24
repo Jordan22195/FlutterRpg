@@ -146,7 +146,6 @@ class EncounterService {
     encounterState.lastPlayerDamage = dmg;
     entity.hitpoints -= dmg;
 
-    // todo : xp calculations
     res.damageDone = dmg;
     res.enemyDied = entity.hitpoints <= 0;
 
