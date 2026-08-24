@@ -2,6 +2,7 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/catalogs/entities/entity_id.dart';
+import 'package:rpg/catalogs/entities/rarity.dart';
 import 'package:rpg/catalogs/entities/model/encounter_entity.dart';
 import 'package:rpg/catalogs/entities/definition/entity_definition.dart';
 
@@ -20,6 +21,7 @@ class EncounterEntityDefinition extends EntityDefinition {
   const EncounterEntityDefinition({
     required super.name,
     required super.iconAsset,
+    super.rarity,
     required this.entityType,
     required this.defence,
     required this.hitpoints,
@@ -41,6 +43,7 @@ class EncounterEntityDefinition extends EntityDefinition {
   EncounterEntityDefinition copyWith({
     String? name,
     String? iconAsset,
+    Rarity? rarity,
     SkillId? entityType,
     int? defence,
     int? hitpoints,
@@ -50,6 +53,7 @@ class EncounterEntityDefinition extends EntityDefinition {
     return EncounterEntityDefinition(
       name: name ?? this.name,
       iconAsset: iconAsset ?? this.iconAsset,
+      rarity: rarity ?? this.rarity,
       entityType: entityType ?? this.entityType,
       defence: defence ?? this.defence,
       hitpoints: hitpoints ?? this.hitpoints,

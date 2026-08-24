@@ -13,6 +13,7 @@ export 'definition/herb_entity_definition.dart';
 export 'definition/shop_entity_definition.dart';
 export 'definition/shop_stock_entry.dart';
 export 'entity_id.dart';
+export 'rarity.dart';
 export 'model/combat_entity.dart';
 export 'model/crafting_entity.dart';
 export 'model/dungeon_entity.dart';

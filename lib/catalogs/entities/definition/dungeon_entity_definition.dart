@@ -9,6 +9,7 @@ class DungeonEntityDefinition extends EntityDefinition {
   const DungeonEntityDefinition({
     required super.name,
     required super.iconAsset,
+    super.rarity,
     required this.dungeonId,
   });
 

@@ -22,6 +22,11 @@ import 'package:flutter/widgets.dart';
 /// Definitions are `const`. Call [build] for a mutable runtime [Entity], or
 /// `definition.copyWith(...)` for a variant template.
 ///
+/// [Rarity] is cosmetic — it colors the border around the entity's
+/// portrait — and defaults to common, so only an entity that stands out
+/// from its neighbours spells one out. Within a section, rarity climbs
+/// with the same progression the section is already ordered by.
+///
 /// The enum *value names* are the save format, so they must never be renamed.
 enum EntityId {
   // ── SENTINEL ────────────────────────────────────────────────────
@@ -69,7 +74,7 @@ enum EntityId {
 
       entityType: SkillId.WOODCUTTING,
       defence: 1,
-      hitpoints: 10,
+      hitpoints: 5,
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.LOGS, weight: 1)],
     ),
   ),
@@ -77,6 +82,7 @@ enum EntityId {
     EncounterEntityDefinition(
       name: "Oak Tree",
       iconAsset: "assets/images/entities/oak_tree.png",
+      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.WOODCUTTING,
       defence: 10,
@@ -96,7 +102,7 @@ enum EntityId {
 
       entityType: SkillId.MINING,
       defence: 1,
-      hitpoints: 10,
+      hitpoints: 5,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.COPPER_ORE, weight: 1),
         // rare gem finds (lower tiers only in the starter vein)
@@ -110,6 +116,7 @@ enum EntityId {
     EncounterEntityDefinition(
       name: "Iron Vein",
       iconAsset: "assets/images/entities/iron.png",
+      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.MINING,
       defence: 10,
@@ -131,6 +138,7 @@ enum EntityId {
     EncounterEntityDefinition(
       name: "Coal Vein",
       iconAsset: "assets/images/entities/coal_vein.png",
+      rarity: Rarity.RARE,
 
       entityType: SkillId.MINING,
       defence: 15,
@@ -149,6 +157,7 @@ enum EntityId {
     EncounterEntityDefinition(
       name: "Gem Vein",
       iconAsset: "assets/images/entities/gem_vein.png",
+      rarity: Rarity.EPIC,
 
       entityType: SkillId.MINING,
       defence: 25,
@@ -185,6 +194,7 @@ enum EntityId {
     FishingEntityDefinition(
       name: "River",
       iconAsset: "assets/images/entities/river.png",
+      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.FISHING,
       defence: 1,
@@ -200,6 +210,7 @@ enum EntityId {
     FishingEntityDefinition(
       name: "Deep Pond",
       iconAsset: "assets/images/entities/tranquil_pond.png",
+      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.FISHING,
       defence: 10,
@@ -215,6 +226,7 @@ enum EntityId {
     FishingEntityDefinition(
       name: "Lake",
       iconAsset: "assets/images/entities/lake.png",
+      rarity: Rarity.RARE,
 
       entityType: SkillId.FISHING,
       defence: 1,
@@ -230,6 +242,7 @@ enum EntityId {
     FishingEntityDefinition(
       name: "Ocean",
       iconAsset: "assets/images/entities/ocean.png",
+      rarity: Rarity.EPIC,
 
       entityType: SkillId.FISHING,
       defence: 1,
@@ -270,6 +283,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Tarromin",
       iconAsset: "assets/images/entities/tarromin.png",
+      rarity: Rarity.UNCOMMON,
       requiredLevel: 11,
       defence: 11,
       itemDrops: [
@@ -281,6 +295,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Harralander",
       iconAsset: "assets/images/entities/harralander.png",
+      rarity: Rarity.UNCOMMON,
       requiredLevel: 20,
       defence: 20,
       itemDrops: [
@@ -292,6 +307,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Ranarr Weed",
       iconAsset: "assets/images/entities/ranarr.png",
+      rarity: Rarity.RARE,
       requiredLevel: 25,
       defence: 25,
       itemDrops: [
@@ -303,6 +319,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Toadflax",
       iconAsset: "assets/images/entities/toadflax.png",
+      rarity: Rarity.RARE,
       requiredLevel: 30,
       defence: 30,
       itemDrops: [
@@ -314,6 +331,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Irit Leaf",
       iconAsset: "assets/images/entities/irit.png",
+      rarity: Rarity.RARE,
       requiredLevel: 40,
       defence: 40,
       itemDrops: [
@@ -325,6 +343,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Avantoe",
       iconAsset: "assets/images/entities/avantoe.png",
+      rarity: Rarity.RARE,
       requiredLevel: 48,
       defence: 48,
       itemDrops: [
@@ -336,6 +355,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Kwuarm",
       iconAsset: "assets/images/entities/kwuarm.png",
+      rarity: Rarity.EPIC,
       requiredLevel: 54,
       defence: 54,
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.KWUARM, weight: 1)],
@@ -345,6 +365,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Snapdragon",
       iconAsset: "assets/images/entities/snapdragon.png",
+      rarity: Rarity.EPIC,
       requiredLevel: 59,
       defence: 59,
       itemDrops: [
@@ -356,6 +377,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Cadantine",
       iconAsset: "assets/images/entities/cadantine.png",
+      rarity: Rarity.EPIC,
       requiredLevel: 65,
       defence: 65,
       itemDrops: [
@@ -367,6 +389,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Lantadyme",
       iconAsset: "assets/images/entities/lantadyme.png",
+      rarity: Rarity.EPIC,
       requiredLevel: 67,
       defence: 67,
       itemDrops: [
@@ -378,6 +401,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Dwarf Weed",
       iconAsset: "assets/images/entities/dwarf_weed.png",
+      rarity: Rarity.LEGENDARY,
       requiredLevel: 70,
       defence: 70,
       itemDrops: [
@@ -389,6 +413,7 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Torstol",
       iconAsset: "assets/images/entities/torstol.png",
+      rarity: Rarity.LEGENDARY,
       requiredLevel: 75,
       defence: 75,
       itemDrops: [
@@ -405,15 +430,32 @@ enum EntityId {
   // ── COMBAT ──────────────────────────────────────────────────────
   // CombatEntityDefinition, difficulty ascending by hitpoints (2, 5,
   // 10, 10, 20, 20, 25, 50, 120, 200) — bosses land last by construction
+  FIELD_RAT(
+    CombatEntityDefinition(
+      name: "Field Rat",
+      iconAsset: "assets/images/entities/field_rat.png",
+
+      entityType: SkillId.ATTACK,
+      defence: 1,
+      hitpoints: 2,
+      attack: 1,
+      attackInterval: 2.0,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
+        WeightedDropTableEntry<ItemId>(id: ItemId.FEATHER, weight: 1),
+      ],
+    ),
+  ),
+
   CHICKEN(
     CombatEntityDefinition(
       name: "Chicken",
       iconAsset: "assets/images/entities/chicken.png",
 
       entityType: SkillId.ATTACK,
-      defence: 1,
-      hitpoints: 2,
-      attack: 1,
+      defence: 3,
+      hitpoints: 5,
+      attack: 3,
       attackInterval: 2.0,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
@@ -427,9 +469,9 @@ enum EntityId {
       iconAsset: "assets/images/entities/cow.png",
 
       entityType: SkillId.ATTACK,
-      defence: 1,
-      hitpoints: 5,
-      attack: 2,
+      defence: 5,
+      hitpoints: 10,
+      attack: 5,
       attackInterval: 2.0,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.COW_MEAT, weight: 1),
@@ -443,9 +485,9 @@ enum EntityId {
       iconAsset: "assets/images/entities/goblin.png",
 
       entityType: SkillId.ATTACK,
-      defence: 1,
+      defence: 2,
       hitpoints: 10,
-      attack: 2,
+      attack: 6,
       attackInterval: 2.0,
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1)],
       // 5% chance, on top of the coin drop, to yield the key that opens
@@ -467,11 +509,12 @@ enum EntityId {
     CombatEntityDefinition(
       name: "Big Red",
       iconAsset: "assets/images/entities/big_red.png",
+      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.ATTACK,
-      defence: 3,
-      hitpoints: 10,
-      attack: 2,
+      defence: 5,
+      hitpoints: 25,
+      attack: 7,
       attackInterval: 2.0,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
@@ -487,11 +530,12 @@ enum EntityId {
     CombatEntityDefinition(
       name: "Goblin",
       iconAsset: "assets/images/entities/goblin_scout.png",
+      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.ATTACK,
       defence: 5,
-      hitpoints: 20,
-      attack: 10,
+      hitpoints: 25,
+      attack: 7,
       attackInterval: 2.0,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(
@@ -527,6 +571,7 @@ enum EntityId {
     CombatEntityDefinition(
       name: "Giant Spider",
       iconAsset: "assets/images/entities/giant_spider.png",
+      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.ATTACK,
       defence: 5,
@@ -536,15 +581,50 @@ enum EntityId {
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1)],
     ),
   ),
-  ROTWOOD_SCARECROW(
+  ROTWOOD_SCARECROW_0(
     CombatEntityDefinition(
       name: "Rotwood Scarecrow",
       iconAsset: "assets/images/entities/rotwood_scarecrow.png",
 
       entityType: SkillId.ATTACK,
-      defence: 4,
-      hitpoints: 25,
-      attack: 3,
+      defence: 12,
+      hitpoints: 40,
+      attack: 4,
+      attackInterval: 2.5,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.FEATHER,
+          weight: 1,
+          count: 20,
+          highCount: 60,
+        ),
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.COINS,
+          weight: 1,
+          count: 25,
+          highCount: 75,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll<ItemId>(
+          chance: 0.05,
+          entries: [
+            WeightedDropTableEntry<ItemId>(id: ItemId.PITCHFORK, weight: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
+  ROTWOOD_SCARECROW_1(
+    CombatEntityDefinition(
+      name: "Rotwood Scarecrow",
+      iconAsset: "assets/images/entities/rotwood_scarecrow.png",
+      rarity: Rarity.RARE,
+
+      entityType: SkillId.ATTACK,
+      defence: 15,
+      hitpoints: 60,
+      attack: 10,
       attackInterval: 2.5,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(
@@ -574,6 +654,7 @@ enum EntityId {
     CombatEntityDefinition(
       name: "Goblin",
       iconAsset: "assets/images/entities/goblin_scout.png",
+      rarity: Rarity.RARE,
 
       entityType: SkillId.ATTACK,
       defence: 10,
@@ -616,6 +697,7 @@ enum EntityId {
     CombatEntityDefinition(
       name: "Spider Broodmother",
       iconAsset: "assets/images/entities/spider_broodmother.png",
+      rarity: Rarity.EPIC,
 
       entityType: SkillId.ATTACK,
       defence: 12,
@@ -642,6 +724,7 @@ enum EntityId {
     CombatEntityDefinition(
       name: "Goblin Queen",
       iconAsset: "assets/images/entities/goblin_queen.png",
+      rarity: Rarity.LEGENDARY,
 
       entityType: SkillId.ATTACK,
       defence: 30,
@@ -707,6 +790,7 @@ enum EntityId {
     ShopEntityDefinition(
       name: "Trading Post",
       iconAsset: "assets/images/entities/trading_post.png",
+      rarity: Rarity.UNCOMMON,
       shopStockPool: [
         // the full iron set, one entry per slot: exactly stockSlots many, so
         // a restock puts the whole set on the shelf
@@ -728,6 +812,7 @@ enum EntityId {
     ShopEntityDefinition(
       name: "Wandering Merchant",
       iconAsset: "assets/images/entities/wandering_merchant.png",
+      rarity: Rarity.RARE,
       // pricier but restocks much faster than the trading post
       priceMarkup: 1.5,
       restockInterval: Duration(hours: 1),
@@ -748,6 +833,7 @@ enum EntityId {
     DungeonEntityDefinition(
       name: "Spider Den",
       iconAsset: "assets/images/entities/spider_den.png",
+      rarity: Rarity.RARE,
       dungeonId: DungeonId.SPIDER_DEN,
     ),
   ),
@@ -755,6 +841,7 @@ enum EntityId {
     DungeonEntityDefinition(
       name: "Goblin Camp",
       iconAsset: "assets/images/entities/goblin_camp.png",
+      rarity: Rarity.EPIC,
       dungeonId: DungeonId.GOBLIN_CAMP,
     ),
   ),

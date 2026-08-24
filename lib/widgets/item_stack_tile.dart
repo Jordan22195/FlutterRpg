@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
@@ -7,20 +8,38 @@ import '../utilities/image_resolver.dart';
 import '../data/skill_data.dart';
 import '../widgets/countdown_timer.dart';
 
-/// Border color used to signal an equipment item's quality tier.
-/// Common quality has no special color (falls back to the theme outline).
+/// Border color used to signal an entity's rarity. Common has no special
+/// color (falls back to the theme outline).
+Color? rarityBorderColor(Rarity rarity) {
+  switch (rarity) {
+    case Rarity.COMMON:
+      return null;
+    case Rarity.UNCOMMON:
+      return Colors.green;
+    case Rarity.RARE:
+      return Colors.blue;
+    case Rarity.EPIC:
+      return Colors.purple;
+    case Rarity.LEGENDARY:
+      return Colors.orange;
+  }
+}
+
+/// Border color used to signal an equipment item's quality tier. Quality
+/// and rarity are the same ladder wearing two names, so a rare vein and a
+/// rare sword are framed in the same blue.
 Color? qualityBorderColor(ItemQuality quality) {
   switch (quality) {
     case ItemQuality.COMMON:
-      return null;
+      return rarityBorderColor(Rarity.COMMON);
     case ItemQuality.UNCOMMON:
-      return Colors.green;
+      return rarityBorderColor(Rarity.UNCOMMON);
     case ItemQuality.RARE:
-      return Colors.blue;
+      return rarityBorderColor(Rarity.RARE);
     case ItemQuality.EPIC:
-      return Colors.purple;
+      return rarityBorderColor(Rarity.EPIC);
     case ItemQuality.LEGENDARY:
-      return Colors.orange;
+      return rarityBorderColor(Rarity.LEGENDARY);
   }
 }
 
@@ -56,7 +75,8 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   final String? title;
   final String? description;
 
-  /// Overrides the tile border, e.g. to show equipment quality.
+  /// Overrides the tile border, e.g. to show equipment quality. An entity
+  /// tile needs no override: it takes its border from its own rarity.
   final Color? borderColor;
 
   /// Renders the tile as spent: the art is darkened and the count badge
@@ -175,9 +195,20 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     return EnumImageProviderLookup.resolveDynamic(currentId);
   }
 
+  /// An entity frames itself: its rarity is a property of the entity, not
+  /// of the screen showing it, so every tile in the game picks the color
+  /// up without its caller having to know about rarity at all.
+  Color? get _effectiveBorderColor {
+    if (borderColor != null) return borderColor;
+    final currentId = id;
+    if (currentId is! EntityId) return null;
+    return rarityBorderColor(currentId.definition.rarity);
+  }
+
   @override
   Widget build(BuildContext context) {
     final resolvedImage = _resolveImage();
+    final effectiveBorderColor = _effectiveBorderColor;
 
     Widget icon = _IconOrFallback(imageProvider: resolvedImage);
     if (depleted) {
@@ -206,9 +237,9 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
                 ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.0),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  width: borderColor != null ? 2 : 1,
+                  width: effectiveBorderColor != null ? 2 : 1,
                   color:
-                      borderColor ??
+                      effectiveBorderColor ??
                       Theme.of(
                         context,
                       ).colorScheme.outline.withOpacity(depleted ? 0.25 : 0.5),

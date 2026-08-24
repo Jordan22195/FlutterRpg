@@ -26,24 +26,30 @@ enum ZoneId {
 
       permanentEntities: [
         EntityId.TRANQUIL_POND,
+        EntityId.ANVIL,
         EntityId.FIREPIT,
         EntityId.FARMER,
       ],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.CHICKEN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COW, weight: 1),
         // the skill's first payoff: an existing rare, now something you
         // earn rather than something you stumble into on turn one
         WeightedDropTableEntry<EntityId>(
           id: EntityId.BIG_RED,
-          weight: .1,
+          weight: .07,
           unlockLevel: 4,
         ),
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.ROTWOOD_SCARECROW,
-          weight: .05,
+          id: EntityId.ROTWOOD_SCARECROW_0,
+          weight: .7,
+          unlockLevel: 8,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.ROTWOOD_SCARECROW_1,
+          weight: .007,
           unlockLevel: 8,
         ),
       ],
