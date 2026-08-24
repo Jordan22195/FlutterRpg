@@ -1,6 +1,7 @@
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/zones/definition/zone_definition.dart';
+import 'package:rpg/catalogs/zones/map_node_type.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/catalogs/entities/entity_id.dart';
 
@@ -145,6 +146,7 @@ enum ZoneId {
   SOUTH_HAVEN(
     ZoneDefinition(
       iconAsset: 'assets/images/zones/south_haven.png',
+      type: MapNodeType.SETTLEMENT,
       explorationLevel: 1,
 
       name: "South Haven",

@@ -434,6 +434,20 @@ void main() {
       }
     });
 
+    test('every zone on the travel graph has a place on the map', () {
+      // a zone with an edge but no anchor is invisible: the map filters it
+      // out of the drawing silently, so the graph and the layout have to be
+      // kept in step here rather than noticed in play
+      for (final id in ZoneId.values) {
+        if (id == ZoneId.NULL || id == ZoneId.CHALLENGING_MOUNTAIN) continue;
+        expect(
+          zoneNodeCenter(id),
+          isNotNull,
+          reason: '${id.name} is not laid out on the world map',
+        );
+      }
+    });
+
     test('every non-dev zone is reachable from the starting farm', () {
       final graph = ZoneTravelGraph();
       // unreleased content: it has a definition but no travel edge yet

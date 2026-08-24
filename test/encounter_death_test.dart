@@ -92,12 +92,9 @@ void main() {
     final encounter = session.encounterController;
 
     // enter the current zone so the map tab has a screen pushed on it
-    // (the marker icon picks out the zone the player is standing in)
+    // (selecting the token fills the detail pane; the pane's button travels)
     await tester.tap(
-      find.ancestor(
-        of: find.byIcon(Icons.location_on),
-        matching: find.byType(ElevatedButton),
-      ),
+      find.byKey(const ValueKey('map-node-TUTORIAL_FARM')),
     );
     await settle(tester);
     await tester.tap(find.text('Enter'));

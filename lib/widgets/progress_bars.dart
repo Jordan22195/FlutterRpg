@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'fading_number.dart';
+import 'icon_renderer.dart';
 import 'fill_bar.dart';
 
 class ProgressBars extends StatelessWidget {
@@ -137,7 +139,7 @@ class ProgressBars extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 2),
         Column(
           children: [
             AnimatedBuilder(
@@ -241,25 +243,29 @@ class _ActivityPulseDotState extends State<_ActivityPulseDot>
 
 /// "xx / yy" readout next to a stat bar (e.g. current/max stamina),
 /// matching the icon + fixed-width text style of ActionIntervalTimer.
+///
+/// The icon is the stat's own skill sprite. Three different numbers used to
+/// share one lightning bolt up here, which read as three kinds of stamina;
+/// each now wears the face of the thing it actually measures.
 class StatValueLabel extends StatelessWidget {
   const StatValueLabel({
     super.key,
     required this.value,
     required this.max,
-    this.icon = Icons.bolt,
+    this.skill = SkillId.STAMINA,
   });
 
   final double value;
   final double max;
-  final IconData icon;
+  final SkillId skill;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15),
-        const SizedBox(width: 4),
+        IconRenderer<SkillId>(size: 15, id: skill),
+        // const SizedBox(width: 4),
         Text(
           '${value.round()} / ${max.round()}',
           style: const TextStyle(fontSize: 12),
@@ -287,29 +293,14 @@ class ActionIntervalTimer extends StatelessWidget {
             children: [
               const SizedBox(width: 4),
 
-              const Icon(Icons.bolt, size: 15),
+              // the action-speed boost: the Speed stat's doing, so it wears
+              // the Speed icon rather than a bolt
+              const IconRenderer<SkillId>(size: 15, id: SkillId.SPEED),
               const SizedBox(width: 4),
               SizedBox(
                 width: 40, // Fixed width for text so it doesn't resize
                 child: Text(
                   '${(speedBoost).toStringAsFixed(2)}x',
-                  textAlign: TextAlign.left,
-                  style: TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const SizedBox(width: 4),
-
-              const Icon(Icons.bolt, size: 15),
-              const SizedBox(width: 4),
-              SizedBox(
-                width: 40, // Fixed width for text so it doesn't resize
-                child: Text(
-                  '${(intervalMs / 1000).toStringAsFixed(2)}s',
                   textAlign: TextAlign.left,
                   style: TextStyle(fontSize: 12),
                 ),

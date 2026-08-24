@@ -2,6 +2,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/catalogs/zones/map_node_type.dart';
 
 class ZoneDefinition {
   final String name;
@@ -11,6 +12,10 @@ class ZoneDefinition {
   // an exploration action happens.
   final List<WeightedDropTableEntry<ItemId>> discoverableItems;
   final String iconAsset;
+
+  /// What this place is on the world map, which is what its map token draws.
+  /// Wilderness is the default: somewhere you explore, fight and gather.
+  final MapNodeType type;
 
   /// Skill level gate for entering the zone; NULL/0 means unrestricted.
   /// Separate from (and additional to) [explorationLevel].
@@ -36,6 +41,7 @@ class ZoneDefinition {
     required this.permanentEntities,
     this.discoverableItems = const [],
     required this.iconAsset,
+    this.type = MapNodeType.WILDERNESS,
     this.requiredSkill = SkillId.NULL,
     this.requiredLevel = 0,
     this.explorationLevel = 0,

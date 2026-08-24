@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/catalogs/entities/entity_id.dart';
 import 'package:rpg/catalogs/dungeons/dungeon_type.dart';
+import 'package:rpg/catalogs/zones/map_node_type.dart';
 import 'package:rpg/catalogs/dungeons/definition/dungeon_entry.dart';
 import 'package:rpg/catalogs/dungeons/definition/dungeon_definition.dart';
 
@@ -33,6 +34,7 @@ enum DungeonId {
       name: "Goblin Queen's Lair",
       iconAsset: "assets/images/dungeons/goblin_queen_lair.png",
       type: DungeonType.LANDMARK,
+      mapNodeType: MapNodeType.BOSS_LAIR,
       keyItemId: ItemId.GOBLIN_QUEEN_KEY,
       entries: [
         DungeonEntry(

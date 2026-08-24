@@ -1,12 +1,18 @@
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/dungeons/dungeon_type.dart';
+import 'package:rpg/catalogs/zones/map_node_type.dart';
 import 'package:rpg/catalogs/dungeons/definition/dungeon_entry.dart';
 
 class DungeonDefinition {
   final String name;
   final String iconAsset;
   final DungeonType type;
+
+  /// What this dungeon looks like on the world map, for the landmarks that
+  /// get their own token there. Orthogonal to [type]: [DungeonType] is how
+  /// you get in and what leaving costs, this is what the place is.
+  final MapNodeType mapNodeType;
 
   /// Landmark dungeons consume this item to start the first card. NULL for
   /// free-entry (transient/zone) dungeons.
@@ -24,6 +30,7 @@ class DungeonDefinition {
     required this.iconAsset,
     required this.type,
     required this.entries,
+    this.mapNodeType = MapNodeType.DUNGEON,
     this.keyItemId = ItemId.NULL,
     this.requiredSkill = SkillId.NULL,
     this.requiredLevel = 0,
@@ -42,6 +49,7 @@ class DungeonDefinition {
     String? name,
     String? iconAsset,
     DungeonType? type,
+    MapNodeType? mapNodeType,
     List<DungeonEntry>? entries,
     ItemId? keyItemId,
     SkillId? requiredSkill,
@@ -51,6 +59,7 @@ class DungeonDefinition {
       name: name ?? this.name,
       iconAsset: iconAsset ?? this.iconAsset,
       type: type ?? this.type,
+      mapNodeType: mapNodeType ?? this.mapNodeType,
       entries: entries ?? this.entries,
       keyItemId: keyItemId ?? this.keyItemId,
       requiredSkill: requiredSkill ?? this.requiredSkill,

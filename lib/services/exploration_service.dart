@@ -269,8 +269,16 @@ class ExplorationService {
     PlayerData playerState,
     WorldData worldState,
   ) {
+    return getZoneEntities(playerState.currentZoneId, worldState);
+  }
+
+  /// What's standing in [zoneId] right now — its permanent fixtures plus
+  /// whatever exploring there has turned up so far. Takes the zone rather
+  /// than reading the player's, so the map can show a place without the
+  /// player having to be in it.
+  List<Entity> getZoneEntities(ZoneId zoneId, WorldData worldState) {
     final allEnts = <Entity>[];
-    final zone = worldState.zones[playerState.currentZoneId] ?? nullZone;
+    final zone = worldState.zones[zoneId] ?? nullZone;
 
     allEnts.addAll(zone.permanentEntities);
     allEnts.addAll(zone.discoveredEntities);

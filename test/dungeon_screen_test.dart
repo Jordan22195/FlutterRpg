@@ -41,8 +41,11 @@ Future<void> scrollList(WidgetTester tester, double dy) async {
   await settle(tester);
 }
 
+// tapping a map node selects it; the detail pane's button is what enters
 Future<void> openLair(WidgetTester tester) async {
-  await tester.tap(find.text("Goblin Queen's Lair"));
+  await tester.tap(find.byKey(const ValueKey('map-node-GOBLIN_QUEEN_LAIR')));
+  await settle(tester);
+  await tester.tap(find.text('Enter'));
   await settle(tester);
 }
 

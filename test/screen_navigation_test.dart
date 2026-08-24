@@ -31,11 +31,14 @@ void main() {
     // ---- Map tab ----
     expect(find.text('World Map'), findsOneWidget);
 
-    // select the forest, then travel there -> explore screen
-    await tester.tap(find.text('Forest'));
+    // select the forest, travel there, then walk in: travelling moves you
+    // and stops, and Enter is the tap that opens the zone
+    await tester.tap(find.byKey(const ValueKey('map-node-SOUTHWOOD_FOREST')));
     await settle(tester);
     expect(find.text('Travel'), findsOneWidget);
     await tester.tap(find.text('Travel'));
+    await settle(tester);
+    await tester.tap(find.text('Enter'));
     await settle(tester);
     expect(find.text('The Forest'), findsOneWidget);
     expect(find.text('Anvil'), findsOneWidget);

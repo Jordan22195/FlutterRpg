@@ -195,6 +195,30 @@ class WorldController extends ChangeNotifier {
     return _playerState.stamina >= travelCostTo(target);
   }
 
+  /// Hops along the cheapest route from the player's zone to [target]; 0 when
+  /// they are already there, -1 when unreachable.
+  int travelHopsTo(ZoneId target) {
+    return ZoneTravelGraph.travelHops(_playerState.currentZoneId, target);
+  }
+
+  /// Whether the player's stamina covers walking [from] -> [to] in one hop.
+  /// This is about right now, not about the road: it flips back as stamina
+  /// recovers, which is what makes an unaffordable edge worth marking.
+  bool canAffordHop(ZoneId from, ZoneId to) {
+    return _playerState.stamina >= ZoneTravelGraph.edgeCost(from, to);
+  }
+
+  /// The player's Exploration level, for stating an unmet zone gate.
+  int get playerExplorationLevel {
+    return _explorationSystem.explorationLevel(_playerState);
+  }
+
+  /// The player's level in [skill], gear and buffs included — the same total
+  /// the zone gates are checked against.
+  int skillLevelFor(SkillId skill) {
+    return _playerDataService.getStatTotals(_playerState)[skill] ?? 0;
+  }
+
   /// Exploration level [target] demands to enter; 0 when ungated.
   int requiredExplorationLevel(ZoneId target) {
     return target.definition.explorationLevel;
@@ -225,6 +249,13 @@ class WorldController extends ChangeNotifier {
   bool meetsZoneRequirement(ZoneId target) {
     return meetsZoneExplorationRequirement(target) &&
         meetsZoneSkillRequirement(target);
+  }
+
+  /// What's standing in [zoneId]: permanent structures plus the entities
+  /// exploring there has turned up. Any zone, not just the one the player
+  /// is in, so the map can preview a place before you walk to it.
+  List<Entity> zoneEntities(ZoneId zoneId) {
+    return _explorationService.getZoneEntities(zoneId, _worldState);
   }
 
   /// Everything the zone detail screen shows for [zoneId].
