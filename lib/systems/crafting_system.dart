@@ -4,6 +4,7 @@ import '../data/action_result.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../data/crafting_state.dart';
+import '../data/recipe_details.dart';
 import '../data/world_data.dart';
 import '../data/inventory_data.dart';
 import '../catalogs/recipes/recipes.dart';
@@ -196,7 +197,7 @@ class CraftingSystem {
     final skillLevel =
         _playerDataService.getStatTotals(playerState, at: at)[recipe.skill] ??
         1;
-    final entries = _qualityEntries(skillLevel, recipe.levelRequirement);
+    final entries = qualityEntries(skillLevel, recipe.levelRequirement);
     final tiers = offline
         ? _weightedDropTableService.rollMulitpleTimes(count, entries)
         : [_weightedDropTableService.roll(entries)];
@@ -223,14 +224,14 @@ class CraftingSystem {
   /// shift weight toward the higher tiers.
   ItemQuality rollQuality(int skillLevel, int levelRequirement) {
     return _weightedDropTableService
-        .roll(_qualityEntries(skillLevel, levelRequirement))
+        .roll(qualityEntries(skillLevel, levelRequirement))
         .id;
   }
 
   /// The quality table a craft at [skillLevel] rolls against. Handed out as
   /// a table rather than a single roll so a batch can settle every piece it
   /// made in one pass.
-  List<WeightedDropTableEntry<ItemQuality>> _qualityEntries(
+  List<WeightedDropTableEntry<ItemQuality>> qualityEntries(
     int skillLevel,
     int levelRequirement,
   ) {
@@ -239,21 +240,122 @@ class CraftingSystem {
       WeightedDropTableEntry<ItemQuality>(id: ItemQuality.COMMON, weight: 100),
       WeightedDropTableEntry<ItemQuality>(
         id: ItemQuality.UNCOMMON,
-        weight: 10 + levelBonus,
+        weight: 1 + levelBonus * 1,
       ),
       WeightedDropTableEntry<ItemQuality>(
         id: ItemQuality.RARE,
-        weight: 4 + levelBonus * 0.5,
+        weight: .1 + levelBonus * 0.2,
       ),
       WeightedDropTableEntry<ItemQuality>(
         id: ItemQuality.EPIC,
-        weight: 1.5 + levelBonus * 0.25,
+        weight: .01 + levelBonus * 0.1,
       ),
       WeightedDropTableEntry<ItemQuality>(
         id: ItemQuality.LEGENDARY,
-        weight: 0.5 + levelBonus * 0.1,
+        weight: .001 + levelBonus * 0.01,
       ),
     ];
+  }
+
+  /// Everything the bench panel's info tab shows for [recipeId]: what it
+  /// makes, what it costs against the inventory on hand, and the odds
+  /// behind the craft.
+  ///
+  /// The odds are whichever table the craft actually rolls. Equipment rolls
+  /// [qualityEntries]; everything else rolls its output table through
+  /// [adjustDropTable], so a cooking recipe reports the burn chance at the
+  /// player's current level rather than the catalog's placeholder weight.
+  RecipeDetails buildRecipeDetails(
+    PlayerData playerState,
+    InventoryData inventoryState,
+    String recipeId, {
+    DateTime? at,
+  }) {
+    final recipe = _recipeCatalog.recipeById(recipeId);
+
+    // the level the craft is judged at, which is the one the quality roll
+    // reads — base plus equipment plus buffs, not the bare skill level
+    final skillLevel =
+        _playerDataService.getStatTotals(playerState, at: at)[recipe.skill] ??
+        1;
+
+    final materials = [
+      for (final input in recipe.inputs.entries)
+        RecipeMaterial(
+          itemId: input.key,
+          name: input.key.definition.name,
+          required: input.value,
+          held: _inventoryService.getItemCount(inventoryState, input.key),
+        ),
+    ];
+
+    // the same test the craft path uses to decide which items take the
+    // equipment branch, so the tab can never claim a quality roll the
+    // craft would not make
+    final rollsQuality = recipe.output.any(
+      (e) => e.id.build() is EquipmentItem,
+    );
+
+    return RecipeDetails(
+      recipe: recipe,
+      effectiveSkillLevel: skillLevel,
+      craftableCount: craftableCount(recipe.id, inventoryState),
+      materials: materials,
+      outcomes: rollsQuality
+          ? _qualityOutcomes(skillLevel, recipe.levelRequirement)
+          : _outputOutcomes(recipe, playerState, at: at),
+      rollsQuality: rollsQuality,
+    );
+  }
+
+  /// The quality ladder as display rows, best tier last so the table reads
+  /// the way the ladder does.
+  List<RecipeOutcomeChance> _qualityOutcomes(
+    int skillLevel,
+    int levelRequirement,
+  ) {
+    final chances = WeightedDropTableService.chances(
+      qualityEntries(skillLevel, levelRequirement),
+    );
+    return [
+      for (final quality in ItemQuality.values)
+        RecipeOutcomeChance(
+          // common's label is empty, since it is the unprefixed name
+          label: quality.label.isEmpty ? 'Common' : quality.label,
+          quality: quality,
+          chance: chances[quality] ?? 0,
+        ),
+    ];
+  }
+
+  /// The recipe's output table as display rows, commonest first — the same
+  /// order an entity's drop table is shown in.
+  List<RecipeOutcomeChance> _outputOutcomes(
+    CraftingRecipe recipe,
+    PlayerData playerState, {
+    DateTime? at,
+  }) {
+    final table = adjustDropTable(recipe.id, playerState, at: at);
+    final chances = WeightedDropTableService.chances(table);
+    final seen = <ItemId>{};
+    final rows = <RecipeOutcomeChance>[];
+    for (final entry in table) {
+      // chances already summed a repeated id, so it gets one row
+      if (!seen.add(entry.id)) continue;
+      rows.add(
+        RecipeOutcomeChance(
+          label: entry.id.definition.name,
+          itemId: entry.id,
+          chance: chances[entry.id] ?? 0,
+          minCount: entry.count,
+          maxCount: entry.highCount > entry.count
+              ? entry.highCount
+              : entry.count,
+        ),
+      );
+    }
+    rows.sort((a, b) => b.chance.compareTo(a.chance));
+    return rows;
   }
 
   // right now just scales drop chance for burnt food

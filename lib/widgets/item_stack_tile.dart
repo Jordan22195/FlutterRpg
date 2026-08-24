@@ -6,6 +6,7 @@ import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import '../utilities/image_resolver.dart';
 import '../data/skill_data.dart';
+import '../utilities/util.dart';
 import '../widgets/countdown_timer.dart';
 
 /// Border color used to signal an entity's rarity. Common has no special
@@ -58,6 +59,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     this.borderColor,
     this.depleted = false,
     this.alwaysShowCount = false,
+    this.compactCount = true,
   });
 
   final double size;
@@ -88,6 +90,12 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   /// item needs no "1" — but a recipe's amounts are the point of the tile,
   /// so a one-of input has to say so rather than read as unquantified.
   final bool alwaysShowCount;
+
+  /// Shrinks the count badge and abbreviates the number
+  /// ([Util.formatShortCount]). For dense preview rows of small tiles, where
+  /// a six-digit count at full size covers the art it is counting and the
+  /// reader only wants the magnitude anyway.
+  final bool compactCount;
 
   void _showInfoDialog(BuildContext context) {
     final currentId = id;
@@ -267,6 +275,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
                 count: count,
                 depleted: depleted,
                 alwaysShow: alwaysShowCount,
+                compact: compactCount,
                 tileSize: size,
               ),
             ),
@@ -311,11 +320,13 @@ class _CountBadge extends StatelessWidget {
     required this.tileSize,
     this.depleted = false,
     this.alwaysShow = false,
+    this.compact = false,
   });
 
   final int count;
   final bool depleted;
   final bool alwaysShow;
+  final bool compact;
 
   /// The tile this badge sits on. The badge scales with it so the count is
   /// still readable on a 200px portrait, and the 9pt floor keeps the small
@@ -332,7 +343,10 @@ class _CountBadge extends StatelessWidget {
     // (a recipe's amounts), where the number is the point
     if (count <= 1 && !depleted && !alwaysShow) return const SizedBox.shrink();
 
-    final fontSize = (tileSize * 0.16).clamp(9.0, 28.0);
+    // the compact floor goes under the usual 9pt one: on a 30px preview
+    // tile a 9pt badge is most of the tile, and these rows are read as a
+    // group rather than a number at a time
+    final fontSize = (tileSize * 0.16).clamp(compact ? 7.0 : 9.0, 28.0);
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -346,7 +360,7 @@ class _CountBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(fontSize * 0.9),
       ),
       child: Text(
-        '$count',
+        compact ? Util.formatShortCount(count) : '$count',
         style: TextStyle(
           color: Colors.white,
           fontSize: fontSize,

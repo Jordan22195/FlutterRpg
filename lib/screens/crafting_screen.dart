@@ -152,6 +152,7 @@ class _CraftingScreenState extends State<CraftingScreen>
                   CraftingInfoPanel(
                     items: controller.craftedItems(),
                     equipment: controller.craftedEquipment(),
+                    recipeId: selectedRecipeId,
                   ),
                 ],
               ),

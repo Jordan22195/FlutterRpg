@@ -8,6 +8,7 @@ import 'buff_row.dart';
 import 'equipment_info_dialog.dart';
 import 'inventory_grid.dart';
 import 'item_stack_tile.dart';
+import 'recipe_info_body.dart';
 
 /// What a crafting bench reports while you work: what this session has
 /// produced, what is buffing it, and the odds behind the recipe itself. The
@@ -21,6 +22,7 @@ class CraftingInfoPanel extends StatefulWidget {
   const CraftingInfoPanel({
     super.key,
     required this.items,
+    required this.recipeId,
     this.equipment = const [],
     this.craftedLabel = 'Crafted',
     this.emptyCraftedLabel = 'Nothing crafted this session',
@@ -28,6 +30,11 @@ class CraftingInfoPanel extends StatefulWidget {
 
   /// Plain items produced this session.
   final List<ObjectStack> items;
+
+  /// The recipe the info tab describes. Passed in rather than read off the
+  /// controller: the firepit runs two skills at one station, so only the
+  /// screen knows which section's selection the tab should follow.
+  final String recipeId;
 
   /// Equipment produced this session. Kept apart from [items] because a
   /// piece of equipment carries a quality border the item grid can't show.
@@ -116,12 +123,11 @@ class _CraftingInfoPanelState extends State<CraftingInfoPanel> {
 
   Widget _body(BuildContext context, int buffCount, int craftedCount) {
     switch (_tab) {
-      // placeholder: the craft-chance stats land here
+      // sizes to its own contents rather than the fixed body height: the
+      // odds table is taller than a buff row and is the thing worth
+      // scrolling to, and the screens around it already scroll
       case _CraftingTab.info:
-        return SizedBox(
-          height: _bodyHeight,
-          child: _empty(context, 'Craft chances coming soon'),
-        );
+        return RecipeInfoBody(recipeId: widget.recipeId);
 
       case _CraftingTab.buffs:
         return SizedBox(

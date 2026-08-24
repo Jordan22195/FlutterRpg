@@ -6,6 +6,7 @@ import '../data/entity_details.dart';
 import '../data/skill_data.dart';
 import 'explore_card.dart';
 import 'icon_renderer.dart';
+import 'info_section.dart';
 import 'item_stack_tile.dart';
 
 /// Details popup for a world entity, used where there is no room to show
@@ -115,10 +116,6 @@ class _EntityInfoBodyState extends State<EntityInfoBody> {
   }
 }
 
-String _percent(double value) => '${(value * 100).toStringAsFixed(1)}%';
-
-String _decimal(double value) => value.toStringAsFixed(1);
-
 /// Portrait, plus the skill this entity trains and its level gate.
 class _Header extends StatelessWidget {
   const _Header({required this.details});
@@ -171,24 +168,24 @@ class _EntityStats extends StatelessWidget {
   Widget build(BuildContext context) {
     final entity = details.entity;
 
-    return _Section(
+    return InfoSection(
       title: 'Stats',
       children: [
-        _StatRow(label: 'Remaining', value: '${entity.count}'),
+        InfoStatRow(label: 'Remaining', value: '${entity.count}'),
         if (details.usesDamage)
-          _StatRow(
+          InfoStatRow(
             label: 'Hitpoints',
             value: '${entity.hitpoints} / ${entity.maxHitPoints}',
           ),
-        _StatRow(label: 'Defence', value: '${entity.defence}'),
+        InfoStatRow(label: 'Defence', value: '${entity.defence}'),
         if (entity is CombatEntity) ...[
-          _StatRow(label: 'Attack', value: '${entity.attack}'),
-          _StatRow(
+          InfoStatRow(label: 'Attack', value: '${entity.attack}'),
+          InfoStatRow(
             label: 'Attack speed',
-            value: '${_decimal(entity.attackInterval)}s',
+            value: '${formatDecimal(entity.attackInterval)}s',
           ),
         ],
-        _StatRow(
+        InfoStatRow(
           label: 'XP',
           value:
               '+${details.xpPerUnit.round()} / '
@@ -222,10 +219,10 @@ class _PlayerRolls extends StatelessWidget {
   Widget build(BuildContext context) {
     final actionsToKill = details.actionsToKill;
 
-    return _Section(
+    return InfoSection(
       title: _title,
       children: [
-        _StatRow(
+        InfoStatRow(
           label: 'Your ${skillDisplayName(details.skill).toLowerCase()}',
           value: '${details.playerSkillLevel}',
         ),
@@ -233,30 +230,30 @@ class _PlayerRolls extends StatelessWidget {
         // herbs are never missed: the roll only decides how much the pick
         // yields, so hit/miss and damage don't apply
         if (details.skill == SkillId.HERBALISM) ...[
-          _StatRow(
+          InfoStatRow(
             label: 'Bonus yield chance',
-            value: _percent(details.playerHitChance),
+            value: formatPercent(details.playerHitChance),
           ),
-          _StatRow(
+          InfoStatRow(
             label: 'Expected yield',
-            value: _decimal(details.expectedYield),
+            value: formatDecimal(details.expectedYield),
           ),
         ] else ...[
-          _StatRow(
+          InfoStatRow(
             label: details.isCombat ? 'Hit chance' : 'Success chance',
-            value: _percent(details.playerHitChance),
+            value: formatPercent(details.playerHitChance),
           ),
-          _StatRow(
+          InfoStatRow(
             label: details.isCombat ? 'Miss chance' : 'Fail chance',
-            value: _percent(details.playerMissChance),
+            value: formatPercent(details.playerMissChance),
           ),
-          _StatRow(label: 'Max hit', value: '${details.playerMaxHit}'),
-          _StatRow(
+          InfoStatRow(label: 'Max hit', value: '${details.playerMaxHit}'),
+          InfoStatRow(
             label: 'Avg damage',
-            value: _decimal(details.playerAverageDamage),
+            value: formatDecimal(details.playerAverageDamage),
           ),
           if (details.usesDamage)
-            _StatRow(
+            InfoStatRow(
               label: details.isCombat ? 'Actions to kill' : 'Actions to clear',
               value: actionsToKill.isFinite
                   ? '~${actionsToKill.ceil()}'
@@ -276,26 +273,26 @@ class _IncomingDamage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Section(
+    return InfoSection(
       title: 'Incoming',
       children: [
-        _StatRow(label: 'Your defence', value: '${details.playerDefence}'),
-        _StatRow(
+        InfoStatRow(label: 'Your defence', value: '${details.playerDefence}'),
+        InfoStatRow(
           label: 'Their hit chance',
-          value: _percent(details.entityHitChance),
+          value: formatPercent(details.entityHitChance),
         ),
-        _StatRow(
+        InfoStatRow(
           label: 'Your block chance',
-          value: _percent(details.blockChance),
+          value: formatPercent(details.blockChance),
         ),
-        _StatRow(label: 'Their max hit', value: '${details.entityMaxHit}'),
-        _StatRow(
+        InfoStatRow(label: 'Their max hit', value: '${details.entityMaxHit}'),
+        InfoStatRow(
           label: 'Avg damage taken',
-          value: _decimal(details.entityAverageDamage),
+          value: formatDecimal(details.entityAverageDamage),
         ),
-        _StatRow(
+        InfoStatRow(
           label: 'Damage per second',
-          value: _decimal(details.entityDamagePerSecond),
+          value: formatDecimal(details.entityDamagePerSecond),
         ),
       ],
     );
@@ -317,7 +314,7 @@ class _DropTable extends StatelessWidget {
       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
     );
 
-    return _Section(
+    return InfoSection(
       title: 'Drop table',
       children: [
         for (final drop in details.drops)
@@ -349,7 +346,7 @@ class _DropTable extends StatelessWidget {
                 SizedBox(
                   width: 56,
                   child: Text(
-                    _percent(drop.chance),
+                    formatPercent(drop.chance),
                     textAlign: TextAlign.end,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
@@ -365,64 +362,6 @@ class _DropTable extends StatelessWidget {
 }
 
 /// A labelled block of rows, matching the explore screen's section labels.
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.children});
-
-  final String title;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 14, bottom: 4),
-          child: Text(
-            title.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-              letterSpacing: 0.8,
-            ),
-          ),
-        ),
-        ...children,
-      ],
-    );
-  }
-}
 
 /// One label/value line. Values are right-aligned so a column of numbers
 /// stays readable.
-class _StatRow extends StatelessWidget {
-  const _StatRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            value,
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
-}

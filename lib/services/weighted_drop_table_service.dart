@@ -71,6 +71,26 @@ class WeightedDropTableService {
     return entries.where((e) => level >= e.unlockLevel).toList();
   }
 
+  /// The table's weights as probabilities, one per distinct id: what a
+  /// single [roll] has of landing on each entry. An id listed twice sums
+  /// its shares, matching what rolling actually does.
+  ///
+  /// Empty when the weights total zero, since there is no distribution to
+  /// report — callers show nothing rather than dividing by it.
+  static Map<T, double> chances<T>(List<WeightedDropTableEntry<T>> entries) {
+    final total = entries.fold<double>(0, (sum, e) => sum + e.weight);
+    if (total <= 0) return const {};
+    final out = <T, double>{};
+    for (final e in entries) {
+      out.update(
+        e.id,
+        (value) => value + e.weight / total,
+        ifAbsent: () => e.weight / total,
+      );
+    }
+    return out;
+  }
+
   /// Resolves [numberOfRolls] weighted rolls in one pass, aggregated into one
   /// stack per distinct id.
   ///

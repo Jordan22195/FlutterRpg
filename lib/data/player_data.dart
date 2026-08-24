@@ -36,7 +36,7 @@ SkillId boostTrainedSkill(SkillId skillBoost) {
 /// the root keeps every point paying while landing a hundred of them at
 /// about triple. Nothing caps it - past the useful range it simply climbs
 /// slowly rather than hitting a wall.
-double boostStatBonus(int stat) => 0.2 * sqrt(stat < 0 ? 0 : stat);
+double boostStatBonus(int stat) => 0.1 * sqrt(stat < 0 ? 0 : stat);
 
 /// Speed's half of that curve. Speed pays twice - once by shortening the
 /// interval and again through the boost ceiling - so each half carries

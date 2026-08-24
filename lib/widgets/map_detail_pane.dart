@@ -268,6 +268,8 @@ class MapDetailPane extends StatelessWidget {
         id: id,
         count: count,
         showInfoDialogOnTap: false,
+        // a preview row: the reader wants "lots of trees", not 115,599
+        compactCount: true,
       ),
     );
   }

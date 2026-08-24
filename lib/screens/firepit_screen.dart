@@ -286,6 +286,9 @@ class _FirepitScreenState extends State<FirepitScreen>
                     equipment: controller.craftedEquipment(),
                     craftedLabel: 'Cooked',
                     emptyCraftedLabel: 'Nothing cooked this session',
+                    // the section the screen is showing owns the tab: the
+                    // firepit keeps a separate selection per skill
+                    recipeId: selectedId,
                   ),
                 ],
               ),

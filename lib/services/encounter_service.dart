@@ -6,6 +6,7 @@ import '../services/inventory_service.dart';
 import '../data/combat_segment_outcome.dart';
 import '../data/encounter_data.dart';
 import '../data/action_result.dart';
+import '../data/swing_profile.dart';
 
 class EncounterService {
   /// Bonus yield rolls a single herb pick makes on top of its guaranteed
@@ -32,7 +33,7 @@ class EncounterService {
 
     encounterState.respawning = true;
 
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 50));
     entity.hitpoints = entity.maxHitPoints;
 
     encounterState.respawning = false;
@@ -84,11 +85,37 @@ class EncounterService {
     return maxHitPoints / averageDamage;
   }
 
-  EncounterActionResult resolvePlayerDamage(
+  /// How the player's swings land against the entity they are facing, for a
+  /// batch that has to settle a fight without rolling one.
+  ///
+  /// Null when there is nothing to swing at, or when the player cannot
+  /// damage it at all - the one case no number of hits answers.
+  SwingProfile? playerSwingProfile(
     Map<SkillId, int> playerStatTotals,
     PlayerData playerState,
     EncounterData encounterState,
   ) {
+    final entity = encounterState.entity;
+    if (entity == null || encounterState.isActive == false) return null;
+
+    final attack = playerStatTotals[entity.entityType] ?? 0;
+    final hitChance = chanceToHit(attack, entity.defence);
+    final maxHit = computeMaxHit(attack: attack, defense: entity.defence);
+    if (hitChance <= 0 || maxHit <= 0) return null;
+
+    return SwingProfile(hitChance: hitChance, maxHit: maxHit);
+  }
+
+  /// [rng] is here for tests: a live swing rolls its own [Random], which
+  /// makes a run of them impossible to reproduce, and the batch it is
+  /// compared against in test/offline_parity_test.dart has to land on the
+  /// same numbers twice. Nothing in the game passes it.
+  EncounterActionResult resolvePlayerDamage(
+    Map<SkillId, int> playerStatTotals,
+    PlayerData playerState,
+    EncounterData encounterState, {
+    Random? rng,
+  }) {
     EncounterActionResult res = EncounterActionResult();
 
     if (encounterState.isActive == false) {
@@ -114,6 +141,7 @@ class EncounterService {
       attackerAttack: playerOffenseSkillStat,
       defenderDefense: encounterDefence,
       defenderHp: entity.hitpoints,
+      rng: rng,
     );
     encounterState.lastPlayerDamage = dmg;
     entity.hitpoints -= dmg;
@@ -131,12 +159,13 @@ class EncounterService {
     required int attackerAttack,
     required int defenderDefense,
     required int defenderHp,
+    Random? rng,
   }) {
-    final rng = Random();
+    final random = rng ?? Random();
 
     // 1) Roll to hit
     final hitChance = chanceToHit(attackerAttack, defenderDefense);
-    final hitRoll = rng.nextDouble();
+    final hitRoll = random.nextDouble();
 
     if (hitRoll > hitChance) {
       return 0;
@@ -146,7 +175,7 @@ class EncounterService {
     int damage = rollDamageUniform(
       attack: attackerAttack,
       defense: defenderDefense,
-      rng: rng,
+      rng: random,
     );
 
     if (damage > defenderHp) {

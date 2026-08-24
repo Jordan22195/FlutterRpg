@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:rpg/catalogs/drop_tables.dart';
 import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/catalogs/enchantments/enchantments.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
@@ -210,6 +211,11 @@ void main() {
   });
 
   group('drop tables', () {
+    test('the shared tables are rollable', () {
+      checkDropTable(gemDropTable, 'gemDropTable');
+      checkDropTable(herbDropTable, 'herbDropTable');
+    });
+
     test('encounter drops are rollable', () {
       for (final id in EntityId.values) {
         final def = id.definition;

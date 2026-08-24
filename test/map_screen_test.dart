@@ -296,6 +296,34 @@ void main() {
       expect(separators(tester), findsOneWidget);
     });
 
+    testWidgets('a big count is abbreviated, not spelled out', (tester) async {
+      await pumpMap(tester);
+      final session = sessionOf(tester);
+      final zone = session.saveGameData.worldData.zones[ZoneId.TUTORIAL_FARM]!;
+
+      final many = EntityId.TREE.build() as EncounterEntity;
+      many.count = 115599;
+      zone.discoveredEntities.add(many);
+      await select(tester, 'TUTORIAL_FARM');
+
+      // six digits at full size would cover the art they are counting
+      expect(
+        find.descendant(
+          of: find.byType(MapDetailPane),
+          matching: find.text('115k'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('115599'), findsNothing);
+
+      final tile = tester.widget<ItemStackTile<EntityId>>(
+        find.byWidgetPredicate(
+          (w) => w is ItemStackTile<EntityId> && w.id == EntityId.TREE,
+        ),
+      );
+      expect(tile.compactCount, isTrue);
+    });
+
     testWidgets('a node worked down to nothing drops out of the row', (
       tester,
     ) async {

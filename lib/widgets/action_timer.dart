@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/action_timing_controller.dart';
+import '../controllers/player_data_controller.dart';
+import '../data/skill_category.dart';
 import 'fill_bar.dart';
 
 /// The width every encounter row's label sits in, so the bars below the
@@ -13,7 +15,8 @@ const double kEncounterRowLabelWidth = 58;
 /// fill hue differs, so a glance reads which timer is which without reading
 /// either one as more important than the other.
 enum ActionTimerActor {
-  /// The player's own action loop. Lilac, matching the banner's boost bar.
+  /// The player's own action loop. Colored by the skill currently being
+  /// trained, matching the banner's boost bar.
   player,
 
   /// A hostile entity winding up its swing. Amber, against combat's red.
@@ -63,14 +66,17 @@ class ActionTimer extends StatelessWidget {
   static const double _gap = 7;
 
   static const Color _trackColor = Color(0xFF27212B);
-  static const Color _playerFill = Color(0xFFC2A7F4);
   static const Color _enemyFill = Color(0xFFEBA941);
+  static const Color _playerFill = Color(0xFFC2A7F4);
 
   static const Color _chipTextColor = Color(0xFFA8A1AE);
   static const Color _chipBackgroundColor = Color(0xFF211D24);
 
-  Color get _fillColor =>
-      actor == ActionTimerActor.enemy ? _enemyFill : _playerFill;
+  Color _fillColor(BuildContext context) {
+    if (actor == ActionTimerActor.enemy) return _enemyFill;
+    final boostSkill = context.watch<PlayerDataController>().getBoostSkill();
+    return _playerFill;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +95,7 @@ class ActionTimer extends StatelessWidget {
               height: _barHeight,
               borderRadius: _barRadius,
               backgroundColor: _trackColor,
-              foregroundColor: _fillColor,
+              foregroundColor: _fillColor(context),
             ),
           ),
           const SizedBox(width: _gap),

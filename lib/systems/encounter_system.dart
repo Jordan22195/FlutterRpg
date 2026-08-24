@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:rpg/data/skill_data.dart';
 
 import '../services/combat_auto_eat_service.dart';
@@ -13,6 +15,7 @@ import '../data/player_data.dart';
 import '../data/encounter_data.dart';
 import '../data/world_data.dart';
 import '../data/inventory_data.dart';
+import '../data/swing_profile.dart';
 import '../data/ObjectStack.dart';
 import '../services/inventory_service.dart';
 import '../catalogs/items/items.dart';
@@ -77,6 +80,9 @@ class EncounterSystem {
     bool offline = false,
     DateTime? at,
     Duration? span,
+    // tests only, so a run of live swings can be reproduced and held up
+    // against the batch that is meant to match it
+    Random? rng,
   }) {
     final result = EncounterActionResult();
 
@@ -89,18 +95,22 @@ class EncounterSystem {
     final e = encounter.entity!;
 
     if (offline) {
-      // calculate average damage per action
-      double avgDamage = _encounterService.playerAverageDamage(
+      // how the player's swings land on this entity. null means they cannot
+      // scratch it - the loop still swings for the whole stretch, it just
+      // never lands a kill, so the batch is charged its actions and pays
+      // nothing.
+      final swing = _encounterService.playerSwingProfile(
         stats,
         playerState,
         encounter,
       );
-
-      // calculate actions to kill
-      double actionToKill = _encounterService.actionsToKill(
-        e.maxHitPoints,
-        avgDamage,
-      );
+      // a pool of nothing is not a fight anyone can model: live, every swing
+      // caps at the target's 0 hitpoints and "kills" it. bad content, so
+      // charge the stretch and pay nothing rather than settle a landslide.
+      if (swing == null || e.maxHitPoints <= 0) {
+        result.actionsPerformed = actionCount;
+        return result;
+      }
 
       // the enemy swings back for as long as the fight lasts, which is
       // however much of the stretch the player spends fighting: the whole
@@ -108,10 +118,15 @@ class EncounterSystem {
       final playerInterval = span == null || actionCount <= 0
           ? 0.0
           : (span.inMicroseconds / 1e6) / actionCount;
-      // the fight lasts until the action that finishes the last one, and
-      // actions only land on the interval - a kill worth two thirds of an
-      // action still takes the whole action to arrive
-      final timeToClear = (e.count * actionToKill).ceil() * playerInterval;
+      // clearing the group means finishing the one already standing - which
+      // an earlier segment may have left part-damaged - and then every one
+      // behind it from full. actions only land on the interval, so the last
+      // one arrives on a whole action.
+      final hitsToClear =
+          swing.hitsToRemove(e.hitpoints) +
+          (e.count - 1) * swing.hitsToRemove(e.maxHitPoints);
+      final timeToClear =
+          swing.actionsForHits(hitsToClear).ceil() * playerInterval;
       final window = playerInterval <= 0
           ? 0.0
           : (timeToClear < span!.inMicroseconds / 1e6
@@ -137,12 +152,9 @@ class EncounterSystem {
           : (elapsed / playerInterval).floor();
       if (actions > actionCount) actions = actionCount;
 
-      // calulate total enemies defeated
-      // todo use the remainder to put damage on the last entity
-      int enemiesToKill = (actions / actionToKill).floor();
-      if (enemiesToKill > e.count) {
-        enemiesToKill = e.count;
-      }
+      final fight = _spendHits(swing, e, actions);
+      final enemiesToKill = fight.kills;
+
       // roll loot on x enemies
       // roll drops: the guaranteed main drop plus any layered bonus rolls
       // (rare uniques, bulk stacks) the entity defines. a non-encounter
@@ -166,20 +178,25 @@ class EncounterSystem {
 
       // decrement entity count by x
       encounter.entity!.count -= enemiesToKill;
-      result.entitiesDefeated = [
-        ObjectStack<EntityId>(id: e.id, count: enemiesToKill),
-      ];
+      if (enemiesToKill > 0) {
+        result.entitiesDefeated = [
+          ObjectStack<EntityId>(id: e.id, count: enemiesToKill),
+        ];
+      }
 
       // what the batch actually did. the loop settling time away credits
       // only the time these actions were worth, so this has to stay
       // proportional to the stretch they covered.
       result.actionsPerformed = actions;
-      result.damageDone = enemiesToKill * e.maxHitPoints;
+      // the hitpoints the fight took off, which is what the entity's own
+      // bar has lost. xp is paid on [FightOutcome.damageForXp] instead - see
+      // there for why the two differ.
+      result.damageDone = fight.hitpointsRemoved;
 
       // reward xp
-      result.xp.addAll(_damageXp(e, playerState, result.damageDone));
+      result.xp.addAll(_damageXp(e, playerState, fight.damageForXp));
       if (e is CombatEntity) {
-        result.xp[SkillId.HITPOINTS] = (xpPerDamage * result.damageDone) / 3.0;
+        result.xp[SkillId.HITPOINTS] = (xpPerDamage * fight.damageForXp) / 3.0;
       }
       // Apply XP to player
       if (result.xp.isNotEmpty) {
@@ -197,6 +214,7 @@ class EncounterSystem {
       stats,
       playerState,
       encounter,
+      rng: rng,
     );
     result.damageDone = r.damageDone;
     result.enemyDied = r.enemyDied;
@@ -206,7 +224,7 @@ class EncounterSystem {
     }
 
     // xp accrues on every damaging action, scaled by the damage done
-    result.xp.addAll(_damageXp(e, playerState, result.damageDone));
+    result.xp.addAll(_damageXp(e, playerState, result.damageDone.toDouble()));
 
     // combat also trains hitpoints, at a third of the attack xp rate
     if (e is CombatEntity) {
@@ -250,6 +268,83 @@ class EncounterSystem {
     }
 
     return result;
+  }
+
+  /// Spends [actions] worth of swings on [e], taking its hitpoints down and
+  /// stepping the next one up as each drops.
+  ///
+  /// The entity's own [EncounterEntity.hitpoints] is the carry between
+  /// segments. A settle cuts the window at every buff expiry and level-up
+  /// (see [OfflineProgressSystem]), and a fight that was halfway through
+  /// something when the cut landed has to still be halfway through it on the
+  /// other side - otherwise every boundary quietly heals whatever was
+  /// standing, and on a long-lived entity that is most of the damage.
+  ///
+  /// Two damage numbers come back because they answer different questions.
+  /// `hitpointsRemoved` is what the bars actually lost, in whole hitpoints.
+  /// `damageForXp` is the same damage with its fraction kept, because an
+  /// action worth half a point has to pay half a point of xp: a batch too
+  /// small to move an integer hitpoint - the single-action probe the settle
+  /// loop opens with - would otherwise report no xp at all, and the loop
+  /// reads that back as a rate of zero and stops predicting level-ups for
+  /// the rest of the window.
+  ///
+  /// Neither of them pays for overkill. A kill is worth the pool it emptied
+  /// and nothing more, however far past it the swing would have rolled -
+  /// which is the same cap [EncounterService.calculateAttackDamage] applies
+  /// live.
+  ({int kills, int hitpointsRemoved, double damageForXp}) _spendHits(
+    SwingProfile swing,
+    EncounterEntity e,
+    int actions,
+  ) {
+    var hitsLeft = swing.hitsForActions(actions);
+    var damageForXp = 0.0;
+    var kills = 0;
+    var removed = 0;
+
+    // finish the one already standing, which an earlier segment may have
+    // left part-damaged. it pays for the pool it emptied and not a point
+    // more - the hit that finishes something is worth what was left of it,
+    // however hard it swings.
+    final hitsToFinish = swing.hitsToRemove(e.hitpoints);
+    if (e.count > 0 && hitsToFinish > 0 && hitsLeft >= hitsToFinish) {
+      hitsLeft -= hitsToFinish;
+      removed += e.hitpoints;
+      damageForXp += e.hitpoints;
+      kills++;
+      e.hitpoints = e.maxHitPoints;
+    }
+
+    // then whole ones from full, which is arithmetic rather than a loop
+    final hitsPerKill = swing.hitsToRemove(e.maxHitPoints);
+    if (kills < e.count && hitsPerKill > 0) {
+      var more = (hitsLeft / hitsPerKill).floor();
+      if (more > e.count - kills) more = e.count - kills;
+      if (more > 0) {
+        hitsLeft -= more * hitsPerKill;
+        removed += more * e.maxHitPoints;
+        damageForXp += more * e.maxHitPoints;
+        kills += more;
+      }
+    }
+
+    // and whatever is left chips at the next one without finishing it. it
+    // has to stop a hitpoint short: a pool taken to zero here would be a
+    // kill this batch never counted or rolled loot for.
+    if (kills < e.count && hitsLeft > 0) {
+      final pool = e.hitpoints.toDouble();
+      final chip = hitsLeft * swing.damagePerHit;
+      damageForXp += chip < pool ? chip : pool;
+      var applied = chip.floor();
+      if (applied >= e.hitpoints) applied = e.hitpoints - 1;
+      if (applied > 0) {
+        e.hitpoints -= applied;
+        removed += applied;
+      }
+    }
+
+    return (kills: kills, hitpointsRemoved: removed, damageForXp: damageForXp);
   }
 
   /// Runs the enemy's side of a batched fight over [seconds] and applies what
@@ -311,7 +406,7 @@ class EncounterSystem {
   Map<SkillId, double> _damageXp(
     EncounterEntity entity,
     PlayerData playerState,
-    int damage,
+    double damage,
   ) {
     final total = xpPerDamage * damage;
     if (entity is! CombatEntity) return {entity.entityType: total};

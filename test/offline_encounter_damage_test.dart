@@ -47,6 +47,29 @@ void main() {
     return entity;
   }
 
+  // a plain node - no attack, so nothing swings back and the whole stretch
+  // belongs to the player. trees and rocks settle through the same batch a
+  // fight does.
+  EncounterEntity nodeWith(
+    GameSession session, {
+    int hitpoints = 2,
+    int count = 5000,
+  }) {
+    final node = EncounterEntity(
+      id: EntityId.TREE,
+      name: 'Test Node',
+      count: count,
+      entityType: SkillId.WOODCUTTING,
+      defence: 1,
+      hitpoints: hitpoints,
+    );
+    session.encounterService.setEncounterEntity(
+      session.saveGameData.encounterData,
+      node,
+    );
+    return node;
+  }
+
   void equipFood(GameSession session, {int count = 500}) {
     final save = session.saveGameData;
     session.inventoryService.setItemCount(
@@ -165,8 +188,11 @@ void main() {
     expect(result.entitiesDefeated.single.count, 1);
     expect(result.actionsPerformed, lessThan(10));
     // an hour of a 1-attack enemy would have worn the player down; a few
-    // seconds of it barely scratches them
-    expect(save.playerData.hitpoints, greaterThanOrEqualTo(9));
+    // seconds of it barely scratches them. the fight is modelled at two
+    // actions - one hit kills, and at a 59% hit chance one hit costs about
+    // 1.7 swings - so the enemy gets three swings of at most 1 damage in
+    // before it drops.
+    expect(save.playerData.hitpoints, greaterThanOrEqualTo(7));
 
     session.dispose();
   });
@@ -207,6 +233,170 @@ void main() {
     expect(result.xp[SkillId.HITPOINTS], greaterThan(0));
 
     session.dispose();
+  });
+
+  // a batch settles kills off average damage, but a swing that overkills is
+  // worth no more than the pool it emptied - so however hard the player
+  // hits, one action is one kill at most.
+  group('a kill costs a whole action', () {
+    test('a node the player one-shots pays at most a kill an action', () {
+      final session = buildSession();
+      setLevel(session, SkillId.WOODCUTTING, 20); // fells it in a swing
+      nodeWith(session, hitpoints: 2, count: 5000);
+
+      final result = settleFight(
+        session,
+        count: 1200,
+        span: const Duration(hours: 1),
+      );
+
+      expect(result.actionsPerformed, 1200);
+      // one hit is enough, so the only thing between an action and a kill
+      // is the swings that miss. what that leaves is pinned against a live
+      // loop in test/offline_parity_test.dart; here it is the ceiling that
+      // matters - it used to come back at several times the action count.
+      expect(result.entitiesDefeated.single.count, lessThan(1200));
+      expect(result.entitiesDefeated.single.count, greaterThan(600));
+
+      session.dispose();
+    });
+
+    test('an over-levelled fight never kills more than it swung', () {
+      final session = buildSession();
+      equipFood(session, count: 5000);
+      setLevel(session, SkillId.ATTACK, 20);
+      // 2 hitpoints against a max hit many times that: the old batch paid
+      // several kills for every action
+      fightWith(session, attack: 1, hitpoints: 2, count: 5000);
+
+      final result = settleFight(
+        session,
+        count: 1200,
+        span: const Duration(hours: 1),
+      );
+
+      expect(
+        result.entitiesDefeated.single.count,
+        lessThanOrEqualTo(result.actionsPerformed),
+      );
+
+      session.dispose();
+    });
+
+    test('a slow kill still lands on a whole action', () {
+      final session = buildSession();
+      equipFood(session, count: 5000);
+      // a wall of hitpoints against a level 1 attack: many actions a kill,
+      // and the kills are the actions divided down, never rounded up
+      fightWith(session, attack: 1, hitpoints: 200, count: 5000);
+
+      final result = settleFight(
+        session,
+        count: 1200,
+        span: const Duration(hours: 1),
+      );
+
+      expect(result.entitiesDefeated.single.count, greaterThan(0));
+      expect(
+        result.entitiesDefeated.single.count,
+        lessThanOrEqualTo(result.actionsPerformed),
+      );
+
+      session.dispose();
+    });
+
+    test('an entity with no hitpoints settles to nothing', () {
+      final session = buildSession();
+      // nothing to take down, so nothing is: the swings still cost the
+      // stretch they took, the way a run of pure misses would
+      nodeWith(session, hitpoints: 0, count: 5000);
+
+      final result = settleFight(
+        session,
+        count: 1200,
+        span: const Duration(hours: 1),
+      );
+
+      expect(result.entitiesDefeated, isEmpty);
+      expect(result.actionsPerformed, 1200);
+
+      session.dispose();
+    });
+  });
+
+  // a settle cuts the window at every buff expiry and level-up, so a fight
+  // is handed to the batch in pieces. what one piece started, the next has
+  // to be able to finish.
+  group('a fight carries across the batches that settle it', () {
+    test('a batch that cannot finish one leaves its damage on it', () {
+      final session = buildSession();
+      final node = nodeWith(session, hitpoints: 100, count: 5000);
+
+      // a minute against a 100 hitpoint node at level 1: nowhere near a kill
+      final first = settleFight(
+        session,
+        count: 20,
+        span: const Duration(seconds: 60),
+      );
+
+      expect(first.entitiesDefeated, isEmpty);
+      expect(node.hitpoints, lessThan(node.maxHitPoints));
+      expect(first.damageDone, greaterThan(0));
+
+      // and the next stretch picks the same one up where it was left
+      final carried = node.hitpoints;
+      settleFight(session, count: 20, span: const Duration(seconds: 60));
+      expect(node.hitpoints, lessThan(carried));
+
+      session.dispose();
+    });
+
+    test('enough batches in a row add up to the kill', () {
+      final session = buildSession();
+      final node = nodeWith(session, hitpoints: 100, count: 5000);
+      final startingCount = node.count;
+
+      var kills = 0;
+      for (var i = 0; i < 40; i++) {
+        final result = settleFight(
+          session,
+          count: 20,
+          span: const Duration(seconds: 60),
+        );
+        kills += result.entitiesDefeated.fold<int>(
+          0,
+          (sum, stack) => sum + stack.count,
+        );
+      }
+
+      // 800 actions of half-landing 1-damage swings is 400 damage, so four
+      // 100 hitpoint nodes - which only adds up if nothing was healed at a
+      // batch boundary
+      expect(kills, greaterThan(2));
+      expect(node.count, startingCount - kills);
+
+      session.dispose();
+    });
+
+    test('a single action pays the xp its damage was worth', () {
+      final session = buildSession();
+      nodeWith(session, hitpoints: 100, count: 5000);
+
+      // the probe the settle loop opens every window with. half a landing
+      // swing is too little to move a whole hitpoint, but it is not too
+      // little to be worth xp - and the loop reads that xp back as the rate
+      // it predicts level-ups from, so a zero here stops it predicting any.
+      final result = settleFight(
+        session,
+        count: 1,
+        span: const Duration(seconds: 3),
+      );
+
+      expect(result.damageDone, 0);
+      expect(result.xp[SkillId.WOODCUTTING], greaterThan(0));
+
+      session.dispose();
+    });
   });
 
   group('settling time away', () {

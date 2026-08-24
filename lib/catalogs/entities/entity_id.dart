@@ -1,3 +1,4 @@
+import 'package:rpg/catalogs/drop_tables.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -105,44 +106,36 @@ enum EntityId {
       hitpoints: 5,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.COPPER_ORE, weight: 1),
+
         // rare gem finds (lower tiers only in the starter vein)
-        WeightedDropTableEntry<ItemId>(id: ItemId.TOPAZ, weight: 0.05),
-        WeightedDropTableEntry<ItemId>(id: ItemId.SAPPHIRE, weight: 0.03),
-        WeightedDropTableEntry<ItemId>(id: ItemId.EMERALD, weight: 0.02),
       ],
+      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.05)],
     ),
   ),
   IRON(
     EncounterEntityDefinition(
       name: "Iron Vein",
       iconAsset: "assets/images/entities/iron.png",
-      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.MINING,
       defence: 10,
       hitpoints: 15,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.IRON_ORE, weight: 1),
+
         // rare gem finds, all tiers
-        WeightedDropTableEntry<ItemId>(id: ItemId.TOPAZ, weight: 0.06),
-        WeightedDropTableEntry<ItemId>(id: ItemId.SAPPHIRE, weight: 0.04),
-        WeightedDropTableEntry<ItemId>(id: ItemId.EMERALD, weight: 0.03),
-        WeightedDropTableEntry<ItemId>(id: ItemId.RUBY, weight: 0.02),
-        WeightedDropTableEntry<ItemId>(id: ItemId.DIAMOND, weight: 0.012),
-        WeightedDropTableEntry<ItemId>(id: ItemId.DRAGONSTONE, weight: 0.006),
-        WeightedDropTableEntry<ItemId>(id: ItemId.ONYX, weight: 0.003),
       ],
+      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.1)],
     ),
   ),
   COAL_VEIN(
     EncounterEntityDefinition(
       name: "Coal Vein",
       iconAsset: "assets/images/entities/coal_vein.png",
-      rarity: Rarity.RARE,
 
       entityType: SkillId.MINING,
-      defence: 15,
-      hitpoints: 20,
+      defence: 20,
+      hitpoints: 25,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(
           id: ItemId.COAL,
@@ -151,6 +144,7 @@ enum EntityId {
           highCount: 3,
         ),
       ],
+      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.5)],
     ),
   ),
   GEM_VEIN(
@@ -160,17 +154,9 @@ enum EntityId {
       rarity: Rarity.EPIC,
 
       entityType: SkillId.MINING,
-      defence: 25,
+      defence: 40,
       hitpoints: 30,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.TOPAZ, weight: 1),
-        WeightedDropTableEntry<ItemId>(id: ItemId.SAPPHIRE, weight: 0.7),
-        WeightedDropTableEntry<ItemId>(id: ItemId.EMERALD, weight: 0.5),
-        WeightedDropTableEntry<ItemId>(id: ItemId.RUBY, weight: 0.3),
-        WeightedDropTableEntry<ItemId>(id: ItemId.DIAMOND, weight: 0.15),
-        WeightedDropTableEntry<ItemId>(id: ItemId.DRAGONSTONE, weight: 0.07),
-        WeightedDropTableEntry<ItemId>(id: ItemId.ONYX, weight: 0.03),
-      ],
+      itemDrops: gemDropTable,
     ),
   ),
 
@@ -194,7 +180,6 @@ enum EntityId {
     FishingEntityDefinition(
       name: "River",
       iconAsset: "assets/images/entities/river.png",
-      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.FISHING,
       defence: 1,
@@ -210,7 +195,6 @@ enum EntityId {
     FishingEntityDefinition(
       name: "Deep Pond",
       iconAsset: "assets/images/entities/tranquil_pond.png",
-      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.FISHING,
       defence: 10,
@@ -226,7 +210,6 @@ enum EntityId {
     FishingEntityDefinition(
       name: "Lake",
       iconAsset: "assets/images/entities/lake.png",
-      rarity: Rarity.RARE,
 
       entityType: SkillId.FISHING,
       defence: 1,
@@ -242,7 +225,6 @@ enum EntityId {
     FishingEntityDefinition(
       name: "Ocean",
       iconAsset: "assets/images/entities/ocean.png",
-      rarity: Rarity.EPIC,
 
       entityType: SkillId.FISHING,
       defence: 1,

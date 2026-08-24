@@ -32,9 +32,9 @@ void main() {
 
     expect(find.byType(ProgressBars), findsOneWidget);
 
-    // The bar used to read one lightning bolt three times over: stamina, the
-    // action-speed boost and the tick length. Two of those are not stamina,
-    // and a shared glyph said they were.
+    // The bar used to read the same lightning bolt for stamina and for the
+    // action-speed boost, which made the boost look like a second kind of
+    // stamina. Each number now wears its own stat's sprite.
     expect(
       find.descendant(
         of: find.byType(ProgressBars),
@@ -45,12 +45,5 @@ void main() {
 
     expect(skillIcon(SkillId.STAMINA), findsOneWidget);
     expect(skillIcon(SkillId.SPEED), findsOneWidget);
-    expect(
-      find.descendant(
-        of: find.byType(ProgressBars),
-        matching: find.byIcon(Icons.timer),
-      ),
-      findsOneWidget,
-    );
   });
 }

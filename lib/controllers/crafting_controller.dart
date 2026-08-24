@@ -16,6 +16,7 @@ import '../data/offline_progress_data.dart';
 import '../services/offline_progress_service.dart';
 import '../data/player_data.dart';
 import '../data/crafting_state.dart';
+import '../data/recipe_details.dart';
 import '../data/world_data.dart';
 import '../data/buff_data.dart';
 
@@ -296,6 +297,16 @@ class CraftingController extends ChangeNotifier {
     // start action timing
     _actionTimingController.start();
     return true;
+  }
+
+  /// Everything the info tab shows for [recipeId] — xp, materials against
+  /// the inventory on hand, and the craft's odds.
+  RecipeDetails recipeDetails(String recipeId) {
+    return _craftingSystem.buildRecipeDetails(
+      _playerState,
+      _inventoryState,
+      recipeId,
+    );
   }
 
   int getMaxNumberCraftsForRecipe(String recipeId) {

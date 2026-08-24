@@ -75,6 +75,17 @@ void main() {
   double xpFor(GameSession session, SkillId skill) =>
       session.saveGameData.playerData.skillData[skill]!.xp;
 
+  // A batch pays xp on the damage its actions bought, fraction and all,
+  // while [EncounterActionResult.damageDone] is the whole hitpoints that
+  // came off - see EncounterSystem._spendHits for why the two are not the
+  // same number. They part company by less than the entity in progress has
+  // left, so the rate is checked to within a hitpoint's worth of xp and the
+  // routing, which is what these tests are about, is checked exactly.
+  Matcher paysRateFor(EncounterActionResult result) => closeTo(
+    EncounterSystem.xpPerDamage * result.damageDone,
+    EncounterSystem.xpPerDamage,
+  );
+
   group('a combat batch pays the stance that fought it', () {
     test('offensive trains the weapon skill and nothing else', () {
       final session = buildSession();
@@ -88,10 +99,7 @@ void main() {
       final result = batch(session);
 
       expect(result.damageDone, greaterThan(0));
-      expect(
-        result.xp[SkillId.ATTACK],
-        EncounterSystem.xpPerDamage * result.damageDone,
-      );
+      expect(result.xp[SkillId.ATTACK], paysRateFor(result));
       expect(result.xp[SkillId.DEFENCE], isNull);
 
       session.dispose();
@@ -109,10 +117,7 @@ void main() {
       final result = batch(session);
 
       expect(result.damageDone, greaterThan(0));
-      expect(
-        result.xp[SkillId.DEFENCE],
-        EncounterSystem.xpPerDamage * result.damageDone,
-      );
+      expect(result.xp[SkillId.DEFENCE], paysRateFor(result));
       expect(result.xp[SkillId.ATTACK], isNull);
 
       session.dispose();
@@ -129,13 +134,12 @@ void main() {
 
       final result = batch(session);
 
-      final total = EncounterSystem.xpPerDamage * result.damageDone;
-      expect(result.xp[SkillId.ATTACK], total / 2);
-      expect(result.xp[SkillId.DEFENCE], total / 2);
-      // a stance moves the xp, it does not create or destroy any
+      // a stance moves the xp, it does not create or destroy any: the two
+      // halves are equal to the last bit, and add back up to the rate
+      expect(result.xp[SkillId.ATTACK], result.xp[SkillId.DEFENCE]);
       expect(
         result.xp[SkillId.ATTACK]! + result.xp[SkillId.DEFENCE]!,
-        closeTo(total, 1e-9),
+        paysRateFor(result),
       );
 
       session.dispose();
@@ -153,9 +157,14 @@ void main() {
 
         final result = batch(session);
 
+        // a third of the damage xp, whatever stance routed it and whatever
+        // the damage came to
+        final damageXp =
+            (result.xp[SkillId.ATTACK] ?? 0) +
+            (result.xp[SkillId.DEFENCE] ?? 0);
         expect(
           result.xp[SkillId.HITPOINTS],
-          closeTo(EncounterSystem.xpPerDamage * result.damageDone / 3.0, 1e-9),
+          closeTo(damageXp / 3.0, 1e-9),
           reason: '$stance',
         );
 

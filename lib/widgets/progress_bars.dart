@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
+import 'package:rpg/data/skill_category.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'fading_number.dart';
@@ -41,13 +42,13 @@ class ProgressBars extends StatelessWidget {
   static const double _barRadius = 4;
 
   static const Color _energyColor = Color(0xFF188CEB);
-  static const Color _boostColor = Color(0xFFB5A3DA);
 
   @override
   Widget build(BuildContext context) {
     final playerController = context.watch<PlayerDataController>();
     final timing = context.watch<ActionTimingController>();
     final encounter = context.watch<EncounterController>();
+    final boostSkill = playerController.getBoostSkill();
 
     // flash damage on the icon unless the active encounter's own screen
     // is in view (it shows the numbers over the entity image instead)
@@ -133,7 +134,6 @@ class ProgressBars extends StatelessWidget {
                   value: timing.percentMaxSpeed,
                   height: _barHeight,
                   borderRadius: _barRadius,
-                  foregroundColor: _boostColor,
                 ),
               ),
             ],
@@ -281,8 +281,8 @@ class ActionIntervalTimer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timing = context.watch<ActionTimingController>();
-    final intervalMs = timing.getCurrentActionDuration().inMilliseconds;
     final speedBoost = timing.getCurrentSpeedMultiplier();
+    final boostSkill = context.watch<PlayerDataController>().getBoostSkill();
 
     return SizedBox(
       width: 80, // Fixed width so layout doesn't shift
@@ -293,9 +293,8 @@ class ActionIntervalTimer extends StatelessWidget {
             children: [
               const SizedBox(width: 4),
 
-              // the action-speed boost: the Speed stat's doing, so it wears
-              // the Speed icon rather than a bolt
-              const IconRenderer<SkillId>(size: 15, id: SkillId.SPEED),
+              // wears the icon of whichever stat is actually being trained
+              IconRenderer<SkillId>(size: 15, id: boostSkill),
               const SizedBox(width: 4),
               SizedBox(
                 width: 40, // Fixed width for text so it doesn't resize
