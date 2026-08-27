@@ -18,7 +18,13 @@ class InventoryScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Inventory')),
       body: ListView(
         children: [
-          Card(child: InventoryGrid(items: items, shrinkWrap: true)),
+          Card(
+            child: InventoryGrid(
+              items: items,
+              shrinkWrap: true,
+              showActiveBuffTimers: true,
+            ),
+          ),
 
           // unique equipment instances, each with its own quality/enchant
           if (equipment.isNotEmpty) ...[

@@ -18,6 +18,16 @@ class BuffService {
     return buffState.globalBuffs.values.toList();
   }
 
+  /// The global buff [id] is currently putting up, or null when none is. A
+  /// buff that has run out but not been swept yet reads as null, the way
+  /// [FiremakingSystem.activeFire] treats a fire a moment past its end.
+  BuffItem? getGlobalBuff(BuffData buffState, ItemId id, {DateTime? at}) {
+    final buff = buffState.globalBuffs[id];
+    if (buff == null) return null;
+    if (!buff.expirationTime.isAfter(at ?? DateTime.now())) return null;
+    return buff;
+  }
+
   List<ZoneBuffItem> getZoneBuffs(BuffData buffState, ZoneId zoneId) {
     return buffState.zoneBuffs[zoneId]?.values.toList() ?? [];
   }

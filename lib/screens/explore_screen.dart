@@ -191,6 +191,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         name: e.name,
         count: 0,
         typeId: e.entityType,
+        statLevel: worldController.entityLevel(e),
         isStructure: true,
         onTap: () => worldController.navigateToEntity(e.id, context),
         onIconTap: () => showEntityInfoDialog(context, e),
@@ -218,9 +219,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final requiredLevel = worldController.requiredLevelFor(e.id);
     final locked = !worldController.meetsEntityRequirement(e.id);
 
-    // level-gated nodes surface their gate even when unlocked
+    // level-gated nodes surface their gate even when unlocked. the chip
+    // beside it already carries the skill icon, so the gate only needs to
+    // say what it asks for
     final subtitle = requiredLevel > 0 && !locked
-        ? "${skillDisplayName(e.entityType)} · Lv $requiredLevel"
+        ? "Requires Lv $requiredLevel"
         : null;
 
     return ObjectCard(
@@ -230,6 +233,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       count: e.count,
       typeId: e.entityType,
       subtitle: subtitle,
+      statLevel: worldController.entityLevel(e),
       xpPerUnit: worldController.xpPerUnit(e),
       locked: locked,
       requiredLevel: requiredLevel,

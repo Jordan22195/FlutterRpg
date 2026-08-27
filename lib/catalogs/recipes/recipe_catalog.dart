@@ -1,5 +1,6 @@
 import 'package:rpg/catalogs/recipes/crafting_recipe.dart';
 import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/catalogs/recipes/data/alchemy_recipes.dart';
 import 'package:rpg/catalogs/recipes/data/blacksmithing_recipes.dart';
 import 'package:rpg/catalogs/recipes/data/cooking_recipes.dart';
 import 'package:rpg/catalogs/recipes/data/firemaking_recipes.dart';
@@ -13,6 +14,7 @@ class RecipeCatalog {
     ...cookingRecipes,
     ...blacksmithingRecipes,
     ...jewelcraftingRecipes,
+    ...alchemyRecipes,
   ];
 
   List<CraftingRecipe> get recipes => List.unmodifiable(_recipes);

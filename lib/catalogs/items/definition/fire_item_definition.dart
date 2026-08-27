@@ -1,5 +1,6 @@
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
+import 'package:rpg/catalogs/items/item_quality.dart';
 import 'package:rpg/catalogs/items/model/fire_item.dart';
 import 'package:rpg/catalogs/items/definition/zone_buff_item_definition.dart';
 
@@ -14,6 +15,7 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
     this.canCook = false,
     super.description,
     super.iconAsset,
+    super.quality,
   });
 
   @override
@@ -23,6 +25,7 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
     String? description,
     String? iconAsset,
     int? xpValue,
+    ItemQuality? quality,
     Map<SkillId, int>? skillBonus,
     Duration? duration,
     bool? canCook,
@@ -32,6 +35,7 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
       value: value ?? this.value,
       description: description ?? this.description,
       iconAsset: iconAsset ?? this.iconAsset,
+      quality: quality ?? this.quality,
       skillBonus: skillBonus ?? this.skillBonus,
       duration: duration ?? this.duration,
       canCook: canCook ?? this.canCook,

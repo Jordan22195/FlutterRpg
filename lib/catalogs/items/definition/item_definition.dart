@@ -1,4 +1,5 @@
 import 'package:rpg/catalogs/items/item_id.dart';
+import 'package:rpg/catalogs/items/item_quality.dart';
 import 'package:rpg/catalogs/items/model/item.dart';
 
 class ItemDefinition {
@@ -13,11 +14,22 @@ class ItemDefinition {
   /// Always non-null; if a null value is provided (e.g., from JSON/dynamic), it defaults to 0.
   final int xpValue;
 
+  /// The quality this item is defined at. Defaults to common, which is the
+  /// identity — a 1.0 stat multiplier and an empty label — so an item that
+  /// does not care about quality reads exactly as it did before.
+  ///
+  /// Most quality is *rolled*, not declared: crafting rolls it against the
+  /// player's skill and writes it onto the runtime [EquipmentItem]. This is
+  /// for the other case — an item that is a particular quality by
+  /// definition, such as a fixed reward or a named drop.
+  final ItemQuality quality;
+
   const ItemDefinition({
     required this.name,
     required this.value,
     this.description,
     this.iconAsset,
+    this.quality = ItemQuality.COMMON,
     int? xpValue,
   }) : xpValue = xpValue ?? 0;
 
@@ -32,6 +44,7 @@ class ItemDefinition {
     String? description,
     String? iconAsset,
     int? xpValue,
+    ItemQuality? quality,
   }) {
     return ItemDefinition(
       name: name ?? this.name,
@@ -39,6 +52,7 @@ class ItemDefinition {
       description: description ?? this.description,
       iconAsset: iconAsset ?? this.iconAsset,
       xpValue: xpValue ?? this.xpValue,
+      quality: quality ?? this.quality,
     );
   }
 

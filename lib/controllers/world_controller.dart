@@ -140,6 +140,14 @@ class WorldController extends ChangeNotifier {
     return _encounterSystem.xpPerUnit(e);
   }
 
+  /// The number an entity card shows beside its skill icon: a combat
+  /// entity's level, or a gathering node's defence — the difficulty the
+  /// player's skill is rolled against when working it.
+  int entityLevel(EncounterEntity e) {
+    final def = e.id.definition;
+    return def is CombatEntityDefinition ? def.level : e.defence;
+  }
+
   /// Everything the entity details popup shows for [e]: its own stats, its
   /// drop table odds, and the combat rolls both ways against the player's
   /// current stats.

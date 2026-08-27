@@ -394,20 +394,27 @@ enum EntityId {
   // ── ALCHEMY STATION ─────────────────────────────────────────────
   // CraftingEntityDefinition with craftingSkill: SkillId.ALCHEMY, the
   // counterpart to the ALCHEMY REAGENTS and POTIONS item sections.
-  // Nothing here yet.
+  ALCHEMY_STATION(
+    CraftingEntityDefinition(
+      name: "Alchemy Station",
+      craftingSkill: SkillId.ALCHEMY,
+      iconAsset: "assets/icons/alchemy_station.png",
+    ),
+  ),
 
   // ── COMBAT ──────────────────────────────────────────────────────
-  // CombatEntityDefinition, difficulty ascending by hitpoints (2, 5,
-  // 10, 10, 20, 20, 25, 50, 120, 200) — bosses land last by construction
+  // CombatEntityDefinition. Stats are not written here: level sets
+  // the stat budget and combatType splits it (see CombatType).
+  // Ascending by level (1, 2, 3, 4, 4, 6, 6, 8, 12, 12, 15, 28) —
+  // bosses land last by construction
   FIELD_RAT(
     CombatEntityDefinition(
       name: "Field Rat",
       iconAsset: "assets/images/entities/field_rat.png",
 
       entityType: SkillId.ATTACK,
-      defence: 1,
-      hitpoints: 2,
-      attack: 1,
+      level: 1,
+      combatType: CombatType.PLATE_DPS,
       attackInterval: 2.0,
       itemDrops: [],
     ),
@@ -419,9 +426,8 @@ enum EntityId {
       iconAsset: "assets/images/entities/chicken.png",
 
       entityType: SkillId.ATTACK,
-      defence: 3,
-      hitpoints: 5,
-      attack: 3,
+      level: 2,
+      combatType: CombatType.LEATHER_DPS,
       attackInterval: 2.0,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
@@ -434,31 +440,14 @@ enum EntityId {
       ],
     ),
   ),
-  COW(
-    CombatEntityDefinition(
-      name: "Cow",
-      iconAsset: "assets/images/entities/cow.png",
-
-      entityType: SkillId.ATTACK,
-      defence: 5,
-      hitpoints: 10,
-      attack: 5,
-      attackInterval: 2.0,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.COW_MEAT, weight: 1),
-        WeightedDropTableEntry<ItemId>(id: ItemId.COW_HIDE, weight: 1),
-      ],
-    ),
-  ),
   GOBLIN(
     CombatEntityDefinition(
       name: "Goblin",
       iconAsset: "assets/images/entities/goblin.png",
 
       entityType: SkillId.ATTACK,
-      defence: 2,
-      hitpoints: 10,
-      attack: 6,
+      level: 5,
+      combatType: CombatType.CLOTH_DPS,
       attackInterval: 2.0,
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1)],
       // 5% chance, on top of the coin drop, to yield the key that opens
@@ -476,6 +465,37 @@ enum EntityId {
       ],
     ),
   ),
+  COW(
+    CombatEntityDefinition(
+      name: "Cow",
+      iconAsset: "assets/images/entities/cow.png",
+
+      entityType: SkillId.ATTACK,
+      level: 4,
+      combatType: CombatType.PLATE_DPS,
+      attackInterval: 2.0,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.COW_MEAT, weight: 1),
+        WeightedDropTableEntry<ItemId>(id: ItemId.COW_HIDE, weight: 1),
+      ],
+    ),
+  ),
+  GIANT_SPIDER(
+    CombatEntityDefinition(
+      name: "Giant Spider",
+      iconAsset: "assets/images/entities/giant_spider.png",
+      rarity: Rarity.UNCOMMON,
+
+      entityType: SkillId.ATTACK,
+      level: 8,
+      combatType: CombatType.BALANCE,
+      attackInterval: 1.5,
+      itemDrops: [
+        WeightedDropTableEntry<ItemId>(id: ItemId.SILK, weight: 1),
+        WeightedDropTableEntry<ItemId>(id: ItemId.VENOM, weight: 1),
+      ],
+    ),
+  ),
   BIG_RED(
     CombatEntityDefinition(
       name: "Big Red",
@@ -483,16 +503,16 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.ATTACK,
-      defence: 5,
-      hitpoints: 25,
-      attack: 7,
+      level: 8,
+      combatType: CombatType.LEATHER_DPS,
       attackInterval: 2.0,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
         WeightedDropTableEntry<ItemId>(
           id: ItemId.FEATHER,
           weight: 1,
-          count: 100,
+          count: 25,
+          highCount: 50,
         ),
       ],
     ),
@@ -504,9 +524,8 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.ATTACK,
-      defence: 5,
-      hitpoints: 25,
-      attack: 7,
+      level: 6,
+      combatType: CombatType.LEATHER_DPS,
       attackInterval: 2.0,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(
@@ -538,42 +557,33 @@ enum EntityId {
       ],
     ),
   ),
-  GIANT_SPIDER(
-    CombatEntityDefinition(
-      name: "Giant Spider",
-      iconAsset: "assets/images/entities/giant_spider.png",
-      rarity: Rarity.UNCOMMON,
-
-      entityType: SkillId.ATTACK,
-      defence: 5,
-      hitpoints: 20,
-      attack: 4,
-      attackInterval: 1.5,
-      itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1)],
-    ),
-  ),
   ROTWOOD_SCARECROW_0(
     CombatEntityDefinition(
       name: "Rotwood Scarecrow",
       iconAsset: "assets/images/entities/rotwood_scarecrow.png",
 
       entityType: SkillId.ATTACK,
-      defence: 12,
-      hitpoints: 40,
-      attack: 4,
+      level: 8,
+      combatType: CombatType.PLATE_TANK,
       attackInterval: 2.5,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(
-          id: ItemId.FEATHER,
+          id: ItemId.LOGS,
           weight: 1,
-          count: 20,
-          highCount: 60,
+          count: 1,
+          highCount: 4,
         ),
         WeightedDropTableEntry<ItemId>(
           id: ItemId.COINS,
           weight: 1,
-          count: 25,
-          highCount: 75,
+          count: 3,
+          highCount: 10,
+        ),
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.IRON_ORE,
+          weight: 1,
+          count: 1,
+          highCount: 2,
         ),
       ],
       bonusDrops: [
@@ -593,29 +603,37 @@ enum EntityId {
       rarity: Rarity.RARE,
 
       entityType: SkillId.ATTACK,
-      defence: 15,
-      hitpoints: 60,
-      attack: 10,
+      level: 12,
+      combatType: CombatType.LEATHER_TANK,
       attackInterval: 2.5,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(
-          id: ItemId.FEATHER,
+          id: ItemId.LOGS,
           weight: 1,
-          count: 20,
-          highCount: 60,
+          count: 1,
+          highCount: 4,
         ),
         WeightedDropTableEntry<ItemId>(
           id: ItemId.COINS,
           weight: 1,
-          count: 25,
-          highCount: 75,
+          count: 3,
+          highCount: 10,
+        ),
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.IRON_ORE,
+          weight: 1,
+          count: 1,
+          highCount: 2,
         ),
       ],
       bonusDrops: [
         DropRoll<ItemId>(
           chance: 0.05,
           entries: [
-            WeightedDropTableEntry<ItemId>(id: ItemId.PITCHFORK, weight: 1),
+            WeightedDropTableEntry<ItemId>(
+              id: ItemId.RARE_PITCHFORK,
+              weight: 1,
+            ),
           ],
         ),
       ],
@@ -628,9 +646,8 @@ enum EntityId {
       rarity: Rarity.RARE,
 
       entityType: SkillId.ATTACK,
-      defence: 10,
-      hitpoints: 50,
-      attack: 15,
+      level: 12,
+      combatType: CombatType.LEATHER_DPS,
       attackInterval: 2.0,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(
@@ -671,9 +688,8 @@ enum EntityId {
       rarity: Rarity.EPIC,
 
       entityType: SkillId.ATTACK,
-      defence: 12,
-      hitpoints: 120,
-      attack: 8,
+      level: 15,
+      combatType: CombatType.LEATHER_TANK,
       attackInterval: 2.5,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1, count: 100),
@@ -698,9 +714,8 @@ enum EntityId {
       rarity: Rarity.LEGENDARY,
 
       entityType: SkillId.ATTACK,
-      defence: 30,
-      hitpoints: 200,
-      attack: 14,
+      level: 28,
+      combatType: CombatType.LEATHER_TANK,
       attackInterval: 2.5,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.GOBLIN_CROWN, weight: 1),

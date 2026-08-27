@@ -65,6 +65,18 @@ const knownMissingArt = <String>{
   'assets/icons/items/mithril_axe.png',
   'assets/icons/items/mithril_pickaxe.png',
   'assets/icons/items/mithril_sickle.png',
+  // the minor potion tier: its reagents, the six potions, and the station
+  'assets/icons/items/scale.png',
+  'assets/icons/items/silk.png',
+  'assets/icons/items/claw.png',
+  'assets/icons/items/venom.png',
+  'assets/icons/items/minor_speed_potion.png',
+  'assets/icons/items/minor_defence_potion.png',
+  'assets/icons/items/minor_stamina_potion.png',
+  'assets/icons/items/minor_recovery_potion.png',
+  'assets/icons/items/minor_attack_potion.png',
+  'assets/icons/items/minor_strength_potion.png',
+  'assets/icons/alchemy_station.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
@@ -205,6 +217,31 @@ void main() {
           assetExists(asset),
           isFalse,
           reason: '$asset now exists — drop it from knownMissingArt',
+        );
+      }
+    });
+  });
+
+  group('combat stats', () {
+    test('every combat entity sits on the level curve', () {
+      for (final id in EntityId.values) {
+        final def = id.definition;
+        if (def is! CombatEntityDefinition) continue;
+        expect(
+          def.level,
+          greaterThanOrEqualTo(1),
+          reason: 'EntityId.${id.name} has a level below 1',
+        );
+        expect(
+          CombatType.levelOf(
+            attack: def.attack,
+            defence: def.defence,
+            hitpoints: def.hitpoints,
+          ),
+          def.level,
+          reason:
+              'EntityId.${id.name} stats (${def.attack}/${def.defence}/'
+              '${def.hitpoints}) do not read back as level ${def.level}',
         );
       }
     });
@@ -500,6 +537,31 @@ void main() {
       );
       expect(entry.copyWith(weight: 0.5).weight, 0.5);
       expect(entry.weight, 1);
+    });
+
+    test('quality defaults to common and survives copyWith', () {
+      // the default is the identity: a 1.0 multiplier and an empty label,
+      // so an item that ignores quality reads as it always did. asserted
+      // against a bare definition rather than the catalog, which is free to
+      // tag as many items as it likes
+      expect(
+        const ItemDefinition(name: 'x', value: 1).quality,
+        ItemQuality.COMMON,
+      );
+      expect(ItemQuality.COMMON.statMultiplier, 1.0);
+      expect(ItemQuality.COMMON.label, isEmpty);
+
+      // a declared quality has to survive a copyWith that is not about
+      // quality, or every variant silently drops back to common
+      final original =
+          ItemId.COPPER_HELMET.definition as EquipmentItemDefinition;
+      final epic = original.copyWith(quality: ItemQuality.EPIC);
+      expect(epic.quality, ItemQuality.EPIC);
+      expect(epic.copyWith(value: 999).quality, ItemQuality.EPIC);
+      expect(ItemId.COPPER_HELMET.definition.quality, ItemQuality.COMMON);
+
+      // and it has to reach the runtime item, or declaring it does nothing
+      expect((epic.toItem(ItemId.COPPER_HELMET)).quality, ItemQuality.EPIC);
     });
   });
 

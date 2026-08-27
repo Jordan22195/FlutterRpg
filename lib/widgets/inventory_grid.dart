@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/data/ObjectStack.dart';
 import 'item_stack_tile.dart';
 
@@ -15,6 +17,7 @@ class InventoryGrid extends StatelessWidget {
     this.titleForItem,
     this.descriptionForItem,
     this.shrinkWrap = false,
+    this.showActiveBuffTimers = false,
   });
 
   final List<ObjectStack> items;
@@ -37,8 +40,20 @@ class InventoryGrid extends StatelessWidget {
   final String Function(ObjectStack stack)? titleForItem;
   final String Function(ObjectStack stack)? descriptionForItem;
 
+  /// Counts down a potion you have active, in the corner of its own stack.
+  /// Off by default: most grids show loot and drops rather than what the
+  /// player is carrying, and a timer there would be answering a question
+  /// nobody asked of a pile of rewards.
+  final bool showActiveBuffTimers;
+
   @override
   Widget build(BuildContext context) {
+    // watched, not read: BuffController notifies on its own tick, which is
+    // what clears a timer from the grid the moment its buff runs out
+    final buffController = showActiveBuffTimers
+        ? context.watch<BuffController>()
+        : null;
+
     return GridView.builder(
       shrinkWrap: shrinkWrap,
       physics: shrinkWrap ? const NeverScrollableScrollPhysics() : null,
@@ -56,6 +71,9 @@ class InventoryGrid extends StatelessWidget {
           size: tileSize,
           id: stack.id,
           count: stack.count,
+          buffExpirationTime: buffController
+              ?.getGlobalBuff(stack.id)
+              ?.expirationTime,
           showInfoDialogOnTap: showInfoDialogOnTap && onItemTap == null,
           title: titleForItem?.call(stack) ?? stack.id.definition?.name,
           description:

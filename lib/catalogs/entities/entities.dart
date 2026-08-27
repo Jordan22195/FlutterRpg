@@ -12,6 +12,7 @@ export 'definition/fishing_entity_definition.dart';
 export 'definition/herb_entity_definition.dart';
 export 'definition/shop_entity_definition.dart';
 export 'definition/shop_stock_entry.dart';
+export 'combat_type.dart';
 export 'entity_id.dart';
 export 'rarity.dart';
 export 'model/combat_entity.dart';

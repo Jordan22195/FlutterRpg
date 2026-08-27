@@ -208,6 +208,7 @@ enum ZoneId {
         EntityId.ANVIL,
         EntityId.ENCHANTING_BENCH,
         EntityId.JEWELCRAFTING_BENCH,
+        EntityId.ALCHEMY_STATION,
         EntityId.DEEP_POND,
         EntityId.RIVER,
         EntityId.LAKE,

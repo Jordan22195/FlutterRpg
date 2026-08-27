@@ -4,6 +4,7 @@ library;
 
 export 'crafting_recipe.dart';
 export 'recipe_catalog.dart';
+export 'data/alchemy_recipes.dart';
 export 'data/blacksmithing_recipes.dart';
 export 'data/cooking_recipes.dart';
 export 'data/firemaking_recipes.dart';

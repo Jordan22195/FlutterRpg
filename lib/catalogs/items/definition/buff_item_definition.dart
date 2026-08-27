@@ -1,5 +1,6 @@
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
+import 'package:rpg/catalogs/items/item_quality.dart';
 import 'package:rpg/catalogs/items/model/buff_item.dart';
 import 'package:rpg/catalogs/items/definition/item_definition.dart';
 
@@ -14,6 +15,7 @@ class BuffItemDefinition extends ItemDefinition {
     required this.duration,
     super.description,
     super.iconAsset,
+    super.quality,
   });
 
   @override
@@ -23,6 +25,7 @@ class BuffItemDefinition extends ItemDefinition {
     String? description,
     String? iconAsset,
     int? xpValue,
+    ItemQuality? quality,
     Map<SkillId, int>? skillBonus,
     Duration? duration,
   }) {
@@ -31,6 +34,7 @@ class BuffItemDefinition extends ItemDefinition {
       value: value ?? this.value,
       description: description ?? this.description,
       iconAsset: iconAsset ?? this.iconAsset,
+      quality: quality ?? this.quality,
       skillBonus: skillBonus ?? this.skillBonus,
       duration: duration ?? this.duration,
     );

@@ -45,6 +45,7 @@ import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/services/exploration_service.dart';
 import 'package:rpg/systems/crafting_system.dart';
 import 'package:rpg/systems/firemaking_system.dart';
+import 'package:rpg/systems/potion_system.dart';
 import 'package:rpg/systems/encounter_system.dart';
 import 'package:rpg/systems/exploration_system.dart';
 import 'package:rpg/systems/equipment_system.dart';
@@ -431,6 +432,10 @@ class GameSessionFactory {
 
     // systems
     final firemakingSystem = FiremakingSystem(buffService: buffService);
+    final potionSystem = PotionSystem(
+      buffService: buffService,
+      inventoryService: inventoryService,
+    );
     final craftingSystem = CraftingSystem(
       playerState: save.playerData,
       inventoryData: save.inventoryData,
@@ -507,7 +512,9 @@ class GameSessionFactory {
     );
     final inventoryController = InventoryController(
       inventoryData: save.inventoryData,
+      buffState: save.playerData.buffData,
       inventoryService: inventoryService,
+      potionSystem: potionSystem,
     );
     final encounterController = EncounterController(
       playerData: save.playerData,
@@ -636,6 +643,12 @@ class GameSessionFactory {
     // firemaking changes the buff list as it crafts, so the buff row must
     // not wait for the next expiry tick to show it
     craftingController.addListener(buffController.refresh);
+    // drinking a potion does the same thing from the inventory side, and a
+    // buff row that lags a second behind the tap reads as a missed tap
+    inventoryController.addListener(buffController.refresh);
+    // a potion's stat bonus lands the moment it is drunk, so the skill
+    // readouts have to follow it too
+    inventoryController.addListener(playerDataController.refresh);
     enchantingController.addListener(playerDataController.refresh);
     dungeonController.addListener(playerDataController.refresh);
     equipmentController.addListener(playerDataController.refresh);
@@ -673,6 +686,7 @@ class GameSessionFactory {
       shopService: shopService,
       craftingSystem: craftingSystem,
       firemakingSystem: firemakingSystem,
+      potionSystem: potionSystem,
       encounterSystem: encounterSystem,
       explorationSystem: explorationSystem,
       equipmentSystem: equipmentSystem,
@@ -723,6 +737,7 @@ class GameSession {
   // systems
   CraftingSystem craftingSystem;
   FiremakingSystem firemakingSystem;
+  PotionSystem potionSystem;
   EncounterSystem encounterSystem;
   ExplorationSystem explorationSystem;
   EquipmentSystem equipmentSystem;
@@ -767,6 +782,7 @@ class GameSession {
     // systems
     required this.craftingSystem,
     required this.firemakingSystem,
+    required this.potionSystem,
     required this.encounterSystem,
     required this.explorationSystem,
     required this.equipmentSystem,

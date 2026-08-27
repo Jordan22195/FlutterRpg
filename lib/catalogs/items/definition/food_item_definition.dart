@@ -1,5 +1,6 @@
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
+import 'package:rpg/catalogs/items/item_quality.dart';
 import 'package:rpg/catalogs/items/model/item.dart';
 import 'package:rpg/catalogs/items/definition/item_definition.dart';
 
@@ -14,6 +15,7 @@ class FoodItemDefinition extends ItemDefinition {
     this.restoreSkill = SkillId.HITPOINTS,
     super.description,
     super.iconAsset,
+    super.quality,
     super.xpValue,
   });
 
@@ -24,6 +26,7 @@ class FoodItemDefinition extends ItemDefinition {
     String? description,
     String? iconAsset,
     int? xpValue,
+    ItemQuality? quality,
     int? restoreAmount,
     SkillId? restoreSkill,
   }) {
@@ -32,6 +35,7 @@ class FoodItemDefinition extends ItemDefinition {
       value: value ?? this.value,
       description: description ?? this.description,
       iconAsset: iconAsset ?? this.iconAsset,
+      quality: quality ?? this.quality,
       xpValue: xpValue ?? this.xpValue,
       restoreAmount: restoreAmount ?? this.restoreAmount,
       restoreSkill: restoreSkill ?? this.restoreSkill,

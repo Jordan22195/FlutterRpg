@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
+import 'package:rpg/widgets/repeat_press_button.dart';
 import '../utilities/image_resolver.dart';
 import '../data/skill_data.dart';
 import '../utilities/util.dart';
@@ -56,6 +58,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     this.description,
     this.isTimerStackTile = false,
     this.expirationTime,
+    this.buffExpirationTime,
     this.borderColor,
     this.depleted = false,
     this.alwaysShowCount = false,
@@ -70,6 +73,15 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   final int count;
   final DateTime? expirationTime;
   final bool isTimerStackTile;
+
+  /// When this item's own buff is running, when it runs out. Puts a
+  /// countdown in the bottom-left corner, opposite the count badge, so a
+  /// potion you have active reads as active from the inventory grid.
+  ///
+  /// Distinct from [expirationTime], which replaces the count badge outright
+  /// ([isTimerStackTile]) for a tile that *is* a timer — an active buff in
+  /// the buff row. This one sits alongside the count.
+  final DateTime? buffExpirationTime;
 
   final VoidCallback? onTap;
 
@@ -102,97 +114,173 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     if (currentId is! ItemId) return;
     final itemDef = currentId.definition;
     final inventoryController = context.read<InventoryController>();
+    final buffController = context.read<BuffController>();
     final devCountController = TextEditingController(
       text: '${inventoryController.getItemCount(currentId)}',
     );
+    // read through the controllers rather than the providers: the dialog
+    // sits on its own route, and holding Drink has to rebuild it in place
+    // as the stack drains and the buff climbs
     showDialog<void>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(itemDef.name),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              IconRenderer(size: size * 2, id: id as ItemId),
-              Text(itemDef.description ?? "No description available."),
-              Row(
-                children: [
-                  IconRenderer(size: 40, id: ItemId.COINS),
-                  Text("${itemDef.value}"),
-                ],
-              ),
-              if (itemDef is BuffItemDefinition)
-                Row(
-                  children: [
-                    Icon(Icons.timer),
-                    Text("${itemDef.duration.inSeconds}s"),
-                  ],
-                ),
-              if (itemDef is EquipmentItemDefinition)
-                Text("Slot: ${itemDef.armorSlot}"),
-              if (itemDef is EquipmentItemDefinition)
-                for (var stat in itemDef.skillBonus.entries)
-                  Row(
-                    children: [
-                      IconRenderer(size: 40, id: stat.key),
-                      Text("${stat.value}"),
-                    ],
-                  ),
+      builder: (dialogContext) => ListenableBuilder(
+        listenable: Listenable.merge([inventoryController, buffController]),
+        builder: (context, _) => _buildInfoDialog(
+          dialogContext,
+          currentId,
+          itemDef,
+          inventoryController,
+          buffController,
+          devCountController,
+        ),
+      ),
+    );
+  }
 
-              if (itemDef is BuffItemDefinition)
-                for (var stat in itemDef.skillBonus.entries)
-                  Row(
-                    children: [
-                      IconRenderer(size: 40, id: stat.key),
-                      Text("${stat.value}"),
-                    ],
-                  ),
-              if (itemDef is FoodItemDefinition)
-                Row(
-                  children: [
-                    IconRenderer(size: 40, id: SkillId.HITPOINTS),
-                    Text("+${itemDef.restoreAmount}"),
-                  ],
-                ),
-
-              // dev tool: force the player-inventory stack count
-              const SizedBox(height: 12),
-              Row(
+  Widget _buildInfoDialog(
+    BuildContext dialogContext,
+    ItemId currentId,
+    ItemDefinition itemDef,
+    InventoryController inventoryController,
+    BuffController buffController,
+    TextEditingController devCountController,
+  ) {
+    // what the player is holding, which is not the tile's own [count]: that
+    // is whatever the screen is quantifying — a recipe's inputs, a shop's
+    // stock — so a potion you do not own must not offer a drink just
+    // because a recipe listed it, and the dialog's badge must not claim you
+    // have one because a recipe asked for one
+    final held = inventoryController.getItemCount(currentId);
+    final canDrink = inventoryController.isDrinkable(currentId) && held > 0;
+    // what this potion is putting up right now, if anything — drinking
+    // extends it, so this is what climbs while the button is held
+    final activeBuff = inventoryController.isDrinkable(currentId)
+        ? buffController.getGlobalBuff(currentId)
+        : null;
+    return AlertDialog(
+      title: Text(itemDef.name),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // the same badge the tiles wear, on the big icon: how many you
+            // are holding is the thing the dialog is most often opened to
+            // check, and it has to follow a drink down
+            SizedBox(
+              width: size * 2,
+              height: size * 2,
+              child: Stack(
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: devCountController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        labelText: 'Dev: stack count',
-                        border: OutlineInputBorder(),
-                      ),
+                  Positioned.fill(
+                    child: IconRenderer(size: size * 2, id: currentId),
+                  ),
+                  Positioned(
+                    right: 4,
+                    bottom: 4,
+                    child: _CountBadge(
+                      count: held,
+                      alwaysShow: true,
+                      compact: false,
+                      tileSize: size * 2,
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {
-                      final count = int.tryParse(devCountController.text);
-                      if (count != null) {
-                        inventoryController.devSetItemCount(currentId, count);
-                      }
-                      Navigator.of(dialogContext).pop();
-                    },
-                    child: const Text('Set'),
-                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+            Text(itemDef.description ?? "No description available."),
+            Row(
+              children: [
+                IconRenderer(size: 40, id: ItemId.COINS),
+                Text("${itemDef.value}"),
+              ],
+            ),
+            if (itemDef is BuffItemDefinition)
+              Row(
+                children: [
+                  Icon(Icons.timer),
+                  Text("${itemDef.duration.inSeconds}s"),
+                  // what is actually on the clock, next to what one dose
+                  // is worth. drinking extends rather than restarts, so
+                  // this is the number that grows as the button is held.
+                  if (activeBuff != null) ...[
+                    const SizedBox(width: 16),
+                    CountdownTimer(expirationTime: activeBuff.expirationTime),
+                    const Text(" left"),
+                  ],
+                ],
+              ),
+            if (itemDef is EquipmentItemDefinition)
+              Text("Slot: ${itemDef.armorSlot}"),
+            if (itemDef is EquipmentItemDefinition)
+              for (var stat in itemDef.skillBonus.entries)
+                Row(
+                  children: [
+                    IconRenderer(size: 40, id: stat.key),
+                    Text("${stat.value}"),
+                  ],
+                ),
+
+            if (itemDef is BuffItemDefinition)
+              for (var stat in itemDef.skillBonus.entries)
+                Row(
+                  children: [
+                    IconRenderer(size: 40, id: stat.key),
+                    Text("${stat.value}"),
+                  ],
+                ),
+            if (itemDef is FoodItemDefinition)
+              Row(
+                children: [
+                  IconRenderer(size: 40, id: SkillId.HITPOINTS),
+                  Text("+${itemDef.restoreAmount}"),
+                ],
+              ),
+
+            // dev tool: force the player-inventory stack count
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: devCountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      labelText: 'Dev: stack count',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final count = int.tryParse(devCountController.text);
+                    if (count != null) {
+                      inventoryController.devSetItemCount(currentId, count);
+                    }
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('Set'),
+                ),
+              ],
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Close'),
-          ),
-        ],
       ),
+      actions: [
+        // stays open on a drink, and holding it drinks the stack down —
+        // drinkPotion is a no-op once the last one is gone, which is what
+        // RepeatPressButton's repeat relies on
+        if (canDrink)
+          RepeatPressButton(
+            label: 'Drink',
+            onPressed: () => inventoryController.drinkPotion(currentId),
+          ),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Close'),
+        ),
+      ],
     );
   }
 
@@ -279,6 +367,19 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
                 tileSize: size,
               ),
             ),
+
+          // this item's own buff, ticking down in the corner opposite the
+          // count. no clock icon: the two corners share one tile's width,
+          // and the count is the one that must never be crowded out
+          if (buffExpirationTime != null)
+            Positioned(
+              left: 4,
+              bottom: 4,
+              child: _BuffTimerBadge(
+                expirationTime: buffExpirationTime!,
+                tileSize: size,
+              ),
+            ),
         ],
       ),
     );
@@ -289,6 +390,46 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
           onTap ??
           (showInfoDialogOnTap ? () => _showInfoDialog(context) : null),
       child: child,
+    );
+  }
+}
+
+/// The time left on this item's own buff, worn in the tile's bottom-left
+/// corner. Shaped like [_CountBadge] so the two corners read as a pair, and
+/// tinted so an active potion stands out from the plain count opposite it.
+class _BuffTimerBadge extends StatelessWidget {
+  const _BuffTimerBadge({required this.expirationTime, required this.tileSize});
+
+  final DateTime expirationTime;
+
+  /// The tile this badge sits on. Matches [_CountBadge]'s scaling so the
+  /// two corners stay the same size as each other on every tile.
+  final double tileSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fontSize = (tileSize * 0.16).clamp(7.0, 28.0);
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: fontSize * 0.45,
+        vertical: fontSize * 0.11,
+      ),
+      decoration: BoxDecoration(
+        color: scheme.primary.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(fontSize * 0.9),
+      ),
+      child: DefaultTextStyle(
+        style: TextStyle(color: scheme.onPrimary, fontWeight: FontWeight.w700),
+        // CountdownTimer sizes its text at 0.8 of what it is given, and it
+        // ticks itself, so the corner stays live without the tile rebuilding
+        child: CountdownTimer(
+          expirationTime: expirationTime,
+          size: fontSize / 0.8,
+          showIcon: false,
+        ),
+      ),
     );
   }
 }

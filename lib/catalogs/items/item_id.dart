@@ -53,13 +53,6 @@ enum ItemId {
       iconAsset: "assets/icons/items/cow_hide.png",
     ),
   ),
-  FEATHER(
-    ItemDefinition(
-      name: "Feather",
-      value: 1,
-      iconAsset: "assets/icons/items/feather.png",
-    ),
-  ),
 
   // ── LOGS ────────────────────────────────────────────────────────
   // tier ascending
@@ -350,13 +343,113 @@ enum ItemId {
   ),
 
   // ── ALCHEMY REAGENTS ────────────────────────────────────────────
-  // Herb -> reagent intermediates (clean herbs, vials, water), alchemy
-  // level ascending. SkillId.ALCHEMY exists and herbalism already feeds
-  // it; nothing is defined here yet.
+  // What a herb is brewed *with*, alchemy level ascending. A herb sets
+  // what a potion is; the reagent it is paired with sets which stat the
+  // potion moves. Iron ore doubles as one and stays in ORES.
+  FEATHER(
+    ItemDefinition(
+      name: "Feather",
+      value: 1,
+      iconAsset: "assets/icons/items/feather.png",
+    ),
+  ),
+  SCALE(
+    ItemDefinition(
+      name: "Scale",
+      value: 4,
+      iconAsset: "assets/icons/items/scale.png",
+    ),
+  ),
+  SILK(
+    ItemDefinition(
+      name: "Silk",
+      value: 8,
+      iconAsset: "assets/icons/items/silk.png",
+    ),
+  ),
+  CLAW(
+    ItemDefinition(
+      name: "Claw",
+      value: 6,
+      iconAsset: "assets/icons/items/claw.png",
+    ),
+  ),
+  VENOM(
+    ItemDefinition(
+      name: "Venom",
+      value: 10,
+      iconAsset: "assets/icons/items/venom.png",
+    ),
+  ),
 
   // ── POTIONS ─────────────────────────────────────────────────────
   // BuffItemDefinition, alchemy level ascending. A restore-type potion is
-  // a FoodItemDefinition with restoreSkill set. Nothing here yet.
+  // a FoodItemDefinition with restoreSkill set.
+  //
+  // The minor tier is the whole of alchemy so far: one guam leaf and one
+  // reagent for +1 to a single stat for a minute. Drinking one is
+  // PotionSystem's job — the buff is global, so it travels with the
+  // player rather than sitting in a zone the way a fire does.
+  MINOR_SPEED_POTION(
+    BuffItemDefinition(
+      name: "Minor Speed Potion",
+      value: 12,
+      description: "Guam steeped with a feather. Acts a shade faster.",
+      skillBonus: {SkillId.SPEED: 1},
+      duration: Duration(minutes: 1),
+      iconAsset: "assets/icons/items/minor_speed_potion.png",
+    ),
+  ),
+  MINOR_DEFENCE_POTION(
+    BuffItemDefinition(
+      name: "Minor Defence Potion",
+      value: 18,
+      description: "Guam ground with iron. Turns a little more aside.",
+      skillBonus: {SkillId.DEFENCE: 1},
+      duration: Duration(minutes: 1),
+      iconAsset: "assets/icons/items/minor_defence_potion.png",
+    ),
+  ),
+  MINOR_STAMINA_POTION(
+    BuffItemDefinition(
+      name: "Minor Stamina Potion",
+      value: 25,
+      description: "Guam and a ground scale. Holds a little more wind.",
+      skillBonus: {SkillId.STAMINA: 1},
+      duration: Duration(minutes: 1),
+      iconAsset: "assets/icons/items/minor_stamina_potion.png",
+    ),
+  ),
+  MINOR_RECOVERY_POTION(
+    BuffItemDefinition(
+      name: "Minor Recovery Potion",
+      value: 30,
+      description: "Guam strained through silk. Gets the wind back sooner.",
+      skillBonus: {SkillId.RECOVERY: 1},
+      duration: Duration(minutes: 1),
+      iconAsset: "assets/icons/items/minor_recovery_potion.png",
+    ),
+  ),
+  MINOR_ATTACK_POTION(
+    BuffItemDefinition(
+      name: "Minor Attack Potion",
+      value: 40,
+      description: "Guam cut with venom. Lands a little more often.",
+      skillBonus: {SkillId.ATTACK: 1},
+      duration: Duration(minutes: 1),
+      iconAsset: "assets/icons/items/minor_attack_potion.png",
+    ),
+  ),
+  MINOR_STRENGTH_POTION(
+    BuffItemDefinition(
+      name: "Minor Strength Potion",
+      value: 45,
+      description: "Guam and a powdered claw. Hits a little harder.",
+      skillBonus: {SkillId.STRENGTH: 1},
+      duration: Duration(minutes: 1),
+      iconAsset: "assets/icons/items/minor_strength_potion.png",
+    ),
+  ),
 
   // ── RAW FOOD · MEAT ─────────────────────────────────────────────
   // level ascending
@@ -1336,6 +1429,17 @@ enum ItemId {
       name: "Pitchfork",
       value: 30,
       skillBonus: {SkillId.ATTACK: 5},
+      actionInterval: SlowAttackSpeed,
+      iconAsset: "assets/icons/items/pitchfork.png",
+    ),
+  ),
+  RARE_PITCHFORK(
+    WeaponItemDefinition(
+      armorSlot: ArmorSlots.WEAPON_2H,
+      name: "Pitchfork",
+      value: 30,
+      skillBonus: {SkillId.ATTACK: 7},
+      quality: ItemQuality.RARE,
       actionInterval: SlowAttackSpeed,
       iconAsset: "assets/icons/items/pitchfork.png",
     ),

@@ -1,6 +1,7 @@
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
+import 'package:rpg/catalogs/items/item_quality.dart';
 import 'package:rpg/catalogs/items/model/weapon_item.dart';
 import 'package:rpg/catalogs/items/definition/equipment_item_definition.dart';
 
@@ -15,6 +16,7 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
     required this.actionInterval,
     super.description,
     super.iconAsset,
+    super.quality,
   });
 
   @override
@@ -24,6 +26,7 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
     String? description,
     String? iconAsset,
     int? xpValue,
+    ItemQuality? quality,
     ArmorSlots? armorSlot,
     Map<SkillId, int>? skillBonus,
     Duration? actionInterval,
@@ -33,6 +36,7 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
       value: value ?? this.value,
       description: description ?? this.description,
       iconAsset: iconAsset ?? this.iconAsset,
+      quality: quality ?? this.quality,
       armorSlot: armorSlot ?? this.armorSlot,
       skillBonus: skillBonus ?? this.skillBonus,
       actionInterval: actionInterval ?? this.actionInterval,
@@ -47,5 +51,6 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
     armorSlot: armorSlot,
     skillBonus: Map.of(skillBonus),
     actionInterval: actionInterval,
+    quality: quality,
   );
 }

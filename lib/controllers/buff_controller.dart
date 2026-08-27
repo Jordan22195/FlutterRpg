@@ -60,6 +60,13 @@ class BuffController extends ChangeNotifier {
     return _buffService.getGlobalBuffs(_playerState.buffData);
   }
 
+  /// The global buff [itemId] is putting up right now, or null when it is
+  /// not running — what a potion's own tile reads to show how long is left
+  /// on it.
+  BuffItem? getGlobalBuff(ItemId itemId) {
+    return _buffService.getGlobalBuff(_playerState.buffData, itemId);
+  }
+
   List<ZoneBuffItem> getCurrentZoneBuffs() {
     return _buffService.getZoneBuffs(
       _playerState.buffData,

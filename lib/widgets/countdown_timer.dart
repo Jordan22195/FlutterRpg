@@ -6,11 +6,21 @@ import 'package:flutter/material.dart';
 /// This widget manages its own 1Hz tick so it can update the display without
 /// requiring a Provider above it.
 class CountdownTimer extends StatefulWidget {
-  CountdownTimer({super.key, required this.expirationTime, this.size = 16});
+  CountdownTimer({
+    super.key,
+    required this.expirationTime,
+    this.size = 16,
+    this.showIcon = true,
+  });
 
   /// The time at which the countdown ends.
   final DateTime expirationTime;
   double size;
+
+  /// Drop the clock icon and show the remaining time alone. For corners too
+  /// narrow to spare the width — an item tile has a count badge in the
+  /// other one, and the two must not run into each other.
+  final bool showIcon;
 
   @override
   State<CountdownTimer> createState() => _CountdownTimerState();
@@ -54,8 +64,10 @@ class _CountdownTimerState extends State<CountdownTimer> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.schedule, size: size),
-        SizedBox(width: 6),
+        if (widget.showIcon) ...[
+          Icon(Icons.schedule, size: size),
+          SizedBox(width: 6),
+        ],
         Text(remainingText, style: TextStyle(fontSize: size * 0.8)),
       ],
     );

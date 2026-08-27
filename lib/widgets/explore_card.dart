@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
+import 'package:rpg/widgets/stat_chip.dart';
 import '../data/skill_data.dart';
 import 'countdown_timer.dart';
 
@@ -43,6 +44,7 @@ class ObjectCard<T extends Enum> extends StatefulWidget {
     this.height = 64,
     this.expirationTime,
     this.subtitle,
+    this.statLevel,
     this.xpPerUnit,
     this.isStructure = false,
     this.locked = false,
@@ -75,6 +77,12 @@ class ObjectCard<T extends Enum> extends StatefulWidget {
 
   /// Overrides the default subtitle (skill name), e.g. "Shop" / "Dungeon".
   final String? subtitle;
+
+  /// How hard the entity is, shown as a chip beside its skill icon in
+  /// place of the skill's name: a combat entity's level, a gathering
+  /// node's defence. Null for structures, which have no such number and
+  /// keep the plain skill label.
+  final int? statLevel;
 
   /// Estimated xp for consuming one count. Non-null shows the trailing
   /// xp column (total stack xp + per-action rate).
@@ -174,6 +182,32 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
     final skills = types
         .where((t) => t is SkillId && t != SkillId.NULL)
         .toList();
+
+    // an entity with a difficulty says how hard it is rather than what it
+    // is called — the icon already names the skill
+    final level = widget.statLevel;
+    if (level != null && skills.isNotEmpty) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final skill in skills) ...[
+            StatChip(
+              icon: IconRenderer(size: 16, id: skill),
+              value: '$level',
+            ),
+            const SizedBox(width: 6),
+          ],
+          if (widget.subtitle != null)
+            Flexible(
+              child: Text(
+                widget.subtitle!,
+                style: style,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+        ],
+      );
+    }
 
     return Row(
       mainAxisSize: MainAxisSize.min,
