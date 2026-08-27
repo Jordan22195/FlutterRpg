@@ -2,8 +2,26 @@ import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rpg/catalogs/json_codec.dart';
-import 'package:rpg/catalogs/items/item_quality.dart';
+import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/items/model/item.dart';
+
+/// How much each rarity scales a piece of equipment's base stats.
+///
+/// Equipment is the only thing that reads a multiplier off the ladder — an
+/// entity's rarity is cosmetic — so it lives here rather than on [Rarity]
+/// itself. Every rarity has an entry; [statMultiplierFor] is the way to
+/// read it, so a tier added to the enum without one falls back to 1.0
+/// instead of throwing.
+const Map<Rarity, double> rarityStatMultiplier = {
+  Rarity.COMMON: 1.0,
+  Rarity.UNCOMMON: 1.1,
+  Rarity.RARE: 1.2,
+  Rarity.EPIC: 1.3,
+  Rarity.LEGENDARY: 1.5,
+};
+
+/// The stat multiplier for [rarity], defaulting to the identity.
+double statMultiplierFor(Rarity rarity) => rarityStatMultiplier[rarity] ?? 1.0;
 
 class EquipmentItem extends Item {
   final ArmorSlots armorSlot;
@@ -14,8 +32,6 @@ class EquipmentItem extends Item {
   /// Unique per instance so individual pieces of equipment can be
   /// tracked, equipped, and enchanted independently.
   String instanceId;
-
-  ItemQuality quality;
 
   /// Enchant suffix, e.g. "Boar" -> "... of the Boar". Empty when the
   /// item is not enchanted. Only equipment (armor/weapons) can carry one.
@@ -28,7 +44,7 @@ class EquipmentItem extends Item {
     required super.value,
     required this.armorSlot,
     required this.skillBonus,
-    this.quality = ItemQuality.COMMON,
+    super.quality = Rarity.COMMON,
     this.enchantName = '',
     Map<SkillId, int>? enchantBonus,
   }) : enchantBonus = enchantBonus ?? {},
@@ -38,7 +54,7 @@ class EquipmentItem extends Item {
   Map<SkillId, int> get effectiveSkillBonus {
     final result = <SkillId, int>{};
     for (final entry in skillBonus.entries) {
-      result[entry.key] = (entry.value * quality.statMultiplier).round();
+      result[entry.key] = (entry.value * statMultiplierFor(quality)).round();
     }
     for (final entry in enchantBonus.entries) {
       result[entry.key] = (result[entry.key] ?? 0) + entry.value;
@@ -121,7 +137,7 @@ class EquipmentItem extends Item {
     final rawQuality = json['quality'];
     if (rawQuality is String) {
       quality =
-          ItemQuality.values.asNameMap()[rawQuality] ?? ItemQuality.COMMON;
+          Rarity.values.asNameMap()[rawQuality] ?? Rarity.COMMON;
     }
     final rawEnchantName = json['enchantName'];
     if (rawEnchantName is String) {

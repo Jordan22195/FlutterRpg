@@ -1,6 +1,6 @@
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/entities/entity_id.dart';
-import 'package:rpg/catalogs/entities/rarity.dart';
+import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/entities/model/crafting_entity.dart';
 import 'package:rpg/catalogs/entities/definition/entity_definition.dart';
 

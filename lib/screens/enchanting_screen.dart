@@ -266,7 +266,7 @@ class EnchantingScreen extends StatelessWidget {
                                     count: item.count,
                                     id: item.id,
                                     showInfoDialogOnTap: false,
-                                    borderColor: qualityBorderColor(
+                                    borderColor: rarityBorderColor(
                                       item.quality,
                                     ),
                                     onTap: () =>

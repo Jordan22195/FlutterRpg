@@ -8,7 +8,7 @@ import 'item_stack_tile.dart';
 /// Info dialog for a unique equipment instance: display name, quality,
 /// effective stats (quality-scaled + enchant), and weapon speed.
 void showEquipmentInfoDialog(BuildContext context, EquipmentItem item) {
-  final qualityColor = qualityBorderColor(item.quality);
+  final qualityColor = rarityBorderColor(item.quality);
   final stats = item.effectiveSkillBonus;
   final currentItem = item;
   final Duration? attackInterval = currentItem is WeaponItem

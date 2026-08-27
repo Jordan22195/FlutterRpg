@@ -1,7 +1,7 @@
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
-import 'package:rpg/catalogs/items/item_quality.dart';
+import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/items/model/weapon_item.dart';
 import 'package:rpg/catalogs/items/definition/equipment_item_definition.dart';
 
@@ -26,7 +26,7 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
     String? description,
     String? iconAsset,
     int? xpValue,
-    ItemQuality? quality,
+    Rarity? quality,
     ArmorSlots? armorSlot,
     Map<SkillId, int>? skillBonus,
     Duration? actionInterval,

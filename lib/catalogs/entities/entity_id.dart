@@ -6,6 +6,7 @@ import 'package:rpg/catalogs/dungeons/dungeon_id.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:flutter/widgets.dart';
+import 'package:rpg/catalogs/rarity.dart';
 
 // ignore_for_file: constant_identifier_names
 
@@ -471,7 +472,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/cow.png",
 
       entityType: SkillId.ATTACK,
-      level: 4,
+      level: 5,
       combatType: CombatType.PLATE_DPS,
       attackInterval: 2.0,
       itemDrops: [
@@ -487,7 +488,7 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.ATTACK,
-      level: 8,
+      level: 13,
       combatType: CombatType.BALANCE,
       attackInterval: 1.5,
       itemDrops: [
@@ -524,7 +525,7 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.ATTACK,
-      level: 6,
+      level: 8,
       combatType: CombatType.LEATHER_DPS,
       attackInterval: 2.0,
       itemDrops: [
@@ -603,7 +604,7 @@ enum EntityId {
       rarity: Rarity.RARE,
 
       entityType: SkillId.ATTACK,
-      level: 12,
+      level: 13,
       combatType: CombatType.LEATHER_TANK,
       attackInterval: 2.5,
       itemDrops: [
@@ -628,7 +629,7 @@ enum EntityId {
       ],
       bonusDrops: [
         DropRoll<ItemId>(
-          chance: 0.05,
+          chance: 0.50,
           entries: [
             WeightedDropTableEntry<ItemId>(
               id: ItemId.RARE_PITCHFORK,
@@ -646,7 +647,7 @@ enum EntityId {
       rarity: Rarity.RARE,
 
       entityType: SkillId.ATTACK,
-      level: 12,
+      level: 21,
       combatType: CombatType.LEATHER_DPS,
       attackInterval: 2.0,
       itemDrops: [
@@ -688,7 +689,7 @@ enum EntityId {
       rarity: Rarity.EPIC,
 
       entityType: SkillId.ATTACK,
-      level: 15,
+      level: 55,
       combatType: CombatType.LEATHER_TANK,
       attackInterval: 2.5,
       itemDrops: [
@@ -714,7 +715,7 @@ enum EntityId {
       rarity: Rarity.LEGENDARY,
 
       entityType: SkillId.ATTACK,
-      level: 28,
+      level: 233,
       combatType: CombatType.LEATHER_TANK,
       attackInterval: 2.5,
       itemDrops: [

@@ -546,22 +546,22 @@ void main() {
       // tag as many items as it likes
       expect(
         const ItemDefinition(name: 'x', value: 1).quality,
-        ItemQuality.COMMON,
+        Rarity.COMMON,
       );
-      expect(ItemQuality.COMMON.statMultiplier, 1.0);
-      expect(ItemQuality.COMMON.label, isEmpty);
+      expect(statMultiplierFor(Rarity.COMMON), 1.0);
+      expect(Rarity.COMMON.label, isEmpty);
 
       // a declared quality has to survive a copyWith that is not about
       // quality, or every variant silently drops back to common
       final original =
           ItemId.COPPER_HELMET.definition as EquipmentItemDefinition;
-      final epic = original.copyWith(quality: ItemQuality.EPIC);
-      expect(epic.quality, ItemQuality.EPIC);
-      expect(epic.copyWith(value: 999).quality, ItemQuality.EPIC);
-      expect(ItemId.COPPER_HELMET.definition.quality, ItemQuality.COMMON);
+      final epic = original.copyWith(quality: Rarity.EPIC);
+      expect(epic.quality, Rarity.EPIC);
+      expect(epic.copyWith(value: 999).quality, Rarity.EPIC);
+      expect(ItemId.COPPER_HELMET.definition.quality, Rarity.COMMON);
 
       // and it has to reach the runtime item, or declaring it does nothing
-      expect((epic.toItem(ItemId.COPPER_HELMET)).quality, ItemQuality.EPIC);
+      expect((epic.toItem(ItemId.COPPER_HELMET)).quality, Rarity.EPIC);
     });
   });
 

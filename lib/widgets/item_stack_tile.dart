@@ -11,8 +11,10 @@ import '../data/skill_data.dart';
 import '../utilities/util.dart';
 import '../widgets/countdown_timer.dart';
 
-/// Border color used to signal an entity's rarity. Common has no special
-/// color (falls back to the theme outline).
+/// Border color used to signal rarity — an entity's, or the tier a piece of
+/// equipment rolled, which are one ladder. A rare vein and a rare sword are
+/// framed in the same blue. Common has no special color (falls back to the
+/// theme outline).
 Color? rarityBorderColor(Rarity rarity) {
   switch (rarity) {
     case Rarity.COMMON:
@@ -25,24 +27,6 @@ Color? rarityBorderColor(Rarity rarity) {
       return Colors.purple;
     case Rarity.LEGENDARY:
       return Colors.orange;
-  }
-}
-
-/// Border color used to signal an equipment item's quality tier. Quality
-/// and rarity are the same ladder wearing two names, so a rare vein and a
-/// rare sword are framed in the same blue.
-Color? qualityBorderColor(ItemQuality quality) {
-  switch (quality) {
-    case ItemQuality.COMMON:
-      return rarityBorderColor(Rarity.COMMON);
-    case ItemQuality.UNCOMMON:
-      return rarityBorderColor(Rarity.UNCOMMON);
-    case ItemQuality.RARE:
-      return rarityBorderColor(Rarity.RARE);
-    case ItemQuality.EPIC:
-      return rarityBorderColor(Rarity.EPIC);
-    case ItemQuality.LEGENDARY:
-      return rarityBorderColor(Rarity.LEGENDARY);
   }
 }
 
@@ -60,12 +44,18 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     this.expirationTime,
     this.buffExpirationTime,
     this.borderColor,
+    this.quality = Rarity.COMMON,
     this.depleted = false,
     this.alwaysShowCount = false,
     this.compactCount = true,
   });
 
   final double size;
+
+  /// The rarity this tile's contents are, which frames the tile when no
+  /// [borderColor] overrides it. Equipment passes the tier it rolled; an
+  /// entity tile leaves it alone and is framed by its own rarity instead.
+  final Rarity quality;
 
   /// The enum id for this stack (e.g., Items.copperOre, Skills.blacksmithing, etc.)
   final T? id;
@@ -293,12 +283,16 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
 
   /// An entity frames itself: its rarity is a property of the entity, not
   /// of the screen showing it, so every tile in the game picks the color
-  /// up without its caller having to know about rarity at all.
+  /// up without its caller having to know about rarity at all. Anything
+  /// else is framed by the [quality] it was handed, unless [borderColor]
+  /// overrides the lot to say something that is not about rarity.
   Color? get _effectiveBorderColor {
     if (borderColor != null) return borderColor;
     final currentId = id;
-    if (currentId is! EntityId) return null;
-    return rarityBorderColor(currentId.definition.rarity);
+    if (currentId is EntityId) {
+      return rarityBorderColor(currentId.definition.rarity);
+    }
+    return rarityBorderColor(quality);
   }
 
   @override

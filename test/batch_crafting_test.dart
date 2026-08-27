@@ -146,14 +146,14 @@ void main() {
       expect(total(result.equipment), 100);
       expect(
         save.inventoryData.equipment.length,
-        lessThanOrEqualTo(ItemQuality.values.length),
+        lessThanOrEqualTo(Rarity.values.length),
       );
       // ~30% of pieces are above common at this level, so a batch of 100
       // virtually guarantees a spread rather than one flat stack
       expect(
         total(
           save.inventoryData.equipment.where(
-            (e) => e.quality != ItemQuality.COMMON,
+            (e) => e.quality != Rarity.COMMON,
           ),
         ),
         greaterThan(0),

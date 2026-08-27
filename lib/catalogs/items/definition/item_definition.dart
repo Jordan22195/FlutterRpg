@@ -1,5 +1,5 @@
 import 'package:rpg/catalogs/items/item_id.dart';
-import 'package:rpg/catalogs/items/item_quality.dart';
+import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/items/model/item.dart';
 
 class ItemDefinition {
@@ -22,14 +22,14 @@ class ItemDefinition {
   /// player's skill and writes it onto the runtime [EquipmentItem]. This is
   /// for the other case — an item that is a particular quality by
   /// definition, such as a fixed reward or a named drop.
-  final ItemQuality quality;
+  final Rarity quality;
 
   const ItemDefinition({
     required this.name,
     required this.value,
     this.description,
     this.iconAsset,
-    this.quality = ItemQuality.COMMON,
+    this.quality = Rarity.COMMON,
     int? xpValue,
   }) : xpValue = xpValue ?? 0;
 
@@ -44,7 +44,7 @@ class ItemDefinition {
     String? description,
     String? iconAsset,
     int? xpValue,
-    ItemQuality? quality,
+    Rarity? quality,
   }) {
     return ItemDefinition(
       name: name ?? this.name,
@@ -56,5 +56,6 @@ class ItemDefinition {
     );
   }
 
-  Item toItem(ItemId id) => Item(id: id, name: name, value: value);
+  Item toItem(ItemId id) =>
+      Item(id: id, name: name, value: value, quality: quality);
 }

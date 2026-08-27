@@ -152,7 +152,7 @@ class ShopScreen extends StatelessWidget {
                         count: item.count,
                         id: item.id,
                         showInfoDialogOnTap: false,
-                        borderColor: qualityBorderColor(item.quality),
+                        quality: item.quality,
                       ),
                       name: item.name,
                       buttonLabel: "Sell ${item.value}c",

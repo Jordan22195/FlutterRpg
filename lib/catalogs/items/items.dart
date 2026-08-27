@@ -4,7 +4,7 @@ library;
 
 export 'attack_speed.dart';
 export 'item_id.dart';
-export 'item_quality.dart';
+export '../rarity.dart';
 export 'definition/buff_item_definition.dart';
 export 'definition/equipment_item_definition.dart';
 export 'definition/fire_item_definition.dart';

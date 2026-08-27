@@ -1439,7 +1439,7 @@ enum ItemId {
       name: "Pitchfork",
       value: 30,
       skillBonus: {SkillId.ATTACK: 7},
-      quality: ItemQuality.RARE,
+      quality: Rarity.RARE,
       actionInterval: SlowAttackSpeed,
       iconAsset: "assets/icons/items/pitchfork.png",
     ),

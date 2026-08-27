@@ -45,16 +45,16 @@ void main() {
     final save = factory.newGame(catalogs);
     final system = buildSystem(save, catalogs);
 
-    final counts = <ItemQuality, int>{};
+    final counts = <Rarity, int>{};
     for (var i = 0; i < 2000; i++) {
       final q = system.rollQuality(16, 2);
       counts[q] = (counts[q] ?? 0) + 1;
     }
 
     // common should dominate but never be the only outcome
-    expect(counts[ItemQuality.COMMON] ?? 0, greaterThan(1000));
+    expect(counts[Rarity.COMMON] ?? 0, greaterThan(1000));
     expect(counts.keys.length, greaterThan(2));
-    expect((counts[ItemQuality.UNCOMMON] ?? 0), greaterThan(0));
+    expect((counts[Rarity.UNCOMMON] ?? 0), greaterThan(0));
   });
 
   test('crafting daggers at level 16 yields quality instances', () {
@@ -92,14 +92,14 @@ void main() {
     // identical items stack: at most one stack per quality tier
     expect(
       save.inventoryData.equipment.length,
-      lessThanOrEqualTo(ItemQuality.values.length),
+      lessThanOrEqualTo(Rarity.values.length),
     );
     expect(save.inventoryData.itemMap[ItemId.COPPER_BAR], isNull);
 
     // with ~30% non-common odds per craft, 100 crafts virtually
     // guarantee at least one non-common item
     final nonCommon = save.inventoryData.equipment
-        .where((e) => e.quality != ItemQuality.COMMON)
+        .where((e) => e.quality != Rarity.COMMON)
         .fold<int>(0, (sum, stack) => sum + stack.count);
     expect(nonCommon, greaterThan(0));
 
@@ -111,7 +111,7 @@ void main() {
     );
     expect(
       restored.equipment
-          .where((e) => e.quality != ItemQuality.COMMON)
+          .where((e) => e.quality != Rarity.COMMON)
           .fold<int>(0, (sum, stack) => sum + stack.count),
       nonCommon,
     );
@@ -133,7 +133,7 @@ void main() {
 
     // a different quality does not stack with commons
     final rare = ItemId.COPPER_DAGGER.build() as EquipmentItem;
-    rare.quality = ItemQuality.RARE;
+    rare.quality = Rarity.RARE;
     inventoryService.addEquipment(save.inventoryData, rare);
     expect(save.inventoryData.equipment.length, 2);
 

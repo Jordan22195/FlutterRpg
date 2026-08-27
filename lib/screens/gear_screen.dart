@@ -364,7 +364,7 @@ class _GearScreenState extends State<GearScreen> {
     required VoidCallback onTap,
   }) {
     final scheme = Theme.of(context).colorScheme;
-    final qualityColor = item == null ? null : qualityBorderColor(item.quality);
+    final qualityColor = item == null ? null : rarityBorderColor(item.quality);
     final borderColor = qualityColor ?? scheme.outline.withOpacity(0.5);
 
     return InkWell(
@@ -427,7 +427,7 @@ class _GearScreenState extends State<GearScreen> {
       onChange = () => _openSlotPicker(slot);
     }
 
-    final qualityColor = item == null ? null : qualityBorderColor(item.quality);
+    final qualityColor = item == null ? null : rarityBorderColor(item.quality);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),

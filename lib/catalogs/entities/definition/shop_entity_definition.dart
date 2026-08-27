@@ -1,5 +1,5 @@
 import 'package:rpg/catalogs/entities/entity_id.dart';
-import 'package:rpg/catalogs/entities/rarity.dart';
+import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/entities/definition/shop_stock_entry.dart';
 import 'package:rpg/catalogs/entities/model/shop_entity.dart';
 import 'package:rpg/catalogs/entities/definition/entity_definition.dart';

@@ -1,13 +1,19 @@
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/json_codec.dart';
-import 'package:rpg/catalogs/items/item_id.dart';
 
 class Item {
   final ItemId id;
   final String name;
   final int value;
+  Rarity quality;
   int count = 1;
 
-  Item({required this.id, required this.name, required this.value});
+  Item({
+    required this.id,
+    required this.name,
+    required this.value,
+    this.quality = Rarity.COMMON,
+  });
 
   Map<String, dynamic> toJson() {
     return {

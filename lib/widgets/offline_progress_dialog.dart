@@ -88,7 +88,7 @@ class OfflineProgressBody extends StatelessWidget {
                           count: item.count,
                           id: item.id,
                           showInfoDialogOnTap: false,
-                          borderColor: qualityBorderColor(item.quality),
+                          quality: item.quality,
                           onTap: () => showEquipmentInfoDialog(context, item),
                         ),
                     ],

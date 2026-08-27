@@ -15,7 +15,7 @@ class RecipeOutcomeChance {
   final ItemId? itemId;
 
   /// Set on a quality row; null on an output row.
-  final ItemQuality? quality;
+  final Rarity? quality;
 
   /// Probability this outcome lands on one craft (0..1).
   final double chance;

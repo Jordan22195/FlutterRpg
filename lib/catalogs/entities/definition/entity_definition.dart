@@ -1,6 +1,6 @@
 import 'package:rpg/catalogs/entities/entity_id.dart';
 import 'package:rpg/catalogs/entities/model/entity.dart';
-import 'package:rpg/catalogs/entities/rarity.dart';
+import 'package:rpg/catalogs/rarity.dart';
 
 class EntityDefinition {
   final String name;

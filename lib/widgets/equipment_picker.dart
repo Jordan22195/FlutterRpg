@@ -241,7 +241,7 @@ class _PickerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final qualityColor = qualityBorderColor(item.quality);
+    final qualityColor = rarityBorderColor(item.quality);
 
     return Material(
       color: isEquipped

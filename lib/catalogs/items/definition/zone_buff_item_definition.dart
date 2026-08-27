@@ -1,6 +1,6 @@
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
-import 'package:rpg/catalogs/items/item_quality.dart';
+import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/items/model/zone_buff_item.dart';
 import 'package:rpg/catalogs/items/definition/buff_item_definition.dart';
 
@@ -22,7 +22,7 @@ class ZoneBuffItemDefinition extends BuffItemDefinition {
     String? description,
     String? iconAsset,
     int? xpValue,
-    ItemQuality? quality,
+    Rarity? quality,
     Map<SkillId, int>? skillBonus,
     Duration? duration,
   }) {

@@ -47,27 +47,21 @@ void main() {
   }
 
   group('rarity colors', () {
-    test('rarity and equipment quality share one ladder', () {
-      const pairs = <ItemQuality, Rarity>{
-        ItemQuality.COMMON: Rarity.COMMON,
-        ItemQuality.UNCOMMON: Rarity.UNCOMMON,
-        ItemQuality.RARE: Rarity.RARE,
-        ItemQuality.EPIC: Rarity.EPIC,
-        ItemQuality.LEGENDARY: Rarity.LEGENDARY,
-      };
+    test('equipment scales on the same ladder entities are colored by', () {
+      // the ladder is one enum, so a tier added to it must bring a
+      // multiplier with it rather than silently scaling by nothing
+      expect(rarityStatMultiplier.keys, containsAll(Rarity.values));
 
-      // every tier is covered, so a new one cannot be added to either enum
-      // without this test being updated
-      expect(pairs.keys, containsAll(ItemQuality.values));
-      expect(pairs.values, containsAll(Rarity.values));
-
-      pairs.forEach((quality, rarity) {
+      // common is the identity, and the ladder climbs from there
+      expect(statMultiplierFor(Rarity.COMMON), 1.0);
+      final multipliers = Rarity.values.map(statMultiplierFor).toList();
+      for (var i = 1; i < multipliers.length; i++) {
         expect(
-          qualityBorderColor(quality),
-          rarityBorderColor(rarity),
-          reason: 'a $rarity entity and a $quality item must match',
+          multipliers[i],
+          greaterThan(multipliers[i - 1]),
+          reason: '${Rarity.values[i]} must beat ${Rarity.values[i - 1]}',
         );
-      });
+      }
     });
 
     test('common is the only uncolored tier, and every other is distinct', () {

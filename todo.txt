@@ -56,3 +56,28 @@ the new crafting screen has a button select adding logs. a cooking recipe picker
 
 when the fire timer duration runs out, the entity goes back to a firepit. 
 
+assume total stat wieght of 12. 
+type            hp/ att def
+balance         4   3   3
+glass cannon    1   8   1
+tank            4   2   4
+rock crab       8   1   1
+tank+           4   5   1
+dps             3   4   3
+                1   1   8
+
+
+
+I want all items to have an item quality. Common - legendary. They dont even need to be stat modifiers. They just need to show the quality on the border. only equipment items have stats, and equipment items use rarity/quality to change stats. 
+what else might need that. 
+Food - food is meant to be stackable. you are not trying to a get a single good item when cooking. rarity makes sense to identify good food. would ever want a stat modifer on food from the quality. say cooking beef. the base quality is common, and it heals 5. would you want to craft or buy a rare version of that that heals more. maybe. I don't think that woulld make sense right now. but I can't count out a consumable wanting better quality. but with food, you just want a bunch of the same item so they stack and you can eat them all. a bunch of different kinds of food doesn't makes senes. 
+buff items like potions. they also want a stack. if you have a common minor str and rare minor str, how does that work becuase they woudl have different stats. they would be different items. 
+crafting material items don't have stats outside of sell value so quality wouldn't affect them. what do you do with a legendary cow hide, you still sell it. 
+
+conculsion, item that are equipment need to have item quality as a modifer. and the same item can be different quality so it needs to be tied to the instance. 
+
+everything else should have a quality, it is just tied to the definition. so you can look up the quality by id in the catalog. 
+
+the problem is rending both in the same list in the inventory. they both render into item stack tiles. but they are different types, so they live in different lists. 
+
+refactoring the whole app to use item instances instead of id's just to put the two types in the same rendered grid is overkill. I just need to do something clever with the inventory data and widget so they are flat in the same list. 

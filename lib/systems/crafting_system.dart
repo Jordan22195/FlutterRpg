@@ -222,7 +222,7 @@ class CraftingSystem {
   /// Rolls the quality tier for a crafted piece of equipment. Common is
   /// always the most likely outcome; levels above the recipe requirement
   /// shift weight toward the higher tiers.
-  ItemQuality rollQuality(int skillLevel, int levelRequirement) {
+  Rarity rollQuality(int skillLevel, int levelRequirement) {
     return _weightedDropTableService
         .roll(qualityEntries(skillLevel, levelRequirement))
         .id;
@@ -231,27 +231,27 @@ class CraftingSystem {
   /// The quality table a craft at [skillLevel] rolls against. Handed out as
   /// a table rather than a single roll so a batch can settle every piece it
   /// made in one pass.
-  List<WeightedDropTableEntry<ItemQuality>> qualityEntries(
+  List<WeightedDropTableEntry<Rarity>> qualityEntries(
     int skillLevel,
     int levelRequirement,
   ) {
     final levelBonus = (skillLevel - levelRequirement).clamp(0, 99).toDouble();
     return [
-      WeightedDropTableEntry<ItemQuality>(id: ItemQuality.COMMON, weight: 100),
-      WeightedDropTableEntry<ItemQuality>(
-        id: ItemQuality.UNCOMMON,
+      WeightedDropTableEntry<Rarity>(id: Rarity.COMMON, weight: 100),
+      WeightedDropTableEntry<Rarity>(
+        id: Rarity.UNCOMMON,
         weight: 1 + levelBonus * 1,
       ),
-      WeightedDropTableEntry<ItemQuality>(
-        id: ItemQuality.RARE,
+      WeightedDropTableEntry<Rarity>(
+        id: Rarity.RARE,
         weight: .1 + levelBonus * 0.2,
       ),
-      WeightedDropTableEntry<ItemQuality>(
-        id: ItemQuality.EPIC,
+      WeightedDropTableEntry<Rarity>(
+        id: Rarity.EPIC,
         weight: .01 + levelBonus * 0.1,
       ),
-      WeightedDropTableEntry<ItemQuality>(
-        id: ItemQuality.LEGENDARY,
+      WeightedDropTableEntry<Rarity>(
+        id: Rarity.LEGENDARY,
         weight: .001 + levelBonus * 0.01,
       ),
     ];
@@ -318,7 +318,7 @@ class CraftingSystem {
       qualityEntries(skillLevel, levelRequirement),
     );
     return [
-      for (final quality in ItemQuality.values)
+      for (final quality in Rarity.values)
         RecipeOutcomeChance(
           // common's label is empty, since it is the unprefixed name
           label: quality.label.isEmpty ? 'Common' : quality.label,

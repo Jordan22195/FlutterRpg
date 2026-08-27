@@ -160,7 +160,7 @@ class _CraftingInfoPanelState extends State<CraftingInfoPanel> {
                   count: item.count,
                   id: item.id,
                   showInfoDialogOnTap: false,
-                  borderColor: qualityBorderColor(item.quality),
+                  quality: item.quality,
                   onTap: () => showEquipmentInfoDialog(context, item),
                 ),
             ],

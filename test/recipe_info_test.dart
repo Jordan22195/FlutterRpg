@@ -52,7 +52,7 @@ void main() {
   RecipeDetails detailsFor(String recipeId) =>
       session.craftingController.recipeDetails(recipeId);
 
-  double chanceOf(RecipeDetails d, ItemQuality quality) =>
+  double chanceOf(RecipeDetails d, Rarity quality) =>
       d.outcomes.firstWhere((o) => o.quality == quality).chance;
 
   group('quality odds', () {
@@ -63,7 +63,7 @@ void main() {
       expect(details.rollsQuality, isTrue);
       expect(
         details.outcomes.map((o) => o.quality).toList(),
-        ItemQuality.values,
+        Rarity.values,
         reason: 'the tab should show the whole ladder, in ladder order',
       );
       final sum = details.outcomes.fold<double>(0, (s, o) => s + o.chance);
@@ -76,12 +76,12 @@ void main() {
       final details = detailsFor('forge_copper_dagger');
 
       const total = 100 + 1 + 0.1 + 0.01 + 0.001;
-      expect(chanceOf(details, ItemQuality.COMMON), closeTo(100 / total, 1e-9));
-      expect(chanceOf(details, ItemQuality.UNCOMMON), closeTo(1 / total, 1e-9));
-      expect(chanceOf(details, ItemQuality.RARE), closeTo(0.1 / total, 1e-9));
-      expect(chanceOf(details, ItemQuality.EPIC), closeTo(0.01 / total, 1e-9));
+      expect(chanceOf(details, Rarity.COMMON), closeTo(100 / total, 1e-9));
+      expect(chanceOf(details, Rarity.UNCOMMON), closeTo(1 / total, 1e-9));
+      expect(chanceOf(details, Rarity.RARE), closeTo(0.1 / total, 1e-9));
+      expect(chanceOf(details, Rarity.EPIC), closeTo(0.01 / total, 1e-9));
       expect(
-        chanceOf(details, ItemQuality.LEGENDARY),
+        chanceOf(details, Rarity.LEGENDARY),
         closeTo(0.001 / total, 1e-9),
       );
     });
@@ -93,14 +93,14 @@ void main() {
       final high = detailsFor('forge_copper_dagger');
 
       expect(
-        chanceOf(high, ItemQuality.COMMON),
-        lessThan(chanceOf(low, ItemQuality.COMMON)),
+        chanceOf(high, Rarity.COMMON),
+        lessThan(chanceOf(low, Rarity.COMMON)),
       );
       for (final tier in [
-        ItemQuality.UNCOMMON,
-        ItemQuality.RARE,
-        ItemQuality.EPIC,
-        ItemQuality.LEGENDARY,
+        Rarity.UNCOMMON,
+        Rarity.RARE,
+        Rarity.EPIC,
+        Rarity.LEGENDARY,
       ]) {
         expect(
           chanceOf(high, tier),
@@ -245,7 +245,7 @@ void main() {
       expect(find.text('3 / 1'), findsOneWidget);
 
       expect(find.text('QUALITY'), findsOneWidget);
-      for (final tier in ItemQuality.values) {
+      for (final tier in Rarity.values) {
         final label = tier.label.isEmpty ? 'Common' : tier.label;
         expect(find.text(label), findsOneWidget, reason: 'missing $label row');
       }

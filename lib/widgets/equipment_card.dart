@@ -31,7 +31,7 @@ class EquipmentCard extends StatelessWidget {
     }
 
     final stats = item.effectiveSkillBonus;
-    final qualityColor = qualityBorderColor(item.quality);
+    final qualityColor = rarityBorderColor(item.quality);
 
     return Card(
       child: InkWell(

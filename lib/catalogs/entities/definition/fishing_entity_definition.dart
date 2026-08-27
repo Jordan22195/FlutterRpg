@@ -2,7 +2,7 @@ import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/entities/entity_id.dart';
-import 'package:rpg/catalogs/entities/rarity.dart';
+import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/entities/model/fishing_entity.dart';
 import 'package:rpg/catalogs/entities/definition/encounter_entity_definition.dart';
 

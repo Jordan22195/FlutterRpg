@@ -33,7 +33,7 @@ void main() {
     final system = buildSystem();
 
     final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
-    helmet.quality = ItemQuality.RARE;
+    helmet.quality = Rarity.RARE;
     save.inventoryData.equipment.add(helmet);
 
     final result = system.disenchant(
@@ -142,7 +142,7 @@ void main() {
     final system = buildSystem();
 
     final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
-    helmet.quality = ItemQuality.EPIC;
+    helmet.quality = Rarity.EPIC;
     save.inventoryData.equipment.add(helmet);
     save.inventoryData.itemMap[ItemId.ENCHANTING_DUST] = 10;
 
@@ -155,7 +155,7 @@ void main() {
 
     final restored = SaveGameData.fromJson(save.toJson());
     final restoredHelmet = restored.inventoryData.equipment.single;
-    expect(restoredHelmet.quality, ItemQuality.EPIC);
+    expect(restoredHelmet.quality, Rarity.EPIC);
     expect(restoredHelmet.enchantName, helmet.enchantName);
     expect(restoredHelmet.enchantBonus, helmet.enchantBonus);
     expect(restoredHelmet.displayName, helmet.displayName);
@@ -206,7 +206,7 @@ void main() {
     final system = buildSystem();
 
     final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
-    helmet.quality = ItemQuality.RARE;
+    helmet.quality = Rarity.RARE;
     save.playerData.equipmentData.armorEquipment[helmet.armorSlot] = helmet;
 
     final gained = system.disenchant(

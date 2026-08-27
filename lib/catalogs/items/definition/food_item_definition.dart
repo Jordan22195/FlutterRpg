@@ -1,6 +1,6 @@
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
-import 'package:rpg/catalogs/items/item_quality.dart';
+import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/items/model/item.dart';
 import 'package:rpg/catalogs/items/definition/item_definition.dart';
 
@@ -26,7 +26,7 @@ class FoodItemDefinition extends ItemDefinition {
     String? description,
     String? iconAsset,
     int? xpValue,
-    ItemQuality? quality,
+    Rarity? quality,
     int? restoreAmount,
     SkillId? restoreSkill,
   }) {

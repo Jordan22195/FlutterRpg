@@ -20,17 +20,17 @@ class EnchantingService {
   ];
 
   /// The material an item of [quality] disenchants into.
-  ItemId materialForQuality(ItemQuality quality) {
+  ItemId materialForQuality(Rarity quality) {
     switch (quality) {
-      case ItemQuality.COMMON:
+      case Rarity.COMMON:
         return ItemId.ENCHANTING_DUST;
-      case ItemQuality.UNCOMMON:
+      case Rarity.UNCOMMON:
         return ItemId.ENCHANTING_ESSENCE;
-      case ItemQuality.RARE:
+      case Rarity.RARE:
         return ItemId.ENCHANTING_RUNE;
-      case ItemQuality.EPIC:
+      case Rarity.EPIC:
         return ItemId.ENCHANTING_PRISM;
-      case ItemQuality.LEGENDARY:
+      case Rarity.LEGENDARY:
         return ItemId.SOUL_SHARD;
     }
   }
