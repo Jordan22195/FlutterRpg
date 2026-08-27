@@ -12,9 +12,9 @@ import '../data/zone_details.dart';
 /// its tables — including the ones still locked, so the player can see
 /// what levelling Exploration here still has to offer.
 ///
-/// Reached by tapping the zone image on the explore screen.
-class ZoneDetailScreen extends StatelessWidget {
-  const ZoneDetailScreen({super.key, required this.zoneId});
+/// Shown in the explore screen's Info tab.
+class ZoneInfoBody extends StatelessWidget {
+  const ZoneInfoBody({super.key, required this.zoneId});
 
   final ZoneId zoneId;
 
@@ -23,47 +23,43 @@ class ZoneDetailScreen extends StatelessWidget {
     final worldController = context.watch<WorldController>();
     final details = worldController.zoneDetails(zoneId);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(details.zone.name)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-        children: [
-          _ZoneBanner(details: details),
+    return Column(
+      children: [
+        _ZoneBanner(details: details),
+        const SizedBox(height: 12),
+        _SummaryCard(details: details),
+        if (details.entities.isNotEmpty) ...[
           const SizedBox(height: 12),
-          _SummaryCard(details: details),
-          if (details.entities.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _DiscoveryCard(
-              label: 'Discoveries',
-              emptyMessage: 'Nothing to find here.',
-              discoveries: details.entities,
-              showXp: true,
-            ),
-          ],
-          if (details.items.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            _DiscoveryCard(
-              label: 'Finds',
-              emptyMessage: 'Nothing turns up here.',
-              discoveries: details.items,
-              showXp: false,
-            ),
-          ],
-          if (!details.hasDiscoveries) ...[
-            const SizedBox(height: 12),
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'There is nothing to discover here. Somewhere this settled '
-                  'keeps no secrets.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
-                ),
+          _DiscoveryCard(
+            label: 'Discoveries',
+            emptyMessage: 'Nothing to find here.',
+            discoveries: details.entities,
+            showXp: true,
+          ),
+        ],
+        if (details.items.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _DiscoveryCard(
+            label: 'Finds',
+            emptyMessage: 'Nothing turns up here.',
+            discoveries: details.items,
+            showXp: false,
+          ),
+        ],
+        if (!details.hasDiscoveries) ...[
+          const SizedBox(height: 12),
+          const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'There is nothing to discover here. Somewhere this settled '
+                'keeps no secrets.',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
               ),
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -206,7 +202,7 @@ class _SummaryCard extends StatelessWidget {
 
 /// One table's worth of discoveries, baseline entries first and then in
 /// unlock order. Locked rows stay visible — seeing what is still out there
-/// is the point of the screen.
+/// is the point of the tab.
 class _DiscoveryCard extends StatelessWidget {
   const _DiscoveryCard({
     required this.label,

@@ -20,6 +20,18 @@ const List<CraftingRecipe> cookingRecipes = [
     ],
   ),
   CraftingRecipe(
+    id: 'cook_beef',
+    name: 'Cooked Beef',
+    skill: SkillId.COOKING,
+    levelRequirement: 3,
+    xp: 10,
+    inputs: {ItemId.CHICKEN_MEAT: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.COOKED_BEEF, count: 1, weight: 1),
+      WeightedDropTableEntry(id: ItemId.BURNT_FOOD, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
     id: 'cook_minnow',
     name: 'Cooked Meat',
     skill: SkillId.COOKING,

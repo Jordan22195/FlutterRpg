@@ -89,11 +89,6 @@ void main() {
     );
     await settle(tester);
 
-    // the zone list is tabbed and opens on resources; a firepit is a
-    // structure, so every case here starts by opening that tab
-    await tester.tap(find.textContaining('Structures'));
-    await settle(tester);
-
     return session;
   }
 

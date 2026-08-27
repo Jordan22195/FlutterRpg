@@ -1,4 +1,5 @@
 import 'package:rpg/catalogs/catalog_icons.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -125,6 +126,144 @@ void main() {
     expect(session.shopController.playerCoins(), greaterThan(coinsBeforeSell));
     expect(save.inventoryData.itemMap[ItemId.COPPER_ORE] ?? 0, oreBefore - 1);
 
+    session.dispose();
+  });
+
+  testWidgets('holding a buy button buys repeatedly until released', (
+    tester,
+  ) async {
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final save = factory.newGame(catalogs);
+    final session = factory.create(
+      save: save,
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+
+    registerCatalogIconResolvers();
+    EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
+
+    save.inventoryData.itemMap[ItemId.COINS] = 10000;
+    save.playerData.currentZoneId = ZoneId.DEV_FOREST;
+    save.playerData.currentEntityViewId = EntityId.TRADING_POST;
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<ShopController>.value(
+            value: session.shopController,
+          ),
+          ChangeNotifierProvider<InventoryController>.value(
+            value: session.inventoryController,
+          ),
+        ],
+        child: const MaterialApp(home: Scaffold(body: ShopScreen())),
+      ),
+    );
+    await tester.pump();
+
+    final buyButtons = find.textContaining('Buy ');
+    await tester.ensureVisible(buyButtons.first);
+    await tester.pumpAndSettle();
+
+    final coinsBeforeHold = session.shopController.playerCoins();
+
+    // hold past the long-press threshold, then keep pumping the repeat
+    // interval while still down: each tick should buy again
+    final gesture = await tester.startGesture(
+      tester.getCenter(buyButtons.first),
+    );
+    await tester.pump(kLongPressTimeout + kPressTimeout);
+    final coinsAfterFirstHit = session.shopController.playerCoins();
+    expect(coinsAfterFirstHit, lessThan(coinsBeforeHold));
+
+    await tester.pump(const Duration(milliseconds: 120));
+    await tester.pump(const Duration(milliseconds: 120));
+    final coinsAfterRepeats = session.shopController.playerCoins();
+    expect(coinsAfterRepeats, lessThan(coinsAfterFirstHit));
+
+    // releasing stops the repeat: coins stay put across further ticks
+    await gesture.up();
+    await tester.pump();
+    final coinsAfterRelease = session.shopController.playerCoins();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(session.shopController.playerCoins(), coinsAfterRelease);
+
+    session.dispose();
+  });
+
+  testWidgets('holding a buy button past one second speeds up the repeat', (
+    tester,
+  ) async {
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final save = factory.newGame(catalogs);
+    final session = factory.create(
+      save: save,
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+
+    registerCatalogIconResolvers();
+    EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
+
+    save.inventoryData.itemMap[ItemId.COINS] = 1000000;
+    save.playerData.currentZoneId = ZoneId.DEV_FOREST;
+    save.playerData.currentEntityViewId = EntityId.TRADING_POST;
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<ShopController>.value(
+            value: session.shopController,
+          ),
+          ChangeNotifierProvider<InventoryController>.value(
+            value: session.inventoryController,
+          ),
+        ],
+        child: const MaterialApp(home: Scaffold(body: ShopScreen())),
+      ),
+    );
+    await tester.pump();
+
+    // top up the held slot so the fast phase isn't cut short by running
+    // out of stock (a fresh restock only guarantees 1-10 units)
+    final entry = session.shopController.stock().first;
+    entry.count = 500;
+    final price = session.shopController.buyPrice(entry.itemId);
+
+    final buyButtons = find.textContaining('Buy ');
+    await tester.ensureVisible(buyButtons.first);
+    await tester.pumpAndSettle();
+
+    int coins() => session.shopController.playerCoins();
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(buyButtons.first),
+    );
+
+    // trips the long-press threshold: fires the first buy and starts the
+    // normal 120ms-interval repeat
+    await tester.pump(kLongPressTimeout + kPressTimeout);
+    final coinsAfterFirstHit = coins();
+
+    // stay well inside the first second, still on the normal interval
+    await tester.pump(const Duration(milliseconds: 240));
+    final boughtNormalPhase = (coinsAfterFirstHit - coins()) ~/ price;
+
+    // cross the one-second mark, then measure a fresh window once the
+    // fast interval has taken over
+    await tester.pump(const Duration(milliseconds: 900));
+    final coinsAtAccel = coins();
+    await tester.pump(const Duration(milliseconds: 150));
+    final boughtFastPhase = (coinsAtAccel - coins()) ~/ price;
+
+    // the fast interval is 8x quicker (120ms -> 15ms), so even a shorter
+    // window should buy several times as much
+    expect(boughtFastPhase, greaterThan(boughtNormalPhase * 3));
+
+    await gesture.up();
     session.dispose();
   });
 }

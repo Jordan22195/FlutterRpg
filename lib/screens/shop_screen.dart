@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/shop_controller.dart';
+import 'package:rpg/utilities/interval_runner.dart';
 import 'package:rpg/widgets/countdown_timer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
@@ -41,7 +44,7 @@ class ShopScreen extends StatelessWidget {
             tile,
             const SizedBox(width: 12),
             Expanded(child: Text(name, overflow: TextOverflow.ellipsis)),
-            TextButton(onPressed: onPressed, child: Text(buttonLabel)),
+            _RepeatPressButton(label: buttonLabel, onPressed: onPressed),
           ],
         ),
       ),
@@ -164,6 +167,67 @@ class ShopScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A trade button that fires once on tap, then keeps firing on an interval
+/// for as long as it's held — long-pressing "Buy" or "Sell" repeats the
+/// trade instead of one tap per item. Past [_accelerateAfter] the interval
+/// drops to [_fastRepeatInterval], so clearing out a big stack doesn't mean
+/// sitting through it one buy at a time. The trade calls this repeats into
+/// (buy/sellOne/sellOneEquipment) are all safe no-ops once coins, stock or
+/// the stack run out, so this doesn't re-check affordability itself.
+class _RepeatPressButton extends StatefulWidget {
+  const _RepeatPressButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  State<_RepeatPressButton> createState() => _RepeatPressButtonState();
+}
+
+class _RepeatPressButtonState extends State<_RepeatPressButton> {
+  static const _repeatInterval = Duration(milliseconds: 120);
+  static const _fastRepeatInterval = Duration(milliseconds: 15);
+  static const _accelerateAfter = Duration(seconds: 1);
+
+  final _repeat = IntervalRunner();
+  Timer? _accelerateTimer;
+
+  void _startRepeating() {
+    // the long press already stood in for the first tap, so fire once
+    // immediately rather than waiting a full interval for the first trade
+    widget.onPressed?.call();
+    _repeat.start(_repeatInterval, () => widget.onPressed?.call());
+    _accelerateTimer = Timer(_accelerateAfter, () {
+      _repeat.stop();
+      _repeat.start(_fastRepeatInterval, () => widget.onPressed?.call());
+    });
+  }
+
+  void _stopRepeating() {
+    _repeat.stop();
+    _accelerateTimer?.cancel();
+    _accelerateTimer = null;
+  }
+
+  @override
+  void dispose() {
+    _stopRepeating();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onLongPressStart: widget.onPressed == null
+          ? null
+          : (_) => _startRepeating(),
+      onLongPressEnd: (_) => _stopRepeating(),
+      onLongPressCancel: _stopRepeating,
+      child: TextButton(onPressed: widget.onPressed, child: Text(widget.label)),
     );
   }
 }

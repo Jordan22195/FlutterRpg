@@ -6,7 +6,6 @@ import '../controllers/buff_controller.dart';
 import '../data/ObjectStack.dart';
 import 'buff_row.dart';
 import 'equipment_info_dialog.dart';
-import 'inventory_grid.dart';
 import 'item_stack_tile.dart';
 import 'recipe_info_body.dart';
 
@@ -36,8 +35,9 @@ class CraftingInfoPanel extends StatefulWidget {
   /// screen knows which section's selection the tab should follow.
   final String recipeId;
 
-  /// Equipment produced this session. Kept apart from [items] because a
-  /// piece of equipment carries a quality border the item grid can't show.
+  /// Equipment produced this session. Kept apart from [items] since it's a
+  /// different type — a piece of equipment carries a quality border, so its
+  /// tiles are built separately even though both render into the same wrap.
   final List<EquipmentItem> equipment;
 
   /// Tab title for the output: a station crafts, a firepit cooks.
@@ -144,35 +144,27 @@ class _CraftingInfoPanelState extends State<CraftingInfoPanel> {
             child: _empty(context, widget.emptyCraftedLabel),
           );
         }
-        return Column(
-          children: [
-            if (widget.items.isNotEmpty)
-              SizedBox(
-                height: _bodyHeight,
-                child: InventoryGrid(items: widget.items),
-              ),
-            // crafted equipment carries its quality border, so it gets tiles
-            // of its own rather than the grid
-            if (widget.equipment.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    for (final item in widget.equipment)
-                      ItemStackTile(
-                        size: 56,
-                        count: item.count,
-                        id: item.id,
-                        showInfoDialogOnTap: false,
-                        borderColor: qualityBorderColor(item.quality),
-                        onTap: () => showEquipmentInfoDialog(context, item),
-                      ),
-                  ],
+        // items and equipment share one wrap of tiles; equipment tiles carry
+        // their quality border in place of the plain item tile's
+        return Padding(
+          padding: const EdgeInsets.all(10),
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final stack in widget.items)
+                ItemStackTile(size: 56, count: stack.count, id: stack.id),
+              for (final item in widget.equipment)
+                ItemStackTile(
+                  size: 56,
+                  count: item.count,
+                  id: item.id,
+                  showInfoDialogOnTap: false,
+                  borderColor: qualityBorderColor(item.quality),
+                  onTap: () => showEquipmentInfoDialog(context, item),
                 ),
-              ),
-          ],
+            ],
+          ),
         );
     }
   }

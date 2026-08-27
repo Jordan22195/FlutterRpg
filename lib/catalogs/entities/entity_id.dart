@@ -83,7 +83,6 @@ enum EntityId {
     EncounterEntityDefinition(
       name: "Oak Tree",
       iconAsset: "assets/images/entities/oak_tree.png",
-      rarity: Rarity.UNCOMMON,
 
       entityType: SkillId.WOODCUTTING,
       defence: 10,
@@ -151,7 +150,7 @@ enum EntityId {
     EncounterEntityDefinition(
       name: "Gem Vein",
       iconAsset: "assets/images/entities/gem_vein.png",
-      rarity: Rarity.EPIC,
+      rarity: Rarity.RARE,
 
       entityType: SkillId.MINING,
       defence: 40,
@@ -265,7 +264,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Tarromin",
       iconAsset: "assets/images/entities/tarromin.png",
-      rarity: Rarity.UNCOMMON,
       requiredLevel: 11,
       defence: 11,
       itemDrops: [
@@ -277,7 +275,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Harralander",
       iconAsset: "assets/images/entities/harralander.png",
-      rarity: Rarity.UNCOMMON,
       requiredLevel: 20,
       defence: 20,
       itemDrops: [
@@ -289,7 +286,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Ranarr Weed",
       iconAsset: "assets/images/entities/ranarr.png",
-      rarity: Rarity.RARE,
       requiredLevel: 25,
       defence: 25,
       itemDrops: [
@@ -301,7 +297,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Toadflax",
       iconAsset: "assets/images/entities/toadflax.png",
-      rarity: Rarity.RARE,
       requiredLevel: 30,
       defence: 30,
       itemDrops: [
@@ -313,7 +308,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Irit Leaf",
       iconAsset: "assets/images/entities/irit.png",
-      rarity: Rarity.RARE,
       requiredLevel: 40,
       defence: 40,
       itemDrops: [
@@ -325,7 +319,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Avantoe",
       iconAsset: "assets/images/entities/avantoe.png",
-      rarity: Rarity.RARE,
       requiredLevel: 48,
       defence: 48,
       itemDrops: [
@@ -337,7 +330,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Kwuarm",
       iconAsset: "assets/images/entities/kwuarm.png",
-      rarity: Rarity.EPIC,
       requiredLevel: 54,
       defence: 54,
       itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.KWUARM, weight: 1)],
@@ -347,7 +339,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Snapdragon",
       iconAsset: "assets/images/entities/snapdragon.png",
-      rarity: Rarity.EPIC,
       requiredLevel: 59,
       defence: 59,
       itemDrops: [
@@ -359,7 +350,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Cadantine",
       iconAsset: "assets/images/entities/cadantine.png",
-      rarity: Rarity.EPIC,
       requiredLevel: 65,
       defence: 65,
       itemDrops: [
@@ -371,7 +361,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Lantadyme",
       iconAsset: "assets/images/entities/lantadyme.png",
-      rarity: Rarity.EPIC,
       requiredLevel: 67,
       defence: 67,
       itemDrops: [
@@ -383,7 +372,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Dwarf Weed",
       iconAsset: "assets/images/entities/dwarf_weed.png",
-      rarity: Rarity.LEGENDARY,
       requiredLevel: 70,
       defence: 70,
       itemDrops: [
@@ -395,7 +383,6 @@ enum EntityId {
     HerbEntityDefinition(
       name: "Torstol",
       iconAsset: "assets/images/entities/torstol.png",
-      rarity: Rarity.LEGENDARY,
       requiredLevel: 75,
       defence: 75,
       itemDrops: [
@@ -422,10 +409,7 @@ enum EntityId {
       hitpoints: 2,
       attack: 1,
       attackInterval: 2.0,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
-        WeightedDropTableEntry<ItemId>(id: ItemId.FEATHER, weight: 1),
-      ],
+      itemDrops: [],
     ),
   ),
 
@@ -441,7 +425,12 @@ enum EntityId {
       attackInterval: 2.0,
       itemDrops: [
         WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
-        WeightedDropTableEntry<ItemId>(id: ItemId.FEATHER, weight: 1),
+        WeightedDropTableEntry<ItemId>(
+          id: ItemId.FEATHER,
+          count: 1,
+          highCount: 5,
+          weight: 1,
+        ),
       ],
     ),
   ),
@@ -749,11 +738,12 @@ enum EntityId {
     ShopEntityDefinition(
       name: "Farmer John",
       iconAsset: "assets/images/entities/farmer_john.png",
-      stockSlots: 11,
+      stockSlots: 12,
       restockInterval: Duration(minutes: 30),
       shopStockPool: [
-        ShopStockEntry(itemId: ItemId.COOKED_MINNOW, count: 10),
-        ShopStockEntry(itemId: ItemId.MINNOW, count: 20),
+        ShopStockEntry(itemId: ItemId.COOKED_MINNOW, count: 200),
+        ShopStockEntry(itemId: ItemId.LOGS, count: 1000),
+        ShopStockEntry(itemId: ItemId.CHICKEN_MEAT, count: 1000),
         ShopStockEntry(itemId: ItemId.FEATHER, count: 20),
         ShopStockEntry(itemId: ItemId.LIGHT_LEATHER_BOOTS, count: 1),
         ShopStockEntry(itemId: ItemId.LIGHT_LEATHER_GLOVES, count: 1),
@@ -823,7 +813,7 @@ enum EntityId {
     DungeonEntityDefinition(
       name: "Goblin Camp",
       iconAsset: "assets/images/entities/goblin_camp.png",
-      rarity: Rarity.EPIC,
+      rarity: Rarity.UNCOMMON,
       dungeonId: DungeonId.GOBLIN_CAMP,
     ),
   ),
@@ -831,6 +821,7 @@ enum EntityId {
     DungeonEntityDefinition(
       name: "Dev Transient Dungeon",
       iconAsset: "assets/images/entities/spider_den.png",
+      rarity: Rarity.LEGENDARY,
       dungeonId: DungeonId.DEV_TRANSIENT_DUNGEON,
     ),
   );

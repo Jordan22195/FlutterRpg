@@ -12,11 +12,12 @@ import '../widgets/primary_button.dart';
 import '../widgets/entity_info_dialog.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/skill_ring_row.dart';
-import 'zone_detail_screen.dart';
+import '../widgets/zone_info_body.dart';
 
-/// What the zone list is showing: the permanent things you can walk into,
-/// the nodes you work for materials, or what exploring has turned up here.
-enum _ExploreTab { structures, resources, loot }
+/// What the zone list is showing: the permanent things you can walk into
+/// or work for materials, what exploring has turned up here, or the zone's
+/// own difficulty and discovery tables.
+enum _ExploreTab { entities, loot, info }
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -26,9 +27,9 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
-  /// The zone list is one slot switched by tab, so the three kinds of thing
-  /// a zone holds don't compete for the same scroll.
-  _ExploreTab _tab = _ExploreTab.resources;
+  /// The zone list is one slot switched by tab, so the different kinds of
+  /// thing a zone holds don't compete for the same scroll.
+  _ExploreTab _tab = _ExploreTab.entities;
 
   /// Which resource sub-tab is open, keyed the way [_resourceGroupKey] keys
   /// them. Null is the All chip — every resource in the zone, which is where
@@ -78,14 +79,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  /// The three top-level tabs, each carrying how much of that kind the zone
+  /// The top-level tabs, each carrying how much of that kind the zone
   /// holds. The segments share the row's width evenly, so the labels are
   /// kept compact enough to survive a narrow screen.
   Widget _tabBar(BuildContext context, Map<_ExploreTab, int> counts) {
     const labels = {
-      _ExploreTab.structures: 'Structures',
-      _ExploreTab.resources: 'Resources',
+      _ExploreTab.entities: 'Entities',
       _ExploreTab.loot: 'Loot',
+      _ExploreTab.info: 'Info',
     };
 
     return Padding(
@@ -98,7 +99,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ButtonSegment<_ExploreTab>(
                 value: tab,
                 label: Text(
-                  '${labels[tab]} · ${counts[tab] ?? 0}',
+                  // info has nothing to count, so its label carries no number
+                  counts.containsKey(tab)
+                      ? '${labels[tab]} · ${counts[tab]}'
+                      : '${labels[tab]}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -289,57 +293,52 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
     final listChildren = <Widget>[
       _tabBar(context, {
-        _ExploreTab.structures: structures.length,
-        _ExploreTab.resources: totalResourceCount,
+        _ExploreTab.entities: structures.length + totalResourceCount,
         _ExploreTab.loot: zoneItems.length,
       }),
 
       switch (_tab) {
-        _ExploreTab.structures =>
-          structures.isEmpty
-              ? _emptyBody(context, 'Nothing built here')
+        // permanent structures and the resource nodes worked for materials
+        // share a tab: structures list first, then the resource group chips
+        _ExploreTab.entities =>
+          structures.isEmpty && resources.isEmpty
+              ? _emptyBody(context, 'Nothing here yet')
               : Column(
                   children: [
                     for (final e in structures)
                       _buildStructureCard(worldController, e),
-                  ],
-                ),
-
-        _ExploreTab.resources =>
-          resources.isEmpty
-              ? _emptyBody(context, 'No resources here')
-              : Column(
-                  children: [
-                    // sub-tabs, each with its own total node count
-                    SizedBox(
-                      height: 48,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        children: [
-                          _filterChip(
-                            context: context,
-                            label: 'All',
-                            count: totalResourceCount,
-                            selected: _resourceGroup == null,
-                            onSelected: () =>
-                                setState(() => _resourceGroup = null),
-                          ),
-                          for (final key in groupKeys)
+                    if (resources.isNotEmpty) ...[
+                      // sub-tabs, each with its own total node count
+                      SizedBox(
+                        height: 48,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          children: [
                             _filterChip(
                               context: context,
-                              label: _resourceGroupLabel(key),
-                              count: groupTotals[key] ?? 0,
-                              selected: _resourceGroup == key,
+                              label: 'All',
+                              count: totalResourceCount,
+                              selected: _resourceGroup == null,
                               onSelected: () =>
-                                  setState(() => _resourceGroup = key),
-                              icon: IconRendererChipAvatar(skill: key),
+                                  setState(() => _resourceGroup = null),
                             ),
-                        ],
+                            for (final key in groupKeys)
+                              _filterChip(
+                                context: context,
+                                label: _resourceGroupLabel(key),
+                                count: groupTotals[key] ?? 0,
+                                selected: _resourceGroup == key,
+                                onSelected: () =>
+                                    setState(() => _resourceGroup = key),
+                                icon: IconRendererChipAvatar(skill: key),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                    for (final e in openGroup)
-                      _buildResourceCard(worldController, e),
+                      for (final e in openGroup)
+                        _buildResourceCard(worldController, e),
+                    ],
                   ],
                 ),
 
@@ -348,6 +347,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           zoneItems.isEmpty
               ? _emptyBody(context, 'Nothing found here yet')
               : Card(child: InventoryGrid(items: zoneItems, shrinkWrap: true)),
+
+        // the zone's own difficulty, finds-per-explore and discovery tables
+        _ExploreTab.info => ZoneInfoBody(zoneId: worldController.currentZoneId),
       },
     ];
     listChildren.insert(
@@ -373,60 +375,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
           // must not fill this zone's timer
           progress: worldController.exploreProgress,
           interval: worldController.exploreInterval,
-        ),
-      ),
-    );
-    listChildren.insert(
-      0,
-      // the zone art doubles as the way into the zone's detail screen,
-      // where its discoveries and exploration gates are listed
-      InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) =>
-                ZoneDetailScreen(zoneId: worldController.currentZoneId),
-          ),
-        ),
-        child: Stack(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              height: 140,
-              child: zoneDef.iconAsset.isEmpty
-                  ? const ColoredBox(color: Colors.black26)
-                  : Image.asset(
-                      zoneDef.iconAsset,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) =>
-                          const ColoredBox(color: Colors.black26),
-                    ),
-            ),
-            // the art alone doesn't read as tappable, so say so
-            Positioned(
-              right: 8,
-              bottom: 8,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.black54,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.travel_explore, size: 13, color: Colors.white),
-                      SizedBox(width: 4),
-                      Text(
-                        'Zone details',
-                        style: TextStyle(fontSize: 11, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

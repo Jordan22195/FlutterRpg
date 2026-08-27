@@ -7,10 +7,10 @@ import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
-import 'package:rpg/screens/zone_detail_screen.dart';
 import 'package:rpg/utilities/image_resolver.dart';
+import 'package:rpg/widgets/zone_info_body.dart';
 
-// Boots a real session and renders the actual ZoneDetailScreen through the
+// Boots a real session and renders the actual ZoneInfoBody through the
 // provider tree, so the numbers on screen come from the live exploration
 // math rather than a fixture.
 void main() {
@@ -41,8 +41,13 @@ void main() {
             value: session.worldController,
           ),
         ],
-        child: const MaterialApp(
-          home: ZoneDetailScreen(zoneId: ZoneId.TUTORIAL_FARM),
+        child: MaterialApp(
+          home: Scaffold(
+            body: ListView(
+              padding: const EdgeInsets.all(12),
+              children: const [ZoneInfoBody(zoneId: ZoneId.TUTORIAL_FARM)],
+            ),
+          ),
         ),
       ),
     );
@@ -54,8 +59,6 @@ void main() {
     tester,
   ) async {
     final session = await pumpZoneDetail(tester, explorationLevel: 1);
-
-    expect(find.text('Southglen Meadow'), findsOneWidget);
 
     // at the zone's own level an explore turns up exactly one thing
     expect(find.text('1.00'), findsOneWidget);

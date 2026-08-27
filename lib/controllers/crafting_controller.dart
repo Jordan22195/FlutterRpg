@@ -249,15 +249,21 @@ class CraftingController extends ChangeNotifier {
     // stop the timing controller.
     _actionTimingController.stop();
 
-    // crafting at a new station starts a new session: crafted items
-    // shown in the crafting screen belong to the previous session
-    // a different station — or the same station in a different zone — is a
-    // new session, so the previous one's output is cleared
+    // crafting a new recipe starts a new session: crafted items shown in
+    // the crafting screen belong to the previous session. a different
+    // station, the same station in a different zone, or simply a different
+    // recipe at the same station is a new session, so the previous one's
+    // output is cleared
     if (_craftingState.craftingEntityId != stationEntityId ||
-        _craftingState.craftingZoneId != _playerState.currentZoneId) {
+        _craftingState.craftingZoneId != _playerState.currentZoneId ||
+        _craftingState.activeRecipeId != recipeId) {
       _inventoryService.clearItems(_craftingState.craftedItems);
       _craftingState.craftingEntityId = stationEntityId;
       _craftingState.craftingZoneId = _playerState.currentZoneId;
+      // the clear above is a state change on its own: notify now rather
+      // than relying on the first tick's notify, which leaves the old
+      // session's items on screen until a craft actually fires
+      notifyListeners();
     }
 
     _craftingService.setActiveRecipe(recipeId, _craftingState, _recipeCatalog);

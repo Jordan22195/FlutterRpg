@@ -23,7 +23,7 @@ enum ZoneId {
       name: "Southglen Meadow",
       iconAsset: "assets/images/zones/farm.png",
       explorationLevel: 1,
-      xpPerExplore: 8,
+      xpPerExplore: 3,
 
       permanentEntities: [
         EntityId.TRANQUIL_POND,
@@ -77,21 +77,21 @@ enum ZoneId {
     ZoneDefinition(
       iconAsset: 'assets/images/zones/forest.png',
       explorationLevel: 5,
-      xpPerExplore: 20,
+      xpPerExplore: 5,
 
       name: "Southwood Forest",
       permanentEntities: [
-        EntityId.TRANQUIL_POND,
+        EntityId.RIVER,
         EntityId.FIREPIT,
         EntityId.SPIDER_DEN_ENTRANCE,
       ],
       discoverableEntities: [
-        WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
+        //WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
         WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: .5),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
+        //WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
-        WeightedDropTableEntry(id: EntityId.GOBLIN_CAMP, weight: .1),
+        WeightedDropTableEntry(id: EntityId.GOBLIN_CAMP, weight: .01),
         // herb geography: the low herbs grow here once you can spot them,
         // which is what makes Herbalism reachable through Exploration
         WeightedDropTableEntry<EntityId>(
@@ -100,31 +100,15 @@ enum ZoneId {
           count: 3,
           unlockLevel: 8,
         ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.MARRENTILL,
-          weight: .7,
-          count: 3,
-          unlockLevel: 8,
-        ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.TARROMIN,
-          weight: .5,
-          count: 3,
-          unlockLevel: 8,
-        ),
+
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GIANT_SPIDER,
           weight: .3,
           unlockLevel: 11,
         ),
+
         // the valuable herb everyone wants, reserved for explorers who
         // have really learned these woods
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.RANARR,
-          weight: .1,
-          count: 3,
-          unlockLevel: 17,
-        ),
       ],
       discoverableItems: [
         WeightedDropTableEntry(
@@ -134,12 +118,6 @@ enum ZoneId {
           weight: .15,
           unlockLevel: 8,
         ),
-        WeightedDropTableEntry(
-          id: ItemId.ENCHANTING_ESSENCE,
-          weight: .03,
-          unlockLevel: 14,
-        ),
-        WeightedDropTableEntry(id: ItemId.NULL, weight: 1),
       ],
     ),
   ),
@@ -165,7 +143,7 @@ enum ZoneId {
       requiredSkill: SkillId.MINING,
       requiredLevel: 5,
       explorationLevel: 15,
-      xpPerExplore: 50,
+      xpPerExplore: 8,
 
       permanentEntities: [],
       discoverableEntities: [
