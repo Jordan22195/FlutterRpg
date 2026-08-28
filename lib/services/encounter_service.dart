@@ -326,45 +326,73 @@ class EncounterService {
     );
   }
 
-  // calculate hit chance for a given attack and defense.
+  /// Tuning for the combat curves below. These are the defaults of
+  /// `tools/damage_calc.py`, which is where they get tuned and plotted — a bare
+  /// run of that script draws these exact curves, so change the two together.
+  /// test/combat_curve_test.dart pins the two to the same numbers.
+  static const double hitChanceExponent = 4.0;
+  static const double hitChanceAtParity = 0.9;
+
+  /// Both stats are read against this footing before their ratio is taken, so
+  /// small absolute stats are not violently swingy: at attack 1 a one-point
+  /// gain multiplies hit chance by at most ~1.5x, against 16x without it.
+  /// Adding the same value to both sides leaves parity at [hitChanceAtParity]
+  /// exactly, at every level.
+  static const double hitChanceFooting = 8.0;
+  static const double maxHitDefenceK = 75.0;
+  static const double maxHitExponent = 0.75;
+
+  /// Chance a swing lands: [hitChanceAtParity] when attack equals defence,
+  /// climbing toward 100% as attack pulls ahead and falling off as
+  /// (defence / attack) ^ [hitChanceExponent] when it falls behind.
+  ///
+  /// Gathering rolls through here too — a swing at a rock, tree, herb or
+  /// fishing spot passes its gathering skill as the attack and the node's
+  /// difficulty as the defence. [hitChanceFooting] is what keeps that
+  /// workable: skill 1 against a defence 10 rock is 36%, where the bare ratio
+  /// would make it 0.09%.
   double chanceToHit(
     int attack,
     int defense, {
-    double minChance = 0.05, // 5% floor / 95% ceiling
-    double slope = 0.045, // tuned for 1–200 stat range
-    double bias = 0.0, // positive favors attacker, negative favors defender
+    double exponent = hitChanceExponent,
+    double parityChance = hitChanceAtParity,
+    double footing = hitChanceFooting,
   }) {
     // Clamp inputs defensively
     attack = attack.clamp(0, 100000);
     defense = defense.clamp(0, 100000);
 
-    final diff = (attack - defense) + bias;
+    // No attack stat lands nothing. Defence 0 needs no special case — the
+    // footing keeps the ratio well defined, and short-circuiting it to 100%
+    // would put a step between defence 0 and defence 1.
+    if (attack <= 0) return 0.0;
 
-    // Logistic curve
-    final core = 1.0 / (1.0 + exp(-slope * diff));
-
-    // Apply floor/ceiling so it's never guaranteed
-    return minChance + (1.0 - 2.0 * minChance) * core;
+    final c = parityChance / (1.0 - parityChance);
+    final ratio = pow((defense + footing) / (attack + footing), exponent);
+    return (1.0 / (1.0 + ratio / c)).clamp(0.0, 1.0).toDouble();
   }
 
-  // calculated max git for a given attack and defense
+  /// Max hit for a swing. Attack is scaled by `s = k / (k + defence)`, and the
+  /// part of it above the target's defence is scaled by `s` a second time —
+  /// the soft cap, so out-levelling a target still pays, at half rate. That
+  /// effective attack is raised to [maxHitExponent], which is what keeps max
+  /// hit growing sublinearly as stats climb.
   int computeMaxHit({
     required int attack,
     required int defense,
-    double attackScaling = 1.0, // attack=100 => unmitigated max 100
-    int baseMax = 0,
+    double defenceK = maxHitDefenceK,
+    double exponent = maxHitExponent,
     int minMaxHit = 1,
   }) {
     attack = attack.clamp(0, 100000);
     defense = defense.clamp(0, 100000);
 
-    final unmitigated = baseMax + (attack * attackScaling);
+    final s = defenceK / (defenceK + defense);
+    final upToDefence = min(attack, defense).toDouble();
+    final aboveDefence = max(0, attack - defense).toDouble();
+    final effective = s * upToDefence + s * s * aboveDefence;
 
-    final denom = attack + defense;
-    final multiplier = denom > 0 ? (attack / denom) : 0.5;
-
-    final maxHit = (unmitigated * multiplier).floor();
-    return max(minMaxHit, maxHit);
+    return max(minMaxHit, pow(effective, exponent).floor());
   }
 
   // roll for damange (1 - max hit)

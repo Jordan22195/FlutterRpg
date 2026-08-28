@@ -138,7 +138,12 @@ void main() {
     final session = buildSession();
     final save = session.saveGameData;
     equipFood(session);
-    fightWith(session, attack: 2); // max hit 1 against defence 1
+    // the combat curve reads attack against defence as a ratio, so a low
+    // defence against attack 2 is a ~99% hit rate - more damage in an hour
+    // than 500 food can heal. Defence 12 is the same max hit of 1, at a 36%
+    // rate the player can eat through.
+    setLevel(session, SkillId.DEFENCE, 12);
+    fightWith(session, attack: 2); // max hit 1 against defence 12
 
     final result = settleFight(
       session,

@@ -1,5 +1,70 @@
 # tools
 
+## damage_calc.py
+
+Tuning sandbox for the combat curves — hit chance and max hit as functions of
+attack vs defense. It plots four panels (hit chance and max hit, each swept over
+attack and over defense), drawing one curve per opposing stat so you can see the
+whole family at once, with the uncapped `attack^n` ceiling dashed in for
+reference.
+
+```bash
+python3 tools/damage_calc.py                  # plot
+python3 tools/damage_calc.py --save curves.png
+python3 tools/damage_calc.py --table          # numeric sweeps instead
+```
+
+Plots use matplotlib if it's installed (`pip install -r tools/requirements.txt`);
+without it the script prints the same four panels as terminal charts, so it
+always runs. `--ascii` forces that mode even when matplotlib is present.
+
+Every constant is a flag, so a tuning pass is one command:
+
+```bash
+python3 tools/damage_calc.py --n-max-hit 0.8 --k-hit-chance 3 --defenses 10,60,150
+```
+
+**The defaults are the curve the game ships.** `EncounterService.chanceToHit`
+and `computeMaxHit` in [`lib/services/encounter_service.dart`](../lib/services/encounter_service.dart)
+mirror them, and `test/combat_curve_test.dart` pins the two to the same numbers —
+so a bare run plots live combat, and retuning here means updating both.
+
+`--model` picks how defense reduces max hit, and the two differ mainly *below*
+parity:
+
+- **`excess`** (default, shipped) is the `s = k/(k+def)` form: `s` scales the
+  whole attack and squares on the part above defence — the soft cap. `s` depends
+  on absolute defence, so the gap to uncapped widens as stats climb.
+- **`ratio`** scales attack by `1 / (1 + (def/att)^knee / c)`, with `c` set from
+  `--parity-retain` (default 0.9). Reading defence as a *ratio* keeps the curve
+  the same distance below uncapped at every stat level, but it punishes being
+  badly out-defended much harder.
+
+`--bite` (0..1) exists only for the `excess` model and weakens its below-parity
+scaling to `s**bite`, pulling the curve toward uncapped. **It is a trap.** Any
+value below 1 makes max hit non-monotone in defense — a player gains max hit by
+fighting a *higher*-defence target. `test/combat_curve_test.dart` guards the
+shipped curve against exactly that.
+
+`--footing` (default 8) is added to both attack and defence before their ratio is
+taken. A bare ratio of small integers is violent — at attack 1 a single extra
+point is worth up to **16x** the hit chance, which is what made early combat feel
+like a coin that flipped on one stat point. The footing compresses that end
+without moving parity (adding the same value to both sides leaves the ratio at 1
+when attack == defence, so 90% still holds at every level) and barely touches the
+late game. `--footing 0` plots the un-smoothed curve for comparison.
+
+The hit-chance curve covers **gathering too** — mining, woodcutting, fishing and
+herbalism all roll their skill against a node's defence through the same
+`chanceToHit`, and the footing is what keeps early nodes workable: skill 1
+against a defence 10 rock is 36%, where the bare ratio gives 0.09%. Plot with
+`--defenses` set to node defences to check a skill's early game.
+
+`--k-max-hit`, `--n-max-hit`, `--k-hit-chance` set the formula; `--defenses` and
+`--attacks` pick which curves get drawn; `--min/max/step` flags for each axis set
+the sweep ranges. The formulas themselves live at the top of the file — nothing
+imports them, this is a scratchpad for finding numbers to paste into Dart.
+
 ## generate_assets_rd.py
 
 Generates missing art via the [Retro Diffusion](https://www.retrodiffusion.ai)

@@ -2,3 +2,6 @@ openai>=1.40.0
 Pillow>=10.0.0
 # CA bundle fallback for generate_assets_rd.py on python.org macOS builds.
 certifi
+
+# Plots for damage_calc.py (optional -- it falls back to terminal plots).
+matplotlib>=3.7
