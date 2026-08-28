@@ -1,5 +1,87 @@
 # tools
 
+## release_ios.sh
+
+One command from a clean tree to a build on App Store Connect: bump the build
+number, archive, export a signed IPA, upload, then commit and tag the number
+that shipped.
+
+```bash
+./tools/release_ios.sh --dry-run     # build and sign, stop before uploading
+./tools/release_ios.sh               # ship it
+```
+
+`--dry-run` runs every step including a real signed archive, then prints the
+upload command instead of running it and restores `pubspec.yaml`. Use it to
+check a release end to end without touching App Store Connect.
+
+### The build number lives in pubspec.yaml
+
+It didn't used to. Builds 9 through 13 were archived by hand, and the number
+existed only in `ios/Flutter/Generated.xcconfig` — a generated, gitignored file
+that every `flutter build` rewrites. Nothing in the repo recorded what had
+shipped, so `pubspec.yaml` sat at `1.0.0+1` while the App Store was on 13.
+
+Now `version: 1.0.0+N` in [`pubspec.yaml`](../pubspec.yaml) is the source of
+truth; Info.plist already reads it through `$(FLUTTER_BUILD_NUMBER)`. The script
+increments it, and commits it as `release: iOS build N` with tag `ios-build-N`
+**only after a successful upload**, so a failed run leaves no misleading commit.
+
+A drift guard catches the old failure mode: it reads the highest
+`CFBundleVersion` among local archives for this bundle ID and refuses to build
+if `pubspec.yaml` is behind. It matches on bundle ID because
+`~/Library/Developer/Xcode/Archives` holds every app built on the machine —
+without that filter another project's timestamp-style build number wins the
+comparison. It reports rather than silently rewriting, and pruned archives only
+weaken the check, never fail it falsely.
+
+### Export compliance is answered in the binary
+
+`ITSAppUsesNonExemptEncryption` is set to `false` in
+[`ios/Runner/Info.plist`](../ios/Runner/Info.plist), so App Store Connect marks
+each build compliant on ingest instead of blocking it behind the export
+question every upload. The declaration is accurate: the app makes no network
+calls and links no crypto — dependencies are `path_provider`, `provider` and
+`cupertino_icons`. **Revisit that key if the app ever gains networking or a
+crypto dependency.** After archiving, the script asserts the key survived into
+the built app and aborts if it didn't, so a lost Info.plist entry surfaces here
+rather than as a surprise prompt.
+
+### Gates
+
+`flutter test` must pass; a failing suite aborts the release. `flutter analyze`
+runs with `--no-fatal-infos --no-fatal-warnings` — the project carries
+pre-existing lint debt (deprecated `withOpacity`, SCREAMING_CASE enum
+constants), so gating on it would block every release on warnings that predate
+it. Real errors still stop the build. A dirty working tree also aborts.
+`--skip-tests` and `--allow-dirty` override those, and `--build-number N` sets
+the number explicitly.
+
+### One-time setup
+
+Uploads use an App Store Connect API key, so nothing prompts for a password.
+In App Store Connect, **Users and Access → Integrations → App Store Connect
+API**, create a key with the **App Manager** role and download the `.p8` (it is
+downloadable exactly once):
+
+```bash
+mkdir -p ~/.appstoreconnect/private_keys
+mv ~/Downloads/AuthKey_*.p8 ~/.appstoreconnect/private_keys/
+```
+
+Then in your shell profile — these are identifiers, not secrets, but the key
+file itself must never be committed (`.gitignore` covers `*.p8`):
+
+```bash
+export ASC_KEY_ID=XXXXXXXXXX
+export ASC_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+The script checks all three before it builds, so a missing key fails in a
+second rather than after a ten-minute archive. Signing itself is unchanged:
+automatic, team `7K93JT5R5H`, bundle `com.jordanroth.celadoridle`, with export
+settings in [`ios/ExportOptions.plist`](../ios/ExportOptions.plist).
+
 ## damage_calc.py
 
 Tuning sandbox for the combat curves — hit chance and max hit as functions of
