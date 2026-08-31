@@ -1,4 +1,5 @@
 import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/catalogs/entities/entity_id.dart';
@@ -11,7 +12,7 @@ class EncounterEntityDefinition extends EntityDefinition {
   final int hitpoints;
 
   /// The main drop: rolled once per kill, always yields one weighted pick.
-  final List<WeightedDropTableEntry<ItemId>> itemDrops;
+  final List<ItemDropType> itemDrops;
 
   /// Extra layered rolls on top of the main drop (rare uniques, bulk
   /// stacks, tertiary drops). Empty for most entities.
@@ -27,6 +28,20 @@ class EncounterEntityDefinition extends EntityDefinition {
     required this.itemDrops,
     this.bonusDrops = const [],
   });
+
+  /// [itemDrops] as a table keyed by the drops themselves, so a roll comes
+  /// back knowing which quality it landed on rather than just which item.
+  /// Built on read: a definition is const, so it cannot hold a table it
+  /// assembled in its constructor.
+  List<WeightedDropTableEntry<ItemDropType>> get weightedDropTable => [
+    for (final drop in itemDrops)
+      WeightedDropTableEntry(
+        id: drop,
+        count: drop.lowCount,
+        highCount: drop.highCount,
+        weight: drop.weight,
+      ),
+  ];
 
   @override
   EncounterEntity toEntity(EntityId id) => EncounterEntity(
@@ -46,7 +61,7 @@ class EncounterEntityDefinition extends EntityDefinition {
     SkillId? entityType,
     int? defence,
     int? hitpoints,
-    List<WeightedDropTableEntry<ItemId>>? itemDrops,
+    List<ItemDropType>? itemDrops,
     List<DropRoll<ItemId>>? bonusDrops,
   }) {
     return EncounterEntityDefinition(

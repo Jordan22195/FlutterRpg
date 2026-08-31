@@ -4,6 +4,7 @@ import 'skill_data.dart';
 enum ArmorSlots {
   HEAD,
   SHOULDER,
+  BACK,
   CHEST,
   WAIST,
   LEGS,
@@ -12,10 +13,25 @@ enum ArmorSlots {
   FEET,
   NECK,
   FINGER,
+  FINGER_2,
   WEAPON_1H,
   WEAPON_2H,
   OFFHAND,
   TOOL,
+}
+
+/// Rings are the one piece of gear with two places to put it: equipment
+/// is always defined as [ArmorSlots.FINGER], and either finger can wear it.
+extension ArmorSlotPairing on ArmorSlots {
+  /// The slots an item defined for this slot can be worn in, in fill order.
+  List<ArmorSlots> get equipTargets => this == ArmorSlots.FINGER
+      ? const [ArmorSlots.FINGER, ArmorSlots.FINGER_2]
+      : [this];
+
+  /// The slot an item must be defined for to be worn here — the inverse of
+  /// [equipTargets], for looking up what the inventory can put in a slot.
+  ArmorSlots get itemSlot =>
+      this == ArmorSlots.FINGER_2 ? ArmorSlots.FINGER : this;
 }
 
 class EquipmentData {

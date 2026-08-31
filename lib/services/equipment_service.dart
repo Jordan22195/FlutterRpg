@@ -25,10 +25,16 @@ class EquipmentService {
   }
 
   /// Equips [item] into its slot, applying weapon exclusivity rules.
-  /// Returns the instances displaced by the swap (so they can be put
-  /// back in the inventory), or null when the item can't be equipped
-  /// this way (tools go through [equipTool]).
-  List<EquipmentItem>? equipItem(EquipmentItem item, EquipmentData eq) {
+  /// [toSlot] picks between the slots an item accepts (which ring finger
+  /// it goes on); without it the first empty one wins. Returns the
+  /// instances displaced by the swap (so they can be put back in the
+  /// inventory), or null when the item can't be equipped this way (tools
+  /// go through [equipTool]).
+  List<EquipmentItem>? equipItem(
+    EquipmentItem item,
+    EquipmentData eq, {
+    ArmorSlots? toSlot,
+  }) {
     final displaced = <EquipmentItem>[];
 
     void displace(ArmorSlots slot) {
@@ -58,11 +64,31 @@ class EquipmentService {
         // tools are equipped per skill via equipTool
         return null;
       default:
-        if (!eq.armorEquipment.containsKey(item.armorSlot)) return null;
-        displace(item.armorSlot);
-        eq.armorEquipment[item.armorSlot] = item;
+        final target = _armorTargetFor(item, eq, toSlot);
+        if (target == null) return null;
+        displace(target);
+        eq.armorEquipment[target] = item;
         return displaced;
     }
+  }
+
+  /// Where a piece of armor goes: the caller's pick when the item fits it,
+  /// otherwise the first slot the item accepts that is empty, otherwise the
+  /// first one — whose occupant gets displaced.
+  ArmorSlots? _armorTargetFor(
+    EquipmentItem item,
+    EquipmentData eq,
+    ArmorSlots? toSlot,
+  ) {
+    final targets = item.armorSlot.equipTargets
+        .where(eq.armorEquipment.containsKey)
+        .toList();
+    if (targets.isEmpty) return null;
+    if (toSlot != null && targets.contains(toSlot)) return toSlot;
+    return targets.firstWhere(
+      (slot) => eq.armorEquipment[slot] == null,
+      orElse: () => targets.first,
+    );
   }
 
   /// The skills whose action is performed with the equipped weapon rather

@@ -1,4 +1,5 @@
 import 'package:rpg/catalogs/items/item_id.dart';
+import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/entities/definition/encounter_entity_definition.dart';
@@ -33,7 +34,7 @@ class HerbEntityDefinition extends EncounterEntityDefinition {
     SkillId? entityType,
     int? defence,
     int? hitpoints,
-    List<WeightedDropTableEntry<ItemId>>? itemDrops,
+    List<ItemDropType>? itemDrops,
     List<DropRoll<ItemId>>? bonusDrops,
     int? requiredLevel,
   }) {

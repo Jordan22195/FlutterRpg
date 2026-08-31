@@ -16,19 +16,25 @@ class EquipmentSystem {
        _inventoryService = inventoryService;
 
   /// Takes one item off the inventory stack and equips it; anything
-  /// displaced by the swap goes back into the inventory.
+  /// displaced by the swap goes back into the inventory. [toSlot] picks
+  /// between the slots the item accepts (which ring finger it goes on).
   bool equipItem(
     EquipmentItem item,
     EquipmentData equipmentState,
-    InventoryData inventoryState,
-  ) {
+    InventoryData inventoryState, {
+    ArmorSlots? toSlot,
+  }) {
     final taken = _inventoryService.takeOneEquipment(
       inventoryState,
       item.instanceId,
     );
     if (taken == null) return false;
 
-    final displaced = _equipmentService.equipItem(taken, equipmentState);
+    final displaced = _equipmentService.equipItem(
+      taken,
+      equipmentState,
+      toSlot: toSlot,
+    );
     if (displaced == null) {
       // couldn't equip; return the item to the inventory
       _inventoryService.addEquipment(inventoryState, taken);

@@ -53,6 +53,7 @@ enum ItemId {
       iconAsset: "assets/icons/items/cow_hide.png",
     ),
   ),
+  ANIMAL_PELT(ItemDefinition(name: "Fur Pelt", value: 1)),
 
   // ── LOGS ────────────────────────────────────────────────────────
   // tier ascending
@@ -946,7 +947,7 @@ enum ItemId {
     ),
   ),
 
-  // ── ARMOUR · HELMET ─────────────────────────────────────────────
+  // ── ARMOR · HELMET ─────────────────────────────────────────────
   // tier ascending
   COPPER_HELMET(
     EquipmentItemDefinition(
@@ -1030,6 +1031,40 @@ enum ItemId {
       value: 200,
       skillBonus: {SkillId.DEFENCE: 8},
       iconAsset: "assets/icons/items/mithril_chestplate.png",
+    ),
+  ),
+
+  // ── ARMOR · WAIST ───────────────────────────────────────────────
+  // tier ascending
+  LIGHT_LEATHER_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Light Leather Belt",
+      value: 100,
+      skillBonus: {SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_leather_pants.png",
+    ),
+  ),
+
+  // ── ARMOR · WAIST ───────────────────────────────────────────────
+  // tier ascending
+  LIGHT_LEATHER_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Light Leather Bracers",
+      value: 100,
+      skillBonus: {SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_leather_bracers.png",
+    ),
+  ),
+  BRACERS_OF_THE_WOLF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Bracers of the Wolf",
+      value: 100,
+      quality: Rarity.COMMON,
+      skillBonus: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/bracers_of_the_wolf.png",
     ),
   ),
 
@@ -1236,6 +1271,16 @@ enum ItemId {
       skillBonus: {SkillId.ATTACK: 2},
       actionInterval: FastAttackSpeed,
       iconAsset: "assets/icons/items/iron_dagger.png",
+    ),
+  ),
+  FISHBONE_DAGGER(
+    WeaponItemDefinition(
+      armorSlot: ArmorSlots.WEAPON_1H,
+      name: "Fishbone Dagger",
+      value: 25,
+      skillBonus: {SkillId.ATTACK: 3},
+      actionInterval: FastAttackSpeed,
+      iconAsset: "assets/icons/items/fishbone_dagger.png",
     ),
   ),
   STEEL_DAGGER(

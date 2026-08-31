@@ -1,4 +1,5 @@
 import 'package:rpg/catalogs/drop_tables.dart';
+import 'package:rpg/catalogs/items/attack_speed.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -7,6 +8,7 @@ import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rpg/catalogs/rarity.dart';
+import 'package:rpg/data/item_drop_type.dart';
 
 // ignore_for_file: constant_identifier_names
 
@@ -77,7 +79,7 @@ enum EntityId {
       entityType: SkillId.WOODCUTTING,
       defence: 1,
       hitpoints: 5,
-      itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.LOGS, weight: 1)],
+      itemDrops: [ItemDropType(id: ItemId.LOGS, weight: 1)],
     ),
   ),
   OAK_TREE(
@@ -88,9 +90,7 @@ enum EntityId {
       entityType: SkillId.WOODCUTTING,
       defence: 10,
       hitpoints: 15,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.OAK_LOGS, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.OAK_LOGS, weight: 1)],
     ),
   ),
 
@@ -105,7 +105,7 @@ enum EntityId {
       defence: 1,
       hitpoints: 5,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.COPPER_ORE, weight: 1),
+        ItemDropType(id: ItemId.COPPER_ORE, weight: 1),
 
         // rare gem finds (lower tiers only in the starter vein)
       ],
@@ -121,7 +121,7 @@ enum EntityId {
       defence: 10,
       hitpoints: 15,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.IRON_ORE, weight: 1),
+        ItemDropType(id: ItemId.IRON_ORE, weight: 1),
 
         // rare gem finds, all tiers
       ],
@@ -137,12 +137,7 @@ enum EntityId {
       defence: 20,
       hitpoints: 25,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(
-          id: ItemId.COAL,
-          weight: 1,
-          count: 1,
-          highCount: 3,
-        ),
+        ItemDropType(id: ItemId.COAL, weight: 1, lowCount: 1, highCount: 3),
       ],
       bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.5)],
     ),
@@ -171,8 +166,8 @@ enum EntityId {
       defence: 1,
       hitpoints: 10,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.MINNOW, weight: 1),
-        WeightedDropTableEntry<ItemId>(id: ItemId.CARP, weight: 0.5),
+        ItemDropType(id: ItemId.MINNOW, weight: 1),
+        ItemDropType(id: ItemId.CARP, weight: 0.5),
       ],
     ),
   ),
@@ -185,9 +180,9 @@ enum EntityId {
       defence: 1,
       hitpoints: 10,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.PIKE, weight: 1),
-        WeightedDropTableEntry(id: ItemId.SALMON, weight: .5),
-        WeightedDropTableEntry(id: ItemId.TROUT, weight: .25),
+        ItemDropType(id: ItemId.PIKE, weight: 1),
+        ItemDropType(id: ItemId.SALMON, weight: .5),
+        ItemDropType(id: ItemId.TROUT, weight: .25),
       ],
     ),
   ),
@@ -200,9 +195,9 @@ enum EntityId {
       defence: 10,
       hitpoints: 10,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.TROUT, weight: 1),
-        WeightedDropTableEntry<ItemId>(id: ItemId.PIKE, weight: 0.5),
-        WeightedDropTableEntry<ItemId>(id: ItemId.SALMON, weight: 0.25),
+        ItemDropType(id: ItemId.TROUT, weight: 1),
+        ItemDropType(id: ItemId.PIKE, weight: 0.5),
+        ItemDropType(id: ItemId.SALMON, weight: 0.25),
       ],
     ),
   ),
@@ -215,9 +210,9 @@ enum EntityId {
       defence: 1,
       hitpoints: 10,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.WHITEFISH, weight: 1),
-        WeightedDropTableEntry(id: ItemId.BASS, weight: .5),
-        WeightedDropTableEntry(id: ItemId.WHITEFISH, weight: .25),
+        ItemDropType(id: ItemId.WHITEFISH, weight: 1),
+        ItemDropType(id: ItemId.BASS, weight: .5),
+        ItemDropType(id: ItemId.WHITEFISH, weight: .25),
       ],
     ),
   ),
@@ -230,9 +225,9 @@ enum EntityId {
       defence: 1,
       hitpoints: 10,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.TUNA, weight: 1),
-        WeightedDropTableEntry(id: ItemId.SWORDFISH, weight: .5),
-        WeightedDropTableEntry(id: ItemId.SHARK, weight: .25),
+        ItemDropType(id: ItemId.TUNA, weight: 1),
+        ItemDropType(id: ItemId.SWORDFISH, weight: .5),
+        ItemDropType(id: ItemId.SHARK, weight: .25),
       ],
     ),
   ),
@@ -245,9 +240,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/guam.png",
       requiredLevel: 1,
       defence: 1,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.GUAM_LEAF, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.GUAM_LEAF, weight: 1)],
     ),
   ),
   MARRENTILL(
@@ -256,9 +249,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/marrentill.png",
       requiredLevel: 5,
       defence: 5,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.MARRENTILL, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.MARRENTILL, weight: 1)],
     ),
   ),
   TARROMIN(
@@ -267,9 +258,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/tarromin.png",
       requiredLevel: 11,
       defence: 11,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.TARROMIN, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.TARROMIN, weight: 1)],
     ),
   ),
   HARRALANDER(
@@ -278,9 +267,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/harralander.png",
       requiredLevel: 20,
       defence: 20,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.HARRALANDER, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.HARRALANDER, weight: 1)],
     ),
   ),
   RANARR(
@@ -289,9 +276,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/ranarr.png",
       requiredLevel: 25,
       defence: 25,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.RANARR_WEED, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.RANARR_WEED, weight: 1)],
     ),
   ),
   TOADFLAX(
@@ -300,9 +285,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/toadflax.png",
       requiredLevel: 30,
       defence: 30,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.TOADFLAX, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.TOADFLAX, weight: 1)],
     ),
   ),
   IRIT(
@@ -311,9 +294,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/irit.png",
       requiredLevel: 40,
       defence: 40,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.IRIT_LEAF, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.IRIT_LEAF, weight: 1)],
     ),
   ),
   AVANTOE(
@@ -322,9 +303,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/avantoe.png",
       requiredLevel: 48,
       defence: 48,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.AVANTOE, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.AVANTOE, weight: 1)],
     ),
   ),
   KWUARM(
@@ -333,7 +312,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/kwuarm.png",
       requiredLevel: 54,
       defence: 54,
-      itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.KWUARM, weight: 1)],
+      itemDrops: [ItemDropType(id: ItemId.KWUARM, weight: 1)],
     ),
   ),
   SNAPDRAGON(
@@ -342,9 +321,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/snapdragon.png",
       requiredLevel: 59,
       defence: 59,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.SNAPDRAGON, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.SNAPDRAGON, weight: 1)],
     ),
   ),
   CADANTINE(
@@ -353,9 +330,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/cadantine.png",
       requiredLevel: 65,
       defence: 65,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.CADANTINE, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.CADANTINE, weight: 1)],
     ),
   ),
   LANTADYME(
@@ -364,9 +339,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/lantadyme.png",
       requiredLevel: 67,
       defence: 67,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.LANTADYME, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.LANTADYME, weight: 1)],
     ),
   ),
   DWARF_WEED(
@@ -375,9 +348,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/dwarf_weed.png",
       requiredLevel: 70,
       defence: 70,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.DWARF_WEED, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.DWARF_WEED, weight: 1)],
     ),
   ),
   TORSTOL(
@@ -386,9 +357,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/torstol.png",
       requiredLevel: 75,
       defence: 75,
-      itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.TORSTOL, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.TORSTOL, weight: 1)],
     ),
   ),
 
@@ -431,13 +400,8 @@ enum EntityId {
       combatType: CombatType.LEATHER_DPS,
       attackInterval: 2.0,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
-        WeightedDropTableEntry<ItemId>(
-          id: ItemId.FEATHER,
-          count: 1,
-          highCount: 5,
-          weight: 1,
-        ),
+        ItemDropType(id: ItemId.CHICKEN_MEAT, weight: 1),
+        ItemDropType(id: ItemId.FEATHER, lowCount: 1, highCount: 5, weight: 1),
       ],
     ),
   ),
@@ -450,7 +414,7 @@ enum EntityId {
       level: 5,
       combatType: CombatType.CLOTH_DPS,
       attackInterval: 2.0,
-      itemDrops: [WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1)],
+      itemDrops: [ItemDropType(id: ItemId.COINS, weight: 1)],
       // 5% chance, on top of the coin drop, to yield the key that opens
       // the Goblin Queen's Lair landmark dungeon
       bonusDrops: [
@@ -476,8 +440,8 @@ enum EntityId {
       combatType: CombatType.PLATE_DPS,
       attackInterval: 2.0,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.COW_MEAT, weight: 1),
-        WeightedDropTableEntry<ItemId>(id: ItemId.COW_HIDE, weight: 1),
+        ItemDropType(id: ItemId.COW_MEAT, weight: 1),
+        ItemDropType(id: ItemId.COW_HIDE, weight: 1),
       ],
     ),
   ),
@@ -492,8 +456,8 @@ enum EntityId {
       combatType: CombatType.BALANCE,
       attackInterval: 1.5,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.SILK, weight: 1),
-        WeightedDropTableEntry<ItemId>(id: ItemId.VENOM, weight: 1),
+        ItemDropType(id: ItemId.SILK, weight: 1),
+        ItemDropType(id: ItemId.VENOM, weight: 1),
       ],
     ),
   ),
@@ -508,11 +472,11 @@ enum EntityId {
       combatType: CombatType.LEATHER_DPS,
       attackInterval: 2.0,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.CHICKEN_MEAT, weight: 1),
-        WeightedDropTableEntry<ItemId>(
+        ItemDropType(id: ItemId.CHICKEN_MEAT, weight: 1),
+        ItemDropType(
           id: ItemId.FEATHER,
           weight: 1,
-          count: 25,
+          lowCount: 25,
           highCount: 50,
         ),
       ],
@@ -529,16 +493,11 @@ enum EntityId {
       combatType: CombatType.LEATHER_DPS,
       attackInterval: 2.0,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(
-          id: ItemId.COINS,
-          count: 5,
-          highCount: 15,
-          weight: 1,
-        ),
-        WeightedDropTableEntry(id: ItemId.IRON_DAGGER, weight: 1),
-        WeightedDropTableEntry(
+        ItemDropType(id: ItemId.COINS, lowCount: 5, highCount: 15, weight: 1),
+        ItemDropType(id: ItemId.IRON_DAGGER, weight: 1),
+        ItemDropType(
           id: ItemId.COOKED_BLUEGILL,
-          count: 1,
+          lowCount: 1,
           highCount: 3,
           weight: 1,
         ),
@@ -568,24 +527,9 @@ enum EntityId {
       combatType: CombatType.PLATE_TANK,
       attackInterval: 2.5,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(
-          id: ItemId.LOGS,
-          weight: 1,
-          count: 1,
-          highCount: 4,
-        ),
-        WeightedDropTableEntry<ItemId>(
-          id: ItemId.COINS,
-          weight: 1,
-          count: 3,
-          highCount: 10,
-        ),
-        WeightedDropTableEntry<ItemId>(
-          id: ItemId.IRON_ORE,
-          weight: 1,
-          count: 1,
-          highCount: 2,
-        ),
+        ItemDropType(id: ItemId.LOGS, weight: 1, lowCount: 1, highCount: 4),
+        ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 3, highCount: 10),
+        ItemDropType(id: ItemId.IRON_ORE, weight: 1, lowCount: 1, highCount: 2),
       ],
       bonusDrops: [
         DropRoll<ItemId>(
@@ -608,24 +552,9 @@ enum EntityId {
       combatType: CombatType.LEATHER_TANK,
       attackInterval: 2.5,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(
-          id: ItemId.LOGS,
-          weight: 1,
-          count: 1,
-          highCount: 4,
-        ),
-        WeightedDropTableEntry<ItemId>(
-          id: ItemId.COINS,
-          weight: 1,
-          count: 3,
-          highCount: 10,
-        ),
-        WeightedDropTableEntry<ItemId>(
-          id: ItemId.IRON_ORE,
-          weight: 1,
-          count: 1,
-          highCount: 2,
-        ),
+        ItemDropType(id: ItemId.LOGS, weight: 1, lowCount: 1, highCount: 4),
+        ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 3, highCount: 10),
+        ItemDropType(id: ItemId.IRON_ORE, weight: 1, lowCount: 1, highCount: 2),
       ],
       bonusDrops: [
         DropRoll<ItemId>(
@@ -651,18 +580,13 @@ enum EntityId {
       combatType: CombatType.LEATHER_DPS,
       attackInterval: 2.0,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(
-          id: ItemId.COINS,
-          count: 5,
-          highCount: 15,
-          weight: 1,
-        ),
-        WeightedDropTableEntry(id: ItemId.IRON_DAGGER, weight: 1),
-        WeightedDropTableEntry(id: ItemId.GUAM_LEAF, weight: 1),
-        WeightedDropTableEntry(id: ItemId.LIGHT_LEATHER_BOOTS, weight: 1),
-        WeightedDropTableEntry(
+        ItemDropType(id: ItemId.COINS, lowCount: 5, highCount: 15, weight: 1),
+        ItemDropType(id: ItemId.IRON_DAGGER, weight: 1),
+        ItemDropType(id: ItemId.GUAM_LEAF, weight: 1),
+        ItemDropType(id: ItemId.LIGHT_LEATHER_BOOTS, weight: 1),
+        ItemDropType(
           id: ItemId.COOKED_BLUEGILL,
-          count: 1,
+          lowCount: 1,
           highCount: 3,
           weight: 1,
         ),
@@ -682,6 +606,83 @@ enum EntityId {
       ],
     ),
   ),
+  MUDLURC(
+    CombatEntityDefinition(
+      name: "Mudlurc",
+      iconAsset: "assets/images/entities/mudlurc.png",
+      level: 35,
+      combatType: CombatType.CLOTH_DPS,
+      itemDrops: [
+        ItemDropType(id: ItemId.SALMON, weight: 1),
+        ItemDropType(id: ItemId.PIKE, weight: 1),
+        ItemDropType(id: ItemId.TROUT, weight: 1),
+        ItemDropType(id: ItemId.SCALE, lowCount: 1, highCount: 3, weight: 3),
+      ],
+      attackInterval: 1.0,
+    ),
+  ),
+  // the weighted drop table just spits out the object you put in as an id.
+  // right now the id is alwasy an enumeration but it could be an Item type.
+  // Make a lightweght item drop type with id, quality, count, drop weight.
+  // under the hood itme drop type is passed as an entry into the wieghted
+  // drop table and the item quality is preserved in the results.
+  MUDLURC_WARRIOR(
+    CombatEntityDefinition(
+      name: "Mudlurc",
+      iconAsset: "assets/images/entities/mudlurc.png",
+      level: 55,
+      combatType: CombatType.CLOTH_DPS,
+      itemDrops: [
+        ItemDropType(id: ItemId.SALMON),
+        ItemDropType(id: ItemId.PIKE),
+        ItemDropType(id: ItemId.TROUT),
+        ItemDropType(id: ItemId.SCALE, highCount: 3, weight: 3),
+        ItemDropType(
+          id: ItemId.FISHBONE_DAGGER,
+          rarity: Rarity.COMMON,
+          weight: 0.1,
+        ),
+        ItemDropType(
+          id: ItemId.FISHBONE_DAGGER,
+          rarity: Rarity.UNCOMMON,
+          weight: 0.05,
+        ),
+      ],
+      attackInterval: 1.0,
+    ),
+  ),
+  FOREST_WOLF(
+    CombatEntityDefinition(
+      name: "Forest Wolf",
+      iconAsset: "assets/images/entities/wolf.png",
+      level: 35,
+      combatType: CombatType.LEATHER_DPS,
+      itemDrops: [
+        ItemDropType(id: ItemId.CLAW, weight: 1),
+        ItemDropType(id: ItemId.ANIMAL_PELT, weight: 1),
+      ],
+      attackInterval: 1.0,
+    ),
+  ),
+  FOREST_WOLF_UNCOMMON(
+    CombatEntityDefinition(
+      name: "Elder Forest Wolf",
+      iconAsset: "assets/images/entities/wolf.png",
+      level: 55,
+      combatType: CombatType.LEATHER_DPS,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(id: ItemId.CLAW, lowCount: 2, highCount: 5, weight: 1),
+        ItemDropType(
+          id: ItemId.ANIMAL_PELT,
+          lowCount: 2,
+          highCount: 5,
+          weight: 1,
+        ),
+      ],
+      attackInterval: 1.0,
+    ),
+  ),
   SPIDER_BROODMOTHER(
     CombatEntityDefinition(
       name: "Spider Broodmother",
@@ -693,17 +694,26 @@ enum EntityId {
       combatType: CombatType.LEATHER_TANK,
       attackInterval: 2.5,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1, count: 100),
-      ],
-      bonusDrops: [
-        DropRoll<ItemId>(
-          chance: 0.08,
-          entries: [
-            WeightedDropTableEntry<ItemId>(
-              id: ItemId.SPIDER_SILK_NECKLACE,
-              weight: 1,
-            ),
-          ],
+        ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 100),
+        ItemDropType(
+          id: ItemId.SPIDER_SILK_NECKLACE,
+          rarity: Rarity.COMMON,
+          weight: .1,
+        ),
+        ItemDropType(
+          id: ItemId.SPIDER_SILK_NECKLACE,
+          rarity: Rarity.UNCOMMON,
+          weight: .05,
+        ),
+        ItemDropType(
+          id: ItemId.SPIDER_SILK_NECKLACE,
+          rarity: Rarity.RARE,
+          weight: .01,
+        ),
+        ItemDropType(
+          id: ItemId.SPIDER_SILK_NECKLACE,
+          rarity: Rarity.EPIC,
+          weight: .005,
         ),
       ],
     ),
@@ -719,8 +729,8 @@ enum EntityId {
       combatType: CombatType.LEATHER_TANK,
       attackInterval: 2.5,
       itemDrops: [
-        WeightedDropTableEntry<ItemId>(id: ItemId.GOBLIN_CROWN, weight: 1),
-        WeightedDropTableEntry<ItemId>(id: ItemId.GOBLIN_SCEPTER, weight: 1),
+        ItemDropType(id: ItemId.GOBLIN_CROWN, weight: 1),
+        ItemDropType(id: ItemId.GOBLIN_SCEPTER, weight: 1),
       ],
       bonusDrops: [
         // guaranteed bulk currency

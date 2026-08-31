@@ -15,6 +15,7 @@ import '../data/player_data.dart';
 import '../data/encounter_data.dart';
 import '../data/world_data.dart';
 import '../data/inventory_data.dart';
+import '../data/item_drop_type.dart';
 import '../data/swing_profile.dart';
 import '../data/ObjectStack.dart';
 import '../services/inventory_service.dart';
@@ -162,19 +163,21 @@ class EncounterSystem {
       // cast, so bad content is an empty result instead of a crash mid-fight
       final def = e.id.definition;
       if (def is! EncounterEntityDefinition) return result;
-      final drops = _dropTableService.rollMulitpleTimes(
-        enemiesToKill,
-        def.itemDrops,
+      _payOutDrops(
+        _dropTableService.rollMulitpleTimes(
+          enemiesToKill,
+          def.weightedDropTable,
+        ),
+        playerInventory,
+        encounter.itemDrops,
+        result,
       );
-      drops.addAll(
+      _payOutItems(
         _dropTableService.rollBonusMulitpleTimes(enemiesToKill, def.bonusDrops),
+        playerInventory,
+        encounter.itemDrops,
+        result,
       );
-
-      result.items.addAll(drops);
-
-      // add drops to inventories (player + encounter history)
-      _inventoryService.addItems(playerInventory, drops);
-      _inventoryService.addItems(encounter.itemDrops, drops);
 
       // decrement entity count by x
       encounter.entity!.count -= enemiesToKill;
@@ -251,15 +254,18 @@ class EncounterSystem {
       // (rare uniques, bulk stacks) the entity defines
       final def = e.id.definition;
       if (def is! EncounterEntityDefinition) return result;
-      final drops = <ObjectStack<ItemId>>[
-        _dropTableService.roll(def.itemDrops),
-        ..._dropTableService.rollBonus(def.bonusDrops),
-      ];
-      result.items.addAll(drops);
-
-      // add drops to inventories (player + encounter history)
-      _inventoryService.addItems(playerInventory, drops);
-      _inventoryService.addItems(encounter.itemDrops, drops);
+      _payOutDrops(
+        [_dropTableService.roll(def.weightedDropTable)],
+        playerInventory,
+        encounter.itemDrops,
+        result,
+      );
+      _payOutItems(
+        _dropTableService.rollBonus(def.bonusDrops),
+        playerInventory,
+        encounter.itemDrops,
+        result,
+      );
     }
 
     // Apply XP to player
@@ -489,6 +495,69 @@ class EncounterSystem {
     return level >= herbRequiredLevel(id);
   }
 
+  /// Pays out what the main drop table rolled, into the player's bag and
+  /// the encounter's own tally of what the fight has produced.
+  ///
+  /// A drop of equipment carries the quality its table line names, so it
+  /// arrives as its own instance the way a crafted piece does — that is the
+  /// whole reason the main table rolls for [ItemDropType] rather than a bare
+  /// id. Everything else stacks by id, and comes back as the stacks that
+  /// were paid so the caller can price them for xp.
+  List<ObjectStack<ItemId>> _payOutDrops(
+    List<ObjectStack<ItemDropType>> rolled,
+    InventoryData playerInventory,
+    InventoryData encounterDrops,
+    EncounterActionResult result,
+  ) {
+    final stacks = <ObjectStack<ItemId>>[];
+    for (final drop in rolled) {
+      if (drop.count <= 0 || drop.id.id == ItemId.NULL) continue;
+      if (drop.id.id.build() is! EquipmentItem) {
+        stacks.add(ObjectStack<ItemId>(id: drop.id.id, count: drop.count));
+        continue;
+      }
+      // every inventory gets its own instance: sharing one object between
+      // two of them would double-count when stacks merge
+      for (final target in [playerInventory, encounterDrops]) {
+        _inventoryService.addEquipment(target, _dropAsEquipment(drop));
+      }
+      result.equipment.add(_dropAsEquipment(drop));
+    }
+    _payOutItems(stacks, playerInventory, encounterDrops, result);
+    return stacks;
+  }
+
+  /// Pays out plain item stacks — what a bonus roll produces. Bonus rolls
+  /// name items rather than drops, so nothing there carries a quality.
+  void _payOutItems(
+    List<ObjectStack<ItemId>> stacks,
+    InventoryData playerInventory,
+    InventoryData encounterDrops,
+    EncounterActionResult result,
+  ) {
+    if (stacks.isEmpty) return;
+    result.items.addAll(stacks);
+    _inventoryService.addItems(playerInventory, stacks);
+    _inventoryService.addItems(encounterDrops, stacks);
+  }
+
+  EquipmentItem _dropAsEquipment(ObjectStack<ItemDropType> drop) {
+    final piece = drop.id.id.build() as EquipmentItem;
+    piece.quality = drop.id.rarity;
+    piece.count = drop.count;
+    return piece;
+  }
+
+  /// What a haul is worth to the skill that gathered it. Equipment is not
+  /// priced: a spot pays its xp for the fish, not for what came up with it.
+  double _xpFor(List<ObjectStack<ItemId>> stacks) {
+    double xp = 0;
+    for (final stack in stacks) {
+      xp += stack.id.definition.xpValue * stack.count;
+    }
+    return xp;
+  }
+
   /// Estimated xp for fully consuming ONE count of [e], mirroring the xp
   /// the actions actually award: damage-based skills accrue
   /// [xpPerDamage] per damage (one kill/fell/deplete deals the node's full
@@ -651,19 +720,18 @@ class EncounterSystem {
     e.count--;
     result.actionsPerformed = 1;
 
-    final rolled = _dropTableService.roll(def.itemDrops);
-    final drop = ObjectStack<ItemId>(id: rolled.id, count: gathered);
-    result.items.add(drop);
-
-    // add drops to inventories (player + encounter history)
-    _inventoryService.addItems(playerInventory, [drop]);
-    _inventoryService.addItems(encounter.itemDrops, [drop]);
+    final rolled = _dropTableService.roll(def.weightedDropTable);
+    final paid = _payOutDrops(
+      [ObjectStack<ItemDropType>(id: rolled.id, count: gathered)],
+      playerInventory,
+      encounter.itemDrops,
+      result,
+    );
 
     // shown as the per-action feedback number on the encounter screen
     result.damageDone = gathered;
 
-    result.xp[SkillId.HERBALISM] = (drop.id.definition.xpValue * gathered)
-        .toDouble();
+    result.xp[SkillId.HERBALISM] = _xpFor(paid);
     _playerDataService.applyXp(playerState, result.xp);
 
     return result;
@@ -699,9 +767,9 @@ class EncounterSystem {
     // the table is rolled once per pick; each roll's stack is then worth a
     // pick's yield, the way a single pick's stack is
     final drops = _dropTableService
-        .rollMulitpleTimes(picks, def.itemDrops)
+        .rollMulitpleTimes(picks, def.weightedDropTable)
         .map(
-          (stack) => ObjectStack<ItemId>(
+          (stack) => ObjectStack<ItemDropType>(
             id: stack.id,
             count: (stack.count * meanYield).round(),
           ),
@@ -711,14 +779,16 @@ class EncounterSystem {
 
     e.count -= picks;
     result.actionsPerformed = picks;
-    result.items.addAll(drops);
 
-    // add drops to inventories (player + encounter history)
-    _inventoryService.addItems(playerInventory, drops);
-    _inventoryService.addItems(encounter.itemDrops, drops);
+    final paid = _payOutDrops(
+      drops,
+      playerInventory,
+      encounter.itemDrops,
+      result,
+    );
 
     double xp = 0;
-    for (final drop in drops) {
+    for (final drop in paid) {
       xp += drop.id.definition.xpValue * drop.count;
       result.damageDone += drop.count;
     }
@@ -790,15 +860,14 @@ class EncounterSystem {
     // roll drops
     final def = e.id.definition;
     if (def is! EncounterEntityDefinition) return result;
-    final drop = _dropTableService.roll(def.itemDrops);
-    result.items.add(drop);
+    final paid = _payOutDrops(
+      [_dropTableService.roll(def.weightedDropTable)],
+      playerInventory,
+      encounter.itemDrops,
+      result,
+    );
 
-    // add drops to inventories (player + encounter history)
-    _inventoryService.addItems(playerInventory, [drop]);
-    _inventoryService.addItems(encounter.itemDrops, [drop]);
-
-    result.xp[SkillId.FISHING] = (drop.id.definition.xpValue * drop.count)
-        .toDouble();
+    result.xp[SkillId.FISHING] = _xpFor(paid);
 
     // Apply XP to player
     if (result.xp.isNotEmpty) {
@@ -833,12 +902,12 @@ class EncounterSystem {
     if (catches <= 0) return result;
 
     final def = e.id.definition as EncounterEntityDefinition;
-    final drops = _dropTableService.rollMulitpleTimes(catches, def.itemDrops);
-    result.items.addAll(drops);
-
-    // add drops to inventories (player + encounter history)
-    _inventoryService.addItems(playerInventory, drops);
-    _inventoryService.addItems(encounter.itemDrops, drops);
+    final drops = _payOutDrops(
+      _dropTableService.rollMulitpleTimes(catches, def.weightedDropTable),
+      playerInventory,
+      encounter.itemDrops,
+      result,
+    );
 
     double xp = 0;
     for (final drop in drops) {

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:flutter/widgets.dart';
@@ -18,6 +19,14 @@ const Map<Rarity, double> rarityStatMultiplier = {
   Rarity.RARE: 1.2,
   Rarity.EPIC: 1.3,
   Rarity.LEGENDARY: 1.5,
+};
+
+const Map<Rarity, int> rarityStatMinBonus = {
+  Rarity.COMMON: 0,
+  Rarity.UNCOMMON: 1,
+  Rarity.RARE: 2,
+  Rarity.EPIC: 3,
+  Rarity.LEGENDARY: 5,
 };
 
 /// The stat multiplier for [rarity], defaulting to the identity.
@@ -54,7 +63,12 @@ class EquipmentItem extends Item {
   Map<SkillId, int> get effectiveSkillBonus {
     final result = <SkillId, int>{};
     for (final entry in skillBonus.entries) {
-      result[entry.key] = (entry.value * statMultiplierFor(quality)).round();
+      final stat = result[entry.key] ?? 0;
+      result[entry.key] = stat.clamp(
+        rarityStatMinBonus[quality] ?? 0,
+        (entry.value * statMultiplierFor(quality)).round(),
+      );
+      result[entry.key] = stat;
     }
     for (final entry in enchantBonus.entries) {
       result[entry.key] = (result[entry.key] ?? 0) + entry.value;
@@ -136,8 +150,7 @@ class EquipmentItem extends Item {
     }
     final rawQuality = json['quality'];
     if (rawQuality is String) {
-      quality =
-          Rarity.values.asNameMap()[rawQuality] ?? Rarity.COMMON;
+      quality = Rarity.values.asNameMap()[rawQuality] ?? Rarity.COMMON;
     }
     final rawEnchantName = json['enchantName'];
     if (rawEnchantName is String) {

@@ -42,6 +42,13 @@ class EquipmentItemDefinition extends ItemDefinition {
   }
 
   @override
+  // todo: make item intance objet and Id and some modifiers rather than
+  // keeping all the core item info in the item instance. The game will lookup data
+  // from the catalog based on the id, and calculate stat totals from the modifier
+  // rather keeping the stat totals in the item instance. This makes sure there
+  // is a single source of truth for item data. That way when there are turning updates,
+  // all the existing item instances take the changes, rather than needing a wipe
+  // or some tooling to adjust the existing instantiated items.
   EquipmentItem toItem(ItemId id) => EquipmentItem(
     id: id,
     name: name,

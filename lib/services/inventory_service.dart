@@ -142,7 +142,11 @@ class InventoryService {
     ArmorSlots slot,
     InventoryData inventoryState,
   ) {
-    return inventoryState.equipment.where((e) => e.armorSlot == slot).toList();
+    // the second ring slot wears items defined for the first
+    final itemSlot = slot.itemSlot;
+    return inventoryState.equipment
+        .where((e) => e.armorSlot == itemSlot)
+        .toList();
   }
 
   List<EquipmentItem> getEquipmentForSlotAndSkill(

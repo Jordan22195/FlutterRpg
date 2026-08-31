@@ -24,22 +24,29 @@ class _GearScreenState extends State<GearScreen> {
   static const List<ArmorSlots> _leftSlots = [
     ArmorSlots.HEAD,
     ArmorSlots.SHOULDER,
+    ArmorSlots.NECK,
+    ArmorSlots.BACK,
     ArmorSlots.CHEST,
-    ArmorSlots.WAIST,
-    ArmorSlots.LEGS,
+    ArmorSlots.WRIST,
   ];
   static const List<ArmorSlots> _rightSlots = [
     ArmorSlots.HANDS,
-    ArmorSlots.WRIST,
+    ArmorSlots.WAIST,
+    ArmorSlots.LEGS,
     ArmorSlots.FEET,
-    ArmorSlots.NECK,
     ArmorSlots.FINGER,
+    ArmorSlots.FINGER_2,
   ];
   static const List<ArmorSlots> _weaponSlots = [
     ArmorSlots.WEAPON_1H,
     ArmorSlots.WEAPON_2H,
     ArmorSlots.OFFHAND,
   ];
+
+  // the taller of the two paper-doll columns, in tiles
+  static final int _dollColumnSlots = _leftSlots.length > _rightSlots.length
+      ? _leftSlots.length
+      : _rightSlots.length;
 
   // gathering skills that equip a tool; each has its own tool slot
   static const List<SkillId> _toolSkills = [
@@ -52,6 +59,7 @@ class _GearScreenState extends State<GearScreen> {
   static const Map<ArmorSlots, String> _slotLabels = {
     ArmorSlots.HEAD: 'Head',
     ArmorSlots.SHOULDER: 'Shoulder',
+    ArmorSlots.BACK: 'Back',
     ArmorSlots.CHEST: 'Chest',
     ArmorSlots.WAIST: 'Waist',
     ArmorSlots.LEGS: 'Legs',
@@ -59,7 +67,8 @@ class _GearScreenState extends State<GearScreen> {
     ArmorSlots.HANDS: 'Hands',
     ArmorSlots.FEET: 'Feet',
     ArmorSlots.NECK: 'Neck',
-    ArmorSlots.FINGER: 'Ring',
+    ArmorSlots.FINGER: 'Ring 1',
+    ArmorSlots.FINGER_2: 'Ring 2',
     ArmorSlots.WEAPON_1H: 'Main hand',
     ArmorSlots.WEAPON_2H: 'Two-hand',
     ArmorSlots.OFFHAND: 'Offhand',
@@ -69,6 +78,7 @@ class _GearScreenState extends State<GearScreen> {
   static const Map<ArmorSlots, String> _slotShortLabels = {
     ArmorSlots.HEAD: 'Head',
     ArmorSlots.SHOULDER: 'Shldr',
+    ArmorSlots.BACK: 'Back',
     ArmorSlots.CHEST: 'Chest',
     ArmorSlots.WAIST: 'Waist',
     ArmorSlots.LEGS: 'Legs',
@@ -76,7 +86,8 @@ class _GearScreenState extends State<GearScreen> {
     ArmorSlots.HANDS: 'Hands',
     ArmorSlots.FEET: 'Feet',
     ArmorSlots.NECK: 'Neck',
-    ArmorSlots.FINGER: 'Ring',
+    ArmorSlots.FINGER: 'Ring 1',
+    ArmorSlots.FINGER_2: 'Ring 2',
     ArmorSlots.WEAPON_1H: '1H',
     ArmorSlots.WEAPON_2H: '2H',
     ArmorSlots.OFFHAND: 'Off',
@@ -109,7 +120,7 @@ class _GearScreenState extends State<GearScreen> {
       equipped: equipped,
       available: inventoryController.getSlotItemList(slot),
       onEquip: (item) {
-        equipmentController.equipItem(item);
+        equipmentController.equipItem(item, toSlot: slot);
         setState(() {
           _selectedSlot = slot;
           _selectedTool = null;
@@ -273,8 +284,8 @@ class _GearScreenState extends State<GearScreen> {
           slotColumn(_leftSlots),
           Expanded(
             child: SizedBox(
-              // matches the 5-slot column height so the figure centers
-              height: 5 * 52 + 4 * 10,
+              // matches the taller slot column so the figure centers
+              height: _dollColumnSlots * 52 + (_dollColumnSlots - 1) * 10,
               child: Center(
                 child: CustomPaint(
                   size: const Size(110, 227),

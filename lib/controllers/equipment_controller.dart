@@ -37,11 +37,14 @@ class EquipmentController extends ChangeNotifier {
     return _equipmentService.getStatTotals(_playerState.equipmentData);
   }
 
-  bool equipItem(EquipmentItem item) {
+  /// [toSlot] picks between the slots the item accepts, for gear with more
+  /// than one home (rings); without it the first empty one wins.
+  bool equipItem(EquipmentItem item, {ArmorSlots? toSlot}) {
     final equipped = _equipmentSystem.equipItem(
       item,
       _playerState.equipmentData,
       _inventoryState,
+      toSlot: toSlot,
     );
     notifyListeners();
     return equipped;
