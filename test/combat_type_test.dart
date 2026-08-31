@@ -106,21 +106,26 @@ void main() {
   });
 
   group('CombatEntityDefinition', () {
+    // Stats are never written in the catalog — the level is the budget and
+    // the type is the split — so these assert the derivation itself rather
+    // than a snapshot of one entity's numbers. A rebalance changes the
+    // numbers; it must not change the relationship.
     test('derives its stats from level and type', () {
       final def = EntityId.GOBLIN_QUEEN.definition as CombatEntityDefinition;
-      expect(def.level, 28);
       expect(def.combatType, CombatType.LEATHER_TANK);
-      expect(def.attack, 17);
-      expect(def.defence, 34);
-      expect(def.hitpoints, 168);
+      expect(def.attack, def.combatType.attackAt(def.level));
+      expect(def.defence, def.combatType.defenceAt(def.level));
+      expect(def.hitpoints, def.combatType.hitpointsAt(def.level));
+      expect(levelOfType(def.combatType, def.level), def.level);
     });
 
     test('the runtime entity carries the derived stats', () {
+      final def = EntityId.GOBLIN.definition as CombatEntityDefinition;
       final entity = EntityId.GOBLIN.build() as CombatEntity;
-      expect(entity.attack, 5);
-      expect(entity.defence, 2);
-      expect(entity.hitpoints, 9);
-      expect(entity.maxHitPoints, 9);
+      expect(entity.attack, def.attack);
+      expect(entity.defence, def.defence);
+      expect(entity.hitpoints, def.hitpoints);
+      expect(entity.maxHitPoints, def.hitpoints);
     });
   });
 }

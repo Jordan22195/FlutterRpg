@@ -315,8 +315,11 @@ void main() {
           closeTo(1 + speedStatBonus(stat), 1e-9),
         );
       }
-      // a hundred points is worth about triple, not eleven times
-      expect(service.maxStrengthBoostForStat(99), closeTo(3.0, 0.05));
+      // a hundred points is worth about double, not eleven times. The
+      // coefficient was halved in "ui and balance tweaks" (7cbb76b); this
+      // guard exists to catch the curve drifting again, so it is deliberately
+      // a magnitude the root has to be retuned to break.
+      expect(service.maxStrengthBoostForStat(99), closeTo(2.0, 0.05));
     });
 
     test('speed divides the interval and keeps paying past the old floor', () {

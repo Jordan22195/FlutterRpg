@@ -5,6 +5,32 @@ import 'package:rpg/services/weighted_drop_table_service.dart';
 
 /// Jewelcrafting. Bars into bases, then bases plus gems into jewellery.
 const List<CraftingRecipe> jewelcraftingRecipes = [
+  // The bases. Every gem recipe below consumes one of these, so they sit at
+  // level 1 — the gem is what gates a piece, not the band it goes into.
+  // These replace the old 'forge_copper_ring'/'forge_copper_necklace', which
+  // were Blacksmithing recipes taking copper bars and named for copper while
+  // quietly outputting the gold bases.
+  CraftingRecipe(
+    id: 'jc_gold_ring',
+    name: 'Gold Ring',
+    skill: SkillId.JEWELCRAFTING,
+    levelRequirement: 1,
+    xp: 15,
+    inputs: {ItemId.GOLD_BAR: 1},
+    output: [WeightedDropTableEntry(id: ItemId.GOLD_RING, count: 1, weight: 1)],
+  ),
+  CraftingRecipe(
+    id: 'jc_gold_necklace',
+    name: 'Gold Necklace',
+    skill: SkillId.JEWELCRAFTING,
+    levelRequirement: 1,
+    xp: 20,
+    inputs: {ItemId.GOLD_BAR: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.GOLD_NECKLACE, count: 1, weight: 1),
+    ],
+  ),
+
   // Jewelcrafting: set a gem into a ring or necklace base.
   // gem tiers gate the level requirement, runescape style
   CraftingRecipe(

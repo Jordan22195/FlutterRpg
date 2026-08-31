@@ -138,13 +138,21 @@ void main() {
         save.playerData.buffData.zoneBuffs[save.playerData.currentZoneId]!;
     expect(zoneBuffs.keys, containsAll([EntityId.FIREPIT, EntityId.ANVIL]));
 
-    final campfireBonus = (ItemId.BASIC_CAMPFIRE.build() as FireItem)
-        .skillBonus[SkillId.HITPOINTS]!;
+    final campfire = ItemId.BASIC_CAMPFIRE.build() as FireItem;
     final total = session.buffService.getBuffedStatTotal(
       save.playerData.buffData,
       save.playerData.currentZoneId,
     );
-    expect(total[SkillId.HITPOINTS], campfireBonus * 2);
+    // which stats a campfire grants is a balance choice; the claim here is
+    // that two of them are worth double, whatever those stats are
+    expect(campfire.skillBonus, isNotEmpty);
+    for (final entry in campfire.skillBonus.entries) {
+      expect(
+        total[entry.key],
+        entry.value * 2,
+        reason: 'two campfires should double their ${entry.key.name} bonus',
+      );
+    }
 
     session.dispose();
   });

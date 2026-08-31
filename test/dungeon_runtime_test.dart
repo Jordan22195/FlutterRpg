@@ -181,10 +181,24 @@ void main() {
       expect(session.encounterController.slotClearedSequence, before + 1);
       expect(session.encounterController.lastClearedSlot, 3);
 
-      // the boss's guaranteed coins landed
+      // The boss paid out. Its table is one weighted roll — a 100+ coin stack
+      // at weight 1, or one of the silk necklaces whose weights sum to 0.165 —
+      // so coins land about 86% of the time, not always. Asserting coins alone
+      // fails roughly one run in seven.
+      final coins = session.inventoryService.getItemCount(
+        save.inventoryData,
+        ItemId.COINS,
+      );
+      // the necklace is equipment, so it stacks in inventoryData.equipment
+      // rather than the itemMap that getItemCount reads
+      final necklaces = save.inventoryData.equipment
+          .where((e) => e.id == ItemId.SPIDER_SILK_NECKLACE)
+          .fold<int>(0, (sum, e) => sum + e.count);
       expect(
-        session.inventoryService.getItemCount(save.inventoryData, ItemId.COINS),
-        greaterThanOrEqualTo(100),
+        coins >= 100 || necklaces > 0,
+        isTrue,
+        reason: 'the boss should have paid out one roll of its table, '
+            'got $coins coins and $necklaces necklaces',
       );
 
       session.dispose();

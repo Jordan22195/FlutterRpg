@@ -78,4 +78,42 @@ const List<CraftingRecipe> firemakingRecipes = [
       WeightedDropTableEntry(id: ItemId.OAK_BONFIRE, count: 1, weight: 1),
     ],
   ),
+
+  // Willow (tier 3). Same log counts as the oak tier — the step up is in
+  // what the fire is worth and how long it burns, not what it costs to lay.
+  CraftingRecipe(
+    id: 'willow_cookfire',
+    name: 'Willow Cookfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 40,
+    xp: 135,
+    inputs: {ItemId.WILLOW_LOGS: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.WILLOW_COOKFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'willow_campfire',
+    name: 'Willow Campfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 45,
+    xp: 330,
+    inputs: {ItemId.WILLOW_LOGS: 5},
+    output: [
+      WeightedDropTableEntry(id: ItemId.WILLOW_CAMPFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'willow_bonfire',
+    name: 'Willow Bonfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 55,
+    xp: 1020,
+    inputs: {ItemId.WILLOW_LOGS: 15},
+    output: [
+      WeightedDropTableEntry(id: ItemId.WILLOW_BONFIRE, count: 1, weight: 1),
+    ],
+  ),
 ];

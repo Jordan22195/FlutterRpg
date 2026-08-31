@@ -203,8 +203,10 @@ void main() {
       session.worldController.doExplore(1);
 
       // the meadow's baseline table is uniform, so every find pays the
-      // zone's whole pool
-      expect(explorationXp(session), closeTo(8.0, 1e-9));
+      // zone's whole pool — read that pool off the catalog rather than
+      // restating it, since it is a tuning number
+      final pool = save.playerData.currentZoneId.definition.xpPerExplore;
+      expect(explorationXp(session), closeTo(pool.toDouble(), 1e-9));
       session.dispose();
     });
 
@@ -305,9 +307,10 @@ void main() {
       // the four baseline nodes are unlocked and split the table evenly
       final unlocked = details.entities.where((d) => !d.locked).toList();
       expect(unlocked, hasLength(4));
+      final pool = ZoneId.TUTORIAL_FARM.definition.xpPerExplore.toDouble();
       for (final d in unlocked) {
         expect(d.chance, closeTo(0.25, 1e-9));
-        expect(d.xp, closeTo(8.0, 1e-9));
+        expect(d.xp, closeTo(pool, 1e-9));
       }
 
       // the odds of everything available always add up

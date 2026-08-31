@@ -251,17 +251,23 @@ class EncounterSystem {
       }
 
       // roll drops: the guaranteed main drop plus any layered bonus rolls
-      // (rare uniques, bulk stacks) the entity defines
+      // (rare uniques, bulk stacks) the entity defines.
+      //
+      // [rng] is threaded through here too, not just into the damage roll.
+      // A caller that passes a seed is asking for a reproducible run, and
+      // loot is most of what a run is worth reproducing — leaving the drop
+      // roll on its own unseeded Random made seeded tests of rare drops
+      // silently probabilistic.
       final def = e.id.definition;
       if (def is! EncounterEntityDefinition) return result;
       _payOutDrops(
-        [_dropTableService.roll(def.weightedDropTable)],
+        [_dropTableService.roll(def.weightedDropTable, rng: rng)],
         playerInventory,
         encounter.itemDrops,
         result,
       );
       _payOutItems(
-        _dropTableService.rollBonus(def.bonusDrops),
+        _dropTableService.rollBonus(def.bonusDrops, rng: rng),
         playerInventory,
         encounter.itemDrops,
         result,

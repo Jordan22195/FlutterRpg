@@ -7,12 +7,18 @@ import 'package:rpg/catalogs/zones/zone_id.dart';
 /// edges between them, so it stays a service.
 class ZoneTravelGraph {
   // travel edges with stamina costs; the world map is a path/tree.
-  // farm <-5-> forest <-1-> mine
+  // farm <-5-> forest <-10-> haven, and below the town the road forks:
+  // haven <-15-> darkwood, haven -1-> mine (10 back up the hill)
   static const Map<ZoneId, Map<ZoneId, double>> _connections = {
     ZoneId.TUTORIAL_FARM: {ZoneId.SOUTHWOOD_FOREST: 5},
     ZoneId.SOUTHWOOD_FOREST: {ZoneId.TUTORIAL_FARM: 5, ZoneId.SOUTH_HAVEN: 10},
-    ZoneId.SOUTH_HAVEN: {ZoneId.SOUTHWOOD_FOREST: 10, ZoneId.FOREST_MINE: 1},
+    ZoneId.SOUTH_HAVEN: {
+      ZoneId.SOUTHWOOD_FOREST: 10,
+      ZoneId.FOREST_MINE: 1,
+      ZoneId.DARKWOOD_FOREST: 15,
+    },
     ZoneId.FOREST_MINE: {ZoneId.SOUTH_HAVEN: 10},
+    ZoneId.DARKWOOD_FOREST: {ZoneId.SOUTH_HAVEN: 15},
   };
 
   /// Unique travel edges (each bidirectional pair listed once), for

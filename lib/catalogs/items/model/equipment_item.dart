@@ -60,15 +60,17 @@ class EquipmentItem extends Item {
        instanceId = UniqueKey().toString();
 
   /// Stats after quality scaling and enchant bonus.
+  ///
+  /// Each base stat is scaled by the quality's multiplier and then floored at
+  /// that quality's [rarityStatMinBonus], so a rarer item is never worth less
+  /// than its tier promises — scaling alone rounds a +1 stat straight back to
+  /// +1 at every tier below legendary.
   Map<SkillId, int> get effectiveSkillBonus {
     final result = <SkillId, int>{};
+    final floor = rarityStatMinBonus[quality] ?? 0;
     for (final entry in skillBonus.entries) {
-      final stat = result[entry.key] ?? 0;
-      result[entry.key] = stat.clamp(
-        rarityStatMinBonus[quality] ?? 0,
-        (entry.value * statMultiplierFor(quality)).round(),
-      );
-      result[entry.key] = stat;
+      final scaled = (entry.value * statMultiplierFor(quality)).round();
+      result[entry.key] = scaled > floor ? scaled : floor;
     }
     for (final entry in enchantBonus.entries) {
       result[entry.key] = (result[entry.key] ?? 0) + entry.value;

@@ -182,15 +182,67 @@ grep -n '^version:' "$PUBSPEC" | sed 's/^/    /'
 # --- 6. build + archive -------------------------------------------------------
 # `flutter build ipa` runs `xcodebuild archive` and then `-exportArchive` with
 # the options plist, producing both the .xcarchive and a signed IPA.
+#
+# Clear out any previous run's IPA first. `flutter build ipa` can archive
+# successfully, fail at -exportArchive (a missing distribution certificate does
+# exactly this), and STILL exit 0 — so `set -e` does not catch it. A stale IPA
+# left in place is then picked up below as if this run had produced it, and the
+# upload step ships the previous build under the new build's number and tag.
+step "Clearing previous IPA output"
+if compgen -G "$IPA_DIR/*.ipa" > /dev/null; then
+  for old in "$IPA_DIR"/*.ipa; do
+    note "removing stale $(basename "$old")"
+    rm -f "$old"
+  done
+else
+  note "none present"
+fi
+
 step "Building and archiving (flutter build ipa)"
 flutter build ipa --release --export-options-plist="$EXPORT_OPTIONS"
 
 IPA="$(find "$IPA_DIR" -maxdepth 1 -name '*.ipa' 2>/dev/null | head -1)"
-[[ -n "$IPA" ]] || die "no .ipa produced under $IPA_DIR"
+
+# `flutter build ipa` shells out to a plain `xcodebuild -exportArchive`, with no
+# way to pass API-key credentials through. On a machine with no Apple ID signed
+# into Xcode and no local distribution certificate, that export always fails
+# ("No Accounts", "No signing certificate iOS Distribution found") even though
+# the archive above built fine. Redo the export ourselves with the App Store
+# Connect key: -allowProvisioningUpdates lets Xcode use cloud-managed signing,
+# where Apple holds the private key, so no certificate has to exist locally.
+if [[ -z "$IPA" && -n "${ASC_KEY_ID:-}" && -n "${ASC_ISSUER_ID:-}" ]]; then
+  step "Export failed; retrying with App Store Connect key (cloud signing)"
+  xcodebuild -exportArchive \
+    -archivePath "$XCARCHIVE" \
+    -exportOptionsPlist "$EXPORT_OPTIONS" \
+    -exportPath "$IPA_DIR" \
+    -allowProvisioningUpdates \
+    -authenticationKeyPath "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
+    -authenticationKeyID "$ASC_KEY_ID" \
+    -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+  IPA="$(find "$IPA_DIR" -maxdepth 1 -name '*.ipa' 2>/dev/null | head -1)"
+fi
+
+[[ -n "$IPA" ]] || die "no .ipa produced under $IPA_DIR.
+       The archive step can succeed while -exportArchive fails and still exit 0,
+       so check the build log above for 'Encountered error while creating the IPA'.
+       A missing 'Apple Distribution' certificate is the usual cause; the
+       API-key retry above covers that, but needs ASC_KEY_ID and ASC_ISSUER_ID
+       set even for --dry-run."
 
 step "Archive complete"
 note "archive $XCARCHIVE"
 note "ipa     $IPA"
+
+# The IPA is what actually gets uploaded, so verify its build number rather than
+# trusting that it came from this run. The compliance check below reads the
+# ARCHIVE, which would look correct even while a stale IPA sat here.
+IPA_BUILD="$(unzip -p "$IPA" 'Payload/*.app/Info.plist' 2>/dev/null \
+  | plutil -extract CFBundleVersion raw -o - - 2>/dev/null || echo "?")"
+note "ipa build number         $IPA_BUILD"
+[[ "$IPA_BUILD" == "$NEW_BUILD" ]] || \
+  die "the IPA at $IPA is build $IPA_BUILD, but this run is building $NEW_BUILD.
+       Refusing to upload an artifact this run did not produce."
 
 # Confirm the compliance declaration actually reached the binary, so a silent
 # Info.plist regression surfaces here rather than as an ASC prompt.

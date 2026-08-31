@@ -71,6 +71,13 @@ enum ItemId {
       iconAsset: "assets/icons/items/oak_logs.png",
     ),
   ),
+  WILLOW_LOGS(
+    ItemDefinition(
+      name: "Willow Logs",
+      value: 12,
+      iconAsset: "assets/icons/items/willow_logs.png",
+    ),
+  ),
 
   // ── ORES ────────────────────────────────────────────────────────
   // value ascending
@@ -922,7 +929,9 @@ enum ItemId {
     FireItemDefinition(
       name: "Oak Cookfire",
       value: 10,
-      skillBonus: {SkillId.COOKING: 6},
+      // 5, not 6: the three cookfires run 3 / 5 / 8 so the fire ladder
+      // carries the same Fibonacci step as the gear tiers
+      skillBonus: {SkillId.COOKING: 5},
       duration: Duration(minutes: 5),
       canCook: true,
       iconAsset: "assets/images/entities/oak_cookfire.png",
@@ -944,6 +953,37 @@ enum ItemId {
       skillBonus: {SkillId.SPEED: 3, SkillId.STRENGTH: 3},
       duration: Duration(minutes: 15),
       iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  // Tier 3 fires, burnt from the willow logs that grow in Darkwood. Stats
+  // take the next Fibonacci rung (cooking 3/5/8, the rest 1/3/8) and the
+  // burn times follow their own ladder (3/5/8, 5/8/13, 10/15/25 minutes).
+  WILLOW_COOKFIRE(
+    FireItemDefinition(
+      name: "Willow Cookfire",
+      value: 22,
+      skillBonus: {SkillId.COOKING: 8},
+      duration: Duration(minutes: 8),
+      canCook: true,
+      iconAsset: "assets/images/entities/willow_cookfire.png",
+    ),
+  ),
+  WILLOW_CAMPFIRE(
+    FireItemDefinition(
+      name: "Willow Campfire",
+      value: 26,
+      skillBonus: {SkillId.STAMINA: 8, SkillId.RECOVERY: 8},
+      duration: Duration(minutes: 13),
+      iconAsset: "assets/images/entities/willow_campfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE(
+    FireItemDefinition(
+      name: "Willow Bonfire",
+      value: 85,
+      skillBonus: {SkillId.SPEED: 8, SkillId.STRENGTH: 8},
+      duration: Duration(minutes: 25),
+      iconAsset: "assets/images/entities/willow_bonfire.png",
     ),
   ),
 

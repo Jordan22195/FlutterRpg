@@ -54,6 +54,17 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     ],
   ),
   CraftingRecipe(
+    id: 'forge_copper_sickle',
+    name: 'Copper Sickle',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 2,
+    xp: 2,
+    inputs: {ItemId.COPPER_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.COPPER_SICKLE, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
     id: 'forge_copper_helmet',
     name: 'Copper Helmet',
     skill: SkillId.BLACKSMITHING,
@@ -122,28 +133,6 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     ],
   ),
 
-  // Blacksmithing - jewelry bases
-  CraftingRecipe(
-    id: 'forge_copper_ring',
-    name: 'Copper Ring',
-    skill: SkillId.BLACKSMITHING,
-    levelRequirement: 4,
-    xp: 15,
-    inputs: {ItemId.COPPER_BAR: 1},
-    output: [WeightedDropTableEntry(id: ItemId.GOLD_RING, count: 1, weight: 1)],
-  ),
-  CraftingRecipe(
-    id: 'forge_copper_necklace',
-    name: 'Copper Necklace',
-    skill: SkillId.BLACKSMITHING,
-    levelRequirement: 4,
-    xp: 20,
-    inputs: {ItemId.COPPER_BAR: 2},
-    output: [
-      WeightedDropTableEntry(id: ItemId.GOLD_NECKLACE, count: 1, weight: 1),
-    ],
-  ),
-
   // Blacksmithing - iron (tier 2)
   CraftingRecipe(
     id: 'smelt_iron_bar',
@@ -184,6 +173,17 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     xp: 5,
     inputs: {ItemId.IRON_BAR: 1},
     output: [WeightedDropTableEntry(id: ItemId.IRON_AXE, count: 1, weight: 1)],
+  ),
+  CraftingRecipe(
+    id: 'forge_iron_sickle',
+    name: 'Iron Sickle',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 11,
+    xp: 5,
+    inputs: {ItemId.IRON_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.IRON_SICKLE, count: 1, weight: 1),
+    ],
   ),
   CraftingRecipe(
     id: 'forge_iron_helmet',
@@ -249,6 +249,150 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     inputs: {ItemId.IRON_BAR: 2},
     output: [
       WeightedDropTableEntry(id: ItemId.IRON_SHIELD, count: 1, weight: 1),
+    ],
+  ),
+
+  // ── STEEL (tier 3) ──────────────────────────────────────────────
+  // Steel is an alloy, so its bar is the one that takes two inputs: coal off
+  // the tier 3 vein plus iron ORE, not an iron bar. Smelting the iron first
+  // would make steel cost a second trip through the furnace for nothing —
+  // ore and coal go in together, the way the iron bar's own recipe works.
+  // Gear levels are the iron spread shifted up a tier, and the bar counts
+  // per piece are unchanged.
+  CraftingRecipe(
+    id: 'smelt_steel_bar',
+    name: 'Steel Bar',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 20,
+    xp: 3,
+    inputs: {ItemId.COAL: 1, ItemId.IRON_ORE: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_BAR, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_dagger',
+    name: 'Steel Dagger',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 20,
+    xp: 5,
+    inputs: {ItemId.STEEL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_DAGGER, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_pickaxe',
+    name: 'Steel Pickaxe',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 21,
+    xp: 5,
+    inputs: {ItemId.STEEL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_PICKAXE, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_axe',
+    name: 'Steel Axe',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 21,
+    xp: 5,
+    inputs: {ItemId.STEEL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_AXE, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_helmet',
+    name: 'Steel Helmet',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 22,
+    xp: 5,
+    inputs: {ItemId.STEEL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_HELMET, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_gloves',
+    name: 'Steel Gloves',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 23,
+    xp: 5,
+    inputs: {ItemId.STEEL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_GLOVES, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_sickle',
+    name: 'Steel Sickle',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 21,
+    xp: 5,
+    inputs: {ItemId.STEEL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_SICKLE, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_boots',
+    name: 'Steel Boots',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 25,
+    xp: 5,
+    inputs: {ItemId.STEEL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_BOOTS, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_legs',
+    name: 'Steel Legs',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 27,
+    xp: 10,
+    inputs: {ItemId.STEEL_BAR: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_LEGS, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_chestplate',
+    name: 'Steel Chestplate',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 30,
+    xp: 15,
+    inputs: {ItemId.STEEL_BAR: 3},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_CHESTPLATE, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_shield',
+    name: 'Steel Shield',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 32,
+    xp: 10,
+    inputs: {ItemId.STEEL_BAR: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_SHIELD, count: 1, weight: 1),
+    ],
+  ),
+
+  // ── GOLD (tier 3, jewellery line) ───────────────────────────────
+  // Gold is too soft for armour: its bar exists to be turned into ring and
+  // necklace bases by Jewelcrafting, not forged into gear here.
+  CraftingRecipe(
+    id: 'smelt_gold_bar',
+    name: 'Gold Bar',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 25,
+    xp: 4,
+    inputs: {ItemId.GOLD_ORE: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.GOLD_BAR, count: 1, weight: 1),
     ],
   ),
 ];

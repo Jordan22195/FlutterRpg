@@ -306,16 +306,19 @@ void main() {
   group('stamina', () {
     test('recovers while away with no boost held', () {
       final player = newPlayer();
-      setLevel(player, SkillId.RECOVERY, 20); // 2.0 stamina/sec
+      setLevel(player, SkillId.RECOVERY, 20);
       setLevel(player, SkillId.STAMINA, 20); // room to recover into
       player.stamina = 5;
       final (state, _) = recordingState();
+      // the per-second rate is a balance number; the claim under test is that
+      // a 10s gap pays 10 seconds of it, so read the rate off the service
+      final perSecond = playerDataService.staminaRecoveryPerSecond(player);
       final now = goOffline(player, 10);
 
       system.settle(player, state, now: now);
 
-      // 10s * 2.0/sec on top of the 5 it started with
-      expect(player.stamina, closeTo(25.0, 1e-6));
+      // 10s of recovery on top of the 5 it started with
+      expect(player.stamina, closeTo(5 + 10 * perSecond, 1e-6));
     });
 
     test('caps recovered stamina at the maximum', () {
@@ -424,7 +427,10 @@ void main() {
   group('buffed stats', () {
     test('a segment is worth what the buffs up for it were worth', () {
       final player = newPlayer();
-      setLevel(player, SkillId.STAMINA, 10); // room to recover into
+      // high enough that the pool never caps the recovery being measured —
+      // max stamina is 10x the stat, and a capped run would pass for the
+      // wrong reason
+      setLevel(player, SkillId.STAMINA, 60);
       player.stamina = 0;
       final (state, _) = recordingState();
 
@@ -443,12 +449,22 @@ void main() {
       );
       buffService.addBuff(potion, player.buffData);
 
+      // the two rates the gap should be paid at, read off the service at each
+      // end of it: buffed while the potion is up, the player's own after it
+      // lapses. The per-stat rate is a balance number — what is under test is
+      // that the segment is paid at the rate that applied *during* it.
+      final buffed = playerDataService.staminaRecoveryPerSecond(
+        player,
+        at: player.lastActionTime,
+      );
+      final base = playerDataService.staminaRecoveryPerSecond(player, at: now);
+
       system.settle(player, state, now: now);
 
-      // 30s at 2.1/sec then 30s at 0.1/sec. reading the wall clock instead
-      // would have paid the whole gap at 0.1 - the buff is long expired by
-      // the time the settle runs
-      expect(player.stamina, closeTo(30 * 2.1 + 30 * 0.1, 1e-6));
+      // 30s buffed then 30s unbuffed. reading the wall clock instead would
+      // have paid the whole gap at the base rate - the buff is long expired
+      // by the time the settle runs
+      expect(player.stamina, closeTo(30 * buffed + 30 * base, 1e-6));
     });
   });
 

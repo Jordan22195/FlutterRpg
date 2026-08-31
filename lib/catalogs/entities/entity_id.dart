@@ -93,6 +93,19 @@ enum EntityId {
       itemDrops: [ItemDropType(id: ItemId.OAK_LOGS, weight: 1)],
     ),
   ),
+  // Tier 3 woodcutting, sat at the same level as the coal vein so the two
+  // gathering ladders stay in step. Grows in Darkwood Forest.
+  WILLOW_TREE(
+    EncounterEntityDefinition(
+      name: "Willow Tree",
+      iconAsset: "assets/images/entities/willow_tree.png",
+
+      entityType: SkillId.WOODCUTTING,
+      defence: 20,
+      hitpoints: 25,
+      itemDrops: [ItemDropType(id: ItemId.WILLOW_LOGS, weight: 1)],
+    ),
+  ),
 
   // ── MINING ──────────────────────────────────────────────────────
   // EncounterEntityDefinition, tier ascending — pairs with the ORES items
@@ -126,6 +139,21 @@ enum EntityId {
         // rare gem finds, all tiers
       ],
       bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.1)],
+    ),
+  ),
+  // Tier 3 mining alongside the coal vein, and the first node anywhere that
+  // yields GOLD_ORE — the ore existed as an item with no way to obtain it.
+  GOLD_VEIN(
+    EncounterEntityDefinition(
+      name: "Gold Vein",
+      iconAsset: "assets/images/entities/gold_vein.png",
+
+      entityType: SkillId.MINING,
+      defence: 20,
+      hitpoints: 30,
+      itemDrops: [
+        ItemDropType(id: ItemId.GOLD_ORE, weight: 1, lowCount: 1, highCount: 2),
+      ],
     ),
   ),
   COAL_VEIN(
@@ -386,7 +414,12 @@ enum EntityId {
       level: 1,
       combatType: CombatType.PLATE_DPS,
       attackInterval: 2.0,
-      itemDrops: [],
+      // The weakest thing in the game, so it pays the smallest purse rather
+      // than nothing: an empty table is not rollable — roll() returns
+      // `ObjectStack(id: 0 as T)` for one, which throws on the cast.
+      itemDrops: [
+        ItemDropType(id: ItemId.COINS, lowCount: 1, highCount: 3, weight: 1),
+      ],
     ),
   ),
 
@@ -517,7 +550,7 @@ enum EntityId {
       ],
     ),
   ),
-  ROTWOOD_SCARECROW_0(
+  ROTWOOD_SCARECROW(
     CombatEntityDefinition(
       name: "Rotwood Scarecrow",
       iconAsset: "assets/images/entities/rotwood_scarecrow.png",
@@ -571,7 +604,7 @@ enum EntityId {
   ),
   GOBLIN_SEARGENT(
     CombatEntityDefinition(
-      name: "Goblin",
+      name: "Goblin Seargent",
       iconAsset: "assets/images/entities/goblin_scout.png",
       rarity: Rarity.RARE,
 

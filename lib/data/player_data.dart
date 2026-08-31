@@ -34,7 +34,7 @@ SkillId boostTrainedSkill(SkillId skillBoost) {
 /// Square root rather than linear. A linear ceiling made a hundred points
 /// worth eleven times, which is not a bonus so much as a different game;
 /// the root keeps every point paying while landing a hundred of them at
-/// about triple. Nothing caps it - past the useful range it simply climbs
+/// about double. Nothing caps it - past the useful range it simply climbs
 /// slowly rather than hitting a wall.
 double boostStatBonus(int stat) => 0.1 * sqrt(stat < 0 ? 0 : stat);
 

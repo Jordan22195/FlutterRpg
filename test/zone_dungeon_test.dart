@@ -53,11 +53,13 @@ void main() {
     });
   });
 
-  group('forest zone entrance', () {
-    test('the forest contains a Spider Den DungeonEntity', () {
+  group('darkwood zone entrance', () {
+    test('the darkwood contains a Spider Den DungeonEntity', () {
       final session = buildSession();
+      // the den moved out of Southwood: its cards run to a level 55 boss,
+      // which does not belong behind a level 5 zone's front door
       final forest =
-          session.saveGameData.worldData.zones[ZoneId.SOUTHWOOD_FOREST]!;
+          session.saveGameData.worldData.zones[ZoneId.DARKWOOD_FOREST]!;
       final entrance = forest.permanentEntities.whereType<DungeonEntity>();
       expect(entrance, hasLength(1));
       expect(entrance.first.dungeonId, DungeonId.SPIDER_DEN);
@@ -69,7 +71,7 @@ void main() {
       () {
         final session = buildSession();
         final restored = SaveGameData.fromJson(session.saveGameData.toJson());
-        final forest = restored.worldData.zones[ZoneId.SOUTHWOOD_FOREST]!;
+        final forest = restored.worldData.zones[ZoneId.DARKWOOD_FOREST]!;
         final entrance = forest.permanentEntities.whereType<DungeonEntity>();
         expect(entrance, hasLength(1));
         expect(entrance.first.dungeonId, DungeonId.SPIDER_DEN);
@@ -126,9 +128,24 @@ void main() {
       fightUntilStopped(session);
 
       expect(save.dungeonRun.slots[3].cleared, isTrue);
+      // One weighted roll off the boss's table: a 100+ coin stack at weight 1,
+      // or one of the silk necklaces whose weights sum to 0.165. Coins are the
+      // likely outcome, not a certain one, so accept either rather than
+      // flaking on the ~14% of runs that roll a necklace.
+      final coins = session.inventoryService.getItemCount(
+        save.inventoryData,
+        ItemId.COINS,
+      );
+      // the necklace is equipment, so it stacks in inventoryData.equipment
+      // rather than the itemMap that getItemCount reads
+      final necklaces = save.inventoryData.equipment
+          .where((e) => e.id == ItemId.SPIDER_SILK_NECKLACE)
+          .fold<int>(0, (sum, e) => sum + e.count);
       expect(
-        session.inventoryService.getItemCount(save.inventoryData, ItemId.COINS),
-        greaterThanOrEqualTo(100),
+        coins >= 100 || necklaces > 0,
+        isTrue,
+        reason: 'the boss should have paid out one roll of its table, '
+            'got $coins coins and $necklaces necklaces',
       );
 
       session.dispose();

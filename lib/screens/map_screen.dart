@@ -210,9 +210,9 @@ class _MapScreenState extends State<MapScreen> {
 
     // after layout, so the viewport's size is known
     final zone = world.currentZoneId;
-    //WidgetsBinding.instance.addPostFrameCallback(
-    //  (_) => _frameCurrentZone(zone),
-    //);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _frameCurrentZone(zone),
+    );
 
     return SafeArea(
       child: Column(

@@ -44,7 +44,7 @@ enum ZoneId {
           unlockLevel: 4,
         ),
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.ROTWOOD_SCARECROW_0,
+          id: EntityId.ROTWOOD_SCARECROW,
           weight: .7,
           unlockLevel: 8,
         ),
@@ -80,16 +80,19 @@ enum ZoneId {
       xpPerExplore: 5,
 
       name: "Southwood Forest",
-      permanentEntities: [
-        EntityId.RIVER,
-        EntityId.FIREPIT,
-        EntityId.SPIDER_DEN_ENTRANCE,
-      ],
+      permanentEntities: [EntityId.RIVER, EntityId.FIREPIT],
       discoverableEntities: [
-        //WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
         WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: .5),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
-        //WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GOBLIN_SEARGENT,
+          weight: 1,
+        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.FOREST_WOLF, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.FOREST_WOLF_UNCOMMON,
+          weight: 1,
+        ),
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
         WeightedDropTableEntry(id: EntityId.GOBLIN_CAMP, weight: .01),
         // herb geography: the low herbs grow here once you can spot them,
@@ -101,9 +104,16 @@ enum ZoneId {
           unlockLevel: 8,
         ),
 
+        // the river runs through these woods, and the mudlurcs come out of
+        // it — the same pairing the forest wolves have with the treeline
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.GIANT_SPIDER,
-          weight: .3,
+          id: EntityId.MUDLURC,
+          weight: 1,
+          unlockLevel: 11,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MUDLURC_WARRIOR,
+          weight: .5,
           unlockLevel: 11,
         ),
 
@@ -132,8 +142,52 @@ enum ZoneId {
         EntityId.ANVIL,
         EntityId.FIREPIT,
         EntityId.TRADING_POST,
+        EntityId.ALCHEMY_STATION,
       ],
       discoverableEntities: [],
+    ),
+  ),
+  DARKWOOD_FOREST(
+    ZoneDefinition(
+      name: "Darkwood Forest",
+      iconAsset: 'assets/images/zones/darkwood_forest.png',
+      explorationLevel: 20,
+      xpPerExplore: 10,
+
+      // The Spider Den moved here from Southwood: the den's own cards run to
+      // the Broodmother at level 55, which never sat comfortably behind a
+      // level-5 zone's front door.
+      permanentEntities: [EntityId.FIREPIT, EntityId.SPIDER_DEN_ENTRANCE],
+      discoverableEntities: [
+        // tier 3 gathering: willow for woodcutting, coal for mining. The
+        // gold vein is the mine's, not the darkwood's.
+        WeightedDropTableEntry<EntityId>(id: EntityId.WILLOW_TREE, weight: 1.5),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COAL_VEIN, weight: 1),
+        // the spiders that spill out of the den
+        WeightedDropTableEntry<EntityId>(id: EntityId.GIANT_SPIDER, weight: 1),
+        // the high herbs grow in the deep woods, the way the low ones grow
+        // in Southwood — the next rung of the same Herbalism ladder
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.HARRALANDER,
+          weight: .6,
+          count: 2,
+          unlockLevel: 24,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.RANARR,
+          weight: .2,
+          unlockLevel: 30,
+        ),
+      ],
+      discoverableItems: [
+        WeightedDropTableEntry(
+          id: ItemId.WILLOW_LOGS,
+          count: 1,
+          highCount: 4,
+          weight: .15,
+          unlockLevel: 24,
+        ),
+      ],
     ),
   ),
   FOREST_MINE(
@@ -154,6 +208,12 @@ enum ZoneId {
           id: EntityId.COAL_VEIN,
           weight: .8,
           unlockLevel: 21,
+        ),
+        // gold sits with the other veins, deeper in than coal
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GOLD_VEIN,
+          weight: .5,
+          unlockLevel: 23,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GEM_VEIN,

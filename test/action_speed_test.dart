@@ -197,9 +197,12 @@ void main() {
       actionTimingController: timing,
     );
 
-    // idle: one tick restores one second of recovery (0.1 at level 1)
+    // idle: one tick restores one second of recovery. The rate itself is a
+    // balance number, so read it off the service rather than restating it —
+    // the claim here is "one tick is worth one second", not what a second is.
+    final perSecond = playerDataService.staminaRecoveryPerSecond(player);
     controller.tickAmbientRecovery();
-    expect(player.stamina, closeTo(2.1, 0.001));
+    expect(player.stamina, closeTo(2 + perSecond, 0.001));
     expect(player.skillData[SkillId.RECOVERY]!.xp, greaterThan(0));
 
     // while the loop runs, the ambient tick stands down (the frame loop

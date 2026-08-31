@@ -508,7 +508,11 @@ void main() {
       await pumpMap(tester);
       final player = sessionOf(tester).saveGameData.playerData;
 
-      // 10 stamina covers the 5-stamina walk to the forest
+      // Baseline: a full tank clears every road on the map. Set it rather
+      // than relying on the starting 10 — the darkwood road south of South
+      // Haven costs 15, so a fresh player cannot afford the whole map.
+      player.stamina = 50;
+      await settle(tester);
       expect(edgePainter(tester).edges.every((e) => e.affordable), isTrue);
       expect(edgePainter(tester).warningColor, RecipeCard.missingMaterialColor);
 

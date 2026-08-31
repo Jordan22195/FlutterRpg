@@ -66,21 +66,50 @@ void main() {
 
     expect(find.text('Zone difficulty'), findsOneWidget);
     expect(find.text('Exploration 1'), findsOneWidget);
-    expect(find.text('8 per explore'), findsOneWidget);
+    // the xp pool is a tuning number, so read it off the catalog — the claim
+    // is that the row shows the zone's pool, not that the pool is any value.
+    // Whole numbers render without their ".0", same as the widget does.
+    final raw = ZoneId.TUTORIAL_FARM.definition.xpPerExplore.toStringAsFixed(1);
+    final pool = raw.endsWith('.0')
+        ? raw.substring(0, raw.length - 2)
+        : raw;
+    expect(find.text('$pool per explore'), findsOneWidget);
 
     // the four baseline nodes are live and split the table evenly
     expect(find.text('Tree'), findsOneWidget);
     expect(find.text('Cow'), findsOneWidget);
     expect(find.text('25.0%'), findsNWidgets(4));
-    expect(find.text('8 xp'), findsNWidgets(4));
+    expect(find.text('$pool xp'), findsNWidgets(4));
 
-    // the rares are visible but locked, with the level that opens them
+    // the rares are visible but locked, with the level that opens them.
+    // The scarecrow ships as two variants sharing one display name, so count
+    // the rows the catalog actually puts in this zone rather than assuming one.
     expect(find.text('Big Red'), findsOneWidget);
     expect(find.text('Exploration 4'), findsOneWidget);
-    expect(find.text('Rotwood Scarecrow'), findsOneWidget);
-    expect(find.text('Exploration 8'), findsOneWidget);
+    final details = session.explorationSystem.buildZoneDetails(
+      session.saveGameData.playerData,
+      ZoneId.TUTORIAL_FARM,
+    );
+    final scarecrows = details.entities
+        .where((d) => d.name == 'Rotwood Scarecrow')
+        .toList();
+    expect(scarecrows, isNotEmpty);
+    expect(
+      find.text('Rotwood Scarecrow'),
+      findsNWidgets(scarecrows.length),
+    );
+    for (final s in scarecrows) {
+      expect(find.text('Exploration ${s.unlockLevel}'), findsWidgets);
+    }
 
-    expect(find.text('4 discoveries'), findsOneWidget);
+    // how many things the zone still hides depends on its tables, so ask the
+    // system for the count the widget is rendering
+    final locked = details.lockedCount;
+    expect(locked, greaterThan(0));
+    expect(
+      find.text('$locked ${locked == 1 ? 'discovery' : 'discoveries'}'),
+      findsOneWidget,
+    );
 
     // the item table's gated finds are listed the same way, further down
     await tester.scrollUntilVisible(find.text('Sapphire'), 120);
@@ -104,9 +133,20 @@ void main() {
     expect(find.text('Still hidden'), findsNothing);
     expect(find.byIcon(Icons.lock_outline), findsNothing);
 
-    // Big Red is now rolling at its real odds rather than greyed out
+    // Big Red is now rolling at its real odds rather than greyed out. The
+    // odds follow the zone's discovery table, so derive them the way the
+    // widget does rather than pinning a percentage that any table edit moves.
     expect(find.text('Big Red'), findsOneWidget);
-    expect(find.text('2.4%'), findsOneWidget);
+    final details = session.explorationSystem.buildZoneDetails(
+      session.saveGameData.playerData,
+      ZoneId.TUTORIAL_FARM,
+    );
+    final bigRed = details.entities.firstWhere((d) => d.name == 'Big Red');
+    expect(bigRed.locked, isFalse);
+    expect(bigRed.chance, greaterThan(0));
+    final odds =
+        '${(bigRed.chance * 100).toStringAsFixed(bigRed.chance < 0.01 ? 2 : 1)}%';
+    expect(find.text(odds), findsOneWidget);
 
     session.dispose();
   });

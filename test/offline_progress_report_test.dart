@@ -7,6 +7,7 @@ import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/offline_progress_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/buff_service.dart';
 import 'package:rpg/services/equipment_service.dart';
@@ -80,9 +81,14 @@ void main() {
       expect(report, isNotNull);
       expect(report!.actionCount, actionsIn(session, longGap));
       expect(report.timeAway.inSeconds, longGap.inSeconds);
-      // the meadow pays a flat 8 xp an explore, and the batch pays one
-      // explore's worth per explore
-      expect(report.xp[SkillId.EXPLORATION], 8.0 * actionsIn(session, longGap));
+      // the meadow's table is uniform, so every explore pays the zone's whole
+      // pool; read that off the catalog rather than restating a tuning number
+      final pool = session.saveGameData.playerData.currentZoneId.definition
+          .xpPerExplore;
+      expect(
+        report.xp[SkillId.EXPLORATION],
+        pool * actionsIn(session, longGap),
+      );
       // every explore finds at least once, so the walk turned entities up
       expect(report.entities, isNotEmpty);
       expect(
@@ -138,7 +144,8 @@ void main() {
       // carries every bar the gap was worth
       final crafts = actionsIn(session, longGap);
       expect(report!.items.itemMap[ItemId.COPPER_BAR], crafts);
-      expect(report.xp[SkillId.BLACKSMITHING], 5.0 * crafts);
+      final each = RecipeCatalog().recipeById('smelt_copper_bar').xp.toDouble();
+      expect(report.xp[SkillId.BLACKSMITHING], each * crafts);
 
       session.actionTimingController.stop();
       session.dispose();

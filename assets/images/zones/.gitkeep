@@ -1,0 +1,4 @@
+Placeholder so pubspec.yaml's `assets/images/zones/` entry resolves.
+Flutter treats a declared-but-missing asset directory as a build error, and
+git will not track an empty directory. Delete this once the zone scene art
+exists (see knownMissingArt in test/catalog_integrity_test.dart).

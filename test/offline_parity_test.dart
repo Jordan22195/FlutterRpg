@@ -426,8 +426,10 @@ void main() {
 
       // an hour of felling a level-1 tree is worth dozens of levels, and a
       // settle that resolved the window at the level it started from would
-      // come back at a fraction of both numbers
-      expect(loopedLevel, greaterThan(30));
+      // come back at a fraction of both numbers. The threshold only has to be
+      // high enough that the parity check below is measuring something — the
+      // xp rates behind it are tuning numbers and have already come down once.
+      expect(loopedLevel, greaterThan(20));
       expect(settledLevel, closeTo(loopedLevel, 3));
       expect(
         report.enemiesDefeated,

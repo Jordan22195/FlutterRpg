@@ -155,7 +155,11 @@ void main() {
     final world = session.worldController;
 
     final queen = EntityId.GOBLIN_QUEEN.build() as EncounterEntity;
-    expect(world.entityLevel(queen), 28);
+    final queenDef =
+        EntityId.GOBLIN_QUEEN.definition as CombatEntityDefinition;
+    // the catalog's level, not a copy of it — a rebalance moves the number
+    // without changing the claim that a combat card reads its combat level
+    expect(world.entityLevel(queen), queenDef.level);
 
     final tree = EntityId.TREE.build() as EncounterEntity;
     expect(world.entityLevel(tree), tree.defence);

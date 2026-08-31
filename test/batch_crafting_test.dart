@@ -6,6 +6,7 @@ import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/game_session.dart';
+import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
 // A crafting tick settles [count] crafts at once: one during normal play, and
@@ -46,6 +47,13 @@ void main() {
   double xpFor(GameSession session, SkillId skill) =>
       session.saveGameData.playerData.skillData[skill]!.xp;
 
+  // What one craft of [recipeId] is worth. A recipe's xp is a tuning number,
+  // so the batch tests multiply this out rather than restating it — the claim
+  // is that a batch of N pays N crafts' worth, whatever one craft is worth.
+  final recipes = RecipeCatalog();
+  double xpPerCraft(String recipeId) =>
+      recipes.recipeById(recipeId).xp.toDouble();
+
   // runs one crafting tick of [recipeId] settling [craftCount] crafts.
   // [offline] is what a settle passes: it takes the batch calculation, and
   // [at] is the instant of the stretch being replayed.
@@ -82,12 +90,12 @@ void main() {
 
       final result = craft(session, 'smelt_copper_bar', craftCount: 50);
 
-      // 50 ore in, 50 bars out, and 50 crafts' worth of xp - the recipe
-      // pays 5 an ore
+      // 50 ore in, 50 bars out, and 50 crafts' worth of xp
+      final each = xpPerCraft('smelt_copper_bar');
       expect(save.inventoryData.itemMap[ItemId.COPPER_ORE], 150);
       expect(save.inventoryData.itemMap[ItemId.COPPER_BAR], 50);
-      expect(xpFor(session, SkillId.BLACKSMITHING), xpBefore + 5 * 50);
-      expect(result.xp[SkillId.BLACKSMITHING], 5 * 50);
+      expect(xpFor(session, SkillId.BLACKSMITHING), xpBefore + each * 50);
+      expect(result.xp[SkillId.BLACKSMITHING], each * 50);
       expect(result.items.fold<int>(0, (sum, stack) => sum + stack.count), 50);
     });
 
@@ -99,10 +107,11 @@ void main() {
 
       final result = craft(session, 'smelt_copper_bar', craftCount: 500);
 
+      final each = xpPerCraft('smelt_copper_bar');
       expect(save.inventoryData.itemMap[ItemId.COPPER_ORE], isNull);
       expect(save.inventoryData.itemMap[ItemId.COPPER_BAR], 3);
-      expect(xpFor(session, SkillId.BLACKSMITHING), xpBefore + 5 * 3);
-      expect(result.xp[SkillId.BLACKSMITHING], 5 * 3);
+      expect(xpFor(session, SkillId.BLACKSMITHING), xpBefore + each * 3);
+      expect(result.xp[SkillId.BLACKSMITHING], each * 3);
     });
 
     test('with nothing to craft with, changes nothing', () {
@@ -238,7 +247,10 @@ void main() {
       expect(report, isNotNull);
       expect(report!.actionCount, crafts);
       expect(report.items.itemMap[ItemId.COPPER_BAR], crafts);
-      expect(report.xp[SkillId.BLACKSMITHING], 5 * crafts);
+      expect(
+        report.xp[SkillId.BLACKSMITHING],
+        xpPerCraft('smelt_copper_bar') * crafts,
+      );
 
       session.actionTimingController.stop();
       session.dispose();

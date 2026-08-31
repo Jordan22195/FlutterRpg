@@ -86,19 +86,31 @@ void main() {
     });
 
     test('copyWith carries rarity, and can override it', () {
+      // which tier the gem vein sits at is a balance choice; what is under
+      // test is that a copy keeps it unless asked to change it
       final def = EntityId.GEM_VEIN.definition;
-      expect(def.rarity, Rarity.EPIC);
-      expect(def.copyWith(name: 'Richer Vein').rarity, Rarity.EPIC);
-      expect(def.copyWith(rarity: Rarity.LEGENDARY).rarity, Rarity.LEGENDARY);
+      final original = def.rarity;
+      final other = original == Rarity.LEGENDARY
+          ? Rarity.COMMON
+          : Rarity.LEGENDARY;
+      expect(def.copyWith(name: 'Richer Vein').rarity, original);
+      expect(def.copyWith(rarity: other).rarity, other);
     });
   });
 
   group('the tile borders itself', () {
     testWidgets('a rare entity gets its rarity color, unasked', (tester) async {
-      await pumpTile(tester, EntityId.COAL_VEIN);
+      const id = EntityId.GEM_VEIN;
+      final rarity = id.definition.rarity;
+      // the fixture has to actually be non-common or this proves nothing —
+      // a rebalance that makes it common should fail here, loudly, rather
+      // than quietly leave the test asserting the plain outline
+      expect(rarity, isNot(Rarity.COMMON));
+
+      await pumpTile(tester, id);
 
       final side = borderOf(tester);
-      expect(side.color, rarityBorderColor(Rarity.RARE));
+      expect(side.color, rarityBorderColor(rarity));
       expect(side.width, 2);
     });
 
@@ -108,7 +120,10 @@ void main() {
       await pumpTile(tester, EntityId.GOBLIN_QUEEN);
       final legendary = borderOf(tester).color;
 
-      await pumpTile(tester, EntityId.COAL_VEIN);
+      // GEM_VEIN, not a common entity: comparing legendary against the plain
+      // outline would pass even if every rarity shared one color
+      expect(EntityId.GEM_VEIN.definition.rarity, isNot(Rarity.COMMON));
+      await pumpTile(tester, EntityId.GEM_VEIN);
       final rare = borderOf(tester).color;
 
       expect(legendary, isNot(rare));

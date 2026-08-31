@@ -23,60 +23,30 @@ import 'package:rpg/services/weighted_drop_table_service.dart';
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
 const knownMissingArt = <String>{
-  // referenced before this list existed
-  'assets/icons/items/simple_fishing_rod.png',
-  'assets/images/entities/goblin_scout.png',
-  'assets/images/entities/goblin_camp.png',
-  'assets/images/dungeons/goblin_camp.png',
-  'assets/images/dungeons/goblin_queen_lair.png',
-  'assets/images/dungeons/spider_den.png',
+  // Scene art: zone headers and dungeon splashes. These are the last of the
+  // backlog because they are the one kind the generator will not draw —
+  // assets/images/{zones,dungeons}/** has no style picked, so
+  // generate_assets_rd.py reports them and skips them until it is passed
+  // --scene-style and --scene-size. Prompts for all seven are already written
+  // in tools/rd_prompt_overrides.json.
+  'assets/images/zones/south_haven.png',
   'assets/images/zones/farm.png',
   'assets/images/zones/forest.png',
   'assets/images/zones/mine.png',
-  'assets/images/zones/south_haven.png',
-  // the steel and mithril tiers, plus the Goblin Queen's second unique
-  'assets/icons/items/gold_ore.png',
-  'assets/icons/items/mithril_ore.png',
-  'assets/icons/items/adamantite_ore.png',
-  'assets/icons/items/runeite_ore.png',
-  'assets/icons/items/steel_bar.png',
-  'assets/icons/items/gold_bar.png',
-  'assets/icons/items/mithril_bar.png',
-  'assets/icons/items/adamantite_bar.png',
-  'assets/icons/items/runite_bar.png',
-  'assets/icons/items/goblin_scepter.png',
-  'assets/icons/items/steel_helmet.png',
-  'assets/icons/items/steel_chestplate.png',
-  'assets/icons/items/steel_legs.png',
-  'assets/icons/items/steel_boots.png',
-  'assets/icons/items/steel_gloves.png',
-  'assets/icons/items/steel_shield.png',
-  'assets/icons/items/steel_dagger.png',
-  'assets/icons/items/steel_axe.png',
-  'assets/icons/items/steel_pickaxe.png',
-  'assets/icons/items/steel_sickle.png',
-  'assets/icons/items/mithril_helmet.png',
-  'assets/icons/items/mithril_chestplate.png',
-  'assets/icons/items/mithril_legs.png',
-  'assets/icons/items/mithril_boots.png',
-  'assets/icons/items/mithril_gloves.png',
-  'assets/icons/items/mithril_shield.png',
-  'assets/icons/items/mithril_dagger.png',
-  'assets/icons/items/mithril_axe.png',
-  'assets/icons/items/mithril_pickaxe.png',
-  'assets/icons/items/mithril_sickle.png',
-  // the minor potion tier: its reagents, the six potions, and the station
-  'assets/icons/items/scale.png',
-  'assets/icons/items/silk.png',
-  'assets/icons/items/claw.png',
-  'assets/icons/items/venom.png',
-  'assets/icons/items/minor_speed_potion.png',
-  'assets/icons/items/minor_defence_potion.png',
-  'assets/icons/items/minor_stamina_potion.png',
-  'assets/icons/items/minor_recovery_potion.png',
-  'assets/icons/items/minor_attack_potion.png',
-  'assets/icons/items/minor_strength_potion.png',
-  'assets/icons/alchemy_station.png',
+  'assets/images/dungeons/goblin_camp.png',
+  'assets/images/dungeons/goblin_queen_lair.png',
+  'assets/images/dungeons/spider_den.png',
+  'assets/images/zones/darkwood_forest.png',
+  // Darkwood Forest's tier 3 gathering nodes and the log they drop. These
+  // three are generatable — unlike the scene art above, they are an entity
+  // and an icon, whose styles are settled — so they leave this list as soon
+  // as generate_assets_rd.py is run. Prompts are already written.
+  'assets/images/entities/willow_tree.png',
+  'assets/images/entities/gold_vein.png',
+  'assets/icons/items/willow_logs.png',
+  'assets/images/entities/willow_cookfire.png',
+  'assets/images/entities/willow_campfire.png',
+  'assets/images/entities/willow_bonfire.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
