@@ -43,5 +43,5 @@ class FoodItemDefinition extends ItemDefinition {
   }
 
   @override
-  Item toItem(ItemId id) => Item(id: id, name: name, value: value);
+  Item toItem(ItemId id) => Item(id: id);
 }

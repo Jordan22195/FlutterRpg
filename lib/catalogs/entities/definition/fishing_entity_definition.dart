@@ -20,14 +20,7 @@ class FishingEntityDefinition extends EncounterEntityDefinition {
   });
 
   @override
-  FishingEntity toEntity(EntityId id) => FishingEntity(
-    id: id,
-    name: name,
-    count: 1,
-    entityType: entityType,
-    defence: defence,
-    hitpoints: hitpoints,
-  );
+  FishingEntity toEntity(EntityId id) => FishingEntity(id: id);
 
   @override
   FishingEntityDefinition copyWith({

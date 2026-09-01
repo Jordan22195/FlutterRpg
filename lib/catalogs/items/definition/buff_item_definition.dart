@@ -41,11 +41,5 @@ class BuffItemDefinition extends ItemDefinition {
   }
 
   @override
-  BuffItem toItem(ItemId id) => BuffItem(
-    id: id,
-    name: name,
-    value: value,
-    skillBonus: Map.of(skillBonus),
-    duration: duration,
-  );
+  BuffItem toItem(ItemId id) => BuffItem(id: id);
 }

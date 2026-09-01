@@ -1,84 +1,63 @@
 import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/catalogs/entities/entity_id.dart';
+import 'package:rpg/catalogs/entities/definition/encounter_entity_definition.dart';
 import 'package:rpg/catalogs/entities/model/entity.dart';
 
-// Encounter Entity Class
+/// An entity an encounter runs against — a resource node, a fishing spot,
+/// or something that fights back.
+///
+/// [count] (how many are standing here) and current [hitpoints] (how hurt
+/// the one in front of the player is) are the only genuine per-instance
+/// state. The stats are read off the definition.
 class EncounterEntity extends Entity {
-  final SkillId entityType;
-  final int defence;
   int count;
-  int hitpoints;
-  int maxHitPoints;
+  int _hitpoints;
 
-  EncounterEntity({
-    required super.id,
-    required super.name,
-    required this.count,
-    required this.entityType,
-    required this.defence,
-    required this.hitpoints,
-  }) : maxHitPoints = hitpoints;
+  EncounterEntity({required super.id, this.count = 1, int? hitpoints})
+    : _hitpoints = hitpoints ?? _maxHitPointsOf(id);
+
+  @override
+  EncounterEntityDefinition get definition =>
+      id.definition as EncounterEntityDefinition;
+
+  SkillId get entityType => definition.entityType;
+  int get defence => definition.defence;
+  int get maxHitPoints => definition.hitpoints;
+
+  /// Current hp, clamped to the definition's maximum on both read and
+  /// write. The clamp is what absorbs a tuning change: an entity saved at
+  /// 40/40 whose definition is later cut to 25 comes back at 25/25 rather
+  /// than overflowing its own bar, and it needs no migration to do it.
+  int get hitpoints => _hitpoints.clamp(0, maxHitPoints);
+  set hitpoints(int value) => _hitpoints = value.clamp(0, maxHitPoints);
+
+  // an initializer cannot reach an instance getter, so the default has to
+  // come off the definition directly
+  static int _maxHitPointsOf(EntityId id) =>
+      (id.definition as EncounterEntityDefinition).hitpoints;
 
   @override
   Map<String, dynamic> toJson() {
     final json = super.toJson();
-    json['runtimeType'] = 'EncounterEntity';
-    json['entityType'] = entityType.name;
-    json['defence'] = defence;
     json['count'] = count;
     json['hitpoints'] = hitpoints;
-    json['maxHitPoints'] = maxHitPoints;
     return json;
   }
 
-  factory EncounterEntity.fromJson(Map<String, dynamic> json) {
-    final baseEntity = Entity.fromJson({...json, 'runtimeType': 'Entity'});
-    final rawEntityType = json['entityType'];
-    final rawDefence = json['defence'];
+  /// Overlays the saved runtime state onto a freshly built instance. Both
+  /// fields are optional: a save that predates them, or an entity the
+  /// catalog only just gained, comes back whole and at full health.
+  void readEncounterStateFromJson(Map<String, dynamic> json) {
     final rawCount = json['count'];
+    if (rawCount is int) {
+      count = rawCount;
+    }
+
+    // a half-killed entity has to come back half-killed, or closing the app
+    // mid-fight heals it
     final rawHitpoints = json['hitpoints'];
-    final rawMaxHitPoints = json['maxHitPoints'];
-
-    if (rawEntityType is! String) {
-      throw FormatException(
-        'Missing or invalid "entityType". Expected String.',
-      );
+    if (rawHitpoints is int) {
+      hitpoints = rawHitpoints;
     }
-
-    if (rawDefence is! int) {
-      throw FormatException('Missing or invalid "defence". Expected int.');
-    }
-
-    if (rawCount is! int) {
-      throw FormatException('Missing or invalid "count". Expected int.');
-    }
-
-    if (rawHitpoints is! int) {
-      throw FormatException('Missing or invalid "hitpoints". Expected int.');
-    }
-
-    if (rawMaxHitPoints is! int) {
-      throw FormatException('Missing or invalid "maxHitPoints". Expected int.');
-    }
-
-    final entityType = SkillId.values.firstWhere(
-      (s) => s.name == rawEntityType,
-      orElse: () => throw FormatException('Invalid SkillId "$rawEntityType".'),
-    );
-
-    // the constructor derives maxHitPoints from hitpoints, so build at full
-    // health and then restore both — a half-killed entity has to come back
-    // half-killed, or closing the app mid-fight heals it
-    final entity = EncounterEntity(
-      id: baseEntity.id,
-      name: baseEntity.name,
-      count: rawCount,
-      entityType: entityType,
-      defence: rawDefence,
-      hitpoints: rawMaxHitPoints,
-    );
-
-    entity.maxHitPoints = rawMaxHitPoints;
-    entity.hitpoints = rawHitpoints;
-    return entity;
   }
 }

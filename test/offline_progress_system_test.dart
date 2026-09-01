@@ -435,15 +435,11 @@ void main() {
       final (state, _) = recordingState();
 
       final now = goOffline(player, 60);
-      // a recovery buff covering the first half of the gap: 21 recovery for
-      // 30s, then the player's own 1 for the rest
-      final potion = BuffItem(
-        id: ItemId.NULL,
-        name: 'test',
-        value: 0,
-        skillBonus: {SkillId.RECOVERY: 20},
-        duration: const Duration(seconds: 30),
-      );
+      // the catalog's recovery potion, cut to cover the first half of the
+      // gap: its buffed rate for 30s, then the player's own for the rest.
+      // how big the bonus is belongs to the definition; what matters here is
+      // only that the two rates differ.
+      final potion = ItemId.MINOR_RECOVERY_POTION.build() as BuffItem;
       potion.expirationTime = player.lastActionTime.add(
         const Duration(seconds: 30),
       );

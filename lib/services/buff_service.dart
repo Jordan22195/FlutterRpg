@@ -6,13 +6,7 @@ import '../data/buff_data.dart';
 import '../catalogs/items/items.dart';
 
 class BuffService {
-  final nullBuff = BuffItem(
-    id: ItemId.NULL,
-    name: "",
-    value: 0,
-    skillBonus: {},
-    duration: Duration(seconds: 0),
-  );
+  final nullBuff = ItemId.NULL_BUFF.build() as BuffItem;
 
   List<BuffItem> getGlobalBuffs(BuffData buffState) {
     return buffState.globalBuffs.values.toList();

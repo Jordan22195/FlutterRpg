@@ -13,8 +13,7 @@ class FirePitEntityDefinition extends CraftingEntityDefinition {
   });
 
   @override
-  FirePitEntity toEntity(EntityId id) =>
-      FirePitEntity(id: id, name: name, craftingSkill: craftingSkill);
+  FirePitEntity toEntity(EntityId id) => FirePitEntity(id: id);
 
   @override
   FirePitEntityDefinition copyWith({

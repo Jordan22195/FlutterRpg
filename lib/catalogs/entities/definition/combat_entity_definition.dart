@@ -66,16 +66,7 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
   int get hitpoints => combatType.hitpointsAt(level);
 
   @override
-  CombatEntity toEntity(EntityId id) => CombatEntity(
-    id: id,
-    name: name,
-    count: 1,
-    entityType: entityType,
-    defence: defence,
-    hitpoints: hitpoints,
-    attack: attack,
-    attackInterval: attackInterval,
-  );
+  CombatEntity toEntity(EntityId id) => CombatEntity(id: id);
 
   /// [iconAsset], [defence] and [hitpoints] are inherited from the base
   /// signature but have no meaning here — art comes from the archetype and

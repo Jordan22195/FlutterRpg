@@ -1,60 +1,17 @@
-import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/catalogs/entities/definition/combat_entity_definition.dart';
 import 'package:rpg/catalogs/entities/model/encounter_entity.dart';
 
-// Combat Encounter Entity Class
+/// An entity that fights back. Adds no state of its own — what makes it a
+/// combat entity is its definition, and attack, swing speed and level are
+/// all derived there from the level budget.
 class CombatEntity extends EncounterEntity {
-  final int attack;
-  final double attackInterval;
-  CombatEntity({
-    required super.id,
-    required super.name,
-    super.entityType = SkillId.ATTACK,
-    required super.count,
-    required super.defence,
-    required super.hitpoints,
-    required this.attack,
-    required this.attackInterval,
-  });
+  CombatEntity({required super.id, super.count, super.hitpoints});
 
   @override
-  Map<String, dynamic> toJson() {
-    final json = super.toJson();
-    json['runtimeType'] = 'CombatEntity';
-    json['attack'] = attack;
-    json['attackInterval'] = attackInterval;
-    return json;
-  }
+  CombatEntityDefinition get definition =>
+      id.definition as CombatEntityDefinition;
 
-  factory CombatEntity.fromJson(Map<String, dynamic> json) {
-    final baseEntity = EncounterEntity.fromJson({
-      ...json,
-      'runtimeType': 'EncounterEntity',
-    });
-    final rawAttack = json['attack'];
-    final rawAttackInterval = json['attackInterval'];
-
-    if (rawAttack is! int) {
-      throw FormatException('Missing or invalid "attack". Expected int.');
-    }
-
-    if (rawAttackInterval is! num) {
-      throw FormatException(
-        'Missing or invalid "attackInterval". Expected number.',
-      );
-    }
-
-    final entity = CombatEntity(
-      id: baseEntity.id,
-      name: baseEntity.name,
-      entityType: baseEntity.entityType,
-      count: baseEntity.count,
-      defence: baseEntity.defence,
-      hitpoints: baseEntity.hitpoints,
-      attack: rawAttack,
-      attackInterval: rawAttackInterval.toDouble(),
-    );
-
-    entity.maxHitPoints = baseEntity.maxHitPoints;
-    return entity;
-  }
+  int get attack => definition.attack;
+  double get attackInterval => definition.attackInterval;
+  int get level => definition.level;
 }

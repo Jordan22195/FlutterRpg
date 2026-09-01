@@ -4,6 +4,7 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rpg/catalogs/json_codec.dart';
 import 'package:rpg/catalogs/rarity.dart';
+import 'package:rpg/catalogs/items/definition/equipment_item_definition.dart';
 import 'package:rpg/catalogs/items/model/item.dart';
 
 /// How much each rarity scales a piece of equipment's base stats.
@@ -32,12 +33,13 @@ const Map<Rarity, int> rarityStatMinBonus = {
 /// The stat multiplier for [rarity], defaulting to the identity.
 double statMultiplierFor(Rarity rarity) => rarityStatMultiplier[rarity] ?? 1.0;
 
+/// A wearable piece.
+///
+/// Its base stats and slot come off the definition; what is unique to the
+/// piece in the player's bag is the rolled [quality] and the enchant rolled
+/// onto it. Those are the only things stored here — retuning the base item
+/// in the catalog moves every copy already in play.
 class EquipmentItem extends Item {
-  final ArmorSlots armorSlot;
-
-  /// Base stats from the item definition; quality/enchant scale on top.
-  final Map<SkillId, int> skillBonus;
-
   /// Unique per instance so individual pieces of equipment can be
   /// tracked, equipped, and enchanted independently.
   String instanceId;
@@ -45,19 +47,41 @@ class EquipmentItem extends Item {
   /// Enchant suffix, e.g. "Boar" -> "... of the Boar". Empty when the
   /// item is not enchanted. Only equipment (armor/weapons) can carry one.
   String enchantName;
+
+  /// The enchant's stat roll. Genuinely per-instance: no definition can
+  /// supply it, because it is rolled fresh at the bench.
   Map<SkillId, int> enchantBonus;
+
+  /// The rolled quality, or null when this piece has never been rolled and
+  /// simply is whatever quality its definition declares.
+  Rarity? _quality;
 
   EquipmentItem({
     required super.id,
-    required super.name,
-    required super.value,
-    required this.armorSlot,
-    required this.skillBonus,
-    super.quality = Rarity.COMMON,
+    Rarity? quality,
     this.enchantName = '',
     Map<SkillId, int>? enchantBonus,
-  }) : enchantBonus = enchantBonus ?? {},
+  }) : _quality = quality,
+       enchantBonus = enchantBonus ?? {},
        instanceId = UniqueKey().toString();
+
+  @override
+  EquipmentItemDefinition get definition =>
+      id.definition as EquipmentItemDefinition;
+
+  ArmorSlots get armorSlot => definition.armorSlot;
+
+  /// Base stats, straight off the definition. Read-only on purpose: an
+  /// instance that could write here could drift from the catalog, which is
+  /// the whole thing this model exists to prevent. Per-piece stats belong
+  /// in [quality] and [enchantBonus].
+  Map<SkillId, int> get skillBonus => Map.unmodifiable(definition.skillBonus);
+
+  /// Rolled by crafting, drops and shop stock; falls back to whatever the
+  /// definition declares for a piece that was never rolled.
+  @override
+  Rarity get quality => _quality ?? definition.quality;
+  set quality(Rarity value) => _quality = value;
 
   /// Stats after quality scaling and enchant bonus.
   ///
@@ -97,51 +121,24 @@ class EquipmentItem extends Item {
   bool canStackWith(EquipmentItem other) => stackKey == other.stackKey;
 
   /// A fresh single instance with the same identity (new instanceId).
+  /// Built through the catalog, so the copy is the right subclass without
+  /// this having to be overridden per class.
   EquipmentItem copy() {
-    return EquipmentItem(
-      id: id,
-      name: name,
-      value: value,
-      armorSlot: armorSlot,
-      skillBonus: Map.of(skillBonus),
-      quality: quality,
-      enchantName: enchantName,
-      enchantBonus: Map.of(enchantBonus),
-    );
+    final fresh = id.build() as EquipmentItem;
+    fresh.quality = quality;
+    fresh.enchantName = enchantName;
+    fresh.enchantBonus = Map.of(enchantBonus);
+    return fresh;
   }
 
   @override
   Map<String, dynamic> toJson() {
     final json = super.toJson();
-    json['runtimeType'] = 'EquipmentItem';
-    json['armorSlot'] = armorSlot.name;
-    json['skillBonus'] = skillBonusToJson(skillBonus);
     json['instanceId'] = instanceId;
     json['quality'] = quality.name;
     json['enchantName'] = enchantName;
     json['enchantBonus'] = skillBonusToJson(enchantBonus);
     return json;
-  }
-
-  factory EquipmentItem.fromJson(Map<String, dynamic> json) {
-    final baseItem = Item.fromJson(json);
-    final rawArmorSlot = json['armorSlot'];
-
-    if (rawArmorSlot is! String) {
-      throw FormatException('Missing or invalid "armorSlot". Expected String.');
-    }
-
-    final item = EquipmentItem(
-      id: baseItem.id,
-      name: baseItem.name,
-      value: baseItem.value,
-      armorSlot: parseArmorSlot(rawArmorSlot),
-      skillBonus: skillBonusFromJson(json, 'skillBonus'),
-    );
-
-    item.count = baseItem.count;
-    item.readInstanceFieldsFromJson(json);
-    return item;
   }
 
   /// Restores instance fields (tolerating their absence in older saves).
@@ -152,7 +149,7 @@ class EquipmentItem extends Item {
     }
     final rawQuality = json['quality'];
     if (rawQuality is String) {
-      quality = Rarity.values.asNameMap()[rawQuality] ?? Rarity.COMMON;
+      _quality = Rarity.values.asNameMap()[rawQuality] ?? Rarity.COMMON;
     }
     final rawEnchantName = json['enchantName'];
     if (rawEnchantName is String) {

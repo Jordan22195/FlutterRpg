@@ -16,7 +16,7 @@ class EntityDefinition {
     this.rarity = Rarity.COMMON,
   });
 
-  Entity toEntity(EntityId id) => Entity(id: id, name: name);
+  Entity toEntity(EntityId id) => Entity(id: id);
 
   /// A variant of this definition. Definitions are `const` and shared by
   /// every consumer, so anything needing a tweaked one builds a new value

@@ -28,7 +28,7 @@ class ShopEntityDefinition extends EntityDefinition {
   });
 
   @override
-  ShopEntity toEntity(EntityId id) => ShopEntity(id: id, name: name);
+  ShopEntity toEntity(EntityId id) => ShopEntity(id: id);
 
   @override
   ShopEntityDefinition copyWith({

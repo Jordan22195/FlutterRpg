@@ -627,15 +627,14 @@ class EncounterController extends ChangeNotifier {
   // todo make this not return the mutable entity state. instead return
   // a snapshot or copy of the entity
   EncounterEntity getActiveEntity() {
-    return _resolveViewedEntity() ??
-        EncounterEntity(
-          id: EntityId.NULL,
-          name: "null",
-          count: 0,
-          entityType: SkillId.NULL,
-          defence: 0,
-          hitpoints: 0,
-        );
+    final viewed = _resolveViewedEntity();
+    if (viewed != null) return viewed;
+
+    // nothing selected: a zeroed stand-in, so the screen renders an empty
+    // bar instead of the caller having to handle a null
+    final none = EntityId.NULL_ENCOUNTER.build() as EncounterEntity;
+    none.count = 0;
+    return none;
   }
 
   // true only when the entity being viewed is the one respawning; the

@@ -6,20 +6,19 @@ import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/equipment_service.dart';
 
-// the BACK slot has no catalog items yet (SHOULDER and WRIST don't either),
-// so these build cloak instances directly to cover the slot plumbing.
+// The BACK slot's two catalog pieces, covering the slot plumbing. Their
+// stats come off their definitions, so this reads them rather than
+// declaring them: retuning a cloak must not fail these tests.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  EquipmentItem cloak(String name, int defence) {
-    return EquipmentItem(
-      id: ItemId.NULL,
-      name: name,
-      value: 10,
-      armorSlot: ArmorSlots.BACK,
-      skillBonus: {SkillId.DEFENCE: defence},
-    );
-  }
+  EquipmentItem cloak(ItemId id) => id.build() as EquipmentItem;
+
+  int defenceOf(ItemId id) =>
+      (id.definition as EquipmentItemDefinition).skillBonus[SkillId.DEFENCE]!;
+
+  final woolDefence = defenceOf(ItemId.WOOL_CLOAK);
+  final linenDefence = defenceOf(ItemId.LINEN_CAPE);
 
   test('a fresh EquipmentData has an empty BACK slot', () {
     final equipment = EquipmentData();
@@ -32,30 +31,30 @@ void main() {
     final service = EquipmentService();
     final equipment = EquipmentData();
 
-    final displaced = service.equipItem(cloak('Wool Cloak', 2), equipment);
+    final displaced = service.equipItem(cloak(ItemId.WOOL_CLOAK), equipment);
 
     expect(displaced, isEmpty);
     expect(equipment.armorEquipment[ArmorSlots.BACK]?.name, 'Wool Cloak');
-    expect(service.getStatTotals(equipment)[SkillId.DEFENCE], 2);
+    expect(service.getStatTotals(equipment)[SkillId.DEFENCE], woolDefence);
   });
 
   test('a second back item displaces the first', () {
     final service = EquipmentService();
     final equipment = EquipmentData();
-    final worn = cloak('Wool Cloak', 2);
+    final worn = cloak(ItemId.WOOL_CLOAK);
 
     service.equipItem(worn, equipment);
-    final displaced = service.equipItem(cloak('Linen Cape', 3), equipment);
+    final displaced = service.equipItem(cloak(ItemId.LINEN_CAPE), equipment);
 
     expect(displaced?.map((item) => item.instanceId), [worn.instanceId]);
     expect(equipment.armorEquipment[ArmorSlots.BACK]?.name, 'Linen Cape');
-    expect(service.getStatTotals(equipment)[SkillId.DEFENCE], 3);
+    expect(service.getStatTotals(equipment)[SkillId.DEFENCE], linenDefence);
   });
 
   test('unequipping the back slot returns the item and clears the slot', () {
     final service = EquipmentService();
     final equipment = EquipmentData();
-    service.equipItem(cloak('Wool Cloak', 2), equipment);
+    service.equipItem(cloak(ItemId.WOOL_CLOAK), equipment);
 
     final removed = service.unequipSlot(ArmorSlots.BACK, equipment);
 
@@ -66,7 +65,7 @@ void main() {
 
   test('an equipped back item survives a JSON round trip', () {
     final equipment = EquipmentData();
-    EquipmentService().equipItem(cloak('Wool Cloak', 2), equipment);
+    EquipmentService().equipItem(cloak(ItemId.WOOL_CLOAK), equipment);
 
     final restored = EquipmentData.fromJson(
       jsonDecode(jsonEncode(equipment.toJson())) as Map<String, dynamic>,
@@ -75,6 +74,6 @@ void main() {
     final back = restored.armorEquipment[ArmorSlots.BACK];
     expect(back?.name, 'Wool Cloak');
     expect(back?.armorSlot, ArmorSlots.BACK);
-    expect(back?.skillBonus[SkillId.DEFENCE], 2);
+    expect(back?.skillBonus[SkillId.DEFENCE], woolDefence);
   });
 }

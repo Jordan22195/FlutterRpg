@@ -56,6 +56,5 @@ class ItemDefinition {
     );
   }
 
-  Item toItem(ItemId id) =>
-      Item(id: id, name: name, value: value, quality: quality);
+  Item toItem(ItemId id) => Item(id: id);
 }

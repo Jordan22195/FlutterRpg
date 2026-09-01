@@ -256,17 +256,23 @@ void main() {
   // idle share that is always on and a boost bar that buys the rest.
   group('the boost curve', () {
     // the stat a strength stance is spent on, at a given boost multiplier
-    int minedAt(double multiplier, {int strength = 10, int gear = 0}) {
+    // gear stats live on the item's definition, so the fixture wears a real
+    // pickaxe and reads what it is worth rather than writing a number onto
+    // the instance
+    final pickaxeMining =
+        (ItemId.COPPER_PICKAXE.definition as EquipmentItemDefinition)
+            .skillBonus[SkillId.MINING]!;
+
+    int minedAt(double multiplier, {int strength = 10, bool geared = false}) {
       final player = newPlayer();
       setLevel(player, SkillId.STRENGTH, strength);
       setLevel(player, SkillId.MINING, 20);
       player.currentEntityViewId = EntityId.COPPER;
       playerDataService.setStance(Stance.strong, player);
       playerDataService.setBoostMultiplier(multiplier, player);
-      if (gear != 0) {
-        final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
-        helmet.skillBonus[SkillId.MINING] = gear;
-        player.equipmentData.armorEquipment[helmet.armorSlot] = helmet;
+      if (geared) {
+        final pickaxe = ItemId.COPPER_PICKAXE.build() as EquipmentItem;
+        player.equipmentData.equipedTools[SkillId.MINING] = pickaxe;
       }
       return playerDataService.getStatTotals(player)[SkillId.MINING]!;
     }
@@ -295,12 +301,15 @@ void main() {
     });
 
     test('gear is added flat, not multiplied', () {
-      // the same skill with and without a +10 helmet differs by exactly 10,
-      // at rest and at full tilt alike - multiplying the geared total was
-      // where most of the old overpowering lived
-      expect(minedAt(1.0, gear: 10) - minedAt(1.0), 10);
+      // the same skill with and without the pickaxe differs by exactly what
+      // the pickaxe is worth, at rest and at full tilt alike - multiplying
+      // the geared total was where most of the old overpowering lived
+      expect(minedAt(1.0, geared: true) - minedAt(1.0), pickaxeMining);
       final bonus = boostStatBonus(10);
-      expect(minedAt(1 + bonus, gear: 10) - minedAt(1 + bonus), 10);
+      expect(
+        minedAt(1 + bonus, geared: true) - minedAt(1 + bonus),
+        pickaxeMining,
+      );
     });
 
     test('both ceilings are the curve, so nothing can drift', () {

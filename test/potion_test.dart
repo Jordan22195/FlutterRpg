@@ -115,10 +115,16 @@ void main() {
         isTrue,
       );
 
-      // the const definition must survive being written through
-      potion.skillBonus[SkillId.SPEED] = 99;
+      // the const definition cannot be written through at all: the
+      // instance reads its stats off the definition and hands them out
+      // read-only, so there is nowhere for a divergent copy to live
       final definition =
           ItemId.MINOR_SPEED_POTION.definition as BuffItemDefinition;
+      expect(potion.skillBonus, definition.skillBonus);
+      expect(
+        () => potion.skillBonus[SkillId.SPEED] = 99,
+        throwsUnsupportedError,
+      );
       expect(definition.skillBonus[SkillId.SPEED], 1);
     });
   });

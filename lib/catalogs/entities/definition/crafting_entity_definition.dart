@@ -15,8 +15,7 @@ class CraftingEntityDefinition extends EntityDefinition {
   });
 
   @override
-  CraftingEntity toEntity(EntityId id) =>
-      CraftingEntity(id: id, name: name, craftingSkill: craftingSkill);
+  CraftingEntity toEntity(EntityId id) => CraftingEntity(id: id);
 
   @override
   CraftingEntityDefinition copyWith({

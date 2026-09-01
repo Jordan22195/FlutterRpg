@@ -44,13 +44,5 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
   }
 
   @override
-  WeaponItem toItem(ItemId id) => WeaponItem(
-    id: id,
-    name: name,
-    value: value,
-    armorSlot: armorSlot,
-    skillBonus: Map.of(skillBonus),
-    actionInterval: actionInterval,
-    quality: quality,
-  );
+  WeaponItem toItem(ItemId id) => WeaponItem(id: id);
 }

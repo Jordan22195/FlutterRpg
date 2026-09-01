@@ -44,14 +44,7 @@ class EncounterEntityDefinition extends EntityDefinition {
   ];
 
   @override
-  EncounterEntity toEntity(EntityId id) => EncounterEntity(
-    id: id,
-    name: name,
-    count: 1,
-    entityType: entityType,
-    defence: defence,
-    hitpoints: hitpoints,
-  );
+  EncounterEntity toEntity(EntityId id) => EncounterEntity(id: id);
 
   @override
   EncounterEntityDefinition copyWith({

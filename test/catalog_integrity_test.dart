@@ -44,6 +44,11 @@ const knownMissingArt = <String>{
   'assets/images/entities/willow_tree.png',
   'assets/images/entities/gold_vein.png',
   'assets/icons/items/willow_logs.png',
+  // The BACK slot's first two pieces. The slot had no catalog items at all
+  // until the equipment models moved onto their definitions and the back
+  // slot's tests needed real ones to build.
+  'assets/icons/items/wool_cloak.png',
+  'assets/icons/items/linen_cape.png',
   'assets/images/entities/willow_cookfire.png',
   'assets/images/entities/willow_campfire.png',
   'assets/images/entities/willow_bonfire.png',
@@ -271,6 +276,7 @@ void main() {
 
     test('encounter drops are rollable', () {
       for (final id in EntityId.values) {
+        if (id == EntityId.NULL_ENCOUNTER) continue;
         final def = id.definition;
         if (def is! EncounterEntityDefinition) continue;
         checkDropTable(def.itemDrops, 'EntityId.${id.name}');
@@ -523,21 +529,48 @@ void main() {
   });
 
   group('the const contract', () {
-    test('build() hands back a freely mutable instance', () {
+    test('build() hands back an instance that cannot leave its definition', () {
+      // the instance reads its stats off the const definition and hands
+      // them out read-only. that is the whole point: a piece the player is
+      // already carrying has nowhere to keep a stale copy of its stats, so
+      // a tuning change reaches it.
       final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
-      helmet.skillBonus[SkillId.DEFENCE] = 99;
       final helmetDef =
           ItemId.COPPER_HELMET.definition as EquipmentItemDefinition;
+      expect(helmet.skillBonus, helmetDef.skillBonus);
       expect(
-        helmetDef.skillBonus[SkillId.DEFENCE],
-        isNot(99),
-        reason: 'toItem handed out the definition\'s own map',
+        () => helmet.skillBonus[SkillId.DEFENCE] = 99,
+        throwsUnsupportedError,
       );
+      expect(helmetDef.skillBonus[SkillId.DEFENCE], isNot(99));
 
       final fire = ItemId.COOKFIRE.build() as FireItem;
-      fire.skillBonus[SkillId.COOKING] = 42;
       final def = ItemId.COOKFIRE.definition as FireItemDefinition;
+      expect(fire.skillBonus, def.skillBonus);
+      expect(
+        () => fire.skillBonus[SkillId.COOKING] = 42,
+        throwsUnsupportedError,
+      );
       expect(def.skillBonus[SkillId.COOKING], isNot(42));
+    });
+
+    test('build() hands back freely mutable instance state', () {
+      // what an instance does own it owns outright: the stack count, the
+      // rolled quality and the enchant rolled onto it
+      final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
+      helmet.count = 4;
+      helmet.quality = Rarity.EPIC;
+      helmet.enchantBonus[SkillId.DEFENCE] = 3;
+
+      expect(helmet.count, 4);
+      expect(helmet.quality, Rarity.EPIC);
+      expect(helmet.effectiveSkillBonus[SkillId.DEFENCE], greaterThan(3));
+      // and none of it reached the catalog, or the next piece to drop
+      expect(ItemId.COPPER_HELMET.definition.quality, Rarity.COMMON);
+      expect(
+        (ItemId.COPPER_HELMET.build() as EquipmentItem).enchantBonus,
+        isEmpty,
+      );
     });
 
     test('copyWith leaves the catalog untouched', () {
@@ -573,8 +606,12 @@ void main() {
       expect(epic.copyWith(value: 999).quality, Rarity.EPIC);
       expect(ItemId.COPPER_HELMET.definition.quality, Rarity.COMMON);
 
-      // and it has to reach the runtime item, or declaring it does nothing
-      expect((epic.toItem(ItemId.COPPER_HELMET)).quality, Rarity.EPIC);
+      // and it has to reach the runtime item, or declaring it does nothing.
+      // read through a catalog id that declares one: an instance is defined
+      // by its id, so a detached copyWith variant is not something it can
+      // be built from.
+      expect(ItemId.RARE_PITCHFORK.definition.quality, Rarity.RARE);
+      expect(ItemId.RARE_PITCHFORK.build().quality, Rarity.RARE);
     });
   });
 

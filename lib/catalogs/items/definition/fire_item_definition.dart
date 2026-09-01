@@ -43,12 +43,5 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
   }
 
   @override
-  FireItem toItem(ItemId id) => FireItem(
-    id: id,
-    name: name,
-    value: value,
-    skillBonus: Map.of(skillBonus),
-    duration: duration,
-    canCook: canCook,
-  );
+  FireItem toItem(ItemId id) => FireItem(id: id);
 }

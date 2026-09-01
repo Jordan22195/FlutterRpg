@@ -1,66 +1,30 @@
-import 'package:rpg/data/skill_data.dart';
-import 'package:rpg/catalogs/json_codec.dart';
+import 'package:rpg/catalogs/items/definition/weapon_item_definition.dart';
 import 'package:rpg/catalogs/items/model/equipment_item.dart';
+import 'package:rpg/catalogs/items/model/item.dart';
 
+/// Equipment that swings on a clock. Adds no state of its own — the swing
+/// interval is a property of the weapon, not of the copy in the bag.
 class WeaponItem extends EquipmentItem {
-  final Duration actionInterval;
-
   WeaponItem({
     required super.id,
-    required super.name,
-    required super.value,
-    required super.armorSlot,
-    required super.skillBonus,
-    required this.actionInterval,
     super.quality,
     super.enchantName,
     super.enchantBonus,
   });
 
   @override
-  Map<String, dynamic> toJson() {
-    final json = super.toJson();
-    json['runtimeType'] = 'WeaponItem';
-    json['actionIntervalMs'] = actionInterval.inMilliseconds;
-    return json;
-  }
+  WeaponItemDefinition get definition => id.definition as WeaponItemDefinition;
 
-  factory WeaponItem.fromJson(Map<String, dynamic> json) {
-    final baseItem = EquipmentItem.fromJson(json);
+  Duration get actionInterval => definition.actionInterval;
 
-    final item = WeaponItem(
-      id: baseItem.id,
-      name: baseItem.name,
-      value: baseItem.value,
-      armorSlot: baseItem.armorSlot,
-      skillBonus: Map<SkillId, int>.from(baseItem.skillBonus),
-      actionInterval: durationFromMilliseconds(json, 'actionIntervalMs'),
-    );
-
-    item.count = baseItem.count;
-    item.readInstanceFieldsFromJson(json);
-    return item;
-  }
-
-  /// Parses an equipment instance, dispatching on the serialized type.
+  /// Parses an equipment instance. The class is decided by the definition,
+  /// so a weapon comes back as a [WeaponItem] whether or not the save said
+  /// so; an id that is not equipment at all is a malformed save.
   static EquipmentItem equipmentFromJson(Map<String, dynamic> json) {
-    return json['runtimeType'] == 'WeaponItem'
-        ? WeaponItem.fromJson(json)
-        : EquipmentItem.fromJson(json);
-  }
-
-  @override
-  WeaponItem copy() {
-    return WeaponItem(
-      id: id,
-      name: name,
-      value: value,
-      armorSlot: armorSlot,
-      skillBonus: Map.of(skillBonus),
-      actionInterval: actionInterval,
-      quality: quality,
-      enchantName: enchantName,
-      enchantBonus: Map.of(enchantBonus),
-    );
+    final item = Item.fromJson(json);
+    if (item is! EquipmentItem) {
+      throw FormatException('ItemId "${item.id.name}" is not equipment.');
+    }
+    return item;
   }
 }

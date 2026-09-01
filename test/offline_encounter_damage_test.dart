@@ -22,24 +22,13 @@ void main() {
     );
   }
 
-  // an enemy of the given shape, standing in the player's zone and opened
-  // as the active encounter
-  CombatEntity fightWith(
-    GameSession session, {
-    int attack = 5,
-    int hitpoints = 10,
-    int count = 1000,
-    double attackInterval = 2.0,
-  }) {
-    final entity = CombatEntity(
-      id: EntityId.CHICKEN,
-      name: 'Test Enemy',
-      count: count,
-      defence: 1,
-      hitpoints: hitpoints,
-      attack: attack,
-      attackInterval: attackInterval,
-    );
+  // a catalog enemy, standing in the player's zone and opened as the
+  // active encounter. the shape of the fight is chosen by picking the
+  // entity whose stats are that shape, not by dialling stats onto an
+  // instance - stats live on the definition.
+  CombatEntity fightWith(GameSession session, EntityId id, {int count = 1000}) {
+    final entity = id.build() as CombatEntity;
+    entity.count = count;
     session.encounterService.setEncounterEntity(
       session.saveGameData.encounterData,
       entity,
@@ -51,18 +40,12 @@ void main() {
   // belongs to the player. trees and rocks settle through the same batch a
   // fight does.
   EncounterEntity nodeWith(
-    GameSession session, {
-    int hitpoints = 2,
+    GameSession session,
+    EntityId id, {
     int count = 5000,
   }) {
-    final node = EncounterEntity(
-      id: EntityId.TREE,
-      name: 'Test Node',
-      count: count,
-      entityType: SkillId.WOODCUTTING,
-      defence: 1,
-      hitpoints: hitpoints,
-    );
+    final node = id.build() as EncounterEntity;
+    node.count = count;
     session.encounterService.setEncounterEntity(
       session.saveGameData.encounterData,
       node,
@@ -113,7 +96,7 @@ void main() {
     final session = buildSession();
     final save = session.saveGameData;
     setLevel(session, SkillId.ATTACK, 10); // kills a chicken in one swing
-    fightWith(session, attack: 5, hitpoints: 2);
+    fightWith(session, EntityId.CHICKEN);
 
     // an hour of fighting at 3s an action, with nothing to eat
     final result = settleFight(
@@ -139,11 +122,13 @@ void main() {
     final save = session.saveGameData;
     equipFood(session);
     // the combat curve reads attack against defence as a ratio, so a low
-    // defence against attack 2 is a ~99% hit rate - more damage in an hour
-    // than 500 food can heal. Defence 12 is the same max hit of 1, at a 36%
+    // defence against a scarecrow's attack is a near-certain hit - more
+    // damage in an hour than 500 food can heal. Defence 12 drops that to a
     // rate the player can eat through.
     setLevel(session, SkillId.DEFENCE, 12);
-    fightWith(session, attack: 2); // max hit 1 against defence 12
+    // the catalog's softest puncher that still swings often enough to cost
+    // food: a lot of hitpoints behind an attack of 4
+    fightWith(session, EntityId.ROTWOOD_SCARECROW);
 
     final result = settleFight(
       session,
@@ -163,7 +148,7 @@ void main() {
   test('blocks pay the defence xp live pays for them', () {
     final session = buildSession();
     equipFood(session);
-    fightWith(session, attack: 2);
+    fightWith(session, EntityId.ROTWOOD_SCARECROW);
 
     final result = settleFight(
       session,
@@ -181,7 +166,8 @@ void main() {
     setLevel(session, SkillId.ATTACK, 10);
     // one weak enemy, dead in a swing or two: the rest of the hour is not
     // spent standing there being hit
-    fightWith(session, attack: 1, hitpoints: 2, count: 1);
+    fightWith(session, EntityId.FIELD_RAT, count: 1);
+    final startingHitpoints = save.playerData.hitpoints;
 
     final result = settleFight(
       session,
@@ -192,12 +178,18 @@ void main() {
     expect(result.playerDied, isFalse);
     expect(result.entitiesDefeated.single.count, 1);
     expect(result.actionsPerformed, lessThan(10));
-    // an hour of a 1-attack enemy would have worn the player down; a few
-    // seconds of it barely scratches them. the fight is modelled at two
-    // actions - one hit kills, and at a 59% hit chance one hit costs about
-    // 1.7 swings - so the enemy gets three swings of at most 1 damage in
-    // before it drops.
-    expect(save.playerData.hitpoints, greaterThanOrEqualTo(7));
+    // an hour of the rat's swings would have worn the player down; the few
+    // seconds the fight actually lasted barely scratches them. it swings on
+    // its own clock for as long as the actions took, and each swing is
+    // worth at most its attack - so bound the damage by that rather than by
+    // a number that a retune would invalidate.
+    final rat = EntityId.FIELD_RAT.definition as CombatEntityDefinition;
+    final worstCase =
+        (result.actionsPerformed * 3 / rat.attackInterval).ceil() * rat.attack;
+    expect(
+      save.playerData.hitpoints,
+      greaterThanOrEqualTo(startingHitpoints - worstCase),
+    );
 
     session.dispose();
   });
@@ -225,7 +217,7 @@ void main() {
   test('hitpoints xp is paid for the damage the batch dealt', () {
     final session = buildSession();
     equipFood(session);
-    fightWith(session, attack: 2, hitpoints: 5);
+    fightWith(session, EntityId.CHICKEN);
 
     final result = settleFight(
       session,
@@ -247,7 +239,7 @@ void main() {
     test('a node the player one-shots pays at most a kill an action', () {
       final session = buildSession();
       setLevel(session, SkillId.WOODCUTTING, 20); // fells it in a swing
-      nodeWith(session, hitpoints: 2, count: 5000);
+      nodeWith(session, EntityId.TREE);
 
       final result = settleFight(
         session,
@@ -270,9 +262,9 @@ void main() {
       final session = buildSession();
       equipFood(session, count: 5000);
       setLevel(session, SkillId.ATTACK, 20);
-      // 2 hitpoints against a max hit many times that: the old batch paid
-      // several kills for every action
-      fightWith(session, attack: 1, hitpoints: 2, count: 5000);
+      // the catalog's weakest enemy against a max hit many times its whole
+      // pool: the old batch paid several kills for every action
+      fightWith(session, EntityId.FIELD_RAT, count: 5000);
 
       final result = settleFight(
         session,
@@ -293,7 +285,7 @@ void main() {
       equipFood(session, count: 5000);
       // a wall of hitpoints against a level 1 attack: many actions a kill,
       // and the kills are the actions divided down, never rounded up
-      fightWith(session, attack: 1, hitpoints: 200, count: 5000);
+      fightWith(session, EntityId.SLIME, count: 5000);
 
       final result = settleFight(
         session,
@@ -314,7 +306,7 @@ void main() {
       final session = buildSession();
       // nothing to take down, so nothing is: the swings still cost the
       // stretch they took, the way a run of pure misses would
-      nodeWith(session, hitpoints: 0, count: 5000);
+      nodeWith(session, EntityId.NULL_ENCOUNTER);
 
       final result = settleFight(
         session,
@@ -335,9 +327,9 @@ void main() {
   group('a fight carries across the batches that settle it', () {
     test('a batch that cannot finish one leaves its damage on it', () {
       final session = buildSession();
-      final node = nodeWith(session, hitpoints: 100, count: 5000);
+      final node = nodeWith(session, EntityId.IRON);
 
-      // a minute against a 100 hitpoint node at level 1: nowhere near a kill
+      // a minute against an iron vein at level 1: nowhere near a kill
       final first = settleFight(
         session,
         count: 20,
@@ -358,7 +350,7 @@ void main() {
 
     test('enough batches in a row add up to the kill', () {
       final session = buildSession();
-      final node = nodeWith(session, hitpoints: 100, count: 5000);
+      final node = nodeWith(session, EntityId.IRON);
       final startingCount = node.count;
 
       var kills = 0;
@@ -385,7 +377,7 @@ void main() {
 
     test('a single action pays the xp its damage was worth', () {
       final session = buildSession();
-      nodeWith(session, hitpoints: 100, count: 5000);
+      nodeWith(session, EntityId.IRON);
 
       // the probe the settle loop opens every window with. half a landing
       // swing is too little to move a whole hitpoint, but it is not too
@@ -398,7 +390,7 @@ void main() {
       );
 
       expect(result.damageDone, 0);
-      expect(result.xp[SkillId.WOODCUTTING], greaterThan(0));
+      expect(result.xp[SkillId.MINING], greaterThan(0));
 
       session.dispose();
     });

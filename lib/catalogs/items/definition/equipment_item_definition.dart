@@ -49,14 +49,7 @@ class EquipmentItemDefinition extends ItemDefinition {
   // is a single source of truth for item data. That way when there are turning updates,
   // all the existing item instances take the changes, rather than needing a wipe
   // or some tooling to adjust the existing instantiated items.
-  EquipmentItem toItem(ItemId id) => EquipmentItem(
-    id: id,
-    name: name,
-    value: value,
-    armorSlot: armorSlot,
-    skillBonus: Map.of(skillBonus),
-    // whatever the definition declares; crafting overwrites it with its own
-    // roll on the instance it just made
-    quality: quality,
-  );
+  // quality is left unrolled, so the piece reads back whatever the
+  // definition declares until crafting, a drop or a shop rolls one onto it
+  EquipmentItem toItem(ItemId id) => EquipmentItem(id: id);
 }

@@ -70,7 +70,7 @@ class FiremakingSystem {
     // worth the whole batch's burn time - both when it extends the fire
     // already burning and when it replaces a different one
     if (count > 1) {
-      fire.duration = fire.duration * count;
+      fire.fuelUnits = count;
       fire.expirationTime = DateTime.now().add(fire.duration);
     }
 

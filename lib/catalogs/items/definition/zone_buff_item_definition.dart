@@ -40,11 +40,5 @@ class ZoneBuffItemDefinition extends BuffItemDefinition {
   // zoneId and ownerEntityId are left unset: they belong to the moment the
   // buff is applied, not to the definition
   @override
-  ZoneBuffItem toItem(ItemId id) => ZoneBuffItem(
-    id: id,
-    name: name,
-    value: value,
-    skillBonus: Map.of(skillBonus),
-    duration: duration,
-  );
+  ZoneBuffItem toItem(ItemId id) => ZoneBuffItem(id: id);
 }

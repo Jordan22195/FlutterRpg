@@ -73,18 +73,12 @@ void main() {
   // swings back and the whole stretch belongs to the player - which is what
   // isolates the half of the fight the batch approximates.
   EncounterEntity standUp(
-    GameSession session, {
-    required int hitpoints,
+    GameSession session,
+    EntityId id, {
     int count = 100000,
   }) {
-    final node = EncounterEntity(
-      id: EntityId.TREE,
-      name: 'Test Node',
-      count: count,
-      entityType: SkillId.WOODCUTTING,
-      defence: 5,
-      hitpoints: hitpoints,
-    );
+    final node = id.build() as EncounterEntity;
+    node.count = count;
     session.encounterService.setEncounterEntity(
       session.saveGameData.encounterData,
       node,
@@ -162,21 +156,23 @@ void main() {
     // the shapes worth separating: a kill inside one hit, a kill over a
     // handful, and a kill over dozens. the first is where the old batch
     // broke, the last is where rounding a kill up to whole hits costs most.
+    // the shape is picked by pairing a real tree with a level, because a
+    // node's hitpoints and difficulty belong to its definition.
     for (final scenario in [
-      (name: 'one hit a kill', level: 30, hitpoints: 2),
-      (name: 'a few hits a kill', level: 20, hitpoints: 40),
-      (name: 'dozens of hits a kill', level: 8, hitpoints: 200),
+      (name: 'one hit a kill', level: 30, node: EntityId.TREE),
+      (name: 'a few hits a kill', level: 20, node: EntityId.OAK_TREE),
+      (name: 'dozens of hits a kill', level: 8, node: EntityId.WILLOW_TREE),
     ]) {
       test('${scenario.name} pays what the loop pays', () {
         final live = buildSession();
         setLevel(live, SkillId.WOODCUTTING, scenario.level);
-        standUp(live, hitpoints: scenario.hitpoints);
+        standUp(live, scenario.node);
         final looped = fightLive(live, count: actions, seed: 20260824);
         live.dispose();
 
         final batch = buildSession();
         setLevel(batch, SkillId.WOODCUTTING, scenario.level);
-        standUp(batch, hitpoints: scenario.hitpoints);
+        standUp(batch, scenario.node);
         final batched = fightBatched(batch, count: actions, interval: interval);
         batch.dispose();
 
@@ -201,13 +197,13 @@ void main() {
       // stop at the group rather than running the stretch out
       final live = buildSession();
       setLevel(live, SkillId.WOODCUTTING, 20);
-      standUp(live, hitpoints: 40, count: 50);
+      standUp(live, EntityId.OAK_TREE, count: 50);
       final looped = fightLive(live, count: actions, seed: 7);
       live.dispose();
 
       final batch = buildSession();
       setLevel(batch, SkillId.WOODCUTTING, 20);
-      standUp(batch, hitpoints: 40, count: 50);
+      standUp(batch, EntityId.OAK_TREE, count: 50);
       final batched = fightBatched(batch, count: actions, interval: interval);
       batch.dispose();
 

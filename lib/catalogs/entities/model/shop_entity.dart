@@ -9,12 +9,11 @@ class ShopEntity extends Entity {
   final List<ShopStockSlot> stock = [];
   DateTime? nextRestockAt;
 
-  ShopEntity({required super.id, required super.name});
+  ShopEntity({required super.id});
 
   @override
   Map<String, dynamic> toJson() {
     final json = super.toJson();
-    json['runtimeType'] = 'ShopEntity';
     json['stock'] = stock.map((s) => s.toJson()).toList();
     if (nextRestockAt != null) {
       json['nextRestockAt'] = nextRestockAt!.toIso8601String();
@@ -22,16 +21,14 @@ class ShopEntity extends Entity {
     return json;
   }
 
-  factory ShopEntity.fromJson(Map<String, dynamic> json) {
-    final baseEntity = Entity.fromJson({...json, 'runtimeType': 'Entity'});
-
-    final shop = ShopEntity(id: baseEntity.id, name: baseEntity.name);
-
+  /// Overlays the saved shelf onto a freshly built shop.
+  void readShopStateFromJson(Map<String, dynamic> json) {
     final rawStock = json['stock'];
     if (rawStock is List) {
+      stock.clear();
       for (final rawEntry in rawStock) {
         if (rawEntry is Map<String, dynamic>) {
-          shop.stock.add(ShopStockSlot.fromJson(rawEntry));
+          stock.add(ShopStockSlot.fromJson(rawEntry));
         }
       }
     }
@@ -39,9 +36,7 @@ class ShopEntity extends Entity {
     // optional: a shop that never restocked has no timestamp yet
     final rawRestock = json['nextRestockAt'];
     if (rawRestock is String) {
-      shop.nextRestockAt = DateTime.tryParse(rawRestock);
+      nextRestockAt = DateTime.tryParse(rawRestock);
     }
-
-    return shop;
   }
 }

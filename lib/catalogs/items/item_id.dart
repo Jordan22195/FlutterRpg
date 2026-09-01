@@ -28,6 +28,19 @@ enum ItemId {
   // ── SENTINEL ────────────────────────────────────────────────────
   NULL(ItemDefinition(name: "Nothing", value: 0)),
 
+  /// The stand-in [BuffService] hands back when nothing is buffing a stat.
+  /// Separate from [NULL] because it has to *be* a BuffItemDefinition for
+  /// the buff plumbing to type-check, while [NULL] stays a plain item.
+  /// Empty bonus and zero duration, so it always reads as expired.
+  NULL_BUFF(
+    BuffItemDefinition(
+      name: "Nothing",
+      value: 0,
+      skillBonus: {},
+      duration: Duration.zero,
+    ),
+  ),
+
   // ── CURRENCY ────────────────────────────────────────────────────
   COINS(
     ItemDefinition(
@@ -1105,6 +1118,27 @@ enum ItemId {
       quality: Rarity.COMMON,
       skillBonus: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
       iconAsset: "assets/icons/items/bracers_of_the_wolf.png",
+    ),
+  ),
+
+  // ── ARMOUR · BACK ───────────────────────────────────────────────
+  // tier ascending
+  WOOL_CLOAK(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Wool Cloak",
+      value: 60,
+      skillBonus: {SkillId.DEFENCE: 2},
+      iconAsset: "assets/icons/items/wool_cloak.png",
+    ),
+  ),
+  LINEN_CAPE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Linen Cape",
+      value: 120,
+      skillBonus: {SkillId.DEFENCE: 3},
+      iconAsset: "assets/icons/items/linen_cape.png",
     ),
   ),
 

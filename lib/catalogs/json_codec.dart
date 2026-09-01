@@ -59,6 +59,14 @@ ItemId parseItemId(String rawValue, {String fieldName = 'id'}) {
   );
 }
 
+EntityId parseEntityId(String rawValue, {String fieldName = 'id'}) {
+  return EntityId.values.firstWhere(
+    (value) => value.name == rawValue,
+    orElse: () =>
+        throw FormatException('Invalid EntityId "$rawValue" for "$fieldName".'),
+  );
+}
+
 ZoneId parseZoneId(String rawValue, {String fieldName = 'zoneId'}) {
   return ZoneId.values.firstWhere(
     (value) => value.name == rawValue,

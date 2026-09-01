@@ -124,22 +124,30 @@ void main() {
       );
       final save = session.saveGameData;
 
-      // a mudlurk that cannot fight back and dies to one hit, so the run is
-      // about what it drops rather than how long it takes to kill
+      // the run is about what a kill drops, not about how long it takes, so
+      // the player is levelled far past the mudlurk instead of the mudlurk
+      // being weakened - its stats belong to its definition
+      for (final skill in [
+        SkillId.ATTACK,
+        SkillId.STRENGTH,
+        SkillId.DEFENCE,
+        SkillId.HITPOINTS,
+      ]) {
+        final data = save.playerData.skillData[skill]!;
+        data.xp = data.xpTable[data.xpTable.length - 1];
+      }
+
+      final mudlurkEntity = EntityId.MUDLURC_WARRIOR.build() as CombatEntity;
+      mudlurkEntity.count = 100000;
       session.encounterService.setEncounterEntity(
         save.encounterData,
-        EncounterEntity(
-          id: EntityId.MUDLURC_WARRIOR,
-          name: 'Test Mudlurk',
-          count: 100000,
-          entityType: SkillId.ATTACK,
-          defence: 0,
-          hitpoints: 1,
-        ),
+        mudlurkEntity,
       );
 
+      // enough swings for ~600 kills: a mudlurk is a level 55 fight even
+      // for a maxed player, so the actions a kill costs are real
       final rng = Random(3);
-      for (var i = 0; i < 600; i++) {
+      for (var i = 0; i < 10000; i++) {
         session.encounterSystem.executePlayerAction(
           playerState: save.playerData,
           encounter: save.encounterData,

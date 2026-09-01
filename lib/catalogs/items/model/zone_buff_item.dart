@@ -1,9 +1,8 @@
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
-import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/json_codec.dart';
 import 'package:rpg/catalogs/items/model/buff_item.dart';
-import 'package:rpg/catalogs/items/model/fire_item.dart';
+import 'package:rpg/catalogs/items/model/item.dart';
 
 class ZoneBuffItem extends BuffItem {
   ZoneId zoneId;
@@ -15,10 +14,7 @@ class ZoneBuffItem extends BuffItem {
 
   ZoneBuffItem({
     required super.id,
-    required super.name,
-    required super.value,
-    required super.skillBonus,
-    required super.duration,
+    super.fuelUnits,
     this.zoneId = ZoneId.NULL,
     this.ownerEntityId = EntityId.NULL,
   });
@@ -26,34 +22,27 @@ class ZoneBuffItem extends BuffItem {
   @override
   Map<String, dynamic> toJson() {
     final json = super.toJson();
-    json['runtimeType'] = 'ZoneBuffItem';
     json['zoneId'] = zoneId.name;
     json['ownerEntityId'] = ownerEntityId.name;
     return json;
   }
 
-  factory ZoneBuffItem.fromJson(Map<String, dynamic> json) {
-    if (json['runtimeType'] == 'FireItem') return FireItem.fromJson(json);
-
-    final baseItem = BuffItem.fromJson(json);
-
+  /// Restores where the buff is applied. Both are tolerated as absent:
+  /// [BuffData.fromJson] re-homes an unrecognised owner on the firepit and
+  /// stamps the zone from the key it was filed under.
+  void readZoneStateFromJson(Map<String, dynamic> json) {
     final rawZoneId = json['zoneId'];
-    if (rawZoneId is! String) {
-      throw FormatException('Missing or invalid "zoneId". Expected String.');
+    if (rawZoneId is String) {
+      zoneId = parseZoneId(rawZoneId);
     }
+    ownerEntityId = ownerEntityIdFromJson(json);
+  }
 
-    final item = ZoneBuffItem(
-      id: baseItem.id,
-      name: baseItem.name,
-      value: baseItem.value,
-      skillBonus: Map<SkillId, int>.from(baseItem.skillBonus),
-      duration: baseItem.duration,
-      zoneId: parseZoneId(rawZoneId),
-      ownerEntityId: ownerEntityIdFromJson(json),
-    );
-
-    item.count = baseItem.count;
-    item.expirationTime = baseItem.expirationTime;
+  factory ZoneBuffItem.fromJson(Map<String, dynamic> json) {
+    final item = Item.fromJson(json);
+    if (item is! ZoneBuffItem) {
+      throw FormatException('ItemId "${item.id.name}" is not a zone buff.');
+    }
     return item;
   }
 }

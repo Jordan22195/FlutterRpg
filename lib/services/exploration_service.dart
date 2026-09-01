@@ -125,7 +125,7 @@ class ExplorationService {
         return e;
       }
     }
-    return Entity(id: EntityId.NULL, name: "");
+    return Entity(id: EntityId.NULL);
   }
 
   // get the entity instance of the player view

@@ -321,22 +321,6 @@ class GameSessionFactory {
       }
     }
 
-    // migration: fishing spots used to serialize as plain encounter
-    // entities. rebuild them from the catalog so they load as the
-    // FishingEntity the explore screen groups with the structures - a
-    // spot never depletes, so it carries no runtime state worth keeping
-    for (final zone in save.worldData.zones.values) {
-      for (final list in [zone.permanentEntities, zone.discoveredEntities]) {
-        for (var i = 0; i < list.length; i++) {
-          final entity = list[i];
-          if (entity is FishingEntity) continue;
-          final def = entity.id.definition;
-          if (def is! FishingEntityDefinition) continue;
-          list[i] = def.toEntity(entity.id);
-        }
-      }
-    }
-
     // save repair: an entity must not be both permanent and discovered.
     // (entities discovered before they were promoted to permanent are
     // duplicated in older saves.) the permanent entry wins; the

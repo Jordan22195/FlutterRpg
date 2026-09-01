@@ -49,22 +49,16 @@ class EncounterService {
     if (encounterState.isActive == false) {
       return 0;
     }
-    final entity =
-        encounterState.entity ??
-        EncounterEntity(
-          id: EntityId.NULL,
-          name: "",
-          count: 0,
-          entityType: SkillId.NULL,
-          defence: 0,
-          hitpoints: 0,
-        );
+    final entity = encounterState.entity;
+    if (entity == null) {
+      return 0;
+    }
 
     final skillId = entity.entityType;
 
     int playerOffenseSkillStat = playerStatTotals[skillId] ?? 0;
 
-    int encounterDefence = encounterState.entity!.defence;
+    int encounterDefence = entity.defence;
     double avgDamage =
         chanceToHit(playerOffenseSkillStat, encounterDefence) *
         (1 +
@@ -121,22 +115,16 @@ class EncounterService {
     if (encounterState.isActive == false) {
       return res;
     }
-    final entity =
-        encounterState.entity ??
-        EncounterEntity(
-          id: EntityId.NULL,
-          name: "",
-          count: 0,
-          entityType: SkillId.NULL,
-          defence: 0,
-          hitpoints: 0,
-        );
+    final entity = encounterState.entity;
+    if (entity == null) {
+      return res;
+    }
 
     final skillId = entity.entityType;
 
     int playerOffenseSkillStat = playerStatTotals[skillId] ?? 0;
 
-    int encounterDefence = encounterState.entity!.defence;
+    int encounterDefence = entity.defence;
     int dmg = calculateAttackDamage(
       attackerAttack: playerOffenseSkillStat,
       defenderDefense: encounterDefence,

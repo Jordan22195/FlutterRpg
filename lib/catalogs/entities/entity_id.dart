@@ -36,6 +36,22 @@ enum EntityId {
   // ── SENTINEL ────────────────────────────────────────────────────
   NULL(EntityDefinition(name: "Nothing", iconAsset: "")),
 
+  /// The stand-in the encounter ui falls back to when nothing is selected.
+  /// Separate from [NULL] because it has to *be* an EncounterEntity for the
+  /// screen to render at all, while [NULL] must stay a plain Entity or the
+  /// entity screen router would send a not-found lookup to the encounter
+  /// screen. Zeroed on every stat, so it reads as an empty bar.
+  NULL_ENCOUNTER(
+    EncounterEntityDefinition(
+      name: "Nothing",
+      iconAsset: "",
+      entityType: SkillId.NULL,
+      defence: 0,
+      hitpoints: 0,
+      itemDrops: [],
+    ),
+  ),
+
   // ── CRAFTING STATIONS ───────────────────────────────────────────
   // CraftingEntityDefinition, by craftingSkill in SkillId order
   ANVIL(

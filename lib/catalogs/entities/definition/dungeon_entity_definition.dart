@@ -14,8 +14,7 @@ class DungeonEntityDefinition extends EntityDefinition {
   });
 
   @override
-  DungeonEntity toEntity(EntityId id) =>
-      DungeonEntity(id: id, name: name, dungeonId: dungeonId);
+  DungeonEntity toEntity(EntityId id) => DungeonEntity(id: id);
 }
 
 // Catalog

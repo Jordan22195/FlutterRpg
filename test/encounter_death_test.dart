@@ -20,19 +20,16 @@ Future<void> settle(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 100));
 }
 
-// An enemy that swings almost immediately, hits hard, and outlasts
-// anything the player can do to it - so the player is the one who dies.
-CombatEntity lethalEnemy() {
-  return CombatEntity(
-    id: EntityId.CHICKEN,
-    name: 'Test enemy',
-    count: 1,
-    defence: 0,
-    hitpoints: 100000,
-    attack: 100000,
-    attackInterval: 0.001,
-  );
-}
+// The catalog's fastest heavy hitter: a 1.0s swing interval (nothing swings
+// sooner), an attack a starting player cannot survive one of, and enough hp
+// to outlast anything the player can do back - so the player is the one who
+// dies. Its stats come off its definition, so retuning it is free.
+CombatEntity lethalEnemy() => EntityId.IMP_LEGENDARY.build() as CombatEntity;
+
+// long enough to cover a real swing interval, which the catalog measures in
+// whole seconds rather than the milliseconds a fabricated enemy could use
+const deathFrames = 300;
+const deathFrameGap = Duration(milliseconds: 5);
 
 void main() {
   GameSession buildSession() {
@@ -49,10 +46,10 @@ void main() {
   // the enemy swing timer runs off the wall clock, so frames have to be
   // spaced by real time for an attack to land
   Future<void> fightUntilDeath(EncounterController encounter) async {
-    for (var i = 0; i < 100; i++) {
+    for (var i = 0; i < deathFrames; i++) {
       encounter.onActionTimingFrame();
       if (encounter.deathSequence > 0) return;
-      await Future<void>.delayed(const Duration(milliseconds: 5));
+      await Future<void>.delayed(deathFrameGap);
     }
   }
 
@@ -93,9 +90,7 @@ void main() {
 
     // enter the current zone so the map tab has a screen pushed on it
     // (selecting the token fills the detail pane; the pane's button travels)
-    await tester.tap(
-      find.byKey(const ValueKey('map-node-TUTORIAL_FARM')),
-    );
+    await tester.tap(find.byKey(const ValueKey('map-node-TUTORIAL_FARM')));
     await settle(tester);
     await tester.tap(find.text('Enter'));
     await settle(tester);
@@ -104,11 +99,9 @@ void main() {
 
     // die: frames need real time between them for the enemy to swing
     expect(encounter.startEncounterActionFor(lethalEnemy()), isTrue);
-    for (var i = 0; i < 100 && encounter.deathSequence == 0; i++) {
+    for (var i = 0; i < deathFrames && encounter.deathSequence == 0; i++) {
       encounter.onActionTimingFrame();
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 5)),
-      );
+      await tester.runAsync(() => Future<void>.delayed(deathFrameGap));
       await tester.pump();
     }
     expect(encounter.deathSequence, 1);
