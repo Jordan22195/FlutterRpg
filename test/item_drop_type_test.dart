@@ -10,6 +10,15 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
+/// A stand-in monster: the drop table is what is under test, so the tier
+/// and the shape of the fight are held constant.
+const testArchetype = CombatArchetype(
+  iconAsset: '',
+  fibLevel: 0,
+  combatType: CombatType.CLOTH_DPS,
+  attackInterval: 1,
+);
+
 // An entity's drop table is written as ItemDropType, which is a weighted
 // entry in its own right. It gets rolled two ways: for a plain item id (a
 // bonus roll), and for the drop itself (the main table), which is what
@@ -27,12 +36,9 @@ void main() {
         ItemDropType(id: ItemId.SALMON),
       ];
       const def = CombatEntityDefinition(
+        testArchetype,
         name: 'Test',
-        iconAsset: '',
-        level: 1,
-        combatType: CombatType.CLOTH_DPS,
         itemDrops: drops,
-        attackInterval: 1,
       );
 
       final table = def.weightedDropTable;
@@ -45,14 +51,11 @@ void main() {
 
     test('rolls the drop itself, quality and all', () {
       const def = CombatEntityDefinition(
+        testArchetype,
         name: 'Test',
-        iconAsset: '',
-        level: 1,
-        combatType: CombatType.CLOTH_DPS,
         itemDrops: [
           ItemDropType(id: ItemId.FISHBONE_DAGGER, rarity: Rarity.UNCOMMON),
         ],
-        attackInterval: 1,
       );
 
       final rolled = WeightedDropTableService().roll(def.weightedDropTable);
@@ -63,15 +66,12 @@ void main() {
 
     test('keeps one item at two qualities as two drops', () {
       const def = CombatEntityDefinition(
+        testArchetype,
         name: 'Test',
-        iconAsset: '',
-        level: 1,
-        combatType: CombatType.CLOTH_DPS,
         itemDrops: [
           ItemDropType(id: ItemId.FISHBONE_DAGGER, weight: 1),
           ItemDropType(id: ItemId.FISHBONE_DAGGER, rarity: Rarity.UNCOMMON),
         ],
-        attackInterval: 1,
       );
 
       final rolled = WeightedDropTableService().rollMulitpleTimes(

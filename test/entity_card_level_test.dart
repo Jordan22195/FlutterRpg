@@ -99,7 +99,7 @@ void main() {
     final session = await pumpExplore(tester);
 
     final chicken = EntityId.CHICKEN.definition as CombatEntityDefinition;
-    expect(chicken.level, 2);
+    expect(chicken.level, 3);
     expect(chipValue(EntityId.CHICKEN, '${chicken.level}'), findsOneWidget);
     expect(cardText(EntityId.CHICKEN, 'Combat'), findsNothing);
 

@@ -47,6 +47,52 @@ const knownMissingArt = <String>{
   'assets/images/entities/willow_cookfire.png',
   'assets/images/entities/willow_campfire.png',
   'assets/images/entities/willow_bonfire.png',
+  // The 47-monster combat roster. Eight of its rows reuse art that already
+  // exists (chicken, cow, scarecrow, spider, wolf, goblin, mudlurc); these
+  // forty are new and undrawn. All five rarity variants of a monster share
+  // one portrait, so this is one line per monster, not per EntityId.
+  // Prompts are written in tools/rd_prompt_overrides.json, so they leave
+  // this list as soon as generate_assets_rd.py is run.
+  'assets/images/entities/giant_rat.png',
+  'assets/images/entities/giant_bat.png',
+  'assets/images/entities/slime.png',
+  'assets/images/entities/bear.png',
+  'assets/images/entities/fungal_monster.png',
+  'assets/images/entities/kobold.png',
+  'assets/images/entities/skeleton.png',
+  'assets/images/entities/zombie.png',
+  'assets/images/entities/harpy.png',
+  'assets/images/entities/naga.png',
+  'assets/images/entities/giant_scorpion.png',
+  'assets/images/entities/imp.png',
+  'assets/images/entities/orc.png',
+  'assets/images/entities/wraith.png',
+  'assets/images/entities/banshee.png',
+  'assets/images/entities/troll.png',
+  'assets/images/entities/minotaur.png',
+  'assets/images/entities/basilisk.png',
+  'assets/images/entities/dark_wizard.png',
+  'assets/images/entities/gargoyle.png',
+  'assets/images/entities/moss_golem.png',
+  'assets/images/entities/hill_giant.png',
+  'assets/images/entities/earth_elemental.png',
+  'assets/images/entities/ogre.png',
+  'assets/images/entities/stone_golem.png',
+  'assets/images/entities/griffin.png',
+  'assets/images/entities/fire_elemental.png',
+  'assets/images/entities/water_elemental.png',
+  'assets/images/entities/yeti.png',
+  'assets/images/entities/iron_golem.png',
+  'assets/images/entities/steel_golem.png',
+  'assets/images/entities/lich.png',
+  'assets/images/entities/cloud_giant.png',
+  'assets/images/entities/roc.png',
+  'assets/images/entities/wyvern.png',
+  'assets/images/entities/drake.png',
+  'assets/images/entities/kraken.png',
+  'assets/images/entities/dragon.png',
+  'assets/images/entities/lesser_demon.png',
+  'assets/images/entities/greater_demon.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
@@ -514,10 +560,7 @@ void main() {
       // so an item that ignores quality reads as it always did. asserted
       // against a bare definition rather than the catalog, which is free to
       // tag as many items as it likes
-      expect(
-        const ItemDefinition(name: 'x', value: 1).quality,
-        Rarity.COMMON,
-      );
+      expect(const ItemDefinition(name: 'x', value: 1).quality, Rarity.COMMON);
       expect(statMultiplierFor(Rarity.COMMON), 1.0);
       expect(Rarity.COMMON.label, isEmpty);
 

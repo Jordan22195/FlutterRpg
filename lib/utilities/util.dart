@@ -82,4 +82,35 @@ class Util {
 
     return totals;
   }
+
+  static const List<int> fibonacciCache = [
+    1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144,
+    233,
+    377,
+    610,
+    987,
+    1597,
+    2584,
+    4181,
+    6765,
+    10946, // Add as many as needed
+  ];
+
+  /// The level at rung [index] of the Fibonacci ladder every combat tier
+  /// is placed on. A rarity variant is its archetype's rung plus its own
+  /// `Rarity.index`, so the top of the ladder is reachable by an ordinary
+  /// legendary and running off the end is a content bug worth naming.
+  static int fib(int index) {
+    if (index < 0 || index >= fibonacciCache.length) {
+      throw RangeError.range(
+        index,
+        0,
+        fibonacciCache.length - 1,
+        'index',
+        'no level on the Fibonacci ladder — the tier plus its rarity step '
+            'is past the end of fibonacciCache',
+      );
+    }
+    return fibonacciCache[index];
+  }
 }
