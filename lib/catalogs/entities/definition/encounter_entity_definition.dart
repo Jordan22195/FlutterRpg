@@ -16,7 +16,7 @@ class EncounterEntityDefinition extends EntityDefinition {
 
   /// Extra layered rolls on top of the main drop (rare uniques, bulk
   /// stacks, tertiary drops). Empty for most entities.
-  final List<DropRoll<ItemId>> bonusDrops;
+  final List<DropRoll> bonusDrops;
 
   const EncounterEntityDefinition({
     required super.name,
@@ -33,15 +33,8 @@ class EncounterEntityDefinition extends EntityDefinition {
   /// back knowing which quality it landed on rather than just which item.
   /// Built on read: a definition is const, so it cannot hold a table it
   /// assembled in its constructor.
-  List<WeightedDropTableEntry<ItemDropType>> get weightedDropTable => [
-    for (final drop in itemDrops)
-      WeightedDropTableEntry(
-        id: drop,
-        count: drop.lowCount,
-        highCount: drop.highCount,
-        weight: drop.weight,
-      ),
-  ];
+  List<WeightedDropTableEntry<ItemDropType>> get weightedDropTable =>
+      itemDrops.weighted;
 
   @override
   EncounterEntity toEntity(EntityId id) => EncounterEntity(id: id);
@@ -55,7 +48,7 @@ class EncounterEntityDefinition extends EntityDefinition {
     int? defence,
     int? hitpoints,
     List<ItemDropType>? itemDrops,
-    List<DropRoll<ItemId>>? bonusDrops,
+    List<DropRoll>? bonusDrops,
   }) {
     return EncounterEntityDefinition(
       name: name ?? this.name,

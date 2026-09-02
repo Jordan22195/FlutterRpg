@@ -172,7 +172,7 @@ class EncounterSystem {
         encounter.itemDrops,
         result,
       );
-      _payOutItems(
+      _payOutDrops(
         _dropTableService.rollBonusMulitpleTimes(enemiesToKill, def.bonusDrops),
         playerInventory,
         encounter.itemDrops,
@@ -266,7 +266,7 @@ class EncounterSystem {
         encounter.itemDrops,
         result,
       );
-      _payOutItems(
+      _payOutDrops(
         _dropTableService.rollBonus(def.bonusDrops, rng: rng),
         playerInventory,
         encounter.itemDrops,
@@ -533,8 +533,8 @@ class EncounterSystem {
     return stacks;
   }
 
-  /// Pays out plain item stacks — what a bonus roll produces. Bonus rolls
-  /// name items rather than drops, so nothing there carries a quality.
+  /// Pays out plain item stacks — the stackable half of a payout, which
+  /// [_payOutDrops] hands over once it has taken the equipment out.
   void _payOutItems(
     List<ObjectStack<ItemId>> stacks,
     InventoryData playerInventory,
@@ -654,7 +654,7 @@ class EncounterSystem {
   }
 
   List<EntityDropChance> _dropRows(
-    List<WeightedDropTableEntry<ItemId>> entries, {
+    List<ItemDropType> entries, {
     required double rollChance,
     required bool bonus,
   }) {
@@ -666,9 +666,10 @@ class EncounterSystem {
         EntityDropChance(
           itemId: e.id,
           name: e.id.definition.name,
+          rarity: e.rarity,
           chance: rollChance * (e.weight / total),
-          minCount: e.count,
-          maxCount: e.highCount > e.count ? e.highCount : e.count,
+          minCount: e.lowCount,
+          maxCount: e.highCount > e.lowCount ? e.highCount : e.lowCount,
           bonus: bonus,
         ),
     ];

@@ -202,8 +202,10 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
               ),
             if (itemDef is EquipmentItemDefinition)
               Text("Slot: ${itemDef.armorSlot}"),
+            // the real stats, not the weights that split them: the budget
+            // comes off the definition's rung at the quality it declares
             if (itemDef is EquipmentItemDefinition)
-              for (var stat in itemDef.skillBonus.entries)
+              for (var stat in itemDef.statsAt(itemDef.quality).entries)
                 Row(
                   children: [
                     IconRenderer(size: 40, id: stat.key),

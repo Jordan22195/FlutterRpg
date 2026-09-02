@@ -154,8 +154,14 @@ class InventoryService {
     InventoryData inventoryState,
     SkillId skillId,
   ) {
+    // a positive weight, not merely a key: a piece weighted 0 in a skill
+    // carries none of it, and offering it as that skill's tool would be a
+    // tool worth nothing
     return inventoryState.equipment
-        .where((e) => e.armorSlot == slot && e.skillBonus.containsKey(skillId))
+        .where(
+          (e) =>
+              e.armorSlot == slot && (e.statWeights[skillId] ?? 0) > 0,
+        )
         .toList();
   }
 

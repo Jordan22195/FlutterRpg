@@ -46,7 +46,7 @@ void main() {
       expect(helmet.name, def.name);
       expect(helmet.value, def.value);
       expect(helmet.armorSlot, def.armorSlot);
-      expect(helmet.skillBonus, def.skillBonus);
+      expect(helmet.statWeights, def.statWeights);
 
       final pickaxe = ItemId.COPPER_PICKAXE.build() as WeaponItem;
       final pickaxeDef =
@@ -180,7 +180,7 @@ void main() {
 
       expect(helmet.name, helmetDef.name);
       expect(helmet.value, helmetDef.value);
-      expect(helmet.skillBonus, helmetDef.skillBonus);
+      expect(helmet.statWeights, helmetDef.statWeights);
       // and the roll that really was this piece's own survives
       expect(helmet.instanceId, '[#legacy]');
       expect(helmet.quality, Rarity.RARE);
@@ -259,9 +259,9 @@ void main() {
             .actionInterval,
       );
       expect(
-        pickaxe.skillBonus,
+        pickaxe.statWeights,
         (ItemId.COPPER_PICKAXE.definition as EquipmentItemDefinition)
-            .skillBonus,
+            .statWeights,
       );
     });
 

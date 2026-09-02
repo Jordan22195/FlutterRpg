@@ -604,13 +604,10 @@ enum EntityId {
         ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 3, highCount: 10),
         ItemDropType(id: ItemId.IRON_ORE, weight: 1, lowCount: 1, highCount: 2),
       ],
+      // an independent 5% on top of the main pick, so it costs the other
+      // three drops nothing
       bonusDrops: [
-        DropRoll<ItemId>(
-          chance: 0.05,
-          entries: [
-            WeightedDropTableEntry<ItemId>(id: ItemId.PITCHFORK, weight: 1),
-          ],
-        ),
+        DropRoll(chance: 0.05, entries: [ItemDropType(id: ItemId.PITCHFORK)]),
       ],
     ),
   ),
@@ -634,15 +631,12 @@ enum EntityId {
         ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 3, highCount: 10),
         ItemDropType(id: ItemId.IRON_ORE, weight: 1, lowCount: 1, highCount: 2),
       ],
+      // a rare pitchfork is the ordinary one at Rarity.RARE - two rungs up
+      // its ladder - which is what retired the separate RARE_PITCHFORK item
       bonusDrops: [
-        DropRoll<ItemId>(
+        DropRoll(
           chance: 0.50,
-          entries: [
-            WeightedDropTableEntry<ItemId>(
-              id: ItemId.RARE_PITCHFORK,
-              weight: 1,
-            ),
-          ],
+          entries: [ItemDropType(id: ItemId.PITCHFORK, rarity: Rarity.RARE)],
         ),
       ],
     ),
@@ -912,13 +906,10 @@ enum EntityId {
       // 5% chance, on top of the coin drop, to yield the key that opens
       // the Goblin Queen's Lair landmark dungeon
       bonusDrops: [
-        DropRoll<ItemId>(
+        DropRoll(
           chance: 0.05,
           entries: [
-            WeightedDropTableEntry<ItemId>(
-              id: ItemId.GOBLIN_QUEEN_KEY,
-              weight: 1,
-            ),
+            ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY),
           ],
         ),
       ],
@@ -1118,6 +1109,7 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 34, highCount: 102, weight: 1),
       ],
+
     ),
   ),
   FUNGAL_MONSTER_UNCOMMON(
@@ -1242,6 +1234,7 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
       ],
+
     ),
   ),
   SKELETON_UNCOMMON(
@@ -1307,6 +1300,7 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
       ],
+
     ),
   ),
   ZOMBIE_UNCOMMON(
@@ -1372,6 +1366,7 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
       ],
+
     ),
   ),
   HARPY_UNCOMMON(
@@ -1506,6 +1501,7 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 89, highCount: 267, weight: 1),
       ],
+
     ),
   ),
   GIANT_SCORPION_UNCOMMON(
@@ -1576,6 +1572,7 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 89, highCount: 267, weight: 1),
       ],
+
     ),
   ),
   IMP_UNCOMMON(
@@ -1646,6 +1643,7 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 89, highCount: 267, weight: 1),
       ],
+
     ),
   ),
   ORC_UNCOMMON(
@@ -1725,6 +1723,7 @@ enum EntityId {
           weight: 1,
         ),
       ],
+
     ),
   ),
   WRAITH_UNCOMMON(
@@ -1800,6 +1799,7 @@ enum EntityId {
           weight: 1,
         ),
       ],
+
     ),
   ),
   BANSHEE_UNCOMMON(
@@ -1875,6 +1875,7 @@ enum EntityId {
           weight: 1,
         ),
       ],
+
     ),
   ),
   TROLL_UNCOMMON(
@@ -2254,6 +2255,7 @@ enum EntityId {
           weight: 1,
         ),
       ],
+
     ),
   ),
   MOSS_GOLEM_UNCOMMON(
@@ -2329,6 +2331,7 @@ enum EntityId {
           weight: 1,
         ),
       ],
+
     ),
   ),
   HILL_GIANT_UNCOMMON(
@@ -3798,13 +3801,10 @@ enum EntityId {
       // 5% chance, on top of the coin drop, to yield the key that opens
       // the Goblin Queen's Lair landmark dungeon
       bonusDrops: [
-        DropRoll<ItemId>(
+        DropRoll(
           chance: 0.05,
           entries: [
-            WeightedDropTableEntry<ItemId>(
-              id: ItemId.GOBLIN_QUEEN_KEY,
-              weight: 1,
-            ),
+            ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY),
           ],
         ),
       ],
@@ -3830,13 +3830,10 @@ enum EntityId {
       // 5% chance, on top of the coin drop, to yield the key that opens
       // the Goblin Queen's Lair landmark dungeon
       bonusDrops: [
-        DropRoll<ItemId>(
+        DropRoll(
           chance: 0.05,
           entries: [
-            WeightedDropTableEntry<ItemId>(
-              id: ItemId.GOBLIN_QUEEN_KEY,
-              weight: 1,
-            ),
+            ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY),
           ],
         ),
       ],
@@ -3883,24 +3880,17 @@ enum EntityId {
       ],
       bonusDrops: [
         // guaranteed bulk currency
-        DropRoll<ItemId>(
+        DropRoll(
           entries: [
-            WeightedDropTableEntry<ItemId>(
-              id: ItemId.COINS,
-              weight: 1,
-              count: 500,
-            ),
+            ItemDropType(id: ItemId.COINS, lowCount: 500),
           ],
         ),
         // rare second unique on top of the guaranteed one
-        DropRoll<ItemId>(
+        DropRoll(
           chance: 0.1,
           entries: [
-            WeightedDropTableEntry<ItemId>(id: ItemId.GOBLIN_CROWN, weight: 1),
-            WeightedDropTableEntry<ItemId>(
-              id: ItemId.GOBLIN_SCEPTER,
-              weight: 1,
-            ),
+            ItemDropType(id: ItemId.GOBLIN_CROWN),
+            ItemDropType(id: ItemId.GOBLIN_SCEPTER),
           ],
         ),
       ],

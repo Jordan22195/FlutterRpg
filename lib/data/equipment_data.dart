@@ -64,10 +64,16 @@ class EquipmentData {
   }
 
   // resolves either the new instance format (item json object) or the
-  // legacy format (a plain ItemId name string) to an equipment instance
+  // legacy format (a plain ItemId name string) to an equipment instance.
+  // an id the catalog has since retired resolves to null and the slot is
+  // left empty, rather than taking the whole save down with it
   static EquipmentItem? _parseEquipmentValue(dynamic rawValue) {
     if (rawValue is Map<String, dynamic>) {
-      return WeaponItem.equipmentFromJson(rawValue);
+      try {
+        return WeaponItem.equipmentFromJson(rawValue);
+      } on FormatException {
+        return null;
+      }
     }
     if (rawValue is String) {
       final itemId = ItemId.values.asNameMap()[rawValue];

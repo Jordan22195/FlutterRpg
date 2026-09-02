@@ -1,6 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
-import 'dart:math';
+import 'package:rpg/utilities/util.dart';
 
 /// How a combat entity spends its level budget across attack, defence and
 /// hitpoints. A combat entity is defined by a level (how much stat it gets)
@@ -79,15 +79,10 @@ enum CombatType {
 // against weight totals no enum constant happens to use.
 
 int combatAttackAt(int level, int weight, int totalWeight) =>
-    _stat(level * 3 * weight, totalWeight);
+    Util.weightedShare(level * 3, weight, totalWeight);
 
 int combatDefenceAt(int level, int weight, int totalWeight) =>
-    _stat(level * 3 * weight, totalWeight);
+    Util.weightedShare(level * 3, weight, totalWeight);
 
 int combatHitpointsAt(int level, int weight, int totalWeight) =>
-    _stat(level * 3 * 5 * weight, totalWeight);
-
-/// Rounded share of the budget, floored at 1 so nothing lands on a stat of
-/// zero at low levels.
-int _stat(int weighted, int totalWeight) =>
-    max(1, (weighted / totalWeight).round());
+    Util.weightedShare(level * 3 * 5, weight, totalWeight);

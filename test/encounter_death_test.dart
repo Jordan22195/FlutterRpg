@@ -150,12 +150,24 @@ void main() {
     // back from a swing they had no hp for
     expect(session.encounterController.deathSequence, 1);
     expect(save.playerData.hitpoints, 1);
+
+    // one eat per swing is what would happen if the eat came first; the
+    // killing blow gets none, so the eats always come up at least one short.
+    // Counted against the swings rather than pinned at "no food eaten",
+    // because damage is a uniform roll: even a 1464-attack imp can roll low
+    // enough to leave the player standing, and being topped up between hits
+    // is the very behaviour the ordering is meant to allow.
+    final swings = session.encounterController.entityAttackSequence;
+    final eaten =
+        50 -
+        session.inventoryService.getItemCount(
+          save.inventoryData,
+          ItemId.COOKED_CHICKEN,
+        );
+    expect(swings, greaterThan(0));
     expect(
-      session.inventoryService.getItemCount(
-        save.inventoryData,
-        ItemId.COOKED_CHICKEN,
-      ),
-      50,
+      eaten,
+      lessThan(swings),
       reason: 'the killing blow left no room to eat',
     );
 

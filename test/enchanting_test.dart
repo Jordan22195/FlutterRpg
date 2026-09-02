@@ -58,6 +58,36 @@ void main() {
     );
   });
 
+  // Disenchanting reads the item's whole effective stat total, so putting
+  // equipment on the Fibonacci ladder inflated both the material yield and
+  // the xp along with it - a rung is a bigger step than the old 1.1x-1.5x
+  // multiplier ever was. Pinned rather than left to drift silently: if a
+  // tuning pass rebalances enchanting, this is the test that says by how
+  // much it moved.
+  test('a rung is worth what it is worth, and the numbers are pinned', () {
+    final factory = GameSessionFactory();
+    final save = factory.newGame(factory.catalog1());
+    final system = buildSystem();
+
+    // mithril shield: rung 5, so 13 defence common and 89 legendary
+    final legendary = ItemId.MITHRIL_SHIELD.build() as EquipmentItem;
+    legendary.quality = Rarity.LEGENDARY;
+    expect(legendary.effectiveSkillBonus[SkillId.DEFENCE], 89);
+    save.inventoryData.equipment.add(legendary);
+
+    final preview = system.previewDisenchant(legendary, save.playerData);
+    expect(preview.id, ItemId.SOUL_SHARD);
+    expect(preview.count, EnchantingService().disenchantYield(89, 1));
+
+    final result = system.disenchant(
+      legendary.instanceId,
+      save.playerData,
+      save.inventoryData,
+    );
+    // xp is twice the stat total, and the stat total is now the rung
+    expect(result.xp[SkillId.ENCHANTING], 89 * 2.0);
+  });
+
   test('disenchant yield grows with stat total and level', () {
     final service = EnchantingService();
     expect(

@@ -1,5 +1,10 @@
 import 'dart:math';
 import '../data/ObjectStack.dart';
+// item_drop_type.dart imports this file back for WeightedDropTableEntry.
+// Dart allows the cycle and there is no const-initialization hazard here;
+// splitting WeightedDropTableEntry into its own library to avoid it would
+// be churn for nothing.
+import '../data/item_drop_type.dart';
 
 class WeightedDropTableEntry<T> {
   final T id;
@@ -53,11 +58,21 @@ class WeightedDropTableEntry<T> {
 /// - a guaranteed roll (chance 1.0) always yields one pick — e.g. a
 ///   boss's "guaranteed one of N uniques", or a guaranteed bulk stack
 /// - a low-chance roll models a rare/tertiary drop on top of the main one
-class DropRoll<T> {
-  final List<WeightedDropTableEntry<T>> entries;
+///
+/// [entries] are [ItemDropType], the same as an entity's main table: a
+/// bonus roll yields a *drop*, quality and all, so equipment from one
+/// arrives as its own instance rather than a count in the item map. This
+/// class carried a type parameter once, but only ever at `ItemId`, and
+/// that is precisely what left bonus-rolled equipment unqualified.
+class DropRoll {
+  final List<ItemDropType> entries;
   final double chance;
 
   const DropRoll({required this.entries, this.chance = 1.0});
+
+  /// [entries] as a weighted table the roll service can pick from.
+  List<WeightedDropTableEntry<ItemDropType>> get weightedEntries =>
+      entries.weighted;
 }
 
 class WeightedDropTableService {
@@ -231,31 +246,34 @@ class WeightedDropTableService {
   /// chance), adds one weighted pick. Guaranteed rolls always contribute;
   /// rare rolls contribute only when their chance succeeds. Empty rolls
   /// are skipped. Returns every stack the kill produced.
-  List<ObjectStack<T>> rollBonus<T>(List<DropRoll<T>> rolls, {Random? rng}) {
+  List<ObjectStack<ItemDropType>> rollBonus(
+    List<DropRoll> rolls, {
+    Random? rng,
+  }) {
     final random = rng ?? Random();
-    final out = <ObjectStack<T>>[];
+    final out = <ObjectStack<ItemDropType>>[];
     for (final dropRoll in rolls) {
       if (dropRoll.entries.isEmpty) continue;
       if (random.nextDouble() <= dropRoll.chance) {
-        out.add(roll<T>(dropRoll.entries, rng: random));
+        out.add(roll(dropRoll.weightedEntries, rng: random));
       }
     }
     return out;
   }
 
   // todo make this deterministic
-  List<ObjectStack<T>> rollBonusMulitpleTimes<T>(
+  List<ObjectStack<ItemDropType>> rollBonusMulitpleTimes(
     int rollCount,
-    List<DropRoll<T>> rolls, {
+    List<DropRoll> rolls, {
     Random? rng,
   }) {
     final random = rng ?? Random();
-    final out = <ObjectStack<T>>[];
+    final out = <ObjectStack<ItemDropType>>[];
     for (int i = 0; i < rollCount; i++) {
       for (final dropRoll in rolls) {
         if (dropRoll.entries.isEmpty) continue;
         if (random.nextDouble() <= dropRoll.chance) {
-          out.add(roll<T>(dropRoll.entries, rng: random));
+          out.add(roll(dropRoll.weightedEntries, rng: random));
         }
       }
     }

@@ -7,35 +7,10 @@ import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/items/definition/equipment_item_definition.dart';
 import 'package:rpg/catalogs/items/model/item.dart';
 
-/// How much each rarity scales a piece of equipment's base stats.
-///
-/// Equipment is the only thing that reads a multiplier off the ladder — an
-/// entity's rarity is cosmetic — so it lives here rather than on [Rarity]
-/// itself. Every rarity has an entry; [statMultiplierFor] is the way to
-/// read it, so a tier added to the enum without one falls back to 1.0
-/// instead of throwing.
-const Map<Rarity, double> rarityStatMultiplier = {
-  Rarity.COMMON: 1.0,
-  Rarity.UNCOMMON: 1.1,
-  Rarity.RARE: 1.2,
-  Rarity.EPIC: 1.3,
-  Rarity.LEGENDARY: 1.5,
-};
-
-const Map<Rarity, int> rarityStatMinBonus = {
-  Rarity.COMMON: 0,
-  Rarity.UNCOMMON: 1,
-  Rarity.RARE: 2,
-  Rarity.EPIC: 3,
-  Rarity.LEGENDARY: 5,
-};
-
-/// The stat multiplier for [rarity], defaulting to the identity.
-double statMultiplierFor(Rarity rarity) => rarityStatMultiplier[rarity] ?? 1.0;
-
 /// A wearable piece.
 ///
-/// Its base stats and slot come off the definition; what is unique to the
+/// Its slot, its rung on the Fibonacci ladder and the weights that split
+/// that rung's budget all come off the definition; what is unique to the
 /// piece in the player's bag is the rolled [quality] and the enchant rolled
 /// onto it. Those are the only things stored here — retuning the base item
 /// in the catalog moves every copy already in play.
@@ -71,11 +46,15 @@ class EquipmentItem extends Item {
 
   ArmorSlots get armorSlot => definition.armorSlot;
 
-  /// Base stats, straight off the definition. Read-only on purpose: an
-  /// instance that could write here could drift from the catalog, which is
-  /// the whole thing this model exists to prevent. Per-piece stats belong
-  /// in [quality] and [enchantBonus].
-  Map<SkillId, int> get skillBonus => Map.unmodifiable(definition.skillBonus);
+  /// How this piece's budget is split across skills — a ratio, not stat
+  /// amounts. Read-only on purpose: an instance that could write here could
+  /// drift from the catalog, which is the whole thing this model exists to
+  /// prevent. Per-piece stats belong in [quality] and [enchantBonus].
+  Map<SkillId, int> get statWeights => Map.unmodifiable(definition.statWeights);
+
+  /// The rung this particular piece sits on: the definition's, walked up by
+  /// whatever rarity was rolled onto it.
+  int get fibLevel => definition.fibLevel + quality.index;
 
   /// Rolled by crafting, drops and shop stock; falls back to whatever the
   /// definition declares for a piece that was never rolled.
@@ -83,19 +62,14 @@ class EquipmentItem extends Item {
   Rarity get quality => _quality ?? definition.quality;
   set quality(Rarity value) => _quality = value;
 
-  /// Stats after quality scaling and enchant bonus.
+  /// The stats this piece actually carries: its rung's budget split by the
+  /// definition's weights, with the enchant added flat on top.
   ///
-  /// Each base stat is scaled by the quality's multiplier and then floored at
-  /// that quality's [rarityStatMinBonus], so a rarer item is never worth less
-  /// than its tier promises — scaling alone rounds a +1 stat straight back to
-  /// +1 at every tier below legendary.
+  /// The enchant is added after the split rather than folded into the
+  /// budget, because it is a roll made at the bench on this one piece — it
+  /// is not part of what the item is.
   Map<SkillId, int> get effectiveSkillBonus {
-    final result = <SkillId, int>{};
-    final floor = rarityStatMinBonus[quality] ?? 0;
-    for (final entry in skillBonus.entries) {
-      final scaled = (entry.value * statMultiplierFor(quality)).round();
-      result[entry.key] = scaled > floor ? scaled : floor;
-    }
+    final result = definition.statsAt(quality);
     for (final entry in enchantBonus.entries) {
       result[entry.key] = (result[entry.key] ?? 0) + entry.value;
     }

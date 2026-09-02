@@ -20,9 +20,9 @@ const testArchetype = CombatArchetype(
 );
 
 // An entity's drop table is written as ItemDropType, which is a weighted
-// entry in its own right. It gets rolled two ways: for a plain item id (a
-// bonus roll), and for the drop itself (the main table), which is what
-// carries a drop's quality through to the loot.
+// entry in its own right. Both the main table and a layered bonus roll are
+// lists of exactly that, and both roll for the drop rather than for a bare
+// id - which is what carries a drop's quality through to the loot.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -88,14 +88,18 @@ void main() {
     });
   });
 
-  test('a shared table still rolls as plain item ids for a bonus roll', () {
-    final rolled = WeightedDropTableService().roll(
-      gemDropTable,
-      rng: Random(1),
-    );
+  test('a shared table drops into a bonus roll and rolls for the drop', () {
+    // the same const table serves both uses. through a bonus roll it comes
+    // back as an ItemDropType, so the quality rides along - a plain item id
+    // is exactly what used to leave bonus-rolled equipment unqualified.
+    final rolled = WeightedDropTableService().rollBonus([
+      DropRoll(entries: gemDropTable),
+    ], rng: Random(1));
 
-    expect(rolled.id, isA<ItemId>());
-    expect(gemDropTable.map((drop) => drop.id), contains(rolled.id));
+    final drop = rolled.single;
+    expect(drop.id, isA<ItemDropType>());
+    expect(gemDropTable, contains(drop.id));
+    expect(drop.id.rarity, Rarity.COMMON);
   });
 
   group('what a kill pays out', () {

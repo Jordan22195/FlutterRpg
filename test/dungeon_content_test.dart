@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
@@ -15,19 +16,10 @@ void main() {
     test('a guaranteed roll always fires; a chance roll fires ~its rate', () {
       final rng = Random(1);
       final rolls = [
-        DropRoll<ItemId>(
-          entries: [
-            WeightedDropTableEntry<ItemId>(id: ItemId.COINS, weight: 1),
-          ],
-        ),
-        DropRoll<ItemId>(
+        DropRoll(entries: [ItemDropType(id: ItemId.COINS)]),
+        DropRoll(
           chance: 0.25,
-          entries: [
-            WeightedDropTableEntry<ItemId>(
-              id: ItemId.GOBLIN_QUEEN_KEY,
-              weight: 1,
-            ),
-          ],
+          entries: [ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY)],
         ),
       ];
 
@@ -36,8 +28,8 @@ void main() {
       const n = 4000;
       for (var i = 0; i < n; i++) {
         final out = service.rollBonus(rolls, rng: rng);
-        coins += out.where((s) => s.id == ItemId.COINS).length;
-        keys += out.where((s) => s.id == ItemId.GOBLIN_QUEEN_KEY).length;
+        coins += out.where((s) => s.id.id == ItemId.COINS).length;
+        keys += out.where((s) => s.id.id == ItemId.GOBLIN_QUEEN_KEY).length;
       }
 
       expect(coins, n); // guaranteed
@@ -45,9 +37,7 @@ void main() {
     });
 
     test('empty rolls are skipped', () {
-      final out = service.rollBonus(<DropRoll<ItemId>>[
-        DropRoll<ItemId>(entries: const []),
-      ]);
+      final out = service.rollBonus(<DropRoll>[DropRoll(entries: const [])]);
       expect(out, isEmpty);
     });
   });
@@ -81,15 +71,15 @@ void main() {
 
       const uniques = {ItemId.GOBLIN_CROWN, ItemId.GOBLIN_SCEPTER};
       for (var i = 0; i < 200; i++) {
-        final drops = <dynamic>[
-          service.roll(def.itemDrops, rng: rng),
+        final drops = [
+          service.roll(def.weightedDropTable, rng: rng),
           ...service.rollBonus(def.bonusDrops, rng: rng),
         ];
-        final ids = drops.map((s) => s.id).toSet();
+        final ids = drops.map((s) => s.id.id).toSet();
         // guaranteed one of the uniques
         expect(ids.intersection(uniques), isNotEmpty);
         // guaranteed bulk coin stack
-        final coinStack = drops.firstWhere((s) => s.id == ItemId.COINS);
+        final coinStack = drops.firstWhere((s) => s.id.id == ItemId.COINS);
         expect(coinStack.count, 500);
       }
     });

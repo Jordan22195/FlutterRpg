@@ -9,8 +9,10 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
+import 'package:rpg/data/equipment_data.dart';
 
 /// Content invariants for the catalogs.
 ///
@@ -161,7 +163,11 @@ void checkIcon(String? asset, String owner, Set<String> declared) {
   );
 }
 
-void checkDropTable(List<WeightedDropTableEntry> entries, String owner) {
+// Generic rather than raw: it serves item drops, zone discovery tables and
+// recipe outputs alike, and a raw parameter would accept anything at all.
+// For an ItemDropType, `count` is its own lowCount - a bonus roll holds the
+// drops themselves, so there is no wrapper count to read by mistake.
+void checkDropTable<T>(List<WeightedDropTableEntry<T>> entries, String owner) {
   expect(entries, isNotEmpty, reason: '$owner has an empty drop table');
   for (final e in entries) {
     // WeightedDropTableService.roll throws on a non-positive total weight,
@@ -537,12 +543,12 @@ void main() {
       final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
       final helmetDef =
           ItemId.COPPER_HELMET.definition as EquipmentItemDefinition;
-      expect(helmet.skillBonus, helmetDef.skillBonus);
+      expect(helmet.statWeights, helmetDef.statWeights);
       expect(
-        () => helmet.skillBonus[SkillId.DEFENCE] = 99,
+        () => helmet.statWeights[SkillId.DEFENCE] = 99,
         throwsUnsupportedError,
       );
-      expect(helmetDef.skillBonus[SkillId.DEFENCE], isNot(99));
+      expect(helmetDef.statWeights[SkillId.DEFENCE], isNot(99));
 
       final fire = ItemId.COOKFIRE.build() as FireItem;
       final def = ItemId.COOKFIRE.definition as FireItemDefinition;
@@ -594,7 +600,7 @@ void main() {
       // against a bare definition rather than the catalog, which is free to
       // tag as many items as it likes
       expect(const ItemDefinition(name: 'x', value: 1).quality, Rarity.COMMON);
-      expect(statMultiplierFor(Rarity.COMMON), 1.0);
+      expect(Rarity.COMMON.index, 0, reason: 'common must be no rungs up');
       expect(Rarity.COMMON.label, isEmpty);
 
       // a declared quality has to survive a copyWith that is not about
@@ -606,12 +612,31 @@ void main() {
       expect(epic.copyWith(value: 999).quality, Rarity.EPIC);
       expect(ItemId.COPPER_HELMET.definition.quality, Rarity.COMMON);
 
-      // and it has to reach the runtime item, or declaring it does nothing.
-      // read through a catalog id that declares one: an instance is defined
-      // by its id, so a detached copyWith variant is not something it can
-      // be built from.
-      expect(ItemId.RARE_PITCHFORK.definition.quality, Rarity.RARE);
-      expect(ItemId.RARE_PITCHFORK.build().quality, Rarity.RARE);
+      // a definition can still declare one, and it survives copyWith
+      const declared = EquipmentItemDefinition(
+        name: 'Declared',
+        value: 1,
+        armorSlot: ArmorSlots.HEAD,
+        fibLevel: 0,
+        statWeights: {SkillId.DEFENCE: 1},
+        quality: Rarity.RARE,
+      );
+      expect(declared.quality, Rarity.RARE);
+      expect(declared.copyWith(value: 9).quality, Rarity.RARE);
+
+      // and an unrolled instance defers to its definition rather than
+      // hardcoding common - which is how a declared quality would reach the
+      // runtime item. No catalog item declares one today: RARE_PITCHFORK
+      // was retired once a drop could carry a quality of its own, so a rare
+      // pitchfork is the ordinary one at Rarity.RARE.
+      for (final id in ItemId.values) {
+        if (id.definition is! EquipmentItemDefinition) continue;
+        expect(
+          id.build().quality,
+          id.definition.quality,
+          reason: '${id.name} did not take its definition\'s quality',
+        );
+      }
     });
   });
 

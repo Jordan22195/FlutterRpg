@@ -63,3 +63,22 @@ class ItemDropType extends WeightedDropTableEntry<ItemId> {
   @override
   int get hashCode => Object.hash(id, rarity, count, highCount);
 }
+
+/// A list of drops as a weighted table keyed by the drops themselves, so a
+/// roll comes back knowing which quality it landed on rather than just
+/// which item.
+///
+/// Built on read rather than stored: an entity definition and a [DropRoll]
+/// are both const, so neither can hold a table it assembled in its own
+/// constructor. Both of them go through here, so the wrap exists once.
+extension WeightedDrops on List<ItemDropType> {
+  List<WeightedDropTableEntry<ItemDropType>> get weighted => [
+    for (final drop in this)
+      WeightedDropTableEntry(
+        id: drop,
+        count: drop.lowCount,
+        highCount: drop.highCount,
+        weight: drop.weight,
+      ),
+  ];
+}

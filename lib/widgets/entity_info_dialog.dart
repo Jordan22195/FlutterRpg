@@ -328,7 +328,15 @@ class _DropTable extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(drop.name, overflow: TextOverflow.ellipsis),
+                      // the quality prefix, the way EquipmentItem.displayName
+                      // writes it: a table can list the same item at two
+                      // qualities, which reads as a duplicate row without it
+                      Text(
+                        drop.rarity.label.isEmpty
+                            ? drop.name
+                            : '${drop.rarity.label} ${drop.name}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       // a layered roll lands on top of the main drop, so
                       // its odds are independent of the rows above
                       if (drop.bonus) Text('bonus roll', style: subtleStyle),

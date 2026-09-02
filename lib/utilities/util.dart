@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class Util {
   static String formatRemainingTime(DateTime expirationTime) {
     final remaining = expirationTime.difference(DateTime.now());
@@ -100,6 +102,15 @@ class Util {
   /// is placed on. A rarity variant is its archetype's rung plus its own
   /// `Rarity.index`, so the top of the ladder is reachable by an ordinary
   /// legendary and running off the end is a content bug worth naming.
+  /// One share of a stat budget, split by weight and floored at 1 so
+  /// nothing lands on a stat of zero.
+  ///
+  /// The two ladders in the game — a combat entity's level budget and a
+  /// piece of equipment's — split their budget by exactly this rule, so it
+  /// lives here rather than on either of them.
+  static int weightedShare(int budget, int weight, int totalWeight) =>
+      max(1, (budget * weight / totalWeight).round());
+
   static int fib(int index) {
     if (index < 0 || index >= fibonacciCache.length) {
       throw RangeError.range(

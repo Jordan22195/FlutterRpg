@@ -261,7 +261,7 @@ void main() {
     // the instance
     final pickaxeMining =
         (ItemId.COPPER_PICKAXE.definition as EquipmentItemDefinition)
-            .skillBonus[SkillId.MINING]!;
+            .statsAt(Rarity.COMMON)[SkillId.MINING]!;
 
     int minedAt(double multiplier, {int strength = 10, bool geared = false}) {
       final player = newPlayer();

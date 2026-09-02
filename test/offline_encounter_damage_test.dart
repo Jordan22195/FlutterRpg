@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
@@ -73,11 +75,17 @@ void main() {
     ItemId.COOKED_CHICKEN,
   );
 
-  // one offline batch of [count] actions covering [span]
+  // one offline batch of [count] actions covering [span].
+  //
+  // Seeded: the enemy's swings are rolled one at a time, so how far into an
+  // hour an unfed player gets - and therefore how many kills they bought
+  // before dying - varies run to run. An unseeded roll made that test flaky
+  // about one run in three.
   EncounterActionResult settleFight(
     GameSession session, {
     required int count,
     required Duration span,
+    int seed = 20260901,
   }) {
     final save = session.saveGameData;
     return session.encounterSystem.executePlayerAction(
@@ -89,14 +97,18 @@ void main() {
       offline: true,
       at: save.playerData.lastActionTime,
       span: span,
+      rng: Random(seed),
     );
   }
 
   test('an unfed player dies partway through a long fight', () {
     final session = buildSession();
     final save = session.saveGameData;
-    setLevel(session, SkillId.ATTACK, 10); // kills a chicken in one swing
-    fightWith(session, EntityId.CHICKEN);
+    setLevel(session, SkillId.ATTACK, 10);
+    // the catalog's gentlest attacker: it takes a while to chew through 10
+    // unfed hitpoints, so the player gets a run of kills in first. a chicken
+    // hits for 5 and ends the fight in two swings, before any kill lands.
+    fightWith(session, EntityId.FIELD_RAT);
 
     // an hour of fighting at 3s an action, with nothing to eat
     final result = settleFight(

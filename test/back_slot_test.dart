@@ -14,8 +14,8 @@ void main() {
 
   EquipmentItem cloak(ItemId id) => id.build() as EquipmentItem;
 
-  int defenceOf(ItemId id) =>
-      (id.definition as EquipmentItemDefinition).skillBonus[SkillId.DEFENCE]!;
+  int defenceOf(ItemId id) => (id.definition as EquipmentItemDefinition)
+      .statsAt(Rarity.COMMON)[SkillId.DEFENCE]!;
 
   final woolDefence = defenceOf(ItemId.WOOL_CLOAK);
   final linenDefence = defenceOf(ItemId.LINEN_CAPE);
@@ -74,6 +74,6 @@ void main() {
     final back = restored.armorEquipment[ArmorSlots.BACK];
     expect(back?.name, 'Wool Cloak');
     expect(back?.armorSlot, ArmorSlots.BACK);
-    expect(back?.skillBonus[SkillId.DEFENCE], woolDefence);
+    expect(back?.effectiveSkillBonus[SkillId.DEFENCE], woolDefence);
   });
 }

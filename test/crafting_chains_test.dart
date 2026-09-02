@@ -64,9 +64,9 @@ void main() {
       ]) {
         final iron = pair.$1.build() as EquipmentItem;
         final steel = pair.$2.build() as EquipmentItem;
-        for (final entry in iron.skillBonus.entries) {
+        for (final entry in iron.effectiveSkillBonus.entries) {
           expect(
-            steel.skillBonus[entry.key],
+            steel.effectiveSkillBonus[entry.key],
             greaterThan(entry.value),
             reason: '${pair.$2.name} should beat ${pair.$1.name}',
           );
@@ -116,6 +116,7 @@ void main() {
         ['forge_copper_pickaxe', 'forge_copper_axe', 'forge_copper_sickle'],
         ['forge_iron_pickaxe', 'forge_iron_axe', 'forge_iron_sickle'],
         ['forge_steel_pickaxe', 'forge_steel_axe', 'forge_steel_sickle'],
+        ['forge_mithril_pickaxe', 'forge_mithril_axe', 'forge_mithril_sickle'],
       ]) {
         final levels = tools
             .map((id) => recipes.recipeById(id).levelRequirement)

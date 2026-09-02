@@ -164,7 +164,7 @@ void main() {
     });
 
     test('a table drops straight into a const DropRoll', () {
-      const roll = DropRoll<ItemId>(chance: 0.02, entries: herbDropTable);
+      const roll = DropRoll(chance: 0.02, entries: herbDropTable);
       expect(roll.entries, same(herbDropTable));
       expect(roll.chance, 0.02);
     });

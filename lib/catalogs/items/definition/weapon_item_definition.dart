@@ -12,7 +12,8 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
     required super.name,
     required super.value,
     required super.armorSlot,
-    required super.skillBonus,
+    required super.fibLevel,
+    required super.statWeights,
     required this.actionInterval,
     super.description,
     super.iconAsset,
@@ -28,7 +29,8 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
     int? xpValue,
     Rarity? quality,
     ArmorSlots? armorSlot,
-    Map<SkillId, int>? skillBonus,
+    int? fibLevel,
+    Map<SkillId, int>? statWeights,
     Duration? actionInterval,
   }) {
     return WeaponItemDefinition(
@@ -38,7 +40,8 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
       iconAsset: iconAsset ?? this.iconAsset,
       quality: quality ?? this.quality,
       armorSlot: armorSlot ?? this.armorSlot,
-      skillBonus: skillBonus ?? this.skillBonus,
+      fibLevel: fibLevel ?? this.fibLevel,
+      statWeights: statWeights ?? this.statWeights,
       actionInterval: actionInterval ?? this.actionInterval,
     );
   }

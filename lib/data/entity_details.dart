@@ -8,6 +8,11 @@ class EntityDropChance {
   final ItemId itemId;
   final String name;
 
+  /// The quality this line drops at. A table may list the same item more
+  /// than once at different qualities, which is otherwise two identical
+  /// looking rows.
+  final Rarity rarity;
+
   /// Probability this drop lands on one kill (0..1).
   final double chance;
 
@@ -20,6 +25,7 @@ class EntityDropChance {
   const EntityDropChance({
     required this.itemId,
     required this.name,
+    this.rarity = Rarity.COMMON,
     required this.chance,
     required this.minCount,
     required this.maxCount,

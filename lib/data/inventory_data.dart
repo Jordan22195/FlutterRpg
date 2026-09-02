@@ -23,8 +23,21 @@ class InventoryData {
     };
   }
 
+  /// An item id the catalog has since retired is skipped rather than
+  /// thrown on, the way `Zone.fromJson` already skips retired entities.
+  /// Without this, removing an id takes down every save that holds one —
+  /// and a bare `firstWhere` throws `StateError`, which the bootstrap's
+  /// `FormatException` fallback in main.dart would not even catch.
   factory InventoryData.fromJson(Map<String, dynamic> json) {
     final rawItems = json['items'] as Map<String, dynamic>? ?? {};
+
+    final itemMap = <ItemId, int>{};
+    for (final entry in rawItems.entries) {
+      final id = ItemId.values.asNameMap()[entry.key];
+      final count = entry.value;
+      if (id == null || count is! int) continue;
+      itemMap[id] = count;
+    }
 
     // tolerated when missing: older saves stored equipment as counts
     // in the item map (migrated in GameSessionFactory.create)
@@ -32,20 +45,15 @@ class InventoryData {
     final equipment = <EquipmentItem>[];
     if (rawEquipment is List) {
       for (final entry in rawEquipment) {
-        if (entry is Map<String, dynamic>) {
+        if (entry is! Map<String, dynamic>) continue;
+        try {
           equipment.add(WeaponItem.equipmentFromJson(entry));
+        } on FormatException {
+          continue;
         }
       }
     }
 
-    return InventoryData(
-      itemMap: rawItems.map(
-        (key, value) => MapEntry(
-          ItemId.values.firstWhere((e) => e.name == key),
-          value as int,
-        ),
-      ),
-      equipment: equipment,
-    );
+    return InventoryData(itemMap: itemMap, equipment: equipment);
   }
 }

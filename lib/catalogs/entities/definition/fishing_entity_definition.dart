@@ -1,4 +1,3 @@
-import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -31,7 +30,7 @@ class FishingEntityDefinition extends EncounterEntityDefinition {
     int? defence,
     int? hitpoints,
     List<ItemDropType>? itemDrops,
-    List<DropRoll<ItemId>>? bonusDrops,
+    List<DropRoll>? bonusDrops,
   }) {
     return FishingEntityDefinition(
       name: name ?? this.name,

@@ -9,13 +9,13 @@
 ///
 /// ```dart
 /// itemDrops: gemDropTable,
-/// bonusDrops: [DropRoll<ItemId>(chance: 0.02, entries: herbDropTable)],
+/// bonusDrops: [DropRoll(chance: 0.02, entries: herbDropTable)],
 /// ```
 ///
-/// A table is a list of [ItemDropType], which is itself a weighted drop
-/// table entry — so the same table serves as an entity's main `itemDrops`
-/// (where it rolls for the drop, quality and all) and as the entries of a
-/// [DropRoll] (where it rolls for a plain item id).
+/// A table is a list of [ItemDropType], and both the main table and a
+/// [DropRoll] are lists of exactly that — so the same table drops into
+/// either, and rolls for the drop, quality and all, whichever it is used
+/// as.
 ///
 /// Every entry leaves `unlockLevel` at 0. Only callers
 /// that run `WeightedDropTableService.availableAt` before rolling honour it —
