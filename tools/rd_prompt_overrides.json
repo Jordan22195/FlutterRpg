@@ -318,5 +318,8 @@
   "assets/images/entities/lesser_demon.png": "a horned demon with dark red skin, black claws, hooved legs and small ember eyes",
   "assets/images/entities/greater_demon.png": "a towering black and crimson demon with huge curled horns, burning orange cracks across its hide and a flaming greatsword",
   "assets/icons/items/wool_cloak.png": "a folded grey wool travelling cloak with a simple clasp, seen from the front, on a plain background",
-  "assets/icons/items/linen_cape.png": "a short cream linen cape with a stitched hem and a leather cord tie, seen from the front, on a plain background"
+  "assets/icons/items/linen_cape.png": "a short cream linen cape with a stitched hem and a leather cord tie, seen from the front, on a plain background",
+  "assets/images/zones/swamp.png": "a murky lowland swamp, still black water between twisted half-drowned trees, thick reeds and drifting mist",
+  "assets/images/zones/foothills.png": "rolling ash-grey foothills rising toward distant mountains, bare rock outcrops and sparse scrub under an overcast sky",
+  "assets/images/entities/mithril_vein.png": "a rock face split by a seam of pale blue-white mithril ore, faintly luminous crystals in dark stone"
 }

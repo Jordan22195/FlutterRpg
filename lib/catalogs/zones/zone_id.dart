@@ -178,6 +178,29 @@ enum ZoneId {
           weight: .2,
           unlockLevel: 30,
         ),
+        // the undead the deep woods were written for. Gated so the zone
+        // still opens at 20 against the spiders it already had: the tier 3
+        // pair arrive at 22, and the tier 4 pair a whole ladder later.
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SKELETON,
+          weight: 1,
+          unlockLevel: 22,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.ZOMBIE,
+          weight: 1,
+          unlockLevel: 22,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.WRAITH,
+          weight: .4,
+          unlockLevel: 32,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.BANSHEE,
+          weight: .4,
+          unlockLevel: 32,
+        ),
       ],
       discoverableItems: [
         WeightedDropTableEntry(
@@ -186,6 +209,41 @@ enum ZoneId {
           highCount: 4,
           weight: .15,
           unlockLevel: 24,
+        ),
+      ],
+    ),
+  ),
+  // The wet ground east of the town. Its roster is the tier 2 pair the
+  // archetypes were written for, climbing to a moss golem the zone gates
+  // well past its own front door.
+  SWAMP(
+    ZoneDefinition(
+      name: "Blackmire Swamp",
+      iconAsset: 'assets/images/zones/swamp.png',
+      explorationLevel: 25,
+      xpPerExplore: 12,
+
+      permanentEntities: [EntityId.FIREPIT],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(id: EntityId.MUDLURC, weight: 1.5),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.FUNGAL_MONSTER,
+          weight: 1.5,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MUDLURC_WARRIOR,
+          weight: .5,
+          unlockLevel: 28,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GIANT_SCORPION,
+          weight: 1,
+          unlockLevel: 30,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MOSS_GOLEM,
+          weight: .3,
+          unlockLevel: 40,
         ),
       ],
     ),
@@ -253,6 +311,36 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
+      ],
+    ),
+  ),
+  // The rising ground beyond the swamp, and the only place mithril is
+  // mined — the ore and the whole mithril gear tier had no source until
+  // this zone.
+  FOOTHILLS(
+    ZoneDefinition(
+      name: "Ashen Foothills",
+      iconAsset: 'assets/images/zones/foothills.png',
+      explorationLevel: 35,
+      xpPerExplore: 15,
+
+      permanentEntities: [EntityId.FIREPIT],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(id: EntityId.HARPY, weight: 1.5),
+        WeightedDropTableEntry<EntityId>(id: EntityId.IMP, weight: 1),
+        WeightedDropTableEntry<EntityId>(id: EntityId.ORC, weight: 1),
+        // tier 4 mining, the rung above the darkwood's coal
+        WeightedDropTableEntry<EntityId>(id: EntityId.MITHRIL_VEIN, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TROLL,
+          weight: .6,
+          unlockLevel: 40,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.HILL_GIANT,
+          weight: .3,
+          unlockLevel: 50,
+        ),
       ],
     ),
   ),

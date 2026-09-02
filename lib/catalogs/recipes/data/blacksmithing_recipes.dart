@@ -395,4 +395,132 @@ const List<CraftingRecipe> blacksmithingRecipes = [
       WeightedDropTableEntry(id: ItemId.GOLD_BAR, count: 1, weight: 1),
     ],
   ),
+
+  // ── MITHRIL (tier 4) ────────────────────────────────────────────
+  // Like steel, mithril is smelted with coal rather than from a bar of
+  // something else — ore and coal go in together, so the tier costs one
+  // trip through the furnace and not two. Two coal to steel's one, so a
+  // tier 4 bar is dearer than the tier 3 one. Gear levels are the steel
+  // spread shifted up a tier; bar counts per piece are unchanged.
+  CraftingRecipe(
+    id: 'smelt_mithril_bar',
+    name: 'Mithril Bar',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 40,
+    xp: 8,
+    inputs: {ItemId.COAL: 2, ItemId.MITHRIL_ORE: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_BAR, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_dagger',
+    name: 'Mithril Dagger',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 40,
+    xp: 10,
+    inputs: {ItemId.MITHRIL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_DAGGER, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_pickaxe',
+    name: 'Mithril Pickaxe',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 41,
+    xp: 10,
+    inputs: {ItemId.MITHRIL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_PICKAXE, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_axe',
+    name: 'Mithril Axe',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 41,
+    xp: 10,
+    inputs: {ItemId.MITHRIL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_AXE, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_sickle',
+    name: 'Mithril Sickle',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 41,
+    xp: 10,
+    inputs: {ItemId.MITHRIL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_SICKLE, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_helmet',
+    name: 'Mithril Helmet',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 42,
+    xp: 10,
+    inputs: {ItemId.MITHRIL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_HELMET, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_gloves',
+    name: 'Mithril Gloves',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 43,
+    xp: 10,
+    inputs: {ItemId.MITHRIL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_GLOVES, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_boots',
+    name: 'Mithril Boots',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 45,
+    xp: 10,
+    inputs: {ItemId.MITHRIL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_BOOTS, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_legs',
+    name: 'Mithril Leggings',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 47,
+    xp: 20,
+    inputs: {ItemId.MITHRIL_BAR: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_LEGS, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_chestplate',
+    name: 'Mithril Chestplate',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 50,
+    xp: 30,
+    inputs: {ItemId.MITHRIL_BAR: 3},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_CHESTPLATE, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_shield',
+    name: 'Mithril Shield',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 52,
+    xp: 20,
+    inputs: {ItemId.MITHRIL_BAR: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_SHIELD, count: 1, weight: 1),
+    ],
+  ),
 ];

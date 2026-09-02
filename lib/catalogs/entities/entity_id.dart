@@ -198,6 +198,23 @@ enum EntityId {
       itemDrops: gemDropTable,
     ),
   ),
+  // Tier 4 mining, the rung above the coal and gold veins, and the first
+  // node anywhere that yields MITHRIL_ORE — the ore and the whole mithril
+  // gear tier existed as items with no way to obtain either. Mining has no
+  // per-node level gate, so its difficulty is the defence a swing is rolled
+  // against, plus the Foothills' own exploration gate.
+  MITHRIL_VEIN(
+    EncounterEntityDefinition(
+      name: "Mithril Vein",
+      iconAsset: "assets/images/entities/mithril_vein.png",
+
+      entityType: SkillId.MINING,
+      defence: 40,
+      hitpoints: 40,
+      itemDrops: [ItemDropType(id: ItemId.MITHRIL_ORE, weight: 1)],
+      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.15)],
+    ),
+  ),
 
   // ── FISHING ─────────────────────────────────────────────────────
   // FishingEntityDefinition, by the fishing level of what it yields
@@ -1109,7 +1126,8 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 34, highCount: 102, weight: 1),
       ],
-
+      // it grows in the same wet ground the herbs do
+      bonusDrops: [DropRoll(entries: herbDropTable, chance: 0.25)],
     ),
   ),
   FUNGAL_MONSTER_UNCOMMON(
@@ -1233,8 +1251,8 @@ enum EntityId {
       name: "Skeleton",
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
+        ItemDropType(id: ItemId.ENCHANTING_DUST, lowCount: 1, highCount: 2, weight: 1),
       ],
-
     ),
   ),
   SKELETON_UNCOMMON(
@@ -1299,8 +1317,9 @@ enum EntityId {
       name: "Zombie",
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
+        ItemDropType(id: ItemId.ANIMAL_PELT, weight: 1),
+        ItemDropType(id: ItemId.ENCHANTING_DUST, weight: 1),
       ],
-
     ),
   ),
   ZOMBIE_UNCOMMON(
@@ -1364,9 +1383,10 @@ enum EntityId {
       harpy,
       name: "Harpy",
       itemDrops: [
+        ItemDropType(id: ItemId.FEATHER, lowCount: 1, highCount: 5, weight: 2),
+        ItemDropType(id: ItemId.CLAW, weight: 1),
         ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
       ],
-
     ),
   ),
   HARPY_UNCOMMON(
@@ -1499,9 +1519,10 @@ enum EntityId {
       giantScorpion,
       name: "Giant Scorpion",
       itemDrops: [
+        ItemDropType(id: ItemId.VENOM, weight: 1),
+        ItemDropType(id: ItemId.CLAW, lowCount: 1, highCount: 2, weight: 1),
         ItemDropType(id: ItemId.COINS, lowCount: 89, highCount: 267, weight: 1),
       ],
-
     ),
   ),
   GIANT_SCORPION_UNCOMMON(
@@ -1571,8 +1592,8 @@ enum EntityId {
       name: "Imp",
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 89, highCount: 267, weight: 1),
+        ItemDropType(id: ItemId.ENCHANTING_ESSENCE, lowCount: 1, highCount: 3, weight: 1),
       ],
-
     ),
   ),
   IMP_UNCOMMON(
@@ -1641,9 +1662,10 @@ enum EntityId {
       orc,
       name: "Orc",
       itemDrops: [
+        ItemDropType(id: ItemId.ANIMAL_PELT, weight: 1),
+        ItemDropType(id: ItemId.CLAW, weight: 1),
         ItemDropType(id: ItemId.COINS, lowCount: 89, highCount: 267, weight: 1),
       ],
-
     ),
   ),
   ORC_UNCOMMON(
@@ -1722,8 +1744,8 @@ enum EntityId {
           highCount: 432,
           weight: 1,
         ),
+        ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1),
       ],
-
     ),
   ),
   WRAITH_UNCOMMON(
@@ -1798,8 +1820,8 @@ enum EntityId {
           highCount: 432,
           weight: 1,
         ),
+        ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1),
       ],
-
     ),
   ),
   BANSHEE_UNCOMMON(
@@ -1868,6 +1890,7 @@ enum EntityId {
       troll,
       name: "Troll",
       itemDrops: [
+        ItemDropType(id: ItemId.ANIMAL_PELT, lowCount: 2, highCount: 5, weight: 1),
         ItemDropType(
           id: ItemId.COINS,
           lowCount: 144,
@@ -1875,7 +1898,6 @@ enum EntityId {
           weight: 1,
         ),
       ],
-
     ),
   ),
   TROLL_UNCOMMON(
@@ -2255,7 +2277,8 @@ enum EntityId {
           weight: 1,
         ),
       ],
-
+      // the stone it is grown over carries gems
+      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.3)],
     ),
   ),
   MOSS_GOLEM_UNCOMMON(
@@ -2330,8 +2353,9 @@ enum EntityId {
           highCount: 699,
           weight: 1,
         ),
+        ItemDropType(id: ItemId.COAL, lowCount: 1, highCount: 3, weight: 1),
+        ItemDropType(id: ItemId.GOLD_ORE, weight: .5),
       ],
-
     ),
   ),
   HILL_GIANT_UNCOMMON(

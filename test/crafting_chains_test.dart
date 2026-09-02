@@ -75,6 +75,72 @@ void main() {
     });
   });
 
+  group('the mithril tier', () {
+    test('mithril bar is an alloy of coal and mithril ore', () {
+      final bar = making(ItemId.MITHRIL_BAR);
+      expect(bar, isNotNull, reason: 'nothing smelts a mithril bar');
+      expect(bar!.inputs.keys, containsAll([ItemId.COAL, ItemId.MITHRIL_ORE]));
+      // ore straight into the furnace with the coal, the way steel works —
+      // going through another bar first would charge two smelts for one
+      expect(bar.inputs.containsKey(ItemId.STEEL_BAR), isFalse);
+      expect(bar.inputs.containsKey(ItemId.IRON_BAR), isFalse);
+      expect(bar.skill, SkillId.BLACKSMITHING);
+    });
+
+    test('every mithril item can be forged, and only from mithril bars', () {
+      final mithril = ItemId.values.where(
+        (i) =>
+            i.name.startsWith('MITHRIL_') &&
+            i != ItemId.MITHRIL_BAR &&
+            i != ItemId.MITHRIL_ORE,
+      );
+      expect(mithril, isNotEmpty);
+      for (final item in mithril) {
+        final r = making(item);
+        expect(r, isNotNull, reason: 'nothing forges ${item.name}');
+        expect(
+          r!.inputs.keys.single,
+          ItemId.MITHRIL_BAR,
+          reason: '${item.name} should be forged from mithril bars',
+        );
+      }
+    });
+
+    test('mithril gear outranks the steel piece it replaces', () {
+      for (final pair in [
+        (ItemId.STEEL_HELMET, ItemId.MITHRIL_HELMET),
+        (ItemId.STEEL_CHESTPLATE, ItemId.MITHRIL_CHESTPLATE),
+        (ItemId.STEEL_SHIELD, ItemId.MITHRIL_SHIELD),
+        (ItemId.STEEL_DAGGER, ItemId.MITHRIL_DAGGER),
+      ]) {
+        final steel = pair.$1.build() as EquipmentItem;
+        final mithril = pair.$2.build() as EquipmentItem;
+        for (final entry in steel.effectiveSkillBonus.entries) {
+          expect(
+            mithril.effectiveSkillBonus[entry.key],
+            greaterThan(entry.value),
+            reason: '${pair.$2.name} should beat ${pair.$1.name}',
+          );
+        }
+      }
+    });
+
+    test('it costs more to make than the tier below', () {
+      final steel = making(ItemId.STEEL_BAR)!;
+      final mithril = making(ItemId.MITHRIL_BAR)!;
+      expect(
+        mithril.levelRequirement,
+        greaterThan(steel.levelRequirement),
+        reason: 'mithril should open after steel',
+      );
+      expect(
+        mithril.inputs[ItemId.COAL],
+        greaterThan(steel.inputs[ItemId.COAL]!),
+        reason: 'a tier 4 bar should not be cheaper than a tier 3 one',
+      );
+    });
+  });
+
   group('the gathering tools', () {
     test('every tier can forge all three, from its own bar', () {
       // the sickles were missing at copper and iron for a while, which left
@@ -94,6 +160,11 @@ void main() {
           ItemId.STEEL_PICKAXE,
           ItemId.STEEL_AXE,
           ItemId.STEEL_SICKLE,
+        ],
+        ItemId.MITHRIL_BAR: [
+          ItemId.MITHRIL_PICKAXE,
+          ItemId.MITHRIL_AXE,
+          ItemId.MITHRIL_SICKLE,
         ],
       };
       tiers.forEach((bar, tools) {

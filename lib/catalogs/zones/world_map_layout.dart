@@ -69,8 +69,10 @@ class LandmarkNode extends MapNode {
 /// Every node drawn on the world map, laid out roughly geographically:
 /// the meadow in the north, the road running south through the forest to
 /// South Haven, which forks below the town — south-west into the darkwood,
-/// south-east down to the mine — with the goblin warren off to the east of
-/// the road and the dev zones parked well clear of the real map.
+/// south-east down to the mine — with the swamp on the wet ground east of
+/// the town and the foothills rising beyond it, the goblin warren off to
+/// the east of the road, and the dev zones parked well clear of the real
+/// map.
 const List<MapNode> kWorldMapNodes = [
   ZoneNode(ZoneId.TUTORIAL_FARM, Offset(200, 140)),
   LandmarkNode(DungeonId.GOBLIN_QUEEN_LAIR, Offset(320, 250)),
@@ -78,6 +80,8 @@ const List<MapNode> kWorldMapNodes = [
   ZoneNode(ZoneId.SOUTH_HAVEN, Offset(230, 460)),
   ZoneNode(ZoneId.DARKWOOD_FOREST, Offset(150, 620)),
   ZoneNode(ZoneId.FOREST_MINE, Offset(390, 570)),
+  ZoneNode(ZoneId.SWAMP, Offset(430, 400)),
+  ZoneNode(ZoneId.FOOTHILLS, Offset(620, 480)),
   ZoneNode(ZoneId.DEV_FOREST, Offset(520, 200)),
   ZoneNode(ZoneId.DEV_DUNGEON_TESTING, Offset(620, 320)),
 ];

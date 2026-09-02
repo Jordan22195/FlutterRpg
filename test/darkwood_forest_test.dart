@@ -80,7 +80,10 @@ void main() {
     });
 
     test('the spiders moved with their den', () {
-      expect(discoverable(ZoneId.DARKWOOD_FOREST, EntityId.GIANT_SPIDER), isTrue);
+      expect(
+        discoverable(ZoneId.DARKWOOD_FOREST, EntityId.GIANT_SPIDER),
+        isTrue,
+      );
       expect(
         discoverable(ZoneId.SOUTHWOOD_FOREST, EntityId.GIANT_SPIDER),
         isFalse,
@@ -92,7 +95,8 @@ void main() {
       // tier 3 is the third rung: tree -> oak -> willow, copper -> iron ->
       // coal/gold. Assert the rung, not the level it currently sits at.
       final oak = EntityId.OAK_TREE.definition as EncounterEntityDefinition;
-      final willow = EntityId.WILLOW_TREE.definition as EncounterEntityDefinition;
+      final willow =
+          EntityId.WILLOW_TREE.definition as EncounterEntityDefinition;
       final iron = EntityId.IRON.definition as EncounterEntityDefinition;
       final gold = EntityId.GOLD_VEIN.definition as EncounterEntityDefinition;
 
@@ -115,10 +119,38 @@ void main() {
       expect(discoverable(ZoneId.DARKWOOD_FOREST, EntityId.GOLD_VEIN), isFalse);
     });
 
+    test('the undead roster it was written for lives here', () {
+      // tier 3 arrives soon after the door; tier 4 a whole ladder later,
+      // so the zone still opens at 20 against the spiders it already had
+      final door = ZoneId.DARKWOOD_FOREST.definition.explorationLevel;
+      int gateFor(EntityId id) => ZoneId
+          .DARKWOOD_FOREST
+          .definition
+          .discoverableEntities
+          .firstWhere((e) => e.id == id)
+          .unlockLevel;
+
+      for (final id in [EntityId.SKELETON, EntityId.ZOMBIE]) {
+        expect(discoverable(ZoneId.DARKWOOD_FOREST, id), isTrue);
+        expect(gateFor(id), greaterThan(door));
+      }
+      for (final id in [EntityId.WRAITH, EntityId.BANSHEE]) {
+        expect(discoverable(ZoneId.DARKWOOD_FOREST, id), isTrue);
+        expect(
+          gateFor(id),
+          greaterThan(gateFor(EntityId.SKELETON)),
+          reason: '${id.name} is tier 4 and should come later',
+        );
+      }
+    });
+
     test('the new nodes drop the ore and logs they are named for', () {
       ({bool ok, List<ItemId> got}) dropsOf(EntityId id) {
         final def = id.definition as EncounterEntityDefinition;
-        return (ok: def.itemDrops.isNotEmpty, got: def.itemDrops.map((e) => e.id).toList());
+        return (
+          ok: def.itemDrops.isNotEmpty,
+          got: def.itemDrops.map((e) => e.id).toList(),
+        );
       }
 
       expect(dropsOf(EntityId.WILLOW_TREE).got, contains(ItemId.WILLOW_LOGS));

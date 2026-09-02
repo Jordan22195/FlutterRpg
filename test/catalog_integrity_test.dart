@@ -39,6 +39,8 @@ const knownMissingArt = <String>{
   'assets/images/dungeons/goblin_queen_lair.png',
   'assets/images/dungeons/spider_den.png',
   'assets/images/zones/darkwood_forest.png',
+  'assets/images/zones/swamp.png',
+  'assets/images/zones/foothills.png',
   // Darkwood Forest's tier 3 gathering nodes and the log they drop. These
   // three are generatable — unlike the scene art above, they are an entity
   // and an icon, whose styles are settled — so they leave this list as soon
@@ -46,6 +48,8 @@ const knownMissingArt = <String>{
   'assets/images/entities/willow_tree.png',
   'assets/images/entities/gold_vein.png',
   'assets/icons/items/willow_logs.png',
+  // the tier 4 mining node, and the first source of mithril ore
+  'assets/images/entities/mithril_vein.png',
   // The BACK slot's first two pieces. The slot had no catalog items at all
   // until the equipment models moved onto their definitions and the back
   // slot's tests needed real ones to build.
