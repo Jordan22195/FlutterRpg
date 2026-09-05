@@ -907,7 +907,11 @@ enum ItemId {
       name: "Onyx Ring",
       value: 550,
       fibLevel: 8,
-      statWeights: {SkillId.ATTACK: 6, SkillId.DEFENCE: 6, SkillId.HITPOINTS: 6},
+      statWeights: {
+        SkillId.ATTACK: 6,
+        SkillId.DEFENCE: 6,
+        SkillId.HITPOINTS: 6,
+      },
       iconAsset: "assets/icons/items/onyx_ring.png",
     ),
   ),
@@ -917,7 +921,11 @@ enum ItemId {
       name: "Onyx Necklace",
       value: 700,
       fibLevel: 9,
-      statWeights: {SkillId.ATTACK: 9, SkillId.DEFENCE: 9, SkillId.HITPOINTS: 9},
+      statWeights: {
+        SkillId.ATTACK: 9,
+        SkillId.DEFENCE: 9,
+        SkillId.HITPOINTS: 9,
+      },
       iconAsset: "assets/icons/items/onyx_necklace.png",
     ),
   ),
@@ -1371,7 +1379,98 @@ enum ItemId {
       iconAsset: "assets/icons/items/mithril_shield.png",
     ),
   ),
-
+  // ── WEAPONS & TOOLS · 2H Swords ────────────────────────────────────
+  // tier ascending
+  COPPER_GREATSWORD(
+    WeaponItemDefinition(
+      armorSlot: ArmorSlots.WEAPON_2H,
+      name: "Copper Greatsword",
+      value: 10,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1},
+      actionInterval: SlowAttackSpeed,
+      iconAsset: "assets/icons/items/copper_greatsword.png",
+    ),
+  ),
+  IRON_GREATSWORD(
+    WeaponItemDefinition(
+      armorSlot: ArmorSlots.WEAPON_2H,
+      name: "Iron Greatsword",
+      value: 10,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 1},
+      actionInterval: SlowAttackSpeed,
+      iconAsset: "assets/icons/items/iron_greatsword.png",
+    ),
+  ),
+  STEEL_GREATSWORD(
+    WeaponItemDefinition(
+      armorSlot: ArmorSlots.WEAPON_2H,
+      name: "Steel Greatsword",
+      value: 10,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1},
+      actionInterval: SlowAttackSpeed,
+      iconAsset: "assets/icons/items/steel_greatsword.png",
+    ),
+  ),
+  MITHRIL_GREATSWORD(
+    WeaponItemDefinition(
+      armorSlot: ArmorSlots.WEAPON_2H,
+      name: "Mithril Greatsword",
+      value: 10,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 1},
+      actionInterval: SlowAttackSpeed,
+      iconAsset: "assets/icons/items/mithril_greatsword.png",
+    ),
+  ),
+  // ── WEAPONS & TOOLS · 1H Swords ────────────────────────────────────
+  // tier ascending
+  COPPER_SWORD(
+    WeaponItemDefinition(
+      armorSlot: ArmorSlots.WEAPON_1H,
+      name: "Copper Sword",
+      value: 10,
+      fibLevel: 1,
+      statWeights: {SkillId.ATTACK: 1},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/copper_sword.png",
+    ),
+  ),
+  IRON_SWORD(
+    WeaponItemDefinition(
+      armorSlot: ArmorSlots.WEAPON_1H,
+      name: "Iron Sword",
+      value: 10,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/iron_sword.png",
+    ),
+  ),
+  STEEL_SWORD(
+    WeaponItemDefinition(
+      armorSlot: ArmorSlots.WEAPON_1H,
+      name: "Steel Sword",
+      value: 10,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 1},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/steel_sword.png",
+    ),
+  ),
+  MITHRIL_SWORD(
+    WeaponItemDefinition(
+      armorSlot: ArmorSlots.WEAPON_1H,
+      name: "Mithril Sword",
+      value: 10,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1},
+      actionInterval: MediumAttackSpeed,
+      iconAsset: "assets/icons/items/mithril_sword.png",
+    ),
+  ),
   // ── WEAPONS & TOOLS · DAGGER ────────────────────────────────────
   // tier ascending
   COPPER_DAGGER(

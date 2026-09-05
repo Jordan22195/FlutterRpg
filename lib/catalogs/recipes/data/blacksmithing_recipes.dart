@@ -30,6 +30,28 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     ],
   ),
   CraftingRecipe(
+    id: 'forge_copper_sword',
+    name: 'Copper Sword',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 10,
+    xp: 4,
+    inputs: {ItemId.COPPER_BAR: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.COPPER_SWORD, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_copper_greatsword',
+    name: 'Copper Greatsword',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 10,
+    xp: 6,
+    inputs: {ItemId.COPPER_BAR: 3},
+    output: [
+      WeightedDropTableEntry(id: ItemId.COPPER_GREATSWORD, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
     id: 'forge_copper_pickaxe',
     name: 'Copper Pickaxe',
     skill: SkillId.BLACKSMITHING,
@@ -155,6 +177,28 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     ],
   ),
   CraftingRecipe(
+    id: 'forge_iron_sword',
+    name: 'Iron Sword',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 10,
+    xp: 10,
+    inputs: {ItemId.IRON_BAR: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.IRON_SWORD, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_iron_greatsword',
+    name: 'Iron Greatsword',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 10,
+    xp: 15,
+    inputs: {ItemId.IRON_BAR: 3},
+    output: [
+      WeightedDropTableEntry(id: ItemId.IRON_GREATSWORD, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
     id: 'forge_iron_pickaxe',
     name: 'Iron Pickaxe',
     skill: SkillId.BLACKSMITHING,
@@ -266,9 +310,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     levelRequirement: 20,
     xp: 3,
     inputs: {ItemId.COAL: 1, ItemId.IRON_ORE: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.STEEL_BAR, count: 1, weight: 1),
-    ],
+    output: [WeightedDropTableEntry(id: ItemId.STEEL_BAR, count: 1, weight: 1)],
   ),
   CraftingRecipe(
     id: 'forge_steel_dagger',
@@ -279,6 +321,28 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     inputs: {ItemId.STEEL_BAR: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_DAGGER, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_sword',
+    name: 'Steel Sword',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 20,
+    xp: 10,
+    inputs: {ItemId.STEEL_BAR: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_SWORD, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_steel_greatsword',
+    name: 'Steel Greatsword',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 20,
+    xp: 15,
+    inputs: {ItemId.STEEL_BAR: 3},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STEEL_GREATSWORD, count: 1, weight: 1),
     ],
   ),
   CraftingRecipe(
@@ -299,9 +363,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     levelRequirement: 21,
     xp: 5,
     inputs: {ItemId.STEEL_BAR: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.STEEL_AXE, count: 1, weight: 1),
-    ],
+    output: [WeightedDropTableEntry(id: ItemId.STEEL_AXE, count: 1, weight: 1)],
   ),
   CraftingRecipe(
     id: 'forge_steel_helmet',
@@ -391,8 +453,26 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     levelRequirement: 25,
     xp: 4,
     inputs: {ItemId.GOLD_ORE: 1},
+    output: [WeightedDropTableEntry(id: ItemId.GOLD_BAR, count: 1, weight: 1)],
+  ),
+  CraftingRecipe(
+    id: 'forge_gold_ring',
+    name: 'Gold Ring',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 25,
+    xp: 4,
+    inputs: {ItemId.GOLD_BAR: 1},
+    output: [WeightedDropTableEntry(id: ItemId.GOLD_RING, count: 1, weight: 1)],
+  ),
+  CraftingRecipe(
+    id: 'forge_gold_necklace',
+    name: 'Gold Necklace',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 25,
+    xp: 4,
+    inputs: {ItemId.GOLD_BAR: 1},
     output: [
-      WeightedDropTableEntry(id: ItemId.GOLD_BAR, count: 1, weight: 1),
+      WeightedDropTableEntry(id: ItemId.GOLD_NECKLACE, count: 1, weight: 1),
     ],
   ),
 
@@ -422,6 +502,32 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     inputs: {ItemId.MITHRIL_BAR: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.MITHRIL_DAGGER, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_sword',
+    name: 'Mithril Sword',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 40,
+    xp: 20,
+    inputs: {ItemId.MITHRIL_BAR: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MITHRIL_SWORD, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'forge_mithril_greatsword',
+    name: 'Mithril Greatsword',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 40,
+    xp: 30,
+    inputs: {ItemId.MITHRIL_BAR: 3},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.MITHRIL_GREATSWORD,
+        count: 1,
+        weight: 1,
+      ),
     ],
   ),
   CraftingRecipe(
@@ -509,7 +615,11 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     xp: 30,
     inputs: {ItemId.MITHRIL_BAR: 3},
     output: [
-      WeightedDropTableEntry(id: ItemId.MITHRIL_CHESTPLATE, count: 1, weight: 1),
+      WeightedDropTableEntry(
+        id: ItemId.MITHRIL_CHESTPLATE,
+        count: 1,
+        weight: 1,
+      ),
     ],
   ),
   CraftingRecipe(

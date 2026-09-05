@@ -250,8 +250,10 @@ class EncounterController extends ChangeNotifier {
   /// one card runs at a time, so this drops whatever was running.
   ///
   /// The encounter panel's drop log is a card's own haul, so a new card
-  /// starts it fresh; the run's cumulative haul lives on the run.
-  bool startDungeonSlot(int index) {
+  /// starts it fresh; the run's cumulative haul lives on the run. A card
+  /// looping into itself passes [keepDrops], since that is the same haul
+  /// continuing rather than a new card's.
+  bool startDungeonSlot(int index, {bool keepDrops = false}) {
     final entity = _dungeonService.slotAt(_dungeonRun, index)?.current;
     if (entity == null) return false;
 
@@ -261,7 +263,7 @@ class EncounterController extends ChangeNotifier {
     _dungeonRun.runningSlot = index;
     _playerState.currentEntityViewId = entity.id;
 
-    return startEncounterActionFor(entity);
+    return startEncounterActionFor(entity, keepDrops: keepDrops);
   }
 
   /// Adds this tick's result to the offline progress report. A no-op unless
@@ -385,8 +387,16 @@ class EncounterController extends ChangeNotifier {
 
   // starts the encounter action on [entity] directly (used by the action
   // button via startEncounterAction and by the action queue). returns
-  // true when the action is running when this returns
-  bool startEncounterActionFor(EncounterEntity entity) {
+  // true when the action is running when this returns.
+  //
+  // [keepDrops] holds the encounter screen's drop list across the switch.
+  // A fresh entity normally starts a fresh list; a looping dungeon card is
+  // the exception — its refilled members are new objects, but the player
+  // is still standing in the same fight
+  bool startEncounterActionFor(
+    EncounterEntity entity, {
+    bool keepDrops = false,
+  }) {
     // starting anything that isn't the running card's own member leaves the
     // dungeon behind. this is the one place that decides it, because every
     // way of starting an encounter — the action button, the action queue,
@@ -412,7 +422,7 @@ class EncounterController extends ChangeNotifier {
 
     // a new entity starts a new encounter session: drops shown in the
     // encounter screen belong to the previous session and are cleared
-    if (isNew) {
+    if (isNew && !keepDrops) {
       _inventoryService.clearItems(_encounterState.itemDrops);
     }
 

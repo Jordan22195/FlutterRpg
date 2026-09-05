@@ -1,11 +1,15 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
+import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/main.dart';
+import 'package:rpg/screens/dungeon_screen.dart';
 import 'package:rpg/screens/encounter_screen.dart';
 import 'package:rpg/screens/map_screen.dart';
 import 'package:rpg/services/file_manager_service.dart';
@@ -21,10 +25,11 @@ Future<void> settle(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 100));
 }
 
-GameSession sessionOf(WidgetTester tester) => Provider.of<GameSession>(
-  tester.element(find.byType(MapScreen)),
-  listen: false,
-);
+GameSession sessionOf(WidgetTester tester, {Finder? at}) =>
+    Provider.of<GameSession>(
+      tester.element(at ?? find.byType(MapScreen)),
+      listen: false,
+    );
 
 void makeStrong(GameSession session) {
   for (final id in [SkillId.ATTACK, SkillId.DEFENCE, SkillId.HITPOINTS]) {
@@ -38,6 +43,25 @@ void makeStrong(GameSession session) {
 // the card list is a lazy ListView taller than the test surface
 Future<void> scrollList(WidgetTester tester, double dy) async {
   await tester.drag(find.byType(ListView).last, Offset(0, dy));
+  await settle(tester);
+}
+
+// boots the app straight onto a dungeon's card list, which is the only
+// cheap way to reach the zone dungeons — their entrances are found by
+// exploring
+Future<void> openDungeonFromSave(WidgetTester tester, DungeonId id) async {
+  final factory = GameSessionFactory();
+  final save = factory.newGame(factory.catalog1());
+  save.uiState.tabIndex = 0;
+  save.uiState.mapRouteStack = ['dungeon'];
+  save.uiState.dungeonId = id;
+
+  await tester.pumpWidget(
+    MyApp(
+      rawSave: jsonDecode(jsonEncode(save.toJson())) as Map<String, dynamic>,
+      fileManagerService: FileManagerService(),
+    ),
+  );
   await settle(tester);
 }
 
@@ -220,12 +244,40 @@ void main() {
     await openLair(tester);
 
     expect(session.saveGameData.uiState.dungeonAutoAdvance, isFalse);
-    await tester.tap(find.byType(Switch));
+    await tester.tap(find.byKey(const ValueKey('dungeon-auto-advance')));
     await settle(tester);
 
     // it is a preference, not run state: it lives in the saved ui state so
     // it outlives the run
     expect(session.saveGameData.uiState.dungeonAutoAdvance, isTrue);
+
+    // a one-shot dungeon can't refight a card, so it offers no repeat
+    expect(find.text('Repeat this floor'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('a zone dungeon offers the repeat toggle, and the two '
+      'toggles are exclusive', (tester) async {
+    await openDungeonFromSave(tester, DungeonId.SPIDER_DEN);
+
+    // restored onto the card list, the map screen underneath it is not
+    // built, so the session comes off the dungeon screen itself
+    final session = sessionOf(tester, at: find.byType(DungeonScreen));
+    final ui = session.saveGameData.uiState;
+    expect(find.text('Repeat this floor'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('dungeon-loop-floor')));
+    await settle(tester);
+    expect(ui.dungeonLoopFloor, isTrue);
+
+    // turning the other on puts the repeat back down: a cleared card can
+    // only do one of the two
+    await tester.tap(find.byKey(const ValueKey('dungeon-auto-advance')));
+    await settle(tester);
+    expect(ui.dungeonAutoAdvance, isTrue);
+    expect(ui.dungeonLoopFloor, isFalse);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();

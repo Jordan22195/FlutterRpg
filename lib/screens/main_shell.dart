@@ -182,10 +182,10 @@ class _MainShellState extends State<MainShell> {
   }
 
   // a dungeon card ran dry. by default that drops back to the card list so
-  // the newly unlocked card is in view; with the toggle on it runs straight
-  // into the next one. the card can clear while the encounter screen is
-  // unmounted (backing out doesn't stop the loop), which is why this lives
-  // on the shell rather than the screen
+  // the newly unlocked card is in view; the toggles instead run straight
+  // into the next card, or refight this one. the card can clear while the
+  // encounter screen is unmounted (backing out doesn't stop the loop),
+  // which is why this lives on the shell rather than the screen
   void _onDungeonSlotCleared(int slot) {
     final dungeons = context.read<DungeonController>();
 
@@ -199,20 +199,26 @@ class _MainShellState extends State<MainShell> {
           EntityScreenRouterService.encounterRouteName;
       if (!onEncounter) return;
 
-      final next = dungeons.autoAdvance
-          ? dungeons.nextStartableSlot(slot)
-          : null;
+      final next = dungeons.nextSlotAfterClear(slot);
       if (next == null) {
         nav.maybePop();
         return;
       }
 
-      // swap the encounter route rather than stacking a second one, so
-      // backing out of card three still lands on the card list
-      if (!dungeons.startSlot(next)) {
+      // looping re-runs the card the screen is already showing, so the
+      // drop log carries on rather than starting over
+      final looping = next == slot;
+      if (!dungeons.startSlot(next, continuing: looping)) {
         nav.maybePop();
         return;
       }
+
+      // the route and its card index are still right, so leave the stack
+      // alone; only a different card needs a new one
+      if (looping) return;
+
+      // swap the encounter route rather than stacking a second one, so
+      // backing out of card three still lands on the card list
       nav.pushReplacement(
         MaterialPageRoute(
           settings: RouteSettings(

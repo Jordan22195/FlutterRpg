@@ -29,7 +29,7 @@ const knownMissingArt = <String>{
   // backlog because they are the one kind the generator will not draw —
   // assets/images/{zones,dungeons}/** has no style picked, so
   // generate_assets_rd.py reports them and skips them until it is passed
-  // --scene-style and --scene-size. Prompts for all seven are already written
+  // --scene-style and --scene-size. Prompts for all ten are already written
   // in tools/rd_prompt_overrides.json.
   'assets/images/zones/south_haven.png',
   'assets/images/zones/farm.png',
@@ -41,69 +41,9 @@ const knownMissingArt = <String>{
   'assets/images/zones/darkwood_forest.png',
   'assets/images/zones/swamp.png',
   'assets/images/zones/foothills.png',
-  // Darkwood Forest's tier 3 gathering nodes and the log they drop. These
-  // three are generatable — unlike the scene art above, they are an entity
-  // and an icon, whose styles are settled — so they leave this list as soon
-  // as generate_assets_rd.py is run. Prompts are already written.
-  'assets/images/entities/willow_tree.png',
-  'assets/images/entities/gold_vein.png',
-  'assets/icons/items/willow_logs.png',
-  // the tier 4 mining node, and the first source of mithril ore
-  'assets/images/entities/mithril_vein.png',
-  // The BACK slot's first two pieces. The slot had no catalog items at all
-  // until the equipment models moved onto their definitions and the back
-  // slot's tests needed real ones to build.
-  'assets/icons/items/wool_cloak.png',
-  'assets/icons/items/linen_cape.png',
-  'assets/images/entities/willow_cookfire.png',
-  'assets/images/entities/willow_campfire.png',
-  'assets/images/entities/willow_bonfire.png',
-  // The 47-monster combat roster. Eight of its rows reuse art that already
-  // exists (chicken, cow, scarecrow, spider, wolf, goblin, mudlurc); these
-  // forty are new and undrawn. All five rarity variants of a monster share
-  // one portrait, so this is one line per monster, not per EntityId.
-  // Prompts are written in tools/rd_prompt_overrides.json, so they leave
-  // this list as soon as generate_assets_rd.py is run.
-  'assets/images/entities/giant_rat.png',
-  'assets/images/entities/giant_bat.png',
-  'assets/images/entities/slime.png',
-  'assets/images/entities/bear.png',
-  'assets/images/entities/fungal_monster.png',
-  'assets/images/entities/kobold.png',
-  'assets/images/entities/skeleton.png',
-  'assets/images/entities/zombie.png',
-  'assets/images/entities/harpy.png',
-  'assets/images/entities/naga.png',
-  'assets/images/entities/giant_scorpion.png',
-  'assets/images/entities/imp.png',
-  'assets/images/entities/orc.png',
-  'assets/images/entities/wraith.png',
-  'assets/images/entities/banshee.png',
-  'assets/images/entities/troll.png',
-  'assets/images/entities/minotaur.png',
-  'assets/images/entities/basilisk.png',
-  'assets/images/entities/dark_wizard.png',
-  'assets/images/entities/gargoyle.png',
-  'assets/images/entities/moss_golem.png',
-  'assets/images/entities/hill_giant.png',
-  'assets/images/entities/earth_elemental.png',
-  'assets/images/entities/ogre.png',
-  'assets/images/entities/stone_golem.png',
-  'assets/images/entities/griffin.png',
-  'assets/images/entities/fire_elemental.png',
-  'assets/images/entities/water_elemental.png',
-  'assets/images/entities/yeti.png',
-  'assets/images/entities/iron_golem.png',
-  'assets/images/entities/steel_golem.png',
-  'assets/images/entities/lich.png',
-  'assets/images/entities/cloud_giant.png',
-  'assets/images/entities/roc.png',
-  'assets/images/entities/wyvern.png',
-  'assets/images/entities/drake.png',
-  'assets/images/entities/kraken.png',
-  'assets/images/entities/dragon.png',
-  'assets/images/entities/lesser_demon.png',
-  'assets/images/entities/greater_demon.png',
+  // The entity portraits, item icons and the 47-monster roster that used to
+  // sit here have all been drawn — generate_assets_rd.py covers every kind
+  // whose style is settled, so the backlog is down to the scene art alone.
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,

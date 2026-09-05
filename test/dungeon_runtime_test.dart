@@ -386,6 +386,127 @@ void main() {
     });
   });
 
+  group('what a cleared card runs next', () {
+    test('the loop toggle refights the same card, refilled', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      final dungeons = session.dungeonController;
+      makePlayerStrong(session);
+
+      dungeons.openDungeon(DungeonId.SPIDER_DEN);
+      dungeons.loopFloor = true;
+
+      dungeons.startSlot(1); // the ore seam: no card above it to clear
+      fightUntilStopped(session);
+      expect(save.dungeonRun.slots[1].cleared, isTrue);
+
+      // the same card, not the next one
+      expect(dungeons.nextSlotAfterClear(1), 1);
+
+      expect(dungeons.startSlot(1), isTrue);
+      expect(save.dungeonRun.slots[1].cleared, isFalse);
+      expect(save.dungeonRun.runningSlot, 1);
+      expect(session.actionTimingController.isRunning, isTrue);
+      // the mark stays, so the card below it is still open
+      expect(save.dungeonRun.cleared, contains(1));
+
+      session.dispose();
+    });
+
+    test('a loop lap keeps the drop log, a new card starts it fresh', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      final dungeons = session.dungeonController;
+      makePlayerStrong(session);
+
+      dungeons.openDungeon(DungeonId.SPIDER_DEN);
+      dungeons.loopFloor = true;
+
+      // ObjectStacks are rebuilt per read and don't compare, so the log is
+      // measured by what it holds
+      int logged() => session.encounterController.itemDrops().fold<int>(
+        0,
+        (sum, stack) => sum + stack.count,
+      );
+
+      dungeons.startSlot(1); // 8 iron
+      fightUntilStopped(session);
+      final firstLap = logged();
+      expect(firstLap, greaterThan(0));
+
+      // the refill builds new entities, but the panel is still showing the
+      // same fight, so its haul carries on
+      dungeons.startSlot(1, continuing: true);
+      expect(logged(), firstLap);
+      fightUntilStopped(session);
+      expect(logged(), greaterThan(firstLap));
+
+      // the run's own haul never reset either
+      expect(
+        session.inventoryService.getItemCount(
+          save.dungeonRun.loot,
+          ItemId.IRON_ORE,
+        ),
+        greaterThan(0),
+      );
+
+      // moving to a different card is a different haul
+      dungeons.startSlot(2);
+      expect(logged(), 0);
+
+      session.dispose();
+    });
+
+    test('auto-advance moves on, and off both drop back to the list', () {
+      final session = buildSession();
+      final dungeons = session.dungeonController;
+      makePlayerStrong(session);
+
+      dungeons.openDungeon(DungeonId.SPIDER_DEN);
+      dungeons.startSlot(1);
+      fightUntilStopped(session);
+
+      expect(dungeons.nextSlotAfterClear(1), isNull);
+      dungeons.autoAdvance = true;
+      expect(dungeons.nextSlotAfterClear(1), 2);
+
+      session.dispose();
+    });
+
+    test('the two toggles turn each other off', () {
+      final session = buildSession();
+      final dungeons = session.dungeonController;
+
+      dungeons.autoAdvance = true;
+      dungeons.loopFloor = true;
+      expect(dungeons.autoAdvance, isFalse);
+
+      dungeons.autoAdvance = true;
+      expect(dungeons.loopFloor, isFalse);
+
+      session.dispose();
+    });
+
+    test('a one-shot card has nothing to loop, whatever the toggle says', () {
+      final session = buildSession();
+      final dungeons = session.dungeonController;
+      makePlayerStrong(session);
+      giveKey(session);
+
+      dungeons.openDungeon(DungeonId.GOBLIN_QUEEN_LAIR);
+      expect(dungeons.canLoopFloor, isFalse);
+
+      dungeons.loopFloor = true;
+      dungeons.startSlot(0);
+      fightUntilStopped(session);
+
+      // the card can't be refought, so clearing it still drops out
+      expect(dungeons.nextSlotAfterClear(0), isNull);
+
+      session.dispose();
+    });
+  });
+
   group('the entry key', () {
     test('is charged once, and only on the first card', () {
       final session = buildSession();
@@ -594,11 +715,13 @@ void main() {
     save.uiState.dungeonId = DungeonId.SPIDER_DEN;
     save.uiState.dungeonSlot = 2;
     save.uiState.dungeonAutoAdvance = true;
+    save.uiState.dungeonLoopFloor = true;
 
     final ui = SaveGameData.fromJson(save.toJson()).uiState;
     expect(ui.dungeonId, DungeonId.SPIDER_DEN);
     expect(ui.dungeonSlot, 2);
     expect(ui.dungeonAutoAdvance, isTrue);
+    expect(ui.dungeonLoopFloor, isTrue);
 
     session.dispose();
   });

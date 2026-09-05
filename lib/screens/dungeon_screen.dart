@@ -104,7 +104,7 @@ class _DungeonScreenState extends State<DungeonScreen> {
                   ],
                 ),
               ),
-              _autoAdvanceToggle(context, controller),
+              _toggles(context, controller),
             ],
           ),
         ),
@@ -235,24 +235,48 @@ class _DungeonScreenState extends State<DungeonScreen> {
     );
   }
 
-  /// Whether clearing a card drops back to this list or runs straight into
-  /// the next one. A preference, so it holds across runs.
-  Widget _autoAdvanceToggle(
-    BuildContext context,
-    DungeonController controller,
-  ) {
-    return Row(
+  /// What clearing a card does: drop back to this list, run on into the
+  /// next card, or refight the same one. Preferences, so they hold across
+  /// runs — and mutually exclusive, since a cleared card can only do one
+  /// of the two.
+  Widget _toggles(BuildContext context, DungeonController controller) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Expanded(
-          child: Text(
-            'Continue to next floor',
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-        ),
-        Switch(
+        _toggleRow(
+          context,
+          key: const ValueKey('dungeon-auto-advance'),
+          label: 'Continue to next floor',
           value: controller.autoAdvance,
           onChanged: (value) => controller.autoAdvance = value,
         ),
+        // only the repeatable dungeons can refight a card, so elsewhere
+        // the row would be a switch that never does anything
+        if (controller.canLoopFloor)
+          _toggleRow(
+            context,
+            key: const ValueKey('dungeon-loop-floor'),
+            label: 'Repeat this floor',
+            value: controller.loopFloor,
+            onChanged: (value) => controller.loopFloor = value,
+          ),
+      ],
+    );
+  }
+
+  Widget _toggleRow(
+    BuildContext context, {
+    required Key key,
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+        ),
+        Switch(key: key, value: value, onChanged: onChanged),
       ],
     );
   }

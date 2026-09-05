@@ -120,7 +120,12 @@ class OfflineProgressSystem {
 
       // ---- fire one batch, and remember what the report said before it so
       // the rate can be read back off it
-      final actions = (segment / intervalSeconds).floor();
+      // A segment cut to hold exactly n actions can divide back out to a
+      // hair under n in floating point — `n * interval / interval` is not
+      // always n — which would silently drop the very action the cut was
+      // made for. A level-up threshold is exactly that shape, so without
+      // the tolerance a long gap loses one action per level it earns.
+      final actions = (segment / intervalSeconds + 1e-9).floor();
       final xpBefore = Map<SkillId, double>.from(
         _offlineProgressData.report.xp,
       );
@@ -259,7 +264,15 @@ class OfflineProgressSystem {
     if (drain <= 0) return null;
     if (timingState.boostingSpeed) return playerState.stamina / drain;
     if (intervalSeconds <= 0) return null;
-    return (playerState.stamina / drain) * intervalSeconds;
+    // a strength boost is charged by the action, so the window has to hold a
+    // whole number of them. rounded up rather than down: live, the last
+    // action fires on whatever stamina is left, clamps the pool to zero and
+    // breaks the lock on the next frame. rounding down instead would leave a
+    // residue too small to fund an action, cutting every later segment short
+    // of one - and a segment that fires nothing spends nothing, so the
+    // residue would never clear and the rest of the gap would settle at zero
+    // actions.
+    return (playerState.stamina / drain).ceil() * intervalSeconds;
   }
 
   /// How long until the next buff runs out — a fire going cold is what stops

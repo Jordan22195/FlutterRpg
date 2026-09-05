@@ -7,8 +7,9 @@ import '../catalogs/dungeons/dungeons.dart';
 /// screen's id and card index ride along because, unlike the entity
 /// screens, they can't be re-derived from the player's currentEntityViewId.
 ///
-/// [dungeonAutoAdvance] is a preference rather than a position: it survives
-/// leaving the dungeon, which the run state deliberately does not.
+/// [dungeonAutoAdvance] and [dungeonLoopFloor] are preferences rather than
+/// positions: they survive leaving the dungeon, which the run state
+/// deliberately does not.
 class UiState {
   int tabIndex;
   List<String> mapRouteStack;
@@ -21,12 +22,17 @@ class UiState {
   /// back to the dungeon list.
   bool dungeonAutoAdvance;
 
+  /// Clearing a card refills it and fights it again, instead of moving on.
+  /// Only the repeatable (zone) dungeons can honour it.
+  bool dungeonLoopFloor;
+
   UiState({
     this.tabIndex = 0,
     List<String>? mapRouteStack,
     this.dungeonId = DungeonId.NULL,
     this.dungeonSlot = -1,
     this.dungeonAutoAdvance = false,
+    this.dungeonLoopFloor = false,
   }) : mapRouteStack = mapRouteStack ?? [];
 
   Map<String, dynamic> toJson() {
@@ -36,6 +42,7 @@ class UiState {
       'dungeonId': dungeonId.name,
       'dungeonSlot': dungeonSlot,
       'dungeonAutoAdvance': dungeonAutoAdvance,
+      'dungeonLoopFloor': dungeonLoopFloor,
     };
   }
 
@@ -59,6 +66,7 @@ class UiState {
           : DungeonId.NULL,
       dungeonSlot: rawSlot is int ? rawSlot : -1,
       dungeonAutoAdvance: json['dungeonAutoAdvance'] == true,
+      dungeonLoopFloor: json['dungeonLoopFloor'] == true,
     );
   }
 }

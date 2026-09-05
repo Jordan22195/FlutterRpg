@@ -141,8 +141,27 @@ class DungeonController extends ChangeNotifier {
   set autoAdvance(bool value) {
     if (_uiState.dungeonAutoAdvance == value) return;
     _uiState.dungeonAutoAdvance = value;
+    // the two say different things about the same moment, so turning one
+    // on turns the other off rather than leaving a toggle that never fires
+    if (value) _uiState.dungeonLoopFloor = false;
     notifyListeners();
   }
+
+  /// Clearing a card refills it and fights it again — farming one floor
+  /// rather than working down the list. Same kind of preference.
+  bool get loopFloor => _uiState.dungeonLoopFloor;
+
+  set loopFloor(bool value) {
+    if (_uiState.dungeonLoopFloor == value) return;
+    _uiState.dungeonLoopFloor = value;
+    if (value) _uiState.dungeonAutoAdvance = false;
+    notifyListeners();
+  }
+
+  /// Whether looping is on offer here at all: only the dungeons whose
+  /// cards can be re-fought have anything to loop.
+  bool get canLoopFloor =>
+      _run.dungeonId.isReal && _run.dungeonId.definition.repeatableEntries;
 
   // ---- lifecycle ----
 
@@ -159,7 +178,11 @@ class DungeonController extends ChangeNotifier {
   /// dungeon, refills a cleared card in a repeatable dungeon, and hands the
   /// queue to the encounter loop. Returns false when the card is locked or
   /// has nothing left to fight.
-  bool startSlot(int index) {
+  ///
+  /// [continuing] marks the loop toggle restarting the card the player is
+  /// already standing in: the refill builds new entities, but the drop log
+  /// on screen is the same haul and is kept.
+  bool startSlot(int index, {bool continuing = false}) {
     if (!_run.dungeonId.isReal || !unlocked(index)) return false;
     final def = _run.dungeonId.definition;
 
@@ -178,7 +201,10 @@ class DungeonController extends ChangeNotifier {
       _dungeonSystem.refillSlot(_run, index);
     }
 
-    final started = _encounterController.startDungeonSlot(index);
+    final started = _encounterController.startDungeonSlot(
+      index,
+      keepDrops: continuing,
+    );
     notifyListeners();
     return started;
   }
@@ -193,6 +219,16 @@ class DungeonController extends ChangeNotifier {
       worldState: _worldState,
     );
     notifyListeners();
+  }
+
+  /// The card to start when [index] clears: the same one while the loop
+  /// toggle is on and it can be re-fought, the next open one while
+  /// auto-advance is on, and null when clearing should drop back to the
+  /// list.
+  int? nextSlotAfterClear(int index) {
+    if (loopFloor && startable(index)) return index;
+    if (autoAdvance) return nextStartableSlot(index);
+    return null;
   }
 
   /// The next card the auto-advance toggle should run after [index], or
