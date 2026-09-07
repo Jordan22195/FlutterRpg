@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/bound_action.dart';
+import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 
@@ -75,6 +76,18 @@ void main() {
       expect(bound?.kind, BoundActionKind.ENCOUNTER);
       expect(bound?.entityId, EntityId.TREE);
       expect(bound?.zoneId, session.saveGameData.playerData.currentZoneId);
+
+      session.dispose();
+    });
+
+    test('a dungeon card records its slot', () {
+      final session = newSession();
+      session.dungeonController.openDungeon(DungeonId.SPIDER_DEN);
+      expect(session.dungeonController.startSlot(1), isTrue);
+
+      final bound = session.saveGameData.actionTimingData.boundAction;
+      expect(bound?.kind, BoundActionKind.DUNGEON_SLOT);
+      expect(bound?.dungeonSlot, 1);
 
       session.dispose();
     });
@@ -216,6 +229,43 @@ void main() {
       // starting the loop normally stamps this to now, which would throw the
       // gap away before any frame could pay it out
       expect(after.saveGameData.playerData.lastActionTime, closedAt);
+
+      before.dispose();
+      after.dispose();
+    });
+
+    test('a dungeon card resumes with the gap it was away for', () {
+      final before = newSession();
+      before.dungeonController.openDungeon(DungeonId.SPIDER_DEN);
+      expect(before.dungeonController.startSlot(1), isTrue);
+
+      final after = relaunch(before);
+      final closedAt = DateTime.now().subtract(const Duration(minutes: 10));
+      after.saveGameData.playerData.lastActionTime = closedAt;
+
+      after.resumeBoundAction();
+
+      // the card is running again, and the gap it was closed on is still
+      // owed - the screen restore deliberately leaves the start to this
+      expect(after.actionTimingController.isTicking, isTrue);
+      expect(after.saveGameData.dungeonRun.runningSlot, 1);
+      expect(after.saveGameData.playerData.lastActionTime, closedAt);
+
+      before.dispose();
+      after.dispose();
+    });
+
+    test('a dungeon card that was not running is left alone', () {
+      final before = newSession();
+      before.dungeonController.openDungeon(DungeonId.SPIDER_DEN);
+      expect(before.dungeonController.startSlot(1), isTrue);
+      // the player stopped the card before closing the app
+      before.actionTimingController.stop();
+
+      final after = relaunch(before);
+      after.resumeBoundAction();
+
+      expect(after.actionTimingController.isTicking, isFalse);
 
       before.dispose();
       after.dispose();

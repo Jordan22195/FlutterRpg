@@ -30,6 +30,7 @@ class OfflineProgressService {
   /// Opens the buffer for one settle, discarding whatever the last one left.
   void begin(OfflineProgressData data, Duration timeAway) {
     data.report = OfflineProgressReport()..timeAway = timeAway;
+    data.earlyStop = false;
     data.processing = true;
   }
 
@@ -75,6 +76,24 @@ class OfflineProgressService {
         ifAbsent: () => entity.count,
       );
     }
+  }
+
+  /// The batch that just fired handed its loop over to something else part
+  /// way through the stretch it was given — a dungeon card's next member,
+  /// or the card refilled for another lap. The settle needs to know,
+  /// because the actions it reported cover only the part of the segment it
+  /// spent before the hand-off.
+  void recordEarlyStop(OfflineProgressData data) {
+    if (!data.processing) return;
+    data.earlyStop = true;
+  }
+
+  /// Reads the hand-off flag and puts it back down, so one segment's
+  /// hand-off is never charged to the next.
+  bool takeEarlyStop(OfflineProgressData data) {
+    final stopped = data.earlyStop;
+    data.earlyStop = false;
+    return stopped;
   }
 
   /// The fight that killed the player, and when. A death always earns a

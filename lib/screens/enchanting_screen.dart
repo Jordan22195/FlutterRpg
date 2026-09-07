@@ -8,6 +8,7 @@ import '../data/skill_data.dart';
 import '../widgets/equipment_card.dart';
 import '../widgets/equipment_info_dialog.dart';
 import '../widgets/inventory_grid.dart';
+import '../widgets/picker_list.dart';
 import '../widgets/recipe_card.dart';
 import '../widgets/item_stack_tile.dart';
 import '../widgets/primary_button.dart';
@@ -29,32 +30,44 @@ class EnchantingScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) {
+        final recipes = controller.recipes();
+        // disenchant leads the list, so a tier sits one row below its own
+        // index in it
+        final selectedTier = recipes.indexWhere(
+          (recipe) => recipe.id == controller.selectedRecipeId,
+        );
         return AlertDialog(
           title: const Text('Select Recipe'),
           content: SizedBox(
             width: double.maxFinite,
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                _DisenchantRecipeCard(
-                  selected: controller.disenchantSelected,
-                  onTap: () {
-                    controller.selectRecipe(
-                      EnchantingController.disenchantRecipeId,
-                    );
-                    Navigator.of(ctx).pop();
-                  },
-                ),
-                for (final recipe in controller.recipes())
-                  _EnchantRecipeCard(
-                    recipe: recipe,
-                    selected: recipe.id == controller.selectedRecipeId,
+            child: PickerList(
+              itemCount: recipes.length + 1,
+              // opens on the row already selected rather than at the top
+              selectedIndex: controller.disenchantSelected
+                  ? 0
+                  : (selectedTier < 0 ? -1 : selectedTier + 1),
+              itemBuilder: (context, i) {
+                if (i == 0) {
+                  return _DisenchantRecipeCard(
+                    selected: controller.disenchantSelected,
                     onTap: () {
-                      controller.selectRecipe(recipe.id);
+                      controller.selectRecipe(
+                        EnchantingController.disenchantRecipeId,
+                      );
                       Navigator.of(ctx).pop();
                     },
-                  ),
-              ],
+                  );
+                }
+                final recipe = recipes[i - 1];
+                return _EnchantRecipeCard(
+                  recipe: recipe,
+                  selected: recipe.id == controller.selectedRecipeId,
+                  onTap: () {
+                    controller.selectRecipe(recipe.id);
+                    Navigator.of(ctx).pop();
+                  },
+                );
+              },
             ),
           ),
           actions: [

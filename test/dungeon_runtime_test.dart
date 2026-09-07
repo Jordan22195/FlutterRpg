@@ -51,6 +51,29 @@ void main() {
     return ticks;
   }
 
+  /// Ticks while [waiting] is still true, up to [limit]. The stop-based
+  /// helper above is no use to a run whose card laps or walks on: the loop
+  /// never stops on its own.
+  int fightPast(
+    GameSession session,
+    bool Function() waiting, {
+    int limit = 20000,
+  }) {
+    var ticks = 0;
+    while (waiting() && ticks < limit) {
+      session.encounterController.doEncounterAction(1);
+      ticks++;
+    }
+    return ticks;
+  }
+
+  /// Ticks a fixed number of times, whatever the run is doing.
+  void fightFor(GameSession session, int ticks) {
+    for (int i = 0; i < ticks; i++) {
+      session.encounterController.doEncounterAction(1);
+    }
+  }
+
   /// Clears every card up to [index] so it is reachable, then leaves the
   /// run parked on it.
   void clearUpTo(GameSession session, int index) {
@@ -387,7 +410,7 @@ void main() {
   });
 
   group('what a cleared card runs next', () {
-    test('the loop toggle refights the same card, refilled', () {
+    test('the loop toggle laps the same card in place, without stopping', () {
       final session = buildSession();
       final save = session.saveGameData;
       final dungeons = session.dungeonController;
@@ -395,25 +418,28 @@ void main() {
 
       dungeons.openDungeon(DungeonId.SPIDER_DEN);
       dungeons.loopFloor = true;
+      final reported = session.encounterController.slotClearedSequence;
 
       dungeons.startSlot(1); // the ore seam: no card above it to clear
-      fightUntilStopped(session);
-      expect(save.dungeonRun.slots[1].cleared, isTrue);
+      final ticks = fightPast(session, () => save.dungeonRun.cleared.isEmpty);
 
-      // the same card, not the next one
-      expect(dungeons.nextSlotAfterClear(1), 1);
-
-      expect(dungeons.startSlot(1), isTrue);
-      expect(save.dungeonRun.slots[1].cleared, isFalse);
-      expect(save.dungeonRun.runningSlot, 1);
-      expect(session.actionTimingController.isRunning, isTrue);
-      // the mark stays, so the card below it is still open
+      // the card cleared, and the loop carried straight into another lap
       expect(save.dungeonRun.cleared, contains(1));
+      expect(session.actionTimingController.isRunning, isTrue);
+      expect(save.dungeonRun.runningSlot, 1);
+      // refilled: the queue is back at its first member with a full count
+      expect(save.dungeonRun.slots[1].cleared, isFalse);
+      expect(save.dungeonRun.slots[1].index, 0);
+      expect(save.dungeonRun.slots[1].members.first.count, 8);
+      // and the shell was never told to drop back to the list
+      expect(session.encounterController.slotClearedSequence, reported);
+      expect(session.encounterController.lastClearedSlot, -1);
+      expect(ticks, lessThan(20000));
 
       session.dispose();
     });
 
-    test('a loop lap keeps the drop log, a new card starts it fresh', () {
+    test('a lap keeps the drop log and the momentum it built', () {
       final session = buildSession();
       final save = session.saveGameData;
       final dungeons = session.dungeonController;
@@ -430,16 +456,16 @@ void main() {
       );
 
       dungeons.startSlot(1); // 8 iron
-      fightUntilStopped(session);
-      final firstLap = logged();
-      expect(firstLap, greaterThan(0));
+      fightPast(session, () => save.dungeonRun.cleared.isEmpty);
+      final atClear = logged();
+      expect(atClear, greaterThan(0));
 
-      // the refill builds new entities, but the panel is still showing the
-      // same fight, so its haul carries on
-      dungeons.startSlot(1, continuing: true);
-      expect(logged(), firstLap);
-      fightUntilStopped(session);
-      expect(logged(), greaterThan(firstLap));
+      // a lap binds in place - it never stops the loop - so the boost the
+      // player built up crossing the card boundary survives it
+      save.actionTimingData.percentOfMaxBoost = 0.5;
+      fightFor(session, 200);
+      expect(logged(), greaterThan(atClear));
+      expect(save.actionTimingData.percentOfMaxBoost, greaterThan(0.0));
 
       // the run's own haul never reset either
       expect(
@@ -450,15 +476,38 @@ void main() {
         greaterThan(0),
       );
 
-      // moving to a different card is a different haul
+      // tapping a different card is a different haul
       dungeons.startSlot(2);
       expect(logged(), 0);
 
       session.dispose();
     });
 
-    test('auto-advance moves on, and off both drop back to the list', () {
+    test('auto-advance runs the next card without the screen', () {
       final session = buildSession();
+      final save = session.saveGameData;
+      final dungeons = session.dungeonController;
+      makePlayerStrong(session);
+
+      dungeons.openDungeon(DungeonId.SPIDER_DEN);
+      dungeons.autoAdvance = true;
+
+      dungeons.startSlot(1);
+      fightPast(session, () => save.dungeonRun.runningSlot == 1);
+
+      // straight on to the card the clear unlocked, still running
+      expect(save.dungeonRun.cleared, contains(1));
+      expect(save.dungeonRun.runningSlot, 2);
+      expect(session.actionTimingController.isRunning, isTrue);
+      // a new card is a new haul
+      expect(session.encounterController.itemDrops(), isEmpty);
+
+      session.dispose();
+    });
+
+    test('with both toggles off, a cleared card ends the action', () {
+      final session = buildSession();
+      final save = session.saveGameData;
       final dungeons = session.dungeonController;
       makePlayerStrong(session);
 
@@ -466,9 +515,9 @@ void main() {
       dungeons.startSlot(1);
       fightUntilStopped(session);
 
-      expect(dungeons.nextSlotAfterClear(1), isNull);
-      dungeons.autoAdvance = true;
-      expect(dungeons.nextSlotAfterClear(1), 2);
+      expect(save.dungeonRun.slots[1].cleared, isTrue);
+      expect(session.actionTimingController.isRunning, isFalse);
+      expect(session.encounterController.lastClearedSlot, 1);
 
       session.dispose();
     });
@@ -487,8 +536,9 @@ void main() {
       session.dispose();
     });
 
-    test('a one-shot card has nothing to loop, whatever the toggle says', () {
+    test('a one-shot card never laps, whatever the toggle says', () {
       final session = buildSession();
+      final save = session.saveGameData;
       final dungeons = session.dungeonController;
       makePlayerStrong(session);
       giveKey(session);
@@ -500,8 +550,32 @@ void main() {
       dungeons.startSlot(0);
       fightUntilStopped(session);
 
-      // the card can't be refought, so clearing it still drops out
-      expect(dungeons.nextSlotAfterClear(0), isNull);
+      // the card can't be refought, so clearing it ends the action
+      expect(save.dungeonRun.slots[0].cleared, isTrue);
+      expect(session.actionTimingController.isRunning, isFalse);
+      expect(session.encounterController.lastClearedSlot, 0);
+
+      session.dispose();
+    });
+
+    test('a card with nothing fightable in it does not open', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      final dungeons = session.dungeonController;
+      makePlayerStrong(session);
+
+      dungeons.openDungeon(DungeonId.SPIDER_DEN);
+      dungeons.startSlot(1);
+      fightUntilStopped(session);
+
+      // an emptied card would clear again the instant it started, looping
+      // at no cost - the system refuses to open it instead
+      save.dungeonRun.slots[1].members.first.count = 0;
+      save.dungeonRun.slots[1].index = 0;
+      expect(
+        session.dungeonSystem.openSlot(save.dungeonRun, 1),
+        isNull,
+      );
 
       session.dispose();
     });

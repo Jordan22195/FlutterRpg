@@ -104,8 +104,9 @@ class _MainShellState extends State<MainShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _restoreMapTabStack();
-      // after the stack, so a dungeon card that restored by starting itself
-      // is left running rather than started over
+      // after the stack: the dungeon restore above pushes its card's
+      // screen but deliberately leaves it stopped, and this is what starts
+      // it - with the offline gap it was closed on still owed
       context.read<GameSession>().resumeBoundAction();
     });
   }
@@ -154,9 +155,8 @@ class _MainShellState extends State<MainShell> {
     }
 
     if (_encounter.slotClearedSequence != _handledSlotClearedSequence) {
-      final slot = _encounter.lastClearedSlot;
       _handledSlotClearedSequence = _encounter.slotClearedSequence;
-      _onDungeonSlotCleared(slot);
+      _onDungeonSlotCleared();
     }
   }
 
@@ -181,14 +181,12 @@ class _MainShellState extends State<MainShell> {
     });
   }
 
-  // a dungeon card ran dry. by default that drops back to the card list so
-  // the newly unlocked card is in view; the toggles instead run straight
-  // into the next card, or refight this one. the card can clear while the
-  // encounter screen is unmounted (backing out doesn't stop the loop),
-  // which is why this lives on the shell rather than the screen
-  void _onDungeonSlotCleared(int slot) {
-    final dungeons = context.read<DungeonController>();
-
+  // a dungeon card ran dry with nothing to follow it - the run's own
+  // preferences are answered in the encounter tick, which carries a lap or
+  // the next card over in place and never reports here. so this is only
+  // ever the end of the run's action: drop back to the card list, where
+  // the newly unlocked card is in view.
+  void _onDungeonSlotCleared() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final nav = _navKeys[0].currentState;
@@ -199,35 +197,7 @@ class _MainShellState extends State<MainShell> {
           EntityScreenRouterService.encounterRouteName;
       if (!onEncounter) return;
 
-      final next = dungeons.nextSlotAfterClear(slot);
-      if (next == null) {
-        nav.maybePop();
-        return;
-      }
-
-      // looping re-runs the card the screen is already showing, so the
-      // drop log carries on rather than starting over
-      final looping = next == slot;
-      if (!dungeons.startSlot(next, continuing: looping)) {
-        nav.maybePop();
-        return;
-      }
-
-      // the route and its card index are still right, so leave the stack
-      // alone; only a different card needs a new one
-      if (looping) return;
-
-      // swap the encounter route rather than stacking a second one, so
-      // backing out of card three still lands on the card list
-      nav.pushReplacement(
-        MaterialPageRoute(
-          settings: RouteSettings(
-            name: EntityScreenRouterService.encounterRouteName,
-            arguments: next,
-          ),
-          builder: (_) => const EncounterScreen(),
-        ),
-      );
+      nav.maybePop();
     });
   }
 
@@ -269,6 +239,12 @@ class _MainShellState extends State<MainShell> {
         ui.dungeonSlot = settings.arguments as int;
       }
     }
+
+    // the route's index is the card it was pushed for, which a run that
+    // walked on to the next card - offline, or with the screen unmounted -
+    // has since left behind. the run itself is the live answer.
+    final running = context.read<DungeonController>().runningSlot;
+    if (ui.dungeonSlot >= 0 && running >= 0) ui.dungeonSlot = running;
 
     widget.onUiStateChanged?.call();
   }
@@ -316,12 +292,24 @@ class _MainShellState extends State<MainShell> {
           // an encounter above a dungeon is one of its cards; a zone
           // entity lookup would never find that entity
           if (inDungeon) {
-            if (!dungeons.startSlot(_restoreDungeonSlot)) return;
+            // the run's own slot first: a card the player walked on to
+            // while away is the one they are standing in now, whatever the
+            // saved route said
+            final slot = dungeons.runningSlot >= 0
+                ? dungeons.runningSlot
+                : _restoreDungeonSlot;
+            // deliberately not started here. starting stamps
+            // lastActionTime, which would eat the gap this launch is owed;
+            // resumeBoundAction restarts the card below with the gap
+            // intact, and the screen renders the card off the saved run
+            // either way
+            if (!dungeons.hasActiveRun) return;
+            if (dungeons.slotAt(slot)?.displayed == null) return;
             nav.push(
               MaterialPageRoute(
                 settings: RouteSettings(
                   name: EntityScreenRouterService.encounterRouteName,
-                  arguments: _restoreDungeonSlot,
+                  arguments: slot,
                 ),
                 builder: (_) => const EncounterScreen(),
               ),

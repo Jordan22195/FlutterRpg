@@ -9,6 +9,7 @@ import '../controllers/crafting_controller.dart';
 import '../data/skill_data.dart';
 import '../widgets/crafting_info_panel.dart';
 import '../widgets/item_stack_tile.dart';
+import '../widgets/picker_list.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/recipe_card.dart';
 import '../widgets/skill_ring_row.dart';
@@ -72,9 +73,10 @@ class _FirepitScreenState extends State<FirepitScreen>
           ),
           content: SizedBox(
             width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
+            child: PickerList(
               itemCount: recipes.length,
+              // opens on the recipe already selected rather than at the top
+              selectedIndex: recipes.indexWhere((r) => r.id == selectedId),
               itemBuilder: (context, i) {
                 final r = recipes[i];
                 return RecipeCard(

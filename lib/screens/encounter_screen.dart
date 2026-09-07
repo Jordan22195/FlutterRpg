@@ -608,9 +608,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                     // placeholder entity a screen falls back to has no
                     // details to build, so it gets neither
                     skills: isCombatEntity ? trainedSkills : null,
-                    infoEntity: isCombatEntity || entityId == EntityId.NULL
-                        ? null
-                        : entity,
+                    infoEntity: entityId == EntityId.NULL ? null : entity,
                     drops: view.drops,
                     lootLabel: isCombatEntity ? 'Loot' : 'Gathered',
                     emptyLootLabel: isCombatEntity

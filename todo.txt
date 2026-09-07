@@ -81,3 +81,47 @@ everything else should have a quality, it is just tied to the definition. so you
 the problem is rending both in the same list in the inventory. they both render into item stack tiles. but they are different types, so they live in different lists. 
 
 refactoring the whole app to use item instances instead of id's just to put the two types in the same rendered grid is overkill. I just need to do something clever with the inventory data and widget so they are flat in the same list. 
+
+
+I don't want max hit to go down until after the defenders defence is greater than the players attack ()
+
+
+----------------
+
+dungeons..
+
+dungeons are themed around monster types.
+spider den, wolf, den, crypt (zombies, skeletons)
+
+monsters in the zone drop keys to the dungeon.
+
+you spend keys to do the dungeon. 
+    spend keys to enter? or spend keys to loop a floor? 
+    two paths there. 
+        -grind monsters to get lots of keys. and spend a key each run. if there is a 1% drop at the boss you need 100 keys. 
+        -keys are rare drops and you grind for 1 of them. 1 key lets you enter the dungeon but you spend the key. or keys are permanent. you only have to grind it once. 
+    dungeon progress. you get an uncommon key, which gives you access to the dungeon with uncommon monsters, and a rare boss. defeating the rare boss gives rare loot an unlocks uncommon monsters in the zone. uncommon mosters drop the upgraded key which unlocks an upgraded dungeon.
+        example:
+            wolf den dungeon.
+            uncommon forest wolf (lvl 21) has a 1% drop for an uncommon key. 
+            the uncommon key unlocks the uncommon wolf den dungeon. the floors have 
+            common mobs(21) and uncommon bosses(34) that drop uncommon items. 
+            you grind the floor for the upgrades, or progress to the next difficuty. 
+            defeating the final boss unlocks the uncommon mob varient in the zone. 
+            you grind that mob for the rare key so you can grind the rare dungeon for rare loot 
+            and unlock the epic key.
+
+            entry mob level 21
+            key         boss lvl
+            uncommon    34
+            rare        55
+            epic        89
+            legendary   144
+
+            at some point the dungeon or mobs will be to difficult to grind, so you move on to the next zone
+            which is more level appropriate. 
+
+            in this case epic is too hard to effectivly grind, so you move to darkwood forest and start at the spider den dungeon. when you are stronger you comback to wolf den to finish it out and get teh legendary gear upgrades.
+
+
+

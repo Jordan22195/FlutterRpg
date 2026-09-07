@@ -514,6 +514,8 @@ class GameSessionFactory {
       inventoryState: save.inventoryData,
       inventoryService: inventoryService,
       encounterSystem: encounterSystem,
+      dungeonSystem: dungeonSystem,
+      uiState: save.uiState,
       offlineProgressData: offlineProgressData,
       offlineProgressService: offlineProgressService,
     );
@@ -782,15 +784,18 @@ class GameSession {
   /// fire. This re-runs the controller's own start path for the recorded
   /// [BoundAction], which is what actually rebinds it.
   ///
-  /// Call after the screens have been restored: a dungeon card restores by
-  /// starting its own slot, and this must not start a second action over it.
+  /// Call after the screens have been restored: a dungeon card's screen
+  /// restores without starting anything, because starting is what stamps
+  /// [PlayerData.lastActionTime] — and this is the path that puts the gap
+  /// back afterwards.
   void resumeBoundAction() {
     final timing = saveGameData.actionTimingData;
     final bound = timing.boundAction;
     if (!timing.running || bound == null) return;
 
-    // something is already firing - the dungeon card the screen restore
-    // started. it is the same action this would resume, so leave it alone
+    // something is already firing, so this would start a second action
+    // over it. nothing in the screen restore starts an action any more, so
+    // this is a backstop rather than the usual case
     if (actionTimingController.isTicking) return;
 
     // every start path below stops the loop first, which resets progress and

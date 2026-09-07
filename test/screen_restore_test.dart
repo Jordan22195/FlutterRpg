@@ -7,6 +7,7 @@ import 'package:rpg/main.dart';
 import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/encounter_screen.dart';
 import 'package:rpg/screens/inventory_screen.dart';
@@ -97,12 +98,30 @@ void main() {
     save.uiState.mapRouteStack = ['dungeon', 'encounter'];
     save.uiState.dungeonId = DungeonId.SPIDER_DEN;
     save.uiState.dungeonSlot = 0;
+    // the app was closed on this card for long enough to be worth a
+    // report, but not long enough to finish the card or the player
+    for (final id in [SkillId.ATTACK, SkillId.DEFENCE, SkillId.HITPOINTS]) {
+      final skill = save.playerData.skillData[id]!;
+      skill.xp = skill.xpTable[99];
+    }
+    save.playerData.hitpoints = session.playerDataService.getStatTotals(
+      save.playerData,
+    )[SkillId.HITPOINTS]!;
+    save.playerData.lastActionTime = DateTime.now().subtract(
+      const Duration(seconds: 6),
+    );
     final raw = toRawSave(save);
     session.dispose();
 
     await tester.pumpWidget(
       MyApp(rawSave: raw, fileManagerService: FileManagerService()),
     );
+    await settle(tester);
+
+    // the gap survived the restore and settled. it used not to: the screen
+    // restore started the card itself, and starting stamps lastActionTime
+    expect(find.text('While you were away'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
     await settle(tester);
 
     // back on the card's encounter, not stopped at the card list

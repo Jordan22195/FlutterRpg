@@ -179,10 +179,10 @@ class DungeonController extends ChangeNotifier {
   /// queue to the encounter loop. Returns false when the card is locked or
   /// has nothing left to fight.
   ///
-  /// [continuing] marks the loop toggle restarting the card the player is
-  /// already standing in: the refill builds new entities, but the drop log
-  /// on screen is the same haul and is kept.
-  bool startSlot(int index, {bool continuing = false}) {
+  /// This is a card tap, or a resume — a fresh start either way. A card
+  /// clearing into its next lap or its next card never comes through here;
+  /// the encounter tick hands those over in place.
+  bool startSlot(int index) {
     if (!_run.dungeonId.isReal || !unlocked(index)) return false;
     final def = _run.dungeonId.definition;
 
@@ -201,10 +201,7 @@ class DungeonController extends ChangeNotifier {
       _dungeonSystem.refillSlot(_run, index);
     }
 
-    final started = _encounterController.startDungeonSlot(
-      index,
-      keepDrops: continuing,
-    );
+    final started = _encounterController.startDungeonSlot(index);
     notifyListeners();
     return started;
   }
@@ -219,25 +216,6 @@ class DungeonController extends ChangeNotifier {
       worldState: _worldState,
     );
     notifyListeners();
-  }
-
-  /// The card to start when [index] clears: the same one while the loop
-  /// toggle is on and it can be re-fought, the next open one while
-  /// auto-advance is on, and null when clearing should drop back to the
-  /// list.
-  int? nextSlotAfterClear(int index) {
-    if (loopFloor && startable(index)) return index;
-    if (autoAdvance) return nextStartableSlot(index);
-    return null;
-  }
-
-  /// The next card the auto-advance toggle should run after [index], or
-  /// null when there isn't one.
-  int? nextStartableSlot(int index) {
-    for (int i = index + 1; i < _run.slots.length; i++) {
-      if (unlocked(i) && !_dungeonService.slotAt(_run, i)!.cleared) return i;
-    }
-    return null;
   }
 
   /// Text for the leave confirmation, spelling out what this dungeon type

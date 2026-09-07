@@ -327,7 +327,7 @@ class EncounterService {
   /// Adding the same value to both sides leaves parity at [hitChanceAtParity]
   /// exactly, at every level.
   static const double hitChanceFooting = 8.0;
-  static const double maxHitDefenceK = 75.0;
+  static const double maxHitDefenceK = 200.0;
   static const double maxHitExponent = 0.75;
 
   /// Chance a swing lands: [hitChanceAtParity] when attack equals defence,

@@ -65,6 +65,66 @@ class DungeonSystem {
     run.slots[index] = _buildSlot(def, index);
   }
 
+  /// The card to run when card [index] clears: the same one when the loop
+  /// preference is on and the card can be refought, the next unlocked
+  /// card that has not been fought when auto-advance is on, and null when
+  /// clearing should simply end the run's action.
+  ///
+  /// Both preferences are answered here rather than on the screen, because
+  /// the encounter tick is what asks - and it fires with the app closed,
+  /// where no widget is listening and no route is mounted.
+  int? nextSlotAfterClear(
+    DungeonRun run, {
+    required int index,
+    required bool loopFloor,
+    required bool autoAdvance,
+    required PlayerData playerState,
+    required InventoryData playerInventory,
+  }) {
+    if (!run.dungeonId.isReal) return null;
+    final def = run.dungeonId.definition;
+
+    bool open(int i) => unlocked(
+      run: run,
+      def: def,
+      index: i,
+      playerState: playerState,
+      playerInventory: playerInventory,
+    );
+
+    // the same rule the card's own play button uses: a cleared card is
+    // re-runnable only where the dungeon's cards repeat
+    if (loopFloor && def.repeatableEntries && open(index)) return index;
+
+    if (autoAdvance) {
+      for (int i = index + 1; i < run.slots.length; i++) {
+        if (open(i) && !run.slots[i].cleared) return i;
+      }
+    }
+    return null;
+  }
+
+  /// Prepares card [index] to be fought and hands back the member to start
+  /// on, or null when there is nothing in it to fight — including a refill
+  /// that produced an empty card, which would otherwise clear again the
+  /// moment it started and loop at no cost.
+  ///
+  /// A cleared card in a repeatable dungeon is rebuilt first. The cleared
+  /// mark is left alone by [refillSlot]: it is what keeps the card below
+  /// this one open across laps.
+  EncounterEntity? openSlot(DungeonRun run, int index) {
+    if (!run.dungeonId.isReal || index < 0 || index >= run.slots.length) {
+      return null;
+    }
+    if (run.slots[index].cleared) {
+      if (!run.dungeonId.definition.repeatableEntries) return null;
+      refillSlot(run, index);
+    }
+    final member = run.slots[index].current;
+    if (member == null || member.count <= 0) return null;
+    return member;
+  }
+
   /// Ends the run and applies what leaving this dungeon type costs. A
   /// transient dungeon's entrance is consumed; a keyed dungeon's key was
   /// already spent, so re-entry costs another one.

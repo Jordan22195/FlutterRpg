@@ -213,48 +213,6 @@ def plot_matplotlib(panels, args) -> None:
         plt.show()
 
 
-# ----------------------------------------------------------------- ascii plots
-
-def plot_ascii(panels, args, width: int = 74, height: int = 18) -> None:
-    print(f"Combat curves  ({subtitle(args)})")
-    for title, xlabel, ylabel, is_pct, series, refs in panels:
-        drawn = series + [(lbl, xs, ys) for lbl, xs, ys in refs if lbl]
-        xmin = min(min(xs) for _, xs, _ in drawn)
-        xmax = max(max(xs) for _, xs, _ in drawn)
-        ymin = 0.0
-        ymax = max(max(ys) for _, _, ys in drawn) or 1.0
-
-        grid = [[" "] * width for _ in range(height)]
-        for i, (_, xs, ys) in enumerate(drawn):
-            mark = SERIES_MARKS[i % len(SERIES_MARKS)] if i < len(series) else "."
-            for x, y in zip(xs, ys):
-                col = int(round((x - xmin) / (xmax - xmin or 1) * (width - 1)))
-                row = height - 1 - int(round((y - ymin) / (ymax - ymin or 1) * (height - 1)))
-                grid[max(0, min(height - 1, row))][max(0, min(width - 1, col))] = mark
-
-        def fmt_y(v: float) -> str:
-            return f"{v:.0%}" if is_pct else f"{v:.0f}"
-
-        print(f"\n  {title}   [y: {ylabel}, x: {xlabel}]")
-        for r, row in enumerate(grid):
-            tick = ""
-            if r == 0:
-                tick = fmt_y(ymax)
-            elif r == height - 1:
-                tick = fmt_y(ymin)
-            elif r == height // 2:
-                tick = fmt_y((ymax + ymin) / 2)
-            print(f"  {tick:>6} |{''.join(row)}")
-        print("  " + " " * 6 + " +" + "-" * width)
-        left, right = f"{xmin:g}", f"{xmax:g}"
-        print("  " + " " * 8 + left + " " * max(1, width - len(left) - len(right)) + right)
-        legend = "  ".join(
-            f"{SERIES_MARKS[i % len(SERIES_MARKS)]} {lbl}" for i, (lbl, _, _) in enumerate(series))
-        if any(lbl for lbl, _, _ in refs):
-            legend += "  . " + next(lbl for lbl, _, _ in refs if lbl)
-        print(f"  {' ' * 6}  {legend}")
-
-
 # ----------------------------------------------------------------------- table
 
 def print_tables(args) -> None:
@@ -283,7 +241,7 @@ def csv_floats(text: str):
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--k-max-hit", type=float, default=75)
+    p.add_argument("--k-max-hit", type=float, default=100)
     p.add_argument("--n-max-hit", type=float, default=0.75)
     p.add_argument("--k-hit-chance", type=float, default=4)
     p.add_argument("--footing", type=float, default=8,
@@ -303,13 +261,13 @@ def main(argv=None) -> int:
                    help="excess model: how much of the defense reduction applies below "
                         "parity. Below 1 pulls the curve toward uncapped but makes max "
                         "hit non-monotone in defense -- prefer --model ratio.")
-    p.add_argument("--defenses", type=csv_floats, default=[1, 10, 50, 100, 200],
+    p.add_argument("--defenses", type=csv_floats, default=[1, 10, 250, 100, 200],
                    help="defense values to draw a curve for (default 10,50,100,200)")
     p.add_argument("--attacks", type=csv_floats, default=[1, 10, 50, 100, 200],
                    help="attack values to draw a curve for (default 10,50,100,200)")
     p.add_argument("--min-attack", type=float, default=1)
-    p.add_argument("--max-attack", type=float, default=150)
-    p.add_argument("--attack-step", type=float, default=2)
+    p.add_argument("--max-attack", type=float, default=1000)
+    p.add_argument("--attack-step", type=float, default=100)
     p.add_argument("--min-defense", type=float, default=0)
     p.add_argument("--max-defense", type=float, default=400)
     p.add_argument("--defense-step", type=float, default=5)

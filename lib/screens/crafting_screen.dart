@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/widgets/crafting_info_panel.dart';
+import 'package:rpg/widgets/picker_list.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/skill_ring_row.dart';
@@ -38,9 +39,12 @@ class _CraftingScreenState extends State<CraftingScreen>
           title: const Text('Select Recipe'),
           content: SizedBox(
             width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
+            child: PickerList(
               itemCount: recipes.length,
+              // opens on the recipe already selected rather than at the top
+              selectedIndex: recipes.indexWhere(
+                (r) => r.id == controller.selectedRecipeId,
+              ),
               itemBuilder: (context, i) {
                 final r = recipes[i];
                 return RecipeCard(

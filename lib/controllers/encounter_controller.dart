@@ -19,6 +19,8 @@ import '../data/dungeon_run.dart';
 import '../data/encounter_data.dart';
 import '../services/dungeon_service.dart';
 import '../services/encounter_service.dart';
+import '../data/ui_state.dart';
+import '../systems/dungeon_system.dart';
 import '../systems/encounter_system.dart';
 import '../services/inventory_service.dart';
 import '../data/ObjectStack.dart';
@@ -39,6 +41,7 @@ class EncounterController extends ChangeNotifier {
   final InventoryData _inventoryState;
   final DungeonRun _dungeonRun;
   final OfflineProgressData _offlineProgressData;
+  final UiState _uiState;
 
   // services
   final EncounterService _encounterService;
@@ -50,6 +53,7 @@ class EncounterController extends ChangeNotifier {
 
   //systems
   final EncounterSystem _encounterSystem;
+  final DungeonSystem _dungeonSystem;
 
   EncounterActionResult latestActionResult = EncounterActionResult();
 
@@ -91,6 +95,8 @@ class EncounterController extends ChangeNotifier {
     required InventoryData inventoryState,
     required InventoryService inventoryService,
     required EncounterSystem encounterSystem,
+    required DungeonSystem dungeonSystem,
+    required UiState uiState,
     required OfflineProgressData offlineProgressData,
     required OfflineProgressService offlineProgressService,
   }) : _playerState = playerData,
@@ -106,6 +112,8 @@ class EncounterController extends ChangeNotifier {
        _playerDataService = playerDataService,
        _inventoryState = inventoryState,
        _encounterSystem = encounterSystem,
+       _dungeonSystem = dungeonSystem,
+       _uiState = uiState,
        _inventoryService = inventoryService;
 
   void doFishingEncounterAction(
@@ -250,10 +258,8 @@ class EncounterController extends ChangeNotifier {
   /// one card runs at a time, so this drops whatever was running.
   ///
   /// The encounter panel's drop log is a card's own haul, so a new card
-  /// starts it fresh; the run's cumulative haul lives on the run. A card
-  /// looping into itself passes [keepDrops], since that is the same haul
-  /// continuing rather than a new card's.
-  bool startDungeonSlot(int index, {bool keepDrops = false}) {
+  /// starts it fresh; the run's cumulative haul lives on the run.
+  bool startDungeonSlot(int index) {
     final entity = _dungeonService.slotAt(_dungeonRun, index)?.current;
     if (entity == null) return false;
 
@@ -263,7 +269,7 @@ class EncounterController extends ChangeNotifier {
     _dungeonRun.runningSlot = index;
     _playerState.currentEntityViewId = entity.id;
 
-    return startEncounterActionFor(entity, keepDrops: keepDrops);
+    return startEncounterActionFor(entity);
   }
 
   /// Adds this tick's result to the offline progress report. A no-op unless
@@ -281,11 +287,17 @@ class EncounterController extends ChangeNotifier {
     _inventoryService.addItems(_dungeonRun.loot, latestActionResult.items);
   }
 
-  /// Hands the running card off to its next member, keeping the loop
+  /// Hands the running card off to whatever comes next, keeping the loop
   /// running. Returns true when it did — the caller then skips its own
   /// conditions check, which would otherwise see the spent member and stop.
   ///
-  /// Clearing the last member marks the card and stops the loop, reporting
+  /// Next is the card's next member, or — once the card is spent — what the
+  /// player's two dungeon preferences ask for: the same card refilled, or
+  /// the next one down. That decision lives here rather than on the shell
+  /// because this is the path that also runs with the app closed, where no
+  /// widget is listening and no route is mounted.
+  ///
+  /// When nothing comes next the card is done: the loop stops and reports
   /// through [slotClearedSequence].
   bool _advanceDungeonQueue() {
     final slot = _dungeonService.runningSlot(_dungeonRun);
@@ -296,17 +308,76 @@ class EncounterController extends ChangeNotifier {
     if (!identical(_encounterState.entity, current)) return false;
     if (current.count > 0) return false;
 
+    final index = _dungeonRun.runningSlot;
+
     final next = _dungeonService.advanceRunning(_dungeonRun);
-    if (next != null) {
-      _startDungeonMember(next);
-      return true;
+    if (next != null) return _handOffTo(next);
+
+    _dungeonService.markCleared(_dungeonRun, index);
+
+    final continueOn = _dungeonSystem.nextSlotAfterClear(
+      _dungeonRun,
+      index: index,
+      loopFloor: _uiState.dungeonLoopFloor,
+      autoAdvance: _uiState.dungeonAutoAdvance,
+      playerState: _playerState,
+      playerInventory: _inventoryState,
+    );
+    if (continueOn != null) {
+      final member = _dungeonSystem.openSlot(_dungeonRun, continueOn);
+      if (member != null) {
+        // a lap of the same card is the same haul carrying on, so its drop
+        // log stands; moving down to another card starts a fresh one
+        if (continueOn != index) {
+          _inventoryService.clearItems(_encounterState.itemDrops);
+          _dungeonRun.runningSlot = continueOn;
+        }
+        return _handOffTo(member);
+      }
     }
 
-    _dungeonService.markCleared(_dungeonRun, _dungeonRun.runningSlot);
     _actionTimingController.stop();
-    lastClearedSlot = _dungeonRun.runningSlot;
+    lastClearedSlot = index;
     slotClearedSequence++;
     return false;
+  }
+
+  /// Points the running loop at [entity] and reports whether it can keep
+  /// firing. A member the player cannot work stops the loop here rather
+  /// than leaving it to the caller, whose own conditions check is the one
+  /// for the action that just finished — not necessarily this member's.
+  bool _handOffTo(EncounterEntity entity) {
+    _startDungeonMember(entity);
+    if (!_conditionsMetFor(entity)) {
+      _actionTimingController.stop();
+      return false;
+    }
+    // the batch that just fired stopped at this hand-off rather than
+    // running the whole stretch it was given, so an offline settle has to
+    // charge its segment the share it actually did
+    _offlineProgressService.recordEarlyStop(_offlineProgressData);
+    return true;
+  }
+
+  /// Whether [entity]'s own action could fire right now. Dispatches on the
+  /// entity's type, because the members of one dungeon card need not share
+  /// one. Reads the encounter state, so the entity has to be set on it
+  /// first.
+  bool _conditionsMetFor(EncounterEntity entity) {
+    switch (entity.entityType) {
+      case SkillId.FISHING:
+        return _encounterService.fishingConditionsMet(
+          _playerState,
+          _encounterState,
+        );
+      case SkillId.HERBALISM:
+        return _herbalismConditionsMet();
+      default:
+        return _encounterService.encounterConditionsMet(
+          _playerState,
+          _encounterState,
+        );
+    }
   }
 
   /// Swaps the live encounter onto [entity] without restarting the loop.
@@ -387,16 +458,8 @@ class EncounterController extends ChangeNotifier {
 
   // starts the encounter action on [entity] directly (used by the action
   // button via startEncounterAction and by the action queue). returns
-  // true when the action is running when this returns.
-  //
-  // [keepDrops] holds the encounter screen's drop list across the switch.
-  // A fresh entity normally starts a fresh list; a looping dungeon card is
-  // the exception — its refilled members are new objects, but the player
-  // is still standing in the same fight
-  bool startEncounterActionFor(
-    EncounterEntity entity, {
-    bool keepDrops = false,
-  }) {
+  // true when the action is running when this returns
+  bool startEncounterActionFor(EncounterEntity entity) {
     // starting anything that isn't the running card's own member leaves the
     // dungeon behind. this is the one place that decides it, because every
     // way of starting an encounter — the action button, the action queue,
@@ -405,8 +468,6 @@ class EncounterController extends ChangeNotifier {
       _releaseDungeonSlot();
     }
 
-    final isFishing = entity.entityType == SkillId.FISHING;
-    final isHerbalism = entity.entityType == SkillId.HERBALISM;
     final action = _actionFor(entity);
 
     final isNew = _encounterService.isNewEntity(_encounterState, entity);
@@ -422,7 +483,7 @@ class EncounterController extends ChangeNotifier {
 
     // a new entity starts a new encounter session: drops shown in the
     // encounter screen belong to the previous session and are cleared
-    if (isNew && !keepDrops) {
+    if (isNew) {
       _inventoryService.clearItems(_encounterState.itemDrops);
     }
 
@@ -433,15 +494,7 @@ class EncounterController extends ChangeNotifier {
     _playerDataService.coerceStanceFor(entity, _playerState);
 
     // check action conditions are met
-    final conditionsMet = isFishing
-        ? _encounterService.fishingConditionsMet(_playerState, _encounterState)
-        : isHerbalism
-        ? _herbalismConditionsMet()
-        : _encounterService.encounterConditionsMet(
-            _playerState,
-            _encounterState,
-          );
-    if (!conditionsMet) {
+    if (!_conditionsMetFor(entity)) {
       return false;
     }
 

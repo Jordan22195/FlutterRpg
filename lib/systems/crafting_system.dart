@@ -198,11 +198,11 @@ class CraftingSystem {
         _playerDataService.getStatTotals(playerState, at: at)[recipe.skill] ??
         1;
     final entries = qualityEntries(skillLevel, recipe.levelRequirement);
-    final tiers = offline
+    final qualityRollResult = offline
         ? _weightedDropTableService.rollMulitpleTimes(count, entries)
         : [_weightedDropTableService.roll(entries)];
 
-    for (final tier in tiers) {
+    for (final tier in qualityRollResult) {
       if (tier.count <= 0) continue;
       // every inventory gets its own instance: sharing one object between
       // two of them would double-count when stacks merge

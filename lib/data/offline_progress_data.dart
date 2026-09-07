@@ -72,6 +72,14 @@ class OfflineProgressData {
   /// A finished report waiting for the ui to show it.
   OfflineProgressReport? pending;
 
+  /// A bound action handed the loop over to something else mid-batch — a
+  /// dungeon card's next member, or the same card refilled for another lap.
+  /// The batch stopped short of the actions it was asked for, so its
+  /// segment is charged the share it actually did rather than the whole
+  /// stretch. Read and cleared once per segment by
+  /// [OfflineProgressSystem.settle].
+  bool earlyStop = false;
+
   /// Bumped whenever a report becomes [pending]. The shell watches this
   /// rather than the report itself, so a second settle with identical
   /// numbers still raises the popup.

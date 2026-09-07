@@ -69,6 +69,17 @@ class OfflineProgressSystem {
         ActionTimingService.offlineThreshold;
   }
 
+  /// Hard ceiling on the segments one settle will walk. A dungeon card
+  /// looping in place cuts a segment per member per lap, so a long gap at a
+  /// fast pace is the first thing here that can produce five figures of
+  /// them — and this runs inside a frame.
+  static const int maxSegments = 50000;
+
+  /// Consecutive segments that cost no time before the replay gives up. One
+  /// is legitimate (an empty card member skipped over); a run of them means
+  /// the state is not moving.
+  static const int stallLimit = 8;
+
   /// Replays [PlayerData.lastActionTime] → [now] segment by segment.
   ///
   /// [now] defaults to the wall clock and exists so tests can hand over a
@@ -93,6 +104,11 @@ class OfflineProgressSystem {
     // itself in an accurate level-up threshold for everything after it.
     var xpPerAction = <SkillId, double>{};
     var probing = true;
+
+    // both are backstops rather than part of the algorithm - see the
+    // constants for what they are guarding against
+    var segments = 0;
+    var stalled = 0;
 
     while (remaining > 0 && timingState.running) {
       // ---- read the state this segment runs at
@@ -145,7 +161,15 @@ class OfflineProgressSystem {
       // what makes this share meaningful.
       final performedThisSegment =
           _offlineProgressData.report.actionCount - actionsBefore;
-      final spanUsed = (!timingState.running && actions > 0)
+      // the batch handed its loop to something else part way through - a
+      // dungeon card's next member, or the card refilled for another lap.
+      // it stopped there because the thing it handed to runs a different
+      // entity at a different interval, so the rest of the stretch has to
+      // be cut again around that, not charged to this segment.
+      final handedOff = _offlineProgressService.takeEarlyStop(
+        _offlineProgressData,
+      );
+      final spanUsed = ((!timingState.running || handedOff) && actions > 0)
           ? segment * performedThisSegment / actions
           : segment;
 
@@ -174,6 +198,18 @@ class OfflineProgressSystem {
         };
       }
       probing = false;
+
+      // ---- backstops, after the segment has been charged so a batch that
+      // fired is never left unpaid. a hand-off that cost no time moves
+      // nothing, so a run of them is a stall rather than progress: the
+      // replay gives up and pays the rest of the gap out idle below,
+      // instead of spinning inside a frame.
+      if (spanUsed <= 0) {
+        if (++stalled > stallLimit) break;
+      } else {
+        stalled = 0;
+      }
+      if (++segments > maxSegments) break;
     }
 
     // the loop stopped short: the action's requirements failed and the

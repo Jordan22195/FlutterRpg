@@ -147,10 +147,17 @@ class EncounterSystem {
       }
 
       // actions are what the elapsed time bought: a fight cut short by the
-      // player's death pays only for the part they were alive for
+      // player's death pays only for the part they were alive for.
+      //
+      // The tolerance is the one [OfflineProgressSystem.settle] takes on
+      // its own cut, for the same reason: a window measured as exactly n
+      // actions divides back out to a hair under n in floating point, and
+      // the action it drops is the one that would have finished the group.
+      // A dungeon card left one hit short never hands off, so its whole
+      // segment is charged for the part of it that was worked.
       int actions = playerInterval <= 0
           ? actionCount
-          : (elapsed / playerInterval).floor();
+          : (elapsed / playerInterval + 1e-9).floor();
       if (actions > actionCount) actions = actionCount;
 
       final fight = _spendHits(swing, e, actions);
