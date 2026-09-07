@@ -154,6 +154,11 @@ class WorldController extends ChangeNotifier {
     return _encounterSystem.buildEntityDetails(
       playerState: _playerState,
       entity: e,
+      // what working this entity would cost per action from here, which is
+      // not the interval the action running on some other screen is using
+      actionInterval: _actionTimingController.idleActionDurationFor(
+        e.entityType,
+      ),
     );
   }
 

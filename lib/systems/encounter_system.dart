@@ -599,9 +599,14 @@ class EncounterSystem {
   /// Assembles the entity details snapshot the info popup renders: the
   /// entity's own stats, its drop table with per-kill probabilities, and
   /// the to-hit rolls both ways against the player's current stats.
+  /// [actionInterval] is how long one action against [entity] takes from a
+  /// standing start. It is passed in rather than worked out here: the
+  /// interval depends on equipment and the speed stance, which the timing
+  /// system owns.
   EntityDetails buildEntityDetails({
     required PlayerData playerState,
     required EncounterEntity entity,
+    required Duration actionInterval,
   }) {
     final stats = _playerDataService.getStatTotals(playerState);
     final playerSkill = stats[entity.entityType] ?? 0;
@@ -629,6 +634,7 @@ class EncounterSystem {
         attack: playerSkill,
         defense: entity.defence,
       ),
+      playerActionInterval: actionInterval.inMicroseconds / 1e6,
       entityHitChance: combat == null
           ? 0
           : _encounterService.chanceToHit(combat.attack, playerDefence),

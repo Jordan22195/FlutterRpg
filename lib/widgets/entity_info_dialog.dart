@@ -252,13 +252,20 @@ class _PlayerRolls extends StatelessWidget {
             label: 'Avg damage',
             value: formatDecimal(details.playerAverageDamage),
           ),
-          if (details.usesDamage)
+          if (details.usesDamage) ...[
+            // the same row the incoming section carries, so the two rates
+            // can be read against each other
+            InfoStatRow(
+              label: 'Damage per second',
+              value: formatDecimal(details.playerDamagePerSecond),
+            ),
             InfoStatRow(
               label: details.isCombat ? 'Actions to kill' : 'Actions to clear',
               value: actionsToKill.isFinite
                   ? '~${actionsToKill.ceil()}'
                   : 'never',
             ),
+          ],
         ],
       ],
     );

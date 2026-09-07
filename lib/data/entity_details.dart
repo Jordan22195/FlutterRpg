@@ -58,6 +58,11 @@ class EntityDetails {
   final double playerHitChance;
   final int playerMaxHit;
 
+  /// Seconds one action takes from a standing start, with whatever is
+  /// equipped to perform it. Unboosted: this is the rate the idle timer
+  /// shows, not the one a held button is currently running at.
+  final double playerActionInterval;
+
   /// Combat entities only: the entity's chance to land a hit on the player
   /// and how hard it hits. Both zero for everything else.
   final double entityHitChance;
@@ -79,6 +84,7 @@ class EntityDetails {
     required this.playerMaxHp,
     required this.playerHitChance,
     required this.playerMaxHit,
+    required this.playerActionInterval,
     required this.entityHitChance,
     required this.entityMaxHit,
     required this.expectedYield,
@@ -101,6 +107,14 @@ class EntityDetails {
   /// Expected damage per action: the to-hit roll times the uniform
   /// 1..maxHit damage roll.
   double get playerAverageDamage => playerHitChance * (1 + playerMaxHit) / 2.0;
+
+  /// Outgoing damage per second at the player's own action rate — the
+  /// mirror of [entityDamagePerSecond], and what the two sections are read
+  /// against each other for. 0 when nothing is being damaged.
+  double get playerDamagePerSecond {
+    if (!usesDamage || playerActionInterval <= 0) return 0;
+    return playerAverageDamage / playerActionInterval;
+  }
 
   /// Actions needed to take one count down from full hitpoints. Infinite
   /// when the player can't damage it at all.
