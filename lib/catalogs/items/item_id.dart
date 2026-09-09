@@ -388,6 +388,13 @@ enum ItemId {
       iconAsset: "assets/icons/items/silk.png",
     ),
   ),
+  FANG(
+    ItemDefinition(
+      name: "Fang",
+      value: 6,
+      iconAsset: "assets/icons/items/fang.png",
+    ),
+  ),
   CLAW(
     ItemDefinition(
       name: "Claw",
@@ -408,7 +415,7 @@ enum ItemId {
   // a FoodItemDefinition with restoreSkill set.
   //
   // The minor tier is the whole of alchemy so far: one guam leaf and one
-  // reagent for +1 to a single stat for a minute. Drinking one is
+  // reagent for +5 to a single stat for three minutes. Drinking one is
   // PotionSystem's job — the buff is global, so it travels with the
   // player rather than sitting in a zone the way a fire does.
   MINOR_SPEED_POTION(
@@ -1024,6 +1031,96 @@ enum ItemId {
 
   // ── ARMOR · HELMET ─────────────────────────────────────────────
   // tier ascending
+  LIGHT_LEATHER_COIF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Light Leather Coif",
+      value: 50,
+      fibLevel: 1,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_leather_coif.png",
+    ),
+  ),
+  MEDIUM_LEATHER_COIF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Medium Leather Coif",
+      value: 100,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_leather_coif.png",
+    ),
+  ),
+  HEAVY_LEATHER_COIF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Heavy Leather Coif",
+      value: 200,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_leather_coif.png",
+    ),
+  ),
+  LIGHT_DRAGONHIDE_COIF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Light Dragonhide Coif",
+      value: 400,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_dragonhide_coif.png",
+    ),
+  ),
+  MEDIUM_DRAGONHIDE_COIF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Medium Dragonhide Coif",
+      value: 800,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_dragonhide_coif.png",
+    ),
+  ),
+  HEAVY_DRAGONHIDE_COIF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Heavy Dragonhide Coif",
+      value: 1600,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_dragonhide_coif.png",
+    ),
+  ),
+  LIGHT_DEMONHIDE_COIF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Light Demonhide Coif",
+      value: 3200,
+      fibLevel: 7,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_demonhide_coif.png",
+    ),
+  ),
+  MEDIUM_DEMONHIDE_COIF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Medium Demonhide Coif",
+      value: 6400,
+      fibLevel: 8,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_demonhide_coif.png",
+    ),
+  ),
+  HEAVY_DEMONHIDE_COIF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Heavy Demonhide Coif",
+      value: 12800,
+      fibLevel: 9,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_demonhide_coif.png",
+    ),
+  ),
   COPPER_HELMET(
     EquipmentItemDefinition(
       armorSlot: ArmorSlots.HEAD,
@@ -1065,16 +1162,191 @@ enum ItemId {
     ),
   ),
 
+  // ── ARMOUR · SHOULDER ───────────────────────────────────────────
+  // tier ascending
+  LIGHT_LEATHER_SPAULDERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Light Leather Spaulders",
+      value: 100,
+      fibLevel: 1,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_leather_spaulders.png",
+    ),
+  ),
+  MEDIUM_LEATHER_SPAULDERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Medium Leather Spaulders",
+      value: 200,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_leather_spaulders.png",
+    ),
+  ),
+  HEAVY_LEATHER_SPAULDERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Heavy Leather Spaulders",
+      value: 400,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_leather_spaulders.png",
+    ),
+  ),
+  LIGHT_DRAGONHIDE_SPAULDERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Light Dragonhide Spaulders",
+      value: 800,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_dragonhide_spaulders.png",
+    ),
+  ),
+  MEDIUM_DRAGONHIDE_SPAULDERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Medium Dragonhide Spaulders",
+      value: 1600,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_dragonhide_spaulders.png",
+    ),
+  ),
+  HEAVY_DRAGONHIDE_SPAULDERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Heavy Dragonhide Spaulders",
+      value: 3200,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_dragonhide_spaulders.png",
+    ),
+  ),
+  LIGHT_DEMONHIDE_SPAULDERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Light Demonhide Spaulders",
+      value: 6400,
+      fibLevel: 7,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_demonhide_spaulders.png",
+    ),
+  ),
+  MEDIUM_DEMONHIDE_SPAULDERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Medium Demonhide Spaulders",
+      value: 12800,
+      fibLevel: 8,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_demonhide_spaulders.png",
+    ),
+  ),
+  HEAVY_DEMONHIDE_SPAULDERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Heavy Demonhide Spaulders",
+      value: 25600,
+      fibLevel: 9,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_demonhide_spaulders.png",
+    ),
+  ),
+
   // ── ARMOUR · CHESTPLATE ─────────────────────────────────────────
   // tier ascending
+  // the misspelling is this item's save format and cannot be corrected;
+  // every tier above it spells leather properly
   LIGHT_LETHER_CHEST(
     EquipmentItemDefinition(
       armorSlot: ArmorSlots.CHEST,
       name: "Light Leather Jerkin",
       value: 150,
-      fibLevel: 1,
-      statWeights: {SkillId.DEFENCE: 2},
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
       iconAsset: "assets/icons/items/light_leather_chest.png",
+    ),
+  ),
+  MEDIUM_LEATHER_CHEST(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Medium Leather Jerkin",
+      value: 300,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_leather_chest.png",
+    ),
+  ),
+  HEAVY_LEATHER_CHEST(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Heavy Leather Jerkin",
+      value: 600,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_leather_chest.png",
+    ),
+  ),
+  LIGHT_DRAGONHIDE_CHEST(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Light Dragonhide Jerkin",
+      value: 1200,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_dragonhide_chest.png",
+    ),
+  ),
+  MEDIUM_DRAGONHIDE_CHEST(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Medium Dragonhide Jerkin",
+      value: 2400,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_dragonhide_chest.png",
+    ),
+  ),
+  HEAVY_DRAGONHIDE_CHEST(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Heavy Dragonhide Jerkin",
+      value: 4800,
+      fibLevel: 7,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_dragonhide_chest.png",
+    ),
+  ),
+  LIGHT_DEMONHIDE_CHEST(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Light Demonhide Jerkin",
+      value: 9600,
+      fibLevel: 8,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_demonhide_chest.png",
+    ),
+  ),
+  MEDIUM_DEMONHIDE_CHEST(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Medium Demonhide Jerkin",
+      value: 19200,
+      fibLevel: 9,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_demonhide_chest.png",
+    ),
+  ),
+  HEAVY_DEMONHIDE_CHEST(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Heavy Demonhide Jerkin",
+      value: 38400,
+      fibLevel: 10,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_demonhide_chest.png",
     ),
   ),
   COPPER_CHESTPLATE(
@@ -1125,22 +1397,182 @@ enum ItemId {
       armorSlot: ArmorSlots.WAIST,
       name: "Light Leather Belt",
       value: 100,
-      fibLevel: 0,
-      statWeights: {SkillId.DEFENCE: 1},
-      iconAsset: "assets/icons/items/light_leather_pants.png",
+      fibLevel: 1,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_leather_belt.png",
+    ),
+  ),
+  MEDIUM_LEATHER_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Medium Leather Belt",
+      value: 200,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_leather_belt.png",
+    ),
+  ),
+  HEAVY_LEATHER_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Heavy Leather Belt",
+      value: 400,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_leather_belt.png",
+    ),
+  ),
+  LIGHT_DRAGONHIDE_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Light Dragonhide Belt",
+      value: 800,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_dragonhide_belt.png",
+    ),
+  ),
+  MEDIUM_DRAGONHIDE_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Medium Dragonhide Belt",
+      value: 1600,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_dragonhide_belt.png",
+    ),
+  ),
+  HEAVY_DRAGONHIDE_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Heavy Dragonhide Belt",
+      value: 3200,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_dragonhide_belt.png",
+    ),
+  ),
+  LIGHT_DEMONHIDE_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Light Demonhide Belt",
+      value: 6400,
+      fibLevel: 7,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_demonhide_belt.png",
+    ),
+  ),
+  MEDIUM_DEMONHIDE_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Medium Demonhide Belt",
+      value: 12800,
+      fibLevel: 8,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_demonhide_belt.png",
+    ),
+  ),
+  HEAVY_DEMONHIDE_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Heavy Demonhide Belt",
+      value: 25600,
+      fibLevel: 9,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_demonhide_belt.png",
     ),
   ),
 
-  // ── ARMOR · WAIST ───────────────────────────────────────────────
+  // ── ARMOR · WRIST ───────────────────────────────────────────────
   // tier ascending
   LIGHT_LEATHER_BRACERS(
     EquipmentItemDefinition(
       armorSlot: ArmorSlots.WRIST,
       name: "Light Leather Bracers",
       value: 100,
-      fibLevel: 0,
-      statWeights: {SkillId.DEFENCE: 1},
+      fibLevel: 1,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
       iconAsset: "assets/icons/items/light_leather_bracers.png",
+    ),
+  ),
+  MEDIUM_LEATHER_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Medium Leather Bracers",
+      value: 200,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_leather_bracers.png",
+    ),
+  ),
+  HEAVY_LEATHER_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Heavy Leather Bracers",
+      value: 400,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_leather_bracers.png",
+    ),
+  ),
+  LIGHT_DRAGONHIDE_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Light Dragonhide Bracers",
+      value: 800,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_dragonhide_bracers.png",
+    ),
+  ),
+  MEDIUM_DRAGONHIDE_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Medium Dragonhide Bracers",
+      value: 1600,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_dragonhide_bracers.png",
+    ),
+  ),
+  HEAVY_DRAGONHIDE_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Heavy Dragonhide Bracers",
+      value: 3200,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_dragonhide_bracers.png",
+    ),
+  ),
+  LIGHT_DEMONHIDE_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Light Demonhide Bracers",
+      value: 6400,
+      fibLevel: 7,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_demonhide_bracers.png",
+    ),
+  ),
+  MEDIUM_DEMONHIDE_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Medium Demonhide Bracers",
+      value: 12800,
+      fibLevel: 8,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_demonhide_bracers.png",
+    ),
+  ),
+  HEAVY_DEMONHIDE_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Heavy Demonhide Bracers",
+      value: 25600,
+      fibLevel: 9,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_demonhide_bracers.png",
     ),
   ),
   BRACERS_OF_THE_WOLF(
@@ -1185,9 +1617,89 @@ enum ItemId {
       armorSlot: ArmorSlots.LEGS,
       name: "Light Leather Pants",
       value: 100,
-      fibLevel: 1,
-      statWeights: {SkillId.DEFENCE: 2},
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
       iconAsset: "assets/icons/items/light_leather_pants.png",
+    ),
+  ),
+  MEDIUM_LEATHER_PANTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Medium Leather Pants",
+      value: 200,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_leather_pants.png",
+    ),
+  ),
+  HEAVY_LEATHER_PANTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Heavy Leather Pants",
+      value: 400,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_leather_pants.png",
+    ),
+  ),
+  LIGHT_DRAGONHIDE_PANTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Light Dragonhide Pants",
+      value: 800,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_dragonhide_pants.png",
+    ),
+  ),
+  MEDIUM_DRAGONHIDE_PANTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Medium Dragonhide Pants",
+      value: 1600,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_dragonhide_pants.png",
+    ),
+  ),
+  HEAVY_DRAGONHIDE_PANTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Heavy Dragonhide Pants",
+      value: 3200,
+      fibLevel: 7,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_dragonhide_pants.png",
+    ),
+  ),
+  LIGHT_DEMONHIDE_PANTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Light Demonhide Pants",
+      value: 6400,
+      fibLevel: 8,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_demonhide_pants.png",
+    ),
+  ),
+  MEDIUM_DEMONHIDE_PANTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Medium Demonhide Pants",
+      value: 12800,
+      fibLevel: 9,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_demonhide_pants.png",
+    ),
+  ),
+  HEAVY_DEMONHIDE_PANTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Heavy Demonhide Pants",
+      value: 25600,
+      fibLevel: 10,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_demonhide_pants.png",
     ),
   ),
   COPPER_LEGS(
@@ -1238,9 +1750,89 @@ enum ItemId {
       armorSlot: ArmorSlots.FEET,
       name: "Light Leather Boots",
       value: 50,
-      fibLevel: 0,
-      statWeights: {SkillId.DEFENCE: 1},
+      fibLevel: 1,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
       iconAsset: "assets/icons/items/light_leather_boots.png",
+    ),
+  ),
+  MEDIUM_LEATHER_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Medium Leather Boots",
+      value: 100,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_leather_boots.png",
+    ),
+  ),
+  HEAVY_LEATHER_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Heavy Leather Boots",
+      value: 200,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_leather_boots.png",
+    ),
+  ),
+  LIGHT_DRAGONHIDE_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Light Dragonhide Boots",
+      value: 400,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_dragonhide_boots.png",
+    ),
+  ),
+  MEDIUM_DRAGONHIDE_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Medium Dragonhide Boots",
+      value: 800,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_dragonhide_boots.png",
+    ),
+  ),
+  HEAVY_DRAGONHIDE_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Heavy Dragonhide Boots",
+      value: 1600,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_dragonhide_boots.png",
+    ),
+  ),
+  LIGHT_DEMONHIDE_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Light Demonhide Boots",
+      value: 3200,
+      fibLevel: 7,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_demonhide_boots.png",
+    ),
+  ),
+  MEDIUM_DEMONHIDE_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Medium Demonhide Boots",
+      value: 6400,
+      fibLevel: 8,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_demonhide_boots.png",
+    ),
+  ),
+  HEAVY_DEMONHIDE_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Heavy Demonhide Boots",
+      value: 12800,
+      fibLevel: 9,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_demonhide_boots.png",
     ),
   ),
   COPPER_BOOTS(
@@ -1291,9 +1883,89 @@ enum ItemId {
       armorSlot: ArmorSlots.HANDS,
       name: "Light Leather Gloves",
       value: 50,
-      fibLevel: 0,
-      statWeights: {SkillId.DEFENCE: 1},
+      fibLevel: 1,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
       iconAsset: "assets/icons/items/light_leather_gloves.png",
+    ),
+  ),
+  MEDIUM_LEATHER_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Medium Leather Gloves",
+      value: 100,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_leather_gloves.png",
+    ),
+  ),
+  HEAVY_LEATHER_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Heavy Leather Gloves",
+      value: 200,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_leather_gloves.png",
+    ),
+  ),
+  LIGHT_DRAGONHIDE_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Light Dragonhide Gloves",
+      value: 400,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_dragonhide_gloves.png",
+    ),
+  ),
+  MEDIUM_DRAGONHIDE_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Medium Dragonhide Gloves",
+      value: 800,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_dragonhide_gloves.png",
+    ),
+  ),
+  HEAVY_DRAGONHIDE_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Heavy Dragonhide Gloves",
+      value: 1600,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_dragonhide_gloves.png",
+    ),
+  ),
+  LIGHT_DEMONHIDE_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Light Demonhide Gloves",
+      value: 3200,
+      fibLevel: 7,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/light_demonhide_gloves.png",
+    ),
+  ),
+  MEDIUM_DEMONHIDE_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Medium Demonhide Gloves",
+      value: 6400,
+      fibLevel: 8,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/medium_demonhide_gloves.png",
+    ),
+  ),
+  HEAVY_DEMONHIDE_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Heavy Demonhide Gloves",
+      value: 12800,
+      fibLevel: 9,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/heavy_demonhide_gloves.png",
     ),
   ),
   COPPER_GLOVES(
@@ -1708,22 +2380,45 @@ enum ItemId {
 
   // ── WEAPONS & TOOLS · ODDITIES ──────────────────────────────────
   // tier ascending
+
+  // ── BOSS UNIQUES ────────────────────────────────────────────────
+  // by source dungeon
+
+  CHICKEN_CHARM(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Chicken Charm",
+      value: 150,
+      fibLevel: 0,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/chicken_charm.png",
+    ),
+  ),
+  MOOD_RING(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Mood Ring",
+      value: 150,
+      fibLevel: 0,
+      statWeights: {SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/mood_ring.png",
+    ),
+  ),
   PITCHFORK(
     WeaponItemDefinition(
       armorSlot: ArmorSlots.WEAPON_2H,
       name: "Pitchfork",
       value: 30,
-      fibLevel: 3,
-      statWeights: {SkillId.ATTACK: 5},
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1},
       actionInterval: SlowAttackSpeed,
       iconAsset: "assets/icons/items/pitchfork.png",
     ),
   ),
 
-  // ── BOSS UNIQUES ────────────────────────────────────────────────
-  // by source dungeon
   GOBLIN_CROWN(
     EquipmentItemDefinition(
+      quality: Rarity.LEGENDARY,
       armorSlot: ArmorSlots.HEAD,
       name: "Goblin Crown",
       value: 150,

@@ -70,9 +70,7 @@ void main() {
     // is that the row shows the zone's pool, not that the pool is any value.
     // Whole numbers render without their ".0", same as the widget does.
     final raw = ZoneId.TUTORIAL_FARM.definition.xpPerExplore.toStringAsFixed(1);
-    final pool = raw.endsWith('.0')
-        ? raw.substring(0, raw.length - 2)
-        : raw;
+    final pool = raw.endsWith('.0') ? raw.substring(0, raw.length - 2) : raw;
     expect(find.text('$pool per explore'), findsOneWidget);
 
     // the four baseline nodes are live and split the table evenly
@@ -94,10 +92,7 @@ void main() {
         .where((d) => d.name == 'Rotwood Scarecrow')
         .toList();
     expect(scarecrows, isNotEmpty);
-    expect(
-      find.text('Rotwood Scarecrow'),
-      findsNWidgets(scarecrows.length),
-    );
+    expect(find.text('Rotwood Scarecrow'), findsNWidgets(scarecrows.length));
     for (final s in scarecrows) {
       expect(find.text('Exploration ${s.unlockLevel}'), findsWidgets);
     }

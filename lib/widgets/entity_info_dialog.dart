@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
 import '../controllers/world_controller.dart';
 import '../data/entity_details.dart';
 import '../data/skill_data.dart';
@@ -329,7 +330,18 @@ class _DropTable extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 3),
             child: Row(
               children: [
-                IconRenderer(size: 28, id: drop.itemId),
+                // the standard tile, so a drop is framed by the quality
+                // it rolls and opens the same item dialog the bag does -
+                // the table is where you go to find out what a monster is
+                // worth killing for, which is exactly when you want to read
+                // the item. No count on the badge: a drop is a range, and
+                // the column to the right is the one that can say so
+                ItemStackTile<ItemId>(
+                  size: 36,
+                  id: drop.itemId,
+                  count: 0,
+                  quality: drop.rarity,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(

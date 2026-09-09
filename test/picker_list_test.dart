@@ -101,10 +101,7 @@ void main() {
         selectedIndex: 39,
       );
 
-      expect(
-        scrollable.position.pixels,
-        scrollable.position.maxScrollExtent,
-      );
+      expect(scrollable.position.pixels, scrollable.position.maxScrollExtent);
       expect(find.byKey(const ValueKey(39)), findsOneWidget);
     });
 

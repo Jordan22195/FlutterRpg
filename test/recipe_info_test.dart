@@ -80,10 +80,7 @@ void main() {
       expect(chanceOf(details, Rarity.UNCOMMON), closeTo(1 / total, 1e-9));
       expect(chanceOf(details, Rarity.RARE), closeTo(0.1 / total, 1e-9));
       expect(chanceOf(details, Rarity.EPIC), closeTo(0.01 / total, 1e-9));
-      expect(
-        chanceOf(details, Rarity.LEGENDARY),
-        closeTo(0.001 / total, 1e-9),
-      );
+      expect(chanceOf(details, Rarity.LEGENDARY), closeTo(0.001 / total, 1e-9));
     });
 
     test('levelling shifts weight off common and onto the top tiers', () {
@@ -160,9 +157,9 @@ void main() {
 
     test('outcomes are listed commonest first', () {
       setLevel(SkillId.COOKING, 40);
-      final chances = detailsFor('cook_chicken').outcomes
-          .map((o) => o.chance)
-          .toList();
+      final chances = detailsFor(
+        'cook_chicken',
+      ).outcomes.map((o) => o.chance).toList();
       for (var i = 1; i < chances.length; i++) {
         expect(chances[i], lessThanOrEqualTo(chances[i - 1]));
       }

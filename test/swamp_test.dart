@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
@@ -110,8 +111,9 @@ void main() {
       for (final id in [EntityId.FUNGAL_MONSTER, EntityId.GIANT_SCORPION]) {
         final def = id.definition as EncounterEntityDefinition;
         final loot = {
-          ...def.itemDrops.map((d) => d.id),
-          for (final roll in def.bonusDrops) ...roll.entries.map((d) => d.id),
+          ...def.itemDrops.flattened.map((d) => d.id),
+          for (final roll in def.bonusDrops)
+            ...roll.entries.flattened.map((d) => d.id),
         }..remove(ItemId.COINS);
         expect(loot, isNotEmpty, reason: '${id.name} drops only coins');
       }

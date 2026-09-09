@@ -36,7 +36,9 @@ void main() {
 
     // another activity takes over the action loop
     session.actionTimingController.stop();
-    session.actionTimingController.bindOnFireFunction((_, {offline = false, at, span}) {});
+    session.actionTimingController.bindOnFireFunction(
+      (_, {offline = false, at, span}) {},
+    );
     session.actionTimingController.start();
     expect(world.getCurrentZoneItems(), isEmpty);
 

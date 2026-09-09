@@ -161,9 +161,7 @@ void main() {
       // virtually guarantees a spread rather than one flat stack
       expect(
         total(
-          save.inventoryData.equipment.where(
-            (e) => e.quality != Rarity.COMMON,
-          ),
+          save.inventoryData.equipment.where((e) => e.quality != Rarity.COMMON),
         ),
         greaterThan(0),
       );

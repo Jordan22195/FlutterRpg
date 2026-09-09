@@ -39,14 +39,14 @@ void main() {
         .playerData;
   }
 
-
   // an action state with a recording onFire. every count the loop fires is
   // appended, so a test can tell one batch of 20 from two batches of 10.
   (ActionTimingData, List<int>) recordingState() {
     final fired = <int>[];
     final state = ActionTimingData();
-    state.onFire = (count, {bool offline = false, DateTime? at, Duration? span}) =>
-        fired.add(count);
+    state.onFire =
+        (count, {bool offline = false, DateTime? at, Duration? span}) =>
+            fired.add(count);
     return (state, fired);
   }
 
@@ -157,7 +157,8 @@ void main() {
       final fired = <int>[];
       final timing = game.actionTimingController;
       timing.bindOnFireFunction(
-        (count, {bool offline = false, DateTime? at, Duration? span}) => fired.add(count),
+        (count, {bool offline = false, DateTime? at, Duration? span}) =>
+            fired.add(count),
       );
 
       // the player was on another screen for a minute, not backgrounded

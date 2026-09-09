@@ -260,8 +260,9 @@ void main() {
     // pickaxe and reads what it is worth rather than writing a number onto
     // the instance
     final pickaxeMining =
-        (ItemId.COPPER_PICKAXE.definition as EquipmentItemDefinition)
-            .statsAt(Rarity.COMMON)[SkillId.MINING]!;
+        (ItemId.COPPER_PICKAXE.definition as EquipmentItemDefinition).statsAt(
+          Rarity.COMMON,
+        )[SkillId.MINING]!;
 
     int minedAt(double multiplier, {int strength = 10, bool geared = false}) {
       final player = newPlayer();

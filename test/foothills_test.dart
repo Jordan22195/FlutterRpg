@@ -4,6 +4,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
@@ -110,7 +111,10 @@ void main() {
 
     test('the vein drops the ore it is named for', () {
       final def = EntityId.MITHRIL_VEIN.definition as EncounterEntityDefinition;
-      expect(def.itemDrops.map((d) => d.id), contains(ItemId.MITHRIL_ORE));
+      expect(
+        def.itemDrops.flattened.map((d) => d.id),
+        contains(ItemId.MITHRIL_ORE),
+      );
     });
 
     test('and nothing else in the game yields mithril ore', () {
@@ -121,8 +125,9 @@ void main() {
         final def = id.definition;
         if (def is! EncounterEntityDefinition) continue;
         final drops = {
-          ...def.itemDrops.map((d) => d.id),
-          for (final roll in def.bonusDrops) ...roll.entries.map((d) => d.id),
+          ...def.itemDrops.flattened.map((d) => d.id),
+          for (final roll in def.bonusDrops)
+            ...roll.entries.flattened.map((d) => d.id),
         };
         if (drops.contains(ItemId.MITHRIL_ORE)) sources.add(id.name);
       }

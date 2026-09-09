@@ -108,7 +108,7 @@ void main() {
     final mudlurk = definitionOf(EntityId.MUDLURC_WARRIOR);
 
     test('the catalog still lists a weapon drop at two qualities', () {
-      final daggers = mudlurk.itemDrops
+      final daggers = mudlurk.itemDrops.flattened
           .where((drop) => drop.id == ItemId.FISHBONE_DAGGER)
           .toList();
 

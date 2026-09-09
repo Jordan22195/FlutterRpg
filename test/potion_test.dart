@@ -48,6 +48,15 @@ void main() {
     ItemId.MINOR_STRENGTH_POTION: SkillId.STRENGTH,
   };
 
+  // The minor tier's shape, read off the catalog rather than written down:
+  // the tier has been retuned once already (+1 for a minute became +5 for
+  // three), and these tests are meant to pin that the six agree with each
+  // other and that drinking one works — not to freeze the numbers.
+  final minorPotion =
+      ItemId.MINOR_SPEED_POTION.definition as BuffItemDefinition;
+  final minorBonus = minorPotion.skillBonus[SkillId.SPEED]!;
+  final minorDuration = minorPotion.duration;
+
   const newReagents = <ItemId>[
     ItemId.SCALE,
     ItemId.SILK,
@@ -70,7 +79,7 @@ void main() {
   }
 
   group('the potion catalog', () {
-    test('every minor potion is a drinkable one-minute +1', () {
+    test('every minor potion is a drinkable buff of one shape', () {
       potionStats.forEach((id, stat) {
         final definition = id.definition;
         expect(
@@ -87,10 +96,12 @@ void main() {
         );
 
         final buff = definition as BuffItemDefinition;
-        expect(buff.duration, const Duration(minutes: 1));
-        expect(buff.skillBonus, {
-          stat: 1,
-        }, reason: '${id.name} must be exactly +1 ${stat.name}');
+        expect(buff.duration, minorDuration);
+        expect(
+          buff.skillBonus,
+          {stat: minorBonus},
+          reason: '${id.name} must be exactly +\$minorBonus \${stat.name}',
+        );
       });
     });
 
@@ -125,7 +136,7 @@ void main() {
         () => potion.skillBonus[SkillId.SPEED] = 99,
         throwsUnsupportedError,
       );
-      expect(definition.skillBonus[SkillId.SPEED], 1);
+      expect(definition.skillBonus[SkillId.SPEED], minorBonus);
     });
   });
 
@@ -258,7 +269,7 @@ void main() {
       );
       expect(
         session.playerDataService.getStatTotals(save.playerData)[SkillId.SPEED],
-        before + 1,
+        before + minorBonus,
       );
 
       session.dispose();
@@ -319,7 +330,7 @@ void main() {
       // one entry, running longer — not two entries, and not restarted
       expect(save.playerData.buffData.globalBuffs.length, 1);
       expect(secondExpiry.isAfter(firstExpiry), isTrue);
-      expect(secondExpiry.difference(firstExpiry), const Duration(minutes: 1));
+      expect(secondExpiry.difference(firstExpiry), minorDuration);
       expect(
         save.inventoryData.itemMap.containsKey(ItemId.MINOR_SPEED_POTION),
         isFalse,
@@ -328,7 +339,7 @@ void main() {
       session.dispose();
     });
 
-    test('the buff lapses after its minute', () {
+    test('the buff lapses once its duration is up', () {
       final session = buildSession();
       final save = session.saveGameData;
       save.inventoryData.itemMap[ItemId.MINOR_ATTACK_POTION] = 1;
@@ -345,7 +356,7 @@ void main() {
           zone,
           at: expiry.subtract(const Duration(seconds: 1)),
         )[SkillId.ATTACK],
-        1,
+        minorBonus,
       );
       expect(
         session.buffService.getBuffedStatTotal(
@@ -382,7 +393,7 @@ void main() {
           save.playerData.buffData,
           elsewhere,
         )[SkillId.STAMINA],
-        1,
+        minorBonus,
       );
 
       session.dispose();
@@ -403,7 +414,7 @@ void main() {
 
       final buff = restored.globalBuffs[ItemId.MINOR_RECOVERY_POTION];
       expect(buff, isNotNull);
-      expect(buff!.skillBonus, {SkillId.RECOVERY: 1});
+      expect(buff!.skillBonus, {SkillId.RECOVERY: minorBonus});
       expect(buff.expirationTime, original.expirationTime);
 
       session.dispose();
@@ -544,7 +555,7 @@ void main() {
           .widget<CountdownTimer>(find.byType(CountdownTimer))
           .expirationTime;
 
-      expect(secondShown.difference(firstShown), const Duration(minutes: 1));
+      expect(secondShown.difference(firstShown), minorDuration);
       // and it is the live buff being shown, not a recomputed guess
       expect(
         secondShown,
@@ -609,7 +620,7 @@ void main() {
           save.playerData.buffData.globalBuffs[ItemId.MINOR_SPEED_POTION]!;
       expect(
         buff.expirationTime.difference(DateTime.now()),
-        greaterThan(const Duration(minutes: 3, seconds: 30)),
+        greaterThan(minorDuration * 3),
       );
       expect(find.text('Drink'), findsNothing);
 
@@ -672,7 +683,7 @@ void main() {
       // and it goes away with the buff
       session.buffService.checkBuffExpriations(
         save.playerData.buffData,
-        at: DateTime.now().add(const Duration(minutes: 2)),
+        at: DateTime.now().add(minorDuration + const Duration(seconds: 1)),
       );
       session.buffController.refresh();
       await settle(tester);

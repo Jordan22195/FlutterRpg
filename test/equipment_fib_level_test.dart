@@ -5,8 +5,9 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/utilities/util.dart';
 
 /// Equipment stats are never written by hand: a [fibLevel] sets the size of
-/// the stat budget, [statWeights] splits it, and rarity walks the rung up
-/// the same ladder a monster's does.
+/// the stat budget, [statWeights] splits it, and rarity multiplies it —
+/// 1.2x/1.4x/1.6x/1.8x, floored so the tier is worth at least +1/+2/+3/+4
+/// total stats over the common.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -60,28 +61,36 @@ void main() {
       for (final entry in equipment()) {
         final def = entry.value;
         if (def.statWeights.length != 1) continue;
+        // nothing is lost in the split when there is only one share
+        expect(
+          def.statsAt(Rarity.COMMON).values.single,
+          Util.fib(def.fibLevel),
+          reason: '${entry.key.name} at COMMON',
+        );
         for (final rarity in Rarity.values) {
           expect(
             def.statsAt(rarity).values.single,
-            Util.fib(def.fibLevel + rarity.index),
+            def.budgetAt(rarity),
             reason: '${entry.key.name} at ${rarity.name}',
           );
         }
       }
     });
+  });
 
-    test('rarity moves every stat on every piece', () {
-      // the thing rarityStatMinBonus used to paper over: a +1 item scaled
-      // by 1.1 rounded straight back to +1, so an uncommon copper helmet
-      // was worth exactly what a common one was
+  group('rarity multiplies the budget', () {
+    int totalAt(EquipmentItemDefinition def, Rarity rarity) =>
+        def.statsAt(rarity).values.fold(0, (sum, stat) => sum + stat);
+
+    test('every piece is worth strictly more at every step up', () {
+      // the thing the multiplier alone cannot promise: a +1 item scaled by
+      // 1.2 rounds straight back to +1, so an uncommon copper helmet would
+      // be worth exactly what a common one is
       for (final entry in equipment()) {
         final def = entry.value;
         var previous = 0;
         for (final rarity in Rarity.values) {
-          final total = def
-              .statsAt(rarity)
-              .values
-              .fold(0, (sum, stat) => sum + stat);
+          final total = totalAt(def, rarity);
           expect(
             total,
             greaterThan(previous),
@@ -90,6 +99,55 @@ void main() {
           previous = total;
         }
       }
+    });
+
+    test('the minimum each tier owes over common is paid on every piece', () {
+      for (final entry in equipment()) {
+        final def = entry.value;
+        final common = totalAt(def, Rarity.COMMON);
+        for (final rarity in Rarity.values) {
+          expect(
+            totalAt(def, rarity) - common,
+            greaterThanOrEqualTo(rarity.minStatBonus),
+            reason:
+                '${entry.key.name} at ${rarity.name} owes common '
+                '+${rarity.minStatBonus} and does not pay it',
+          );
+        }
+      }
+    });
+
+    test('a big enough piece is the multiplier and nothing more', () {
+      // rung 9 is a budget of 89, well past where the floors bite, so the
+      // tiers land on exactly the percentages
+      const big = EquipmentItemDefinition(
+        name: 'Test',
+        value: 1,
+        armorSlot: ArmorSlots.HEAD,
+        fibLevel: 9,
+        statWeights: {SkillId.DEFENCE: 1},
+      );
+      expect(big.budgetAt(Rarity.COMMON), 89);
+      expect(big.budgetAt(Rarity.UNCOMMON), 107); // 89 * 1.2
+      expect(big.budgetAt(Rarity.RARE), 125); // 89 * 1.4
+      expect(big.budgetAt(Rarity.EPIC), 142); // 89 * 1.6
+      expect(big.budgetAt(Rarity.LEGENDARY), 160); // 89 * 1.8
+    });
+
+    test('a one-point piece rides the floor instead', () {
+      // 1.2x of 1 rounds to 1, so the whole ladder here is minStatBonus
+      const tiny = EquipmentItemDefinition(
+        name: 'Test',
+        value: 1,
+        armorSlot: ArmorSlots.HEAD,
+        fibLevel: 0,
+        statWeights: {SkillId.DEFENCE: 1},
+      );
+      expect(tiny.statsAt(Rarity.COMMON), {SkillId.DEFENCE: 1});
+      expect(tiny.statsAt(Rarity.UNCOMMON), {SkillId.DEFENCE: 2});
+      expect(tiny.statsAt(Rarity.RARE), {SkillId.DEFENCE: 3});
+      expect(tiny.statsAt(Rarity.EPIC), {SkillId.DEFENCE: 4});
+      expect(tiny.statsAt(Rarity.LEGENDARY), {SkillId.DEFENCE: 5});
     });
   });
 
@@ -155,7 +213,7 @@ void main() {
       ItemId.IRON_DAGGER: 2,
       ItemId.STEEL_DAGGER: 3,
       ItemId.MITHRIL_DAGGER: 5,
-      ItemId.PITCHFORK: 5,
+      ItemId.PITCHFORK: 3,
     };
     for (final entry in weapons.entries) {
       final piece = entry.key.build() as EquipmentItem;
@@ -184,16 +242,26 @@ void main() {
     expect(helmet.effectiveSkillBonus[SkillId.ATTACK], 2);
   });
 
-  test("a piece's rung is its definition's plus the rarity rolled on it", () {
+  test("a rolled piece's stats are its definition's, multiplied", () {
     final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
     final def = ItemId.COPPER_HELMET.definition as EquipmentItemDefinition;
 
-    expect(helmet.fibLevel, def.fibLevel);
-    helmet.quality = Rarity.EPIC;
-    expect(helmet.fibLevel, def.fibLevel + 3);
     expect(
       helmet.effectiveSkillBonus[SkillId.DEFENCE],
-      Util.fib(def.fibLevel + 3),
+      def.budgetAt(helmet.quality),
     );
+    helmet.quality = Rarity.EPIC;
+    expect(
+      helmet.effectiveSkillBonus[SkillId.DEFENCE],
+      def.budgetAt(Rarity.EPIC),
+    );
+
+    // EquipmentItem.fibLevel is the other tuning of the same idea, kept in
+    // case the ladder is worth going back to. It still walks, and stats
+    // still ignore it: a rung-0 helmet at epic is 4 by the +3 floor, not
+    // fib(3) = 5.
+    expect(helmet.fibLevel, def.fibLevel + Rarity.EPIC.index);
+    expect(helmet.effectiveSkillBonus[SkillId.DEFENCE], 4);
+    expect(Util.fib(helmet.fibLevel), 5);
   });
 }

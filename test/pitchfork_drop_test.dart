@@ -15,7 +15,7 @@ import 'package:rpg/utilities/util.dart';
 /// RARE_PITCHFORK existed only because a bonus roll could not carry a
 /// quality. Now that a bonus roll rolls `ItemDropType` like the main table
 /// does, it is retired: the rare scarecrow's 50% layered roll drops
-/// PITCHFORK at RARE, and rarity walks its rung two steps up the ladder.
+/// PITCHFORK at RARE, and rarity multiplies its budget by 1.4.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -29,7 +29,7 @@ void main() {
     );
   }
 
-  test('a rare pitchfork is two rungs above the ordinary one', () {
+  test('a rare pitchfork is 1.4x the ordinary one', () {
     final def = ItemId.PITCHFORK.definition as EquipmentItemDefinition;
     final rare = ItemId.PITCHFORK.build() as EquipmentItem;
     rare.quality = Rarity.RARE;
@@ -39,10 +39,10 @@ void main() {
           .ATTACK],
       Util.fib(def.fibLevel),
     );
-    expect(
-      rare.effectiveSkillBonus[SkillId.ATTACK],
-      Util.fib(def.fibLevel + Rarity.RARE.index),
-    );
+    // rung 2 is 3 attack. 3 * 1.4 rounds to 4, which is short of the +2
+    // the rare tier owes at minimum, so the floor carries it to 5
+    expect(rare.effectiveSkillBonus[SkillId.ATTACK], 5);
+    expect(rare.effectiveSkillBonus[SkillId.ATTACK], def.budgetAt(Rarity.RARE));
     expect(rare.displayName, 'Rare Pitchfork');
   });
 
@@ -87,9 +87,8 @@ void main() {
     expect(pitchforks.map((p) => p.quality), everyElement(Rarity.RARE));
     expect(
       pitchforks.first.effectiveSkillBonus[SkillId.ATTACK],
-      Util.fib(
-        (ItemId.PITCHFORK.definition as EquipmentItemDefinition).fibLevel +
-            Rarity.RARE.index,
+      (ItemId.PITCHFORK.definition as EquipmentItemDefinition).budgetAt(
+        Rarity.RARE,
       ),
     );
     // an instance in the equipment list, never a count on the item map

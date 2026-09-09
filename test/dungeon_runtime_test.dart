@@ -220,7 +220,8 @@ void main() {
       expect(
         coins >= 100 || necklaces > 0,
         isTrue,
-        reason: 'the boss should have paid out one roll of its table, '
+        reason:
+            'the boss should have paid out one roll of its table, '
             'got $coins coins and $necklaces necklaces',
       );
 
@@ -572,10 +573,7 @@ void main() {
       // at no cost - the system refuses to open it instead
       save.dungeonRun.slots[1].members.first.count = 0;
       save.dungeonRun.slots[1].index = 0;
-      expect(
-        session.dungeonSystem.openSlot(save.dungeonRun, 1),
-        isNull,
-      );
+      expect(session.dungeonSystem.openSlot(save.dungeonRun, 1), isNull);
 
       session.dispose();
     });

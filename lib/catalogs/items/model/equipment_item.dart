@@ -52,8 +52,13 @@ class EquipmentItem extends Item {
   /// prevent. Per-piece stats belong in [quality] and [enchantBonus].
   Map<SkillId, int> get statWeights => Map.unmodifiable(definition.statWeights);
 
-  /// The rung this particular piece sits on: the definition's, walked up by
-  /// whatever rarity was rolled onto it.
+  /// The rung this particular piece sits on, if rarity were a step up the
+  /// Fibonacci ladder rather than a multiplier on the budget.
+  ///
+  /// Kept deliberately: stats come off [EquipmentItemDefinition.budgetAt],
+  /// which now scales the definition's rung by [Rarity.statMultiplier], so
+  /// nothing in play reads this. It is the other tuning of the same idea,
+  /// left here in case the ladder is worth going back to.
   int get fibLevel => definition.fibLevel + quality.index;
 
   /// Rolled by crafting, drops and shop stock; falls back to whatever the

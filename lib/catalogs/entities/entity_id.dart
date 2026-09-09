@@ -519,7 +519,14 @@ enum EntityId {
       name: "Cow",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 8, highCount: 24, weight: 1),
+        ItemDropType(id: ItemId.COW_MEAT, weight: 1),
+        ItemDropType(id: ItemId.COW_HIDE, weight: 1),
+        ItemDropType(id: ItemId.MOOD_RING, rarity: Rarity.COMMON, weight: .1),
+        ItemDropType(
+          id: ItemId.MOOD_RING,
+          rarity: Rarity.UNCOMMON,
+          weight: .01,
+        ),
       ],
     ),
   ),
@@ -563,7 +570,8 @@ enum EntityId {
       giantRat,
       name: "Giant Rat",
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 8, highCount: 24, weight: 1),
+        ItemDropType(id: ItemId.COINS, lowCount: 1, highCount: 10, weight: 8),
+        ItemDropType(id: ItemId.GOLD_RING, lowCount: 1, weight: 1),
       ],
     ),
   ),
@@ -620,6 +628,7 @@ enum EntityId {
         ItemDropType(id: ItemId.LOGS, weight: 1, lowCount: 1, highCount: 4),
         ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 3, highCount: 10),
         ItemDropType(id: ItemId.IRON_ORE, weight: 1, lowCount: 1, highCount: 2),
+        ItemDropType(id: ItemId.PITCHFORK, weight: .5),
       ],
       // an independent 5% on top of the main pick, so it costs the other
       // three drops nothing
@@ -634,7 +643,11 @@ enum EntityId {
       name: "Rotwood Scarecrow",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 21, highCount: 63, weight: 1),
+        ItemDropType(id: ItemId.LOGS, weight: 1, lowCount: 1, highCount: 6),
+        ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 3, highCount: 10),
+        ItemDropType(id: ItemId.IRON_ORE, weight: 1, lowCount: 1, highCount: 4),
+        ItemDropType(id: ItemId.PITCHFORK, weight: .5),
+        ItemDropType(id: ItemId.PITCHFORK, rarity: Rarity.UNCOMMON, weight: .1),
       ],
     ),
   ),
@@ -687,10 +700,7 @@ enum EntityId {
     CombatEntityDefinition(
       spider,
       name: "Giant Spider",
-      itemDrops: [
-        ItemDropType(id: ItemId.SILK, weight: 1),
-        ItemDropType(id: ItemId.VENOM, weight: 1),
-      ],
+      itemDrops: [NestedDrop(spiderDropTable)],
     ),
   ),
   GIANT_SPIDER_UNCOMMON(
@@ -699,7 +709,9 @@ enum EntityId {
       name: "Giant Spider",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 34, highCount: 102, weight: 1),
+        NestedDrop(spiderDropTable, countMultiplier: 2),
+        ItemDropType(id: ItemId.SPIDER_SILK_NECKLACE, weight: .2),
+        ItemDropType(id: ItemId.SPIDER_SILK_NECKLACE, weight: .1),
       ],
     ),
   ),
@@ -755,7 +767,7 @@ enum EntityId {
       name: "Elder Forest Wolf",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(id: ItemId.CLAW, lowCount: 2, highCount: 5, weight: 1),
+        ItemDropType(id: ItemId.FANG, lowCount: 2, highCount: 5, weight: 1),
         ItemDropType(
           id: ItemId.ANIMAL_PELT,
           lowCount: 2,
@@ -768,10 +780,18 @@ enum EntityId {
   FOREST_WOLF_RARE(
     CombatEntityDefinition(
       wolf,
-      name: "Forest Wolf",
+      name: "Alpha Forest Wolf",
       rarity: Rarity.RARE,
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
+        ItemDropType(id: ItemId.FANG, lowCount: 2, highCount: 5, weight: 1),
+
+        ItemDropType(id: ItemId.WOOL_CLOAK, weight: .1),
+        ItemDropType(
+          id: ItemId.WOOL_CLOAK,
+          weight: .01,
+          rarity: Rarity.UNCOMMON,
+        ),
+        ItemDropType(id: ItemId.WOOL_CLOAK, weight: .002, rarity: Rarity.RARE),
       ],
     ),
   ),
@@ -807,6 +827,9 @@ enum EntityId {
       name: "Giant Bat",
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 21, highCount: 63, weight: 1),
+        // TODO
+        // BATWINGS
+        // LEATHER
       ],
     ),
   ),
@@ -862,6 +885,7 @@ enum EntityId {
       name: "Slime",
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 21, highCount: 63, weight: 1),
+        // TODO OOZE FOR ALCH
       ],
     ),
   ),
@@ -915,19 +939,27 @@ enum EntityId {
   // Tier 8 - Level 34
   //
   // Goblin · roster tier 2 · forest
+  // The goblin family shares one set of tables across all five rarity
+  // variants: the gear nests take the variant's quality as an override, so
+  // the ladder is five one-word edits rather than five hand-written copies
+  // of the same six lines. The fish nest never takes one — only equipment
+  // carries a quality.
   GOBLIN(
     CombatEntityDefinition(
       goblin,
       name: "Goblin",
-      itemDrops: [ItemDropType(id: ItemId.COINS, weight: 1)],
+      itemDrops: [
+        NestedDrop(cookedFishDropTable, weight: 2),
+        NestedDrop(ironToolsDropTable, weight: 1),
+        NestedDrop(ironMinorArmorDropTable, weight: 1),
+        ItemDropType(id: ItemId.COINS, lowCount: 1, highCount: 5, weight: 1),
+      ],
       // 5% chance, on top of the coin drop, to yield the key that opens
       // the Goblin Queen's Lair landmark dungeon
       bonusDrops: [
         DropRoll(
           chance: 0.05,
-          entries: [
-            ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY),
-          ],
+          entries: [ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY)],
         ),
       ],
     ),
@@ -935,29 +967,38 @@ enum EntityId {
   GOBLIN_UNCOMMON(
     CombatEntityDefinition(
       goblin,
-      name: "Goblin",
+      name: "Goblin Scout",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
+        NestedDrop(cookedFishDropTable, weight: 2),
+        NestedDrop(ironToolsDropTable, weight: 1, rarity: Rarity.UNCOMMON),
+        NestedDrop(ironMinorArmorDropTable, weight: 1, rarity: Rarity.UNCOMMON),
+        ItemDropType(id: ItemId.COINS, weight: 1),
       ],
     ),
   ),
   GOBLIN_RARE(
     CombatEntityDefinition(
       goblin,
-      name: "Goblin",
+      name: "Goblin Warrior",
       rarity: Rarity.RARE,
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 89, highCount: 267, weight: 1),
+        NestedDrop(cookedFishDropTable, weight: 2),
+        NestedDrop(steelMinorArmorDropTable, weight: 1, rarity: Rarity.RARE),
+        NestedDrop(steelToolsDropTable, weight: 1, rarity: Rarity.RARE),
+        ItemDropType(id: ItemId.COINS, lowCount: 50, weight: 1),
       ],
     ),
   ),
   GOBLIN_EPIC(
     CombatEntityDefinition(
       goblin,
-      name: "Goblin",
+      name: "Goblin General",
       rarity: Rarity.EPIC,
       itemDrops: [
+        NestedDrop(cookedFishDropTable, weight: 2),
+        NestedDrop(ironToolsDropTable, weight: 1, rarity: Rarity.EPIC),
+        NestedDrop(ironMinorArmorDropTable, weight: 1, rarity: Rarity.EPIC),
         ItemDropType(
           id: ItemId.COINS,
           lowCount: 144,
@@ -970,9 +1011,16 @@ enum EntityId {
   GOBLIN_LEGENDARY(
     CombatEntityDefinition(
       goblin,
-      name: "Goblin",
+      name: "Goblin Queen",
       rarity: Rarity.LEGENDARY,
       itemDrops: [
+        NestedDrop(cookedFishDropTable, weight: 2),
+        NestedDrop(ironToolsDropTable, weight: 1, rarity: Rarity.LEGENDARY),
+        NestedDrop(
+          ironMinorArmorDropTable,
+          weight: 1,
+          rarity: Rarity.LEGENDARY,
+        ),
         ItemDropType(
           id: ItemId.COINS,
           lowCount: 233,
@@ -988,7 +1036,8 @@ enum EntityId {
       bear,
       name: "Bear",
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 34, highCount: 102, weight: 1),
+        ItemDropType(id: ItemId.CLAW, lowCount: 1, highCount: 3, weight: 1),
+        // todo leather
       ],
     ),
   ),
@@ -1052,6 +1101,10 @@ enum EntityId {
         ItemDropType(id: ItemId.PIKE, weight: 1),
         ItemDropType(id: ItemId.TROUT, weight: 1),
         ItemDropType(id: ItemId.SCALE, lowCount: 1, highCount: 3, weight: 3),
+        ItemDropType(id: ItemId.MEDIUM_LEATHER_BELT, weight: 1),
+        ItemDropType(id: ItemId.MEDIUM_LEATHER_BOOTS, weight: 1),
+        ItemDropType(id: ItemId.MEDIUM_LEATHER_BRACERS, weight: 1),
+        ItemDropType(id: ItemId.MEDIUM_LEATHER_GLOVES, weight: 1),
       ],
     ),
   ),
@@ -1074,6 +1127,26 @@ enum EntityId {
           id: ItemId.FISHBONE_DAGGER,
           rarity: Rarity.UNCOMMON,
           weight: 0.05,
+        ),
+        ItemDropType(
+          id: ItemId.MEDIUM_LEATHER_BELT,
+          rarity: Rarity.UNCOMMON,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.MEDIUM_LEATHER_BOOTS,
+          rarity: Rarity.UNCOMMON,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.MEDIUM_LEATHER_BRACERS,
+          rarity: Rarity.UNCOMMON,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.MEDIUM_LEATHER_GLOVES,
+          rarity: Rarity.UNCOMMON,
+          weight: 1,
         ),
       ],
     ),
@@ -1187,6 +1260,8 @@ enum EntityId {
       name: "Kobold",
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 34, highCount: 102, weight: 1),
+        // todo ore drop table
+        // todo big rat tail ach
       ],
     ),
   ),
@@ -1250,8 +1325,8 @@ enum EntityId {
       skeleton,
       name: "Skeleton",
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
-        ItemDropType(id: ItemId.ENCHANTING_DUST, lowCount: 1, highCount: 2, weight: 1),
+        NestedDrop(steelMajorArmorDropTable),
+        ItemDropType(id: ItemId.COINS, weight: 10),
       ],
     ),
   ),
@@ -1316,9 +1391,10 @@ enum EntityId {
       zombie,
       name: "Zombie",
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
-        ItemDropType(id: ItemId.ANIMAL_PELT, weight: 1),
-        ItemDropType(id: ItemId.ENCHANTING_DUST, weight: 1),
+        NestedDrop(steelMinorArmorDropTable),
+        NestedDrop(herbDropTable),
+        NestedDrop(steelToolsDropTable),
+        ItemDropType(id: ItemId.COINS, weight: 10),
       ],
     ),
   ),
@@ -1328,7 +1404,9 @@ enum EntityId {
       name: "Zombie",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(id: ItemId.COINS, lowCount: 89, highCount: 267, weight: 1),
+        NestedDrop(mithrilWeaponsDropTable),
+        NestedDrop(herbDropTable),
+        ItemDropType(id: ItemId.COINS, weight: 10),
       ],
     ),
   ),
@@ -1592,7 +1670,12 @@ enum EntityId {
       name: "Imp",
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 89, highCount: 267, weight: 1),
-        ItemDropType(id: ItemId.ENCHANTING_ESSENCE, lowCount: 1, highCount: 3, weight: 1),
+        ItemDropType(
+          id: ItemId.ENCHANTING_ESSENCE,
+          lowCount: 1,
+          highCount: 3,
+          weight: 1,
+        ),
       ],
     ),
   ),
@@ -1890,7 +1973,12 @@ enum EntityId {
       troll,
       name: "Troll",
       itemDrops: [
-        ItemDropType(id: ItemId.ANIMAL_PELT, lowCount: 2, highCount: 5, weight: 1),
+        ItemDropType(
+          id: ItemId.ANIMAL_PELT,
+          lowCount: 2,
+          highCount: 5,
+          weight: 1,
+        ),
         ItemDropType(
           id: ItemId.COINS,
           lowCount: 144,
@@ -3804,6 +3892,17 @@ enum EntityId {
           lowCount: 25,
           highCount: 50,
         ),
+        ItemDropType(id: ItemId.CHICKEN_CHARM),
+        ItemDropType(
+          id: ItemId.CHICKEN_CHARM,
+          rarity: Rarity.UNCOMMON,
+          weight: .1,
+        ),
+        ItemDropType(
+          id: ItemId.CHICKEN_CHARM,
+          rarity: Rarity.RARE,
+          weight: .01,
+        ),
       ],
     ),
   ),
@@ -3827,9 +3926,7 @@ enum EntityId {
       bonusDrops: [
         DropRoll(
           chance: 0.05,
-          entries: [
-            ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY),
-          ],
+          entries: [ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY)],
         ),
       ],
     ),
@@ -3842,6 +3939,12 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 5, highCount: 15, weight: 1),
         ItemDropType(id: ItemId.IRON_DAGGER, weight: 1),
+        ItemDropType(
+          id: ItemId.IRON_DAGGER,
+          rarity: Rarity.UNCOMMON,
+          weight: .1,
+        ),
+        ItemDropType(id: ItemId.IRON_DAGGER, rarity: Rarity.RARE, weight: .01),
         ItemDropType(id: ItemId.GUAM_LEAF, weight: 1),
         ItemDropType(id: ItemId.LIGHT_LEATHER_BOOTS, weight: 1),
         ItemDropType(
@@ -3856,9 +3959,7 @@ enum EntityId {
       bonusDrops: [
         DropRoll(
           chance: 0.05,
-          entries: [
-            ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY),
-          ],
+          entries: [ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY)],
         ),
       ],
     ),
@@ -3869,6 +3970,7 @@ enum EntityId {
       name: "Spider Broodmother",
       rarity: Rarity.EPIC,
       itemDrops: [
+        NestedDrop(spiderDropTable, countMultiplier: 4),
         ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 100),
         ItemDropType(
           id: ItemId.SPIDER_SILK_NECKLACE,
@@ -3904,11 +4006,7 @@ enum EntityId {
       ],
       bonusDrops: [
         // guaranteed bulk currency
-        DropRoll(
-          entries: [
-            ItemDropType(id: ItemId.COINS, lowCount: 500),
-          ],
-        ),
+        DropRoll(entries: [ItemDropType(id: ItemId.COINS, lowCount: 500)]),
         // rare second unique on top of the guaranteed one
         DropRoll(
           chance: 0.1,
@@ -3990,12 +4088,28 @@ enum EntityId {
 
   // ── DUNGEON ENTRANCES ───────────────────────────────────────────
   // DungeonEntityDefinition, same order as dungeon_id.dart
+  GRAINERY_ENTRANCE(
+    DungeonEntityDefinition(
+      name: "Grainery",
+      iconAsset: "assets/images/entities/grainery.png",
+      rarity: Rarity.UNCOMMON,
+      dungeonId: DungeonId.GRAINERY,
+    ),
+  ),
   SPIDER_DEN_ENTRANCE(
     DungeonEntityDefinition(
       name: "Spider Den",
       iconAsset: "assets/images/entities/spider_den.png",
       rarity: Rarity.RARE,
       dungeonId: DungeonId.SPIDER_DEN,
+    ),
+  ),
+  WOLF_DEN_ENTRANCE(
+    DungeonEntityDefinition(
+      name: "Wolf Den",
+      iconAsset: "assets/images/entities/wolf_den.png",
+      rarity: Rarity.RARE,
+      dungeonId: DungeonId.WOLF_DEN,
     ),
   ),
   GOBLIN_CAMP(

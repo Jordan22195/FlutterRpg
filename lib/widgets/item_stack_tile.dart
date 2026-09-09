@@ -44,7 +44,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     this.expirationTime,
     this.buffExpirationTime,
     this.borderColor,
-    this.quality = Rarity.COMMON,
+    this.quality,
     this.depleted = false,
     this.alwaysShowCount = false,
     this.compactCount = true,
@@ -52,10 +52,29 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
 
   final double size;
 
-  /// The rarity this tile's contents are, which frames the tile when no
-  /// [borderColor] overrides it. Equipment passes the tier it rolled; an
-  /// entity tile leaves it alone and is framed by its own rarity instead.
-  final Rarity quality;
+  /// The rarity this tile's contents rolled, or null for a tile showing a
+  /// bare id that nothing has rolled — a recipe's output, a drop table line
+  /// — which falls back to whatever the item's definition declares.
+  ///
+  /// Null and [Rarity.COMMON] are genuinely different answers, which is why
+  /// this is nullable: the Goblin Crown is a legendary by definition, so a
+  /// tile that was told nothing has to show it as one, while a tile holding
+  /// an instance that actually rolled common has to show that instead.
+  /// [EquipmentItem.quality] resolves the same two cases the same way.
+  ///
+  /// It frames the tile when no [borderColor] overrides it, and it is the
+  /// tier the info dialog prices the stats at. An entity tile leaves it
+  /// alone and is framed by its own rarity instead.
+  final Rarity? quality;
+
+  /// [quality] if this tile was handed one, else whatever the item declares
+  /// for itself.
+  Rarity get _effectiveQuality {
+    final rolled = quality;
+    if (rolled != null) return rolled;
+    final currentId = id;
+    return currentId is ItemId ? currentId.definition.quality : Rarity.COMMON;
+  }
 
   /// The enum id for this stack (e.g., Items.copperOre, Skills.blacksmithing, etc.)
   final T? id;
@@ -203,9 +222,11 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
             if (itemDef is EquipmentItemDefinition)
               Text("Slot: ${itemDef.armorSlot}"),
             // the real stats, not the weights that split them: the budget
-            // comes off the definition's rung at the quality it declares
+            // comes off the definition's rung, scaled by the quality this
+            // particular piece is — not the one its definition declares, or
+            // every rarity of a charm would read as the common one
             if (itemDef is EquipmentItemDefinition)
-              for (var stat in itemDef.statsAt(itemDef.quality).entries)
+              for (var stat in itemDef.statsAt(_effectiveQuality).entries)
                 Row(
                   children: [
                     IconRenderer(size: 40, id: stat.key),
@@ -294,7 +315,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     if (currentId is EntityId) {
       return rarityBorderColor(currentId.definition.rarity);
     }
-    return rarityBorderColor(quality);
+    return rarityBorderColor(_effectiveQuality);
   }
 
   @override

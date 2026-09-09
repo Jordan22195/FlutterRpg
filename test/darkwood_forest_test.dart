@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
@@ -148,8 +149,8 @@ void main() {
       ({bool ok, List<ItemId> got}) dropsOf(EntityId id) {
         final def = id.definition as EncounterEntityDefinition;
         return (
-          ok: def.itemDrops.isNotEmpty,
-          got: def.itemDrops.map((e) => e.id).toList(),
+          ok: def.itemDrops.flattened.isNotEmpty,
+          got: def.itemDrops.flattened.map((e) => e.id).toList(),
         );
       }
 

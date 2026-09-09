@@ -69,7 +69,7 @@ const giantRat = CombatArchetype(
 // Rotwood Scarecrow · roster tier 1 · farm
 const scarecrow = CombatArchetype(
   iconAsset: 'assets/images/entities/rotwood_scarecrow.png',
-  fibLevel: 5,
+  fibLevel: 4,
   combatType: CombatType.PLATE_TANK,
   attackInterval: 2.5,
 );
@@ -108,7 +108,7 @@ const slime = CombatArchetype(
 // Goblin · roster tier 2 · forest
 const goblin = CombatArchetype(
   iconAsset: 'assets/images/entities/goblin.png',
-  fibLevel: 7,
+  fibLevel: 5,
   combatType: CombatType.CLOTH_DPS,
   attackInterval: 2.0,
 );
@@ -145,14 +145,14 @@ const kobold = CombatArchetype(
 // Skeleton · roster tier 3 · dark forest
 const skeleton = CombatArchetype(
   iconAsset: 'assets/images/entities/skeleton.png',
-  fibLevel: 8,
+  fibLevel: 7,
   combatType: CombatType.BALANCE,
   attackInterval: 2.0,
 );
 // Zombie · roster tier 3 · dark forest
 const zombie = CombatArchetype(
   iconAsset: 'assets/images/entities/zombie.png',
-  fibLevel: 8,
+  fibLevel: 7,
   combatType: CombatType.ROCK_CRAB,
   attackInterval: 2.5,
 );
@@ -424,10 +424,10 @@ const goblinSeargent = CombatArchetype(
   combatType: CombatType.LEATHER_DPS,
   attackInterval: 2.0,
 );
-// Epic, so fib(5)+3 holds its level 55.
+// Rare, so fib(5)+3 holds its level 55.
 const spiderBroodmother = CombatArchetype(
   iconAsset: 'assets/images/entities/spider_broodmother.png',
-  fibLevel: 5,
+  fibLevel: 6,
   combatType: CombatType.LEATHER_TANK,
   attackInterval: 2.5,
 );

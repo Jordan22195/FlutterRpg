@@ -455,26 +455,9 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     inputs: {ItemId.GOLD_ORE: 1},
     output: [WeightedDropTableEntry(id: ItemId.GOLD_BAR, count: 1, weight: 1)],
   ),
-  CraftingRecipe(
-    id: 'forge_gold_ring',
-    name: 'Gold Ring',
-    skill: SkillId.BLACKSMITHING,
-    levelRequirement: 25,
-    xp: 4,
-    inputs: {ItemId.GOLD_BAR: 1},
-    output: [WeightedDropTableEntry(id: ItemId.GOLD_RING, count: 1, weight: 1)],
-  ),
-  CraftingRecipe(
-    id: 'forge_gold_necklace',
-    name: 'Gold Necklace',
-    skill: SkillId.BLACKSMITHING,
-    levelRequirement: 25,
-    xp: 4,
-    inputs: {ItemId.GOLD_BAR: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.GOLD_NECKLACE, count: 1, weight: 1),
-    ],
-  ),
+  // The gold bases are Jewelcrafting's, not Blacksmithing's — see
+  // jc_gold_ring / jc_gold_necklace in jewelcrafting_recipes.dart. Smelting
+  // the bar stays here; shaping it into a band does not.
 
   // ── MITHRIL (tier 4) ────────────────────────────────────────────
   // Like steel, mithril is smelted with coal rather than from a bar of

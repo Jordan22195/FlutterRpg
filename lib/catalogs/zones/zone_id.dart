@@ -30,47 +30,22 @@ enum ZoneId {
         EntityId.ANVIL,
         EntityId.FIREPIT,
         EntityId.FARMER,
+        EntityId.GRAINERY_ENTRANCE,
       ],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.CHICKEN, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.COW, weight: 1),
-        // the skill's first payoff: an existing rare, now something you
-        // earn rather than something you stumble into on turn one
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.BIG_RED,
-          weight: .07,
-          unlockLevel: 4,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.FIELD_RAT, weight: 1),
+
         WeightedDropTableEntry<EntityId>(
           id: EntityId.ROTWOOD_SCARECROW,
-          weight: .7,
-          unlockLevel: 8,
-        ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.ROTWOOD_SCARECROW_1,
-          weight: .007,
+          weight: 1,
           unlockLevel: 8,
         ),
       ],
-      discoverableItems: [
-        WeightedDropTableEntry(
-          id: ItemId.COINS,
-          count: 1,
-          highCount: 10,
-          weight: .1,
-          unlockLevel: 3,
-        ),
-        // a lucky gem turned up in the dirt; feeds jewelcrafting from the
-        // starter zone
-        WeightedDropTableEntry(
-          id: ItemId.SAPPHIRE,
-          weight: .02,
-          unlockLevel: 6,
-        ),
-        WeightedDropTableEntry(id: ItemId.NULL, weight: 1),
-      ],
+      discoverableItems: [WeightedDropTableEntry(id: ItemId.NULL, weight: 1)],
     ),
   ),
   SOUTHWOOD_FOREST(
@@ -80,7 +55,11 @@ enum ZoneId {
       xpPerExplore: 5,
 
       name: "Southwood Forest",
-      permanentEntities: [EntityId.RIVER, EntityId.FIREPIT],
+      permanentEntities: [
+        EntityId.RIVER,
+        EntityId.FIREPIT,
+        EntityId.WOLF_DEN_ENTRANCE,
+      ],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: .5),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
@@ -89,10 +68,8 @@ enum ZoneId {
           weight: 1,
         ),
         WeightedDropTableEntry<EntityId>(id: EntityId.FOREST_WOLF, weight: 1),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.FOREST_WOLF_UNCOMMON,
-          weight: 1,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.BEAR, weight: 1),
+
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
         WeightedDropTableEntry(id: EntityId.GOBLIN_CAMP, weight: .01),
         // herb geography: the low herbs grow here once you can spot them,
@@ -103,26 +80,10 @@ enum ZoneId {
           count: 3,
           unlockLevel: 8,
         ),
-
-        // the river runs through these woods, and the mudlurcs come out of
-        // it — the same pairing the forest wolves have with the treeline
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.MUDLURC,
-          weight: 1,
-          unlockLevel: 11,
-        ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.MUDLURC_WARRIOR,
-          weight: .5,
-          unlockLevel: 11,
-        ),
-
-        // the valuable herb everyone wants, reserved for explorers who
-        // have really learned these woods
       ],
       discoverableItems: [
         WeightedDropTableEntry(
-          id: ItemId.LOGS,
+          id: ItemId.NULL,
           count: 1,
           highCount: 5,
           weight: .15,
@@ -173,14 +134,7 @@ enum ZoneId {
           count: 2,
           unlockLevel: 24,
         ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.RANARR,
-          weight: .2,
-          unlockLevel: 30,
-        ),
-        // the undead the deep woods were written for. Gated so the zone
-        // still opens at 20 against the spiders it already had: the tier 3
-        // pair arrive at 22, and the tier 4 pair a whole ladder later.
+
         WeightedDropTableEntry<EntityId>(
           id: EntityId.SKELETON,
           weight: 1,
@@ -190,16 +144,6 @@ enum ZoneId {
           id: EntityId.ZOMBIE,
           weight: 1,
           unlockLevel: 22,
-        ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.WRAITH,
-          weight: .4,
-          unlockLevel: 32,
-        ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.BANSHEE,
-          weight: .4,
-          unlockLevel: 32,
         ),
       ],
       discoverableItems: [

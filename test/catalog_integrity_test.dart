@@ -43,7 +43,94 @@ const knownMissingArt = <String>{
   'assets/images/zones/foothills.png',
   // The entity portraits, item icons and the 47-monster roster that used to
   // sit here have all been drawn — generate_assets_rd.py covers every kind
-  // whose style is settled, so the backlog is down to the scene art alone.
+  // whose style is settled, so the scene art above is the whole of the old
+  // backlog.
+  //
+  // The leather ladder below is a new and deliberately temporary entry: the
+  // nine tiers across eight slots landed as definitions before their art,
+  // and every prompt is already written in tools/rd_prompt_overrides.json.
+  // One `python3 tools/generate_assets_rd.py` run draws all of them and this
+  // whole block comes back out.
+  //
+  // The swords and the fang below are older gaps, found the same way and
+  // pending the same run: they shipped with an iconAsset and no art, and
+  // until now no prompt either.
+  'assets/icons/items/copper_sword.png',
+  'assets/icons/items/copper_greatsword.png',
+  'assets/icons/items/iron_sword.png',
+  'assets/icons/items/iron_greatsword.png',
+  'assets/icons/items/steel_sword.png',
+  'assets/icons/items/steel_greatsword.png',
+  'assets/icons/items/mithril_sword.png',
+  'assets/icons/items/mithril_greatsword.png',
+  'assets/icons/items/fang.png',
+  'assets/icons/items/light_leather_coif.png',
+  'assets/icons/items/light_leather_spaulders.png',
+  'assets/icons/items/light_leather_belt.png',
+  'assets/icons/items/medium_leather_coif.png',
+  'assets/icons/items/medium_leather_spaulders.png',
+  'assets/icons/items/medium_leather_chest.png',
+  'assets/icons/items/medium_leather_belt.png',
+  'assets/icons/items/medium_leather_bracers.png',
+  'assets/icons/items/medium_leather_pants.png',
+  'assets/icons/items/medium_leather_boots.png',
+  'assets/icons/items/medium_leather_gloves.png',
+  'assets/icons/items/heavy_leather_coif.png',
+  'assets/icons/items/heavy_leather_spaulders.png',
+  'assets/icons/items/heavy_leather_chest.png',
+  'assets/icons/items/heavy_leather_belt.png',
+  'assets/icons/items/heavy_leather_bracers.png',
+  'assets/icons/items/heavy_leather_pants.png',
+  'assets/icons/items/heavy_leather_boots.png',
+  'assets/icons/items/heavy_leather_gloves.png',
+  'assets/icons/items/light_dragonhide_coif.png',
+  'assets/icons/items/light_dragonhide_spaulders.png',
+  'assets/icons/items/light_dragonhide_chest.png',
+  'assets/icons/items/light_dragonhide_belt.png',
+  'assets/icons/items/light_dragonhide_bracers.png',
+  'assets/icons/items/light_dragonhide_pants.png',
+  'assets/icons/items/light_dragonhide_boots.png',
+  'assets/icons/items/light_dragonhide_gloves.png',
+  'assets/icons/items/medium_dragonhide_coif.png',
+  'assets/icons/items/medium_dragonhide_spaulders.png',
+  'assets/icons/items/medium_dragonhide_chest.png',
+  'assets/icons/items/medium_dragonhide_belt.png',
+  'assets/icons/items/medium_dragonhide_bracers.png',
+  'assets/icons/items/medium_dragonhide_pants.png',
+  'assets/icons/items/medium_dragonhide_boots.png',
+  'assets/icons/items/medium_dragonhide_gloves.png',
+  'assets/icons/items/heavy_dragonhide_coif.png',
+  'assets/icons/items/heavy_dragonhide_spaulders.png',
+  'assets/icons/items/heavy_dragonhide_chest.png',
+  'assets/icons/items/heavy_dragonhide_belt.png',
+  'assets/icons/items/heavy_dragonhide_bracers.png',
+  'assets/icons/items/heavy_dragonhide_pants.png',
+  'assets/icons/items/heavy_dragonhide_boots.png',
+  'assets/icons/items/heavy_dragonhide_gloves.png',
+  'assets/icons/items/light_demonhide_coif.png',
+  'assets/icons/items/light_demonhide_spaulders.png',
+  'assets/icons/items/light_demonhide_chest.png',
+  'assets/icons/items/light_demonhide_belt.png',
+  'assets/icons/items/light_demonhide_bracers.png',
+  'assets/icons/items/light_demonhide_pants.png',
+  'assets/icons/items/light_demonhide_boots.png',
+  'assets/icons/items/light_demonhide_gloves.png',
+  'assets/icons/items/medium_demonhide_coif.png',
+  'assets/icons/items/medium_demonhide_spaulders.png',
+  'assets/icons/items/medium_demonhide_chest.png',
+  'assets/icons/items/medium_demonhide_belt.png',
+  'assets/icons/items/medium_demonhide_bracers.png',
+  'assets/icons/items/medium_demonhide_pants.png',
+  'assets/icons/items/medium_demonhide_boots.png',
+  'assets/icons/items/medium_demonhide_gloves.png',
+  'assets/icons/items/heavy_demonhide_coif.png',
+  'assets/icons/items/heavy_demonhide_spaulders.png',
+  'assets/icons/items/heavy_demonhide_chest.png',
+  'assets/icons/items/heavy_demonhide_belt.png',
+  'assets/icons/items/heavy_demonhide_bracers.png',
+  'assets/icons/items/heavy_demonhide_pants.png',
+  'assets/icons/items/heavy_demonhide_boots.png',
+  'assets/icons/items/heavy_demonhide_gloves.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
@@ -222,6 +309,9 @@ void main() {
     test('the shared tables are rollable', () {
       checkDropTable(gemDropTable, 'gemDropTable');
       checkDropTable(herbDropTable, 'herbDropTable');
+      checkDropTable(cookedFishDropTable, 'cookedFishDropTable');
+      checkDropTable(ironToolsDropTable, 'ironToolsDropTable');
+      checkDropTable(ironMinorArmorDropTable, 'ironMinorArmorDropTable');
     });
 
     test('encounter drops are rollable', () {
@@ -229,8 +319,17 @@ void main() {
         if (id == EntityId.NULL_ENCOUNTER) continue;
         final def = id.definition;
         if (def is! EncounterEntityDefinition) continue;
-        checkDropTable(def.itemDrops, 'EntityId.${id.name}');
+        // flattened, so the check reaches the leaves inside a nested table
+        // rather than stopping at the reference standing in for them
+        final drops = def.itemDrops.flattened;
+        checkDropTable(drops, 'EntityId.${id.name}');
+        expect(
+          drops.whereType<NestedDrop>(),
+          isEmpty,
+          reason: '${id.name} still has an unresolved nested table',
+        );
         for (final roll in def.bonusDrops) {
+          checkDropTable(roll.entries.flattened, 'EntityId.${id.name} bonus');
           expect(
             roll.chance,
             inInclusiveRange(0, 1),
@@ -434,7 +533,10 @@ void main() {
       for (final id in EntityId.values) {
         final def = id.definition;
         if (def is! EncounterEntityDefinition) continue;
-        for (final e in def.itemDrops) {
+        // flattened: a nested table's reference carries ItemId.NULL as a
+        // placeholder, and it is the leaves it resolves to that have to be
+        // real items
+        for (final e in def.itemDrops.flattened) {
           expect(
             e.id,
             isNot(ItemId.NULL),
@@ -764,6 +866,75 @@ const frozenItemIds = <String>{
   'GOBLIN_SCEPTER',
   'SPIDER_SILK_NECKLACE',
   'GOBLIN_QUEEN_KEY',
+  // the leather ladder: nine tiers across eight slots
+  'LIGHT_LEATHER_COIF',
+  'MEDIUM_LEATHER_COIF',
+  'HEAVY_LEATHER_COIF',
+  'LIGHT_DRAGONHIDE_COIF',
+  'MEDIUM_DRAGONHIDE_COIF',
+  'HEAVY_DRAGONHIDE_COIF',
+  'LIGHT_DEMONHIDE_COIF',
+  'MEDIUM_DEMONHIDE_COIF',
+  'HEAVY_DEMONHIDE_COIF',
+  'LIGHT_LEATHER_SPAULDERS',
+  'MEDIUM_LEATHER_SPAULDERS',
+  'HEAVY_LEATHER_SPAULDERS',
+  'LIGHT_DRAGONHIDE_SPAULDERS',
+  'MEDIUM_DRAGONHIDE_SPAULDERS',
+  'HEAVY_DRAGONHIDE_SPAULDERS',
+  'LIGHT_DEMONHIDE_SPAULDERS',
+  'MEDIUM_DEMONHIDE_SPAULDERS',
+  'HEAVY_DEMONHIDE_SPAULDERS',
+  'MEDIUM_LEATHER_CHEST',
+  'HEAVY_LEATHER_CHEST',
+  'LIGHT_DRAGONHIDE_CHEST',
+  'MEDIUM_DRAGONHIDE_CHEST',
+  'HEAVY_DRAGONHIDE_CHEST',
+  'LIGHT_DEMONHIDE_CHEST',
+  'MEDIUM_DEMONHIDE_CHEST',
+  'HEAVY_DEMONHIDE_CHEST',
+  'LIGHT_LEATHER_BELT',
+  'MEDIUM_LEATHER_BELT',
+  'HEAVY_LEATHER_BELT',
+  'LIGHT_DRAGONHIDE_BELT',
+  'MEDIUM_DRAGONHIDE_BELT',
+  'HEAVY_DRAGONHIDE_BELT',
+  'LIGHT_DEMONHIDE_BELT',
+  'MEDIUM_DEMONHIDE_BELT',
+  'HEAVY_DEMONHIDE_BELT',
+  'LIGHT_LEATHER_BRACERS',
+  'MEDIUM_LEATHER_BRACERS',
+  'HEAVY_LEATHER_BRACERS',
+  'LIGHT_DRAGONHIDE_BRACERS',
+  'MEDIUM_DRAGONHIDE_BRACERS',
+  'HEAVY_DRAGONHIDE_BRACERS',
+  'LIGHT_DEMONHIDE_BRACERS',
+  'MEDIUM_DEMONHIDE_BRACERS',
+  'HEAVY_DEMONHIDE_BRACERS',
+  'MEDIUM_LEATHER_PANTS',
+  'HEAVY_LEATHER_PANTS',
+  'LIGHT_DRAGONHIDE_PANTS',
+  'MEDIUM_DRAGONHIDE_PANTS',
+  'HEAVY_DRAGONHIDE_PANTS',
+  'LIGHT_DEMONHIDE_PANTS',
+  'MEDIUM_DEMONHIDE_PANTS',
+  'HEAVY_DEMONHIDE_PANTS',
+  'MEDIUM_LEATHER_BOOTS',
+  'HEAVY_LEATHER_BOOTS',
+  'LIGHT_DRAGONHIDE_BOOTS',
+  'MEDIUM_DRAGONHIDE_BOOTS',
+  'HEAVY_DRAGONHIDE_BOOTS',
+  'LIGHT_DEMONHIDE_BOOTS',
+  'MEDIUM_DEMONHIDE_BOOTS',
+  'HEAVY_DEMONHIDE_BOOTS',
+  'MEDIUM_LEATHER_GLOVES',
+  'HEAVY_LEATHER_GLOVES',
+  'LIGHT_DRAGONHIDE_GLOVES',
+  'MEDIUM_DRAGONHIDE_GLOVES',
+  'HEAVY_DRAGONHIDE_GLOVES',
+  'LIGHT_DEMONHIDE_GLOVES',
+  'MEDIUM_DEMONHIDE_GLOVES',
+  'HEAVY_DEMONHIDE_GLOVES',
 };
 
 const frozenEntityIds = <String>{

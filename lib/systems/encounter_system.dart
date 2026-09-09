@@ -524,6 +524,14 @@ class EncounterSystem {
   ) {
     final stacks = <ObjectStack<ItemId>>[];
     for (final drop in rolled) {
+      // a nested table is resolved away by WeightedDrops.flattened long
+      // before this. One arriving here would be skipped by the NULL guard
+      // below without a word, and the player would silently lose that whole
+      // branch of the table - so say it out loud instead.
+      assert(
+        drop.id is! NestedDrop,
+        'an unflattened nested drop table reached the payout',
+      );
       if (drop.count <= 0 || drop.id.id == ItemId.NULL) continue;
       if (drop.id.id.build() is! EquipmentItem) {
         stacks.add(ObjectStack<ItemId>(id: drop.id.id, count: drop.count));
@@ -585,7 +593,9 @@ class EncounterSystem {
       case SkillId.HERBALISM:
         double weightSum = 0;
         double xpSum = 0;
-        for (final entry in def.itemDrops) {
+        // flattened, or a nested table would count its own weight at the
+        // NULL item's xpValue of 0 and drag the average down
+        for (final entry in def.itemDrops.flattened) {
           final xp = entry.id.definition.xpValue;
           weightSum += entry.weight;
           xpSum += entry.weight * xp * entry.count;
@@ -660,12 +670,28 @@ class EncounterSystem {
     if (def is! EncounterEntityDefinition) return const [];
 
     return [
-      ..._dropRows(def.itemDrops, rollChance: 1.0, bonus: false),
+      ..._dropRows(def.itemDrops.flattened, rollChance: 1.0, bonus: false),
       for (final roll in def.bonusDrops)
-        ..._dropRows(roll.entries, rollChance: roll.chance, bonus: true),
+        ..._dropRows(
+          roll.entries.flattened,
+          rollChance: roll.chance,
+          bonus: true,
+        ),
     ];
   }
 
+  /// One table's worth of rows. [entries] is expected flattened, so a
+  /// nested table shows up as the items it can actually pay rather than as
+  /// itself — the player reads the odds of getting a carp, not the odds of
+  /// reaching the fish table and then a carp.
+  ///
+  /// Lines that describe the same drop are merged into one row. Flattening
+  /// makes that ordinary: two nested tables can each carry coins, and two
+  /// rows reading 10% is a worse answer than one reading 20%. Summing is
+  /// exact here and only here, because a table yields exactly one pick and
+  /// its lines are therefore mutually exclusive. Separate [DropRoll]s are
+  /// independent events, which is why the merge lives at this level and not
+  /// across [_buildDropChances].
   List<EntityDropChance> _dropRows(
     List<ItemDropType> entries, {
     required double rollChance,
@@ -674,20 +700,26 @@ class EncounterSystem {
     final total = entries.fold<double>(0, (sum, e) => sum + e.weight);
     if (total <= 0) return const [];
 
-    final rows = [
-      for (final e in entries)
-        EntityDropChance(
-          itemId: e.id,
-          name: e.id.definition.name,
-          rarity: e.rarity,
-          chance: rollChance * (e.weight / total),
-          minCount: e.lowCount,
-          maxCount: e.highCount > e.lowCount ? e.highCount : e.lowCount,
-          bonus: bonus,
-        ),
-    ];
+    final merged = <(ItemId, Rarity, int, int), EntityDropChance>{};
+    for (final e in entries) {
+      final maxCount = e.highCount > e.lowCount ? e.highCount : e.lowCount;
+      final key = (e.id, e.rarity, e.lowCount, maxCount);
+      final chance = rollChance * (e.weight / total);
+      final seen = merged[key];
+      merged[key] = EntityDropChance(
+        itemId: e.id,
+        name: e.id.definition.name,
+        rarity: e.rarity,
+        chance: (seen?.chance ?? 0) + chance,
+        minCount: e.lowCount,
+        maxCount: maxCount,
+        bonus: bonus,
+      );
+    }
+
     // commonest first, so the chase drops sit at the bottom of the table
-    rows.sort((a, b) => b.chance.compareTo(a.chance));
+    final rows = merged.values.toList()
+      ..sort((a, b) => b.chance.compareTo(a.chance));
     return rows;
   }
 

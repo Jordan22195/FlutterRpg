@@ -144,7 +144,8 @@ void main() {
       expect(
         coins >= 100 || necklaces > 0,
         isTrue,
-        reason: 'the boss should have paid out one roll of its table, '
+        reason:
+            'the boss should have paid out one roll of its table, '
             'got $coins coins and $necklaces necklaces',
       );
 

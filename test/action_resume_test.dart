@@ -39,9 +39,7 @@ void main() {
   // lookup a resume does can find it again
   EncounterEntity addTreeToZone(GameSession session) {
     final save = session.saveGameData;
-    final tree =
-        EntityId.TREE.build()
-            as EncounterEntity;
+    final tree = EntityId.TREE.build() as EncounterEntity;
     save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities.add(
       tree,
     );

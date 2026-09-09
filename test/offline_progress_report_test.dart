@@ -83,8 +83,8 @@ void main() {
       expect(report.timeAway.inSeconds, longGap.inSeconds);
       // the meadow's table is uniform, so every explore pays the zone's whole
       // pool; read that off the catalog rather than restating a tuning number
-      final pool = session.saveGameData.playerData.currentZoneId.definition
-          .xpPerExplore;
+      final pool =
+          session.saveGameData.playerData.currentZoneId.definition.xpPerExplore;
       expect(
         report.xp[SkillId.EXPLORATION],
         pool * actionsIn(session, longGap),

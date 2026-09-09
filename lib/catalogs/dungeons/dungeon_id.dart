@@ -69,26 +69,74 @@ enum DungeonId {
           name: "Webbed Thicket",
           entities: [
             DungeonEntityRef(EntityId.GIANT_SPIDER, count: 10),
-            DungeonEntityRef(EntityId.GOBLIN, count: 10),
-            DungeonEntityRef(EntityId.BIG_RED, count: 15),
-            DungeonEntityRef(EntityId.GEM_VEIN, count: 10),
-            DungeonEntityRef(EntityId.COW, count: 15),
+            DungeonEntityRef(EntityId.GIANT_SPIDER_UNCOMMON, count: 10),
+            DungeonEntityRef(EntityId.ZOMBIE_UNCOMMON, count: 1),
           ],
         ),
-        DungeonEntry(
-          name: "Collapsed Seam",
-          entities: [DungeonEntityRef(EntityId.IRON, count: 8)],
-          requiresPrevious: false,
-        ),
-        DungeonEntry(
-          name: "Deep Nest",
-          entities: [DungeonEntityRef(EntityId.GIANT_SPIDER, count: 5)],
-        ),
+
         DungeonEntry(
           name: "Broodmother's Lair",
           entities: [
-            DungeonEntityRef(EntityId.GIANT_SPIDER, count: 2),
+            DungeonEntityRef(EntityId.GIANT_SPIDER_UNCOMMON, count: 20),
+            DungeonEntityRef(EntityId.ZOMBIE_UNCOMMON, count: 20),
             DungeonEntityRef(EntityId.SPIDER_BROODMOTHER),
+          ],
+        ),
+      ],
+    ),
+  ),
+  GRAINERY(
+    DungeonDefinition(
+      name: "Grainery",
+      iconAsset: "assets/images/dungeons/grainery.png",
+      type: DungeonType.ZONE,
+      entries: [
+        DungeonEntry(
+          name: "Feed Room",
+          entities: [
+            DungeonEntityRef(EntityId.CHICKEN, count: 20),
+            DungeonEntityRef(EntityId.BIG_RED, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "Stalls",
+          entities: [
+            DungeonEntityRef(EntityId.COW, count: 20),
+            DungeonEntityRef(EntityId.COW_UNCOMMON, count: 1),
+          ],
+        ),
+        DungeonEntry(
+          name: "Cellar",
+          entities: [
+            DungeonEntityRef(EntityId.ROTWOOD_SCARECROW, count: 20),
+            DungeonEntityRef(EntityId.ROTWOOD_SCARECROW_UNCOMMON, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
+  WOLF_DEN(
+    DungeonDefinition(
+      name: "Wolf Den",
+      iconAsset: "assets/images/dungeons/wolf_den.png",
+      type: DungeonType.ZONE,
+      entries: [
+        DungeonEntry(
+          name: "Cave Entrance",
+          entities: [
+            DungeonEntityRef(EntityId.GOBLIN, count: 20),
+            DungeonEntityRef(EntityId.GOBLIN_UNCOMMON, count: 10),
+            DungeonEntityRef(EntityId.GOBLIN_RARE, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "Deep Lair",
+          entities: [
+            DungeonEntityRef(EntityId.FOREST_WOLF, count: 20),
+            DungeonEntityRef(EntityId.FOREST_WOLF_UNCOMMON, count: 10),
+            DungeonEntityRef(EntityId.FOREST_WOLF_RARE, count: 10),
           ],
         ),
       ],

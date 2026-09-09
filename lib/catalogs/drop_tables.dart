@@ -17,6 +17,20 @@
 /// either, and rolls for the drop, quality and all, whichever it is used
 /// as.
 ///
+/// A table can also sit *inside* another table as a single weighted line,
+/// by way of [NestedDrop]. Landing on it yields exactly one pick from it,
+/// and the reference may stamp a quality on everything that comes out — so
+/// one shared table serves every rarity variant of a monster instead of
+/// each variant hand-writing the same lines at its own rarity:
+///
+/// ```dart
+/// itemDrops: [
+///   NestedDrop(cookedFishDropTable, weight: 2),
+///   NestedDrop(ironToolsDropTable, weight: 1, rarity: Rarity.RARE),
+///   ItemDropType(id: ItemId.COINS, lowCount: 1, highCount: 5),
+/// ],
+/// ```
+///
 /// Every entry leaves `unlockLevel` at 0. Only callers
 /// that run `WeightedDropTableService.availableAt` before rolling honour it —
 /// today that is exploration alone — and entity drop rolls ignore it outright,
@@ -60,3 +74,121 @@ const List<ItemDropType> herbDropTable = [
   ItemDropType(id: ItemId.DWARF_WEED, weight: 0.035),
   ItemDropType(id: ItemId.TORSTOL, weight: 0.025),
 ];
+
+/// The three cooked river fish, evenly weighted. A nested reference to this
+/// reads as "a cooked fish" wherever it is used, without the caller caring
+/// which one.
+const List<ItemDropType> cookedFishDropTable = [
+  ItemDropType(id: ItemId.COOKED_CARP, weight: 1),
+  ItemDropType(id: ItemId.COOKED_MINNOW, weight: 1),
+  ItemDropType(id: ItemId.COOKED_BLUEGILL, weight: 1),
+];
+
+/// The iron tool set, evenly weighted. Written at COMMON: a nested
+/// reference stamps the quality it wants on top, so this one table serves
+/// every rarity variant of the monsters that drop it.
+const List<ItemDropType> ironToolsDropTable = [
+  ItemDropType(id: ItemId.IRON_DAGGER, weight: 1),
+  ItemDropType(id: ItemId.IRON_AXE, weight: 1),
+  ItemDropType(id: ItemId.IRON_PICKAXE, weight: 1),
+  ItemDropType(id: ItemId.IRON_SICKLE, weight: 1),
+];
+
+/// The small iron pieces — the extremities, not the body slots, so this
+/// stays a lesser drop than a chest or legs would be.
+const List<ItemDropType> ironMinorArmorDropTable = [
+  ItemDropType(id: ItemId.IRON_HELMET, weight: 1),
+  ItemDropType(id: ItemId.IRON_GLOVES, weight: 1),
+  ItemDropType(id: ItemId.IRON_BOOTS, weight: 1),
+];
+
+const List<ItemDropType> ironMajorArmorDropTable = [
+  ItemDropType(id: ItemId.IRON_CHESTPLATE, weight: 1),
+  ItemDropType(id: ItemId.IRON_LEGS, weight: 1),
+];
+
+const List<ItemDropType> steelToolsDropTable = [
+  ItemDropType(id: ItemId.STEEL_DAGGER, weight: 1),
+  ItemDropType(id: ItemId.STEEL_AXE, weight: 1),
+  ItemDropType(id: ItemId.STEEL_PICKAXE, weight: 1),
+  ItemDropType(id: ItemId.STEEL_SICKLE, weight: 1),
+];
+
+/// The small iron pieces — the extremities, not the body slots, so this
+/// stays a lesser drop than a chest or legs would be.
+const List<ItemDropType> steelMinorArmorDropTable = [
+  ItemDropType(id: ItemId.STEEL_HELMET, weight: 1),
+  ItemDropType(id: ItemId.STEEL_GLOVES, weight: 1),
+  ItemDropType(id: ItemId.STEEL_BOOTS, weight: 1),
+];
+
+const List<ItemDropType> steelMajorArmorDropTable = [
+  ItemDropType(id: ItemId.STEEL_CHESTPLATE, weight: 1),
+  ItemDropType(id: ItemId.STEEL_LEGS, weight: 1),
+];
+
+const List<ItemDropType> mithrilWeaponsDropTable = [
+  ItemDropType(id: ItemId.MITHRIL_AXE, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_PICKAXE, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_SICKLE, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_SHIELD, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_DAGGER, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_SWORD, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_GREATSWORD, weight: 1),
+];
+
+const List<ItemDropType> heavyLeatherDropTable = [
+  ItemDropType(id: ItemId.HEAVY_LEATHER_BELT, weight: 1),
+  ItemDropType(id: ItemId.HEAVY_LEATHER_BRACERS, weight: 1),
+  ItemDropType(id: ItemId.HEAVY_LEATHER_CHEST, weight: 1),
+  ItemDropType(id: ItemId.HEAVY_LEATHER_COIF, weight: 1),
+  ItemDropType(id: ItemId.HEAVY_LEATHER_GLOVES, weight: 1),
+  ItemDropType(id: ItemId.HEAVY_LEATHER_PANTS, weight: 1),
+  ItemDropType(id: ItemId.HEAVY_LEATHER_SPAULDERS, weight: 1),
+];
+
+const List<ItemDropType> spiderDropTable = [
+  ItemDropType(id: ItemId.SILK, lowCount: 1, highCount: 2),
+  ItemDropType(id: ItemId.VENOM, lowCount: 1, highCount: 2),
+];
+
+/// The same table with every line stamped at [rarity].
+///
+/// Superseded by [NestedDrop]'s rarity override, which does this without
+/// building a list — and unlike this, can be written in a const catalog
+/// definition. Kept because it still works and takes nothing to keep.
+///
+/// A nested line is copied as a nested line with the rarity pushed into its
+/// override. Rebuilding it as a plain [ItemDropType] the way the rest of the
+/// loop does would quietly turn it into an [ItemId.NULL] leaf with the
+/// sub-table gone.
+List<ItemDropType> getScaledDropTable(
+  List<ItemDropType> table,
+  //int fibLevel,
+  Rarity rarity,
+) {
+  List<ItemDropType> outTable = [];
+  for (ItemDropType i in table) {
+    if (i is NestedDrop) {
+      outTable.add(
+        NestedDrop(
+          i.table,
+          weight: i.weight,
+          rarity: rarity,
+          countMultiplier: i.countMultiplier,
+        ),
+      );
+      continue;
+    }
+    final newItem = ItemDropType(
+      id: i.id,
+      rarity: rarity,
+      lowCount: i.lowCount,
+      highCount: i.highCount,
+      weight: i.weight,
+    );
+
+    outTable.add(newItem);
+  }
+  return outTable;
+}
