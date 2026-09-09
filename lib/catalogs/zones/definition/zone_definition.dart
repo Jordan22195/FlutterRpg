@@ -47,4 +47,13 @@ class ZoneDefinition {
     this.explorationLevel = 0,
     this.xpPerExplore = 0,
   });
+
+  /// Every entity id this zone's content declares, permanent or discoverable
+  /// (including entries still gated behind an unlockLevel — the gate decides
+  /// what can be *rolled*, not what a save may keep). A discovered entity
+  /// outside this set is content the zone no longer has, and the load drops it.
+  Set<EntityId> get definedEntityIds => {
+    ...permanentEntities,
+    ...discoverableEntities.map((e) => e.id),
+  };
 }

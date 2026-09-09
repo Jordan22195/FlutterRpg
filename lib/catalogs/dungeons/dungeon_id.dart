@@ -94,7 +94,8 @@ enum DungeonId {
         DungeonEntry(
           name: "Feed Room",
           entities: [
-            DungeonEntityRef(EntityId.CHICKEN, count: 20),
+            DungeonEntityRef(EntityId.FIELD_RAT, count: 5),
+            DungeonEntityRef(EntityId.CHICKEN, count: 5),
             DungeonEntityRef(EntityId.BIG_RED, count: 1),
           ],
         ),
@@ -102,14 +103,14 @@ enum DungeonId {
         DungeonEntry(
           name: "Stalls",
           entities: [
-            DungeonEntityRef(EntityId.COW, count: 20),
+            DungeonEntityRef(EntityId.COW, count: 10),
             DungeonEntityRef(EntityId.COW_UNCOMMON, count: 1),
           ],
         ),
         DungeonEntry(
           name: "Cellar",
           entities: [
-            DungeonEntityRef(EntityId.ROTWOOD_SCARECROW, count: 20),
+            DungeonEntityRef(EntityId.ROTWOOD_SCARECROW, count: 10),
             DungeonEntityRef(EntityId.ROTWOOD_SCARECROW_UNCOMMON, count: 1),
           ],
         ),

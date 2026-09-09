@@ -72,13 +72,23 @@ class Zone {
     // rejecting the whole save. that is what lets an entity be retired — the
     // campfires that became fire buffs, for instance — without a bespoke
     // migration for every removal.
+    //
+    // two ways an entity can stop being defined, and both are dropped here:
+    // its id is gone from the catalog entirely (Entity.fromJson throws), or
+    // the id still exists but this zone's definition no longer lists it —
+    // the entity moved zones, or the zone's contents were re-tweaked. every
+    // production path into this list rolls the zone's own drop table, so an
+    // entity outside the definition is always stale save data.
+    final defined = zoneId.definition.definedEntityIds;
     final discoveredEntities = <Entity>[];
     for (final e in rawDiscovered) {
       if (e is! Map<String, dynamic>) {
         throw FormatException('Invalid discovered entity entry.');
       }
       try {
-        discoveredEntities.add(Entity.fromJson(e));
+        final entity = Entity.fromJson(e);
+        if (!defined.contains(entity.id)) continue;
+        discoveredEntities.add(entity);
       } on FormatException {
         continue;
       }

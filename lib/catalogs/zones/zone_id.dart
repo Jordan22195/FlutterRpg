@@ -63,10 +63,7 @@ enum ZoneId {
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: .5),
         WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.GOBLIN_SEARGENT,
-          weight: 1,
-        ),
+
         WeightedDropTableEntry<EntityId>(id: EntityId.FOREST_WOLF, weight: 1),
         WeightedDropTableEntry<EntityId>(id: EntityId.BEAR, weight: 1),
 

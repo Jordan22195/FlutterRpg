@@ -52,7 +52,35 @@ double speedIdleBonus(int stat) => 0.05 * sqrt(stat < 0 ? 0 : stat);
 
 /// The share of [boostStatBonus] a strength stance is worth standing
 /// still. Small but always on; the boost bar buys the rest.
+///
+/// DISABLED with the multiplicative application it belonged to - see
+/// [PlayerDataService.getStatTotals]. Kept so the old curve can be switched
+/// back on; nothing reads it while strength is additive.
 const double kBoostIdleShare = 0.15;
+
+/// Strength's additive curve, tuned by two exponents: what a stance pays
+/// standing still, and what a full boost bar pays. The bar runs straight
+/// between them.
+///
+/// Additive rather than multiplicative, which is what stops a stance being
+/// worth more the higher the skill it lands on already is - the points are
+/// the same whether they are added to mining 20 or mining 60. The old
+/// multiplier is kept, disabled, in [PlayerDataService.getStatTotals].
+const double kStrengthIdleExponent = 0.75;
+const double kStrengthMaxExponent = 1.0;
+
+/// Added on top of the max curve, so a full bar is worth a point even at
+/// no strength at all.
+const double kStrengthMaxOffset = 1.0;
+
+/// Flat stat points a strength stance adds with the boost bar empty.
+double strengthIdleBonus(int stat) =>
+    pow(stat < 0 ? 0 : stat, kStrengthIdleExponent).toDouble();
+
+/// Flat stat points a strength stance adds with the boost bar full.
+double strengthMaxBonus(int stat) =>
+    pow(stat < 0 ? 0 : stat, kStrengthMaxExponent).toDouble() +
+    kStrengthMaxOffset;
 
 /// Which stat totals a boosted skill scales - see
 /// [PlayerDataService.getStatTotals].
@@ -120,7 +148,11 @@ class PlayerData {
   // mutable stats
   int hitpoints = 10;
   double stamina = 0;
-  double boostMultiplier = 1.0;
+  /// How full the boost bar is, 0..1. Written by the action loop each
+  /// frame; read only by [PlayerDataService.getStatTotals], which runs the
+  /// strength curve off it. Held here rather than a multiplier because the
+  /// strength bonus is additive now - see [strengthIdleBonus].
+  double boostFill = 0.0;
 
   PlayerData({
     required this.currentZoneId,

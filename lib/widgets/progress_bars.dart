@@ -48,7 +48,6 @@ class ProgressBars extends StatelessWidget {
     final playerController = context.watch<PlayerDataController>();
     final timing = context.watch<ActionTimingController>();
     final encounter = context.watch<EncounterController>();
-    final boostSkill = playerController.getBoostSkill();
 
     // flash damage on the icon unless the active encounter's own screen
     // is in view (it shows the numbers over the entity image instead)
@@ -278,28 +277,61 @@ class StatValueLabel extends StatelessWidget {
 class ActionIntervalTimer extends StatelessWidget {
   const ActionIntervalTimer({super.key});
 
+  static const double _iconSize = 15;
+  static const double _iconGap = 4;
+
+  /// Room for the label plus the widest icon run: the strong stance's two.
+  static const double _labelWidth = 40;
+  static const double _width =
+      _iconGap + (_iconSize + _iconGap) * 2 + _labelWidth;
+
   @override
   Widget build(BuildContext context) {
     final timing = context.watch<ActionTimingController>();
-    final speedBoost = timing.getCurrentSpeedMultiplier();
-    final boostSkill = context.watch<PlayerDataController>().getBoostSkill();
+    final player = context.watch<PlayerDataController>();
+    final boostSkill = player.getBoostSkill();
+
+    // in the strong stance the points are spent on another stat entirely,
+    // so two icons are needed: strength says where they come from, the
+    // second says where they land. the fast stance spends speed on speed,
+    // so there is nothing to add and the row stays one icon wide.
+    final boostedStat = player.getBoostedStat();
+    final showsTarget = boostedStat != boostSkill;
+
+    // the two stances buy different things, so they read differently: a
+    // strength stance adds flat stat points, so it shows +n stepping in
+    // whole points; the fast stance buys rate, so it stays a multiplier.
+    //
+    // the speed multiplier is the total - the cut the speed stat already
+    // makes to the interval times the momentum on top - so standing still
+    // it reads the stat's own cut instead of a flat 1.00x. both sides
+    // therefore show what the stance is worth at rest rather than nothing.
+    final label = boostSkill == SkillId.SPEED
+        ? '${timing.getTotalSpeedMultiplier().toStringAsFixed(2)}x'
+        : '+${player.getStrengthBoostPoints()}';
 
     return SizedBox(
-      width: 80, // Fixed width so layout doesn't shift
+      // Fixed width so layout doesn't shift - wide enough for the two-icon
+      // strong stance, so switching stance doesn't resize the column either
+      width: _width,
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              const SizedBox(width: 4),
+              const SizedBox(width: _iconGap),
 
               // wears the icon of whichever stat is actually being trained
-              IconRenderer<SkillId>(size: 15, id: boostSkill),
-              const SizedBox(width: 4),
+              IconRenderer<SkillId>(size: _iconSize, id: boostSkill),
+              if (showsTarget) ...[
+                const SizedBox(width: _iconGap),
+                IconRenderer<SkillId>(size: _iconSize, id: boostedStat),
+              ],
+              const SizedBox(width: _iconGap),
               SizedBox(
-                width: 40, // Fixed width for text so it doesn't resize
+                width: _labelWidth, // Fixed so the text doesn't resize
                 child: Text(
-                  '${(speedBoost).toStringAsFixed(2)}x',
+                  label,
                   textAlign: TextAlign.left,
                   style: TextStyle(fontSize: 12),
                 ),

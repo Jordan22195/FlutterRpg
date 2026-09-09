@@ -361,6 +361,60 @@ void main() {
       session.dispose();
     });
 
+    test('a boss unique reaches the haul, not just the bag', () {
+      // equipment is paid out as an instance carrying its rolled quality,
+      // never as a count in the item map. the run haul took the stackable
+      // half only, so the drop a dungeon is run for was the one thing
+      // missing from the loot tab
+      final session = buildSession();
+      final save = session.saveGameData;
+      final dungeons = session.dungeonController;
+      makePlayerStrong(session);
+
+      dungeons.openDungeon(DungeonId.GRAINERY);
+
+      // found rather than hardcoded, so re-cutting the dungeon's cards
+      // doesn't quietly point this at one with no equipment on it
+      final slot = List.generate(3, (i) => i).firstWhere(
+        (i) =>
+            dungeons.slotAt(i)?.members.any((m) => m.id == EntityId.BIG_RED) ??
+            false,
+      );
+      final bigRed = dungeons
+          .slotAt(slot)!
+          .members
+          .firstWhere((m) => m.id == EntityId.BIG_RED);
+      // three of Big Red's five drop lines are the charm, so a card's worth
+      // of them makes one a certainty rather than a coin flip
+      bigRed.count = 40;
+
+      dungeons.startSlot(slot);
+      fightUntilStopped(session);
+
+      final inBag = save.inventoryData.equipment
+          .where((e) => e.id == ItemId.CHICKEN_CHARM)
+          .fold<int>(0, (sum, e) => sum + e.count);
+      expect(inBag, greaterThan(0), reason: 'no charm dropped in this run');
+
+      final haul = dungeons.runLoot();
+      expect(
+        haul
+            .where((s) => s.id == ItemId.CHICKEN_CHARM)
+            .fold<int>(0, (sum, s) => sum + s.count),
+        inBag,
+      );
+      // and it is the run's own instance, not the one handed to the bag -
+      // addEquipment merges by mutating whatever stack it lands on
+      expect(
+        save.dungeonRun.loot.equipment.any(
+          (e) => identical(e, save.inventoryData.equipment.first),
+        ),
+        isFalse,
+      );
+
+      session.dispose();
+    });
+
     test('leaving clears the run haul', () {
       final session = buildSession();
       final dungeons = session.dungeonController;

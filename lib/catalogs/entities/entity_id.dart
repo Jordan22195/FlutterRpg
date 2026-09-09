@@ -521,12 +521,8 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COW_MEAT, weight: 1),
         ItemDropType(id: ItemId.COW_HIDE, weight: 1),
-        ItemDropType(id: ItemId.MOOD_RING, rarity: Rarity.COMMON, weight: .1),
-        ItemDropType(
-          id: ItemId.MOOD_RING,
-          rarity: Rarity.UNCOMMON,
-          weight: .01,
-        ),
+        ItemDropType(id: ItemId.MOOD_RING, rarity: Rarity.COMMON, weight: .5),
+        ItemDropType(id: ItemId.MOOD_RING, rarity: Rarity.UNCOMMON, weight: .2),
       ],
     ),
   ),
@@ -630,11 +626,8 @@ enum EntityId {
         ItemDropType(id: ItemId.IRON_ORE, weight: 1, lowCount: 1, highCount: 2),
         ItemDropType(id: ItemId.PITCHFORK, weight: .5),
       ],
+
       // an independent 5% on top of the main pick, so it costs the other
-      // three drops nothing
-      bonusDrops: [
-        DropRoll(chance: 0.05, entries: [ItemDropType(id: ItemId.PITCHFORK)]),
-      ],
     ),
   ),
   ROTWOOD_SCARECROW_UNCOMMON(
@@ -646,8 +639,8 @@ enum EntityId {
         ItemDropType(id: ItemId.LOGS, weight: 1, lowCount: 1, highCount: 6),
         ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 3, highCount: 10),
         ItemDropType(id: ItemId.IRON_ORE, weight: 1, lowCount: 1, highCount: 4),
-        ItemDropType(id: ItemId.PITCHFORK, weight: .5),
-        ItemDropType(id: ItemId.PITCHFORK, rarity: Rarity.UNCOMMON, weight: .1),
+        ItemDropType(id: ItemId.PITCHFORK, weight: .8),
+        ItemDropType(id: ItemId.PITCHFORK, rarity: Rarity.UNCOMMON, weight: .5),
       ],
     ),
   ),
@@ -3896,13 +3889,9 @@ enum EntityId {
         ItemDropType(
           id: ItemId.CHICKEN_CHARM,
           rarity: Rarity.UNCOMMON,
-          weight: .1,
+          weight: .5,
         ),
-        ItemDropType(
-          id: ItemId.CHICKEN_CHARM,
-          rarity: Rarity.RARE,
-          weight: .01,
-        ),
+        ItemDropType(id: ItemId.CHICKEN_CHARM, rarity: Rarity.RARE, weight: .2),
       ],
     ),
   ),

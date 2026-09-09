@@ -83,11 +83,22 @@ class PlayerDataController extends ChangeNotifier {
     return _playerDataService.getStance(_playerData);
   }
 
+  /// The flat stat points the current strength stance is worth right now -
+  /// what the banner renders as `+n`. Zero in a fast stance.
+  int getStrengthBoostPoints() {
+    return _playerDataService.currentStrengthBoostPoints(_playerData);
+  }
+
   /// The skill the action loop's boost is currently training - speed when
   /// running fast, strength in the strong stance.
   SkillId getBoostSkill() {
     return _playerDataService.getBoostSkill(_playerData);
   }
+
+  /// The stat the boost is being *spent* on, which is a different skill
+  /// from [getBoostSkill] in the strong stance: strength trains strength
+  /// but pays out in mining, woodcutting, attack or defence.
+  SkillId getBoostedStat() => _playerData.skillBoost;
 
   void setStance(Stance stance) {
     _playerDataService.setStance(stance, _playerData);

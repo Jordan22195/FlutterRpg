@@ -275,10 +275,7 @@ class OfflineProgressSystem {
     // else in a settle sets it - left alone it would carry whatever the
     // last live frame happened to leave behind, possibly from another
     // stance entirely
-    _playerDataService.setBoostMultiplier(
-      _actionTimingService.getCurrentSpeedMultiplier(timingState),
-      playerState,
-    );
+    _playerDataService.setBoostFill(timingState.percentOfMaxBoost, playerState);
   }
 
   /// How long a locked boost can hold out, or null when nothing is burning

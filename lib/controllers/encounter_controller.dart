@@ -282,9 +282,23 @@ class EncounterController extends ChangeNotifier {
   /// Copies this tick's drops into the run's cumulative haul. The encounter
   /// panel's own log resets with each card, so the run total has to be kept
   /// separately — the dungeon list's loot tab reads it.
+  ///
+  /// Equipment is copied in alongside the stackables. A boss's unique is
+  /// paid out as an instance rather than a count in the item map, so taking
+  /// the stackable half alone left the drop every card in the dungeon is
+  /// run for missing from the run's own haul.
   void _recordDungeonDrops() {
     if (_dungeonService.runningEntity(_dungeonRun) == null) return;
     _inventoryService.addItems(_dungeonRun.loot, latestActionResult.items);
+    for (final piece in latestActionResult.equipment) {
+      // its own instance, the way the payout gives each inventory one:
+      // addEquipment merges by mutating the stack it lands on, so sharing
+      // the object with the result would count the drop twice.
+      // copy() rebuilds from the definition and does not carry the count
+      final own = piece.copy();
+      own.count = piece.count;
+      _inventoryService.addEquipment(_dungeonRun.loot, own);
+    }
   }
 
   /// Hands the running card off to whatever comes next, keeping the loop
@@ -727,11 +741,18 @@ class EncounterController extends ChangeNotifier {
 
   // drops collected during the current encounter session. entities that
   // are not the session's entity show an empty list
+  //
+  // equipment is folded in rather than left to the stackable half alone: a
+  // charm off a boss is paid into this inventory as an instance, and the
+  // panel would otherwise report nothing dropped while the piece sat in
+  // the player's bag
   List<ObjectStack> itemDrops() {
     if (!isViewingActiveEncounter()) {
       return [];
     }
-    return _inventoryService.getObjectStackList(_encounterState.itemDrops);
+    return _inventoryService.getStackListWithEquipment(
+      _encounterState.itemDrops,
+    );
   }
 
   // called when the player navigates to view an entity. if no encounter

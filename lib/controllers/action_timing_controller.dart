@@ -252,6 +252,17 @@ class ActionTimingController extends ChangeNotifier {
     return _actionTimingService.getCurrentSpeedMultiplier(_actionTimingState);
   }
 
+  /// Total rate multiplier: the cut the speed stat already makes to the
+  /// interval, times the momentum boost on top. Standing still this is the
+  /// stat's own cut rather than a flat 1.00x - see
+  /// [ActionTimingSystem.totalSpeedMultiplier].
+  double getTotalSpeedMultiplier() {
+    return _actionSpeedSystem.totalSpeedMultiplier(
+      _actionTimingState,
+      _playerState,
+    );
+  }
+
   void lockActionSpeed() {
     _actionTimingService.setLockActionSpeed(true, _actionTimingState);
   }
@@ -369,9 +380,11 @@ class ActionTimingSystem {
        _playerDataService = playerDataService,
        _equipmentService = equipmentService;
 
-  /// Drops the boost back to 1x, so nothing stays scaled while idle.
+  /// Empties the boost bar, so nothing stays boosted while idle. The
+  /// strength curve still pays its idle share off an empty bar - that is
+  /// the floor, not zero.
   void clearBoost(PlayerData playerState) {
-    _playerDataService.setBoostMultiplier(1.0, playerState);
+    _playerDataService.setBoostFill(0.0, playerState);
   }
 
   /// The unboosted interval the bound action would run at right now: the
@@ -384,6 +397,27 @@ class ActionTimingSystem {
   /// with the loop stopped.
   Duration currentMaxInterval(ActionTimingData state, PlayerData playerState) {
     return intervalFor(state.actionSkill, playerState);
+  }
+
+  /// Total rate multiplier against an unboosted, no-speed baseline: the cut
+  /// the speed stat already makes to the interval, times the momentum boost
+  /// on top. The interval is divided by each in turn, so the two multiply.
+  ///
+  /// Computed live rather than read off stored state, the way
+  /// [currentMaxInterval] is - idle, nothing is ticking to refresh the
+  /// stored values, so a stance switch would otherwise leave the banner
+  /// reading whatever the last action left behind. Standing still this
+  /// reads the stat's own cut instead of the flat 1.00x the momentum
+  /// multiplier alone collapses to.
+  double totalSpeedMultiplier(ActionTimingData state, PlayerData playerState) {
+    final stats = _playerDataService.getStatTotals(playerState);
+    final speedStance =
+        _playerDataService.getBoostSkill(playerState) == SkillId.SPEED;
+    final idle = _actionTimingService.idleSpeedMultiplier(
+      stats[SkillId.SPEED] ?? 0,
+      speedStance: speedStance,
+    );
+    return idle * _actionTimingService.getCurrentSpeedMultiplier(state);
   }
 
   /// The unboosted interval an action training [actionSkill] would run at
@@ -524,7 +558,12 @@ class ActionTimingSystem {
     final boostMulitplier = _actionTimingService.getCurrentSpeedMultiplier(
       actionTimingState,
     );
-    _playerDataService.setBoostMultiplier(boostMulitplier, playerState);
+    // the strength curve is run off the raw bar fill, not the multiplier -
+    // drain below still reads the multiplier
+    _playerDataService.setBoostFill(
+      actionTimingState.percentOfMaxBoost,
+      playerState,
+    );
 
     // stamina flow: drain scales with how boosted you are; recovery is a
     // steady rate from the recovery stat. the net is applied clamped to
@@ -619,6 +658,16 @@ class ActionTimingService {
 
     final rate = 1 + speedIdleBonus(speedStat);
     return Duration(microseconds: (base.inMicroseconds / rate).round());
+  }
+
+  /// The rate multiplier the speed stat is worth standing still - the same
+  /// `1 + speedIdleBonus` [maxIntervalFor] divides the interval by, and
+  /// only in the fast stance, matching it. Surfaced so the banner can show
+  /// it: it is real speed the player has, and it lives in the interval
+  /// rather than in the momentum multiplier, so nothing else reports it.
+  double idleSpeedMultiplier(int speedStat, {required bool speedStance}) {
+    if (!speedStance) return 1.0;
+    return 1 + speedIdleBonus(speedStat);
   }
 
   /// The boost ceiling granted by the speed stat.

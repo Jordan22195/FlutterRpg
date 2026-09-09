@@ -25,7 +25,7 @@ class EncounterSystem {
   /// XP awarded per point of damage done by damage-based skills (combat,
   /// woodcutting, mining). Also used by the explore screen to estimate a
   /// node's xp yield.
-  static const double xpPerDamage = 2;
+  static const double xpPerDamage = 1;
 
   final EncounterService _encounterService;
   final ExplorationService _explorationService;

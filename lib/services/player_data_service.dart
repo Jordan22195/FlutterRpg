@@ -49,34 +49,68 @@ class PlayerDataService {
       skillStats,
       Util.addMap(equipmentStats, buffStats),
     );
-    // a strength stance raises the stat it is spent on. the idle share is
-    // always on and the boost bar buys the rest, composed rather than taken
-    // as the larger of the two - competing is what left the bottom of the
-    // bar doing nothing until it beat standing still.
-    //
-    // only the skill half is scaled. multiplying the geared total meant a
-    // stance was worth more the better your equipment, which is where most
-    // of the old overpowering lived. strength itself is left alone so it
+    // a strength stance raises the stat it is spent on: flat points added,
+    // the idle curve at an empty bar and the max curve at a full one. added
+    // rather than multiplied, so a stance is worth the same however high
+    // the skill it lands on already is. strength itself is left alone so it
     // can't compound on itself.
     if (playerState.skillBoost != SkillId.SPEED &&
         playerState.skillBoost != SkillId.STRENGTH) {
-      final bonus = boostStatBonus(totals[SkillId.STRENGTH] ?? 0);
-      // boostMultiplier is 1 + fill * bonus, so the fill is already in it
-      final scale =
-          1 +
-          bonus * kBoostIdleShare +
-          (playerState.boostMultiplier - 1) * (1 - kBoostIdleShare);
+      // DISABLED: the multiplicative version. it scaled the skill half of
+      // the total by the sqrt curve, leaving gear out so a stance wasn't
+      // worth more the better your equipment. kept intact so the curve can
+      // be switched back on - note it read a *multiplier* off the player,
+      // where the additive version reads the bar fill, so restoring it means
+      // restoring what the action loop writes into PlayerData too.
+      //
+      // final bonus = boostStatBonus(totals[SkillId.STRENGTH] ?? 0);
+      // // boostMultiplier is 1 + fill * bonus, so the fill is already in it
+      // final scale =
+      //     1 +
+      //     bonus * kBoostIdleShare +
+      //     (playerState.boostMultiplier - 1) * (1 - kBoostIdleShare);
+      //
+      // final base = skillStats[playerState.skillBoost] ?? 0;
+      // final gear = (totals[playerState.skillBoost] ?? 0) - base;
+      // totals[playerState.skillBoost] = (base * scale).round() + gear;
 
-      final base = skillStats[playerState.skillBoost] ?? 0;
-      final gear = (totals[playerState.skillBoost] ?? 0) - base;
-      totals[playerState.skillBoost] = (base * scale).round() + gear;
+      totals[playerState.skillBoost] =
+          (totals[playerState.skillBoost] ?? 0) +
+          strengthBoostBonus(
+            totals[SkillId.STRENGTH] ?? 0,
+            playerState.boostFill,
+          ).round();
     }
 
     return totals;
   }
 
-  void setBoostMultiplier(double boostValue, PlayerData playerState) {
-    playerState.boostMultiplier = boostValue;
+  void setBoostFill(double fill, PlayerData playerState) {
+    playerState.boostFill = fill;
+  }
+
+  /// The flat stat points a strength stance is worth at [fill]: the idle
+  /// curve at an empty bar, the max curve at a full one, straight line
+  /// between. The banner's `+n` renders this same number, so the readout
+  /// and the stat can never disagree.
+  double strengthBoostBonus(int strengthStat, double fill) {
+    final idle = strengthIdleBonus(strengthStat);
+    final max = strengthMaxBonus(strengthStat);
+    return idle + (max - idle) * fill.clamp(0.0, 1.0);
+  }
+
+  /// The `+n` the banner shows for the current stance: zero in a fast
+  /// stance, and in a strength stance with nothing to lend itself to (a
+  /// bench or a shop, where [setStance] leaves the boost on strength).
+  int currentStrengthBoostPoints(PlayerData playerState) {
+    if (playerState.skillBoost == SkillId.SPEED ||
+        playerState.skillBoost == SkillId.STRENGTH) {
+      return 0;
+    }
+    // no recursion: strength is never the boosted skill here, so
+    // getStatTotals cannot re-enter through this
+    final strength = getStatTotals(playerState)[SkillId.STRENGTH] ?? 0;
+    return strengthBoostBonus(strength, playerState.boostFill).round();
   }
 
   /// The skill the action loop's boost trains: speed in the fast stance,

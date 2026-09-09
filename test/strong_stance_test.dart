@@ -67,12 +67,12 @@ void main() {
     player.currentEntityViewId = EntityId.COPPER;
     playerDataService.setStance(Stance.strong, player);
 
-    // the stance alone already pays a share of the strength curve, so 20
-    // mining at 10 strength reads a little over 20 before any boost
+    // the stance alone already pays the idle curve, so 20 mining at 10
+    // strength reads 20 plus those points before any boost
     final baseline = playerDataService.getStatTotals(player);
     expect(
       baseline[SkillId.MINING],
-      (20 * (1 + boostStatBonus(10) * kBoostIdleShare)).round(),
+      20 + strengthIdleBonus(10).round(),
     );
     // and only that one stat - woodcutting isn't what is being worked
     expect(baseline[SkillId.WOODCUTTING], 20);
@@ -81,9 +81,9 @@ void main() {
     state.buttonHeld = true;
     run(state, player, seconds: 5); // hold to the ceiling
 
-    expect(player.boostMultiplier, greaterThan(1.0));
+    expect(player.boostFill, greaterThan(0.0));
 
-    // the held boost takes over from the resting 1% per point
+    // the held boost climbs from the idle curve toward the max one
     final boosted = playerDataService.getStatTotals(player);
     expect(boosted[SkillId.MINING], greaterThan(baseline[SkillId.MINING]!));
     expect(boosted[SkillId.WOODCUTTING], 20);
@@ -264,13 +264,18 @@ void main() {
           Rarity.COMMON,
         )[SkillId.MINING]!;
 
-    int minedAt(double multiplier, {int strength = 10, bool geared = false}) {
+    int minedAt(
+      double fill, {
+      int strength = 10,
+      bool geared = false,
+      int mining = 20,
+    }) {
       final player = newPlayer();
       setLevel(player, SkillId.STRENGTH, strength);
-      setLevel(player, SkillId.MINING, 20);
+      setLevel(player, SkillId.MINING, mining);
       player.currentEntityViewId = EntityId.COPPER;
       playerDataService.setStance(Stance.strong, player);
-      playerDataService.setBoostMultiplier(multiplier, player);
+      playerDataService.setBoostFill(fill, player);
       if (geared) {
         final pickaxe = ItemId.COPPER_PICKAXE.build() as EquipmentItem;
         player.equipmentData.equipedTools[SkillId.MINING] = pickaxe;
@@ -278,21 +283,19 @@ void main() {
       return playerDataService.getStatTotals(player)[SkillId.MINING]!;
     }
 
-    test('standing still is worth a share of the curve', () {
+    test('standing still is worth the idle curve', () {
       for (final strength in [10, 99]) {
-        final expected = (20 * (1 + boostStatBonus(strength) * kBoostIdleShare))
-            .round();
-        expect(minedAt(1.0, strength: strength), expected, reason: '$strength');
+        final expected = 20 + strengthIdleBonus(strength).round();
+        expect(minedAt(0.0, strength: strength), expected, reason: '$strength');
       }
     });
 
-    test('a full bar is worth the whole curve, and half a bar half of it', () {
-      final bonus = boostStatBonus(10);
-      final full = minedAt(1 + bonus);
-      final half = minedAt(1 + bonus / 2);
-      final idle = minedAt(1.0);
+    test('a full bar is worth the max curve, and half a bar half of it', () {
+      final full = minedAt(1.0);
+      final half = minedAt(0.5);
+      final idle = minedAt(0.0);
 
-      expect(full, (20 * (1 + bonus)).round());
+      expect(full, 20 + strengthMaxBonus(10).round());
       // composed, not competing: the first stretch of the bar pays from the
       // moment it leaves zero, where the old max() left it dead until it
       // beat standing still
@@ -305,12 +308,34 @@ void main() {
       // the same skill with and without the pickaxe differs by exactly what
       // the pickaxe is worth, at rest and at full tilt alike - multiplying
       // the geared total was where most of the old overpowering lived
+      expect(minedAt(0.0, geared: true) - minedAt(0.0), pickaxeMining);
       expect(minedAt(1.0, geared: true) - minedAt(1.0), pickaxeMining);
-      final bonus = boostStatBonus(10);
-      expect(
-        minedAt(1 + bonus, geared: true) - minedAt(1 + bonus),
-        pickaxeMining,
-      );
+    });
+
+    test('the boost is added, not multiplied', () {
+      // the whole point of the additive curve: a stance is worth the same
+      // number of points whether it lands on mining 20 or mining 60, where
+      // the old multiplier paid three times as much on the higher skill
+      for (final fill in [0.0, 0.5, 1.0]) {
+        expect(
+          minedAt(fill, mining: 60) - 60,
+          minedAt(fill, mining: 20) - 20,
+          reason: 'fill $fill',
+        );
+      }
+    });
+
+    test('the curve exponents are what they are tuned to', () {
+      // 16 is picked because both exponents land on a whole number there,
+      // so a drifting exponent cannot hide inside the rounding
+      expect(strengthIdleBonus(16), closeTo(8, 1e-9)); // 16 ^ 0.75
+      expect(strengthMaxBonus(16), closeTo(17, 1e-9)); // 16 ^ 1 + 1
+      // no strength at all still buys a point at a full bar, and nothing
+      // standing still
+      expect(strengthIdleBonus(0), 0);
+      expect(strengthMaxBonus(0), kStrengthMaxOffset);
+      // and a negative stat is floored rather than returning a NaN
+      expect(strengthIdleBonus(-5), 0);
     });
 
     test('both ceilings are the curve, so nothing can drift', () {
