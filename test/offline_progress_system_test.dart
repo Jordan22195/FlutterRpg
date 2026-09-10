@@ -19,6 +19,8 @@ import 'package:rpg/services/offline_progress_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/services/skill_service.dart';
 import 'package:rpg/systems/offline_progress_system.dart';
+import 'package:rpg/data/inventory_data.dart';
+import 'package:rpg/systems/potion_system.dart';
 
 // A settle replays the gap rather than paying it out in one lump: segment by
 // segment, each one running to the next moment the state changes under it -
@@ -35,6 +37,7 @@ void main() {
   late OfflineProgressService offlineProgressService;
   late OfflineProgressData offlineProgressData;
   late OfflineProgressSystem system;
+  late InventoryData inventoryData;
 
   setUp(() {
     buffService = BuffService();
@@ -52,6 +55,7 @@ void main() {
     );
     offlineProgressData = OfflineProgressData();
     offlineProgressService = OfflineProgressService(InventoryService());
+    inventoryData = InventoryData(itemMap: {});
     system = OfflineProgressSystem(
       actionTimingService: timingService,
       actionTimingSystem: timingSystem,
@@ -60,6 +64,11 @@ void main() {
       buffService: buffService,
       offlineProgressService: offlineProgressService,
       offlineProgressData: offlineProgressData,
+      potionSystem: PotionSystem(
+        buffService: buffService,
+        inventoryService: InventoryService(),
+      ),
+      inventoryData: inventoryData,
     );
   });
 
@@ -361,6 +370,41 @@ void main() {
 
       // a probe, the rest of the fire's 30s, then the unlit remainder
       expect(counts(fired), [1, 9, 10]);
+    });
+
+    test('an auto-drink potion is put back at the cut it lapsed on', () {
+      final player = newPlayer();
+      final (state, fired) = recordingState();
+      final now = goOffline(player, 60);
+      final start = player.lastActionTime;
+      // strength, so the interval - and the counts - stay the same
+      inventoryData.itemMap[ItemId.MINOR_STRENGTH_POTION] = 1;
+      player.autoDrinkPotions.add(ItemId.MINOR_STRENGTH_POTION);
+      final potion = ItemId.MINOR_STRENGTH_POTION.build() as BuffItem;
+      potion.expirationTime = start.add(const Duration(seconds: 30));
+      buffService.addBuff(potion, player.buffData);
+
+      system.settle(player, state, now: now);
+
+      // the same cuts as a fire going out: the dose drunk at 30s runs past
+      // the end of the gap, so it cuts nothing more
+      expect(counts(fired), [1, 9, 10]);
+      expect(
+        buffService.getGlobalBuff(
+          player.buffData,
+          ItemId.MINOR_STRENGTH_POTION,
+          at: now,
+        ),
+        isNotNull,
+      );
+      expect(
+        inventoryData.itemMap.containsKey(ItemId.MINOR_STRENGTH_POTION),
+        isFalse,
+      );
+      expect(
+        offlineProgressData.report.potionsUsed[ItemId.MINOR_STRENGTH_POTION],
+        1,
+      );
     });
 
     test('it splits at the earliest of several, and skips other zones', () {

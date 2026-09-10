@@ -22,6 +22,7 @@ import 'controllers/shop_controller.dart';
 import 'data/skill_data.dart';
 import 'utilities/image_resolver.dart';
 import 'screens/main_shell.dart';
+import 'controllers/potion_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -159,6 +160,9 @@ class _GameBootstrapState extends State<GameBootstrap>
         ),
         ChangeNotifierProvider<InventoryController>.value(
           value: session.inventoryController,
+        ),
+        ChangeNotifierProvider<PotionController>.value(
+          value: session.potionController,
         ),
         ChangeNotifierProvider<EquipmentController>.value(
           value: session.equipmentController,

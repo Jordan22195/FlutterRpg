@@ -15,6 +15,8 @@ import 'package:rpg/services/offline_progress_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/services/skill_service.dart';
 import 'package:rpg/systems/offline_progress_system.dart';
+import 'package:rpg/data/inventory_data.dart';
+import 'package:rpg/systems/potion_system.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -186,6 +188,11 @@ void main() {
         buffService: BuffService(),
         offlineProgressService: offlineProgressService,
         offlineProgressData: offlineProgressData,
+        potionSystem: PotionSystem(
+          buffService: BuffService(),
+          inventoryService: InventoryService(),
+        ),
+        inventoryData: InventoryData(itemMap: {}),
       ),
       actionTimingState: ActionTimingData(),
       offlineProgressData: offlineProgressData,

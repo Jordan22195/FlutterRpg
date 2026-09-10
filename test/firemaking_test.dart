@@ -124,6 +124,84 @@ void main() {
     session.dispose();
   });
 
+  test('lightOrExtend at a replayed instant stamps the fire from it', () {
+    final session = buildSession();
+    final save = session.saveGameData;
+    final zone = save.playerData.currentZoneId;
+    final buffs = save.playerData.buffData;
+    FireItem fire() => session.firemakingSystem.activeFire(
+      EntityId.FIREPIT,
+      zone,
+      buffs,
+      // a fixed instant far enough back that the wall clock never reads
+      // the fire as out
+      at: DateTime(2000),
+    )!;
+
+    // a settle relights at the segment it is replaying, and the fire has
+    // to burn from there
+    final t = DateTime(2030, 1, 1, 12);
+    session.firemakingSystem.lightOrExtend(
+      ItemId.COOKFIRE,
+      EntityId.FIREPIT,
+      zone,
+      buffs,
+      at: t,
+    );
+    expect(fire().expirationTime, t.add(const Duration(minutes: 3)));
+
+    // relit long after it went out: from the relight, not the dead expiry
+    final t2 = t.add(const Duration(minutes: 10));
+    session.firemakingSystem.lightOrExtend(
+      ItemId.COOKFIRE,
+      EntityId.FIREPIT,
+      zone,
+      buffs,
+      at: t2,
+    );
+    expect(fire().expirationTime, t2.add(const Duration(minutes: 3)));
+
+    // logs added while it burns extend the existing timer
+    final t3 = t2.add(const Duration(minutes: 1));
+    session.firemakingSystem.lightOrExtend(
+      ItemId.COOKFIRE,
+      EntityId.FIREPIT,
+      zone,
+      buffs,
+      at: t3,
+    );
+    expect(fire().expirationTime, t2.add(const Duration(minutes: 6)));
+
+    // a batch is worth the whole batch's burn time from its instant
+    final t4 = t.add(const Duration(hours: 1));
+    session.firemakingSystem.lightOrExtend(
+      ItemId.COOKFIRE,
+      EntityId.FIREPIT,
+      zone,
+      buffs,
+      count: 2,
+      at: t4,
+    );
+    expect(fire().expirationTime, t4.add(const Duration(minutes: 6)));
+
+    // and with no instant given, a fresh fire burns from now
+    session.firemakingSystem.extinguish(EntityId.FIREPIT, zone, buffs);
+    final before = DateTime.now();
+    session.firemakingSystem.lightOrExtend(
+      ItemId.COOKFIRE,
+      EntityId.FIREPIT,
+      zone,
+      buffs,
+    );
+    final expiry = fire().expirationTime;
+    expect(
+      expiry.difference(before.add(const Duration(minutes: 3))).abs(),
+      lessThan(const Duration(seconds: 1)),
+    );
+
+    session.dispose();
+  });
+
   test('two firepits in a zone burn independently and their buffs sum', () {
     final session = buildSession();
     final save = session.saveGameData;
@@ -157,7 +235,59 @@ void main() {
     session.dispose();
   });
 
-  test('cooking is gated on a cookfire burning at the station', () {
+  test('with a cookfire picked, cooking is gated on the logs to light it', () {
+    final session = buildSession();
+    final save = session.saveGameData;
+    stockForFiremaking(session);
+    save.inventoryData.itemMap[ItemId.MINNOW] = 20;
+    save.craftingState.craftingEntityId = EntityId.FIREPIT;
+
+    bool canCook() => session.craftingSystem.recipeRequirementsMet(
+      'cook_minnow',
+      save.playerData,
+      save.inventoryData,
+      save.craftingState,
+    );
+    void pick(String recipeId) {
+      save.craftingState.selectedRecipeByEntity[EntityId.FIREPIT] = {
+        SkillId.FIREMAKING: recipeId,
+      };
+    }
+
+    // a cold pit cooks as soon as it has a cookfire picked and the logs
+    // for it: the cook lights it itself
+    pick('cookfire');
+    expect(canCook(), isTrue);
+
+    // no logs, no fire, no cooking
+    save.inventoryData.itemMap[ItemId.LOGS] = 0;
+    expect(canCook(), isFalse);
+    save.inventoryData.itemMap[ItemId.LOGS] = 200;
+
+    // a campfire is not something you can cook on, so picking one is the
+    // same as picking nothing
+    pick('basic_campfire');
+    expect(canCook(), isFalse);
+
+    // the fire's own level has to be met too
+    final skill = save.playerData.skillData[SkillId.FIREMAKING]!;
+    skill.xp = skill.xpTable[1];
+    pick('oak_cookfire');
+    expect(canCook(), isFalse);
+    skill.xp = skill.xpTable[40];
+    expect(canCook(), isTrue);
+
+    // a campfire already burning does not get in the way: the relight
+    // replaces it
+    pick('cookfire');
+    craftAt(session, 'basic_campfire', EntityId.FIREPIT);
+    expect(canCook(), isTrue);
+
+    session.dispose();
+  });
+
+  test('cooking is gated on a cookfire burning at the station when no '
+      'cookfire is picked', () {
     final session = buildSession();
     final save = session.saveGameData;
     stockForFiremaking(session);

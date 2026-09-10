@@ -27,6 +27,11 @@ class EncounterActionResult {
   /// The fight killed the player. Only a batch settling time away sets it -
   /// live, the frame loop notices a death the moment the swing lands.
   bool playerDied = false;
+
+  /// The batch stopped after [actionsPerformed] and handed the rest of its
+  /// stretch back to the loop: a cook tick that spent itself lighting the
+  /// fire. An offline settle charges only the share reported.
+  bool handedOff = false;
 }
 
 /// What one explore action turned up.

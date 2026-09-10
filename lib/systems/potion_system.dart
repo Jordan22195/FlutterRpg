@@ -3,6 +3,7 @@ import '../data/buff_data.dart';
 import '../data/inventory_data.dart';
 import '../services/buff_service.dart';
 import '../services/inventory_service.dart';
+import '../data/player_data.dart';
 
 /// Potions: an inventory item turning into a buff on the player.
 ///
@@ -38,7 +39,16 @@ class PotionSystem {
   /// Returns false and changes nothing when [id] is not a potion or the
   /// player has none — [InventoryService.removeItems] reports neither, so
   /// the guard has to live here.
-  bool drink(ItemId id, InventoryData inventoryState, BuffData buffState) {
+  ///
+  /// [at] is the instant it is drunk at, defaulting to now. An offline
+  /// settle drinks at the segment it is replaying, and a buff stamped from
+  /// the wall clock instead would read as up until long after the gap.
+  bool drink(
+    ItemId id,
+    InventoryData inventoryState,
+    BuffData buffState, {
+    DateTime? at,
+  }) {
     if (!isDrinkable(id)) return false;
     if (_inventoryService.getItemCount(inventoryState, id) <= 0) return false;
 
@@ -47,9 +57,36 @@ class PotionSystem {
     // the moment it is drunk or the buff arrives part-spent
     final potion = id.build();
     if (potion is! BuffItem) return false;
+    if (at != null) potion.expirationTime = at.add(potion.duration);
 
     _inventoryService.removeItems(inventoryState, id, 1);
-    _buffService.addBuff(potion, buffState);
+    _buffService.addBuff(potion, buffState, at: at);
     return true;
+  }
+
+  /// Drinks one of every potion in [PlayerData.autoDrinkPotions] whose buff
+  /// is not up at [at] and that the player still holds. Returns what was
+  /// drunk, in catalog order.
+  ///
+  /// "Not up" is [BuffService.getGlobalBuff]'s rule, which matches the
+  /// sweep's: a buff expiring exactly at [at] has gone, so the instant a
+  /// settle sweeps one is the instant this puts it back.
+  List<ItemId> autoDrink(
+    PlayerData playerState,
+    InventoryData inventoryState, {
+    DateTime? at,
+  }) {
+    final drunk = <ItemId>[];
+    for (final id in ItemId.values) {
+      if (!playerState.autoDrinkPotions.contains(id)) continue;
+      if (_buffService.getGlobalBuff(playerState.buffData, id, at: at) !=
+          null) {
+        continue;
+      }
+      if (drink(id, inventoryState, playerState.buffData, at: at)) {
+        drunk.add(id);
+      }
+    }
+    return drunk;
   }
 }

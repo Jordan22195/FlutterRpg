@@ -9,6 +9,8 @@ import '../widgets/equipment_picker.dart';
 import '../widgets/icon_renderer.dart';
 import '../widgets/item_stack_tile.dart';
 import '../widgets/stat_chip.dart';
+import '../controllers/potion_controller.dart';
+import 'potions_screen.dart';
 
 /// Paper-doll gear screen: armor slots flank a character silhouette,
 /// weapons sit below it, and a detail card shows the selected slot's
@@ -195,7 +197,61 @@ class _GearScreenState extends State<GearScreen> {
           _detailCard(context, equipmentController),
           _sectionHeader(context, 'Tools'),
           _toolsRow(context, equipmentController),
+          _sectionHeader(context, 'Potions'),
+          _potionsRow(context),
         ],
+      ),
+    );
+  }
+
+  /// The way into the potions screen, in the detail card's dress: what is
+  /// armed to auto-drink and what is up right now, and a chevron.
+  Widget _potionsRow(BuildContext context) {
+    final potions = context.watch<PotionController>();
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: InkWell(
+        key: const ValueKey('gear-potions-row'),
+        borderRadius: BorderRadius.circular(13),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const PotionsScreen()),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest.withOpacity(0.35),
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: scheme.outline.withOpacity(0.3)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.science, size: 28, color: scheme.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Potions',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${potions.autoCount} auto · '
+                      '${potions.activeCount} active',
+                      style: TextStyle(fontSize: 11, color: scheme.outline),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: scheme.outline),
+            ],
+          ),
+        ),
       ),
     );
   }

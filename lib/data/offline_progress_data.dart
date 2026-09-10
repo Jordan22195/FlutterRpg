@@ -1,6 +1,7 @@
 import '../catalogs/entities/entities.dart';
 import 'inventory_data.dart';
 import 'skill_data.dart';
+import '../catalogs/items/items.dart';
 
 /// Everything one offline settle paid out, merged into a single summary.
 ///
@@ -30,6 +31,10 @@ class OfflineProgressReport {
   /// gathering nodes both land here - anything an encounter took down.
   Map<EntityId, int> entitiesDefeated = {};
 
+  /// Potions the settle drank to keep their buffs up, counted by kind. The
+  /// stack visibly shrank, so the player is told what it went on.
+  Map<ItemId, int> potionsUsed = {};
+
   /// The fight killed the player while they were away. They come back on
   /// 1 hp with the loop stopped, exactly as a death on screen leaves them.
   bool died = false;
@@ -52,7 +57,8 @@ class OfflineProgressReport {
       items.itemMap.isEmpty &&
       items.equipment.isEmpty &&
       entities.isEmpty &&
-      entitiesDefeated.isEmpty;
+      entitiesDefeated.isEmpty &&
+      potionsUsed.isEmpty;
 }
 
 /// The buffer offline progress is collected into.

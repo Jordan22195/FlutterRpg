@@ -8,6 +8,15 @@ import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/main.dart';
 import 'package:rpg/services/file_manager_service.dart';
+import 'package:provider/provider.dart';
+import 'package:rpg/catalogs/catalog_icons.dart';
+import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/controllers/buff_controller.dart';
+import 'package:rpg/controllers/inventory_controller.dart';
+import 'package:rpg/data/offline_progress_data.dart';
+import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/utilities/image_resolver.dart';
+import 'package:rpg/widgets/offline_progress_dialog.dart';
 
 // Coming back to a running action: the first frame settles the time away and
 // the shell reports it, whichever screen the app was closed on.
@@ -191,5 +200,49 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
+  });
+
+  testWidgets('potions drunk while away are listed under Used', (
+    tester,
+  ) async {
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final session = factory.create(
+      save: factory.newGame(catalogs),
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+    registerCatalogIconResolvers();
+    EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
+
+    final report = OfflineProgressReport()
+      ..timeAway = const Duration(minutes: 5)
+      ..potionsUsed = {ItemId.MINOR_SPEED_POTION: 3};
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<GameSession>.value(value: session),
+          ChangeNotifierProvider<InventoryController>.value(
+            value: session.inventoryController,
+          ),
+          ChangeNotifierProvider<BuffController>.value(
+            value: session.buffController,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: OfflineProgressBody(report: report),
+            ),
+          ),
+        ),
+      ),
+    );
+    await settle(tester);
+
+    expect(find.text('USED'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    session.dispose();
   });
 }

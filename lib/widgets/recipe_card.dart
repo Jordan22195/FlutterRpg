@@ -85,9 +85,11 @@ class RecipeCard extends StatelessWidget {
   /// picker, and locking that would strand the player on the recipe.
   final bool lockWhenUnderLevel;
 
-  /// Marks this row as the recipe already in play. Only the picker sets it:
-  /// the card that displays the current selection is always showing it, so
-  /// highlighting there would say nothing.
+  /// Marks this row as the recipe already in play. Set by the picker, and by
+  /// screens that stack several cards at once — the firepit's firemaking and
+  /// cooking pair — where the mark says which one the action button runs. A
+  /// screen showing a single card leaves it off: highlighting the only choice
+  /// would say nothing.
   final bool selected;
 
   final double height;

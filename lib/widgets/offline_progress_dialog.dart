@@ -10,6 +10,7 @@ import 'equipment_info_dialog.dart';
 import 'icon_renderer.dart';
 import 'inventory_grid.dart';
 import 'item_stack_tile.dart';
+import '../catalogs/items/items.dart';
 
 /// What the loop paid out while the player was away, shown once on the way
 /// back in. Raised by [MainShell] rather than any one screen, so it reaches
@@ -96,15 +97,22 @@ class OfflineProgressBody extends StatelessWidget {
                 ),
             ],
           ),
+        // what the settle drank to keep its buffs up: the stack shrank,
+        // and a gain list that never says so reads as a bug
+        if (report.potionsUsed.isNotEmpty)
+          _Section(
+            title: 'Used',
+            children: [_CountTiles<ItemId>(counts: report.potionsUsed)],
+          ),
         if (report.entitiesDefeated.isNotEmpty)
           _Section(
             title: 'Defeated',
-            children: [_EntityTiles(counts: report.entitiesDefeated)],
+            children: [_CountTiles<EntityId>(counts: report.entitiesDefeated)],
           ),
         if (report.entities.isNotEmpty)
           _Section(
             title: 'Discovered',
-            children: [_EntityTiles(counts: report.entities)],
+            children: [_CountTiles<EntityId>(counts: report.entities)],
           ),
         if (xp.isNotEmpty)
           _Section(
@@ -118,12 +126,12 @@ class OfflineProgressBody extends StatelessWidget {
   }
 }
 
-/// A row of entity tiles with their counts, shared by the sections that
-/// report entities by kind - what the walk turned up, and what it killed.
-class _EntityTiles extends StatelessWidget {
-  const _EntityTiles({required this.counts});
+/// A row of tiles with their counts, shared by the sections that report
+/// things by kind - what the walk turned up, what it killed, what it drank.
+class _CountTiles<T extends Enum> extends StatelessWidget {
+  const _CountTiles({required this.counts});
 
-  final Map<EntityId, int> counts;
+  final Map<T, int> counts;
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +142,7 @@ class _EntityTiles extends StatelessWidget {
         runSpacing: 10,
         children: [
           for (final entry in counts.entries)
-            ItemStackTile(
+            ItemStackTile<T>(
               size: 48,
               id: entry.key,
               count: entry.value,

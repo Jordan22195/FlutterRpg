@@ -6,6 +6,8 @@ import '../services/buff_service.dart';
 import '../services/offline_progress_service.dart';
 import '../services/player_data_service.dart';
 import '../services/skill_service.dart';
+import '../data/inventory_data.dart';
+import 'potion_system.dart';
 
 /// Settles the time the app spent backgrounded while an action was running.
 ///
@@ -32,6 +34,10 @@ class OfflineProgressSystem {
   final SkillService _skillService;
   final BuffService _buffService;
   final OfflineProgressService _offlineProgressService;
+  final PotionSystem _potionSystem;
+
+  // the bag the settle drinks auto-drink potions out of
+  final InventoryData _inventoryData;
 
   // the buffer offline actions report into. shared with the action
   // controllers, which record their results while it is open - which is
@@ -46,13 +52,17 @@ class OfflineProgressSystem {
     required BuffService buffService,
     required OfflineProgressService offlineProgressService,
     required OfflineProgressData offlineProgressData,
+    required PotionSystem potionSystem,
+    required InventoryData inventoryData,
   }) : _actionTimingService = actionTimingService,
        _actionTimingSystem = actionTimingSystem,
        _playerDataService = playerDataService,
        _skillService = skillService,
        _buffService = buffService,
        _offlineProgressService = offlineProgressService,
-       _offlineProgressData = offlineProgressData;
+       _offlineProgressData = offlineProgressData,
+       _potionSystem = potionSystem,
+       _inventoryData = inventoryData;
 
   /// A settle is owed once the loop is running and frames have not arrived
   /// for longer than the offline threshold; it is in progress while the
@@ -111,6 +121,20 @@ class OfflineProgressSystem {
     var stalled = 0;
 
     while (remaining > 0 && timingState.running) {
+      // ---- put back any auto-drink potion whose buff is not up at this
+      // instant - missing when the gap began, or swept at the cut the last
+      // segment ended on - so this segment's stats are read with it up. the
+      // fresh buff expires a whole duration on, so it is the next cut, never
+      // a zero-length one.
+      _offlineProgressService.recordPotionsUsed(
+        _offlineProgressData,
+        _potionSystem.autoDrink(
+          playerState,
+          _inventoryData,
+          at: playerState.lastActionTime,
+        ),
+      );
+
       // ---- read the state this segment runs at
       _refreshTiming(playerState, timingState);
       final intervalSeconds =

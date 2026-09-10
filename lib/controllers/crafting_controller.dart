@@ -193,6 +193,12 @@ class CraftingController extends ChangeNotifier {
     );
     // a no-op unless the timing system is settling time away
     _offlineProgressService.record(_offlineProgressData, result);
+    // a cook tick that lit the fire stopped there rather than running the
+    // whole stretch it was given, so a settle charges it one interval and
+    // cuts the rest around the fire it lit
+    if (result.handedOff) {
+      _offlineProgressService.recordEarlyStop(_offlineProgressData);
+    }
     if (!_craftingSystem.recipeRequirementsMet(
       _craftingState.activeRecipeId,
       _playerState,
@@ -365,6 +371,22 @@ class CraftingController extends ChangeNotifier {
 
   /// Whether the viewed firepit's fire can cook on it.
   bool canCook() => activeFire()?.canCook ?? false;
+
+  /// The cookfire the viewed firepit has picked to cook over, or null when
+  /// its fire selection is empty or cannot cook.
+  CraftingRecipe? cookFireRecipe() => _craftingSystem.cookFireRecipeAt(
+    _playerState.currentEntityViewId,
+    _craftingState,
+  );
+
+  /// Whether a cook at the viewed firepit could light its selected cookfire
+  /// right now: the level is met and the logs are on hand.
+  bool canRelight() => _craftingSystem.canRelight(
+    _playerState.currentEntityViewId,
+    _craftingState,
+    _playerState,
+    _inventoryState,
+  );
 
   /// Puts out the viewed firepit's fire. A cooking action running on it stops
   /// on its next tick, when its requirements re-check fails.

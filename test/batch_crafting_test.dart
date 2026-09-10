@@ -340,6 +340,20 @@ void main() {
     int minnowsLeft(GameSession session) =>
         session.saveGameData.inventoryData.itemMap[ItemId.MINNOW] ?? 0;
 
+    int logsLeft(GameSession session) =>
+        session.saveGameData.inventoryData.itemMap[ItemId.LOGS] ?? 0;
+
+    // the fire the firepit will light for itself when a cook finds it cold.
+    // cooking only ever relights the fire the player picked, so the tests
+    // that rely on a relight say so; the ones that do not leave the pit
+    // with nothing picked and still cook nothing on a dead fire
+    void selectFire(GameSession session, String recipeId) {
+      session.saveGameData.craftingState.selectedRecipeByEntity[EntityId
+          .FIREPIT] = {
+        SkillId.FIREMAKING: recipeId,
+      };
+    }
+
     test('a batch replayed while the fire was lit cooks', () {
       final session = buildSession();
       lightCookfire(session);
@@ -358,7 +372,8 @@ void main() {
       session.dispose();
     });
 
-    test('the same batch replayed after it went out cooks nothing', () {
+    test('the same batch replayed after it went out cooks nothing with no '
+        'cookfire picked', () {
       final session = buildSession();
       lightCookfire(session);
       final wentOut = fire(session).expirationTime;
@@ -374,6 +389,101 @@ void main() {
       expect(result.actionsPerformed, 0);
       expect(result.items, isEmpty);
       expect(minnowsLeft(session), 200);
+      session.dispose();
+    });
+
+    test('replayed after it went out, a picked cookfire relights first', () {
+      final session = buildSession();
+      lightCookfire(session);
+      selectFire(session, 'cookfire');
+      final wentOut = fire(session).expirationTime;
+      final at = wentOut.add(const Duration(seconds: 1));
+
+      final result = craft(
+        session,
+        'cook_minnow',
+        craftCount: 20,
+        station: EntityId.FIREPIT,
+        at: at,
+      );
+
+      // the tick was spent on the fire, not the fish: the logs are paid,
+      // firemaking is trained as a manual craft would, and the batch hands
+      // the rest of its stretch back to the loop
+      expect(result.actionsPerformed, 1);
+      expect(result.handedOff, isTrue);
+      expect(result.xp, {SkillId.FIREMAKING: xpPerCraft('cookfire')});
+      expect(result.items, isEmpty);
+      expect(minnowsLeft(session), 200);
+      expect(logsLeft(session), 198 - 2);
+      // stamped from the instant being replayed, not the wall clock
+      expect(fire(session).expirationTime, at.add(const Duration(minutes: 3)));
+      // a fire is not something cooked
+      expect(session.saveGameData.craftingState.craftedItems.itemMap, isEmpty);
+      session.dispose();
+    });
+
+    test('a relight is one fire however many crafts the batch was handed', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.LOGS] = 200;
+      save.inventoryData.itemMap[ItemId.MINNOW] = 200;
+      selectFire(session, 'cookfire');
+      final at = DateTime.now();
+
+      final result = craft(
+        session,
+        'cook_minnow',
+        craftCount: 500,
+        station: EntityId.FIREPIT,
+        at: at,
+      );
+
+      expect(result.actionsPerformed, 1);
+      expect(logsLeft(session), 198);
+      expect(fire(session).fuelUnits, 1);
+      expect(fire(session).expirationTime, at.add(const Duration(minutes: 3)));
+      session.dispose();
+    });
+
+    test('a dead fire is relit by the live tick and cooks on the next', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      lightCookfire(session);
+      selectFire(session, 'cookfire');
+      fire(session).expirationTime = DateTime.now().subtract(
+        const Duration(seconds: 1),
+      );
+
+      final relit = craft(
+        session,
+        'cook_minnow',
+        station: EntityId.FIREPIT,
+        offline: false,
+      );
+      expect(relit.actionsPerformed, 1);
+      expect(relit.xp, {SkillId.FIREMAKING: xpPerCraft('cookfire')});
+      expect(minnowsLeft(session), 200);
+      expect(logsLeft(session), 196);
+      expect(
+        session.craftingSystem.recipeRequirementsMet(
+          'cook_minnow',
+          save.playerData,
+          save.inventoryData,
+          save.craftingState,
+        ),
+        isTrue,
+      );
+
+      final cooked = craft(
+        session,
+        'cook_minnow',
+        station: EntityId.FIREPIT,
+        offline: false,
+      );
+      expect(cooked.actionsPerformed, 1);
+      expect(cooked.xp, {SkillId.COOKING: xpPerCraft('cook_minnow')});
+      expect(minnowsLeft(session), 199);
       session.dispose();
     });
 
@@ -422,6 +532,93 @@ void main() {
 
       expect(result.actionsPerformed, 0);
       expect(minnowsLeft(session), 200);
+      session.dispose();
+    });
+
+    test('a burning campfire is replaced by the picked cookfire on the '
+        'relight tick', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      setLevel(session, SkillId.FIREMAKING, 10);
+      save.inventoryData.itemMap[ItemId.LOGS] = 200;
+      save.inventoryData.itemMap[ItemId.MINNOW] = 200;
+      craft(
+        session,
+        'basic_campfire',
+        station: EntityId.FIREPIT,
+        offline: false,
+      );
+      selectFire(session, 'cookfire');
+
+      final result = craft(
+        session,
+        'cook_minnow',
+        craftCount: 20,
+        station: EntityId.FIREPIT,
+        at: DateTime.now(),
+      );
+
+      expect(result.actionsPerformed, 1);
+      expect(fire(session).id, ItemId.COOKFIRE);
+      expect(
+        save.playerData.buffData.zoneBuffs[save.playerData.currentZoneId]!
+            .length,
+        1,
+      );
+      expect(minnowsLeft(session), 200);
+      session.dispose();
+    });
+
+    test('a cold pit starts a cook only with a cookfire picked', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      setLevel(session, SkillId.FIREMAKING, 10);
+      save.inventoryData.itemMap[ItemId.LOGS] = 200;
+      save.inventoryData.itemMap[ItemId.MINNOW] = 200;
+
+      bool start() => session.craftingController.startCraftingActionFor(
+        'cook_minnow',
+        EntityId.FIREPIT,
+      );
+
+      expect(start(), isFalse);
+      selectFire(session, 'basic_campfire');
+      expect(start(), isFalse);
+      selectFire(session, 'cookfire');
+      expect(start(), isTrue);
+
+      session.actionTimingController.stop();
+      session.dispose();
+    });
+
+    test('logs running out ends the loop when the fire dies', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.LOGS] = 2;
+      save.inventoryData.itemMap[ItemId.MINNOW] = 200;
+      selectFire(session, 'cookfire');
+      expect(
+        session.craftingController.startCraftingActionFor(
+          'cook_minnow',
+          EntityId.FIREPIT,
+        ),
+        isTrue,
+      );
+
+      // the first tick spends the last logs on the fire, and the loop is
+      // still worth running: the fire is lit
+      session.craftingController.doCraftingAction(1);
+      expect(logsLeft(session), 0);
+      expect(session.actionTimingController.isRunning, isTrue);
+
+      // once it dies there is nothing to relight it with
+      fire(session).expirationTime = DateTime.now().subtract(
+        const Duration(seconds: 1),
+      );
+      session.craftingController.doCraftingAction(1);
+      expect(minnowsLeft(session), 200);
+      expect(session.actionTimingController.isRunning, isFalse);
+
       session.dispose();
     });
 
@@ -485,7 +682,8 @@ void main() {
       session.dispose();
     });
 
-    test('a gap cooks the fire\'s share of it, not the whole gap', () {
+    test('a gap cooks the fire\'s share of it, not the whole gap, with no '
+        'cookfire picked', () {
       final session = buildSession();
       final save = session.saveGameData;
       lightCookfire(session);
@@ -525,6 +723,60 @@ void main() {
       // was spent idle
       expect(session.actionTimingController.isRunning, isFalse);
 
+      session.dispose();
+    });
+
+    test('a gap relights the fire and cooks the rest of it', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      lightCookfire(session);
+      selectFire(session, 'cookfire');
+
+      expect(
+        session.craftingController.startCraftingActionFor(
+          'cook_minnow',
+          EntityId.FIREPIT,
+        ),
+        isTrue,
+      );
+
+      // the same two minutes with 30s of fire left, but this time the pit
+      // has a cookfire picked: the fire's 10 cooks, one tick to relight,
+      // and the rest of the gap cooks on the new fire
+      final now = DateTime.now();
+      save.playerData.lastActionTime = now.subtract(
+        const Duration(seconds: 120),
+      );
+      fire(session).expirationTime = save.playerData.lastActionTime.add(
+        const Duration(seconds: 30),
+      );
+
+      session.offlineProgressSystem.settle(
+        save.playerData,
+        save.actionTimingData,
+        now: now,
+      );
+
+      final report = session.actionTimingController.pendingOfflineReport;
+      expect(report, isNotNull);
+      // exactly one relight, and every other action a cook
+      expect(report!.xp[SkillId.FIREMAKING], xpPerCraft('cookfire'));
+      expect(logsLeft(session), 196);
+      final cooks = 200 - minnowsLeft(session);
+      expect(report.actionCount, cooks + 1);
+      expect(report.xp[SkillId.COOKING], 10 * cooks);
+      // well past the fire's own share, and as near the whole gap as the
+      // level-up cuts let it get (a cut at a fraction of an interval pays
+      // the fraction out idle)
+      expect(cooks, greaterThan(10));
+      final whole = actionsIn(session, 120);
+      expect(report.actionCount, inInclusiveRange(whole - 2, whole));
+      // a fire is not something the gap gained
+      expect(report.items.itemMap.containsKey(ItemId.COOKFIRE), isFalse);
+      // and the loop is still going on the fire it lit
+      expect(session.actionTimingController.isRunning, isTrue);
+
+      session.actionTimingController.stop();
       session.dispose();
     });
   });

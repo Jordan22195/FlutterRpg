@@ -3,6 +3,7 @@ import '../data/action_result.dart';
 import '../data/offline_progress_data.dart';
 import '../data/skill_data.dart';
 import 'inventory_service.dart';
+import '../catalogs/items/items.dart';
 
 /// Collects what an offline settle paid out into one report, and hands the
 /// finished report to the ui.
@@ -32,6 +33,15 @@ class OfflineProgressService {
     data.report = OfflineProgressReport()..timeAway = timeAway;
     data.earlyStop = false;
     data.processing = true;
+  }
+
+  /// Potions the settle drank to keep their buffs up. Counted so the report
+  /// can say where the stack went.
+  void recordPotionsUsed(OfflineProgressData data, List<ItemId> ids) {
+    if (!data.processing) return;
+    for (final id in ids) {
+      data.report.potionsUsed.update(id, (n) => n + 1, ifAbsent: () => 1);
+    }
   }
 
   void record(OfflineProgressData data, EncounterActionResult result) {

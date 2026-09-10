@@ -16,6 +16,8 @@ import 'package:rpg/services/offline_progress_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/services/skill_service.dart';
 import 'package:rpg/systems/offline_progress_system.dart';
+import 'package:rpg/data/inventory_data.dart';
+import 'package:rpg/systems/potion_system.dart';
 
 // What the player is told when they come back: an offline settle buffers
 // everything its actions produce into one report, and the shell shows it.
@@ -214,14 +216,20 @@ void main() {
         playerDataService: playerDataService,
         equipmentService: EquipmentService(),
       );
+      final buffService = BuffService();
       system = OfflineProgressSystem(
         actionTimingService: timingService,
         actionTimingSystem: timingSystem,
         playerDataService: playerDataService,
         skillService: SkillService(),
-        buffService: BuffService(),
+        buffService: buffService,
         offlineProgressService: offlineProgressService,
         offlineProgressData: offlineProgressData,
+        potionSystem: PotionSystem(
+          buffService: buffService,
+          inventoryService: InventoryService(),
+        ),
+        inventoryData: InventoryData(itemMap: {}),
       );
     });
 

@@ -5,6 +5,7 @@ import 'skill_data.dart';
 import 'equipment_data.dart';
 import '../catalogs/zones/zones.dart';
 import '../data/buff_data.dart';
+import '../catalogs/items/items.dart';
 
 /// Stance: which skill the action loop boosts during an encounter.
 /// Picked on the combat screen; sets [PlayerData.skillBoost].
@@ -143,6 +144,11 @@ class PlayerData {
   /// offline settle alike.
   AutoEatRule autoEatRule = AutoEatRule.standard;
 
+  /// Potions re-drunk whenever their buff lapses while an action runs. On
+  /// PlayerData rather than UiState for the same reason as [autoEatRule]:
+  /// the live tick and an offline settle read the same set.
+  Set<ItemId> autoDrinkPotions = {};
+
   DateTime lastActionTime = DateTime.now();
 
   // mutable stats
@@ -176,6 +182,7 @@ class PlayerData {
       'hitpoints': hitpoints,
       'stamina': stamina,
       'autoEatRule': autoEatRule.toJson(),
+      'autoDrinkPotions': [for (final id in autoDrinkPotions) id.name],
       'lastActionTime': lastActionTime.toIso8601String(),
     };
   }
@@ -274,6 +281,21 @@ class PlayerData {
       ..lastActionTime = lastActionTime
       ..autoEatRule = json['autoEatRule'] is Map<String, dynamic>
           ? AutoEatRule.fromJson(json['autoEatRule'] as Map<String, dynamic>)
-          : AutoEatRule.standard;
+          : AutoEatRule.standard
+      ..autoDrinkPotions = _readAutoDrinkPotions(json['autoDrinkPotions']);
   }
+}
+
+/// A preference rather than a position, so anything malformed reads as
+/// nothing toggled rather than failing the load. An id the catalog has
+/// since retired is skipped, the way InventoryData skips one.
+Set<ItemId> _readAutoDrinkPotions(Object? raw) {
+  if (raw is! List) return {};
+  final ids = <ItemId>{};
+  for (final entry in raw) {
+    if (entry is! String) continue;
+    final id = ItemId.values.asNameMap()[entry];
+    if (id != null) ids.add(id);
+  }
+  return ids;
 }

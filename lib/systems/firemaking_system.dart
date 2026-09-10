@@ -55,12 +55,18 @@ class FiremakingSystem {
   /// [count] lights the same fire that many times at once, which is how an
   /// offline stretch of firemaking settles: burn time is what a fire craft
   /// pays out, so n crafts are worth n durations however they are applied.
+  ///
+  /// [at] is the instant the fire is lit at, defaulting to now. A cook loop
+  /// settling time away relights at the segment it is replaying, and a fire
+  /// stamped from the wall clock instead would read as burning until long
+  /// after the gap, cooking the whole of it for free.
   void lightOrExtend(
     ItemId fireId,
     EntityId firepitId,
     ZoneId zoneId,
     BuffData buffState, {
     int count = 1,
+    DateTime? at,
   }) {
     if (count <= 0) return;
     final fire = fireId.build();
@@ -69,12 +75,10 @@ class FiremakingSystem {
     // this instance is one application of the fire, so a batched one is
     // worth the whole batch's burn time - both when it extends the fire
     // already burning and when it replaces a different one
-    if (count > 1) {
-      fire.fuelUnits = count;
-      fire.expirationTime = DateTime.now().add(fire.duration);
-    }
+    fire.fuelUnits = count;
+    fire.expirationTime = (at ?? DateTime.now()).add(fire.duration);
 
-    _buffService.setZoneBuff(fire, buffState, zoneId, firepitId);
+    _buffService.setZoneBuff(fire, buffState, zoneId, firepitId, at: at);
   }
 
   /// Puts the fire out, ending its buff immediately.

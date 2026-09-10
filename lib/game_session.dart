@@ -53,6 +53,7 @@ import 'package:rpg/systems/equipment_system.dart';
 import 'data/bound_action.dart';
 import 'data/inventory_data.dart';
 import 'data/ui_state.dart';
+import 'package:rpg/controllers/potion_controller.dart';
 
 class SaveGameData {
   final String slotId;
@@ -476,6 +477,8 @@ class GameSessionFactory {
       buffService: buffService,
       offlineProgressService: offlineProgressService,
       offlineProgressData: offlineProgressData,
+      potionSystem: potionSystem,
+      inventoryData: save.inventoryData,
     );
 
     //controllers
@@ -499,6 +502,14 @@ class GameSessionFactory {
       buffState: save.playerData.buffData,
       inventoryService: inventoryService,
       potionSystem: potionSystem,
+    );
+    final potionController = PotionController(
+      playerState: save.playerData,
+      inventoryData: save.inventoryData,
+      actionTimingState: save.actionTimingData,
+      potionSystem: potionSystem,
+      buffService: buffService,
+      inventoryService: inventoryService,
     );
     final encounterController = EncounterController(
       playerData: save.playerData,
@@ -524,6 +535,11 @@ class GameSessionFactory {
       buffService: buffService,
       actionTimingState: save.actionTimingData,
       offlineProgressSystem: offlineProgressSystem,
+      potionSystem: potionSystem,
+      inventoryData: save.inventoryData,
+      // the tick drinking a potion changes the bag, and the potions screen
+      // and inventory both have to follow it
+      onAutoDrink: potionController.refresh,
     );
     final craftingController = CraftingController(
       actionTimingController: actionTimingController,
@@ -635,6 +651,11 @@ class GameSessionFactory {
     // a potion's stat bonus lands the moment it is drunk, so the skill
     // readouts have to follow it too
     inventoryController.addListener(playerDataController.refresh);
+    // toggling auto-drink can drink one on the spot, and the tick's drinks
+    // land here; the inventory fans out to the buff row and the readouts.
+    // never the other way round: the buff controller is already told about
+    // every inventory change, and listening back would loop
+    potionController.addListener(inventoryController.refresh);
     enchantingController.addListener(playerDataController.refresh);
     dungeonController.addListener(playerDataController.refresh);
     equipmentController.addListener(playerDataController.refresh);
@@ -651,6 +672,7 @@ class GameSessionFactory {
       playerDataController: playerDataController,
       actionTimingController: actionTimingController,
       inventoryController: inventoryController,
+      potionController: potionController,
       encounterController: encounterController,
       buffController: buffController,
       craftingController: craftingController,
@@ -698,6 +720,7 @@ class GameSession {
   PlayerDataController playerDataController;
   ActionTimingController actionTimingController;
   InventoryController inventoryController;
+  PotionController potionController;
   EncounterController encounterController;
   BuffController buffController;
   CraftingController craftingController;
@@ -743,6 +766,7 @@ class GameSession {
     required this.playerDataController,
     required this.actionTimingController,
     required this.inventoryController,
+    required this.potionController,
     required this.encounterController,
     required this.buffController,
     required this.craftingController,

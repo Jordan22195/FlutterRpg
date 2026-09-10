@@ -319,6 +319,119 @@ void main() {
       after.dispose();
     });
 
+    test('a cook whose fire died while the app was closed comes back and '
+        'relights', () {
+      final before = newSession();
+      stockForFiremaking(before);
+      // more fish than ten minutes can cook, so the fire is the only thing
+      // that could stop the loop
+      before.saveGameData.inventoryData.itemMap[ItemId.MINNOW] = 1000;
+      before.saveGameData.craftingState.selectedRecipeByEntity[EntityId
+          .FIREPIT] = {
+        SkillId.FIREMAKING: 'cookfire',
+      };
+      before.firemakingSystem.lightOrExtend(
+        ItemId.COOKFIRE,
+        EntityId.FIREPIT,
+        before.saveGameData.playerData.currentZoneId,
+        before.saveGameData.playerData.buffData,
+      );
+      expect(
+        before.craftingController.startCraftingActionFor(
+          'cook_minnow',
+          EntityId.FIREPIT,
+        ),
+        isTrue,
+      );
+
+      final after = relaunch(before);
+      final save = after.saveGameData;
+      // ten minutes away, and the fire had thirty seconds left when the
+      // app closed
+      final now = DateTime.now();
+      final closedAt = now.subtract(const Duration(minutes: 10));
+      save.playerData.lastActionTime = closedAt;
+      after.buffService
+          .getZoneBuff(
+            save.playerData.buffData,
+            save.playerData.currentZoneId,
+            EntityId.FIREPIT,
+          )!
+          .expirationTime = closedAt.add(
+        const Duration(seconds: 30),
+      );
+
+      after.resumeBoundAction();
+
+      // a dead fire used to leave the cook idle and drop the gap. with
+      // logs on hand the cook can relight it, so it resumes with the gap
+      // intact for the first frame to settle
+      expect(after.actionTimingController.isTicking, isTrue);
+      expect(save.playerData.lastActionTime, closedAt);
+
+      after.offlineProgressSystem.settle(
+        save.playerData,
+        save.actionTimingData,
+        now: now,
+      );
+      final report = after.actionTimingController.pendingOfflineReport!;
+      expect(report.xp[SkillId.COOKING], greaterThan(0));
+      expect(report.xp[SkillId.FIREMAKING], greaterThan(0));
+      expect(after.actionTimingController.isRunning, isTrue);
+      expect(
+        after.firemakingSystem.activeFire(
+          EntityId.FIREPIT,
+          save.playerData.currentZoneId,
+          save.playerData.buffData,
+        ),
+        isNotNull,
+      );
+
+      after.actionTimingController.stop();
+      before.dispose();
+      after.dispose();
+    });
+
+    test('a cook with no logs to relight comes back idle', () {
+      final before = newSession();
+      stockForFiremaking(before);
+      before.saveGameData.inventoryData.itemMap[ItemId.MINNOW] = 200;
+      before.saveGameData.craftingState.selectedRecipeByEntity[EntityId
+          .FIREPIT] = {
+        SkillId.FIREMAKING: 'cookfire',
+      };
+      before.firemakingSystem.lightOrExtend(
+        ItemId.COOKFIRE,
+        EntityId.FIREPIT,
+        before.saveGameData.playerData.currentZoneId,
+        before.saveGameData.playerData.buffData,
+      );
+      before.craftingController.startCraftingActionFor(
+        'cook_minnow',
+        EntityId.FIREPIT,
+      );
+
+      final after = relaunch(before);
+      final save = after.saveGameData;
+      save.inventoryData.itemMap.remove(ItemId.LOGS);
+      after.buffService
+          .getZoneBuff(
+            save.playerData.buffData,
+            save.playerData.currentZoneId,
+            EntityId.FIREPIT,
+          )!
+          .expirationTime = DateTime.now().subtract(
+        const Duration(minutes: 5),
+      );
+
+      after.resumeBoundAction();
+
+      expect(after.actionTimingController.isTicking, isFalse);
+
+      before.dispose();
+      after.dispose();
+    });
+
     test('an action already running is left alone', () {
       final before = newSession();
       before.worldController.startExplore();

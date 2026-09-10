@@ -8,6 +8,7 @@ import 'package:rpg/data/auto_eat_rule.dart';
 import 'package:rpg/data/bound_action.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'package:rpg/catalogs/items/items.dart';
 
 void main() {
   test(
@@ -129,6 +130,54 @@ void main() {
       };
 
       expect(SaveGameData.fromJson(json).actionTimingData.boundAction, isNull);
+    });
+  });
+
+  group('the auto-drink potions', () {
+    SaveGameData roundTrip(SaveGameData save) {
+      return SaveGameData.fromJson(
+        jsonDecode(jsonEncode(save.toJson())) as Map<String, dynamic>,
+      );
+    }
+
+    test('the armed set survives a round trip', () {
+      final factory = GameSessionFactory();
+      final save = factory.newGame(factory.catalog1());
+      save.playerData.autoDrinkPotions.addAll([
+        ItemId.MINOR_SPEED_POTION,
+        ItemId.MINOR_ATTACK_POTION,
+      ]);
+
+      expect(roundTrip(save).playerData.autoDrinkPotions, {
+        ItemId.MINOR_SPEED_POTION,
+        ItemId.MINOR_ATTACK_POTION,
+      });
+    });
+
+    test('a retired or malformed entry is skipped, not thrown on', () {
+      final factory = GameSessionFactory();
+      final save = factory.newGame(factory.catalog1());
+      final json =
+          jsonDecode(jsonEncode(save.toJson())) as Map<String, dynamic>;
+      (json['playerData'] as Map)['autoDrinkPotions'] = [
+        'MINOR_SPEED_POTION',
+        'RETIRED_POTION',
+        42,
+      ];
+
+      expect(SaveGameData.fromJson(json).playerData.autoDrinkPotions, {
+        ItemId.MINOR_SPEED_POTION,
+      });
+    });
+
+    test('a save written before the set existed loads nothing armed', () {
+      final factory = GameSessionFactory();
+      final save = factory.newGame(factory.catalog1());
+      final json =
+          jsonDecode(jsonEncode(save.toJson())) as Map<String, dynamic>;
+      (json['playerData'] as Map).remove('autoDrinkPotions');
+
+      expect(SaveGameData.fromJson(json).playerData.autoDrinkPotions, isEmpty);
     });
   });
 

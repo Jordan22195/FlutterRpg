@@ -1008,6 +1008,139 @@ void main() {
     });
   });
 
+  // ---------------------------------------------------------- auto-drink
+
+  group('auto-drink over a gap', () {
+    /// Arms [id] with [stack] in the bag and, when [leftSeconds] is given,
+    /// a buff already up that lapses that far into the gap.
+    void arm(
+      GameSession session,
+      ItemId id, {
+      required int stack,
+      double? leftSeconds,
+    }) {
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[id] = stack;
+      save.playerData.autoDrinkPotions.add(id);
+      if (leftSeconds != null) {
+        final potion = id.build() as BuffItem;
+        potion.expirationTime = save.playerData.lastActionTime.add(
+          Duration(microseconds: (leftSeconds * 1e6).round()),
+        );
+        session.buffService.addBuff(potion, save.playerData.buffData);
+      }
+    }
+
+    int stackOf(GameSession session, ItemId id) =>
+        session.saveGameData.inventoryData.itemMap[id] ?? 0;
+
+    test('a re-drunk potion keeps its buff up for the whole gap', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      // no level-up cuts: the counts below are about the potion
+      setLevel(session, SkillId.WOODCUTTING, 50);
+      fight(session, EntityId.TREE);
+      final now = goOffline(session, 600);
+      // strength leaves the interval alone, so the action count is exact
+      arm(session, ItemId.MINOR_STRENGTH_POTION, stack: 5, leftSeconds: 60);
+
+      session.offlineProgressSystem.settle(
+        save.playerData,
+        save.actionTimingData,
+        now: now,
+      );
+      final report = session.actionTimingController.pendingOfflineReport!;
+
+      // lapses at 60, re-drunk at 60, 240 and 420: three doses, and the
+      // last one runs out at the instant the gap ends
+      expect(report.potionsUsed[ItemId.MINOR_STRENGTH_POTION], 3);
+      expect(stackOf(session, ItemId.MINOR_STRENGTH_POTION), 2);
+      // every cut at a buff's expiry can pay a fraction of an interval out
+      // idle, so the gap is a couple of actions short of full at most
+      final whole = actionsIn(session, 600);
+      expect(report.actionCount, inInclusiveRange(whole - 2, whole));
+      expect(session.actionTimingController.isRunning, isTrue);
+      tearDownSession(session);
+    });
+
+    test('a speed potion re-drunk offline is worth more actions', () {
+      // the same shape as the potion segment test above: at the bottom of
+      // the speed curve a dose is worth whole actions over ten minutes
+      int run({required bool auto, int stack = 0}) {
+        final session = buildSession();
+        final save = session.saveGameData;
+        session.playerDataService.setStance(Stance.fast, save.playerData);
+        fight(session, EntityId.TREE);
+        final now = goOffline(session, 600);
+        if (auto) arm(session, ItemId.MINOR_SPEED_POTION, stack: stack);
+        session.offlineProgressSystem.settle(
+          save.playerData,
+          save.actionTimingData,
+          now: now,
+        );
+        final count =
+            session.actionTimingController.pendingOfflineReport!.actionCount;
+        tearDownSession(session);
+        return count;
+      }
+
+      final none = run(auto: false);
+      final one = run(auto: true, stack: 1);
+      final plenty = run(auto: true, stack: 5);
+
+      // one dose covers the first three minutes; a stack covers the lot
+      expect(one, greaterThan(none));
+      expect(plenty, greaterThan(one));
+    });
+
+    test('the stack running out settles the rest unbuffed', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      fight(session, EntityId.TREE);
+      final now = goOffline(session, 600);
+      arm(session, ItemId.MINOR_STRENGTH_POTION, stack: 1);
+
+      session.offlineProgressSystem.settle(
+        save.playerData,
+        save.actionTimingData,
+        now: now,
+      );
+      final report = session.actionTimingController.pendingOfflineReport!;
+
+      expect(report.potionsUsed[ItemId.MINOR_STRENGTH_POTION], 1);
+      expect(stackOf(session, ItemId.MINOR_STRENGTH_POTION), 0);
+      // drunk at the start, gone three minutes in, nothing to follow it
+      expect(
+        session.buffService.getGlobalBuff(
+          save.playerData.buffData,
+          ItemId.MINOR_STRENGTH_POTION,
+          at: now,
+        ),
+        isNull,
+      );
+      tearDownSession(session);
+    });
+
+    test('an armed potion with nothing in the bag changes nothing', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      fight(session, EntityId.TREE);
+      final now = goOffline(session, 600);
+      arm(session, ItemId.MINOR_STRENGTH_POTION, stack: 0);
+
+      session.offlineProgressSystem.settle(
+        save.playerData,
+        save.actionTimingData,
+        now: now,
+      );
+      final report = session.actionTimingController.pendingOfflineReport!;
+
+      expect(report.potionsUsed, isEmpty);
+      expect(report.actionCount, actionsIn(session, 600));
+      tearDownSession(session);
+    });
+  });
+
   // ---------------------------------------------------- fires and zone buffs
 
   group('a fire burning out mid-gap', () {
@@ -1059,9 +1192,143 @@ void main() {
       final long = cooksOver(burn: 480);
 
       // the fire is what makes a cook possible, so a longer burn is worth
-      // strictly more cooks - and neither runs the whole ten minutes
+      // strictly more cooks - and neither runs the whole ten minutes. this
+      // pit has no cookfire picked, so the cook has nothing to relight with
       expect(short, greaterThan(0));
       expect(long, greaterThan(short));
+    });
+
+    // a cook with a cookfire picked tends its own fire: the tick that finds
+    // it out relights it out of the logs on hand, and cooking carries on
+    GameSession cookingSession({int logs = 100000}) {
+      final session = buildSession();
+      final save = session.saveGameData;
+      // high enough that no level-up cuts a segment: the counts below are
+      // about fires, not levels
+      setLevel(session, SkillId.COOKING, 50);
+      setLevel(session, SkillId.FIREMAKING, 50);
+      save.inventoryData.itemMap[ItemId.MINNOW] = 100000;
+      save.inventoryData.itemMap[ItemId.LOGS] = logs;
+      save.craftingState.selectedRecipeByEntity[EntityId.FIREPIT] = {
+        SkillId.FIREMAKING: 'cookfire',
+      };
+      return session;
+    }
+
+    int minnowsOf(GameSession session) =>
+        session.saveGameData.inventoryData.itemMap[ItemId.MINNOW]!;
+    // a stack the inventory has spent to nothing is dropped from the map
+    int logsOf(GameSession session) =>
+        session.saveGameData.inventoryData.itemMap[ItemId.LOGS] ?? 0;
+    final cookfireXp = RecipeCatalog().recipeById('cookfire').xp;
+
+    test('with a cookfire picked, the whole gap cooks and the fire is relit '
+        'as needed', () {
+      OfflineProgressReport settleOver({required double burn}) {
+        final session = cookingSession();
+        final save = session.saveGameData;
+        session.firemakingSystem.lightOrExtend(
+          ItemId.COOKFIRE,
+          EntityId.FIREPIT,
+          save.playerData.currentZoneId,
+          save.playerData.buffData,
+        );
+        expect(
+          session.craftingController.startCraftingActionFor(
+            'cook_minnow',
+            EntityId.FIREPIT,
+          ),
+          isTrue,
+        );
+        final now = goOffline(session, 600);
+        final fire = session.buffService.getZoneBuff(
+          save.playerData.buffData,
+          save.playerData.currentZoneId,
+          EntityId.FIREPIT,
+        )!;
+        fire.expirationTime = save.playerData.lastActionTime.add(
+          Duration(microseconds: (burn * 1e6).round()),
+        );
+        session.offlineProgressSystem.settle(
+          save.playerData,
+          save.actionTimingData,
+          now: now,
+        );
+        final report = session.actionTimingController.pendingOfflineReport!;
+        expect(session.actionTimingController.isRunning, isTrue);
+        tearDownSession(session);
+        return report;
+      }
+
+      final short = settleOver(burn: 120);
+      final long = settleOver(burn: 480);
+
+      // every tick of the gap was spent either cooking or relighting, so
+      // both burns fill the whole ten minutes
+      final session = cookingSession();
+      final whole = actionsIn(session, 600);
+      tearDownSession(session);
+      expect(short.actionCount, whole);
+      expect(long.actionCount, whole);
+
+      // a 3-minute cookfire relights at 120, 300 and 480 into the gap, or
+      // once at 480 when the first burn lasted that long
+      expect(short.xp[SkillId.FIREMAKING], cookfireXp * 3);
+      expect(long.xp[SkillId.FIREMAKING], cookfireXp * 1);
+    });
+
+    test('a cold pit at the start of a long gap relights N times', () {
+      final session = cookingSession();
+      final save = session.saveGameData;
+      expect(
+        session.craftingController.startCraftingActionFor(
+          'cook_minnow',
+          EntityId.FIREPIT,
+        ),
+        isTrue,
+      );
+
+      final report = settle(session, 600);
+
+      // lit at 0, 180, 360 and 540: four relight ticks, everything else a
+      // cook
+      final whole = actionsIn(session, 600);
+      expect(report.actionCount, whole);
+      expect(report.xp[SkillId.FIREMAKING], cookfireXp * 4);
+      expect(100000 - minnowsOf(session), whole - 4);
+      expect(100000 - logsOf(session), 2 * 4);
+      expect(session.actionTimingController.isRunning, isTrue);
+      expect(
+        session.firemakingSystem.activeFire(
+          EntityId.FIREPIT,
+          save.playerData.currentZoneId,
+          save.playerData.buffData,
+        ),
+        isNotNull,
+      );
+      tearDownSession(session);
+    });
+
+    test('out of logs, the loop stops when the fire dies and the rest '
+        'idles', () {
+      final session = cookingSession(logs: 2);
+      expect(
+        session.craftingController.startCraftingActionFor(
+          'cook_minnow',
+          EntityId.FIREPIT,
+        ),
+        isTrue,
+      );
+
+      final report = settle(session, 600);
+
+      // one fire's worth: the relight tick plus the cooks it burned for
+      final oneFire = actionsIn(session, 180);
+      expect(report.actionCount, oneFire);
+      expect(100000 - minnowsOf(session), oneFire - 1);
+      expect(logsOf(session), 0);
+      expect(session.actionTimingController.isRunning, isFalse);
+      tearDownSession(session);
     });
   });
 

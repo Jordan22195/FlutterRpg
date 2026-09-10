@@ -69,12 +69,18 @@ class BuffService {
   /// An owner holds one buff at a time. Applying the same buff again extends
   /// it (adding logs to a burning fire); applying a different one replaces it
   /// outright (lighting a new kind of fire in the same firepit).
+  ///
+  /// [at] is the instant the buff is applied at, defaulting to now. An
+  /// offline settle relights a fire at the segment it is replaying, and an
+  /// extension has to be measured from there rather than from the wall
+  /// clock hours later.
   void setZoneBuff(
     ZoneBuffItem buffItem,
     BuffData buffState,
     ZoneId zoneId,
-    EntityId ownerEntityId,
-  ) {
+    EntityId ownerEntityId, {
+    DateTime? at,
+  }) {
     final buffs = buffState.zoneBuffs.putIfAbsent(zoneId, () => {});
 
     final existing = buffs[ownerEntityId];
@@ -82,6 +88,7 @@ class BuffService {
       existing.expirationTime = _extendedExpiration(
         existing,
         buffItem.duration,
+        at: at,
       );
       return;
     }
@@ -102,19 +109,28 @@ class BuffService {
 
   // extend from the current expiration, or from now if the buff already
   // ran out but hasn't been swept yet (never extend from the past)
-  DateTime _extendedExpiration(BuffItem buff, Duration duration) {
-    final now = DateTime.now();
+  DateTime _extendedExpiration(
+    BuffItem buff,
+    Duration duration, {
+    DateTime? at,
+  }) {
+    final now = at ?? DateTime.now();
     final base = buff.expirationTime.isAfter(now) ? buff.expirationTime : now;
     return base.add(duration);
   }
 
   /// Add/refresh a buff.
-  /// If it already exists, extends its duration.
-  void addBuff(BuffItem buff, BuffData buffState) {
+  /// If it already exists, extends its duration - measured from [at], which
+  /// defaults to now and is the replayed instant for an offline settle.
+  void addBuff(BuffItem buff, BuffData buffState, {DateTime? at}) {
     if (buffState.globalBuffs.containsKey(buff.id)) {
       final existing = buffState.globalBuffs[buff.id];
       if (existing != null) {
-        existing.expirationTime = _extendedExpiration(existing, buff.duration);
+        existing.expirationTime = _extendedExpiration(
+          existing,
+          buff.duration,
+          at: at,
+        );
       }
       return;
     }

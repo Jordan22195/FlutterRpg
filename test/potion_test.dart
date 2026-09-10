@@ -421,6 +421,185 @@ void main() {
     });
   });
 
+  group('auto-drink', () {
+    // stands a tree in the zone and binds the loop to it, so an action is
+    // running the way the toggle's drink-now rule wants
+    void startAction(GameSession session) {
+      final save = session.saveGameData;
+      final tree = EntityId.TREE.build() as EncounterEntity;
+      tree.count = 100000;
+      save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities
+          .add(tree);
+      expect(session.encounterController.startEncounterActionFor(tree), isTrue);
+    }
+
+    test('drink(at:) stamps the buff from at, and a second dose extends it', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION] = 2;
+      final t = DateTime(2030, 1, 1, 12);
+
+      expect(
+        session.potionSystem.drink(
+          ItemId.MINOR_SPEED_POTION,
+          save.inventoryData,
+          save.playerData.buffData,
+          at: t,
+        ),
+        isTrue,
+      );
+      final buff = save.playerData.buffData.globalBuffs[ItemId
+          .MINOR_SPEED_POTION]!;
+      expect(buff.expirationTime, t.add(minorDuration));
+
+      // a settle replaying a second dose at the same instant extends from
+      // the first, not from the wall clock
+      session.potionSystem.drink(
+        ItemId.MINOR_SPEED_POTION,
+        save.inventoryData,
+        save.playerData.buffData,
+        at: t,
+      );
+      expect(buff.expirationTime, t.add(minorDuration * 2));
+      session.dispose();
+    });
+
+    test('autoDrink drinks only armed potions with a missing buff and a '
+        'count', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION] = 2;
+      save.inventoryData.itemMap[ItemId.MINOR_ATTACK_POTION] = 2;
+      save.inventoryData.itemMap[ItemId.MINOR_STRENGTH_POTION] = 2;
+      save.playerData.autoDrinkPotions.addAll([
+        ItemId.MINOR_SPEED_POTION,
+        ItemId.MINOR_ATTACK_POTION,
+        ItemId.MINOR_DEFENCE_POTION, // armed, none held
+      ]);
+      // attack is already up, so it is not drunk again
+      session.inventoryController.drinkPotion(ItemId.MINOR_ATTACK_POTION);
+
+      final drunk = session.potionSystem.autoDrink(
+        save.playerData,
+        save.inventoryData,
+      );
+
+      expect(drunk, [ItemId.MINOR_SPEED_POTION]);
+      expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 1);
+      expect(save.inventoryData.itemMap[ItemId.MINOR_ATTACK_POTION], 1);
+      // not armed: untouched
+      expect(save.inventoryData.itemMap[ItemId.MINOR_STRENGTH_POTION], 2);
+      expect(
+        save.inventoryData.itemMap.containsKey(ItemId.MINOR_DEFENCE_POTION),
+        isFalse,
+      );
+      expect(save.playerData.buffData.globalBuffs.keys, {
+        ItemId.MINOR_SPEED_POTION,
+        ItemId.MINOR_ATTACK_POTION,
+      });
+
+      // everything armed is up now, so a second pass changes nothing
+      expect(
+        session.potionSystem.autoDrink(save.playerData, save.inventoryData),
+        isEmpty,
+      );
+      session.dispose();
+    });
+
+    // the tick tests set the loop running without a ticker behind it: the
+    // buff tick reads only the running flag, and a real ticker's frames
+    // would settle the gap the test's own pumps open
+    testWidgets('the tick drinks while an action runs', (tester) async {
+      final session = buildSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION] = 2;
+      save.playerData.autoDrinkPotions.add(ItemId.MINOR_SPEED_POTION);
+      save.actionTimingData.running = true;
+
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 1);
+      expect(
+        session.buffController.getGlobalBuff(ItemId.MINOR_SPEED_POTION),
+        isNotNull,
+      );
+      // and only one: the buff is up now
+      await tester.pump(const Duration(seconds: 1));
+      expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 1);
+      session.dispose();
+    });
+
+    testWidgets('the tick leaves an idle player\'s potions alone', (
+      tester,
+    ) async {
+      final session = buildSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION] = 2;
+      save.playerData.autoDrinkPotions.add(ItemId.MINOR_SPEED_POTION);
+
+      await tester.pump(const Duration(seconds: 2));
+
+      expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 2);
+      expect(save.playerData.buffData.globalBuffs, isEmpty);
+      session.dispose();
+    });
+
+    testWidgets('a pending settle stands the tick down', (tester) async {
+      final session = buildSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION] = 2;
+      save.playerData.autoDrinkPotions.add(ItemId.MINOR_SPEED_POTION);
+      // running, and away long enough that a settle is owed: the replay
+      // has to drink at the instants it owes, not the tick at the wall clock
+      save.actionTimingData.running = true;
+      save.playerData.lastActionTime = DateTime.now().subtract(
+        const Duration(seconds: 10),
+      );
+
+      await tester.pump(const Duration(seconds: 2));
+
+      expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 2);
+      session.dispose();
+    });
+
+    test('arming a potion mid-action drinks one on the spot', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION] = 2;
+      startAction(session);
+
+      session.potionController.setAutoDrink(ItemId.MINOR_SPEED_POTION, true);
+
+      expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 1);
+      expect(
+        save.playerData.autoDrinkPotions,
+        {ItemId.MINOR_SPEED_POTION},
+      );
+
+      // already up: arming again is not another dose
+      session.potionController.setAutoDrink(ItemId.MINOR_SPEED_POTION, false);
+      session.potionController.setAutoDrink(ItemId.MINOR_SPEED_POTION, true);
+      expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 1);
+
+      session.actionTimingController.stop();
+      session.dispose();
+    });
+
+    test('arming a potion while idle waits for an action', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION] = 2;
+
+      session.potionController.setAutoDrink(ItemId.MINOR_SPEED_POTION, true);
+
+      expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 2);
+      expect(save.playerData.buffData.globalBuffs, isEmpty);
+      expect(session.potionController.isAutoDrink(ItemId.MINOR_SPEED_POTION),
+          isTrue);
+      session.dispose();
+    });
+  });
+
   group('the item dialog', () {
     // BuffController ticks a periodic timer that never settles, so these use
     // fixed pumps rather than pumpAndSettle.

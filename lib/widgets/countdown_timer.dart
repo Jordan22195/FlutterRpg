@@ -22,6 +22,31 @@ class CountdownTimer extends StatefulWidget {
   /// other one, and the two must not run into each other.
   final bool showIcon;
 
+  /// "2h" / "6m" / "45s" - the coarse unit, the way the timer itself
+  /// reads. Shared so a stretch of time that is not counting down yet can
+  /// be written the same way beside one that is.
+  static String formatDuration(Duration remaining) {
+    if (remaining.isNegative || remaining.inMilliseconds <= 0) {
+      return '0s';
+    }
+
+    if (remaining.isNegative) {
+      return "0s";
+    }
+
+    final hours = remaining.inHours;
+    final minutes = remaining.inMinutes % 60;
+    final seconds = remaining.inSeconds % 60;
+
+    if (hours > 0) {
+      return "${hours}h";
+    } else if (minutes > 0) {
+      return "${minutes}m";
+    } else {
+      return "${seconds}s";
+    }
+  }
+
   @override
   State<CountdownTimer> createState() => _CountdownTimerState();
 }
@@ -59,7 +84,7 @@ class _CountdownTimerState extends State<CountdownTimer> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final remaining = widget.expirationTime.difference(now);
-    final remainingText = _formatRemaining(remaining);
+    final remainingText = CountdownTimer.formatDuration(remaining);
     double size = widget.size;
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -73,27 +98,6 @@ class _CountdownTimerState extends State<CountdownTimer> {
     );
   }
 
-  static String _formatRemaining(Duration remaining) {
-    if (remaining.isNegative || remaining.inMilliseconds <= 0) {
-      return '0s';
-    }
-
-    if (remaining.isNegative) {
-      return "0s";
-    }
-
-    final hours = remaining.inHours;
-    final minutes = remaining.inMinutes % 60;
-    final seconds = remaining.inSeconds % 60;
-
-    if (hours > 0) {
-      return "${hours}h";
-    } else if (minutes > 0) {
-      return "${minutes}m";
-    } else {
-      return "${seconds}s";
-    }
-  }
 }
 
 /// Lightweight 1Hz ticker without requiring vsync.

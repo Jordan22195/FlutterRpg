@@ -3,6 +3,7 @@ import 'package:rpg/widgets/action_timer.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entities/entities.dart';
 import '../catalogs/items/items.dart';
+import '../catalogs/recipes/recipes.dart';
 import '../controllers/action_timing_controller.dart';
 import '../controllers/buff_controller.dart';
 import '../controllers/crafting_controller.dart';
@@ -19,8 +20,11 @@ firepit screen contents:
 -header naming whatever is burning, or the firepit when it is cold
 -hero image of the fire, with its remaining burn time in the corner
 -skill rings, matching the encounter screen
--a firemaking recipe card, split into Firemaking/Cooking tabs while a
- cookfire burns; the open tab is what the action button runs
+-a firemaking recipe card, with the cooking recipe stacked below it as soon
+ as a cookfire is picked; the highlighted card is what the action button
+ runs. cooking tends its own fire: Cook lights the picked cookfire on its
+ first tick and relights it whenever it burns out, so with a cookfire
+ picked the button always cooks and the fire card only chooses the fire
 -tabbed panel of items cooked this session, active buffs, and recipe stats
 -put-out control in the action bar's trailing slot
 */
@@ -34,26 +38,34 @@ class FirepitScreen extends StatefulWidget {
 
 class _FirepitScreenState extends State<FirepitScreen>
     with TickerProviderStateMixin {
-  /// Which section the action button runs. Null until the player picks, so
-  /// the screen can default to cooking whenever a cookfire is lit.
+  /// Which of the stacked recipe cards the action button runs. Null until
+  /// the player picks, so the screen can default to cooking whenever a
+  /// cookfire is lit or picked.
   SkillId? _activeSection;
 
-  SkillId _resolveActiveSection(CraftingController controller, bool canCook) {
+  SkillId _resolveActiveSection(
+    CraftingController controller, {
+    required bool showCooking,
+    required bool cookfirePicked,
+  }) {
     // a running action owns the selection: the button must describe what it
     // is actually doing
     final running = context.read<ActionTimingController>().isRunning;
     if (running) {
       final activeSkill = controller.getRecipe(controller.activeRecipeId).skill;
-      if (activeSkill == SkillId.COOKING && canCook) return SkillId.COOKING;
+      if (activeSkill == SkillId.COOKING) return SkillId.COOKING;
       if (activeSkill == SkillId.FIREMAKING) return SkillId.FIREMAKING;
     }
 
-    // cooking is the reason you walked over to a lit cookfire
-    if (_activeSection == SkillId.COOKING) {
-      return canCook ? SkillId.COOKING : SkillId.FIREMAKING;
-    }
+    // a cookfire is only ever lit by cooking on it: the cook pays its logs
+    // and relights it itself, so the button cooks and the fire card is just
+    // the choice of which fire it burns
+    if (cookfirePicked) return SkillId.COOKING;
+
+    if (!showCooking) return SkillId.FIREMAKING;
     if (_activeSection == SkillId.FIREMAKING) return SkillId.FIREMAKING;
-    return canCook ? SkillId.COOKING : SkillId.FIREMAKING;
+    // cooking is the reason you walked over to a lit cookfire
+    return SkillId.COOKING;
   }
 
   void _showRecipePicker(
@@ -138,18 +150,31 @@ class _FirepitScreenState extends State<FirepitScreen>
     context.watch<BuffController>();
     final fire = controller.activeFire();
     final canCook = fire?.canCook ?? false;
-    final activeSection = _resolveActiveSection(controller, canCook);
 
     final fireRecipeId = controller.selectedRecipeIdFor(SkillId.FIREMAKING);
     final cookRecipeId = controller.selectedRecipeIdFor(SkillId.COOKING);
+
+    // picking a cookfire is enough to put the cooking recipe on screen: the
+    // cook lights it itself. a lit cookfire shows it too, whatever is picked
+    final cookFireRecipe = controller.cookFireRecipe();
+    final showCooking = canCook || cookFireRecipe != null;
+    final activeSection = _resolveActiveSection(
+      controller,
+      showCooking: showCooking,
+      cookfirePicked: cookFireRecipe != null,
+    );
+
     final selectedId = activeSection == SkillId.COOKING
         ? cookRecipeId
         : fireRecipeId;
 
+    // cooking runs on a lit cookfire, or on the logs to light the picked one
     final canAct =
         selectedId.isNotEmpty &&
         controller.getMaxNumberCraftsForRecipe(selectedId) > 0 &&
-        (activeSection != SkillId.COOKING || canCook);
+        (activeSection != SkillId.COOKING ||
+            canCook ||
+            controller.canRelight());
 
     // both rings always: a firepit is where cooking is trained, and a row
     // that grows from one ring to two re-centres itself, sliding the
@@ -205,57 +230,47 @@ class _FirepitScreenState extends State<FirepitScreen>
                   ),
                   const SizedBox(height: 8),
 
-                  // the skills the pit trains stay in view whichever tab is
-                  // open; the buffs a fire grants moved into the panel below
+                  // the skills the pit trains stay in view whichever recipe
+                  // is picked; the buffs a fire grants moved into the panel
+                  // below
                   const ActivitySkillRingRow(skills: skills),
 
-                  // a lit cookfire is a pit doing two jobs, so they split
-                  // into tabs. the open tab is the one the action button
-                  // runs, which is what the section markers used to say.
-                  // an ordinary fire has nothing to split.
+                  // the fire the pit burns is always the first choice. a
+                  // cookfire is a pit doing two jobs, so its cooking recipe
+                  // stacks underneath rather than hiding in a tab: both
+                  // recipes stay in view, and the highlighted card is the one
+                  // the action button runs.
                   const SizedBox(height: 10),
-                  if (canCook) ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: SegmentedButton<SkillId>(
-                        segments: const [
-                          ButtonSegment<SkillId>(
-                            value: SkillId.FIREMAKING,
-                            label: Text('Firemaking'),
-                          ),
-                          ButtonSegment<SkillId>(
-                            value: SkillId.COOKING,
-                            label: Text('Cooking'),
-                          ),
-                        ],
-                        selected: {activeSection},
-                        // single-select: the set always holds exactly one
-                        onSelectionChanged: (selection) =>
-                            setState(() => _activeSection = selection.first),
-                        showSelectedIcon: false,
-                        style: SegmentedButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 8,
-                          ),
-                          textStyle: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-
-                  // the open tab's recipe. sized rather than swapped outright
-                  // so switching tabs slides the panel below instead of
-                  // teleporting it
                   AnimatedSize(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeOutCubic,
                     alignment: Alignment.topCenter,
-                    child: activeSection == SkillId.COOKING
-                        ? RecipeCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // the cards name themselves only when there are two of
+                        // them; alone, the screen is already unambiguous
+                        if (showCooking) const _SectionLabel('Firemaking'),
+                        _FireRecipeCard(
+                          recipeId: fireRecipeId,
+                          burningFireId: fire?.id,
+                          selected:
+                              showCooking &&
+                              activeSection == SkillId.FIREMAKING,
+                          onTap: () {
+                            setState(() => _activeSection = SkillId.FIREMAKING);
+                            _showRecipePicker(
+                              context,
+                              controller,
+                              SkillId.FIREMAKING,
+                            );
+                          },
+                        ),
+                        if (showCooking) ...[
+                          const _SectionLabel('Cooking'),
+                          RecipeCard(
                             recipeId: cookRecipeId,
+                            selected: activeSection == SkillId.COOKING,
                             onTap: () {
                               setState(() => _activeSection = SkillId.COOKING);
                               _showRecipePicker(
@@ -264,21 +279,24 @@ class _FirepitScreenState extends State<FirepitScreen>
                                 SkillId.COOKING,
                               );
                             },
-                          )
-                        : _FireRecipeCard(
-                            recipeId: fireRecipeId,
-                            burningFireId: fire?.id,
-                            onTap: () {
-                              setState(
-                                () => _activeSection = SkillId.FIREMAKING,
-                              );
-                              _showRecipePicker(
-                                context,
-                                controller,
-                                SkillId.FIREMAKING,
-                              );
-                            },
                           ),
+                          // what the cook burns to keep its fire going, lit
+                          // or not: it relights out of the same logs either
+                          // way. cooking shown only because a cookfire is
+                          // burning has nothing to relight with, and says so
+                          if (cookFireRecipe != null)
+                            _CardHint(
+                              icon: Icons.local_fire_department_outlined,
+                              text: _fireCostLabel(cookFireRecipe),
+                            )
+                          else
+                            const _CardHint(
+                              icon: Icons.swap_horiz,
+                              text: 'Pick a cookfire to cook',
+                            ),
+                        ],
+                      ],
+                    ),
                   ),
 
                   // what the session cooked, the fire's buffs and the recipe
@@ -288,8 +306,8 @@ class _FirepitScreenState extends State<FirepitScreen>
                     equipment: controller.craftedEquipment(),
                     craftedLabel: 'Cooked',
                     emptyCraftedLabel: 'Nothing cooked this session',
-                    // the section the screen is showing owns the tab: the
-                    // firepit keeps a separate selection per skill
+                    // the highlighted card owns the stats tab: the firepit
+                    // keeps a separate selection per skill
                     recipeId: selectedId,
                   ),
                 ],
@@ -345,6 +363,13 @@ class _FirepitScreenState extends State<FirepitScreen>
         : selected.output.first.id;
     return selectedFireId == fire.id ? 'Add Logs' : 'Light Fire';
   }
+
+  /// "Burns 2 × Logs per fire": the cost the cook pays each time it lights
+  /// the picked cookfire.
+  String _fireCostLabel(CraftingRecipe fire) {
+    final cost = fire.inputs.entries.first;
+    return 'Burns ${cost.value} × ${cost.key.definition.name} per fire';
+  }
 }
 
 /// The fire in the entity image slot. Lit fires carry a countdown badge
@@ -384,11 +409,16 @@ class _FireRecipeCard extends StatelessWidget {
     required this.recipeId,
     required this.burningFireId,
     required this.onTap,
+    this.selected = false,
   });
 
   final String recipeId;
   final ItemId? burningFireId;
   final VoidCallback onTap;
+
+  /// Marks this as the card the action button runs. Only set while a
+  /// cooking card is stacked below it and the two are a choice.
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -401,32 +431,67 @@ class _FireRecipeCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RecipeCard(recipeId: recipeId, onTap: onTap),
+        RecipeCard(recipeId: recipeId, onTap: onTap, selected: selected),
         if (replaces)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 0, 10, 2),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.swap_horiz,
-                  size: 14,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'Replaces the current fire',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
+          const _CardHint(
+            icon: Icons.swap_horiz,
+            text: 'Replaces the current fire',
           ),
       ],
+    );
+  }
+}
+
+/// A quiet line under a recipe card, for the one thing about it the card
+/// itself cannot show: which fire it would replace, or that it is waiting on
+/// a lit one.
+class _CardHint extends StatelessWidget {
+  const _CardHint({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.6);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 0, 10, 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Names one of the stacked recipe cards. Only drawn when a lit cookfire
+/// puts two of them on screen and the player has to tell them apart.
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 2, 4, 4),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }

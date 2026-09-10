@@ -1,3 +1,4 @@
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/buff_data.dart';
 import '../data/action_result.dart';
@@ -82,17 +83,32 @@ class CraftingSystem {
       return result;
     }
 
-    // cooking needs a fire that can cook, at the moment being crafted. a
-    // live craft asks about now; a settle asks about the segment it is
-    // replaying, when the fire may still have been burning.
-    if (!_cookingConditionsMet(r, craftingState, playerState, at)) {
-      return result;
-    }
-
-    // Check again
+    // Check again. this comes before the fire check so a cook with nothing
+    // left to cook never burns logs on a fire it will not use
     final craftable = craftableCount(r.id, inventoryState);
     final crafts = craftCount < craftable ? craftCount : craftable;
     if (crafts <= 0) return result;
+
+    // cooking needs a fire that can cook, at the moment being crafted. a
+    // live craft asks about now; a settle asks about the segment it is
+    // replaying, when the fire may still have been burning. a cook tick
+    // without one spends itself lighting the station's cookfire instead.
+    if (r.skill == SkillId.COOKING &&
+        !_firemakingSystem.canCookAt(
+          craftingState.craftingEntityId,
+          playerState.currentZoneId,
+          playerState.buffData,
+          at: at,
+        )) {
+      return _relightTick(
+        craftingState,
+        playerState,
+        inventoryState,
+        buffState,
+        result,
+        at: at,
+      );
+    }
 
     // Consume inputs, a whole batch's worth at a time
     for (final entry in r.inputs.entries) {
@@ -158,19 +174,118 @@ class CraftingSystem {
     return result;
   }
 
-  /// Whether a cooking recipe has its fire at [at]. Anything that is not
-  /// cooking is unconditionally true - it is worked at a bench.
-  bool _cookingConditionsMet(
-    CraftingRecipe recipe,
+  /// A cook tick with no cookfire under it spends itself lighting the one
+  /// [station] has picked: the logs are paid, the fire is lit at [at] and
+  /// firemaking is trained, exactly as a manual craft of that fire would.
+  /// Nothing is cooked, so the session grid and the report's items stay
+  /// food-only.
+  ///
+  /// It ignores the batch's craft count: a relight is exactly one fire, and
+  /// the rest of the stretch is handed back to the loop via
+  /// [EncounterActionResult.handedOff], so a settle charges the tick and
+  /// cuts the remainder around the fire it just lit.
+  ///
+  /// The fire lands in [PlayerData.currentZoneId], as the firemaking output
+  /// path above does - not the session's craftingZoneId. A cook left
+  /// running while the player travels would light the wrong pit, which is
+  /// the same pre-existing gap as that path's.
+  EncounterActionResult _relightTick(
     CraftingState craftingState,
     PlayerData playerState,
+    InventoryData inventoryState,
+    BuffData buffState,
+    EncounterActionResult result, {
     DateTime? at,
+  }) {
+    final station = craftingState.craftingEntityId;
+    final fire = cookFireRecipeAt(station, craftingState);
+    if (fire == null) return result;
+    if (!checkRecipeLevelRequirement(fire.id, playerState, at: at)) {
+      return result;
+    }
+    if (craftableCount(fire.id, inventoryState) <= 0) return result;
+
+    for (final entry in fire.inputs.entries) {
+      _inventoryService.removeItems(inventoryState, entry.key, entry.value);
+    }
+
+    // a fire recipe is a single weight-one entry, so the output is read off
+    // the table rather than rolled: it is the same fire a manual craft lights
+    _firemakingSystem.lightOrExtend(
+      fire.output.first.id,
+      station,
+      playerState.currentZoneId,
+      buffState,
+      at: at,
+    );
+
+    result.actionsPerformed = 1;
+    result.handedOff = true;
+    result.xp = {SkillId.FIREMAKING: fire.xp};
+    _playerDataService.applyXp(playerState, result.xp);
+    return result;
+  }
+
+  /// The cookfire recipe [station] has picked, or null when its firemaking
+  /// selection is empty, not a fire, or a fire that cannot cook on.
+  ///
+  /// Cooking lights only the fire the player chose: a campfire selection is
+  /// never upgraded into a cookfire behind their back.
+  CraftingRecipe? cookFireRecipeAt(
+    EntityId station,
+    CraftingState craftingState,
   ) {
-    if (recipe.skill != SkillId.COOKING) return true;
-    return _firemakingSystem.canCookAt(
-      craftingState.craftingEntityId,
+    final id =
+        craftingState.selectedRecipeByEntity[station]?[SkillId.FIREMAKING] ??
+        '';
+    if (id.isEmpty) return null;
+    final r = _recipeCatalog.recipeById(id);
+    if (r.skill != SkillId.FIREMAKING || r.output.isEmpty) return null;
+    final definition = r.output.first.id.definition;
+    if (definition is! FireItemDefinition || !definition.canCook) return null;
+    return r;
+  }
+
+  /// Whether a cook at [station] could light its selected cookfire at [at]:
+  /// a cookfire is picked, its firemaking level is met and its logs are on
+  /// hand.
+  bool canRelight(
+    EntityId station,
+    CraftingState craftingState,
+    PlayerData playerState,
+    InventoryData inventoryState, {
+    DateTime? at,
+  }) {
+    final fire = cookFireRecipeAt(station, craftingState);
+    if (fire == null) return false;
+    if (!checkRecipeLevelRequirement(fire.id, playerState, at: at)) {
+      return false;
+    }
+    return craftableCount(fire.id, inventoryState) > 0;
+  }
+
+  /// Whether cooking can proceed at [station] at [at]: a cookfire is
+  /// burning there, or the cook could light one on its next tick.
+  bool cookingConditionsMet(
+    EntityId station,
+    CraftingState craftingState,
+    PlayerData playerState,
+    InventoryData inventoryState, {
+    DateTime? at,
+  }) {
+    if (_firemakingSystem.canCookAt(
+      station,
       playerState.currentZoneId,
       playerState.buffData,
+      at: at,
+    )) {
+      return true;
+    }
+    return canRelight(
+      station,
+      craftingState,
+      playerState,
+      inventoryState,
       at: at,
     );
   }
@@ -409,11 +524,21 @@ class CraftingSystem {
     }
     if (craftableCount(recipeId, inventoryState) <= 0) return false;
 
-    // cooking needs a fire that can cook. checking it here is what stops a
-    // running cook loop the moment the fire burns out, via the requirements
+    // cooking needs a fire that can cook, or the logs to light one. checking
+    // it here is what stops a running cook loop once the fire has burnt out
+    // and there is nothing left to relight it with, via the requirements
     // re-check in CraftingController.doCraftingAction
     final r = _recipeCatalog.recipeById(recipeId);
-    if (!_cookingConditionsMet(r, craftingState, playerState, at)) return false;
+    if (r.skill == SkillId.COOKING &&
+        !cookingConditionsMet(
+          craftingState.craftingEntityId,
+          craftingState,
+          playerState,
+          inventoryState,
+          at: at,
+        )) {
+      return false;
+    }
 
     return true;
   }
