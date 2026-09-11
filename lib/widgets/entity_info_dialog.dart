@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rpg/widgets/stat_chip.dart';
 import '../catalogs/entities/entities.dart';
 import '../catalogs/items/items.dart';
+import '../controllers/action_timing_controller.dart';
 import '../controllers/world_controller.dart';
 import '../data/entity_details.dart';
 import '../data/skill_data.dart';
@@ -39,10 +41,13 @@ void showEntityInfoDialog(BuildContext context, EncounterEntity entity) {
   );
 }
 
-/// Everything there is to say about a world entity: its stats, its drop
-/// table with per-action odds, and the rolls both ways against the player's
-/// current stats (hit / miss / block chances and damage). Also carries the
-/// dev control for forcing the entity's remaining count.
+/// Everything there is to say about a world entity that the encounter
+/// screen around it doesn't already: the rolls both ways against the
+/// player's current stats (hit / miss / block chances and damage), and the
+/// drop table with per-action odds. The entity's own stat block is left out
+/// deliberately — hitpoints, level and remaining count are all read off the
+/// encounter screen itself. Also carries the dev control for forcing the
+/// entity's remaining count.
 ///
 /// Sizes to its content, so it can be dropped into a scrolling page as
 /// readily as into the details dialog.
@@ -72,6 +77,13 @@ class _EntityInfoBodyState extends State<EntityInfoBody> {
 
   @override
   Widget build(BuildContext context) {
+    // every number below is resolved against the player's stats as they
+    // stand this frame, and boosting moves them: a speed boost cuts the
+    // interval the damage rate is divided by, and a strength one adds
+    // points to the stat being rolled. The timing controller notifies on
+    // each tick, so watching it is what keeps the readouts honest while the
+    // button is held rather than freezing them at the rate you started at.
+    context.watch<ActionTimingController>();
     final worldController = context.read<WorldController>();
     final details = worldController.entityDetails(widget.entity);
 
@@ -80,9 +92,7 @@ class _EntityInfoBodyState extends State<EntityInfoBody> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Header(details: details),
-        _EntityStats(details: details),
-        _PlayerRolls(details: details),
-        if (details.isCombat) _IncomingDamage(details: details),
+        _RollTable(details: details),
         _DropTable(details: details),
 
         // dev tool: force how many of this entity are left in the zone
@@ -145,8 +155,11 @@ class _Header extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            IconRenderer(size: 18, id: details.skill),
             const SizedBox(width: 4),
+            StatChip(
+              icon: IconRenderer(size: 18, id: details.skill),
+              value: '${details.requiredLevel}',
+            ),
             Text(
               '${skillDisplayName(details.skill)}$gate',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -160,53 +173,21 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _EntityStats extends StatelessWidget {
-  const _EntityStats({required this.details});
-
-  final EntityDetails details;
-
-  @override
-  Widget build(BuildContext context) {
-    final entity = details.entity;
-
-    return InfoSection(
-      title: 'Stats',
-      children: [
-        InfoStatRow(label: 'Remaining', value: '${entity.count}'),
-        if (details.usesDamage)
-          InfoStatRow(
-            label: 'Hitpoints',
-            value: '${entity.hitpoints} / ${entity.maxHitPoints}',
-          ),
-        InfoStatRow(label: 'Defence', value: '${entity.defence}'),
-        if (entity is CombatEntity) ...[
-          InfoStatRow(label: 'Attack', value: '${entity.attack}'),
-          InfoStatRow(
-            label: 'Attack speed',
-            value: '${formatDecimal(entity.attackInterval)}s',
-          ),
-        ],
-        InfoStatRow(
-          label: 'XP',
-          value:
-              '+${details.xpPerUnit.round()} / '
-              '${skillActionVerb(details.skill)}',
-        ),
-      ],
-    );
-  }
-}
-
-/// The player's side of the roll: how often an action lands and how hard.
-class _PlayerRolls extends StatelessWidget {
-  const _PlayerRolls({required this.details});
+/// Both sides of the roll on one table: how often each side lands, how
+/// hard, and how fast. The player's column and the entity's carry the same
+/// measurements, so a fight is read across a line instead of by holding one
+/// section's numbers in your head while you scroll to the other's.
+///
+/// Everything here is resolved against the player's *current* stats, boost
+/// included, so the rates move as the fight does.
+class _RollTable extends StatelessWidget {
+  const _RollTable({required this.details});
 
   final EntityDetails details;
 
   String get _title {
+    if (details.isCombat) return 'Combat Stats';
     switch (details.skill) {
-      case SkillId.ATTACK:
-        return 'Your attacks';
       case SkillId.HERBALISM:
         return 'Your picks';
       case SkillId.FISHING:
@@ -216,91 +197,73 @@ class _PlayerRolls extends StatelessWidget {
     }
   }
 
+  /// The rows, with an entity column only when something is rolling back.
+  List<InfoTableRow> _rows() {
+    final combat = details.isCombat;
+    InfoTableRow row(String label, String you, [String? them]) =>
+        InfoTableRow(label, [you, if (combat) them ?? InfoTable.blank]);
+
+    // herbs are never missed: the roll only decides how much the pick
+    // yields, so hit/miss and damage don't apply
+    if (details.skill == SkillId.HERBALISM) {
+      return [
+        row('Bonus yield chance', formatPercent(details.playerHitChance)),
+        row('Expected yield', formatDecimal(details.expectedYield)),
+      ];
+    }
+
+    final actionsToKill = details.actionsToKill;
+
+    return [
+      row(
+        combat ? 'Hit chance' : 'Success chance',
+        formatPercent(details.playerHitChance),
+        formatPercent(details.entityHitChance),
+      ),
+      // the entity's misses are the player's blocks - the same roll read
+      // from the other end, which is exactly what a column is for
+      row(
+        combat ? 'Miss chance' : 'Fail chance',
+        formatPercent(details.playerMissChance),
+        formatPercent(details.blockChance),
+      ),
+      row('Max hit', '${details.playerMaxHit}', '${details.entityMaxHit}'),
+      row(
+        'Avg damage',
+        formatDecimal(details.playerAverageDamage),
+        formatDecimal(details.entityAverageDamage),
+      ),
+      if (details.usesDamage) ...[
+        row(
+          'Damage per second',
+          formatDecimal(details.playerDamagePerSecond),
+          formatDecimal(details.entityDamagePerSecond),
+        ),
+        row(
+          combat ? 'Actions to kill' : 'Actions to clear',
+          actionsToKill.isFinite ? '~${actionsToKill.ceil()}' : 'never',
+        ),
+      ],
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
-    final actionsToKill = details.actionsToKill;
+    final combat = details.isCombat;
+    final skill = skillDisplayName(details.skill).toLowerCase();
+    final levels = combat
+        ? 'Your $skill ${details.playerSkillLevel} · '
+              'your defence ${details.playerDefence}'
+        : 'Your $skill ${details.playerSkillLevel}';
 
     return InfoSection(
       title: _title,
       children: [
-        InfoStatRow(
-          label: 'Your ${skillDisplayName(details.skill).toLowerCase()}',
-          value: '${details.playerSkillLevel}',
-        ),
-
-        // herbs are never missed: the roll only decides how much the pick
-        // yields, so hit/miss and damage don't apply
-        if (details.skill == SkillId.HERBALISM) ...[
-          InfoStatRow(
-            label: 'Bonus yield chance',
-            value: formatPercent(details.playerHitChance),
-          ),
-          InfoStatRow(
-            label: 'Expected yield',
-            value: formatDecimal(details.expectedYield),
-          ),
-        ] else ...[
-          InfoStatRow(
-            label: details.isCombat ? 'Hit chance' : 'Success chance',
-            value: formatPercent(details.playerHitChance),
-          ),
-          InfoStatRow(
-            label: details.isCombat ? 'Miss chance' : 'Fail chance',
-            value: formatPercent(details.playerMissChance),
-          ),
-          InfoStatRow(label: 'Max hit', value: '${details.playerMaxHit}'),
-          InfoStatRow(
-            label: 'Avg damage',
-            value: formatDecimal(details.playerAverageDamage),
-          ),
-          if (details.usesDamage) ...[
-            // the same row the incoming section carries, so the two rates
-            // can be read against each other
-            InfoStatRow(
-              label: 'Damage per second',
-              value: formatDecimal(details.playerDamagePerSecond),
-            ),
-            InfoStatRow(
-              label: details.isCombat ? 'Actions to kill' : 'Actions to clear',
-              value: actionsToKill.isFinite
-                  ? '~${actionsToKill.ceil()}'
-                  : 'never',
-            ),
-          ],
-        ],
-      ],
-    );
-  }
-}
-
-/// What the entity does back to the player, at its own swing rate.
-class _IncomingDamage extends StatelessWidget {
-  const _IncomingDamage({required this.details});
-
-  final EntityDetails details;
-
-  @override
-  Widget build(BuildContext context) {
-    return InfoSection(
-      title: 'Incoming',
-      children: [
-        InfoStatRow(label: 'Your defence', value: '${details.playerDefence}'),
-        InfoStatRow(
-          label: 'Their hit chance',
-          value: formatPercent(details.entityHitChance),
-        ),
-        InfoStatRow(
-          label: 'Your block chance',
-          value: formatPercent(details.blockChance),
-        ),
-        InfoStatRow(label: 'Their max hit', value: '${details.entityMaxHit}'),
-        InfoStatRow(
-          label: 'Avg damage taken',
-          value: formatDecimal(details.entityAverageDamage),
-        ),
-        InfoStatRow(
-          label: 'Damage per second',
-          value: formatDecimal(details.entityDamagePerSecond),
+        // the levels the columns below are rolled from. A line rather than
+        // rows of their own: they belong to the player either way, so a
+        InfoTable(
+          headers: combat ? ['You', 'Them'] : const [''],
+          rows: _rows(),
         ),
       ],
     );

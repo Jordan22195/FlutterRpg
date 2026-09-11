@@ -6,7 +6,6 @@ import '../data/offline_progress_data.dart';
 import '../data/skill_category.dart';
 import '../data/skill_data.dart';
 import '../game_session.dart';
-import 'equipment_info_dialog.dart';
 import 'icon_renderer.dart';
 import 'inventory_grid.dart';
 import 'item_stack_tile.dart';
@@ -71,30 +70,13 @@ class OfflineProgressBody extends StatelessWidget {
           _Section(
             title: 'Gained',
             children: [
-              if (items.isNotEmpty)
-                InventoryGrid(items: items, shrinkWrap: true, tileSize: 48),
-              // equipment carries a quality border the item grid can't show,
-              // so it gets tiles of its own - the same split the crafting
-              // panel makes for a session's output
-              if (equipment.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      for (final item in equipment)
-                        ItemStackTile(
-                          size: 48,
-                          count: item.count,
-                          id: item.id,
-                          showInfoDialogOnTap: false,
-                          quality: item.quality,
-                          onTap: () => showEquipmentInfoDialog(context, item),
-                        ),
-                    ],
-                  ),
-                ),
+              // one grid: the equipment tiles wear the quality they rolled
+              InventoryGrid(
+                items: items,
+                equipment: equipment,
+                shrinkWrap: true,
+                tileSize: 48,
+              ),
             ],
           ),
         // what the settle drank to keep its buffs up: the stack shrank,

@@ -11,14 +11,16 @@ import 'package:rpg/controllers/potion_controller.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/gear_screen.dart';
-import 'package:rpg/screens/potions_screen.dart';
+import 'package:rpg/widgets/potions_panel.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/countdown_timer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
-// The potions screen: what it lists, what the toggle does, and how a card
+// The potions card: what it lists, what the toggle does, and how a card
 // reads while its potion is up. Rendered through the real controllers so
-// the cards follow the bag and the buff tick rather than a fixture.
+// the cards follow the bag and the buff tick rather than a fixture. The
+// last test covers the thing that used to be a screen push — the card is
+// inline on the gear screen now, a scroll down from the gear itself.
 void main() {
   // BuffController ticks a periodic timer that never settles, so these use
   // fixed pumps rather than pumpAndSettle.
@@ -75,7 +77,12 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(withProviders(session, const PotionsScreen()));
+    await tester.pumpWidget(
+      withProviders(
+        session,
+        const Scaffold(body: SingleChildScrollView(child: PotionsPanel())),
+      ),
+    );
     await settle(tester);
     return session;
   }
@@ -154,8 +161,20 @@ void main() {
     await settle(tester);
 
     expect(shape().side.width, 2);
-    expect(find.byType(CountdownTimer), findsOneWidget);
-    expect(find.byIcon(Icons.hourglass_bottom), findsNothing);
+    // armed, so the timer is the whole runway: what is left on the dose that
+    // is up plus the dose still in the bag behind it
+    expect(find.byIcon(Icons.hourglass_bottom), findsOneWidget);
+    final buff = session.potionController.activeBuff(
+      ItemId.MINOR_SPEED_POTION,
+    )!;
+    final dose =
+        (ItemId.MINOR_SPEED_POTION.definition as BuffItemDefinition).duration;
+    final held = session.potionController.heldCount(ItemId.MINOR_SPEED_POTION);
+    expect(held, 1);
+    expect(
+      tester.widget<CountdownTimer>(find.byType(CountdownTimer)).expirationTime,
+      buff.expirationTime.add(dose * held),
+    );
 
     // once it lapses the card drops back to what the one dose left is
     // worth, which says it is still armed
@@ -169,6 +188,32 @@ void main() {
     expect(shape().side.width, lessThan(2));
     expect(find.byType(CountdownTimer), findsNothing);
     expect(find.text(stackLasts(ItemId.MINOR_SPEED_POTION, 1)), findsOneWidget);
+    // still armed, so the hourglass stays: one dose of runway left
+    expect(find.byIcon(Icons.hourglass_bottom), findsOneWidget);
+
+    session.dispose();
+  });
+
+  testWidgets('unarmed, a potion that is up reads as just that potion', (
+    tester,
+  ) async {
+    final session = await pumpPotions(
+      tester,
+      held: {ItemId.MINOR_SPEED_POTION: 3},
+    );
+
+    session.inventoryController.drinkPotion(ItemId.MINOR_SPEED_POTION);
+    await settle(tester);
+
+    final buff = session.potionController.activeBuff(
+      ItemId.MINOR_SPEED_POTION,
+    )!;
+    // nothing is going to be drunk after it, so there is no runway to show
+    expect(find.byIcon(Icons.hourglass_bottom), findsNothing);
+    expect(
+      tester.widget<CountdownTimer>(find.byType(CountdownTimer)).expirationTime,
+      buff.expirationTime,
+    );
 
     session.dispose();
   });
@@ -209,7 +254,44 @@ void main() {
     session.dispose();
   });
 
-  testWidgets('the gear screen\'s row opens the potions screen', (
+  testWidgets('the card fits the narrowest phone the game ships on', (
+    tester,
+  ) async {
+    // inlining the grid into a card cost it the screen's full width, and a
+    // cell sized by aspect ratio then came out shorter than the fixed stack
+    // it holds — so the row height is fixed and this is why
+    final session = buildSession();
+    session.saveGameData.inventoryData.itemMap.addAll({
+      ItemId.MINOR_SPEED_POTION: 2,
+      ItemId.MINOR_ATTACK_POTION: 1,
+      ItemId.MINOR_STRENGTH_POTION: 1,
+      ItemId.MINOR_DEFENCE_POTION: 1,
+    });
+    registerCatalogIconResolvers();
+    EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
+    tester.view.physicalSize = const Size(320, 667);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      withProviders(
+        session,
+        const Scaffold(body: SingleChildScrollView(child: PotionsPanel())),
+      ),
+    );
+    await settle(tester);
+
+    // a RenderFlex overflow throws in a test, so this is the assertion
+    expect(tester.takeException(), isNull);
+    expect(
+      tester.getSize(cardFor(ItemId.MINOR_SPEED_POTION)).height,
+      greaterThanOrEqualTo(52 + 48 + 18),
+    );
+
+    session.dispose();
+  });
+
+  testWidgets('the gear screen carries the card inline, no push', (
     tester,
   ) async {
     final session = buildSession();
@@ -226,14 +308,23 @@ void main() {
     await tester.pumpWidget(withProviders(session, const GearScreen()));
     await settle(tester);
 
+    // the card is below the gear, so it is scrolled to rather than tapped
+    await tester.scrollUntilVisible(
+      switchFor(ItemId.MINOR_SPEED_POTION),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await settle(tester);
+
+    expect(find.byKey(const ValueKey('gear-potions-card')), findsOneWidget);
     expect(find.text('1 auto · 0 active'), findsOneWidget);
 
-    await tester.tap(find.byKey(const ValueKey('gear-potions-row')));
+    // and it is the live card, not a summary: the switch works in place
+    await tester.tap(switchFor(ItemId.MINOR_SPEED_POTION));
     await settle(tester);
-    await tester.pump(const Duration(milliseconds: 400));
-
-    expect(find.byType(PotionsScreen), findsOneWidget);
-    expect(switchFor(ItemId.MINOR_SPEED_POTION), findsOneWidget);
+    expect(session.saveGameData.playerData.autoDrinkPotions, isEmpty);
+    // nothing was pushed: the gear screen is still the only route
+    expect(find.text('Gear'), findsOneWidget);
 
     session.dispose();
   });

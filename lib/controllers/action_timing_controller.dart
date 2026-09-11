@@ -232,6 +232,30 @@ class ActionTimingController extends ChangeNotifier {
   Duration idleActionDurationFor(SkillId? skill) =>
       _actionSpeedSystem.intervalFor(skill, _playerState);
 
+  /// The interval an action training [skill] is running at *right now*: the
+  /// idle interval, cut by whatever momentum the boost bar is holding.
+  ///
+  /// [idleActionDurationFor] is what a standing start costs; this is what
+  /// the swing actually costs with the button down, which is the rate a
+  /// damage-per-second readout has to quote or it reports a slower fight
+  /// than the player is having.
+  ///
+  /// Momentum only touches the interval in the fast stance — a strength
+  /// boost is paid into the stat being rolled instead, and reaches the same
+  /// readouts through [PlayerDataService.getStatTotals].
+  Duration boostedActionDurationFor(SkillId? skill) {
+    final interval = _actionSpeedSystem.intervalFor(skill, _playerState);
+    if (!_actionTimingState.boostingSpeed) return interval;
+
+    final multiplier = _actionTimingService.getCurrentSpeedMultiplier(
+      _actionTimingState,
+    );
+    if (multiplier <= 0) return interval;
+    return Duration(
+      microseconds: (interval.inMicroseconds / multiplier).round(),
+    );
+  }
+
   Duration getCurrentActionDuration() {
     // the frame loop keeps the stored interval fresh while an action runs.
     // idle, nothing is ticking to refresh it - and stopping resets it to the

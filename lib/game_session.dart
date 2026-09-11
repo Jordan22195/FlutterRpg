@@ -561,6 +561,8 @@ class GameSessionFactory {
       playerState: save.playerData,
       inventoryState: save.inventoryData,
       equipmentService: equipmentService,
+      playerDataService: playerDataService,
+      skillService: skillService,
       equipmentSystem: equipmentSystem,
     );
     final enchantingController = EnchantingController(

@@ -3,21 +3,36 @@ import 'skill_data.dart';
 
 enum ArmorSlots {
   HEAD,
-  SHOULDER,
+  SHOULDER(fibOffset: 1),
   BACK,
-  CHEST,
+  CHEST(fibOffset: 1),
   WAIST,
-  LEGS,
+  LEGS(fibOffset: 1),
   WRIST,
   HANDS,
   FEET,
-  NECK,
+  NECK(fibOffset: 1),
   FINGER,
   FINGER_2,
   WEAPON_1H,
   WEAPON_2H,
-  OFFHAND,
-  TOOL,
+  OFFHAND(fibOffset: 1),
+  TOOL;
+
+  /// How many rungs above its material a piece in this slot sits. Chest and
+  /// legs are the major pieces and are worth a rung more than the trim; a
+  /// shield is the slot you buy purely to be harder to hit, so it is worth
+  /// two. The spread is the same on every ladder — the leather tiers keep it
+  /// too — so it belongs to the slot rather than to any one material.
+  ///
+  /// Only read for a piece that takes its [EquipmentItemDefinition.fibLevel]
+  /// from its material; one that states a rung outright is not offset again.
+  /// The weapon and tool slots are flat, because what a weapon is worth is
+  /// the weapon's business — a dagger and a greatsword share WEAPON_1H's
+  /// neighbours but not its rung.
+  final int fibOffset;
+
+  const ArmorSlots({this.fibOffset = 0});
 }
 
 /// Rings are the one piece of gear with two places to put it: equipment

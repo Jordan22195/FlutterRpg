@@ -79,10 +79,14 @@ class DungeonController extends ChangeNotifier {
   /// Everything the run has dropped so far, across every card. Reset when
   /// the run is (leaving, or dying in it).
   ///
-  /// Equipment folded in, so a boss's unique appears in the haul rather
-  /// than only in the bag - see [InventoryService.getStackListWithEquipment].
+  /// The stackable half; a boss's unique is kept as an instance with its
+  /// quality and comes back from [runEquipment].
   List<ObjectStack> runLoot() =>
-      _inventoryService.getStackListWithEquipment(_run.loot);
+      _inventoryService.getObjectStackList(_run.loot);
+
+  /// The equipment the run has dropped so far, one instance per quality
+  /// rolled. Reset with [runLoot].
+  List<EquipmentItem> runEquipment() => List.unmodifiable(_run.loot.equipment);
 
   /// Why card [index] can't be started, or null when it can.
   String? lockReason(int index) {

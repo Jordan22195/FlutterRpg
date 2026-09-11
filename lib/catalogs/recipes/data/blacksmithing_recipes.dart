@@ -471,7 +471,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 40,
     xp: 8,
-    inputs: {ItemId.COAL: 2, ItemId.MITHRIL_ORE: 1},
+    inputs: {ItemId.MITHRIL_ORE: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.MITHRIL_BAR, count: 1, weight: 1),
     ],

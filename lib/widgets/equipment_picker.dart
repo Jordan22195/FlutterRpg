@@ -62,6 +62,7 @@ class EquipmentPicker {
     required List<EquipmentItem> available,
     required void Function(EquipmentItem item) onEquip,
     VoidCallback? onUnequip,
+    String? Function(EquipmentItem item)? lockedReason,
   }) {
     showModalBottomSheet<void>(
       context: context,
@@ -127,14 +128,21 @@ class EquipmentPicker {
                     shrinkWrap: true,
                     itemCount: available.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) => _PickerCard(
-                      item: available[i],
-                      baseline: equipped,
-                      onTap: () {
-                        onEquip(available[i]);
-                        Navigator.of(ctx).pop();
-                      },
-                    ),
+                    itemBuilder: (_, i) {
+                      final candidate = available[i];
+                      final locked = lockedReason?.call(candidate);
+                      return _PickerCard(
+                        item: candidate,
+                        baseline: equipped,
+                        lockedReason: locked,
+                        onTap: locked != null
+                            ? null
+                            : () {
+                                onEquip(candidate);
+                                Navigator.of(ctx).pop();
+                              },
+                      );
+                    },
                   ),
                 ),
             ],
@@ -228,6 +236,7 @@ class _PickerCard extends StatelessWidget {
     required this.item,
     required this.baseline,
     this.isEquipped = false,
+    this.lockedReason,
     this.onTap,
     this.onUnequip,
   });
@@ -235,6 +244,11 @@ class _PickerCard extends StatelessWidget {
   final EquipmentItem item;
   final EquipmentItem? baseline;
   final bool isEquipped;
+
+  /// Why this piece cannot be worn yet, or null when it can. A locked card
+  /// still shows its stats — seeing what the tier is worth is the point of
+  /// the requirement — but it does not equip on tap.
+  final String? lockedReason;
   final VoidCallback? onTap;
   final VoidCallback? onUnequip;
 
@@ -242,98 +256,127 @@ class _PickerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final qualityColor = rarityBorderColor(item.quality);
+    final locked = lockedReason;
 
-    return Material(
-      color: isEquipped
-          ? scheme.primary.withOpacity(0.08)
-          : scheme.surfaceContainerHighest.withOpacity(0.35),
-      borderRadius: BorderRadius.circular(13),
-      child: InkWell(
-        onTap: onTap,
+    return Opacity(
+      opacity: locked == null ? 1 : 0.55,
+      child: Material(
+        color: isEquipped
+            ? scheme.primary.withOpacity(0.08)
+            : scheme.surfaceContainerHighest.withOpacity(0.35),
         borderRadius: BorderRadius.circular(13),
-        child: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(
-              color: isEquipped
-                  ? scheme.primary.withOpacity(0.4)
-                  : scheme.outline.withOpacity(0.3),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(13),
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(
+                color: isEquipped
+                    ? scheme.primary.withOpacity(0.4)
+                    : scheme.outline.withOpacity(0.3),
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              ItemStackTile(
-                size: 52,
-                id: item.id,
-                count: isEquipped ? 1 : item.count,
-                showInfoDialogOnTap: false,
-                borderColor: qualityColor,
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: qualityColor,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 4,
-                      children: _statChips(context),
-                    ),
-                  ],
+            child: Row(
+              children: [
+                ItemStackTile(
+                  size: 52,
+                  id: item.id,
+                  count: isEquipped ? 1 : item.count,
+                  showInfoDialogOnTap: false,
+                  borderColor: qualityColor,
                 ),
-              ),
-              if (isEquipped) ...[
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: scheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'EQUIPPED',
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.displayName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 9,
-                          letterSpacing: 0.5,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: scheme.onPrimaryContainer,
+                          color: qualityColor,
                         ),
                       ),
-                    ),
-                    if (onUnequip != null)
-                      TextButton(
-                        onPressed: onUnequip,
-                        style: TextButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                      if (locked != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.lock_outline,
+                              size: 12,
+                              color: scheme.error,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                locked,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: scheme.error,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: const Text(
-                          'Unequip',
-                          style: TextStyle(fontSize: 12),
-                        ),
+                      ],
+                      const SizedBox(height: 5),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: _statChips(context),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
+                if (isEquipped) ...[
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: scheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'EQUIPPED',
+                          style: TextStyle(
+                            fontSize: 9,
+                            letterSpacing: 0.5,
+                            fontWeight: FontWeight.w600,
+                            color: scheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ),
+                      if (onUnequip != null)
+                        TextButton(
+                          onPressed: onUnequip,
+                          style: TextButton.styleFrom(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          child: const Text(
+                            'Unequip',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

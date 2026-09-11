@@ -1,6 +1,9 @@
+import 'dart:ui' show FontFeature;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/items/items.dart';
+import '../controllers/buff_controller.dart';
 import '../controllers/equipment_controller.dart';
 import '../controllers/inventory_controller.dart';
 import '../data/equipment_data.dart';
@@ -9,8 +12,7 @@ import '../widgets/equipment_picker.dart';
 import '../widgets/icon_renderer.dart';
 import '../widgets/item_stack_tile.dart';
 import '../widgets/stat_chip.dart';
-import '../controllers/potion_controller.dart';
-import 'potions_screen.dart';
+import '../widgets/potions_panel.dart';
 
 /// Paper-doll gear screen: armor slots flank a character silhouette,
 /// weapons sit below it, and a detail card shows the selected slot's
@@ -111,6 +113,16 @@ class _GearScreenState extends State<GearScreen> {
     return '${name[0].toUpperCase()}${name.substring(1)}';
   }
 
+  /// Why the player cannot wear [item] yet, phrased for the picker, or null
+  /// when they can. Reads the gate the equipment manager enforces rather
+  /// than a second copy of it, so the two cannot disagree.
+  String? _lockedReason(EquipmentController controller, EquipmentItem item) {
+    if (controller.canEquip(item)) return null;
+    final needed = controller.requirementFor(item);
+    if (needed == null) return null;
+    return 'Needs ${_skillLabel(needed.skill)} ${needed.level}';
+  }
+
   void _openSlotPicker(ArmorSlots slot) {
     final equipmentController = context.read<EquipmentController>();
     final inventoryController = context.read<InventoryController>();
@@ -121,6 +133,7 @@ class _GearScreenState extends State<GearScreen> {
       slotLabel: _slotLabels[slot]!,
       equipped: equipped,
       available: inventoryController.getSlotItemList(slot),
+      lockedReason: (item) => _lockedReason(equipmentController, item),
       onEquip: (item) {
         equipmentController.equipItem(item, toSlot: slot);
         setState(() {
@@ -147,6 +160,7 @@ class _GearScreenState extends State<GearScreen> {
         ArmorSlots.TOOL,
         skill,
       ),
+      lockedReason: (item) => _lockedReason(equipmentController, item),
       onEquip: (item) {
         equipmentController.equipToolForSkill(skill, item);
         setState(() {
@@ -185,73 +199,23 @@ class _GearScreenState extends State<GearScreen> {
   @override
   Widget build(BuildContext context) {
     final equipmentController = context.watch<EquipmentController>();
+    // the buff tick is what moves the buff column as a potion runs down
+    context.watch<BuffController>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Gear')),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 16),
         children: [
-          _totalsStrip(context, equipmentController.getStatTotals()),
+          _statsTable(context, equipmentController.getStatBreakdown()),
           _paperDoll(context, equipmentController),
           _weaponRow(context, equipmentController),
           _detailCard(context, equipmentController),
           _sectionHeader(context, 'Tools'),
           _toolsRow(context, equipmentController),
           _sectionHeader(context, 'Potions'),
-          _potionsRow(context),
+          const PotionsPanel(),
         ],
-      ),
-    );
-  }
-
-  /// The way into the potions screen, in the detail card's dress: what is
-  /// armed to auto-drink and what is up right now, and a chevron.
-  Widget _potionsRow(BuildContext context) {
-    final potions = context.watch<PotionController>();
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: InkWell(
-        key: const ValueKey('gear-potions-row'),
-        borderRadius: BorderRadius.circular(13),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PotionsScreen()),
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: scheme.surfaceContainerHighest.withOpacity(0.35),
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: scheme.outline.withOpacity(0.3)),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.science, size: 28, color: scheme.primary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Potions',
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${potions.autoCount} auto · '
-                      '${potions.activeCount} active',
-                      style: TextStyle(fontSize: 11, color: scheme.outline),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: scheme.outline),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -270,9 +234,86 @@ class _GearScreenState extends State<GearScreen> {
     );
   }
 
-  Widget _totalsStrip(BuildContext context, Map<SkillId, int> totals) {
-    final entries = totals.entries.where((e) => e.value != 0).toList()
-      ..sort((a, b) => a.key.index.compareTo(b.key.index));
+  /// Where every stat comes from: the levels the player has earned, the gear
+  /// they are wearing, the potions they have drunk, and the stance they are
+  /// holding — then the total the game actually plays by.
+  ///
+  /// Only stats something other than a level touches get a row. A gear screen
+  /// listing every skill the player has would bury the paper doll under a
+  /// wall of numbers that never move; the interesting rows are the ones gear
+  /// or a potion is changing, and those carry their skill column with them.
+  Widget _statsTable(
+    BuildContext context,
+    ({
+      Map<SkillId, int> skills,
+      Map<SkillId, int> gear,
+      Map<SkillId, int> buffs,
+      Map<SkillId, int> stance,
+      Map<SkillId, int> total,
+    })
+    stats,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    final hasStance = stats.stance.values.any((v) => v != 0);
+
+    // a row per stat that gear, a potion or the stance is moving
+    final rows = {
+      ...stats.gear.keys.where((k) => (stats.gear[k] ?? 0) != 0),
+      ...stats.buffs.keys.where((k) => (stats.buffs[k] ?? 0) != 0),
+      ...stats.stance.keys.where((k) => (stats.stance[k] ?? 0) != 0),
+    }.toList()..sort((a, b) => a.index.compareTo(b.index));
+
+    Widget cell(
+      String text, {
+      required Color color,
+      bool bold = false,
+      SkillId? icon,
+      int flex = 1,
+    }) {
+      final label = Text(
+        text,
+        textAlign: TextAlign.right,
+        style: TextStyle(
+          fontSize: 12,
+          color: color,
+          fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      );
+      return Expanded(
+        flex: flex,
+        child: icon == null
+            ? label
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconRenderer(size: 16, id: icon),
+                  const SizedBox(width: 5),
+                  label,
+                ],
+              ),
+      );
+    }
+
+    Widget heading(String text, {bool bold = false, int flex = 1}) {
+      return Expanded(
+        flex: flex,
+        child: Text(
+          text.toUpperCase(),
+          textAlign: TextAlign.right,
+          style: TextStyle(
+            fontSize: 9,
+            letterSpacing: 0.5,
+            fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+            color: scheme.outline,
+          ),
+        ),
+      );
+    }
+
+    /// A contribution reads as what it adds, so a zero is a dash rather than
+    /// a 0 the eye has to add up.
+    String plus(int value) => value == 0 ? '—' : '+$value';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -280,31 +321,56 @@ class _GearScreenState extends State<GearScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'TOTAL BONUSES',
+            'STATS',
             style: TextStyle(
               fontSize: 11,
               letterSpacing: 0.6,
-              color: Theme.of(context).colorScheme.outline,
+              color: scheme.outline,
             ),
           ),
           const SizedBox(height: 6),
-          if (entries.isEmpty)
-            const Text(
-              'Nothing equipped',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+          if (rows.isEmpty)
+            Text(
+              'Nothing equipped — your stats are your skill levels',
+              style: TextStyle(fontSize: 12, color: scheme.outline),
             )
-          else
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
+          else ...[
+            Row(
+              key: const ValueKey('gear-stats-heading'),
               children: [
-                for (final entry in entries)
-                  StatChip(
-                    icon: IconRenderer(size: 16, id: entry.key),
-                    value: '+${entry.value}',
-                  ),
+                heading('skill'),
+                heading('gear'),
+                heading('buff'),
+                if (hasStance) heading('stance'),
+                heading('total', bold: true, flex: 2),
               ],
             ),
+            const SizedBox(height: 2),
+            for (final stat in rows)
+              Padding(
+                key: ValueKey('gear-stat-row-${stat.name}'),
+                padding: const EdgeInsets.symmetric(vertical: 3),
+                child: Row(
+                  children: [
+                    cell('${stats.skills[stat] ?? 0}', color: scheme.outline),
+                    cell(plus(stats.gear[stat] ?? 0), color: statGainColor),
+                    cell(plus(stats.buffs[stat] ?? 0), color: scheme.primary),
+                    if (hasStance)
+                      cell(
+                        plus(stats.stance[stat] ?? 0),
+                        color: scheme.tertiary,
+                      ),
+                    cell(
+                      '${stats.total[stat] ?? 0}',
+                      color: scheme.onSurface,
+                      bold: true,
+                      icon: stat,
+                      flex: 2,
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ],
       ),
     );

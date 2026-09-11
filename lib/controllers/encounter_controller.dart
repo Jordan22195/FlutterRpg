@@ -742,17 +742,24 @@ class EncounterController extends ChangeNotifier {
   // drops collected during the current encounter session. entities that
   // are not the session's entity show an empty list
   //
-  // equipment is folded in rather than left to the stackable half alone: a
-  // charm off a boss is paid into this inventory as an instance, and the
-  // panel would otherwise report nothing dropped while the piece sat in
-  // the player's bag
+  //
+  // the stackable half only; a charm off a boss is paid into this inventory
+  // as an instance with its own quality, and [equipmentDrops] hands those
+  // over as they are so the panel can frame each one in the rarity it rolled
   List<ObjectStack> itemDrops() {
     if (!isViewingActiveEncounter()) {
       return [];
     }
-    return _inventoryService.getStackListWithEquipment(
-      _encounterState.itemDrops,
-    );
+    return _inventoryService.getObjectStackList(_encounterState.itemDrops);
+  }
+
+  // the equipment this session has dropped, one instance per quality
+  // rolled, under the same session guard as [itemDrops]
+  List<EquipmentItem> equipmentDrops() {
+    if (!isViewingActiveEncounter()) {
+      return const [];
+    }
+    return List.unmodifiable(_encounterState.itemDrops.equipment);
   }
 
   // called when the player navigates to view an entity. if no encounter

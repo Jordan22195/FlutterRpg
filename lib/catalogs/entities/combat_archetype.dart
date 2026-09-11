@@ -12,6 +12,26 @@ import 'package:rpg/catalogs/entities/combat_type.dart';
 ///
 /// These consts are design-time only and are never persisted, so they may
 /// be freely renamed — unlike the `EntityId` values that reference them.
+///
+///
+///
+/// fib   actual  gear
+/// 0     1       copper
+/// 1     2       copper
+/// 2     3       copper
+/// 4     5       copper
+/// 5     8       copper
+/// 6     13      iron
+/// 7     21      iron
+/// 8     34      steel
+/// 9     55      mith
+/// 10    89      addy
+/// 11    144     rune
+/// 12    233     dragon
+/// 13    377
+/// 14    610
+///
+///
 class CombatArchetype {
   final String iconAsset;
 
@@ -152,7 +172,7 @@ const skeleton = CombatArchetype(
 // Zombie · roster tier 3 · dark forest
 const zombie = CombatArchetype(
   iconAsset: 'assets/images/entities/zombie.png',
-  fibLevel: 7,
+  fibLevel: 8,
   combatType: CombatType.ROCK_CRAB,
   attackInterval: 2.5,
 );

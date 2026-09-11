@@ -46,6 +46,14 @@ class EquipmentItem extends Item {
 
   ArmorSlots get armorSlot => definition.armorSlot;
 
+  /// The skill this piece is worn or wielded with, and the level in it the
+  /// player needs before they can put it on. Both come off the definition —
+  /// the metal sets the level, and what the piece is sets the skill — so a
+  /// piece with no material behind it asks for nothing (level 0).
+  SkillId get skillRequirement => definition.skillRequirement;
+
+  int get skillLevelRequirement => definition.skillLevelRequirement;
+
   /// How this piece's budget is split across skills — a ratio, not stat
   /// amounts. Read-only on purpose: an instance that could write here could
   /// drift from the catalog, which is the whole thing this model exists to

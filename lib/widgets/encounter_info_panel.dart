@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
 import '../controllers/buff_controller.dart';
 import '../data/ObjectStack.dart';
 import '../data/skill_data.dart';
@@ -22,6 +23,7 @@ class EncounterInfoPanel extends StatefulWidget {
   const EncounterInfoPanel({
     super.key,
     required this.drops,
+    this.equipment = const [],
     required this.lootLabel,
     required this.emptyLootLabel,
     this.skills,
@@ -39,6 +41,10 @@ class EncounterInfoPanel extends StatefulWidget {
 
   /// Drops collected this session (world) or this run (dungeon).
   final List<ObjectStack> drops;
+
+  /// Equipment dropped alongside [drops], as instances so each tile can
+  /// wear the quality it rolled.
+  final List<EquipmentItem> equipment;
 
   /// Tab title for the drops: combat loots, gathering gathers.
   final String lootLabel;
@@ -124,7 +130,7 @@ class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
   String _label(_PanelTab tab, int buffCount) {
     switch (tab) {
       case _PanelTab.loot:
-        return '${widget.lootLabel} · ${widget.drops.length}';
+        return '${widget.lootLabel} · ${widget.drops.length + widget.equipment.length}';
       case _PanelTab.skills:
         return 'Skills';
       case _PanelTab.buffs:
@@ -163,9 +169,9 @@ class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
       case _PanelTab.loot:
         return SizedBox(
           height: _bodyHeight,
-          child: widget.drops.isEmpty
+          child: widget.drops.isEmpty && widget.equipment.isEmpty
               ? _empty(context, widget.emptyLootLabel)
-              : InventoryGrid(items: widget.drops),
+              : InventoryGrid(items: widget.drops, equipment: widget.equipment),
         );
     }
   }

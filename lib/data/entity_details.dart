@@ -58,9 +58,11 @@ class EntityDetails {
   final double playerHitChance;
   final int playerMaxHit;
 
-  /// Seconds one action takes from a standing start, with whatever is
-  /// equipped to perform it. Unboosted: this is the rate the idle timer
-  /// shows, not the one a held button is currently running at.
+  /// Seconds one action against this entity takes right now, with whatever
+  /// is equipped to perform it and whatever momentum the boost bar is
+  /// holding. Standing still this is the idle timer's interval; mid-boost
+  /// it is the shorter one the held button is producing, so the rates below
+  /// move with the fight.
   final double playerActionInterval;
 
   /// Combat entities only: the entity's chance to land a hit on the player
@@ -109,7 +111,7 @@ class EntityDetails {
   double get playerAverageDamage => playerHitChance * (1 + playerMaxHit) / 2.0;
 
   /// Outgoing damage per second at the player's own action rate — the
-  /// mirror of [entityDamagePerSecond], and what the two sections are read
+  /// mirror of [entityDamagePerSecond], and what the two columns are read
   /// against each other for. 0 when nothing is being damaged.
   double get playerDamagePerSecond {
     if (!usesDamage || playerActionInterval <= 0) return 0;

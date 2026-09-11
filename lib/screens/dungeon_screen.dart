@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../catalogs/dungeons/dungeons.dart';
 import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
 import '../controllers/dungeon_controller.dart';
 import '../data/ObjectStack.dart';
 import '../services/entity_screen_router_service.dart';
@@ -61,6 +62,9 @@ class _DungeonScreenState extends State<DungeonScreen> {
         controller.activeDungeonId == widget.dungeonId;
     final slots = onThisDungeon ? controller.slots : const [];
     final loot = onThisDungeon ? controller.runLoot() : const <ObjectStack>[];
+    final equipment = onThisDungeon
+        ? controller.runEquipment()
+        : const <EquipmentItem>[];
 
     return PopScope(
       // backing out abandons the run, so the pop has to be confirmed first
@@ -79,7 +83,11 @@ class _DungeonScreenState extends State<DungeonScreen> {
                   children: [
                     _banner(def.iconAsset),
                     const SizedBox(height: 12),
-                    _tabBar(context, slots.length, loot.length),
+                    _tabBar(
+                      context,
+                      slots.length,
+                      loot.length + equipment.length,
+                    ),
                     const SizedBox(height: 8),
                     if (_tab == _DungeonTab.floors)
                       for (int i = 0; i < slots.length; i++)
@@ -97,10 +105,16 @@ class _DungeonScreenState extends State<DungeonScreen> {
                           onEntityTap: (entity) =>
                               _showEntityDetails(context, entity),
                         )
-                    else if (loot.isEmpty)
+                    else if (loot.isEmpty && equipment.isEmpty)
                       _emptyLoot(context)
                     else
-                      Card(child: InventoryGrid(items: loot, shrinkWrap: true)),
+                      Card(
+                        child: InventoryGrid(
+                          items: loot,
+                          equipment: equipment,
+                          shrinkWrap: true,
+                        ),
+                      ),
                   ],
                 ),
               ),

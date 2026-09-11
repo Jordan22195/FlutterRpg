@@ -69,6 +69,69 @@ void main() {
     }
   });
 
+  test('a piece takes its rung and its split from the hide it is cut from', () {
+    // the assertion the migration exists for: no hide piece states a rung or
+    // a split of its own, so a tier cannot drift off the material it names
+    for (var tier = 0; tier < tiers.length; tier++) {
+      final material = EquipmentMaterialId.values.byName(tiers[tier]);
+      for (final piece in pieces.entries) {
+        final def = defFor(tier, piece.key);
+        expect(
+          def.materialId,
+          material,
+          reason: '${tiers[tier]}_${piece.key} is not cut from ${tiers[tier]}',
+        );
+        expect(
+          def.fibLevel,
+          material.parameters.fibLevel + piece.value.$1.fibOffset,
+          reason: '${tiers[tier]}_${piece.key} states a rung of its own',
+        );
+        expect(
+          def.statWeights,
+          material.parameters.statWeight,
+          reason: '${tiers[tier]}_${piece.key} states a split of its own',
+        );
+      }
+    }
+  });
+
+  test('a hide asks for the level the plate a rung below it asks for', () {
+    // leather at rung n defends like plate at rung n-1, so it is gated like
+    // it too — the two ladders stay one step apart at every tier they share
+    const plateBelow = {
+      'LIGHT_LEATHER': EquipmentMaterialId.COPPER,
+      'MEDIUM_LEATHER': EquipmentMaterialId.IRON,
+      'HEAVY_LEATHER': EquipmentMaterialId.STEEL,
+      'LIGHT_DRAGONHIDE': EquipmentMaterialId.MITHRIL,
+      'MEDIUM_DRAGONHIDE': EquipmentMaterialId.ADAMANT,
+      'HEAVY_DRAGONHIDE': EquipmentMaterialId.RUNE,
+      'LIGHT_DEMONHIDE': EquipmentMaterialId.DRAGON,
+    };
+    for (final entry in plateBelow.entries) {
+      final hide = EquipmentMaterialId.values.byName(entry.key);
+      expect(
+        hide.parameters.fibLevel,
+        entry.value.parameters.fibLevel + 1,
+        reason: '${entry.key} is not a rung above ${entry.value.name}',
+      );
+      expect(
+        hide.parameters.skillLevelRequirement,
+        entry.value.parameters.skillLevelRequirement,
+        reason: '${entry.key} is not gated like ${entry.value.name}',
+      );
+    }
+    // the last two hides run past the end of the metal ladder, so they run
+    // up to the level cap instead of alongside a plate tier
+    expect(
+      EquipmentMaterialId.MEDIUM_DEMONHIDE.parameters.skillLevelRequirement,
+      95,
+    );
+    expect(
+      EquipmentMaterialId.HEAVY_DEMONHIDE.parameters.skillLevelRequirement,
+      99,
+    );
+  });
+
   test('every piece splits its budget evenly between attack and defence', () {
     for (var tier = 0; tier < tiers.length; tier++) {
       for (final piece in pieces.keys) {

@@ -30,9 +30,8 @@ void main() {
     data.xp = data.xpTable[level];
   }
 
-  int countOf(List<ObjectStack> stacks, ItemId id) => stacks
-      .where((s) => s.id == id)
-      .fold<int>(0, (sum, s) => sum + s.count);
+  int countOf(List<ObjectStack> stacks, ItemId id) =>
+      stacks.where((s) => s.id == id).fold<int>(0, (sum, s) => sum + s.count);
 
   test('a charm off Big Red lands in the session drops, not just the bag', () {
     final session = buildSession();
@@ -75,18 +74,25 @@ void main() {
         .fold<int>(0, (sum, e) => sum + e.count);
     expect(inBag, greaterThan(0), reason: 'no charm dropped in this run');
 
-    // and the panel under the fight reports the same number
-    final drops = session.encounterController.itemDrops();
-    expect(countOf(drops, ItemId.CHICKEN_CHARM), inBag);
+    // and the panel under the fight reports the same number, as instances
+    // so each can wear the quality it rolled
+    final dropped = session.encounterController
+        .equipmentDrops()
+        .where((e) => e.id == ItemId.CHICKEN_CHARM)
+        .fold<int>(0, (sum, e) => sum + e.count);
+    expect(dropped, inBag);
 
-    // the stackable drops still come through untouched
+    // the stackable drops still come through untouched, and the charm is
+    // not flattened into them
+    final drops = session.encounterController.itemDrops();
     expect(countOf(drops, ItemId.CHICKEN_MEAT), greaterThan(0));
+    expect(countOf(drops, ItemId.CHICKEN_CHARM), 0);
 
     session.actionTimingController.stop();
     session.dispose();
   });
 
-  test('the tally folds every quality of a piece onto one line', () {
+  test('each quality of a dropped piece stays its own instance', () {
     final session = buildSession();
     final drops = session.saveGameData.encounterData.itemDrops;
 
@@ -95,21 +101,18 @@ void main() {
       piece.quality = rarity;
       session.inventoryService.addEquipment(drops, piece);
     }
-    // stacked per quality, so the inventory holds three separate instances
+    // stacked per quality, so the inventory holds three separate instances,
+    // and that is what the grid draws: one tile per rolled quality
     expect(drops.equipment, hasLength(3));
-
-    // but the session tally is a count of what fell, and the grid draws one
-    // tile per id - so they are one line of three
-    final tally = session.inventoryService.getStackListWithEquipment(drops);
-    expect(tally.where((s) => s.id == ItemId.CHICKEN_CHARM), hasLength(1));
-    expect(countOf(tally, ItemId.CHICKEN_CHARM), 3);
+    expect(drops.equipment.map((e) => e.quality).toSet(), {
+      Rarity.COMMON,
+      Rarity.UNCOMMON,
+      Rarity.RARE,
+    });
 
     // and the stackable-only list is left as it was, since moving one
     // inventory into another still has to leave equipment alone
-    expect(
-      session.inventoryService.getObjectStackList(drops),
-      isEmpty,
-    );
+    expect(session.inventoryService.getObjectStackList(drops), isEmpty);
 
     session.dispose();
   });

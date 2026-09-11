@@ -31,7 +31,26 @@ class PlayerDataService {
   /// buff half of the total moves with the clock, and only an offline settle
   /// asks about any instant but this one: it replays each segment of the gap
   /// against the buffs that were up for it.
-  Map<SkillId, int> getStatTotals(PlayerData playerState, {DateTime? at}) {
+  Map<SkillId, int> getStatTotals(PlayerData playerState, {DateTime? at}) =>
+      getStatBreakdown(playerState, at: at).total;
+
+  /// The same stats, with the sources kept apart: what the player has earned,
+  /// what they are wearing, what they have drunk, and what the stance is
+  /// lending them. [total] is exactly what [getStatTotals] answers — it is
+  /// the same computation, so a readout that shows the split can never
+  /// disagree with the number the game plays by.
+  ///
+  /// [stance] is separate rather than folded into [buffs] because it is not
+  /// a buff: it comes off the action loop's boost bar and lands on one skill
+  /// only. It is all zeroes whenever no stance is lending anything.
+  ({
+    Map<SkillId, int> skills,
+    Map<SkillId, int> gear,
+    Map<SkillId, int> buffs,
+    Map<SkillId, int> stance,
+    Map<SkillId, int> total,
+  })
+  getStatBreakdown(PlayerData playerState, {DateTime? at}) {
     Map<SkillId, int> skillStats = {};
     for (final s in playerState.skillData.entries) {
       skillStats[s.key] = _skillService.getLevel(s.value);
@@ -49,6 +68,7 @@ class PlayerDataService {
       skillStats,
       Util.addMap(equipmentStats, buffStats),
     );
+    final stanceStats = <SkillId, int>{};
     // a strength stance raises the stat it is spent on: flat points added,
     // the idle curve at an empty bar and the max curve at a full one. added
     // rather than multiplied, so a stance is worth the same however high
@@ -74,15 +94,22 @@ class PlayerDataService {
       // final gear = (totals[playerState.skillBoost] ?? 0) - base;
       // totals[playerState.skillBoost] = (base * scale).round() + gear;
 
+      final points = strengthBoostBonus(
+        totals[SkillId.STRENGTH] ?? 0,
+        playerState.boostFill,
+      ).round();
+      stanceStats[playerState.skillBoost] = points;
       totals[playerState.skillBoost] =
-          (totals[playerState.skillBoost] ?? 0) +
-          strengthBoostBonus(
-            totals[SkillId.STRENGTH] ?? 0,
-            playerState.boostFill,
-          ).round();
+          (totals[playerState.skillBoost] ?? 0) + points;
     }
 
-    return totals;
+    return (
+      skills: skillStats,
+      gear: equipmentStats,
+      buffs: buffStats,
+      stance: stanceStats,
+      total: totals,
+    );
   }
 
   void setBoostFill(double fill, PlayerData playerState) {

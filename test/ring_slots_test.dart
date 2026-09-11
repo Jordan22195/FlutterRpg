@@ -119,7 +119,14 @@ void main() {
     inventoryService.addEquipment(inventory, worn);
     inventoryService.addEquipment(inventory, swappedIn);
 
-    system.equipItem(worn, equipment, inventory, toSlot: ArmorSlots.FINGER_2);
+    // rings ask nothing of the player, so an empty level sheet equips them
+    system.equipItem(
+      worn,
+      equipment,
+      inventory,
+      skillLevels: const {},
+      toSlot: ArmorSlots.FINGER_2,
+    );
     expect(inventory.equipment.map((item) => item.instanceId), [
       swappedIn.instanceId,
     ]);
@@ -128,6 +135,7 @@ void main() {
       swappedIn,
       equipment,
       inventory,
+      skillLevels: const {},
       toSlot: ArmorSlots.FINGER_2,
     );
 

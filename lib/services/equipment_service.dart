@@ -24,6 +24,30 @@ class EquipmentService {
     return stats;
   }
 
+  /// What [item] demands of the player before it can be worn, or null when
+  /// nothing does — a piece with no material behind it (jewellery, a boss
+  /// drop, a stone axe) asks for level 0, which is not a requirement.
+  ///
+  /// The skill comes from what the piece *is* and the level from what it is
+  /// *made of*: a mithril sword asks for attack at mithril's level where a
+  /// mithril helmet asks for defence at the same one.
+  ({SkillId skill, int level})? requirementFor(EquipmentItem item) {
+    final level = item.skillLevelRequirement;
+    if (level <= 0) return null;
+    return (skill: item.skillRequirement, level: level);
+  }
+
+  /// Whether [item] can be worn by a player at [skillLevels].
+  ///
+  /// [skillLevels] is levels earned from xp, never [getStatTotals] — gear
+  /// that counted its own bonus toward its own requirement would let a
+  /// player bootstrap up the ladder one piece at a time.
+  bool meetsRequirement(EquipmentItem item, Map<SkillId, int> skillLevels) {
+    final needed = requirementFor(item);
+    if (needed == null) return true;
+    return (skillLevels[needed.skill] ?? 0) >= needed.level;
+  }
+
   /// Equips [item] into its slot, applying weapon exclusivity rules.
   /// [toSlot] picks between the slots an item accepts (which ring finger
   /// it goes on); without it the first empty one wins. Returns the

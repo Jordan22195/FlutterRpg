@@ -3959,27 +3959,27 @@ enum EntityId {
       name: "Spider Broodmother",
       rarity: Rarity.EPIC,
       itemDrops: [
-        NestedDrop(spiderDropTable, countMultiplier: 4),
+        NestedDrop(spiderDropTable, countMultiplier: 6),
         ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 100),
         ItemDropType(
           id: ItemId.SPIDER_SILK_NECKLACE,
           rarity: Rarity.COMMON,
-          weight: .1,
+          weight: 1,
         ),
         ItemDropType(
           id: ItemId.SPIDER_SILK_NECKLACE,
           rarity: Rarity.UNCOMMON,
-          weight: .05,
+          weight: .8,
         ),
         ItemDropType(
           id: ItemId.SPIDER_SILK_NECKLACE,
           rarity: Rarity.RARE,
-          weight: .01,
+          weight: .6,
         ),
         ItemDropType(
           id: ItemId.SPIDER_SILK_NECKLACE,
           rarity: Rarity.EPIC,
-          weight: .005,
+          weight: .5,
         ),
       ],
     ),

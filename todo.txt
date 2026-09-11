@@ -136,3 +136,34 @@ weapon damage scaling needs work. or at least evaualted.
 
 ----
 idea. slayer skill is how to unlock rares.
+
+
+----
+
+changes to stregth
+
+stregnth should give a passive idle bonus and a boost bonus
+right now stregnth is mulitplicative bonus, where addative might make more sense. 
+
+so for attack x stregnth should give +n idle attack and +k boosted attack. how to determine that? 
+two separate formulas?
+
+idle att += str^.75
+boost = att += str^1 +1
+
+what about defence?
+same formula for now. 
+
+
+------
+
+cooking.  
+making building a fire for a specific duration sucks.
+need to change cooking so you just automatically add logs as you cook. 
+
+I have multiple types of fires. how do I want to handle that. 
+options. 
+-single fire pit like I have now. 
+-multiple fire pits. either one for each or one for cooking and one for buffs
+
+single firepit. selecting a cook fire brings up the cooking menu. and logs are automatically added. 

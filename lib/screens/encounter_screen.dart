@@ -46,6 +46,10 @@ class CombatViewState {
   /// Drops collected this session (world) or this run (dungeon).
   final List<ObjectStack> drops;
 
+  /// Equipment dropped alongside [drops], kept as instances so the loot tab
+  /// frames each piece in the quality it rolled.
+  final List<EquipmentItem> equipmentDrops;
+
   /// Entities still queued behind the one on screen, in queue order. Empty
   /// for a world encounter, which has no queue behind it.
   final List<EncounterEntity> queueRemaining;
@@ -80,6 +84,7 @@ class CombatViewState {
     required this.entityAttackSequence,
     required this.showActionFeedback,
     required this.drops,
+    this.equipmentDrops = const [],
     required this.foodItemId,
     required this.foodItemCount,
     required this.playerActionProgress,
@@ -610,6 +615,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                     skills: isCombatEntity ? trainedSkills : null,
                     infoEntity: entityId == EntityId.NULL ? null : entity,
                     drops: view.drops,
+                    equipment: view.equipmentDrops,
                     lootLabel: isCombatEntity ? 'Loot' : 'Gathered',
                     emptyLootLabel: isCombatEntity
                         ? 'No loot this session'
@@ -673,6 +679,7 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
       // damage feedback belongs only to the encounter the actions fire on
       showActionFeedback: controller.isViewingActiveEncounter(),
       drops: controller.itemDrops(),
+      equipmentDrops: controller.equipmentDrops(),
       // a dungeon card's queue; empty for a zone entity
       queueRemaining: controller.queueRemaining(),
       foodItemId: controller.getEquipedFoodItemId(),

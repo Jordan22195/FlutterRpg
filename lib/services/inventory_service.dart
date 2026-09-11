@@ -158,10 +158,7 @@ class InventoryService {
     // carries none of it, and offering it as that skill's tool would be a
     // tool worth nothing
     return inventoryState.equipment
-        .where(
-          (e) =>
-              e.armorSlot == slot && (e.statWeights[skillId] ?? 0) > 0,
-        )
+        .where((e) => e.armorSlot == slot && (e.statWeights[skillId] ?? 0) > 0)
         .toList();
   }
 
@@ -179,32 +176,6 @@ class InventoryService {
     List<ObjectStack> ret = [];
     for (final pair in inventoryState.itemMap.entries) {
       ret.add(ObjectStack(id: pair.key, count: pair.value));
-    }
-    return ret;
-  }
-
-  /// Everything an inventory holds as one flat tally by id: the stackables
-  /// plus its equipment, folded in by id.
-  ///
-  /// For a session drop list, where the question is what fell rather than
-  /// which instance fell - the grid draws one tile per id, and the piece
-  /// itself is in the bag with its quality intact. Without this an
-  /// equipment drop lands in the player's bag and shows up nowhere in the
-  /// tally of what the fight produced.
-  ///
-  /// Display only. Never move items with it: equipment has to travel as
-  /// instances or it loses its quality.
-  List<ObjectStack> getStackListWithEquipment(InventoryData inventoryState) {
-    final ret = getObjectStackList(inventoryState);
-    for (final piece in inventoryState.equipment) {
-      // a piece is stacked per quality, so two rarities of the same drop
-      // arrive as two entries and are one line in the tally
-      final existing = ret.indexWhere((s) => s.id == piece.id);
-      if (existing >= 0) {
-        ret[existing].count += piece.count;
-      } else {
-        ret.add(ObjectStack(id: piece.id, count: piece.count));
-      }
     }
     return ret;
   }

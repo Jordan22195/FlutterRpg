@@ -396,12 +396,17 @@ void main() {
           .fold<int>(0, (sum, e) => sum + e.count);
       expect(inBag, greaterThan(0), reason: 'no charm dropped in this run');
 
-      final haul = dungeons.runLoot();
+      // the haul carries it as an instance, not folded into the stackables
       expect(
-        haul
-            .where((s) => s.id == ItemId.CHICKEN_CHARM)
-            .fold<int>(0, (sum, s) => sum + s.count),
+        dungeons
+            .runEquipment()
+            .where((e) => e.id == ItemId.CHICKEN_CHARM)
+            .fold<int>(0, (sum, e) => sum + e.count),
         inBag,
+      );
+      expect(
+        dungeons.runLoot().any((s) => s.id == ItemId.CHICKEN_CHARM),
+        isFalse,
       );
       // and it is the run's own instance, not the one handed to the bag -
       // addEquipment merges by mutating whatever stack it lands on

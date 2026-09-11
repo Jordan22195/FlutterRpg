@@ -77,8 +77,8 @@ enum DungeonId {
         DungeonEntry(
           name: "Broodmother's Lair",
           entities: [
-            DungeonEntityRef(EntityId.GIANT_SPIDER_UNCOMMON, count: 20),
-            DungeonEntityRef(EntityId.ZOMBIE_UNCOMMON, count: 20),
+            DungeonEntityRef(EntityId.GIANT_SPIDER_UNCOMMON, count: 15),
+            DungeonEntityRef(EntityId.ZOMBIE_UNCOMMON, count: 6),
             DungeonEntityRef(EntityId.SPIDER_BROODMOTHER),
           ],
         ),

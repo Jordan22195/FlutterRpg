@@ -4,9 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../catalogs/enchantments/enchantments.dart';
 import '../controllers/enchanting_controller.dart';
+import '../catalogs/items/items.dart';
+import '../data/ObjectStack.dart';
 import '../data/skill_data.dart';
 import '../widgets/equipment_card.dart';
-import '../widgets/equipment_info_dialog.dart';
 import '../widgets/inventory_grid.dart';
 import '../widgets/picker_list.dart';
 import '../widgets/recipe_card.dart';
@@ -255,41 +256,11 @@ class EnchantingScreen extends StatelessWidget {
                     ),
 
                   // results of this bench session (materials gained,
-                  // items enchanted)
-                  Card(
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: 80,
-                          child: InventoryGrid(
-                            items: controller.sessionResults(),
-                          ),
-                        ),
-                        if (controller.sessionEquipment().isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Wrap(
-                              spacing: 10,
-                              runSpacing: 10,
-                              children: [
-                                for (final item
-                                    in controller.sessionEquipment())
-                                  ItemStackTile(
-                                    size: 56,
-                                    count: item.count,
-                                    id: item.id,
-                                    showInfoDialogOnTap: false,
-                                    borderColor: rarityBorderColor(
-                                      item.quality,
-                                    ),
-                                    onTap: () =>
-                                        showEquipmentInfoDialog(context, item),
-                                  ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
+                  // items enchanted), in one grid: the enchanted pieces
+                  // wear the quality they rolled
+                  _SessionResultsCard(
+                    items: controller.sessionResults(),
+                    equipment: controller.sessionEquipment(),
                   ),
                 ],
               ),
@@ -307,6 +278,44 @@ class EnchantingScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// What this bench session has produced, or a note that it hasn't yet.
+/// Sized like the crafting panel's output tab so the two benches read the
+/// same way.
+class _SessionResultsCard extends StatelessWidget {
+  const _SessionResultsCard({required this.items, required this.equipment});
+
+  final List<ObjectStack> items;
+  final List<EquipmentItem> equipment;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty && equipment.isEmpty) {
+      return Card(
+        child: SizedBox(
+          height: 80,
+          child: Center(
+            child: Text(
+              'Nothing enchanted this session',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return Card(
+      child: InventoryGrid(
+        items: items,
+        equipment: equipment,
+        shrinkWrap: true,
       ),
     );
   }

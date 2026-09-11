@@ -5,10 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/catalog_icons.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/data/entity_details.dart';
+import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/utilities/image_resolver.dart';
@@ -82,6 +84,44 @@ void main() {
       expect(high, greaterThan(low));
     });
 
+    test('rises with the momentum the held button is holding', () {
+      // the fast stance is the one that spends the boost on the interval,
+      // which is what the rate is divided by
+      save.playerData.stance = Stance.fast;
+      final resting = detailsFor(EntityId.GOBLIN).playerDamagePerSecond;
+
+      save.actionTimingData.boostingSpeed = true;
+      save.actionTimingData.maxBoostMultiplier = 2.0;
+      save.actionTimingData.percentOfMaxBoost = 1.0;
+
+      // twice the swing rate for the same damage roll is twice the dps: the
+      // bug this guards read the idle interval, so a full bar moved nothing
+      expect(
+        detailsFor(EntityId.GOBLIN).playerDamagePerSecond,
+        closeTo(resting * 2, 1e-6),
+      );
+    });
+
+    test('rises with the points a strength stance lends the attack', () {
+      // a strength boost is paid into the stat rather than the interval, so
+      // it has to reach the rate through the damage roll instead
+      setLevel(SkillId.ATTACK, 30);
+      setLevel(SkillId.STRENGTH, 40);
+      save.playerData.stance = Stance.strong;
+      save.playerData.skillBoost = SkillId.ATTACK;
+
+      save.playerData.boostFill = 0.0;
+      final resting = detailsFor(EntityId.GOBLIN);
+      save.playerData.boostFill = 1.0;
+      final boosted = detailsFor(EntityId.GOBLIN);
+
+      expect(boosted.playerSkillLevel, greaterThan(resting.playerSkillLevel));
+      expect(
+        boosted.playerDamagePerSecond,
+        greaterThan(resting.playerDamagePerSecond),
+      );
+    });
+
     test('is zero where actions do not roll damage', () {
       // a fishing spot never depletes and a herb is picked in one action,
       // so neither has a damage rate to report
@@ -106,6 +146,10 @@ void main() {
             ChangeNotifierProvider<BuffController>.value(
               value: session.buffController,
             ),
+            // the body watches this one so the rates track the boost
+            ChangeNotifierProvider<ActionTimingController>.value(
+              value: session.actionTimingController,
+            ),
           ],
           child: MaterialApp(
             home: Scaffold(
@@ -119,22 +163,68 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('shows the damage rate under the player attack rolls', (
+    testWidgets('puts both sides of the roll on one table row', (
       tester,
     ) async {
       setLevel(SkillId.ATTACK, 40);
       await pumpInfo(tester, EntityId.GOBLIN);
 
       // section headings render upper case
-      expect(find.text('YOUR ATTACKS'), findsOneWidget);
-      // one row in the player's section, one in the entity's
-      expect(find.text('Damage per second'), findsNWidgets(2));
+      expect(find.text('COMBAT ROLLS'), findsOneWidget);
+      // one row now, not one in each of two sections - the player's rate
+      // and the entity's are the same measurement and sit side by side
+      expect(find.text('Damage per second'), findsOneWidget);
+      expect(find.text('YOU'), findsOneWidget);
+      expect(
+        find.text(EntityId.GOBLIN.definition.name.toUpperCase()),
+        findsOneWidget,
+      );
 
       final details = detailsFor(EntityId.GOBLIN);
       expect(
         find.text(details.playerDamagePerSecond.toStringAsFixed(1)),
         findsWidgets,
       );
+      expect(
+        find.text(details.entityDamagePerSecond.toStringAsFixed(1)),
+        findsWidgets,
+      );
+    });
+
+    testWidgets('leaves the entity stat block to the encounter screen', (
+      tester,
+    ) async {
+      await pumpInfo(tester, EntityId.GOBLIN);
+
+      // hitpoints, level and remaining count are all on the screen around
+      // this panel already; repeating them here only made it longer
+      expect(find.text('STATS'), findsNothing);
+      expect(find.text('Hitpoints'), findsNothing);
+      expect(find.text('Remaining'), findsNothing);
+      expect(find.text('Attack speed'), findsNothing);
+    });
+
+    testWidgets('the damage rate follows the boost while it is held', (
+      tester,
+    ) async {
+      setLevel(SkillId.ATTACK, 40);
+      save.playerData.stance = Stance.fast;
+      await pumpInfo(tester, EntityId.GOBLIN);
+
+      final resting = detailsFor(EntityId.GOBLIN).playerDamagePerSecond;
+      expect(find.text(resting.toStringAsFixed(1)), findsWidgets);
+
+      // fill the bar the way a held button does, and tick the controller
+      // the way the frame loop does
+      save.actionTimingData.boostingSpeed = true;
+      save.actionTimingData.maxBoostMultiplier = 2.0;
+      save.actionTimingData.percentOfMaxBoost = 1.0;
+      session.actionTimingController.notifyListeners();
+      await tester.pump();
+
+      final boosted = detailsFor(EntityId.GOBLIN).playerDamagePerSecond;
+      expect(boosted, greaterThan(resting));
+      expect(find.text(boosted.toStringAsFixed(1)), findsWidgets);
     });
 
     // The drop rows are ordinary item tiles: framed by the quality the drop
@@ -296,8 +386,9 @@ void main() {
       tester,
     ) async {
       await pumpInfo(tester, EntityId.TREE);
-      // no incoming section on a tree, so the only rate is the player's
+      // nothing swings back at a tree, so the table drops the second column
       expect(find.text('Damage per second'), findsOneWidget);
+      expect(find.text('YOU'), findsNothing);
 
       await pumpInfo(tester, EntityId.TRANQUIL_POND);
       expect(find.text('Damage per second'), findsNothing);

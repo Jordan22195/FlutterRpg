@@ -18,12 +18,19 @@ class EquipmentSystem {
   /// Takes one item off the inventory stack and equips it; anything
   /// displaced by the swap goes back into the inventory. [toSlot] picks
   /// between the slots the item accepts (which ring finger it goes on).
+  ///
+  /// [skillLevels] are the player's levels earned from xp, which the piece's
+  /// own requirement is checked against before anything moves — a refused
+  /// equip leaves the inventory exactly as it was.
   bool equipItem(
     EquipmentItem item,
     EquipmentData equipmentState,
     InventoryData inventoryState, {
+    required Map<SkillId, int> skillLevels,
     ArmorSlots? toSlot,
   }) {
+    if (!_equipmentService.meetsRequirement(item, skillLevels)) return false;
+
     final taken = _inventoryService.takeOneEquipment(
       inventoryState,
       item.instanceId,
@@ -48,23 +55,29 @@ class EquipmentSystem {
   }
 
   /// Takes one item off the inventory stack and equips it as the tool
-  /// for [skill]; the previous tool goes back into the inventory.
-  void equipTool(
+  /// for [skill]; the previous tool goes back into the inventory. Gated on
+  /// the tool's own requirement the same way [equipItem] is — a mithril
+  /// pickaxe asks for a miner, not a fighter. False when it was refused.
+  bool equipTool(
     SkillId skill,
     EquipmentItem item,
     EquipmentData equipmentState,
-    InventoryData inventoryState,
-  ) {
+    InventoryData inventoryState, {
+    required Map<SkillId, int> skillLevels,
+  }) {
+    if (!_equipmentService.meetsRequirement(item, skillLevels)) return false;
+
     final taken = _inventoryService.takeOneEquipment(
       inventoryState,
       item.instanceId,
     );
-    if (taken == null) return;
+    if (taken == null) return false;
 
     final old = _equipmentService.equipTool(skill, taken, equipmentState);
     if (old != null) {
       _inventoryService.addEquipment(inventoryState, old);
     }
+    return true;
   }
 
   void unequipSlot(

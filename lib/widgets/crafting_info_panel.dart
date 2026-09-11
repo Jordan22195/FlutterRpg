@@ -5,8 +5,7 @@ import '../catalogs/items/items.dart';
 import '../controllers/buff_controller.dart';
 import '../data/ObjectStack.dart';
 import 'buff_row.dart';
-import 'equipment_info_dialog.dart';
-import 'item_stack_tile.dart';
+import 'inventory_grid.dart';
 import 'recipe_info_body.dart';
 
 /// What a crafting bench reports while you work: what this session has
@@ -36,8 +35,8 @@ class CraftingInfoPanel extends StatefulWidget {
   final String recipeId;
 
   /// Equipment produced this session. Kept apart from [items] since it's a
-  /// different type — a piece of equipment carries a quality border, so its
-  /// tiles are built separately even though both render into the same wrap.
+  /// different type — a piece carries its own rolled quality — but the grid
+  /// draws both as one run of tiles.
   final List<EquipmentItem> equipment;
 
   /// Tab title for the output: a station crafts, a firepit cooks.
@@ -144,27 +143,12 @@ class _CraftingInfoPanelState extends State<CraftingInfoPanel> {
             child: _empty(context, widget.emptyCraftedLabel),
           );
         }
-        // items and equipment share one wrap of tiles; equipment tiles carry
-        // their quality border in place of the plain item tile's
-        return Padding(
-          padding: const EdgeInsets.all(10),
-          child: Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final stack in widget.items)
-                ItemStackTile(size: 56, count: stack.count, id: stack.id),
-              for (final item in widget.equipment)
-                ItemStackTile(
-                  size: 56,
-                  count: item.count,
-                  id: item.id,
-                  showInfoDialogOnTap: false,
-                  quality: item.quality,
-                  onTap: () => showEquipmentInfoDialog(context, item),
-                ),
-            ],
-          ),
+        // items and equipment share one grid; the equipment tiles wear
+        // their rolled quality and open the equipment dialog
+        return InventoryGrid(
+          items: widget.items,
+          equipment: widget.equipment,
+          shrinkWrap: true,
         );
     }
   }
