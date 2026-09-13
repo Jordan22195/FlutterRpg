@@ -129,9 +129,33 @@ List<Stance> stancesForEntity(EncounterEntity entity) {
 
 class PlayerData {
   // location info
-  ZoneId currentZoneId;
+  ZoneId _currentZoneId;
+
+  /// Where the player is standing. Everything an action *does* keys off
+  /// this.
+  ZoneId get currentZoneId => _currentZoneId;
+
+  /// Moving the player also points them at where they now are: arriving
+  /// somewhere is looking at it. The invariant lives here rather than in the
+  /// one service that moves them, so no path can move the player and leave
+  /// the screens reading the place they left.
+  set currentZoneId(ZoneId id) {
+    _currentZoneId = id;
+    currentZoneViewId = id;
+  }
 
   EntityId currentEntityViewId;
+
+  /// The zone the screens are showing, which is not always the one the
+  /// player is standing in: the map's Enter walks you into a place to look
+  /// at it before you decide to make the trip.
+  ///
+  /// The zone half of the same view/active split [currentEntityViewId]
+  /// makes for entities. Everything a screen *reads* keys off this;
+  /// everything an action *does* keys off [currentZoneId], which is why
+  /// the action button becomes a travel button whenever the two differ.
+  /// Arriving somewhere sets both, so they are equal in the ordinary case.
+  late ZoneId currentZoneViewId;
 
   // skill stats
   BuffData buffData;
@@ -154,6 +178,7 @@ class PlayerData {
   // mutable stats
   int hitpoints = 10;
   double stamina = 0;
+
   /// How full the boost bar is, 0..1. Written by the action loop each
   /// frame; read only by [PlayerDataService.getStatTotals], which runs the
   /// strength curve off it. Held here rather than a multiplier because the
@@ -161,18 +186,22 @@ class PlayerData {
   double boostFill = 0.0;
 
   PlayerData({
-    required this.currentZoneId,
+    required ZoneId currentZoneId,
     required this.currentEntityViewId,
     required this.buffData,
     required this.skillData,
     required this.equipmentData,
     required this.hitpoints,
     required this.stamina,
-  });
+  }) : _currentZoneId = currentZoneId {
+    // a new game opens looking at where it starts you
+    currentZoneViewId = currentZoneId;
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'currentZoneId': currentZoneId.name,
+      'currentZoneViewId': currentZoneViewId.name,
       'currentEntityViewId': currentEntityViewId.name,
       'buffData': buffData.toJson(),
       'skillData': skillData.map(
@@ -260,29 +289,44 @@ class PlayerData {
       skillData[skillId] = SkillData.fromJson(rawSkill);
     }
 
-    return PlayerData(
-        currentZoneId: ZoneId.values.firstWhere(
-          (z) => z.name == rawZoneId,
-          orElse: () => throw FormatException('Invalid ZoneId "\$rawZoneId".'),
-        ),
-        currentEntityViewId: EntityId.values.firstWhere(
-          (e) => e.name == rawEntityId,
-          orElse: () =>
-              throw FormatException('Invalid EntityId "\$rawEntityId".'),
-        ),
-        buffData: BuffData.fromJson(Map<String, dynamic>.from(rawBuffData)),
-        skillData: skillData,
-        equipmentData: EquipmentData.fromJson(
-          Map<String, dynamic>.from(rawEquipmentData),
-        ),
-        hitpoints: rawHitpoints,
-        stamina: rawStamina.toDouble(),
-      )
-      ..lastActionTime = lastActionTime
-      ..autoEatRule = json['autoEatRule'] is Map<String, dynamic>
-          ? AutoEatRule.fromJson(json['autoEatRule'] as Map<String, dynamic>)
-          : AutoEatRule.standard
-      ..autoDrinkPotions = _readAutoDrinkPotions(json['autoDrinkPotions']);
+    final data =
+        PlayerData(
+            currentZoneId: ZoneId.values.firstWhere(
+              (z) => z.name == rawZoneId,
+              orElse: () =>
+                  throw FormatException('Invalid ZoneId "\$rawZoneId".'),
+            ),
+            currentEntityViewId: EntityId.values.firstWhere(
+              (e) => e.name == rawEntityId,
+              orElse: () =>
+                  throw FormatException('Invalid EntityId "\$rawEntityId".'),
+            ),
+            buffData: BuffData.fromJson(Map<String, dynamic>.from(rawBuffData)),
+            skillData: skillData,
+            equipmentData: EquipmentData.fromJson(
+              Map<String, dynamic>.from(rawEquipmentData),
+            ),
+            hitpoints: rawHitpoints,
+            stamina: rawStamina.toDouble(),
+          )
+          ..lastActionTime = lastActionTime
+          ..autoEatRule = json['autoEatRule'] is Map<String, dynamic>
+              ? AutoEatRule.fromJson(
+                  json['autoEatRule'] as Map<String, dynamic>,
+                )
+              : AutoEatRule.standard
+          ..autoDrinkPotions = _readAutoDrinkPotions(json['autoDrinkPotions']);
+
+    // a save from before the map could show you a place you aren't standing
+    // in, or one naming a zone the catalog has since retired, comes back
+    // looking at wherever the player is. being put back on the wrong screen
+    // is not worth failing a load over.
+    final rawViewZoneId = json['currentZoneViewId'];
+    data.currentZoneViewId = rawViewZoneId is String
+        ? (ZoneId.values.asNameMap()[rawViewZoneId] ?? data.currentZoneId)
+        : data.currentZoneId;
+
+    return data;
   }
 }
 

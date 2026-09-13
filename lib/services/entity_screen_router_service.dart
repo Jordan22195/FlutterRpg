@@ -7,6 +7,7 @@ import '../screens/enchanting_screen.dart';
 import '../screens/encounter_screen.dart';
 import '../screens/firepit_screen.dart';
 import '../screens/shop_screen.dart';
+import '../utilities/shell_page_route.dart';
 
 class EntityScreenRouterService {
   // route names let navigator observers identify which screen is on top
@@ -25,14 +26,14 @@ class EntityScreenRouterService {
 
     if (enitity is ShopEntity) {
       Navigator.of(context).push(
-        MaterialPageRoute(
+        ShellPageRoute(
           settings: const RouteSettings(name: shopRouteName),
           builder: (_) => const ShopScreen(),
         ),
       );
     } else if (enitity is DungeonEntity) {
       Navigator.of(context).push(
-        MaterialPageRoute(
+        ShellPageRoute(
           // the dungeon id rides in the route arguments so the saved ui
           // state knows which dungeon screen to restore
           settings: RouteSettings(
@@ -44,7 +45,7 @@ class EntityScreenRouterService {
       );
     } else if (enitity is EncounterEntity) {
       Navigator.of(context).push(
-        MaterialPageRoute(
+        ShellPageRoute(
           settings: const RouteSettings(name: encounterRouteName),
           builder: (_) => EncounterScreen(),
         ),
@@ -54,7 +55,7 @@ class EntityScreenRouterService {
       // cookfire burns, cooking too
       if (enitity is FirePitEntity) {
         Navigator.of(context).push(
-          MaterialPageRoute(
+          ShellPageRoute(
             settings: const RouteSettings(name: firepitRouteName),
             builder: (_) => const FirepitScreen(),
           ),
@@ -65,7 +66,7 @@ class EntityScreenRouterService {
       // instances rather than recipe crafting)
       if (enitity.craftingSkill == SkillId.ENCHANTING) {
         Navigator.of(context).push(
-          MaterialPageRoute(
+          ShellPageRoute(
             settings: const RouteSettings(name: enchantingRouteName),
             builder: (_) => const EnchantingScreen(),
           ),
@@ -73,7 +74,7 @@ class EntityScreenRouterService {
         return;
       }
       Navigator.of(context).push(
-        MaterialPageRoute(
+        ShellPageRoute(
           settings: const RouteSettings(name: craftingRouteName),
           builder: (_) => CraftingScreen(),
         ),

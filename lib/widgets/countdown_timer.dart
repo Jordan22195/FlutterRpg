@@ -97,7 +97,6 @@ class _CountdownTimerState extends State<CountdownTimer> {
       ],
     );
   }
-
 }
 
 /// Lightweight 1Hz ticker without requiring vsync.

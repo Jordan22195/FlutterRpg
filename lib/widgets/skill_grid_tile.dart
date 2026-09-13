@@ -5,6 +5,7 @@ import '../data/skill_category.dart';
 import '../data/skill_data.dart';
 import '../screens/skill_detail_screen.dart';
 import 'icon_renderer.dart';
+import '../utilities/shell_page_route.dart';
 
 /// A single skill in the grouped skills grid: a progress ring in the skill's
 /// own colour, the skill art and level centred inside it, and the name below.
@@ -26,9 +27,9 @@ class SkillGridTile extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => SkillDetailScreen(skillId: id)),
-        );
+        Navigator.of(
+          context,
+        ).push(ShellPageRoute(builder: (_) => SkillDetailScreen(skillId: id)));
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,

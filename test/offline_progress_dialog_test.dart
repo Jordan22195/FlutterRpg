@@ -202,9 +202,7 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('potions drunk while away are listed under Used', (
-    tester,
-  ) async {
+  testWidgets('potions drunk while away are listed under Used', (tester) async {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     final session = factory.create(

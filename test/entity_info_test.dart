@@ -163,9 +163,7 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('puts both sides of the roll on one table row', (
-      tester,
-    ) async {
+    testWidgets('puts both sides of the roll on one table row', (tester) async {
       setLevel(SkillId.ATTACK, 40);
       await pumpInfo(tester, EntityId.GOBLIN);
 

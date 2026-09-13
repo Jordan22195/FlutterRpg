@@ -47,7 +47,8 @@ class PotionController extends ChangeNotifier {
     ];
   }
 
-  int heldCount(ItemId id) => _inventoryService.getItemCount(_inventoryData, id);
+  int heldCount(ItemId id) =>
+      _inventoryService.getItemCount(_inventoryData, id);
 
   bool isAutoDrink(ItemId id) => _playerState.autoDrinkPotions.contains(id);
 

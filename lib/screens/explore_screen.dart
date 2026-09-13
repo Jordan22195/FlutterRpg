@@ -245,9 +245,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   Widget build(BuildContext context) {
     final worldController = context.watch<WorldController>();
-    final zoneDef = worldController.getCurrentZoneDefinition();
-    final entities = worldController.getCurrentZoneEntities();
-    final zoneItems = worldController.getCurrentZoneItems();
+    final zoneDef = worldController.viewedZoneDefinition();
+    final entities = worldController.viewedZoneEntities();
+    final zoneItems = worldController.viewedZoneItems();
 
     // split the zone's entities into permanent structures and resource
     // nodes. fishing spots are encounter entities but never deplete, so
@@ -353,7 +353,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               : Card(child: InventoryGrid(items: zoneItems, shrinkWrap: true)),
 
         // the zone's own difficulty, finds-per-explore and discovery tables
-        _ExploreTab.info => ZoneInfoBody(zoneId: worldController.currentZoneId),
+        _ExploreTab.info => ZoneInfoBody(zoneId: worldController.viewedZoneId),
       },
     ];
     listChildren.insert(
@@ -416,7 +416,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
           // Bottom action bar (sits above the shell bottom nav automatically)
           ActionButtonRow(
-            actionButton: MomentumPrimaryButton(
+            actionButton: ActionOrTravelButton(
               enabled: true,
               label: "Explore",
               startActionFunction: () {

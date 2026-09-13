@@ -315,7 +315,7 @@ class _FirepitScreenState extends State<FirepitScreen>
             ),
 
             const SizedBox(height: 12),
-            // MomentumPrimaryButton takes a label but never draws one, and
+            // The primary button takes a label but never draws one, and
             // which of the two sections the button runs is the whole point
             // of this screen, so name the action here.
             Text(
@@ -329,7 +329,7 @@ class _FirepitScreenState extends State<FirepitScreen>
             ),
             const SizedBox(height: 4),
             ActionButtonRow(
-              actionButton: MomentumPrimaryButton(
+              actionButton: ActionOrTravelButton(
                 enabled: canAct,
                 label: actionLabel,
                 startActionFunction: () {

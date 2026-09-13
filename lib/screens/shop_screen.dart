@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/shop_controller.dart';
+import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/widgets/countdown_timer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/repeat_press_button.dart';
@@ -27,6 +28,10 @@ class ShopScreen extends StatelessWidget {
     );
   }
 
+  /// [onPressed] null greys the button out, which is what a shop read from
+  /// a zone away does with every row: the stock is worth reading before you
+  /// make the trip, but the counter is not in reach until you are standing
+  /// at it — and this screen has no action bar to offer the trip on.
   Widget _tradeRow({
     required BuildContext context,
     required Widget tile,
@@ -52,6 +57,7 @@ class ShopScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ShopController>();
+    final canTrade = context.watch<WorldController>().isViewingCurrentZone;
     final stock = controller.stock();
     final sellableItems = controller.sellableItems();
     final sellableEquipment = controller.sellableEquipment();
@@ -120,7 +126,7 @@ class ShopScreen extends StatelessWidget {
                       ),
                       name: controller.itemName(entry.itemId),
                       buttonLabel: "Buy ${controller.buyPrice(entry.itemId)}c",
-                      onPressed: controller.canAfford(entry.itemId)
+                      onPressed: canTrade && controller.canAfford(entry.itemId)
                           ? () => controller.buy(entry)
                           : null,
                     ),
@@ -142,7 +148,9 @@ class ShopScreen extends StatelessWidget {
                       ),
                       name: controller.itemName(item.id),
                       buttonLabel: "Sell ${controller.sellPrice(item.id)}c",
-                      onPressed: () => controller.sellOne(item.id),
+                      onPressed: canTrade
+                          ? () => controller.sellOne(item.id)
+                          : null,
                     ),
                   for (final item in sellableEquipment)
                     _tradeRow(
@@ -156,8 +164,9 @@ class ShopScreen extends StatelessWidget {
                       ),
                       name: item.name,
                       buttonLabel: "Sell ${item.value}c",
-                      onPressed: () =>
-                          controller.sellOneEquipment(item.instanceId),
+                      onPressed: canTrade
+                          ? () => controller.sellOneEquipment(item.instanceId)
+                          : null,
                     ),
                 ],
               ),

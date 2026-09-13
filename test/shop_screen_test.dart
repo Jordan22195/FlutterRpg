@@ -8,6 +8,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
+import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/controllers/shop_controller.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/shop_screen.dart';
@@ -44,6 +45,9 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider<WorldController>.value(
+            value: session.worldController,
+          ),
           ChangeNotifierProvider<ShopController>.value(
             value: session.shopController,
           ),
@@ -151,6 +155,9 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider<WorldController>.value(
+            value: session.worldController,
+          ),
           ChangeNotifierProvider<ShopController>.value(
             value: session.shopController,
           ),
@@ -215,6 +222,9 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider<WorldController>.value(
+            value: session.worldController,
+          ),
           ChangeNotifierProvider<ShopController>.value(
             value: session.shopController,
           ),

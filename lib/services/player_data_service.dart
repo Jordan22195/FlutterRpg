@@ -303,12 +303,25 @@ class PlayerDataService {
     playerState.stamina = (playerState.stamina + delta).clamp(0.0, max);
   }
 
+  /// Moves the player to [id]. Arriving somewhere is also looking at it, and
+  /// [PlayerData.currentZoneId]'s own setter is what carries the viewed zone
+  /// along.
   void setCurrentZone(ZoneId id, PlayerData playerState) {
     playerState.currentZoneId = id;
   }
 
   ZoneId getCurrentZone(PlayerData playerState) {
     return playerState.currentZoneId;
+  }
+
+  /// Points the screens at [id] without moving the player - see
+  /// [PlayerData.currentZoneViewId].
+  void setViewedZone(ZoneId id, PlayerData playerState) {
+    playerState.currentZoneViewId = id;
+  }
+
+  ZoneId getViewedZone(PlayerData playerState) {
+    return playerState.currentZoneViewId;
   }
 
   void applyXp(PlayerData playerState, Map<SkillId, double> xp) {

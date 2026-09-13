@@ -699,7 +699,7 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
     final controller = context.read<EncounterController>();
 
     return ActionButtonRow(
-      actionButton: MomentumPrimaryButton(
+      actionButton: ActionOrTravelButton(
         // a depleted entity has nothing left to take: the action
         // conditions reject it, so the button says so up front
         enabled: !view.locked && view.entity.count > 0,

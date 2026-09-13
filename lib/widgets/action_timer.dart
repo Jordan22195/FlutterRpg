@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/action_timing_controller.dart';
-import '../controllers/player_data_controller.dart';
-import '../data/skill_category.dart';
 import 'fill_bar.dart';
 
 /// The width every encounter row's label sits in, so the bars below the
 /// labels all start on the same x — on the combat screen, the gathering
 /// screen and the explore screen alike.
 const double kEncounterRowLabelWidth = 58;
+
+/// Travel's colour, on the button that starts a trip and on the bar that
+/// counts it down.
+///
+/// A lighter blue than the banner's energy bar, which it now sits directly
+/// under: a trip and the stamina it costs are related enough to want the
+/// same family and different enough that two identical bars stacked would
+/// read as one bar drawn twice.
+const Color kTravelColor = Color(0xFF4FC3F7);
 
 /// Who an [ActionTimer] belongs to. The two are drawn identically; only the
 /// fill hue differs, so a glance reads which timer is which without reading
@@ -21,6 +28,10 @@ enum ActionTimerActor {
 
   /// A hostile entity winding up its swing. Amber, against combat's red.
   enemy,
+
+  /// The player walking somewhere. Blue, and unmistakably not the purple
+  /// action bar: while this bar is filling, nothing is being worked.
+  travel,
 }
 
 /// The action progress bar, drawn on the row of whoever is acting.
@@ -73,9 +84,14 @@ class ActionTimer extends StatelessWidget {
   static const Color _chipBackgroundColor = Color(0xFF211D24);
 
   Color _fillColor(BuildContext context) {
-    if (actor == ActionTimerActor.enemy) return _enemyFill;
-    final boostSkill = context.watch<PlayerDataController>().getBoostSkill();
-    return _playerFill;
+    switch (actor) {
+      case ActionTimerActor.enemy:
+        return _enemyFill;
+      case ActionTimerActor.travel:
+        return kTravelColor;
+      case ActionTimerActor.player:
+        return _playerFill;
+    }
   }
 
   @override

@@ -433,36 +433,39 @@ void main() {
       expect(session.encounterController.startEncounterActionFor(tree), isTrue);
     }
 
-    test('drink(at:) stamps the buff from at, and a second dose extends it', () {
-      final session = buildSession();
-      final save = session.saveGameData;
-      save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION] = 2;
-      final t = DateTime(2030, 1, 1, 12);
+    test(
+      'drink(at:) stamps the buff from at, and a second dose extends it',
+      () {
+        final session = buildSession();
+        final save = session.saveGameData;
+        save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION] = 2;
+        final t = DateTime(2030, 1, 1, 12);
 
-      expect(
+        expect(
+          session.potionSystem.drink(
+            ItemId.MINOR_SPEED_POTION,
+            save.inventoryData,
+            save.playerData.buffData,
+            at: t,
+          ),
+          isTrue,
+        );
+        final buff =
+            save.playerData.buffData.globalBuffs[ItemId.MINOR_SPEED_POTION]!;
+        expect(buff.expirationTime, t.add(minorDuration));
+
+        // a settle replaying a second dose at the same instant extends from
+        // the first, not from the wall clock
         session.potionSystem.drink(
           ItemId.MINOR_SPEED_POTION,
           save.inventoryData,
           save.playerData.buffData,
           at: t,
-        ),
-        isTrue,
-      );
-      final buff = save.playerData.buffData.globalBuffs[ItemId
-          .MINOR_SPEED_POTION]!;
-      expect(buff.expirationTime, t.add(minorDuration));
-
-      // a settle replaying a second dose at the same instant extends from
-      // the first, not from the wall clock
-      session.potionSystem.drink(
-        ItemId.MINOR_SPEED_POTION,
-        save.inventoryData,
-        save.playerData.buffData,
-        at: t,
-      );
-      expect(buff.expirationTime, t.add(minorDuration * 2));
-      session.dispose();
-    });
+        );
+        expect(buff.expirationTime, t.add(minorDuration * 2));
+        session.dispose();
+      },
+    );
 
     test('autoDrink drinks only armed potions with a missing buff and a '
         'count', () {
@@ -571,10 +574,7 @@ void main() {
       session.potionController.setAutoDrink(ItemId.MINOR_SPEED_POTION, true);
 
       expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 1);
-      expect(
-        save.playerData.autoDrinkPotions,
-        {ItemId.MINOR_SPEED_POTION},
-      );
+      expect(save.playerData.autoDrinkPotions, {ItemId.MINOR_SPEED_POTION});
 
       // already up: arming again is not another dose
       session.potionController.setAutoDrink(ItemId.MINOR_SPEED_POTION, false);
@@ -594,8 +594,10 @@ void main() {
 
       expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 2);
       expect(save.playerData.buffData.globalBuffs, isEmpty);
-      expect(session.potionController.isAutoDrink(ItemId.MINOR_SPEED_POTION),
-          isTrue);
+      expect(
+        session.potionController.isAutoDrink(ItemId.MINOR_SPEED_POTION),
+        isTrue,
+      );
       session.dispose();
     });
   });

@@ -50,6 +50,18 @@ class ActionTimingData {
   /// the interval is found. Null for actions performed with no item at all.
   SkillId? actionSkill;
 
+  /// A base interval the action supplies itself, standing in for the one an
+  /// equipped item would set. Travelling is the case it exists for: a road
+  /// takes as long as the road takes, and no item paces it.
+  ///
+  /// It replaces only the equipment's contribution — the speed stat still
+  /// cuts it and the boost still divides it — so an action with a fixed
+  /// base still runs through the same pipeline as every other one.
+  ///
+  /// Not serialized: the only action that sets it is dropped at load rather
+  /// than resumed, so a save never comes back holding one.
+  Duration? intervalOverride;
+
   bool boostingSpeed = true;
 
   double accelPerSecond =
@@ -229,8 +241,19 @@ class ActionTimingController extends ChangeNotifier {
   /// start. A screen showing a timer for an action that is *not* the one
   /// running asks for this rather than [getCurrentActionDuration], so an
   /// idle timer never reports another screen's live interval.
-  Duration idleActionDurationFor(SkillId? skill) =>
-      _actionSpeedSystem.intervalFor(skill, _playerState);
+  ///
+  /// [intervalOverride] is for an action that sets its own pace rather than
+  /// taking it from what is equipped — a road, whose length the graph knows
+  /// and no item changes. The speed stat still cuts it, so the number quoted
+  /// before setting off is the one the trip will actually run at.
+  Duration idleActionDurationFor(
+    SkillId? skill, {
+    Duration? intervalOverride,
+  }) => _actionSpeedSystem.intervalFor(
+    skill,
+    _playerState,
+    intervalOverride: intervalOverride,
+  );
 
   /// The interval an action training [skill] is running at *right now*: the
   /// idle interval, cut by whatever momentum the boost bar is holding.
@@ -300,6 +323,9 @@ class ActionTimingController extends ChangeNotifier {
   /// Leave it null for actions performed with no equipment.
   /// [boundAction] describes [function] in a form the save can hold, so the
   /// same action can be rebound after an app restart.
+  /// [intervalOverride] is for an action that sets its own pace rather than
+  /// taking it from what is equipped - see
+  /// [ActionTimingData.intervalOverride].
   void bindOnFireFunction(
     FutureOr<void> Function(int, {bool offline, DateTime? at, Duration? span})
     function, {
@@ -307,12 +333,14 @@ class ActionTimingController extends ChangeNotifier {
     int Function()? activityCount,
     SkillId? actionSkill,
     BoundAction? boundAction,
+    Duration? intervalOverride,
   }) {
     _actionTimingState.onFire = function;
     _actionTimingState.actionSkill = actionSkill;
     _actionTimingState.activityIconId = activityIconId;
     _actionTimingState.activityCount = activityCount;
     _actionTimingState.boundAction = boundAction;
+    _actionTimingState.intervalOverride = intervalOverride;
   }
 
   // icon id of the currently running activity; null when idle
@@ -420,7 +448,11 @@ class ActionTimingSystem {
   /// asks for it directly - the stance moves it, and a stance can be switched
   /// with the loop stopped.
   Duration currentMaxInterval(ActionTimingData state, PlayerData playerState) {
-    return intervalFor(state.actionSkill, playerState);
+    return intervalFor(
+      state.actionSkill,
+      playerState,
+      intervalOverride: state.intervalOverride,
+    );
   }
 
   /// Total rate multiplier against an unboosted, no-speed baseline: the cut
@@ -451,19 +483,27 @@ class ActionTimingSystem {
   /// screen that is not the one acting can show what starting *there* would
   /// cost instead of echoing the interval some other screen's action is
   /// currently running at.
+  ///
+  /// [intervalOverride] is an action's own base interval, for the actions no
+  /// item paces. Only the running action's own callers pass it: an idle
+  /// timer on another screen asks without one, so it never quotes the pace
+  /// of whatever is running elsewhere.
   Duration intervalFor(
     SkillId? actionSkill,
     PlayerData playerState, {
     DateTime? at,
+    Duration? intervalOverride,
   }) {
     final stats = _playerDataService.getStatTotals(playerState, at: at);
     return _actionTimingService.maxIntervalFor(
-      equippedInterval: actionSkill == null
-          ? null
-          : _equipmentService.actionIntervalFor(
-              actionSkill,
-              playerState.equipmentData,
-            ),
+      equippedInterval:
+          intervalOverride ??
+          (actionSkill == null
+              ? null
+              : _equipmentService.actionIntervalFor(
+                  actionSkill,
+                  playerState.equipmentData,
+                )),
       speedStance:
           _playerDataService.getBoostSkill(playerState) == SkillId.SPEED,
       speedStat: stats[SkillId.SPEED] ?? 1,
@@ -480,12 +520,14 @@ class ActionTimingSystem {
   ) {
     final actionSkill = state.actionSkill;
     return _actionTimingService.maxIntervalFor(
-      equippedInterval: actionSkill == null
-          ? null
-          : _equipmentService.actionIntervalFor(
-              actionSkill,
-              playerState.equipmentData,
-            ),
+      equippedInterval:
+          state.intervalOverride ??
+          (actionSkill == null
+              ? null
+              : _equipmentService.actionIntervalFor(
+                  actionSkill,
+                  playerState.equipmentData,
+                )),
       speedStance: speedStance,
       speedStat: stats[SkillId.SPEED] ?? 1,
     );
@@ -781,6 +823,7 @@ class ActionTimingService {
     actionTimingState.activityCount = null;
     actionTimingState.actionSkill = null;
     actionTimingState.boundAction = null;
+    actionTimingState.intervalOverride = null;
     actionTimingState.maxInterval = defaultMaxInterval;
   }
 

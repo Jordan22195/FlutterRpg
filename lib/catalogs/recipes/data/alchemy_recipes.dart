@@ -18,7 +18,11 @@ const List<CraftingRecipe> alchemyRecipes = [
     xp: 15,
     inputs: {ItemId.GUAM_LEAF: 1, ItemId.FEATHER: 1},
     output: [
-      WeightedDropTableEntry(id: ItemId.MINOR_SPEED_POTION, count: 1, weight: 1),
+      WeightedDropTableEntry(
+        id: ItemId.MINOR_SPEED_POTION,
+        count: 1,
+        weight: 1,
+      ),
     ],
   ),
   CraftingRecipe(

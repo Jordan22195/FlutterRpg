@@ -102,10 +102,14 @@ class BuffController extends ChangeNotifier {
 
   // the buff owned by [ownerEntityId] in the player's current zone — for a
   // firepit, the fire burning in it. null when the owner has none.
+  /// The zone buff [ownerEntityId] is holding in the zone on screen — the
+  /// fire in this firepit. Keyed on the viewed zone: the same firepit id
+  /// stands in several zones, and the one being looked at is the one whose
+  /// fire the screen means, even from a zone away.
   ZoneBuffItem? getZoneBuffFor(EntityId ownerEntityId) {
     return _buffService.getZoneBuff(
       _playerState.buffData,
-      _playerState.currentZoneId,
+      _playerState.currentZoneViewId,
       ownerEntityId,
     );
   }

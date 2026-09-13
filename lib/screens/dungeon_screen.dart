@@ -12,6 +12,7 @@ import '../widgets/entity_queue_card.dart';
 import '../widgets/inventory_grid.dart';
 import '../widgets/item_stack_tile.dart';
 import 'encounter_screen.dart';
+import '../utilities/shell_page_route.dart';
 
 /// A dungeon: one ordered list of cards, first at the top. Each card is a
 /// queue of entities; tapping an unlocked one opens the ordinary encounter
@@ -331,7 +332,7 @@ class _DungeonScreenState extends State<DungeonScreen> {
 
     if (!controller.startSlot(i)) return;
     navigator.push(
-      MaterialPageRoute(
+      ShellPageRoute(
         settings: RouteSettings(
           name: EntityScreenRouterService.encounterRouteName,
           arguments: i,

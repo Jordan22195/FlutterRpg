@@ -666,6 +666,10 @@ class GameSessionFactory {
     // encounter controller uses it to drive enemy attacks. dungeon cards
     // run through that same encounter loop, so there is nothing extra here
     actionTimingController.addListener(encounterController.onActionTimingFrame);
+    // and the world controller watches the same signal for a trip being
+    // displaced by something else taking the loop, so an abandoned walk
+    // hands its fare back
+    actionTimingController.addListener(worldController.onActionTimingFrame);
 
     return GameSession(
       saveGameData: save,
@@ -857,6 +861,13 @@ class GameSession {
         );
       case BoundActionKind.DUNGEON_SLOT:
         dungeonController.startSlot(bound.dungeonSlot);
+      case BoundActionKind.TRAVEL:
+        // the one action a relaunch doesn't put back. a walk taken while the
+        // app was shut is a walk the player never got to boost or turn back
+        // from, so the trip is given up and the fare handed back rather than
+        // replayed against a clock they weren't watching.
+        worldController.cancelTravel(target: bound.zoneId);
+        return;
     }
 
     // the action could not be restarted - the entity is gone, the materials

@@ -70,10 +70,7 @@ void main() {
     // the stance alone already pays the idle curve, so 20 mining at 10
     // strength reads 20 plus those points before any boost
     final baseline = playerDataService.getStatTotals(player);
-    expect(
-      baseline[SkillId.MINING],
-      20 + strengthIdleBonus(10).round(),
-    );
+    expect(baseline[SkillId.MINING], 20 + strengthIdleBonus(10).round());
     // and only that one stat - woodcutting isn't what is being worked
     expect(baseline[SkillId.WOODCUTTING], 20);
 

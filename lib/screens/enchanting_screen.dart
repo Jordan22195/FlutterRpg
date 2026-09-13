@@ -268,7 +268,7 @@ class EnchantingScreen extends StatelessWidget {
 
             const SizedBox(height: 12),
             ActionButtonRow(
-              actionButton: MomentumPrimaryButton(
+              actionButton: ActionOrTravelButton(
                 enabled: controller.selectionReady(),
                 label: disenchantSelected ? 'Disenchant' : 'Enchant',
                 startActionFunction: () {

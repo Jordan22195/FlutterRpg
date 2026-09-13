@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
+import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/data/skill_category.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
+import 'action_timer.dart';
 import 'fading_number.dart';
 import 'icon_renderer.dart';
 import 'fill_bar.dart';
@@ -33,21 +35,32 @@ class ProgressBars extends StatelessWidget {
   /// Gap between the two stacked bars.
   static const double _barGap = 6;
 
-  /// The banner carries character-level state only: energy, and how much of
-  /// the boost is left. Both run the full width of the banner, and the count
-  /// never changes, so moving between screens never resizes the banner.
+  /// The banner carries character-level state only: energy, how much of the
+  /// boost is left, and — only while there is a trip to show — the road.
   /// Per-action progress is encounter state and lives on the acting entity's
   /// row instead — see [ActionTimer].
+  ///
+  /// A trip belongs here rather than on a screen for the same reason energy
+  /// does: it outlives whatever screen you happen to be reading, and no one
+  /// screen owns it. It is the one bar here that comes and goes, and it can,
+  /// because the banner's height is set by the activity tile beside these
+  /// bars rather than by the bars themselves — three of them still measure
+  /// short of it, so the toolbar never moves.
   static const double _barHeight = 7;
   static const double _barRadius = 4;
 
   static const Color _energyColor = Color(0xFF188CEB);
+
+  /// Identifies the trip bar, which is the only one of the three that is not
+  /// always there.
+  static const Key travelBarKey = Key('travel-progress');
 
   @override
   Widget build(BuildContext context) {
     final playerController = context.watch<PlayerDataController>();
     final timing = context.watch<ActionTimingController>();
     final encounter = context.watch<EncounterController>();
+    final world = context.watch<WorldController>();
 
     // flash damage on the icon unless the active encounter's own screen
     // is in view (it shows the numbers over the entity image instead)
@@ -135,6 +148,23 @@ class ProgressBars extends StatelessWidget {
                   borderRadius: _barRadius,
                 ),
               ),
+
+              // The road, while there is one to walk. Off the bottom rather
+              // than in among the two that are always there, so neither of
+              // those ever changes position as it comes and goes.
+              if (world.isShowingTravel) ...[
+                const SizedBox(height: _barGap),
+                AnimatedBuilder(
+                  animation: timing,
+                  builder: (_, _) => FillBar(
+                    key: travelBarKey,
+                    value: world.travelProgress(),
+                    height: _barHeight,
+                    borderRadius: _barRadius,
+                    foregroundColor: kTravelColor,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

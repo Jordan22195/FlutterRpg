@@ -348,7 +348,7 @@ void main() {
       world.startExplore();
       world.doExplore(300, offline: true);
 
-      final finds = world.getCurrentZoneItems();
+      final finds = world.viewedZoneItems();
       expect(
         finds,
         isNotEmpty,

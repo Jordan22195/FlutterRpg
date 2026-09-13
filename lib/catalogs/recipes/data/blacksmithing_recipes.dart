@@ -308,7 +308,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Bar',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 20,
-    xp: 3,
+    xp: 7.5,
     inputs: {ItemId.COAL: 1, ItemId.IRON_ORE: 1},
     output: [WeightedDropTableEntry(id: ItemId.STEEL_BAR, count: 1, weight: 1)],
   ),
@@ -317,7 +317,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Dagger',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 20,
-    xp: 5,
+    xp: 7.5,
     inputs: {ItemId.STEEL_BAR: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_DAGGER, count: 1, weight: 1),
@@ -328,7 +328,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Sword',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 20,
-    xp: 10,
+    xp: 15,
     inputs: {ItemId.STEEL_BAR: 2},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_SWORD, count: 1, weight: 1),
@@ -339,7 +339,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Greatsword',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 20,
-    xp: 15,
+    xp: 22.5,
     inputs: {ItemId.STEEL_BAR: 3},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_GREATSWORD, count: 1, weight: 1),
@@ -350,7 +350,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Pickaxe',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 21,
-    xp: 5,
+    xp: 7.5,
     inputs: {ItemId.STEEL_BAR: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_PICKAXE, count: 1, weight: 1),
@@ -361,7 +361,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Axe',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 21,
-    xp: 5,
+    xp: 7.5,
     inputs: {ItemId.STEEL_BAR: 1},
     output: [WeightedDropTableEntry(id: ItemId.STEEL_AXE, count: 1, weight: 1)],
   ),
@@ -370,7 +370,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Helmet',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 22,
-    xp: 5,
+    xp: 7.5,
     inputs: {ItemId.STEEL_BAR: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_HELMET, count: 1, weight: 1),
@@ -381,7 +381,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Gloves',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 23,
-    xp: 5,
+    xp: 7.5,
     inputs: {ItemId.STEEL_BAR: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_GLOVES, count: 1, weight: 1),
@@ -392,7 +392,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Sickle',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 21,
-    xp: 5,
+    xp: 7.5,
     inputs: {ItemId.STEEL_BAR: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_SICKLE, count: 1, weight: 1),
@@ -403,7 +403,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Boots',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 25,
-    xp: 5,
+    xp: 7.5,
     inputs: {ItemId.STEEL_BAR: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_BOOTS, count: 1, weight: 1),
@@ -414,7 +414,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Legs',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 27,
-    xp: 10,
+    xp: 15,
     inputs: {ItemId.STEEL_BAR: 2},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_LEGS, count: 1, weight: 1),
@@ -425,7 +425,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Chestplate',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 30,
-    xp: 15,
+    xp: 22.5,
     inputs: {ItemId.STEEL_BAR: 3},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_CHESTPLATE, count: 1, weight: 1),
@@ -436,7 +436,7 @@ const List<CraftingRecipe> blacksmithingRecipes = [
     name: 'Steel Shield',
     skill: SkillId.BLACKSMITHING,
     levelRequirement: 32,
-    xp: 10,
+    xp: 15,
     inputs: {ItemId.STEEL_BAR: 2},
     output: [
       WeightedDropTableEntry(id: ItemId.STEEL_SHIELD, count: 1, weight: 1),

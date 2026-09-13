@@ -129,10 +129,14 @@ class ExplorationService {
   }
 
   // get the entity instance of the player view
+  /// The entity on screen. Resolved in the *viewed* zone, not the current
+  /// one: the same entity id stands in several zones, and the one being
+  /// looked at is the one whose count, drops and level the screen means —
+  /// even when the player has not walked there yet.
   Entity getSelectedEntity(PlayerData playerState, WorldData worldState) {
     return getEntity(
       playerState.currentEntityViewId,
-      playerState.currentZoneId,
+      playerState.currentZoneViewId,
       worldState,
     );
   }
@@ -226,7 +230,14 @@ class ExplorationService {
     PlayerData playerState,
     WorldData worldState,
   ) {
-    final zone = worldState.zones[playerState.currentZoneId] ?? nullZone;
+    return getZoneItems(playerState.currentZoneId, worldState);
+  }
+
+  /// What exploring [zoneId] has turned up. Takes the zone rather than
+  /// reading the player's, so a zone the player is only looking at shows
+  /// its own finds.
+  List<ObjectStack> getZoneItems(ZoneId zoneId, WorldData worldState) {
+    final zone = worldState.zones[zoneId] ?? nullZone;
     return _inventoryService.getObjectStackList(zone.discoveredItems);
   }
 

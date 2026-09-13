@@ -13,7 +13,7 @@ import 'item_stack_tile.dart';
 import 'recipe_card.dart';
 
 /// Everything the map used to try to write on its nodes: what a place is,
-/// how far off it is, what it costs to get there, what's waiting when you
+/// how far off it is, what the trip will cost, what's waiting when you
 /// arrive, and why you can't go yet.
 ///
 /// It is docked below the map rather than floated over it, and it exists
@@ -24,7 +24,6 @@ class MapDetailPane extends StatelessWidget {
   const MapDetailPane({
     super.key,
     required this.node,
-    required this.onTravel,
     required this.onEnter,
     required this.onEnterLandmark,
   });
@@ -38,12 +37,11 @@ class MapDetailPane extends StatelessWidget {
 
   final MapNode node;
 
-  /// Moves the player. It does not walk them in — travelling and entering
-  /// are two taps, so arriving somewhere doesn't force a screen on you.
-  final void Function(ZoneId) onTravel;
-
-  /// Opens the zone you're already standing in.
-  final VoidCallback onEnter;
+  /// Opens a zone. Looking at a place and going to it are two different
+  /// decisions, so this only ever shows you the place — the trip is offered
+  /// by the travel button on the screen it opens, and costs nothing until
+  /// you take it.
+  final void Function(ZoneId) onEnter;
   final void Function(DungeonId) onEnterLandmark;
 
   @override
@@ -75,24 +73,11 @@ class MapDetailPane extends StatelessWidget {
     final affordable = world.canAffordTravelTo(node.id);
     final reachable = !cost.isInfinite;
 
-    final String buttonLabel;
-    final bool enabled;
-    if (isCurrent) {
-      buttonLabel = 'Enter';
-      enabled = true;
-    } else if (locked || !reachable) {
-      buttonLabel = 'Travel';
-      enabled = false;
-    } else if (!affordable) {
-      // a plain greyed-out button says "no" without saying why; the fix for
-      // this one is waiting, so the button says so
-      buttonLabel = 'Rest first';
-      enabled = false;
-    } else {
-      buttonLabel = 'Travel';
-      enabled = true;
-    }
-
+    // one button, and it only ever opens the place. a trip you cannot
+    // afford yet is still a place worth reading about, so the fare being
+    // out of reach reddens the cost chip rather than shutting the door —
+    // the travel button inside is the one that has to wait for stamina.
+    // a locked or roadless zone is the exception: there is nothing to show.
     return _layout(
       context: context,
       scheme: scheme,
@@ -102,11 +87,11 @@ class MapDetailPane extends StatelessWidget {
       body: locked
           ? _requirements(context, scheme, world, node.id)
           : _entityPreview(context, scheme, world.zoneEntities(node.id)),
-      buttonLabel: buttonLabel,
-      enabled: enabled,
+      buttonLabel: 'Enter',
+      enabled: !locked && reachable,
       warnCost: !affordable && reachable && !isCurrent,
       cost: isCurrent || !reachable ? null : cost,
-      onPressed: isCurrent ? onEnter : () => onTravel(node.id),
+      onPressed: () => onEnter(node.id),
     );
   }
 

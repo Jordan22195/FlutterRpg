@@ -84,12 +84,11 @@ class WorldController extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<Entity> getCurrentZoneEntities() {
-    final list = _explorationService.getCurrentZoneEntities(
-      _playerState,
-      _worldState,
-    );
-    return list;
+  /// What's standing in the zone on screen. The viewed zone, not the current
+  /// one: the map can walk you into a place to look at before you decide to
+  /// make the trip, and the list has to show that place's things.
+  List<Entity> viewedZoneEntities() {
+    return _explorationService.getZoneEntities(viewedZoneId, _worldState);
   }
 
   // ---- explore session finds ----
@@ -110,27 +109,37 @@ class WorldController extends ChangeNotifier {
         !_actionTimingController.isRunningAction(doExplore)) {
       _exploreSessionActive = false;
     }
-    return _exploreSessionActive &&
-        _exploreZoneId == _playerState.currentZoneId;
+    return _exploreSessionActive && _exploreZoneId == viewedZoneId;
   }
 
-  /// True when the explore loop is running, and running on this zone.
+  /// True when the explore loop is running, and running on the zone the
+  /// player is standing in. This is the action's own truth — what starting,
+  /// continuing and carrying an explore across a trip all turn on.
   bool _isExploringHere() {
     return _actionTimingController.isRunningAction(doExplore) &&
         _exploreZoneId == _playerState.currentZoneId;
   }
 
-  /// Items turned up by the current explore session in this zone. Mirrors
-  /// the encounter screen's session drops: an ended session shows nothing.
-  List<ObjectStack> getCurrentZoneItems() {
+  /// True when the running explore belongs to the zone on screen. The same
+  /// question [_isExploringHere] asks, from the reader's side rather than
+  /// the player's: a zone you are only looking at fills no timer of its own.
+  bool _isExploringViewed() {
+    return _actionTimingController.isRunningAction(doExplore) &&
+        _exploreZoneId == viewedZoneId;
+  }
+
+  /// Items turned up by the current explore session in the zone on screen.
+  /// Mirrors the encounter screen's session drops: an ended session shows
+  /// nothing, and neither does a zone you are only looking at.
+  List<ObjectStack> viewedZoneItems() {
     if (!_isExploreSessionActive()) {
       return [];
     }
-    return _explorationService.getCurrentZoneItems(_playerState, _worldState);
+    return _explorationService.getZoneItems(viewedZoneId, _worldState);
   }
 
-  ZoneDefinition getCurrentZoneDefinition() {
-    return _playerState.currentZoneId.definition;
+  ZoneDefinition viewedZoneDefinition() {
+    return viewedZoneId.definition;
   }
 
   // ---- explore screen card data ----
@@ -186,9 +195,26 @@ class WorldController extends ChangeNotifier {
     return level >= def.requiredLevel;
   }
 
-  // ---- zone travel ----
+  // ---- the zone on screen ----
 
   ZoneId get currentZoneId => _playerState.currentZoneId;
+
+  /// The zone the screens are showing — see [PlayerData.currentZoneViewId].
+  ZoneId get viewedZoneId => _playerState.currentZoneViewId;
+
+  /// Whether the place on screen is the place the player is standing in.
+  /// False is what turns the action button into a travel button.
+  bool get isViewingCurrentZone => viewedZoneId == currentZoneId;
+
+  /// Points the screens at [zone] without moving the player. Deliberately
+  /// does not touch the running action: looking somewhere is free.
+  void setViewedZone(ZoneId zone) {
+    if (_playerState.currentZoneViewId == zone) return;
+    _playerDataService.setViewedZone(zone, _playerState);
+    notifyListeners();
+  }
+
+  // ---- zone travel ----
 
   ZoneDefinition zoneDefinition(ZoneId zoneId) {
     return zoneId.definition;
@@ -277,18 +303,42 @@ class WorldController extends ChangeNotifier {
     return _explorationSystem.buildZoneDetails(_playerState, zoneId);
   }
 
+  /// How long the trip to [target] takes before the speed stat and any boost
+  /// cut it. Its own number, not a function of what the trip costs.
+  Duration travelTimeTo(ZoneId target) {
+    return _travelGraph.travelTime(_playerState.currentZoneId, target);
+  }
+
+  /// Whether the player could set off for [target] right now: the gates are
+  /// met, a road exists, and the stamina covers it.
+  bool canTravelTo(ZoneId target) {
+    if (target == _playerState.currentZoneId) return false;
+    if (!meetsZoneRequirement(target)) return false;
+    final cost = travelCostTo(target);
+    return !cost.isInfinite && _playerState.stamina >= cost;
+  }
+
   /// Moves the player to [target], paying the path's stamina cost.
   /// Returns false when the level requirement isn't met or stamina can't
   /// cover the cost. Re-entering the current zone is free.
+  ///
+  /// The instant trip. The one the player takes with the travel button runs
+  /// on the action loop instead — see [startTravelTo] — and both end in
+  /// [_arriveAt]. This one is what the action queue walks with, since a
+  /// queue running unattended has nobody to hold the button down.
   bool travelToZone(ZoneId target) {
     if (target == _playerState.currentZoneId) return true;
-    if (!meetsZoneRequirement(target)) return false;
+    if (!canTravelTo(target)) return false;
 
-    final cost = travelCostTo(target);
-    if (cost.isInfinite || _playerState.stamina < cost) return false;
+    _playerDataService.changeStamina(-travelCostTo(target), _playerState);
+    _arriveAt(target);
+    return true;
+  }
 
-    _playerDataService.changeStamina(-cost, _playerState);
-
+  /// Puts the player in [target] and settles what the move means for
+  /// anything that was running. Everything after the fare is paid, so the
+  /// instant trip and the walked one arrive the same way.
+  void _arriveAt(ZoneId target) {
     // an explore runs on whatever zone the player is standing in, so it
     // follows them: walking into a new zone carries the session over rather
     // than ending it, and the loop keeps turning without a second tap.
@@ -308,8 +358,160 @@ class WorldController extends ChangeNotifier {
       _exploreZoneId = null;
     }
     notifyListeners();
+  }
+
+  // ---- travelling as an action ----
+
+  /// Where the running walk is headed. Lives only as long as the trip: the
+  /// loop holds the action itself, and this is what the action needs to know
+  /// when it fires.
+  ZoneId? _travelTarget;
+
+  /// True while the loop is walking the player somewhere.
+  bool get isTravelling =>
+      _actionTimingController.isRunningAction(doTravelArrive);
+
+  /// Where the running walk is headed; null when nothing is walking.
+  ZoneId? get travelTarget => isTravelling ? _travelTarget : null;
+
+  /// Pays for the trip to [target] up front and starts walking it.
+  ///
+  /// Getting there is the whole of it. Arriving does not start whatever the
+  /// screen was showing, held button or not: a trip is a decision, and what
+  /// to do at the other end is the next one. Coming out of a walk already
+  /// swinging would also mean the walk could never be used to simply go
+  /// somewhere and look.
+  ///
+  /// Pressing the button again mid-trip is a boost, not a second departure:
+  /// a walk already headed for [target] is left alone and reports success.
+  bool startTravelTo(ZoneId target) {
+    if (isTravelling && _travelTarget == target) {
+      // the finger came back down on the trip already under way
+      return true;
+    }
+
+    // changing your mind about where you were going. the trip in progress is
+    // given up and its fare handed back before the new one is priced, so
+    // turning around is not charged twice — and so the new trip is priced
+    // against the stamina the old one was holding.
+    if (isTravelling) cancelTravel();
+
+    if (!canTravelTo(target)) return false;
+
+    _actionTimingController.stop();
+
+    _playerDataService.changeStamina(-travelCostTo(target), _playerState);
+    _travelTarget = target;
+
+    // walking offers no stance, and the road has no picker to put one back,
+    // so a strong stance carried out of a fight would otherwise keep
+    // boosting strength the whole way there. travel always boosts on speed.
+    _playerDataService.resetStanceToFast(_playerState);
+
+    _actionTimingController.bindOnFireFunction(
+      doTravelArrive,
+      activityIconId: SkillId.EXPLORATION,
+      // no item paces a road: the graph does
+      actionSkill: null,
+      intervalOverride: travelTimeTo(target),
+      boundAction: BoundAction.travel(zoneId: target),
+    );
+
+    _actionTimingController.start();
+    notifyListeners();
     return true;
   }
+
+  /// Gives up on a trip and hands the fare back. The player never left, so
+  /// the refund is the same cost the departure charged.
+  ///
+  /// This is what a relaunch mid-walk does: a walk the player wasn't there
+  /// for is not replayed, and is not worth their stamina either. [target] is
+  /// for exactly that case — a fresh session has no trip in memory, only the
+  /// destination the save recorded, so the caller supplies it.
+  void cancelTravel({ZoneId? target}) {
+    final destination = target ?? _travelTarget;
+    _travelTarget = null;
+    if (destination != null) {
+      _playerDataService.changeStamina(travelCostTo(destination), _playerState);
+    }
+    _actionTimingController.stop();
+    notifyListeners();
+  }
+
+  /// The end of the walk: you are there, and that is all that happens.
+  ///
+  /// The loop repeats whatever is bound to it, so arriving stops it outright
+  /// rather than leaving the road bound to be walked a second time. Nothing
+  /// is started in its place — not the screen the trip was launched from,
+  /// and not even with the button still held. [ActionTimingService.stop]
+  /// empties the boost on its way through, so a finger that never came off
+  /// the button is holding nothing by the time the player is standing here.
+  ///
+  /// [count] is ignored for the same reason the loop is stopped: a batch
+  /// settled after time away is still one arrival.
+  void doTravelArrive(
+    int count, {
+    bool offline = false,
+    DateTime? at,
+    Duration? span,
+  }) {
+    final target = _travelTarget;
+    _travelTarget = null;
+
+    if (target != null) _arriveAt(target);
+    _actionTimingController.stop();
+  }
+
+  /// Watches for a trip being displaced by something else taking the loop —
+  /// the stop button, or an action started from another screen. The fare was
+  /// paid at the door for a walk that is not going to happen, so it goes
+  /// back. Nothing here fires for an arrival: [doTravelArrive] lets go of
+  /// the trip before it stops the loop.
+  ///
+  /// Wired to the timing loop in [GameSessionFactory], the way the encounter
+  /// controller's frame hook is — this is the only signal that reaches every
+  /// path that can stop an action.
+  void onActionTimingFrame() {
+    if (_travelTarget == null) return;
+    if (isTravelling) return;
+    cancelTravel();
+  }
+
+  /// How far along the road the player is, 0..1. Zero unless walking, so a
+  /// screen's travel bar is empty whenever nothing is travelling.
+  double travelProgress() {
+    if (!isTravelling) return 0.0;
+    return _actionTimingController.actionProgress;
+  }
+
+  /// How long the running walk takes, boost and all. Idle, it quotes what
+  /// the trip to the zone on screen would take from a standing start, so the
+  /// bar under the travel button reads as the trip that button is offering
+  /// rather than as nothing at all.
+  Duration travelInterval() {
+    if (isTravelling) {
+      return _actionTimingController.getCurrentActionDuration();
+    }
+    return _actionTimingController.idleActionDurationFor(
+      null,
+      intervalOverride: travelTimeTo(viewedZoneId),
+    );
+  }
+
+  /// Whether the progress bars belong to travel rather than to the screen's
+  /// own action.
+  ///
+  /// True whenever the button is offering a trip — the place on screen is
+  /// not the place the player is standing in, so there is nothing here to
+  /// work yet and an action bar under that button would sit at zero forever
+  /// without saying why. The bar shows the road instead, empty, quoting what
+  /// the trip will take.
+  ///
+  /// And true while a trip is actually running, wherever the player has
+  /// navigated to since: the loop is walking, so no screen's own action is
+  /// filling anything.
+  bool get isShowingTravel => isTravelling || !isViewingCurrentZone;
 
   // fires a single time when the explore button is pressed
   // binds doExplore to the periodic loop
@@ -355,14 +557,14 @@ class WorldController extends ChangeNotifier {
   /// unless exploring is the action running — working an entity leaves the
   /// explore screen's timer empty rather than mirroring that entity's.
   double exploreProgress() {
-    if (!_isExploringHere()) return 0.0;
+    if (!_isExploringViewed()) return 0.0;
     return _actionTimingController.actionProgress;
   }
 
   /// The interval the explore timer fills over: live while exploring here,
   /// and what starting an explore in this zone would cost otherwise.
   Duration exploreInterval() {
-    if (_isExploringHere()) {
+    if (_isExploringViewed()) {
       return _actionTimingController.getCurrentActionDuration();
     }
     return _actionTimingController.idleActionDurationFor(SkillId.EXPLORATION);

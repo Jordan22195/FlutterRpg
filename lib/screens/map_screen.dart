@@ -12,6 +12,7 @@ import '../widgets/map_detail_pane.dart';
 import '../widgets/map_edge_painter.dart';
 import '../widgets/map_node_token.dart';
 import '../widgets/recipe_card.dart';
+import '../utilities/shell_page_route.dart';
 
 /// The world map: a graph of places you can walk between, and what walking
 /// there costs.
@@ -19,8 +20,8 @@ import '../widgets/recipe_card.dart';
 /// The split of duties is the whole design. A node says what a place *is*
 /// (its type glyph), whether it is shut (the padlock) and whether you're
 /// standing in it (the ring). An edge says what the trip costs, once. Every
-/// sentence of detail — names of gates, what's in town, the travel button —
-/// lives in the pane docked underneath, which never covers the map.
+/// sentence of detail — names of gates, what's in town, the way in — lives
+/// in the pane docked underneath, which never covers the map.
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -93,30 +94,37 @@ class _MapScreenState extends State<MapScreen> {
       ..scaleByDouble(scale, scale, scale, 1);
   }
 
-  /// Moves the player and stops there. Arriving somewhere and going into it
-  /// are two different decisions — you might walk to a town to look at what
-  /// it has and go no further — so travelling leaves you on the map with
-  /// the pane now offering Enter.
-  void _travelTo(WorldController world, ZoneId zoneId) {
-    world.travelToZone(zoneId);
-  }
+  /// Opens a zone — any zone, not just the one you're standing in. Looking
+  /// at a place costs nothing and moves nobody, so this deliberately leaves
+  /// the running action alone: you can read a town while an axe keeps
+  /// swinging back home. The trip is offered by the travel button on the
+  /// screen this opens, and taken only if the player asks for it.
+  void _enterZone(WorldController world, ZoneId zoneId) {
+    world.setViewedZone(zoneId);
 
-  void _enterCurrentZone() {
     // This pushes onto the MAP TAB's nested navigator, so switching
     // tabs and coming back returns to ExploreScreen.
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        settings: const RouteSettings(
-          name: EntityScreenRouterService.exploreRouteName,
-        ),
-        builder: (_) => ExploreScreen(),
-      ),
-    );
+    Navigator.of(context)
+        .push(
+          ShellPageRoute(
+            settings: const RouteSettings(
+              name: EntityScreenRouterService.exploreRouteName,
+            ),
+            builder: (_) => ExploreScreen(),
+          ),
+        )
+        // back out to the map and you are looking at the world again, not at
+        // one place in it. leaving the view pointed somewhere the player has
+        // walked away from would keep travel buttons on screens that have
+        // nothing to do with that zone.
+        .then((_) {
+          if (mounted) world.setViewedZone(world.currentZoneId);
+        });
   }
 
   void _enterLandmark(DungeonId dungeonId) {
     Navigator.of(context).push(
-      MaterialPageRoute(
+      ShellPageRoute(
         settings: RouteSettings(
           name: EntityScreenRouterService.dungeonRouteName,
           arguments: dungeonId,
@@ -314,8 +322,7 @@ class _MapScreenState extends State<MapScreen> {
           if (_selected != null)
             MapDetailPane(
               node: _selected!,
-              onTravel: (zoneId) => _travelTo(world, zoneId),
-              onEnter: _enterCurrentZone,
+              onEnter: (zoneId) => _enterZone(world, zoneId),
               onEnterLandmark: _enterLandmark,
             ),
         ],

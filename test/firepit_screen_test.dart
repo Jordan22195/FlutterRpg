@@ -10,6 +10,7 @@ import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
+import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
@@ -83,6 +84,9 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
+          ChangeNotifierProvider<WorldController>.value(
+            value: session.worldController,
+          ),
           Provider<GameSession>.value(value: session),
           ChangeNotifierProvider<CraftingController>.value(
             value: session.craftingController,

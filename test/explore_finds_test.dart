@@ -24,7 +24,7 @@ void main() {
       world.doExplore(1);
     }
 
-    final finds = world.getCurrentZoneItems();
+    final finds = world.viewedZoneItems();
     expect(finds, isNotEmpty, reason: 'coins should drop within 300 rolls');
     for (final stack in finds) {
       expect(
@@ -40,19 +40,19 @@ void main() {
       (_, {offline = false, at, span}) {},
     );
     session.actionTimingController.start();
-    expect(world.getCurrentZoneItems(), isEmpty);
+    expect(world.viewedZoneItems(), isEmpty);
 
     // the next explore session starts from an empty find list, but the
     // player keeps everything they already picked up
     world.startExplore();
-    expect(world.getCurrentZoneItems(), isEmpty);
+    expect(world.viewedZoneItems(), isEmpty);
     expect(inventory.itemMap, isNotEmpty);
 
     // pausing and resuming the same session keeps the finds on screen
     world.doExplore(1);
-    final resumed = world.getCurrentZoneItems();
+    final resumed = world.viewedZoneItems();
     world.stopExplore();
     world.startExplore();
-    expect(world.getCurrentZoneItems().length, resumed.length);
+    expect(world.viewedZoneItems().length, resumed.length);
   });
 }

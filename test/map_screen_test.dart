@@ -13,7 +13,11 @@ import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/map_detail_pane.dart';
+import 'package:rpg/widgets/action_timer.dart';
+import 'package:rpg/widgets/fill_bar.dart';
+import 'package:rpg/widgets/progress_bars.dart';
 import 'package:rpg/widgets/map_edge_painter.dart';
+import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/map_node_token.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 
@@ -444,62 +448,331 @@ void main() {
     });
   });
 
-  group('travelling', () {
-    testWidgets('Travel moves you, and stops there', (tester) async {
+  group('entering', () {
+    testWidgets('Enter opens a zone you have not walked to', (tester) async {
       await pumpMap(tester);
       final session = sessionOf(tester);
       session.saveGameData.playerData.stamina = 100;
       await settle(tester);
 
       await select(tester, 'SOUTH_HAVEN');
-      await tester.tap(find.text('Travel'));
+      // one button, and it never moves you
+      expect(find.text('Travel'), findsNothing);
+      await tester.tap(find.text('Enter'));
       await settle(tester);
 
-      // the player has moved
-      expect(session.worldController.currentZoneId, ZoneId.SOUTH_HAVEN);
-      // but has not been marched into the zone: arriving and going in are
-      // two decisions, and you might have walked here just to look
-      expect(find.byType(ExploreScreen), findsNothing);
-      expect(find.text('World Map'), findsOneWidget);
-
-      // the pane stays on the place you just walked to, now offering the
-      // way in rather than the way here
-      expect(find.text('You are here'), findsOneWidget);
-      expect(find.text('Travel'), findsNothing);
-      expect(find.text('Enter'), findsOneWidget);
+      // you are reading South Haven while still standing in the farm
+      expect(find.byType(ExploreScreen), findsOneWidget);
+      expect(session.worldController.viewedZoneId, ZoneId.SOUTH_HAVEN);
+      expect(session.worldController.currentZoneId, ZoneId.TUTORIAL_FARM);
+      expect(find.text('South Haven'), findsWidgets);
     });
 
-    testWidgets('Enter is the second tap, and it opens the zone', (
+    testWidgets('Enter costs nothing and leaves the action alone', (
       tester,
     ) async {
       await pumpMap(tester);
+      final session = sessionOf(tester);
+      final player = session.saveGameData.playerData;
+
+      // something already running back home
+      session.worldController.startExplore();
+      await settle(tester);
+      expect(session.actionTimingController.isRunning, isTrue);
+
+      // a new save is capped at 10 stamina and South Haven is a 15 trip, so
+      // a fare charged here would clamp the pool to empty
+      await select(tester, 'SOUTH_HAVEN');
+      await tester.tap(find.text('Enter'));
+      await settle(tester);
+
+      expect(player.stamina, greaterThan(0));
+      expect(player.currentZoneId, ZoneId.TUTORIAL_FARM);
+      // the axe is still swinging back home
+      expect(
+        session.actionTimingController.isRunningAction(
+          session.worldController.doExplore,
+        ),
+        isTrue,
+      );
+    });
+
+    testWidgets('the zone you are standing in still opens', (tester) async {
+      await pumpMap(tester);
 
       await select(tester, 'TUTORIAL_FARM');
-      expect(find.text('Enter'), findsOneWidget);
+      expect(find.text('You are here'), findsOneWidget);
 
       await tester.tap(find.text('Enter'));
       await settle(tester);
 
       expect(find.byType(ExploreScreen), findsOneWidget);
     });
+
+    testWidgets('backing out points the view at the world again', (
+      tester,
+    ) async {
+      await pumpMap(tester);
+      final session = sessionOf(tester);
+      session.saveGameData.playerData.stamina = 100;
+      await settle(tester);
+
+      await select(tester, 'SOUTH_HAVEN');
+      await tester.tap(find.text('Enter'));
+      await settle(tester);
+      expect(session.worldController.viewedZoneId, ZoneId.SOUTH_HAVEN);
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await settle(tester);
+
+      expect(find.text('World Map'), findsOneWidget);
+      expect(session.worldController.viewedZoneId, ZoneId.TUTORIAL_FARM);
+    });
+
+    testWidgets('the action button becomes the way there', (tester) async {
+      await pumpMap(tester);
+      final session = sessionOf(tester);
+      final player = session.saveGameData.playerData;
+      // enough pool and exploration to be let into South Haven
+      player.skillData[SkillId.STAMINA]!.xp =
+          player.skillData[SkillId.STAMINA]!.xpTable[20];
+      player.skillData[SkillId.EXPLORATION]!.xp =
+          player.skillData[SkillId.EXPLORATION]!.xpTable[10];
+      player.stamina = 200;
+      await settle(tester);
+
+      await select(tester, 'SOUTH_HAVEN');
+      await tester.tap(find.text('Enter'));
+      await settle(tester);
+
+      // the purple button is gone: there is nothing to work here until you
+      // have walked here
+      final button = tester.widget<MomentumPrimaryButton>(
+        find.byType(MomentumPrimaryButton),
+      );
+      expect(button.color, kTravelColor);
+      expect(button.idleIcon, Icons.directions_walk);
+
+      // the banner has grown the road, before a step has been taken, and it
+      // is the travel button's own colour
+      var road = tester.widget<FillBar>(find.byKey(ProgressBars.travelBarKey));
+      expect(road.foregroundColor, kTravelColor);
+      expect(road.value, 0.0);
+      // the screen's own timer is left alone — the road did not take its slot
+      expect(find.text('Exploring'), findsOneWidget);
+
+      // pressing it pays the fare and puts the road on the clock
+      await tester.press(find.byType(MomentumPrimaryButton));
+      await settle(tester);
+
+      expect(player.stamina, lessThan(200));
+      expect(session.worldController.isTravelling, isTrue);
+      expect(session.worldController.travelTarget, ZoneId.SOUTH_HAVEN);
+      road = tester.widget<FillBar>(find.byKey(ProgressBars.travelBarKey));
+      expect(road.value, greaterThan(0.0));
+
+      session.worldController.cancelTravel();
+      await settle(tester);
+    });
+
+    testWidgets('a fight a zone away is walked to, and then decided on', (
+      tester,
+    ) async {
+      await pumpMap(tester);
+      final session = sessionOf(tester);
+      final player = session.saveGameData.playerData;
+      player.skillData[SkillId.STAMINA]!.xp =
+          player.skillData[SkillId.STAMINA]!.xpTable[20];
+      player.skillData[SkillId.EXPLORATION]!.xp =
+          player.skillData[SkillId.EXPLORATION]!.xpTable[10];
+      player.stamina = 200;
+
+      // something worth walking to, standing in the next zone over
+      final tree = EntityId.TREE.build() as EncounterEntity;
+      session
+          .saveGameData
+          .worldData
+          .zones[ZoneId.SOUTH_HAVEN]!
+          .discoveredEntities
+          .add(tree);
+      await settle(tester);
+
+      await select(tester, 'SOUTH_HAVEN');
+      await tester.tap(find.text('Enter'));
+      await settle(tester);
+
+      // open the tree from a zone away — the encounter screen resolves it
+      // in the zone on screen, not the one the player is standing in
+      await tester.tap(find.text('Tree').first);
+      await settle(tester);
+
+      // hold the travel button all the way there, and keep holding it
+      final gesture = await tester.press(find.byType(MomentumPrimaryButton));
+      expect(session.worldController.isTravelling, isTrue);
+
+      // the haven road is 7.5s of walking, and the boost only shortens it
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 250));
+      }
+      await settle(tester);
+
+      // arrived — and standing there. the finger never came off the button
+      // and the tree was on screen the whole way, and still nothing swings:
+      // where to go and what to do there are two decisions
+      expect(session.worldController.currentZoneId, ZoneId.SOUTH_HAVEN);
+      expect(session.actionTimingController.isRunning, isFalse);
+      expect(session.worldController.isTravelling, isFalse);
+      // and the road is off the banner, because there is no road left
+      expect(find.byKey(ProgressBars.travelBarKey), findsNothing);
+
+      await gesture.up();
+      await settle(tester);
+      expect(session.actionTimingController.isRunning, isFalse);
+
+      // the button is the screen's own again, and it is what starts the work
+      final button = tester.widget<MomentumPrimaryButton>(
+        find.byType(MomentumPrimaryButton),
+      );
+      expect(button.color, isNot(kTravelColor));
+
+      await tester.press(find.byType(MomentumPrimaryButton));
+      await settle(tester);
+      expect(session.actionTimingController.isRunning, isTrue);
+      expect(
+        session.saveGameData.actionTimingData.boundAction?.entityId,
+        EntityId.TREE,
+      );
+
+      session.actionTimingController.stop();
+      await settle(tester);
+    });
+
+    testWidgets('no road to show, no road in the banner', (tester) async {
+      await pumpMap(tester);
+
+      // standing in the place you are reading: nothing to walk
+      await select(tester, 'TUTORIAL_FARM');
+      await tester.tap(find.text('Enter'));
+      await settle(tester);
+
+      expect(find.byKey(ProgressBars.travelBarKey), findsNothing);
+      expect(find.text('Exploring'), findsOneWidget);
+    });
+
+    testWidgets('the banner does not resize when the road appears', (
+      tester,
+    ) async {
+      await pumpMap(tester);
+      final player = sessionOf(tester).saveGameData.playerData;
+      player.skillData[SkillId.EXPLORATION]!.xp =
+          player.skillData[SkillId.EXPLORATION]!.xpTable[10];
+      await settle(tester);
+
+      // the banner is sized by the activity tile beside the bars, so a third
+      // bar fits under the other two without pushing the toolbar down
+      final before = tester.getSize(find.byType(ProgressBars));
+
+      await select(tester, 'SOUTH_HAVEN');
+      await tester.tap(find.text('Enter'));
+      await settle(tester);
+
+      expect(find.byKey(ProgressBars.travelBarKey), findsOneWidget);
+      expect(tester.getSize(find.byType(ProgressBars)), before);
+    });
+
+    testWidgets('the way into a locked place is shut', (tester) async {
+      await pumpMap(tester);
+      sessionOf(tester).saveGameData.playerData.stamina = 200;
+      await settle(tester);
+
+      await select(tester, 'SWAMP');
+      final button = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'Enter'),
+      );
+      expect(button.onPressed, isNull);
+    });
   });
 
-  group('what the player can afford', () {
-    testWidgets('an unaffordable trip says to rest, not just "no"', (
+  group('screen transitions', () {
+    testWidgets('a screen in transit has solid ground under it', (
       tester,
     ) async {
       await pumpMap(tester);
 
-      // a new save starts on 10 stamina and South Haven is a 15 trip
-      await select(tester, 'SOUTH_HAVEN');
-      expect(find.text('Rest first'), findsOneWidget);
-      expect(find.text('Travel'), findsNothing);
+      await select(tester, 'TUTORIAL_FARM');
+      await tester.tap(find.text('Enter'));
+      // start the transition and stop half way through it, rather than
+      // settling: the whole problem only exists while the animation runs
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 120));
 
-      sessionOf(tester).saveGameData.playerData.stamina = 50;
+      // both screens are on screen at once — which is what makes the canvas
+      // matter. neither carries a Scaffold of its own, so without one the
+      // map would be read straight through the zone sliding over it
+      expect(find.byType(MapScreen), findsOneWidget);
+      expect(find.byType(ExploreScreen), findsOneWidget);
+
+      final ground = tester.widget<ColoredBox>(
+        find
+            .ancestor(
+              of: find.byType(ExploreScreen),
+              matching: find.byType(ColoredBox),
+            )
+            .first,
+      );
+      expect(ground.color.a, 1.0);
+      expect(
+        ground.color,
+        Theme.of(
+          tester.element(find.byType(ExploreScreen)),
+        ).scaffoldBackgroundColor,
+      );
+
+      await settle(tester);
+    });
+
+    testWidgets('and so does one on its way out', (tester) async {
+      await pumpMap(tester);
+
+      await select(tester, 'TUTORIAL_FARM');
+      await tester.tap(find.text('Enter'));
       await settle(tester);
 
-      expect(find.text('Rest first'), findsNothing);
-      expect(find.text('Travel'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 120));
+
+      expect(find.byType(ExploreScreen), findsOneWidget);
+      final ground = tester.widget<ColoredBox>(
+        find
+            .ancestor(
+              of: find.byType(ExploreScreen),
+              matching: find.byType(ColoredBox),
+            )
+            .first,
+      );
+      expect(ground.color.a, 1.0);
+
+      await settle(tester);
+    });
+  });
+
+  group('what the player can afford', () {
+    testWidgets('a trip you cannot afford is still a place worth reading', (
+      tester,
+    ) async {
+      await pumpMap(tester);
+
+      // a new save starts on 10 stamina and South Haven is a 15 trip. the
+      // fare is out of reach, so the cost reddens — but the door stays open,
+      // because looking costs nothing and the travel button inside is the
+      // one that has to wait for stamina
+      await select(tester, 'SOUTH_HAVEN');
+      expect(find.text('2 hops · 15 stamina'), findsOneWidget);
+      final shut = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'Enter'),
+      );
+      expect(shut.onPressed, isNotNull);
     });
 
     testWidgets('an unaffordable hop reddens, and clears as stamina returns', (

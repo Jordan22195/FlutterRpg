@@ -7,6 +7,7 @@ import '../controllers/player_data_controller.dart';
 import '../data/skill_category.dart';
 import '../widgets/icon_renderer.dart';
 import '../screens/skill_detail_screen.dart';
+import '../utilities/shell_page_route.dart';
 
 class SkillTile extends StatelessWidget {
   const SkillTile({
@@ -41,9 +42,9 @@ class SkillTile extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(210),
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => SkillDetailScreen(skillId: id)),
-        );
+        Navigator.of(
+          context,
+        ).push(ShellPageRoute(builder: (_) => SkillDetailScreen(skillId: id)));
       },
       child: Padding(
         padding: const EdgeInsets.all(8),

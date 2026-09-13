@@ -1,7 +1,14 @@
 import '../catalogs/entities/entities.dart';
 import '../catalogs/zones/zones.dart';
 
-enum BoundActionKind { EXPLORE, ENCOUNTER, CRAFT, ENCHANT, DUNGEON_SLOT }
+enum BoundActionKind {
+  EXPLORE,
+  ENCOUNTER,
+  CRAFT,
+  ENCHANT,
+  DUNGEON_SLOT,
+  TRAVEL,
+}
 
 /// A serializable description of the action bound to the timing loop.
 ///
@@ -68,6 +75,12 @@ class BoundAction {
 
   const BoundAction.dungeonSlot({required int dungeonSlot})
     : this._(kind: BoundActionKind.DUNGEON_SLOT, dungeonSlot: dungeonSlot);
+
+  /// A trip in progress. [zoneId] is where the player was walking to - the
+  /// one bound action a relaunch does not resume, since a walk the player
+  /// wasn't there for is refunded rather than replayed.
+  const BoundAction.travel({required ZoneId zoneId})
+    : this._(kind: BoundActionKind.TRAVEL, zoneId: zoneId);
 
   Map<String, dynamic> toJson() {
     return {

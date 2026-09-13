@@ -164,7 +164,7 @@ class _CraftingScreenState extends State<CraftingScreen>
 
             const SizedBox(height: 12),
             ActionButtonRow(
-              actionButton: MomentumPrimaryButton(
+              actionButton: ActionOrTravelButton(
                 enabled: canCraft,
                 label: "Craft",
                 startActionFunction: () {

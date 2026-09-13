@@ -117,7 +117,7 @@ class CraftingController extends ChangeNotifier {
   bool _isViewingSessionStation() {
     return _craftingState.craftingEntityId ==
             _playerState.currentEntityViewId &&
-        _craftingState.craftingZoneId == _playerState.currentZoneId;
+        _craftingState.craftingZoneId == _playerState.currentZoneViewId;
   }
 
   // items crafted during the current crafting session. stations that are
@@ -361,10 +361,13 @@ class CraftingController extends ChangeNotifier {
   // ---- firepits ----
 
   /// The fire burning in the firepit being viewed, or null when it is cold.
+  /// The fire burning in the firepit being viewed — in the viewed zone, so
+  /// a firepit read from a zone away shows its own fire rather than the one
+  /// burning in the same pit back home.
   FireItem? activeFire() {
     return _firemakingSystem.activeFire(
       _playerState.currentEntityViewId,
-      _playerState.currentZoneId,
+      _playerState.currentZoneViewId,
       _buffState,
     );
   }
@@ -390,7 +393,12 @@ class CraftingController extends ChangeNotifier {
 
   /// Puts out the viewed firepit's fire. A cooking action running on it stops
   /// on its next tick, when its requirements re-check fails.
+  ///
+  /// You have to be standing there. A firepit read from a zone away is
+  /// something you are looking at, not something you can reach into — and
+  /// with the zones apart, the pit in hand is not the pit on screen.
   void putOutFire() {
+    if (_playerState.currentZoneViewId != _playerState.currentZoneId) return;
     _firemakingSystem.extinguish(
       _playerState.currentEntityViewId,
       _playerState.currentZoneId,

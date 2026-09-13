@@ -561,7 +561,10 @@ void main() {
       expect(result.actionsPerformed, 1);
       expect(fire(session).id, ItemId.COOKFIRE);
       expect(
-        save.playerData.buffData.zoneBuffs[save.playerData.currentZoneId]!
+        save
+            .playerData
+            .buffData
+            .zoneBuffs[save.playerData.currentZoneId]!
             .length,
         1,
       );

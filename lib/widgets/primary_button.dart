@@ -6,6 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../controllers/action_queue_controller.dart';
 import '../controllers/action_timing_controller.dart';
+import '../controllers/player_data_controller.dart';
+import '../controllers/world_controller.dart';
+import 'action_timer.dart';
 
 /// Height shared by every control in the action bar. The primary button and
 /// the fixed-width side buttons flanking it all sit at this height, so the
@@ -22,11 +25,23 @@ class MomentumPrimaryButton extends StatefulWidget {
     super.key,
     required this.label,
     required this.startActionFunction,
+    this.color,
+    this.idleIcon,
   });
 
   final FutureOr<void> Function() startActionFunction;
   final bool enabled;
   final String label;
+
+  /// The face colour. Defaults to the action bar's purple; travel passes
+  /// its own blue, which is the whole tell that the button will walk you
+  /// somewhere rather than work what's in front of you.
+  final Color? color;
+
+  /// What the face shows at rest. Defaults to play; travel walks instead.
+  /// Held, every button shows fast-forward — the boost works the same way
+  /// whatever is being boosted.
+  final IconData? idleIcon;
 
   @override
   State<MomentumPrimaryButton> createState() => _MomentumPrimaryButtonState();
@@ -203,7 +218,9 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
                 pressed: _pressed,
                 height: _buttonHeight,
                 depth: _pressDepth,
-                color: Theme.of(context).colorScheme.primaryContainer,
+                color:
+                    widget.color ??
+                    Theme.of(context).colorScheme.primaryContainer,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 12,
@@ -220,7 +237,7 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
                     Icon(
                       controller.isButtonHeld || locked
                           ? Icons.fast_forward
-                          : Icons.play_arrow,
+                          : (widget.idleIcon ?? Icons.play_arrow),
                       size: _iconSize,
                     ),
                     if (locked) ...[
@@ -234,6 +251,58 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
           ),
         );
       },
+    );
+  }
+}
+
+/// The screen's own action button, or a travel button when the screen is
+/// showing somewhere the player isn't standing.
+///
+/// This is the whole of how travel is started. A zone screen reached through
+/// the map's Enter can be a place you have not walked to yet, and there is
+/// nothing to work there until you have — so the purple button is replaced
+/// rather than disabled, and the thing it offers instead is the trip.
+///
+/// A screen passes the same action it always passes and never learns that
+/// travelling exists. The trip does not take that action with it: arriving
+/// puts the player here and stops, and the button — purple again, because
+/// this is now where they are standing — is what starts the work.
+class ActionOrTravelButton extends StatelessWidget {
+  const ActionOrTravelButton({
+    super.key,
+    required this.enabled,
+    required this.label,
+    required this.startActionFunction,
+  });
+
+  final FutureOr<void> Function() startActionFunction;
+  final bool enabled;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final world = context.watch<WorldController>();
+    // stamina decides whether the trip can be afforded, and it moves every
+    // frame, so the button has to be re-priced as it does
+    context.watch<PlayerDataController>();
+
+    if (world.isViewingCurrentZone) {
+      return MomentumPrimaryButton(
+        enabled: enabled,
+        label: label,
+        startActionFunction: startActionFunction,
+      );
+    }
+
+    final target = world.viewedZoneId;
+    return MomentumPrimaryButton(
+      // a trip already under way keeps the button live, so holding it keeps
+      // boosting the walk; otherwise it greys out until the stamina is there
+      enabled: world.travelTarget == target || world.canTravelTo(target),
+      label: 'Travel',
+      color: kTravelColor,
+      idleIcon: Icons.directions_walk,
+      startActionFunction: () => world.startTravelTo(target),
     );
   }
 }
