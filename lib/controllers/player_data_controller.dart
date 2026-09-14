@@ -151,8 +151,8 @@ class PlayerDataController extends ChangeNotifier {
     return _playerDataService.getXpPerHour(id, _playerData);
   }
 
-  void debugSetSkillXp(SkillId id, double xp) {
-    _playerDataService.debugSetSkillXp(id, xp, _playerData);
+  void debugSetSkillLevel(SkillId id, int level) {
+    _playerDataService.debugSetSkillLevel(id, level, _playerData);
     notifyListeners();
   }
 

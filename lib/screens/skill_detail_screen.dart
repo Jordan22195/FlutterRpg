@@ -19,11 +19,11 @@ class SkillDetailScreen extends StatefulWidget {
 }
 
 class _SkillDetailScreenState extends State<SkillDetailScreen> {
-  final _debugXpController = TextEditingController();
+  final _debugLevelController = TextEditingController();
 
   @override
   void dispose() {
-    _debugXpController.dispose();
+    _debugLevelController.dispose();
     super.dispose();
   }
 
@@ -67,7 +67,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
           _buildUnlocksCard(level, unlocks),
           if (kDebugMode) ...[
             const SizedBox(height: 12),
-            _buildDebugCard(controller, skillId),
+            _buildDebugCard(controller, skillId, level),
           ],
         ],
       ),
@@ -273,7 +273,11 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
     );
   }
 
-  Widget _buildDebugCard(PlayerDataController controller, SkillId skillId) {
+  Widget _buildDebugCard(
+    PlayerDataController controller,
+    SkillId skillId,
+    int level,
+  ) {
     return Card(
       shape: RoundedRectangleBorder(
         side: const BorderSide(color: Colors.redAccent),
@@ -285,7 +289,7 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'DEBUG · SET XP',
+              'DEBUG · SET LEVEL',
               style: TextStyle(fontSize: 10, color: Colors.redAccent),
             ),
             const SizedBox(height: 8),
@@ -293,19 +297,22 @@ class _SkillDetailScreenState extends State<SkillDetailScreen> {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: _debugXpController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
+                    controller: _debugLevelController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      // the level standing now, so the field says what it
+                      // is about to overwrite
+                      hintText: '$level',
                     ),
-                    decoration: const InputDecoration(isDense: true),
                   ),
                 ),
                 const SizedBox(width: 8),
                 OutlinedButton(
                   onPressed: () {
-                    final parsed = double.tryParse(_debugXpController.text);
+                    final parsed = int.tryParse(_debugLevelController.text);
                     if (parsed == null) return;
-                    controller.debugSetSkillXp(skillId, parsed);
+                    controller.debugSetSkillLevel(skillId, parsed);
                   },
                   child: const Text('Set'),
                 ),

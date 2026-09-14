@@ -4,7 +4,7 @@ import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/utilities/util.dart';
 
-/// The metal spine: four tiers across six slots, every piece pouring its
+/// The metal spine: seven tiers across nine slots, every piece pouring its
 /// whole rung into defence.
 ///
 /// None of it is written by hand any more. A plate piece names the metal it
@@ -20,12 +20,21 @@ void main() {
     'IRON': EquipmentMaterialId.IRON,
     'STEEL': EquipmentMaterialId.STEEL,
     'MITHRIL': EquipmentMaterialId.MITHRIL,
+    'ADAMANT': EquipmentMaterialId.ADAMANT,
+    'RUNE': EquipmentMaterialId.RUNE,
+    'DRAGON': EquipmentMaterialId.DRAGON,
   };
 
+  // the pauldrons, belt and bracers came last: the metal line had no
+  // shoulder, waist or wrist piece at any tier while the leather ladder had
+  // all three, so blacksmithing could not dress a player it had armed
   const pieces = <String, ArmorSlots>{
     'HELMET': ArmorSlots.HEAD,
+    'PAULDRONS': ArmorSlots.SHOULDER,
     'CHESTPLATE': ArmorSlots.CHEST,
+    'BELT': ArmorSlots.WAIST,
     'LEGS': ArmorSlots.LEGS,
+    'BRACERS': ArmorSlots.WRIST,
     'BOOTS': ArmorSlots.FEET,
     'GLOVES': ArmorSlots.HANDS,
     'SHIELD': ArmorSlots.OFFHAND,

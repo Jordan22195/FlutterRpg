@@ -3,13 +3,14 @@ import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/shop_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
+import 'package:rpg/services/shop_service.dart';
 import 'package:rpg/widgets/countdown_timer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/repeat_press_button.dart';
 
 /*
 shop screen contents:
--header with shop name and back button
+-header with shop name, back button and sort button
 -coin balance and restock countdown
 -"for sale" list: shop stock with buy buttons (price = value + markup)
 -"sell" list: the player's items with sell buttons (price = value)
@@ -54,6 +55,30 @@ class ShopScreen extends StatelessWidget {
     );
   }
 
+  /// One control for the whole screen: the shelf and both sell lists read
+  /// in whatever order is picked here. A menu rather than a cycling button,
+  /// so the orderings on offer are readable without tapping through them.
+  Widget _sortButton(ShopController controller) {
+    final mode = controller.sortMode();
+    return PopupMenuButton<ShopSortMode>(
+      tooltip: 'Sort',
+      initialValue: mode,
+      onSelected: controller.setSortMode,
+      itemBuilder: (_) => [
+        for (final option in ShopSortMode.values)
+          PopupMenuItem<ShopSortMode>(value: option, child: Text(option.label)),
+      ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.sort),
+          const SizedBox(width: 4),
+          Text(mode.label),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ShopController>();
@@ -84,6 +109,7 @@ class ShopScreen extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  _sortButton(controller),
                 ],
               ),
             ),

@@ -143,6 +143,13 @@ enum ItemId {
       iconAsset: "assets/icons/items/runeite_ore.png",
     ),
   ),
+  DRAGON_ORE(
+    ItemDefinition(
+      name: "Dragon Ore",
+      value: 192,
+      iconAsset: "assets/icons/items/dragon_ore.png",
+    ),
+  ),
 
   // ── BARS ────────────────────────────────────────────────────────
   // same material order as the ores
@@ -193,6 +200,13 @@ enum ItemId {
       name: "Runite Bar",
       value: 128,
       iconAsset: "assets/icons/items/runite_bar.png",
+    ),
+  ),
+  DRAGON_BAR(
+    ItemDefinition(
+      name: "Dragon Bar",
+      value: 256,
+      iconAsset: "assets/icons/items/dragon_bar.png",
     ),
   ),
 
@@ -1148,6 +1162,33 @@ enum ItemId {
       iconAsset: "assets/icons/items/mithril_helmet.png",
     ),
   ),
+  ADAMANT_HELMET(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Adamant Helmet",
+      value: 240,
+      materialId: EquipmentMaterialId.ADAMANT,
+      iconAsset: "assets/icons/items/adamant_helmet.png",
+    ),
+  ),
+  RUNE_HELMET(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Rune Helmet",
+      value: 480,
+      materialId: EquipmentMaterialId.RUNE,
+      iconAsset: "assets/icons/items/rune_helmet.png",
+    ),
+  ),
+  DRAGON_HELMET(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Dragon Helmet",
+      value: 960,
+      materialId: EquipmentMaterialId.DRAGON,
+      iconAsset: "assets/icons/items/dragon_helmet.png",
+    ),
+  ),
 
   // ── ARMOUR · SHOULDER ───────────────────────────────────────────
   // tier ascending
@@ -1230,6 +1271,69 @@ enum ItemId {
       value: 25600,
       materialId: EquipmentMaterialId.HEAVY_DEMONHIDE,
       iconAsset: "assets/icons/items/heavy_demonhide_spaulders.png",
+    ),
+  ),
+  COPPER_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Copper Pauldrons",
+      value: 20,
+      materialId: EquipmentMaterialId.COPPER,
+      iconAsset: "assets/icons/items/copper_pauldrons.png",
+    ),
+  ),
+  IRON_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Iron Pauldrons",
+      value: 40,
+      materialId: EquipmentMaterialId.IRON,
+      iconAsset: "assets/icons/items/iron_pauldrons.png",
+    ),
+  ),
+  STEEL_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Steel Pauldrons",
+      value: 80,
+      materialId: EquipmentMaterialId.STEEL,
+      iconAsset: "assets/icons/items/steel_pauldrons.png",
+    ),
+  ),
+  MITHRIL_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Mithril Pauldrons",
+      value: 160,
+      materialId: EquipmentMaterialId.MITHRIL,
+      iconAsset: "assets/icons/items/mithril_pauldrons.png",
+    ),
+  ),
+  ADAMANT_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Adamant Pauldrons",
+      value: 320,
+      materialId: EquipmentMaterialId.ADAMANT,
+      iconAsset: "assets/icons/items/adamant_pauldrons.png",
+    ),
+  ),
+  RUNE_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Rune Pauldrons",
+      value: 640,
+      materialId: EquipmentMaterialId.RUNE,
+      iconAsset: "assets/icons/items/rune_pauldrons.png",
+    ),
+  ),
+  DRAGON_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Dragon Pauldrons",
+      value: 1280,
+      materialId: EquipmentMaterialId.DRAGON,
+      iconAsset: "assets/icons/items/dragon_pauldrons.png",
     ),
   ),
 
@@ -1354,6 +1458,33 @@ enum ItemId {
       iconAsset: "assets/icons/items/mithril_chestplate.png",
     ),
   ),
+  ADAMANT_CHESTPLATE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Adamant Chestplate",
+      value: 400,
+      materialId: EquipmentMaterialId.ADAMANT,
+      iconAsset: "assets/icons/items/adamant_chestplate.png",
+    ),
+  ),
+  RUNE_CHESTPLATE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Rune Chestplate",
+      value: 800,
+      materialId: EquipmentMaterialId.RUNE,
+      iconAsset: "assets/icons/items/rune_chestplate.png",
+    ),
+  ),
+  DRAGON_CHESTPLATE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Dragon Chestplate",
+      value: 1600,
+      materialId: EquipmentMaterialId.DRAGON,
+      iconAsset: "assets/icons/items/dragon_chestplate.png",
+    ),
+  ),
 
   // ── ARMOR · WAIST ───────────────────────────────────────────────
   // tier ascending
@@ -1438,6 +1569,69 @@ enum ItemId {
       iconAsset: "assets/icons/items/heavy_demonhide_belt.png",
     ),
   ),
+  COPPER_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Copper Belt",
+      value: 10,
+      materialId: EquipmentMaterialId.COPPER,
+      iconAsset: "assets/icons/items/copper_belt.png",
+    ),
+  ),
+  IRON_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Iron Belt",
+      value: 20,
+      materialId: EquipmentMaterialId.IRON,
+      iconAsset: "assets/icons/items/iron_belt.png",
+    ),
+  ),
+  STEEL_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Steel Belt",
+      value: 40,
+      materialId: EquipmentMaterialId.STEEL,
+      iconAsset: "assets/icons/items/steel_belt.png",
+    ),
+  ),
+  MITHRIL_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Mithril Belt",
+      value: 80,
+      materialId: EquipmentMaterialId.MITHRIL,
+      iconAsset: "assets/icons/items/mithril_belt.png",
+    ),
+  ),
+  ADAMANT_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Adamant Belt",
+      value: 160,
+      materialId: EquipmentMaterialId.ADAMANT,
+      iconAsset: "assets/icons/items/adamant_belt.png",
+    ),
+  ),
+  RUNE_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Rune Belt",
+      value: 320,
+      materialId: EquipmentMaterialId.RUNE,
+      iconAsset: "assets/icons/items/rune_belt.png",
+    ),
+  ),
+  DRAGON_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Dragon Belt",
+      value: 640,
+      materialId: EquipmentMaterialId.DRAGON,
+      iconAsset: "assets/icons/items/dragon_belt.png",
+    ),
+  ),
 
   // ── ARMOR · WRIST ───────────────────────────────────────────────
   // tier ascending
@@ -1520,6 +1714,69 @@ enum ItemId {
       value: 25600,
       materialId: EquipmentMaterialId.HEAVY_DEMONHIDE,
       iconAsset: "assets/icons/items/heavy_demonhide_bracers.png",
+    ),
+  ),
+  COPPER_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Copper Bracers",
+      value: 10,
+      materialId: EquipmentMaterialId.COPPER,
+      iconAsset: "assets/icons/items/copper_bracers.png",
+    ),
+  ),
+  IRON_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Iron Bracers",
+      value: 20,
+      materialId: EquipmentMaterialId.IRON,
+      iconAsset: "assets/icons/items/iron_bracers.png",
+    ),
+  ),
+  STEEL_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Steel Bracers",
+      value: 40,
+      materialId: EquipmentMaterialId.STEEL,
+      iconAsset: "assets/icons/items/steel_bracers.png",
+    ),
+  ),
+  MITHRIL_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Mithril Bracers",
+      value: 80,
+      materialId: EquipmentMaterialId.MITHRIL,
+      iconAsset: "assets/icons/items/mithril_bracers.png",
+    ),
+  ),
+  ADAMANT_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Adamant Bracers",
+      value: 160,
+      materialId: EquipmentMaterialId.ADAMANT,
+      iconAsset: "assets/icons/items/adamant_bracers.png",
+    ),
+  ),
+  RUNE_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Rune Bracers",
+      value: 320,
+      materialId: EquipmentMaterialId.RUNE,
+      iconAsset: "assets/icons/items/rune_bracers.png",
+    ),
+  ),
+  DRAGON_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Dragon Bracers",
+      value: 640,
+      materialId: EquipmentMaterialId.DRAGON,
+      iconAsset: "assets/icons/items/dragon_bracers.png",
     ),
   ),
   BRACERS_OF_THE_WOLF(
@@ -1676,6 +1933,33 @@ enum ItemId {
       iconAsset: "assets/icons/items/mithril_legs.png",
     ),
   ),
+  ADAMANT_LEGS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Adamant Leggings",
+      value: 320,
+      materialId: EquipmentMaterialId.ADAMANT,
+      iconAsset: "assets/icons/items/adamant_legs.png",
+    ),
+  ),
+  RUNE_LEGS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Rune Leggings",
+      value: 640,
+      materialId: EquipmentMaterialId.RUNE,
+      iconAsset: "assets/icons/items/rune_legs.png",
+    ),
+  ),
+  DRAGON_LEGS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Dragon Leggings",
+      value: 1280,
+      materialId: EquipmentMaterialId.DRAGON,
+      iconAsset: "assets/icons/items/dragon_legs.png",
+    ),
+  ),
 
   // ── ARMOUR · BOOTS ──────────────────────────────────────────────
   // tier ascending
@@ -1794,6 +2078,33 @@ enum ItemId {
       value: 80,
       materialId: EquipmentMaterialId.MITHRIL,
       iconAsset: "assets/icons/items/mithril_boots.png",
+    ),
+  ),
+  ADAMANT_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Adamant Boots",
+      value: 160,
+      materialId: EquipmentMaterialId.ADAMANT,
+      iconAsset: "assets/icons/items/adamant_boots.png",
+    ),
+  ),
+  RUNE_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Rune Boots",
+      value: 320,
+      materialId: EquipmentMaterialId.RUNE,
+      iconAsset: "assets/icons/items/rune_boots.png",
+    ),
+  ),
+  DRAGON_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Dragon Boots",
+      value: 640,
+      materialId: EquipmentMaterialId.DRAGON,
+      iconAsset: "assets/icons/items/dragon_boots.png",
     ),
   ),
 
@@ -1916,6 +2227,33 @@ enum ItemId {
       iconAsset: "assets/icons/items/mithril_gloves.png",
     ),
   ),
+  ADAMANT_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Adamant Gloves",
+      value: 160,
+      materialId: EquipmentMaterialId.ADAMANT,
+      iconAsset: "assets/icons/items/adamant_gloves.png",
+    ),
+  ),
+  RUNE_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Rune Gloves",
+      value: 320,
+      materialId: EquipmentMaterialId.RUNE,
+      iconAsset: "assets/icons/items/rune_gloves.png",
+    ),
+  ),
+  DRAGON_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Dragon Gloves",
+      value: 640,
+      materialId: EquipmentMaterialId.DRAGON,
+      iconAsset: "assets/icons/items/dragon_gloves.png",
+    ),
+  ),
 
   // ── ARMOUR · SHIELD ─────────────────────────────────────────────
   // tier ascending
@@ -1955,12 +2293,39 @@ enum ItemId {
       iconAsset: "assets/icons/items/mithril_shield.png",
     ),
   ),
+  ADAMANT_SHIELD(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.OFFHAND,
+      name: "Adamant Shield",
+      value: 240,
+      materialId: EquipmentMaterialId.ADAMANT,
+      iconAsset: "assets/icons/items/adamant_shield.png",
+    ),
+  ),
+  RUNE_SHIELD(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.OFFHAND,
+      name: "Rune Shield",
+      value: 480,
+      materialId: EquipmentMaterialId.RUNE,
+      iconAsset: "assets/icons/items/rune_shield.png",
+    ),
+  ),
+  DRAGON_SHIELD(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.OFFHAND,
+      name: "Dragon Shield",
+      value: 960,
+      materialId: EquipmentMaterialId.DRAGON,
+      iconAsset: "assets/icons/items/dragon_shield.png",
+    ),
+  ),
   // ── WEAPONS & TOOLS · 2H Swords ────────────────────────────────────
   // tier ascending
   COPPER_GREATSWORD(
     WeaponItemDefinition(
       name: "Copper Greatsword",
-      value: 10,
+      value: 30,
       materialId: EquipmentMaterialId.COPPER,
       weaponType: WeaponTypeId.GREATSWORD,
       iconAsset: "assets/icons/items/copper_greatsword.png",
@@ -1969,7 +2334,7 @@ enum ItemId {
   IRON_GREATSWORD(
     WeaponItemDefinition(
       name: "Iron Greatsword",
-      value: 10,
+      value: 60,
       materialId: EquipmentMaterialId.IRON,
       weaponType: WeaponTypeId.GREATSWORD,
       iconAsset: "assets/icons/items/iron_greatsword.png",
@@ -1978,7 +2343,7 @@ enum ItemId {
   STEEL_GREATSWORD(
     WeaponItemDefinition(
       name: "Steel Greatsword",
-      value: 10,
+      value: 120,
       materialId: EquipmentMaterialId.STEEL,
       weaponType: WeaponTypeId.GREATSWORD,
       iconAsset: "assets/icons/items/steel_greatsword.png",
@@ -1987,10 +2352,37 @@ enum ItemId {
   MITHRIL_GREATSWORD(
     WeaponItemDefinition(
       name: "Mithril Greatsword",
-      value: 10,
+      value: 240,
       materialId: EquipmentMaterialId.MITHRIL,
       weaponType: WeaponTypeId.GREATSWORD,
       iconAsset: "assets/icons/items/mithril_greatsword.png",
+    ),
+  ),
+  ADAMANT_GREATSWORD(
+    WeaponItemDefinition(
+      name: "Adamant Greatsword",
+      value: 480,
+      materialId: EquipmentMaterialId.ADAMANT,
+      weaponType: WeaponTypeId.GREATSWORD,
+      iconAsset: "assets/icons/items/adamant_greatsword.png",
+    ),
+  ),
+  RUNE_GREATSWORD(
+    WeaponItemDefinition(
+      name: "Rune Greatsword",
+      value: 960,
+      materialId: EquipmentMaterialId.RUNE,
+      weaponType: WeaponTypeId.GREATSWORD,
+      iconAsset: "assets/icons/items/rune_greatsword.png",
+    ),
+  ),
+  DRAGON_GREATSWORD(
+    WeaponItemDefinition(
+      name: "Dragon Greatsword",
+      value: 1920,
+      materialId: EquipmentMaterialId.DRAGON,
+      weaponType: WeaponTypeId.GREATSWORD,
+      iconAsset: "assets/icons/items/dragon_greatsword.png",
     ),
   ),
   // ── WEAPONS & TOOLS · 1H Swords ────────────────────────────────────
@@ -1998,7 +2390,7 @@ enum ItemId {
   COPPER_SWORD(
     WeaponItemDefinition(
       name: "Copper Sword",
-      value: 10,
+      value: 20,
       materialId: EquipmentMaterialId.COPPER,
       weaponType: WeaponTypeId.SWORD,
       iconAsset: "assets/icons/items/copper_sword.png",
@@ -2007,7 +2399,7 @@ enum ItemId {
   IRON_SWORD(
     WeaponItemDefinition(
       name: "Iron Sword",
-      value: 10,
+      value: 40,
       materialId: EquipmentMaterialId.IRON,
       weaponType: WeaponTypeId.SWORD,
       iconAsset: "assets/icons/items/iron_sword.png",
@@ -2016,7 +2408,7 @@ enum ItemId {
   STEEL_SWORD(
     WeaponItemDefinition(
       name: "Steel Sword",
-      value: 10,
+      value: 80,
       materialId: EquipmentMaterialId.STEEL,
       weaponType: WeaponTypeId.SWORD,
       iconAsset: "assets/icons/items/steel_sword.png",
@@ -2025,10 +2417,37 @@ enum ItemId {
   MITHRIL_SWORD(
     WeaponItemDefinition(
       name: "Mithril Sword",
-      value: 10,
+      value: 160,
       materialId: EquipmentMaterialId.MITHRIL,
       weaponType: WeaponTypeId.SWORD,
       iconAsset: "assets/icons/items/mithril_sword.png",
+    ),
+  ),
+  ADAMANT_SWORD(
+    WeaponItemDefinition(
+      name: "Adamant Sword",
+      value: 320,
+      materialId: EquipmentMaterialId.ADAMANT,
+      weaponType: WeaponTypeId.SWORD,
+      iconAsset: "assets/icons/items/adamant_sword.png",
+    ),
+  ),
+  RUNE_SWORD(
+    WeaponItemDefinition(
+      name: "Rune Sword",
+      value: 640,
+      materialId: EquipmentMaterialId.RUNE,
+      weaponType: WeaponTypeId.SWORD,
+      iconAsset: "assets/icons/items/rune_sword.png",
+    ),
+  ),
+  DRAGON_SWORD(
+    WeaponItemDefinition(
+      name: "Dragon Sword",
+      value: 1280,
+      materialId: EquipmentMaterialId.DRAGON,
+      weaponType: WeaponTypeId.SWORD,
+      iconAsset: "assets/icons/items/dragon_sword.png",
     ),
   ),
   // ── WEAPONS & TOOLS · DAGGER ────────────────────────────────────
@@ -2076,6 +2495,33 @@ enum ItemId {
       materialId: EquipmentMaterialId.MITHRIL,
       weaponType: WeaponTypeId.DAGGER,
       iconAsset: "assets/icons/items/mithril_dagger.png",
+    ),
+  ),
+  ADAMANT_DAGGER(
+    WeaponItemDefinition(
+      name: "Adamant Dagger",
+      value: 300,
+      materialId: EquipmentMaterialId.ADAMANT,
+      weaponType: WeaponTypeId.DAGGER,
+      iconAsset: "assets/icons/items/adamant_dagger.png",
+    ),
+  ),
+  RUNE_DAGGER(
+    WeaponItemDefinition(
+      name: "Rune Dagger",
+      value: 600,
+      materialId: EquipmentMaterialId.RUNE,
+      weaponType: WeaponTypeId.DAGGER,
+      iconAsset: "assets/icons/items/rune_dagger.png",
+    ),
+  ),
+  DRAGON_DAGGER(
+    WeaponItemDefinition(
+      name: "Dragon Dagger",
+      value: 1200,
+      materialId: EquipmentMaterialId.DRAGON,
+      weaponType: WeaponTypeId.DAGGER,
+      iconAsset: "assets/icons/items/dragon_dagger.png",
     ),
   ),
 
@@ -2126,6 +2572,33 @@ enum ItemId {
       iconAsset: "assets/icons/items/mithril_axe.png",
     ),
   ),
+  ADAMANT_AXE(
+    WeaponItemDefinition(
+      name: "Adamant Axe",
+      value: 300,
+      materialId: EquipmentMaterialId.ADAMANT,
+      weaponType: WeaponTypeId.AXE,
+      iconAsset: "assets/icons/items/adamant_axe.png",
+    ),
+  ),
+  RUNE_AXE(
+    WeaponItemDefinition(
+      name: "Rune Axe",
+      value: 600,
+      materialId: EquipmentMaterialId.RUNE,
+      weaponType: WeaponTypeId.AXE,
+      iconAsset: "assets/icons/items/rune_axe.png",
+    ),
+  ),
+  DRAGON_AXE(
+    WeaponItemDefinition(
+      name: "Dragon Axe",
+      value: 1200,
+      materialId: EquipmentMaterialId.DRAGON,
+      weaponType: WeaponTypeId.AXE,
+      iconAsset: "assets/icons/items/dragon_axe.png",
+    ),
+  ),
 
   // ── WEAPONS & TOOLS · PICKAXE ───────────────────────────────────
   // tier ascending
@@ -2174,6 +2647,33 @@ enum ItemId {
       iconAsset: "assets/icons/items/mithril_pickaxe.png",
     ),
   ),
+  ADAMANT_PICKAXE(
+    WeaponItemDefinition(
+      name: "Adamant Pickaxe",
+      value: 300,
+      materialId: EquipmentMaterialId.ADAMANT,
+      weaponType: WeaponTypeId.PICKAXE,
+      iconAsset: "assets/icons/items/adamant_pickaxe.png",
+    ),
+  ),
+  RUNE_PICKAXE(
+    WeaponItemDefinition(
+      name: "Rune Pickaxe",
+      value: 600,
+      materialId: EquipmentMaterialId.RUNE,
+      weaponType: WeaponTypeId.PICKAXE,
+      iconAsset: "assets/icons/items/rune_pickaxe.png",
+    ),
+  ),
+  DRAGON_PICKAXE(
+    WeaponItemDefinition(
+      name: "Dragon Pickaxe",
+      value: 1200,
+      materialId: EquipmentMaterialId.DRAGON,
+      weaponType: WeaponTypeId.PICKAXE,
+      iconAsset: "assets/icons/items/dragon_pickaxe.png",
+    ),
+  ),
 
   // ── WEAPONS & TOOLS · SICKLE ────────────────────────────────────
   // tier ascending
@@ -2211,6 +2711,33 @@ enum ItemId {
       materialId: EquipmentMaterialId.MITHRIL,
       weaponType: WeaponTypeId.SICKLE,
       iconAsset: "assets/icons/items/mithril_sickle.png",
+    ),
+  ),
+  ADAMANT_SICKLE(
+    WeaponItemDefinition(
+      name: "Adamant Sickle",
+      value: 300,
+      materialId: EquipmentMaterialId.ADAMANT,
+      weaponType: WeaponTypeId.SICKLE,
+      iconAsset: "assets/icons/items/adamant_sickle.png",
+    ),
+  ),
+  RUNE_SICKLE(
+    WeaponItemDefinition(
+      name: "Rune Sickle",
+      value: 600,
+      materialId: EquipmentMaterialId.RUNE,
+      weaponType: WeaponTypeId.SICKLE,
+      iconAsset: "assets/icons/items/rune_sickle.png",
+    ),
+  ),
+  DRAGON_SICKLE(
+    WeaponItemDefinition(
+      name: "Dragon Sickle",
+      value: 1200,
+      materialId: EquipmentMaterialId.DRAGON,
+      weaponType: WeaponTypeId.SICKLE,
+      iconAsset: "assets/icons/items/dragon_sickle.png",
     ),
   ),
 

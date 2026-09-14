@@ -4,6 +4,7 @@ library;
 
 export 'definition/combat_entity_definition.dart';
 export 'definition/crafting_entity_definition.dart';
+export 'definition/dev_shop_entity_definition.dart';
 export 'definition/dungeon_entity_definition.dart';
 export 'definition/encounter_entity_definition.dart';
 export 'definition/entity_definition.dart';

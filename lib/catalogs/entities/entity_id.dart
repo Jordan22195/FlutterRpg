@@ -4075,6 +4075,14 @@ enum EntityId {
     ),
   ),
 
+  DEV_SHOP(
+    DevShopEntityDefinition(
+      name: "Dev Shop",
+      iconAsset: "assets/images/entities/trading_post.png",
+      rarity: Rarity.LEGENDARY,
+    ),
+  ),
+
   // ── DUNGEON ENTRANCES ───────────────────────────────────────────
   // DungeonEntityDefinition, same order as dungeon_id.dart
   GRAINERY_ENTRANCE(

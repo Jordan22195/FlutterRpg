@@ -166,7 +166,7 @@ void main() {
     expect(restored.nextRestockAt, shop.nextRestockAt);
   });
 
-  test('dev forest builds both shops as permanent entities', () {
+  test('dev forest builds its shops as permanent entities', () {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     final save = factory.newGame(catalogs);
@@ -180,7 +180,11 @@ void main() {
     // with any shop" would land on the farm or South Haven instead.
     final devForest = save.worldData.zones[ZoneId.DEV_FOREST]!;
     final shops = devForest.permanentEntities.whereType<ShopEntity>().toList();
-    expect(shops.length, 2);
+    expect(shops.map((s) => s.id).toSet(), {
+      EntityId.TRADING_POST,
+      EntityId.WANDERING_MERCHANT,
+      EntityId.DEV_SHOP,
+    });
 
     session.dispose();
   });

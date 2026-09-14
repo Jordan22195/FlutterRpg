@@ -244,8 +244,8 @@ class PlayerDataService {
     return _skillService.xpPerHour(getSkillData(id, playerState));
   }
 
-  void debugSetSkillXp(SkillId id, double xp, PlayerData playerState) {
-    _skillService.setXp(xp, getSkillData(id, playerState));
+  void debugSetSkillLevel(SkillId id, int level, PlayerData playerState) {
+    _skillService.setLevel(level, getSkillData(id, playerState));
   }
 
   // each point of stamina skill adds 10 to the stamina bar

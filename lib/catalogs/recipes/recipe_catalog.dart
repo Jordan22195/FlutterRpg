@@ -9,7 +9,7 @@ import 'package:rpg/catalogs/recipes/data/jewelcrafting_recipes.dart';
 class RecipeCatalog {
   /// Every recipe, in skill order. The per-skill lists are the content;
   /// this is just their concatenation.
-  static const List<CraftingRecipe> _recipes = [
+  static final List<CraftingRecipe> _recipes = [
     ...firemakingRecipes,
     ...cookingRecipes,
     ...blacksmithingRecipes,

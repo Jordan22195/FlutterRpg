@@ -67,8 +67,25 @@ class ShopController extends ChangeNotifier {
     return _playerState.currentEntityViewId.definition.iconAsset;
   }
 
+  // how the screen's three lists are ordered. it lives on the controller
+  // rather than in the screen so the choice survives walking from one
+  // counter to the next
+  ShopSortMode _sortMode = ShopSortMode.CATALOG;
+
+  ShopSortMode sortMode() => _sortMode;
+
+  void setSortMode(ShopSortMode mode) {
+    if (mode == _sortMode) return;
+    _sortMode = mode;
+    notifyListeners();
+  }
+
   List<ShopStockSlot> stock() {
-    return List.unmodifiable(_currentShop()?.stock ?? const []);
+    return _shopService.sortedForDisplay(
+      _currentShop()?.stock ?? const [],
+      _sortMode,
+      (slot) => slot.itemId,
+    );
   }
 
   DateTime? nextRestockAt() {
@@ -127,15 +144,23 @@ class ShopController extends ChangeNotifier {
 
   // stackable inventory the player can sell (everything but coins)
   List<ObjectStack<ItemId>> sellableItems() {
-    return [
-      for (final entry in _inventoryState.itemMap.entries)
-        if (entry.key != ItemId.COINS && entry.value > 0)
-          ObjectStack(id: entry.key, count: entry.value),
-    ];
+    return _shopService.sortedForDisplay(
+      [
+        for (final entry in _inventoryState.itemMap.entries)
+          if (entry.key != ItemId.COINS && entry.value > 0)
+            ObjectStack(id: entry.key, count: entry.value),
+      ],
+      _sortMode,
+      (stack) => stack.id,
+    );
   }
 
   // unique equipment stacks the player can sell
   List<EquipmentItem> sellableEquipment() {
-    return List.unmodifiable(_inventoryState.equipment);
+    return _shopService.sortedForDisplay(
+      _inventoryState.equipment,
+      _sortMode,
+      (item) => item.id,
+    );
   }
 }

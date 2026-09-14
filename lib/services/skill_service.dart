@@ -51,6 +51,16 @@ class SkillService {
     skillState.xp = xp < 0 ? 0 : xp;
   }
 
+  /// Puts the skill at exactly [level], on the least xp that level starts
+  /// at — so the level reads back as asked, with no progress into the next.
+  ///
+  /// Levels run 1 to the top of the table; anything outside that clamps,
+  /// which keeps a typo from writing an xp the curve never produces.
+  void setLevel(int level, SkillData skillState) {
+    final maxLevel = skillState.xpTable.length - 1;
+    setXp(skillState.xpTable[level.clamp(1, maxLevel)], skillState);
+  }
+
   int getLevelFromXp(double xp, SkillData skillState) {
     for (int level = 1; level < skillState.xpTable.length; level++) {
       if (xp < skillState.xpTable[level]) {

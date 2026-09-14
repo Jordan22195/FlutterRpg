@@ -304,6 +304,7 @@ enum ZoneId {
         EntityId.OCEAN,
         EntityId.TRADING_POST,
         EntityId.WANDERING_MERCHANT,
+        EntityId.DEV_SHOP,
       ],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 1),

@@ -130,6 +130,39 @@ class InventoryService {
     }
   }
 
+  /// Forces the whole stack matching [item]'s identity to [quality],
+  /// returning the live stack it ended up on (null when the inventory holds
+  /// no such stack).
+  ///
+  /// Quality is part of [EquipmentItem.stackKey], so this moves the stack to
+  /// a different identity rather than editing one in place: it comes off the
+  /// list and goes back through [addEquipment], which folds it into a stack
+  /// already sitting at the target quality if there is one. The whole stack
+  /// moves together — splitting a stack is not something the dev tool that
+  /// calls this has any way to ask for.
+  EquipmentItem? setEquipmentQuality(
+    InventoryData inventoryState,
+    EquipmentItem item,
+    Rarity quality,
+  ) {
+    for (final stack in inventoryState.equipment) {
+      if (!stack.canStackWith(item)) continue;
+      if (stack.quality == quality) return stack;
+
+      inventoryState.equipment.remove(stack);
+      stack.quality = quality;
+      addEquipment(inventoryState, stack);
+
+      // addEquipment may have merged it away, so hand back whatever stack
+      // now carries this identity rather than the instance passed in
+      for (final merged in inventoryState.equipment) {
+        if (merged.canStackWith(stack)) return merged;
+      }
+      return stack;
+    }
+    return null;
+  }
+
   /// Count of the inventory stack matching [item]'s identity.
   int getEquipmentCount(InventoryData inventoryState, EquipmentItem item) {
     for (final stack in inventoryState.equipment) {

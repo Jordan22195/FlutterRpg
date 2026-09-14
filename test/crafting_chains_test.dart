@@ -76,14 +76,14 @@ void main() {
   });
 
   group('the mithril tier', () {
-    test('mithril bar is an alloy of coal and mithril ore', () {
+    test('mithril bar smelts from its own ore, and nothing else', () {
       final bar = making(ItemId.MITHRIL_BAR);
       expect(bar, isNotNull, reason: 'nothing smelts a mithril bar');
-      expect(bar!.inputs.keys, containsAll([ItemId.COAL, ItemId.MITHRIL_ORE]));
-      // ore straight into the furnace with the coal, the way steel works —
-      // going through another bar first would charge two smelts for one
-      expect(bar.inputs.containsKey(ItemId.STEEL_BAR), isFalse);
-      expect(bar.inputs.containsKey(ItemId.IRON_BAR), isFalse);
+      // steel is the one alloy on the ladder; every other metal smelts
+      // from its own ore alone, so mithril takes neither coal nor a bar of
+      // the tier below — going through another bar would charge the player
+      // two trips through the furnace for one
+      expect(bar!.inputs.keys.single, ItemId.MITHRIL_ORE);
       expect(bar.skill, SkillId.BLACKSMITHING);
     });
 
@@ -133,9 +133,12 @@ void main() {
         greaterThan(steel.levelRequirement),
         reason: 'mithril should open after steel',
       );
+      // the tiers above steel are single-ore smelts, so what makes a tier 4
+      // bar dearer than a tier 3 one is the ore it is cut from rather than
+      // a pile of coal alongside it
       expect(
-        mithril.inputs[ItemId.COAL],
-        greaterThan(steel.inputs[ItemId.COAL]!),
+        ItemId.MITHRIL_ORE.definition.value,
+        greaterThan(ItemId.IRON_ORE.definition.value),
         reason: 'a tier 4 bar should not be cheaper than a tier 3 one',
       );
     });

@@ -56,6 +56,19 @@ class InventoryController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // dev/testing helper: force the quality of the whole equipment stack
+  // matching this item's identity. returns the stack it landed on, which is
+  // a different instance when the new quality merged it into an existing one
+  EquipmentItem? devSetEquipmentQuality(EquipmentItem item, Rarity quality) {
+    final stack = _inventoryService.setEquipmentQuality(
+      _inventoryData,
+      item,
+      quality,
+    );
+    if (stack != null) notifyListeners();
+    return stack;
+  }
+
   ItemDefinition? getItemDefinition(ItemId id) {
     return id.definition;
   }
