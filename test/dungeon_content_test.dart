@@ -87,12 +87,11 @@ void main() {
   });
 
   group('dungeon definitions', () {
-    test('the lair is a keyed, one-shot landmark', () {
+    test('the lair is a keyed landmark', () {
       final d = DungeonId.GOBLIN_QUEEN_LAIR.definition;
       expect(d.type, DungeonType.LANDMARK);
       expect(d.isKeyed, isTrue);
       expect(d.keyItemId, ItemId.GOBLIN_QUEEN_KEY);
-      expect(d.repeatableEntries, isFalse);
       expect(DungeonId.landmarks, contains(DungeonId.GOBLIN_QUEEN_LAIR));
     });
 

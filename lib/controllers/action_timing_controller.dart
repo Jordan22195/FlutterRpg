@@ -326,6 +326,15 @@ class ActionTimingController extends ChangeNotifier {
   /// [intervalOverride] is for an action that sets its own pace rather than
   /// taking it from what is equipped - see
   /// [ActionTimingData.intervalOverride].
+  /// Called with the incoming [BoundAction] every time the loop is pointed
+  /// at something, before the bind takes effect.
+  ///
+  /// Binding — not [stop] — is what says "the player started something
+  /// else": stopping is a pause, and a pause must not cost anything. Wired
+  /// in GameSessionFactory, where it is what resets a dungeon floor the
+  /// player has walked away from to explore, craft, enchant or travel.
+  void Function(BoundAction? boundAction)? onBoundActionChanged;
+
   void bindOnFireFunction(
     FutureOr<void> Function(int, {bool offline, DateTime? at, Duration? span})
     function, {
@@ -335,6 +344,7 @@ class ActionTimingController extends ChangeNotifier {
     BoundAction? boundAction,
     Duration? intervalOverride,
   }) {
+    onBoundActionChanged?.call(boundAction);
     _actionTimingState.onFire = function;
     _actionTimingState.actionSkill = actionSkill;
     _actionTimingState.activityIconId = activityIconId;

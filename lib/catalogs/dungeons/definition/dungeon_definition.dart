@@ -14,8 +14,8 @@ class DungeonDefinition {
   /// you get in and what leaving costs, this is what the place is.
   final MapNodeType mapNodeType;
 
-  /// Landmark dungeons consume this item to start the first card. NULL for
-  /// free-entry (transient/zone) dungeons.
+  /// Landmark dungeons consume this item the first time the first floor is
+  /// started. NULL for free-entry (transient/zone) dungeons.
   final ItemId keyItemId;
 
   /// Optional soft/hard level gate, mirroring the zone gate convention.
@@ -36,12 +36,9 @@ class DungeonDefinition {
     this.requiredLevel = 0,
   });
 
-  /// Whether the first card requires (and consumes) a key.
+  /// Whether the first floor requires (and consumes) a key. Charged once,
+  /// ever — after that the dungeon is open for good.
   bool get isKeyed => keyItemId != ItemId.NULL;
-
-  /// Whether a cleared card can be re-tapped to fight it again. Only the
-  /// permanent zone dungeons farm; keyed and transient runs are one-shot.
-  bool get repeatableEntries => type == DungeonType.ZONE;
 
   /// A variant of this definition. Definitions are `const` and shared, so a
   /// caller needing a tweaked dungeon builds a new value here.

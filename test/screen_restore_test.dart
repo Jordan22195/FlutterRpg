@@ -80,8 +80,8 @@ void main() {
     expect(find.text('Action'), findsNothing);
   }, skip: true);
 
-  testWidgets('relaunch restores a dungeon card mid-fight', (tester) async {
-    // a card's entity lives in the run, not in any zone, so restoring the
+  testWidgets('relaunch restores a dungeon floor mid-fight', (tester) async {
+    // a floor's entity lives in the run, not in any zone, so restoring the
     // encounter above a dungeon can't go through the zone entity lookup
     final save = newSave();
     final factory = GameSessionFactory();
@@ -91,15 +91,14 @@ void main() {
       catalogs: catalogs,
       vsync: const TestVSync(),
     );
-    session.dungeonController.openDungeon(DungeonId.SPIDER_DEN);
-    session.dungeonController.startSlot(0);
+    session.dungeonController.startSlot(DungeonId.SPIDER_DEN, 0);
     session.encounterController.doEncounterAction(1);
     save.uiState.tabIndex = 0;
     save.uiState.mapRouteStack = ['dungeon', 'encounter'];
     save.uiState.dungeonId = DungeonId.SPIDER_DEN;
     save.uiState.dungeonSlot = 0;
     // the app was closed on this card for long enough to be worth a
-    // report, but not long enough to finish the card or the player
+    // report, but not long enough to finish the floor or the player
     for (final id in [SkillId.ATTACK, SkillId.DEFENCE, SkillId.HITPOINTS]) {
       final skill = save.playerData.skillData[id]!;
       skill.xp = skill.xpTable[99];

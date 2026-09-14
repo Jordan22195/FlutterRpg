@@ -14,7 +14,6 @@ import 'package:rpg/screens/encounter_screen.dart';
 import 'package:rpg/screens/map_screen.dart';
 import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/widgets/entity_queue_card.dart';
-import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
 // Fixed pumps (the app has periodic timers that never settle).
@@ -40,13 +39,13 @@ void makeStrong(GameSession session) {
       .getStatTotals(session.saveGameData.playerData)[SkillId.HITPOINTS]!;
 }
 
-// the card list is a lazy ListView taller than the test surface
+// the floor list is a lazy ListView taller than the test surface
 Future<void> scrollList(WidgetTester tester, double dy) async {
   await tester.drag(find.byType(ListView).last, Offset(0, dy));
   await settle(tester);
 }
 
-// boots the app straight onto a dungeon's card list, which is the only
+// boots the app straight onto a dungeon's floor list, which is the only
 // cheap way to reach the zone dungeons — their entrances are found by
 // exploring
 Future<void> openDungeonFromSave(WidgetTester tester, DungeonId id) async {
@@ -74,7 +73,7 @@ Future<void> openLair(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('landmark lists its cards top to bottom, key gates the first', (
+  testWidgets('landmark lists its floors top to bottom, key gates the first', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -89,7 +88,7 @@ void main() {
     expect(find.text('Enter (uses key)'), findsNothing);
     expect(find.text('Boss rewards'), findsNothing);
 
-    // first card at the top, gated by the key rather than by a floor
+    // first floor at the top, gated by the key
     expect(find.text('Warren Entrance'), findsOneWidget);
     expect(find.text('Requires Goblin Queen Key'), findsOneWidget);
 
@@ -102,7 +101,7 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('the first card shows the key, and the spend is confirmed', (
+  testWidgets('the first floor shows the key, and the spend is confirmed', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -113,7 +112,7 @@ void main() {
     final session = sessionOf(tester);
     await openLair(tester);
 
-    // no key yet: the card says so and can't be started
+    // no key yet: the floor says so and can't be started
     expect(find.text('No key'), findsOneWidget);
 
     session.inventoryService.setItemCount(
@@ -122,10 +121,8 @@ void main() {
       1,
     );
     makeStrong(session);
-    // the inventory write doesn't notify the dungeon controller; poke it so
-    // the card re-reads the bag, leaving the preference where it was
-    session.dungeonController.autoAdvance = true;
-    session.dungeonController.autoAdvance = false;
+    // the inventory write doesn't notify the dungeon controller
+    session.dungeonController.refresh();
     await settle(tester);
     expect(find.text('Key ready'), findsOneWidget);
 
@@ -164,7 +161,9 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('the loot tab shows what the run has dropped', (tester) async {
+  testWidgets('a floor card counts its runs once it has been cleared', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
     );
@@ -180,29 +179,33 @@ void main() {
 
     await openLair(tester);
 
-    // nothing run yet
-    await tester.tap(find.text('Loot · 0'));
-    await settle(tester);
-    expect(find.text('Nothing dropped this run yet'), findsOneWidget);
+    // nothing run yet, so the card has no tally to show
+    expect(find.textContaining('this session'), findsNothing);
 
-    // drive a card's worth of kills straight through the controller
-    session.dungeonController.startSlot(0);
+    // drive a floor's worth of kills straight through the controller
+    const id = DungeonId.GOBLIN_QUEEN_LAIR;
+    final progress = session.saveGameData.dungeonProgress;
+    session.dungeonController.startSlot(id, 0);
     var ticks = 0;
-    while (session.actionTimingController.isRunning && ticks < 20000) {
+    while (progress.runsFor(id, 0) == 0 && ticks < 20000) {
       session.encounterController.doEncounterAction(1);
       ticks++;
     }
+    // the floor never stops itself, so hand the loop over to something else
+    session.dungeonController.resetRunningFloor();
     await settle(tester);
 
-    expect(session.dungeonController.runLoot(), isNotEmpty);
-    expect(find.text('Nothing dropped this run yet'), findsNothing);
-    expect(find.byType(InventoryGrid), findsOneWidget);
+    expect(progress.runsFor(id, 0), 1);
+    // the lap count went with the reset; the lifetime tally stands
+    expect(find.text('1 run'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
   });
 
-  testWidgets('a locked card still opens its entities details', (tester) async {
+  testWidgets('a locked floor still opens its entities details', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
     );
@@ -211,7 +214,7 @@ void main() {
     await openLair(tester);
     await scrollList(tester, -400);
 
-    // the boss card is locked; tapping its boss tile is how the drops are
+    // the boss floor is locked; tapping its boss tile is how the drops are
     // read now that the rewards section is gone
     final bossCard = find.ancestor(
       of: find.text("Queen's Chamber"),
@@ -234,84 +237,46 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('the continue-to-next-floor toggle persists', (tester) async {
+  testWidgets('there are no floor-behaviour toggles left', (tester) async {
     await tester.pumpWidget(
       MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
     );
     await settle(tester);
 
-    final session = sessionOf(tester);
     await openLair(tester);
 
-    expect(session.saveGameData.uiState.dungeonAutoAdvance, isFalse);
-    await tester.tap(find.byKey(const ValueKey('dungeon-auto-advance')));
-    await settle(tester);
-
-    // it is a preference, not run state: it lives in the saved ui state so
-    // it outlives the run
-    expect(session.saveGameData.uiState.dungeonAutoAdvance, isTrue);
-
-    // a one-shot dungeon can't refight a card, so it offers no repeat
+    // you always loop the floor you are in, so neither choice exists
+    expect(find.text('Continue to next floor'), findsNothing);
     expect(find.text('Repeat this floor'), findsNothing);
+    expect(find.byType(Switch), findsNothing);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
   });
 
-  testWidgets('a zone dungeon offers the repeat toggle, and the two '
-      'toggles are exclusive', (tester) async {
+  testWidgets('backing out of a dungeon asks nothing and keeps the floor '
+      'running', (tester) async {
     await openDungeonFromSave(tester, DungeonId.SPIDER_DEN);
 
-    // restored onto the card list, the map screen underneath it is not
+    // restored onto the floor list, the map screen underneath it is not
     // built, so the session comes off the dungeon screen itself
     final session = sessionOf(tester, at: find.byType(DungeonScreen));
-    final ui = session.saveGameData.uiState;
-    expect(find.text('Repeat this floor'), findsOneWidget);
+    makeStrong(session);
 
-    await tester.tap(find.byKey(const ValueKey('dungeon-loop-floor')));
+    session.dungeonController.startSlot(DungeonId.SPIDER_DEN, 0);
     await settle(tester);
-    expect(ui.dungeonLoopFloor, isTrue);
-
-    // turning the other on puts the repeat back down: a cleared card can
-    // only do one of the two
-    await tester.tap(find.byKey(const ValueKey('dungeon-auto-advance')));
-    await settle(tester);
-    expect(ui.dungeonAutoAdvance, isTrue);
-    expect(ui.dungeonLoopFloor, isFalse);
-
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump();
-  });
-
-  testWidgets('leaving a dungeon confirms first, then resets the run', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
-    );
-    await settle(tester);
-
-    final session = sessionOf(tester);
-    await openLair(tester);
-
-    expect(session.saveGameData.dungeonRun.active, isTrue);
+    expect(session.saveGameData.dungeonRun.runningSlot, 0);
+    final live = session.saveGameData.dungeonRun.slots[0];
 
     await tester.tap(find.widgetWithIcon(IconButton, Icons.arrow_back));
     await settle(tester);
-    expect(find.text('Leave dungeon?'), findsOneWidget);
 
-    // backing out of the confirm keeps the run
-    await tester.tap(find.text('Stay'));
-    await settle(tester);
-    expect(session.saveGameData.dungeonRun.active, isTrue);
-
-    await tester.tap(find.widgetWithIcon(IconButton, Icons.arrow_back));
-    await settle(tester);
-    await tester.tap(find.widgetWithText(FilledButton, 'Leave'));
-    await settle(tester);
-
-    expect(session.saveGameData.dungeonRun.active, isFalse);
-    expect(session.saveGameData.dungeonRun.slots, isEmpty);
+    // no confirm, and nothing was given up: the floor is still swinging
+    expect(find.text('Leave dungeon?'), findsNothing);
+    expect(find.byType(DungeonScreen), findsNothing);
+    expect(session.saveGameData.dungeonRun.runningSlot, 0);
+    expect(identical(session.saveGameData.dungeonRun.slots[0], live), isTrue);
+    expect(session.actionTimingController.isRunning, isTrue);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();

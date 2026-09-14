@@ -48,6 +48,18 @@ Future<void> pumpMap(WidgetTester tester) async {
   await settle(tester);
 }
 
+/// The time chip sharing a row with the bar at [barKey].
+ActionTimeChip chipBeside(WidgetTester tester, Key barKey) {
+  return tester.widget<ActionTimeChip>(
+    find.descendant(
+      of: find
+          .ancestor(of: find.byKey(barKey), matching: find.byType(Row))
+          .first,
+      matching: find.byType(ActionTimeChip),
+    ),
+  );
+}
+
 Finder tokenFor(String enumName) => find.byKey(ValueKey('map-node-$enumName'));
 
 MapNodeToken tokenWidget(WidgetTester tester, String enumName) =>
@@ -561,6 +573,12 @@ void main() {
       // the screen's own timer is left alone — the road did not take its slot
       expect(find.text('Exploring'), findsOneWidget);
 
+      // with the whole trip still ahead, the chip reads the whole trip:
+      // 7.5s of road, cut by the speed stat
+      var left = chipBeside(tester, ProgressBars.travelBarKey).duration;
+      expect(left, lessThan(const Duration(milliseconds: 7500)));
+      expect(left, greaterThan(const Duration(seconds: 5)));
+
       // pressing it pays the fare and puts the road on the clock
       await tester.press(find.byType(MomentumPrimaryButton));
       await settle(tester);
@@ -570,6 +588,11 @@ void main() {
       expect(session.worldController.travelTarget, ZoneId.SOUTH_HAVEN);
       road = tester.widget<FillBar>(find.byKey(ProgressBars.travelBarKey));
       expect(road.value, greaterThan(0.0));
+      // and the chip counts down as the bar fills
+      expect(
+        chipBeside(tester, ProgressBars.travelBarKey).duration,
+        lessThan(left),
+      );
 
       session.worldController.cancelTravel();
       await settle(tester);

@@ -29,22 +29,35 @@ void main() {
     }
     session.saveGameData.playerData.hitpoints = session.playerDataService
         .getStatTotals(session.saveGameData.playerData)[SkillId.HITPOINTS]!;
+    // a floor loops for as long as its conditions hold, so an unfed player
+    // stops the loop partway through a long lap
+    session.saveGameData.inventoryData.itemMap[ItemId.COOKED_CHICKEN] = 200000;
+    session.saveGameData.playerData.equipmentData.equipedFood =
+        ItemId.COOKED_CHICKEN;
   }
 
-  // ticks the encounter loop until it stops (a card cleared, or a death)
-  void fightUntilStopped(GameSession session) {
+  // ticks while [waiting] holds. a floor loops forever now, so there is
+  // nothing to wait for a stop on
+  void fightPast(GameSession session, bool Function() waiting) {
     var n = 0;
-    while (session.actionTimingController.isRunning && n < 20000) {
+    while (waiting() && n < 20000) {
       session.encounterController.doEncounterAction(1);
       n++;
     }
   }
 
+  /// Starts a floor and fights until it books one more clear.
+  void clearFloorOnce(GameSession session, DungeonId id, int index) {
+    final progress = session.saveGameData.dungeonProgress;
+    final before = progress.runsFor(id, index);
+    session.dungeonController.startSlot(id, index);
+    fightPast(session, () => progress.runsFor(id, index) == before);
+  }
+
   group('Spider Den definition', () {
-    test('is a free zone dungeon with refightable cards', () {
+    test('is a free zone dungeon', () {
       final d = DungeonId.SPIDER_DEN.definition;
       expect(d.type, DungeonType.ZONE);
-      expect(d.repeatableEntries, isTrue);
       expect(d.isKeyed, isFalse);
       expect(
         d.entries.last.entities.last.entityId,
@@ -82,71 +95,67 @@ void main() {
     );
   });
 
-  group('working down the card list', () {
-    test('clearing a card unlocks the next and refights on demand', () {
+  group('working down the floor list', () {
+    test('clearing a floor unlocks the next one, for good', () {
       final session = buildSession();
-      final save = session.saveGameData;
       final dungeons = session.dungeonController;
       makePlayerStrong(session);
+      const id = DungeonId.SPIDER_DEN;
 
-      // free entry: no key, and the first card is open straight away
-      dungeons.openDungeon(DungeonId.SPIDER_DEN);
-      expect(save.dungeonRun.active, isTrue);
-      expect(dungeons.lockReason(0), isNull);
-      expect(dungeons.lockReason(2), isNotNull);
+      // free entry: no key, and the first floor is open straight away
+      expect(dungeons.lockReason(id, 0), isNull);
+      expect(dungeons.lockReason(id, 1), isNotNull);
 
-      // card 2 waits on the seam directly above it
-      dungeons.startSlot(1);
-      fightUntilStopped(session);
+      clearFloorOnce(session, id, 0);
 
-      expect(save.dungeonRun.cleared, contains(1));
-      expect(dungeons.lockReason(2), isNull);
+      expect(dungeons.isCleared(id, 0), isTrue);
+      expect(dungeons.lockReason(id, 1), isNull);
 
-      // re-tapping a cleared card refills it; the cleared mark stays, so
-      // the card below it does not re-lock
-      expect(dungeons.startSlot(1), isTrue);
-      expect(save.dungeonRun.slots[1].cleared, isFalse);
-      expect(save.dungeonRun.slots[1].members.first.count, greaterThan(0));
-      expect(dungeons.lockReason(2), isNull);
+      // and the unlock outlives the floor it came from being reset
+      dungeons.resetRunningFloor();
+      expect(dungeons.lockReason(id, 1), isNull);
+      expect(dungeons.startable(id, 0), isTrue);
 
       session.dispose();
     });
 
-    test('the boss card pays out its guaranteed drop', () {
+    test('the boss floor pays out its guaranteed drop', () {
       final session = buildSession();
       final save = session.saveGameData;
-      final dungeons = session.dungeonController;
       makePlayerStrong(session);
+      const id = DungeonId.SPIDER_DEN;
 
-      dungeons.openDungeon(DungeonId.SPIDER_DEN);
-      // the boss sits behind the cards above it
-      for (int i = 0; i < 3; i++) {
-        dungeons.startSlot(i);
-        fightUntilStopped(session);
-      }
-      dungeons.startSlot(3);
-      fightUntilStopped(session);
+      // the boss sits behind the floor above it
+      clearFloorOnce(session, id, 0);
+      clearFloorOnce(session, id, 1);
 
-      expect(save.dungeonRun.slots[3].cleared, isTrue);
-      // One weighted roll off the boss's table: a 100+ coin stack at weight 1,
-      // or one of the silk necklaces whose weights sum to 0.165. Coins are the
-      // likely outcome, not a certain one, so accept either rather than
-      // flaking on the ~14% of runs that roll a necklace.
+      expect(save.dungeonProgress.runsFor(id, 1), 1);
+      // the boss paid out one roll of its table. which line it rolled is a
+      // coin flip - a nested spider table, a coin stack, or a silk necklace
+      // that lands in equipment rather than the item map - so the assertion
+      // is that something dropped, not what
       final coins = session.inventoryService.getItemCount(
         save.inventoryData,
         ItemId.COINS,
       );
-      // the necklace is equipment, so it stacks in inventoryData.equipment
-      // rather than the itemMap that getItemCount reads
       final necklaces = save.inventoryData.equipment
           .where((e) => e.id == ItemId.SPIDER_SILK_NECKLACE)
           .fold<int>(0, (sum, e) => sum + e.count);
+      final spiderParts =
+          session.inventoryService.getItemCount(
+            save.inventoryData,
+            ItemId.SILK,
+          ) +
+          session.inventoryService.getItemCount(
+            save.inventoryData,
+            ItemId.VENOM,
+          );
       expect(
-        coins >= 100 || necklaces > 0,
+        coins > 0 || necklaces > 0 || spiderParts > 0,
         isTrue,
         reason:
-            'the boss should have paid out one roll of its table, '
-            'got $coins coins and $necklaces necklaces',
+            'the boss should have paid out one roll of its table, got '
+            '$coins coins, $necklaces necklaces and $spiderParts spider parts',
       );
 
       session.dispose();
@@ -154,7 +163,7 @@ void main() {
   });
 
   group('transient entrance', () {
-    test('is discoverable in the dev zone and consumed by a run', () {
+    test('is discoverable in the dev zone, and running it keeps it', () {
       final session = buildSession();
       final save = session.saveGameData;
 
@@ -172,17 +181,17 @@ void main() {
       );
       expect(hasEntrance(), isTrue);
 
-      session.dungeonController.openDungeon(DungeonId.DEV_TRANSIENT_DUNGEON);
-      session.dungeonController.leaveDungeon();
-      expect(hasEntrance(), isFalse);
-
-      // exploring again is how you get another one
-      session.explorationService.addEntityToCurrentZone(
-        EntityId.DEV_DUNGEON_ENTRANCE,
-        1,
-        save.playerData,
-        save.worldData,
+      // nothing is spent by running it: the entrance found by exploring
+      // stays put, the same as any other zone dungeon's
+      makePlayerStrong(session);
+      session.dungeonController.startSlot(DungeonId.DEV_TRANSIENT_DUNGEON, 1);
+      fightPast(
+        session,
+        () =>
+            save.dungeonProgress.runsFor(DungeonId.DEV_TRANSIENT_DUNGEON, 1) ==
+            0,
       );
+      session.dungeonController.resetRunningFloor();
       expect(hasEntrance(), isTrue);
 
       session.dispose();

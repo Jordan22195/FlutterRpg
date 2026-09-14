@@ -499,6 +499,22 @@ class WorldController extends ChangeNotifier {
     );
   }
 
+  /// How much of the road is left to walk.
+  ///
+  /// Read off the bar rather than off a clock: the interval moves under the
+  /// player's finger as the boost builds, so counting down from the time the
+  /// trip was quoted at would drift away from the bar beside it. This is
+  /// what is left of *this* interval, and it shortens as the boost does its
+  /// work — which is the point of holding the button.
+  ///
+  /// Standing still with a trip merely on offer, it reads the whole trip:
+  /// the chip under an untouched travel button is what the walk will take.
+  Duration travelRemaining() {
+    final total = travelInterval();
+    final left = (1.0 - travelProgress()).clamp(0.0, 1.0);
+    return Duration(microseconds: (total.inMicroseconds * left).round());
+  }
+
   /// Whether the progress bars belong to travel rather than to the screen's
   /// own action.
   ///

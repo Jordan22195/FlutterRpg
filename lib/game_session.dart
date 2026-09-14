@@ -51,6 +51,7 @@ import 'package:rpg/systems/exploration_system.dart';
 import 'package:rpg/systems/equipment_system.dart';
 
 import 'data/bound_action.dart';
+import 'data/dungeon_progress_data.dart';
 import 'data/inventory_data.dart';
 import 'data/ui_state.dart';
 import 'package:rpg/controllers/potion_controller.dart';
@@ -66,6 +67,7 @@ class SaveGameData {
   final CraftingState craftingState;
   final EncounterData encounterData;
   final DungeonRun dungeonRun;
+  final DungeonProgressData dungeonProgress;
   final UiState uiState;
   final ActionTimingData actionTimingData;
 
@@ -80,9 +82,11 @@ class SaveGameData {
     required this.craftingState,
     required this.encounterData,
     DungeonRun? dungeonRun,
+    DungeonProgressData? dungeonProgress,
     UiState? uiState,
     ActionTimingData? actionTimingData,
   }) : dungeonRun = dungeonRun ?? DungeonRun(),
+       dungeonProgress = dungeonProgress ?? DungeonProgressData(),
        uiState = uiState ?? UiState(),
        actionTimingData = actionTimingData ?? ActionTimingData();
 
@@ -98,6 +102,7 @@ class SaveGameData {
       'craftingState': craftingState.toJson(),
       'encounterData': encounterData.toJson(),
       'dungeonRun': dungeonRun.toJson(),
+      'dungeonProgress': dungeonProgress.toJson(),
       'uiState': uiState.toJson(),
       'actionTimingData': actionTimingData.toJson(),
     };
@@ -166,6 +171,13 @@ class SaveGameData {
       dungeonRun: json['dungeonRun'] is Map<String, dynamic>
           ? DungeonRun.fromJson(json['dungeonRun'] as Map<String, dynamic>)
           : DungeonRun(),
+      // optional: saves from before floors became permanent have none;
+      // default to nothing unlocked and no key paid
+      dungeonProgress: json['dungeonProgress'] is Map<String, dynamic>
+          ? DungeonProgressData.fromJson(
+              json['dungeonProgress'] as Map<String, dynamic>,
+            )
+          : DungeonProgressData(),
       // optional: saves from before screen restore have no ui state;
       // default to opening on the map tab
       uiState: json['uiState'] is Map<String, dynamic>
@@ -459,7 +471,6 @@ class GameSessionFactory {
       enchantmentCatalog: enchantmentCatalog,
     );
     final dungeonSystem = DungeonSystem(
-      explorationService: explorationService,
       inventoryService: inventoryService,
       playerDataService: playerDataService,
     );
@@ -526,7 +537,7 @@ class GameSessionFactory {
       inventoryService: inventoryService,
       encounterSystem: encounterSystem,
       dungeonSystem: dungeonSystem,
-      uiState: save.uiState,
+      dungeonProgress: save.dungeonProgress,
       offlineProgressData: offlineProgressData,
       offlineProgressService: offlineProgressService,
     );
@@ -594,12 +605,10 @@ class GameSessionFactory {
     );
     final dungeonController = DungeonController(
       dungeonRun: save.dungeonRun,
-      uiState: save.uiState,
-      actionTimingController: actionTimingController,
+      dungeonProgress: save.dungeonProgress,
       encounterController: encounterController,
       playerState: save.playerData,
       inventoryState: save.inventoryData,
-      worldState: save.worldData,
       dungeonSystem: dungeonSystem,
       dungeonService: dungeonService,
       inventoryService: inventoryService,
@@ -670,6 +679,14 @@ class GameSessionFactory {
     // displaced by something else taking the loop, so an abandoned walk
     // hands its fare back
     actionTimingController.addListener(worldController.onActionTimingFrame);
+    // starting anything that is not a dungeon floor walks away from the one
+    // that was running, and a floor walked away from goes back to the top.
+    // the bind is the choke point every activity passes through - exploring,
+    // crafting, enchanting and travelling never touch the encounter paths
+    actionTimingController.onBoundActionChanged = (bound) {
+      if (bound?.kind == BoundActionKind.DUNGEON_SLOT) return;
+      encounterController.releaseDungeonFloor();
+    };
 
     return GameSession(
       saveGameData: save,
@@ -860,7 +877,7 @@ class GameSession {
           bound.targetInstanceId,
         );
       case BoundActionKind.DUNGEON_SLOT:
-        dungeonController.startSlot(bound.dungeonSlot);
+        dungeonController.resumeSlot(bound.dungeonSlot);
       case BoundActionKind.TRAVEL:
         // the one action a relaunch doesn't put back. a walk taken while the
         // app was shut is a walk the player never got to boost or turn back

@@ -3,142 +3,81 @@ import 'package:provider/provider.dart';
 
 import '../catalogs/dungeons/dungeons.dart';
 import '../catalogs/entities/entities.dart';
-import '../catalogs/items/items.dart';
 import '../controllers/dungeon_controller.dart';
-import '../data/ObjectStack.dart';
 import '../services/entity_screen_router_service.dart';
 import '../widgets/entity_info_dialog.dart';
 import '../widgets/entity_queue_card.dart';
-import '../widgets/inventory_grid.dart';
 import '../widgets/item_stack_tile.dart';
 import 'encounter_screen.dart';
-import '../utilities/shell_page_route.dart';
 
-/// A dungeon: one ordered list of cards, first at the top. Each card is a
+/// A dungeon: one ordered list of floors, first at the top. Each floor is a
 /// queue of entities; tapping an unlocked one opens the ordinary encounter
-/// screen against its queue. A card stays sealed until the card above it is
-/// cleared, unless it opts out of that.
+/// screen against its queue, and keeps fighting that floor on a loop until
+/// something else takes the action.
 ///
-/// There is no lobby and no enter button — the list is the dungeon. What a
-/// card holds, and what those entities drop, is read by tapping their
-/// tiles. Backing out is what ends a run, and what that costs depends on
-/// the dungeon's type.
-class DungeonScreen extends StatefulWidget {
+/// There is no lobby, no enter button and no leaving. Opening the list costs
+/// nothing and backing out costs nothing — the floor you started keeps
+/// swinging while you read the zone or the map. A floor cleared once is
+/// unlocked forever; what a floor holds, and what those entities drop, is
+/// read by tapping their tiles.
+class DungeonScreen extends StatelessWidget {
   const DungeonScreen({super.key, required this.dungeonId});
 
   final DungeonId dungeonId;
 
   @override
-  State<DungeonScreen> createState() => _DungeonScreenState();
-}
-
-/// The two things a dungeon has to show: the cards, and what the run has
-/// paid out so far.
-enum _DungeonTab { floors, loot }
-
-class _DungeonScreenState extends State<DungeonScreen> {
-  _DungeonTab _tab = _DungeonTab.floors;
-
-  @override
-  void initState() {
-    super.initState();
-    // opening the list is entering the dungeon. deferred a frame because
-    // it can start a run, and a run start notifies
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      context.read<DungeonController>().openDungeon(widget.dungeonId);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final controller = context.watch<DungeonController>();
-    if (!widget.dungeonId.isReal) {
+    if (!dungeonId.isReal) {
       return const SafeArea(child: Center(child: Text('Unknown dungeon')));
     }
-    final def = widget.dungeonId.definition;
+    final def = dungeonId.definition;
+    final slots = controller.slotsFor(dungeonId);
 
-    final onThisDungeon =
-        controller.hasActiveRun &&
-        controller.activeDungeonId == widget.dungeonId;
-    final slots = onThisDungeon ? controller.slots : const [];
-    final loot = onThisDungeon ? controller.runLoot() : const <ObjectStack>[];
-    final equipment = onThisDungeon
-        ? controller.runEquipment()
-        : const <EquipmentItem>[];
-
-    return PopScope(
-      // backing out abandons the run, so the pop has to be confirmed first
-      canPop: !onThisDungeon,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _leave(context, controller, widget.dungeonId);
-      },
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _header(context, controller, def),
-              Expanded(
-                child: ListView(
-                  children: [
-                    _banner(def.iconAsset),
-                    const SizedBox(height: 12),
-                    _tabBar(
-                      context,
-                      slots.length,
-                      loot.length + equipment.length,
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _header(context, def),
+            Expanded(
+              child: ListView(
+                children: [
+                  _banner(def.iconAsset),
+                  const SizedBox(height: 12),
+                  for (int i = 0; i < slots.length; i++)
+                    EntityQueueCard(
+                      title: slots[i].name,
+                      entities: slots[i].members,
+                      cleared: controller.isCleared(dungeonId, i),
+                      lockReason: controller.lockReason(dungeonId, i),
+                      stats: _statsLine(controller, i),
+                      note: _keyNote(context, controller, i),
+                      onTap: controller.startable(dungeonId, i)
+                          ? () => _openSlot(context, controller, i)
+                          : null,
+                      onEntityTap: (entity) =>
+                          _showEntityDetails(context, entity),
                     ),
-                    const SizedBox(height: 8),
-                    if (_tab == _DungeonTab.floors)
-                      for (int i = 0; i < slots.length; i++)
-                        EntityQueueCard(
-                          title: slots[i].name,
-                          entities: slots[i].members,
-                          cleared: controller.isCleared(i),
-                          lockReason: controller.lockReason(i),
-                          note: _keyNote(context, controller, i),
-                          // a one-shot card already cleared can't be run
-                          // again, so it offers no play button either
-                          onTap: controller.startable(i)
-                              ? () => _openSlot(context, controller, i)
-                              : null,
-                          onEntityTap: (entity) =>
-                              _showEntityDetails(context, entity),
-                        )
-                    else if (loot.isEmpty && equipment.isEmpty)
-                      _emptyLoot(context)
-                    else
-                      Card(
-                        child: InventoryGrid(
-                          items: loot,
-                          equipment: equipment,
-                          shrinkWrap: true,
-                        ),
-                      ),
-                  ],
-                ),
+                ],
               ),
-              _toggles(context, controller),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _header(
-    BuildContext context,
-    DungeonController controller,
-    DungeonDefinition def,
-  ) {
+  Widget _header(BuildContext context, DungeonDefinition def) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 0, 4, 8),
       child: Row(
         children: [
           IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => _leave(context, controller, widget.dungeonId),
+            // nothing is left behind by walking out, so this is an ordinary
+            // pop: the floor keeps running while the player looks around
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           const SizedBox(width: 4),
           Expanded(
@@ -153,62 +92,31 @@ class _DungeonScreenState extends State<DungeonScreen> {
     );
   }
 
-  /// Floors or loot, in the explore screen's segmented style so the two
-  /// list screens read the same way.
-  Widget _tabBar(BuildContext context, int floorCount, int lootCount) {
-    return SizedBox(
-      width: double.infinity,
-      child: SegmentedButton<_DungeonTab>(
-        segments: [
-          ButtonSegment(
-            value: _DungeonTab.floors,
-            label: Text('Floors · $floorCount'),
-          ),
-          ButtonSegment(
-            value: _DungeonTab.loot,
-            label: Text('Loot · $lootCount'),
-          ),
-        ],
-        selected: {_tab},
-        // single-select: the set always holds exactly one tab
-        onSelectionChanged: (selection) =>
-            setState(() => _tab = selection.first),
-        showSelectedIcon: false,
-        style: SegmentedButton.styleFrom(
-          visualDensity: VisualDensity.compact,
-          textStyle: const TextStyle(fontSize: 12),
-        ),
-      ),
-    );
+  /// How much of this floor the player has done: everything ever, and the
+  /// laps since this floor last started. Null until it has been cleared once
+  /// — a floor with nothing to report says nothing.
+  String? _statsLine(DungeonController controller, int index) {
+    final lifetime = controller.lifetimeRuns(dungeonId, index);
+    if (lifetime <= 0) return null;
+    final session = controller.sessionRuns(dungeonId, index);
+    final runs = '$lifetime ${lifetime == 1 ? 'run' : 'runs'}';
+    if (session <= 0) return runs;
+    return '$runs · $session this session';
   }
 
-  Widget _emptyLoot(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Center(
-        child: Text(
-          'Nothing dropped this run yet',
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// The entry key a keyed dungeon's first card is about to charge, so it
-  /// never leaves the bag unannounced.
+  /// The entry key a keyed dungeon's first floor is about to charge, so it
+  /// never leaves the bag unannounced. Charged once, ever.
   Widget? _keyNote(
     BuildContext context,
     DungeonController controller,
     int index,
   ) {
-    if (!controller.showsKeyNote(index)) return null;
+    if (!controller.showsKeyNote(dungeonId, index)) return null;
 
-    final spent = controller.keySpent;
-    final held = controller.keyCount(controller.activeDungeonId);
-    final label = spent
-        ? 'Key spent'
+    final paid = controller.keyPaid(dungeonId);
+    final held = controller.keyCount(dungeonId);
+    final label = paid
+        ? 'Unlocked'
         : held > 0
         ? 'Key ready'
         : 'No key';
@@ -218,15 +126,15 @@ class _DungeonScreenState extends State<DungeonScreen> {
         ItemStackTile(
           size: 28,
           count: held,
-          id: controller.keyItemId,
+          id: controller.keyItemId(dungeonId),
           showInfoDialogOnTap: false,
-          depleted: spent || held <= 0,
+          depleted: paid || held <= 0,
         ),
         const SizedBox(width: 8),
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: spent || held > 0
+            color: paid || held > 0
                 ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6)
                 : Theme.of(context).colorScheme.error,
           ),
@@ -250,52 +158,6 @@ class _DungeonScreenState extends State<DungeonScreen> {
     );
   }
 
-  /// What clearing a card does: drop back to this list, run on into the
-  /// next card, or refight the same one. Preferences, so they hold across
-  /// runs — and mutually exclusive, since a cleared card can only do one
-  /// of the two.
-  Widget _toggles(BuildContext context, DungeonController controller) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _toggleRow(
-          context,
-          key: const ValueKey('dungeon-auto-advance'),
-          label: 'Continue to next floor',
-          value: controller.autoAdvance,
-          onChanged: (value) => controller.autoAdvance = value,
-        ),
-        // only the repeatable dungeons can refight a card, so elsewhere
-        // the row would be a switch that never does anything
-        if (controller.canLoopFloor)
-          _toggleRow(
-            context,
-            key: const ValueKey('dungeon-loop-floor'),
-            label: 'Repeat this floor',
-            value: controller.loopFloor,
-            onChanged: (value) => controller.loopFloor = value,
-          ),
-      ],
-    );
-  }
-
-  Widget _toggleRow(
-    BuildContext context, {
-    required Key key,
-    required String label,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        ),
-        Switch(key: key, value: value, onChanged: onChanged),
-      ],
-    );
-  }
-
   Future<void> _openSlot(
     BuildContext context,
     DungeonController controller,
@@ -303,17 +165,17 @@ class _DungeonScreenState extends State<DungeonScreen> {
   ) async {
     final navigator = Navigator.of(context);
 
-    // spending the key is irreversible and re-entering costs another one,
-    // so it is never charged on a stray tap
-    if (controller.willSpendKey(i)) {
-      final keyName = controller.keyItemId.definition.name;
+    // spending the key is irreversible, so it is never charged on a stray
+    // tap — even though it only ever happens once
+    if (controller.willSpendKey(dungeonId, i)) {
+      final keyName = controller.keyItemId(dungeonId).definition.name;
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           title: Text('Spend 1 $keyName?'),
           content: const Text(
-            'Entering costs the key. Leaving the dungeon — or dying in it '
-            '— will cost another one to come back.',
+            'Entering costs the key, once. After that this dungeon stays '
+            'open for good.',
           ),
           actions: [
             TextButton(
@@ -330,9 +192,9 @@ class _DungeonScreenState extends State<DungeonScreen> {
       if (confirmed != true) return;
     }
 
-    if (!controller.startSlot(i)) return;
+    if (!controller.startSlot(dungeonId, i)) return;
     navigator.push(
-      ShellPageRoute(
+      MaterialPageRoute(
         settings: RouteSettings(
           name: EntityScreenRouterService.encounterRouteName,
           arguments: i,
@@ -344,47 +206,5 @@ class _DungeonScreenState extends State<DungeonScreen> {
 
   void _showEntityDetails(BuildContext context, EncounterEntity entity) {
     showEntityInfoDialog(context, entity);
-  }
-
-  Future<void> _leave(
-    BuildContext context,
-    DungeonController controller,
-    DungeonId dungeonId,
-  ) async {
-    final navigator = Navigator.of(context);
-
-    // pop, never maybePop: this method is itself what PopScope calls when
-    // the back is refused, and the PopScope above still reads canPop false
-    // until the next frame — asking again would come straight back here
-    void popNow() {
-      if (navigator.canPop()) navigator.pop();
-    }
-
-    if (!controller.hasActiveRun || controller.activeDungeonId != dungeonId) {
-      popNow();
-      return;
-    }
-
-    final leave = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Leave dungeon?'),
-        content: Text(controller.leaveWarningFor(dungeonId)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Stay'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Leave'),
-          ),
-        ],
-      ),
-    );
-
-    if (leave != true) return;
-    controller.leaveDungeon();
-    popNow();
   }
 }

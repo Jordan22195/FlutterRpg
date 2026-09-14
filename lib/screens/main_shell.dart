@@ -56,11 +56,9 @@ class _MainShellState extends State<MainShell> {
   DungeonId _restoreDungeonId = DungeonId.NULL;
   int _restoreDungeonSlot = -1;
 
-  // the encounter controller's death and card-cleared counters as of the
-  // last ones handled
+  // the encounter controller's death counter as of the last one handled
   late final EncounterController _encounter;
   int _handledDeathSequence = 0;
-  int _handledSlotClearedSequence = 0;
 
   // the timing controller's offline-report counter as of the last one shown,
   // and whether its dialog is currently up
@@ -91,7 +89,6 @@ class _MainShellState extends State<MainShell> {
 
     _encounter = context.read<EncounterController>();
     _handledDeathSequence = _encounter.deathSequence;
-    _handledSlotClearedSequence = _encounter.slotClearedSequence;
     _encounter.addListener(_onEncounterChanged);
 
     // offline progress settles on the first tick after the action resumes
@@ -141,35 +138,27 @@ class _MainShellState extends State<MainShell> {
     });
   }
 
-  // both of the encounter loop's out-of-band events land here, and they
-  // land mid-frame inside the action tick — navigating or showing a dialog
-  // has to wait for the frame to finish. death is checked first: dying
-  // inside a dungeon card must not also advance to the next card.
+  // the encounter loop's out-of-band event lands here, and it lands
+  // mid-frame inside the action tick — navigating or showing a dialog has to
+  // wait for the frame to finish.
   void _onEncounterChanged() {
     if (_encounter.deathSequence != _handledDeathSequence) {
       _handledDeathSequence = _encounter.deathSequence;
-      // the death also consumed whatever a cleared card would have reported
-      _handledSlotClearedSequence = _encounter.slotClearedSequence;
       _onDeath();
-      return;
-    }
-
-    if (_encounter.slotClearedSequence != _handledSlotClearedSequence) {
-      _handledSlotClearedSequence = _encounter.slotClearedSequence;
-      _onDungeonSlotCleared();
     }
   }
 
   // dying unwinds the map tab back to the map screen and says so; the
-  // encounter itself is already stopped by the controller. dying in a
-  // dungeon is leaving it, so the run ends here too — with everything that
-  // costs (a spent key stays spent, a transient entrance is consumed)
+  // encounter itself is already stopped by the controller. dying on a
+  // dungeon floor sends that floor back to the top — the same cost as
+  // walking away from it to do something else. what has been unlocked, and
+  // a key already paid, stand.
   void _onDeath() {
     final dungeons = context.read<DungeonController>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (dungeons.hasActiveRun) dungeons.leaveDungeon();
+      dungeons.resetRunningFloor();
       setState(() => index = 0);
       _navKeys[0].currentState?.popUntil((route) => route.isFirst);
       _captureUiState();
@@ -178,26 +167,6 @@ class _MainShellState extends State<MainShell> {
       // unwinding above still has to happen either way.
       if (_timing.pendingOfflineReport?.died == true) return;
       _showDeathDialog();
-    });
-  }
-
-  // a dungeon card ran dry with nothing to follow it - the run's own
-  // preferences are answered in the encounter tick, which carries a lap or
-  // the next card over in place and never reports here. so this is only
-  // ever the end of the run's action: drop back to the card list, where
-  // the newly unlocked card is in view.
-  void _onDungeonSlotCleared() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final nav = _navKeys[0].currentState;
-      if (nav == null) return;
-
-      final onEncounter =
-          _mapTabObserver.topRouteName ==
-          EntityScreenRouterService.encounterRouteName;
-      if (!onEncounter) return;
-
-      nav.maybePop();
     });
   }
 
@@ -240,9 +209,8 @@ class _MainShellState extends State<MainShell> {
       }
     }
 
-    // the route's index is the card it was pushed for, which a run that
-    // walked on to the next card - offline, or with the screen unmounted -
-    // has since left behind. the run itself is the live answer.
+    // the route's index is the floor it was pushed for; the run itself is
+    // the live answer for which floor the loop is actually in.
     final running = context.read<DungeonController>().runningSlot;
     if (ui.dungeonSlot >= 0 && running >= 0) ui.dungeonSlot = running;
 
@@ -289,18 +257,17 @@ class _MainShellState extends State<MainShell> {
             ),
           );
         case EntityScreenRouterService.encounterRouteName:
-          // an encounter above a dungeon is one of its cards; a zone
+          // an encounter above a dungeon is one of its floors; a zone
           // entity lookup would never find that entity
           if (inDungeon) {
-            // the run's own slot first: a card the player walked on to
-            // while away is the one they are standing in now, whatever the
-            // saved route said
+            // the run's own slot first: the floor the loop is in now is the
+            // one they are standing in, whatever the saved route said
             final slot = dungeons.runningSlot >= 0
                 ? dungeons.runningSlot
                 : _restoreDungeonSlot;
             // deliberately not started here. starting stamps
             // lastActionTime, which would eat the gap this launch is owed;
-            // resumeBoundAction restarts the card below with the gap
+            // resumeBoundAction restarts the floor below with the gap
             // intact, and the screen renders the card off the saved run
             // either way
             if (!dungeons.hasActiveRun) return;
@@ -337,8 +304,8 @@ class _MainShellState extends State<MainShell> {
     final nav = _navKeys[0].currentState!;
     nav.popUntil((route) => route.isFirst);
 
-    // a dungeon card fight rebuilds Map -> Dungeon -> Encounter: the entity
-    // it is running lives in the card, not in any zone, so the explore
+    // a dungeon floor fight rebuilds Map -> Dungeon -> Encounter: the entity
+    // it is running lives in the floor, not in any zone, so the explore
     // route below could never reach it
     final dungeons = context.read<DungeonController>();
     if (dungeons.hasActiveRun && dungeons.runningSlot >= 0) {
@@ -383,8 +350,7 @@ class _MainShellState extends State<MainShell> {
 
   Future<bool> _onWillPop() async {
     if (_currentNavigator.canPop()) {
-      // maybePop, not pop: a screen can refuse the back (leaving a dungeon
-      // abandons the run, so it asks first)
+      // maybePop, not pop: a screen may still want to refuse the back
       _currentNavigator.maybePop();
       return false; // handled here; don't pop the app
     }

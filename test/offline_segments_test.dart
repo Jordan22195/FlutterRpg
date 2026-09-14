@@ -1554,116 +1554,94 @@ void main() {
           .getStatTotals(session.saveGameData.playerData)[SkillId.HITPOINTS]!;
     }
 
-    /// Opens [id] and starts card [index], the way a card tap does.
-    void enterCard(GameSession session, DungeonId id, int index) {
-      session.dungeonController.openDungeon(id);
-      expect(session.dungeonController.startSlot(index), isTrue);
+    /// Starts floor [index] of [id], the way a floor tap does.
+    void enterFloor(GameSession session, DungeonId id, int index) {
+      expect(session.dungeonController.startSlot(id, index), isTrue);
     }
 
-    test('a repeated floor pays lap after lap across one gap', () {
+    test('a floor pays lap after lap across one gap', () {
       final session = buildSession();
       final save = session.saveGameData;
       makePlayerStrong(session);
-      session.dungeonController.loopFloor = true;
-      // the ore seam: one member, eight iron, and no card above it
-      enterCard(session, DungeonId.SPIDER_DEN, 1);
+      // the dev ore floor: one member, ten iron, and nothing above it
+      enterFloor(session, DungeonId.DEV_TRANSIENT_DUNGEON, 1);
 
       const gap = 3600.0;
       final owed = actionsIn(session, gap);
       final report = settle(session, gap);
 
-      // the card cleared many times over, not once
+      // the floor cleared many times over, not once
       final mined = report.entitiesDefeated[EntityId.IRON] ?? 0;
-      expect(mined, greaterThan(8 * 10));
-      // and the loop is still going, on a card refilled for the next lap
+      expect(mined, greaterThan(10 * 10));
+      // and the loop is still going, on a floor refilled for the next lap
       expect(save.actionTimingData.running, isTrue);
       expect(save.dungeonRun.runningSlot, 1);
-      expect(save.dungeonRun.cleared, contains(1));
+      expect(
+        save.dungeonProgress.runsFor(DungeonId.DEV_TRANSIENT_DUNGEON, 1),
+        greaterThan(1),
+      );
+      // every lap is counted, offline included
+      expect(
+        save.dungeonRun.sessionRuns[1],
+        save.dungeonProgress.runsFor(DungeonId.DEV_TRANSIENT_DUNGEON, 1),
+      );
 
       // the point of charging a handed-off segment only for what it did:
       // without it a lap burns the rest of its segment for nothing
       expect(report.actionCount, closeTo(owed, 2));
-      // the haul went to the run as well as the report
-      expect(
-        session.inventoryService.getItemCount(
-          save.dungeonRun.loot,
-          ItemId.IRON_ORE,
-        ),
-        greaterThan(0),
-      );
       tearDownSession(session);
     });
 
-    test('a card hands off between members without burning the gap', () {
+    test('a floor hands off between members without burning the gap', () {
       final session = buildSession();
       final save = session.saveGameData;
       makePlayerStrong(session);
-      // the boss card: two giant spiders, then the broodmother
-      session.dungeonController.openDungeon(DungeonId.SPIDER_DEN);
-      for (final i in [1, 0, 2]) {
-        expect(session.dungeonController.startSlot(i), isTrue);
-        while (session.actionTimingController.isRunning) {
-          session.encounterController.doEncounterAction(1);
-        }
-      }
-      expect(session.dungeonController.startSlot(3), isTrue);
+      const id = DungeonId.DEV_TRANSIENT_DUNGEON;
+      // the queue floor: three goblins, then a giant spider
+      enterFloor(session, id, 0);
 
       final report = settle(session, 600);
 
       // the hand-off used to charge the whole segment for the part of it
-      // the first member took, leaving the boss unreached
-      expect(save.dungeonRun.slots[3].cleared, isTrue);
-      expect(report.entitiesDefeated[EntityId.SPIDER_BROODMOTHER], 1);
-      expect(save.actionTimingData.running, isFalse);
+      // the first member took, leaving the second member unreached
+      expect(report.entitiesDefeated[EntityId.GOBLIN], greaterThan(0));
+      expect(report.entitiesDefeated[EntityId.GIANT_SPIDER], greaterThan(0));
+      expect(save.dungeonProgress.runsFor(id, 0), greaterThan(0));
+      expect(save.actionTimingData.running, isTrue);
       tearDownSession(session);
     });
 
-    test('auto-advance walks the cards down and stops at the end', () {
+    test('a floor never walks on to the next one on its own', () {
       final session = buildSession();
       final save = session.saveGameData;
       makePlayerStrong(session);
-      session.dungeonController.autoAdvance = true;
-      enterCard(session, DungeonId.SPIDER_DEN, 1);
+      const id = DungeonId.DEV_TRANSIENT_DUNGEON;
+      enterFloor(session, id, 1);
 
       settle(session, 3600);
 
-      // card 1 unlocks 2, which unlocks 3; nothing follows the boss
-      expect(save.dungeonRun.cleared, containsAll([1, 2, 3]));
-      expect(save.actionTimingData.running, isFalse);
+      // it looped floor 1 all gap long; the floors below it were never
+      // started, however many times 1 unlocked them
+      expect(save.dungeonRun.runningSlot, 1);
+      expect(save.dungeonProgress.runsFor(id, 2), 0);
+      expect(save.dungeonProgress.runsFor(id, 3), 0);
+      expect(save.actionTimingData.running, isTrue);
       tearDownSession(session);
     });
 
-    test('a one-shot dungeon never laps, however the toggle is set', () {
-      final session = buildSession();
-      final save = session.saveGameData;
-      makePlayerStrong(session);
-      session.dungeonController.loopFloor = true;
-      // a transient dungeon's cards are one-shot; its ore card is the one
-      // that settles a gap without a fight in it
-      enterCard(session, DungeonId.DEV_TRANSIENT_DUNGEON, 1);
-
-      final report = settle(session, 3600);
-
-      expect(save.dungeonRun.slots[1].cleared, isTrue);
-      expect(save.actionTimingData.running, isFalse);
-      expect(report.entitiesDefeated[EntityId.IRON], 10);
-      tearDownSession(session);
-    });
-
-    test('dying mid-lap ends the run rather than starting another', () {
+    test('dying mid-lap stops the loop rather than starting another', () {
       final session = buildSession();
       final save = session.saveGameData;
       // no skills cranked: the spiders win
-      session.dungeonController.loopFloor = true;
-      enterCard(session, DungeonId.SPIDER_DEN, 0);
+      enterFloor(session, DungeonId.SPIDER_DEN, 0);
 
       final report = settle(session, 3600);
 
       expect(report.died, isTrue);
       expect(save.actionTimingData.running, isFalse);
       expect(save.playerData.hitpoints, 1);
-      // the card was never refilled past the death
-      expect(save.dungeonRun.cleared, isEmpty);
+      // the floor was never cleared, so nothing was booked past the death
+      expect(save.dungeonProgress.runsFor(DungeonId.SPIDER_DEN, 0), 0);
       tearDownSession(session);
     });
 
@@ -1672,8 +1650,7 @@ void main() {
       final save = session.saveGameData;
       makePlayerStrong(session);
       setLevel(session, SkillId.STAMINA, 40);
-      session.dungeonController.loopFloor = true;
-      enterCard(session, DungeonId.SPIDER_DEN, 1);
+      enterFloor(session, DungeonId.DEV_TRANSIENT_DUNGEON, 1);
 
       final report = settle(session, 86400);
 

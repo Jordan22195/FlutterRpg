@@ -19,7 +19,7 @@ import '../data/dungeon_run.dart';
 import '../data/encounter_data.dart';
 import '../services/dungeon_service.dart';
 import '../services/encounter_service.dart';
-import '../data/ui_state.dart';
+import '../data/dungeon_progress_data.dart';
 import '../systems/dungeon_system.dart';
 import '../systems/encounter_system.dart';
 import '../services/inventory_service.dart';
@@ -40,8 +40,8 @@ class EncounterController extends ChangeNotifier {
   final WorldData _worldState;
   final InventoryData _inventoryState;
   final DungeonRun _dungeonRun;
+  final DungeonProgressData _dungeonProgress;
   final OfflineProgressData _offlineProgressData;
-  final UiState _uiState;
 
   // services
   final EncounterService _encounterService;
@@ -72,18 +72,11 @@ class EncounterController extends ChangeNotifier {
   // a sequence (rather than a flag) so repeat deaths always register
   int deathSequence = 0;
 
-  // increments each time a dungeon card is fully cleared. the shell watches
-  // this to drop back to the dungeon list (or run the next card); a
-  // sequence, so clearing the same card twice always registers
-  int slotClearedSequence = 0;
-
-  /// The card index that [slotClearedSequence] last reported.
-  int lastClearedSlot = -1;
-
   EncounterController({
     required PlayerData playerData,
     required EncounterData encounterState,
     required DungeonRun dungeonRun,
+    required DungeonProgressData dungeonProgress,
     required DungeonService dungeonService,
 
     required EncounterService encounterService,
@@ -96,7 +89,6 @@ class EncounterController extends ChangeNotifier {
     required InventoryService inventoryService,
     required EncounterSystem encounterSystem,
     required DungeonSystem dungeonSystem,
-    required UiState uiState,
     required OfflineProgressData offlineProgressData,
     required OfflineProgressService offlineProgressService,
   }) : _playerState = playerData,
@@ -104,6 +96,7 @@ class EncounterController extends ChangeNotifier {
        _offlineProgressService = offlineProgressService,
        _encounterState = encounterState,
        _dungeonRun = dungeonRun,
+       _dungeonProgress = dungeonProgress,
        _dungeonService = dungeonService,
        _encounterService = encounterService,
        _worldState = worldState,
@@ -113,7 +106,6 @@ class EncounterController extends ChangeNotifier {
        _inventoryState = inventoryState,
        _encounterSystem = encounterSystem,
        _dungeonSystem = dungeonSystem,
-       _uiState = uiState,
        _inventoryService = inventoryService;
 
   void doFishingEncounterAction(
@@ -164,7 +156,6 @@ class EncounterController extends ChangeNotifier {
     );
     actionSequence++;
     _recordOfflineResult();
-    _recordDungeonDrops();
 
     if (_advanceDungeonQueue()) {
       notifyListeners();
@@ -214,7 +205,6 @@ class EncounterController extends ChangeNotifier {
     );
     actionSequence++;
     _recordOfflineResult();
-    _recordDungeonDrops();
 
     // the fight killed the player while they were away. this sits above the
     // queue advance for the same reason the shell checks death first: a
@@ -254,11 +244,8 @@ class EncounterController extends ChangeNotifier {
 
   // ---- dungeon cards ----
 
-  /// Starts dungeon card [index] — the encounter behind a card tap. Only
-  /// one card runs at a time, so this drops whatever was running.
-  ///
-  /// The encounter panel's drop log is a card's own haul, so a new card
-  /// starts it fresh; the run's cumulative haul lives on the run.
+  /// Starts dungeon floor [index] — the encounter behind a floor tap. Only
+  /// one floor runs at a time, so this drops whatever was running.
   bool startDungeonSlot(int index) {
     final entity = _dungeonService.slotAt(_dungeonRun, index)?.current;
     if (entity == null) return false;
@@ -279,40 +266,18 @@ class EncounterController extends ChangeNotifier {
     _offlineProgressService.record(_offlineProgressData, latestActionResult);
   }
 
-  /// Copies this tick's drops into the run's cumulative haul. The encounter
-  /// panel's own log resets with each card, so the run total has to be kept
-  /// separately — the dungeon list's loot tab reads it.
-  ///
-  /// Equipment is copied in alongside the stackables. A boss's unique is
-  /// paid out as an instance rather than a count in the item map, so taking
-  /// the stackable half alone left the drop every card in the dungeon is
-  /// run for missing from the run's own haul.
-  void _recordDungeonDrops() {
-    if (_dungeonService.runningEntity(_dungeonRun) == null) return;
-    _inventoryService.addItems(_dungeonRun.loot, latestActionResult.items);
-    for (final piece in latestActionResult.equipment) {
-      // its own instance, the way the payout gives each inventory one:
-      // addEquipment merges by mutating the stack it lands on, so sharing
-      // the object with the result would count the drop twice.
-      // copy() rebuilds from the definition and does not carry the count
-      final own = piece.copy();
-      own.count = piece.count;
-      _inventoryService.addEquipment(_dungeonRun.loot, own);
-    }
-  }
-
-  /// Hands the running card off to whatever comes next, keeping the loop
+  /// Hands the running floor off to whatever comes next, keeping the loop
   /// running. Returns true when it did — the caller then skips its own
   /// conditions check, which would otherwise see the spent member and stop.
   ///
-  /// Next is the card's next member, or — once the card is spent — what the
-  /// player's two dungeon preferences ask for: the same card refilled, or
-  /// the next one down. That decision lives here rather than on the shell
-  /// because this is the path that also runs with the app closed, where no
-  /// widget is listening and no route is mounted.
+  /// Next is the floor's next member, or — once the floor is spent — the
+  /// same floor again: clearing books the lap and the permanent unlock, then
+  /// refills and carries straight on. You always loop the floor you are in,
+  /// and only starting another action gets you out of it.
   ///
-  /// When nothing comes next the card is done: the loop stops and reports
-  /// through [slotClearedSequence].
+  /// That decision lives here rather than on the shell because this is the
+  /// path that also runs with the app closed, where no widget is listening
+  /// and no route is mounted.
   bool _advanceDungeonQueue() {
     final slot = _dungeonService.runningSlot(_dungeonRun);
     final current = slot?.current;
@@ -327,32 +292,16 @@ class EncounterController extends ChangeNotifier {
     final next = _dungeonService.advanceRunning(_dungeonRun);
     if (next != null) return _handOffTo(next);
 
-    _dungeonService.markCleared(_dungeonRun, index);
+    _dungeonSystem.recordFloorCleared(_dungeonProgress, _dungeonRun, index);
 
-    final continueOn = _dungeonSystem.nextSlotAfterClear(
-      _dungeonRun,
-      index: index,
-      loopFloor: _uiState.dungeonLoopFloor,
-      autoAdvance: _uiState.dungeonAutoAdvance,
-      playerState: _playerState,
-      playerInventory: _inventoryState,
-    );
-    if (continueOn != null) {
-      final member = _dungeonSystem.openSlot(_dungeonRun, continueOn);
-      if (member != null) {
-        // a lap of the same card is the same haul carrying on, so its drop
-        // log stands; moving down to another card starts a fresh one
-        if (continueOn != index) {
-          _inventoryService.clearItems(_encounterState.itemDrops);
-          _dungeonRun.runningSlot = continueOn;
-        }
-        return _handOffTo(member);
-      }
-    }
+    // a lap of the same floor is the same haul carrying on, so the
+    // encounter panel's drop log stands across it
+    final member = _dungeonSystem.openSlot(_dungeonRun, index);
+    if (member != null) return _handOffTo(member);
 
+    // a floor that refilled to nothing would clear again the instant it
+    // started and loop at no cost, so the loop stops instead
     _actionTimingController.stop();
-    lastClearedSlot = index;
-    slotClearedSequence++;
     return false;
   }
 
@@ -422,9 +371,19 @@ class EncounterController extends ChangeNotifier {
     _lastEntityAttackAt = null;
   }
 
-  /// Releases the dungeon card context, so the encounter screen stops
-  /// resolving through the run.
-  void _releaseDungeonSlot() => _dungeonService.clearRunningSlot(_dungeonRun);
+  /// Walks away from the running floor: it goes back to the top, and the
+  /// encounter screen stops resolving through the dungeon.
+  ///
+  /// Public because it is not only the encounter paths that leave a floor
+  /// behind — exploring, crafting, enchanting and travelling all take the
+  /// action loop too, and reach this through the bound-action hook wired in
+  /// GameSessionFactory.
+  void releaseDungeonFloor() {
+    final index = _dungeonRun.runningSlot;
+    if (index < 0) return;
+    _dungeonSystem.resetSlot(_dungeonRun, index);
+    _dungeonService.clearRunningSlot(_dungeonRun);
+  }
 
   /// The members still queued behind the one on screen, in queue order.
   /// Empty for an ordinary world encounter.
@@ -435,7 +394,7 @@ class EncounterController extends ChangeNotifier {
   // fires a single time when action button is pressed
   // binds the entity's encounter action to the periodic loop
   void startEncounterAction() {
-    // inside a dungeon card the button re-starts THAT card's member. the
+    // inside a dungeon floor the button re-starts THAT floor's member. the
     // zone lookup below can't see it — and with the same EntityId sitting
     // in the zone it would happily start the wrong fight
     final inCard = _dungeonService.runningEntity(_dungeonRun);
@@ -474,12 +433,11 @@ class EncounterController extends ChangeNotifier {
   // button via startEncounterAction and by the action queue). returns
   // true when the action is running when this returns
   bool startEncounterActionFor(EncounterEntity entity) {
-    // starting anything that isn't the running card's own member leaves the
-    // dungeon behind. this is the one place that decides it, because every
-    // way of starting an encounter — the action button, the action queue,
-    // a card tap — comes through here
+    // starting anything that isn't the running floor's own member leaves
+    // that floor behind, and resets it. every way of starting an encounter —
+    // the action button, the action queue, a floor tap — comes through here
     if (!identical(entity, _dungeonService.runningEntity(_dungeonRun))) {
-      _releaseDungeonSlot();
+      releaseDungeonFloor();
     }
 
     final action = _actionFor(entity);
@@ -768,7 +726,7 @@ class EncounterController extends ChangeNotifier {
   void onEntityViewChanged() {
     // navigating to a zone entity leaves the dungeon card behind. dungeon
     // cards don't route through here, so this only ever fires on the way out
-    _releaseDungeonSlot();
+    releaseDungeonFloor();
 
     if (!_isRunningAnyEncounterAction()) {
       _inventoryService.clearItems(_encounterState.itemDrops);

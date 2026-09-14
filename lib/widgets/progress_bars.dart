@@ -152,19 +152,36 @@ class ProgressBars extends StatelessWidget {
               // The road, while there is one to walk. Off the bottom rather
               // than in among the two that are always there, so neither of
               // those ever changes position as it comes and goes.
-              if (world.isShowingTravel) ...[
-                const SizedBox(height: _barGap),
+              //
+              // The only bar here that carries a number, because it is the
+              // only one counting down to something: energy and boost are
+              // levels, and a trip has an end. The chip is the encounter
+              // rows' own, so the two read the same way.
+              //
+              // No gap above it, unlike between the two above: the chip is
+              // taller than the bar it sits beside, so the road's row brings
+              // its own breathing room — and brings it from the same 36px
+              // the activity tile already claims, which is what keeps the
+              // banner exactly as tall with a trip on as without one.
+              if (world.isShowingTravel)
                 AnimatedBuilder(
                   animation: timing,
-                  builder: (_, _) => FillBar(
-                    key: travelBarKey,
-                    value: world.travelProgress(),
-                    height: _barHeight,
-                    borderRadius: _barRadius,
-                    foregroundColor: kTravelColor,
+                  builder: (_, _) => Row(
+                    children: [
+                      Expanded(
+                        child: FillBar(
+                          key: travelBarKey,
+                          value: world.travelProgress(),
+                          height: _barHeight,
+                          borderRadius: _barRadius,
+                          foregroundColor: kTravelColor,
+                        ),
+                      ),
+                      const SizedBox(width: ActionTimer.gap),
+                      ActionTimeChip(duration: world.travelRemaining()),
+                    ],
                   ),
                 ),
-              ],
             ],
           ),
         ),

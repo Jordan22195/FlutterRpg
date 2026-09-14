@@ -20,6 +20,7 @@ class EntityQueueCard extends StatelessWidget {
     required this.entities,
     this.cleared = false,
     this.lockReason,
+    this.stats,
     this.note,
     this.onTap,
     this.onEntityTap,
@@ -28,20 +29,24 @@ class EntityQueueCard extends StatelessWidget {
   final String title;
   final List<EncounterEntity> entities;
 
-  /// Fully worked through. A cleared card can still be tappable — that is
-  /// how repeatable content is farmed.
+  /// Worked through at least once. A cleared card can still be tappable —
+  /// that is how repeatable content is farmed.
   final bool cleared;
 
   /// Why this card can't be started, or null when it can. Non-null dims the
   /// card and renders the reason under the title.
   final String? lockReason;
 
+  /// A tally line under the title — how much of this card has been done. Null
+  /// when there is nothing to say yet.
+  final String? stats;
+
   /// Anything else this card has to say about itself, under the title — a
   /// dungeon uses it for the entry key it is about to charge.
   final Widget? note;
 
-  /// Starts the card. Null means it can't be started at all (a one-shot
-  /// card already cleared), which also drops the play button.
+  /// Starts the card. Null means it can't be started at all, which also
+  /// drops the play button.
   final VoidCallback? onTap;
 
   /// Tapping one of the entity tiles, for its details popup.
@@ -127,6 +132,16 @@ class EntityQueueCard extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+              ],
+              if (stats != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  stats!,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurface.withOpacity(0.6),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
               if (note != null) ...[const SizedBox(height: 6), note!],

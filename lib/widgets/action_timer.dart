@@ -73,8 +73,10 @@ class ActionTimer extends StatelessWidget {
   static const double _barHeight = 5;
   static const double _barRadius = 3;
 
-  /// Gap between the bar and the interval chip.
-  static const double _gap = 7;
+  /// Gap between a bar and the chip beside it. Public so a bar built
+  /// somewhere other than here — the banner's road — can sit its chip at the
+  /// same distance.
+  static const double gap = 7;
 
   static const Color _trackColor = Color(0xFF27212B);
   static const Color _enemyFill = Color(0xFFEBA941);
@@ -114,21 +116,24 @@ class ActionTimer extends StatelessWidget {
               foregroundColor: _fillColor(context),
             ),
           ),
-          const SizedBox(width: _gap),
-          _IntervalChip(interval: interval()),
+          const SizedBox(width: gap),
+          ActionTimeChip(duration: interval()),
         ],
       ),
     );
   }
 }
 
-/// The interval the bar is currently filling over, beside the bar it belongs
-/// to. Monospaced and fixed to two decimals so the digits don't jitter as the
-/// boost moves the interval underneath it.
-class _IntervalChip extends StatelessWidget {
-  const _IntervalChip({required this.interval});
+/// A span of seconds, read beside the bar it belongs to.
+///
+/// Monospaced and fixed to two decimals so the digits don't jitter as the
+/// boost moves the number underneath them. What the number *means* is the
+/// caller's business: on an action row it is the interval the bar is filling
+/// over, and on the banner's road it is how much of the trip is left.
+class ActionTimeChip extends StatelessWidget {
+  const ActionTimeChip({super.key, required this.duration});
 
-  final Duration interval;
+  final Duration duration;
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +145,7 @@ class _IntervalChip extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         child: Text(
-          '${(interval.inMilliseconds / 1000).toStringAsFixed(2)}s',
+          '${(duration.inMilliseconds / 1000).toStringAsFixed(2)}s',
           style: const TextStyle(
             fontSize: 9,
             fontFamily: 'monospace',
