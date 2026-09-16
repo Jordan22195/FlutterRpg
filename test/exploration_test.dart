@@ -257,28 +257,28 @@ void main() {
     });
 
     test('a locked discovery stays out of the table until its level', () {
+      // whichever entry the meadow gates, read off the catalog: which
+      // monster is gated and at what level are tuning decisions that have
+      // moved before, but the gate itself is the mechanic under test
+      final gated = ZoneId.TUTORIAL_FARM.definition.discoverableEntities
+          .where((e) => e.unlockLevel > 1)
+          .reduce((a, b) => a.unlockLevel <= b.unlockLevel ? a : b);
+
       final session = buildSession();
       final save = session.saveGameData;
-      final catalogs = session.catalogBundle;
 
-      // Big Red is gated behind Exploration 4 in the meadow
-      setExplorationLevel(session, 1);
-      var unlocked = session.explorationService
-          .getZoneEntityDropTableEntries(
-            save.playerData,
-            session.explorationSystem.explorationLevel(save.playerData),
-          )
-          .map((e) => e.id);
-      expect(unlocked, isNot(contains(EntityId.BIG_RED)));
+      Iterable<EntityId> tableAt(int level) {
+        setExplorationLevel(session, level);
+        return session.explorationService
+            .getZoneEntityDropTableEntries(
+              save.playerData,
+              session.explorationSystem.explorationLevel(save.playerData),
+            )
+            .map((e) => e.id);
+      }
 
-      setExplorationLevel(session, 4);
-      unlocked = session.explorationService
-          .getZoneEntityDropTableEntries(
-            save.playerData,
-            session.explorationSystem.explorationLevel(save.playerData),
-          )
-          .map((e) => e.id);
-      expect(unlocked, contains(EntityId.BIG_RED));
+      expect(tableAt(gated.unlockLevel - 1), isNot(contains(gated.id)));
+      expect(tableAt(gated.unlockLevel), contains(gated.id));
 
       session.dispose();
     });
@@ -299,17 +299,33 @@ void main() {
       expect(details.explorationLevel, 1);
       expect(details.findsPerExplore, closeTo(1.0, 1e-9));
 
-      final bigRed = details.entities.firstWhere((d) => d.name == 'Big Red');
-      expect(bigRed.locked, isTrue);
-      expect(bigRed.unlockLevel, 4);
-      expect(bigRed.chance, 0);
+      // the catalog decides which nodes the meadow holds and which of them
+      // it gates; the split below is read against that rather than against
+      // a roster this test would have to be edited to keep up with
+      final table = ZoneId.TUTORIAL_FARM.definition.discoverableEntities;
+      final gatedEntries = table.where((e) => e.unlockLevel > 1).toList();
+      final baseEntries = table.where((e) => e.unlockLevel <= 1).toList();
+      expect(gatedEntries, isNotEmpty, reason: 'the meadow gates nothing');
 
-      // the four baseline nodes are unlocked and split the table evenly
+      for (final entry in gatedEntries) {
+        final row = details.entities.firstWhere(
+          (d) => d.name == entry.id.definition.name,
+        );
+        expect(row.locked, isTrue);
+        expect(row.unlockLevel, entry.unlockLevel);
+        expect(row.chance, 0);
+      }
+
+      // the baseline nodes are unlocked and, being evenly weighted, split
+      // the table between them
       final unlocked = details.entities.where((d) => !d.locked).toList();
-      expect(unlocked, hasLength(4));
+      expect(unlocked, hasLength(baseEntries.length));
+      final weights = baseEntries.map((e) => e.weight).toSet();
+      expect(weights, hasLength(1), reason: 'the baseline is not uniform');
+      final share = 1.0 / baseEntries.length;
       final pool = ZoneId.TUTORIAL_FARM.definition.xpPerExplore.toDouble();
       for (final d in unlocked) {
-        expect(d.chance, closeTo(0.25, 1e-9));
+        expect(d.chance, closeTo(share, 1e-9));
         expect(d.xp, closeTo(pool, 1e-9));
       }
 

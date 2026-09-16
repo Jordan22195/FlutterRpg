@@ -72,51 +72,59 @@ void main() {
     session.dispose();
   });
 
-  test(
-    'a depleted herb node is removed from the zone',
-    () {
-      final session = buildSession();
-      final save = session.saveGameData;
+  test('a depleted herb node stays in the zone, marked empty', () {
+    // picking a patch dry does not take it off the map. The node stays at
+    // count 0 and the encounter screen draws it depleted, so the player can
+    // see they have cleared it rather than watching it vanish mid-action.
+    // (EncounterSystem still carries the removal call it used to make, dead
+    // and commented out, next to the branch that now does nothing.)
+    final session = buildSession();
+    final save = session.saveGameData;
 
-      session.explorationService.addEntityToCurrentZone(
-        EntityId.GUAM,
-        1,
-        save.playerData,
-        save.worldData,
-      );
-      final herb =
-          session.explorationService.getEntity(
-                EntityId.GUAM,
-                save.playerData.currentZoneId,
-                save.worldData,
-              )
-              as EncounterEntity;
-      session.encounterService.setEncounterEntity(save.encounterData, herb);
-
-      session.encounterSystem.executeHerbalismAction(
-        playerState: save.playerData,
-        encounter: save.encounterData,
-        worldState: save.worldData,
-        playerInventory: save.inventoryData,
-      );
-
-      expect(herb.count, 0);
-      expect(
-        session.explorationService
-            .getEntity(
+    session.explorationService.addEntityToCurrentZone(
+      EntityId.GUAM,
+      1,
+      save.playerData,
+      save.worldData,
+    );
+    final herb =
+        session.explorationService.getEntity(
               EntityId.GUAM,
               save.playerData.currentZoneId,
               save.worldData,
             )
-            .id,
-        EntityId.NULL,
-      );
+            as EncounterEntity;
+    session.encounterService.setEncounterEntity(save.encounterData, herb);
 
-      session.dispose();
-    },
-    skip:
-        'pre-existing failure, also fails at commit e642bb3 - predates the batch-explore and offline-progress work',
-  );
+    session.encounterSystem.executeHerbalismAction(
+      playerState: save.playerData,
+      encounter: save.encounterData,
+      worldState: save.worldData,
+      playerInventory: save.inventoryData,
+    );
+
+    expect(herb.count, 0);
+
+    // still there, and still the same instance the encounter is pointing at
+    final stillThere = session.explorationService.getEntity(
+      EntityId.GUAM,
+      save.playerData.currentZoneId,
+      save.worldData,
+    );
+    expect(stillThere.id, EntityId.GUAM);
+    expect(identical(stillThere, herb), isTrue);
+    expect(
+      session.explorationService
+          .getCurrentZoneEntities(save.playerData, save.worldData)
+          .map((e) => e.id),
+      contains(EntityId.GUAM),
+    );
+
+    // and a depleted node is not something the player can act on again
+    expect((stillThere as EncounterEntity).count, 0);
+
+    session.dispose();
+  });
 
   test('herbs above the herbalism level cannot be picked', () {
     final session = buildSession();

@@ -624,10 +624,11 @@ enum EntityId {
         ItemDropType(id: ItemId.LOGS, weight: 1, lowCount: 1, highCount: 4),
         ItemDropType(id: ItemId.COINS, weight: 1, lowCount: 3, highCount: 10),
         ItemDropType(id: ItemId.IRON_ORE, weight: 1, lowCount: 1, highCount: 2),
+        // the pitchfork is a main-table line, not a bonus roll: it used to
+        // be an independent 5% layered on top, and moving it inline is what
+        // takes the other three drops from a third each down to 2/7
         ItemDropType(id: ItemId.PITCHFORK, weight: .5),
       ],
-
-      // an independent 5% on top of the main pick, so it costs the other
     ),
   ),
   ROTWOOD_SCARECROW_UNCOMMON(

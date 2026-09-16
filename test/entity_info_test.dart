@@ -168,15 +168,13 @@ void main() {
       await pumpInfo(tester, EntityId.GOBLIN);
 
       // section headings render upper case
-      expect(find.text('COMBAT ROLLS'), findsOneWidget);
+      expect(find.text('COMBAT STATS'), findsOneWidget);
       // one row now, not one in each of two sections - the player's rate
-      // and the entity's are the same measurement and sit side by side
+      // and the entity's are the same measurement and sit side by side,
+      // under a column each
       expect(find.text('Damage per second'), findsOneWidget);
       expect(find.text('YOU'), findsOneWidget);
-      expect(
-        find.text(EntityId.GOBLIN.definition.name.toUpperCase()),
-        findsOneWidget,
-      );
+      expect(find.text('THEM'), findsOneWidget);
 
       final details = detailsFor(EntityId.GOBLIN);
       expect(

@@ -16,14 +16,18 @@ enum ArmorSlots {
   FINGER_2,
   WEAPON_1H,
   WEAPON_2H,
-  OFFHAND(fibOffset: 1),
+  OFFHAND(fibOffset: 2),
   TOOL;
 
-  /// How many rungs above its material a piece in this slot sits. Chest and
-  /// legs are the major pieces and are worth a rung more than the trim; a
-  /// shield is the slot you buy purely to be harder to hit, so it is worth
-  /// two. The spread is the same on every ladder — the leather tiers keep it
-  /// too — so it belongs to the slot rather than to any one material.
+  /// How many rungs above its material a piece in this slot sits. Chest,
+  /// legs and shoulders are the major pieces and are worth a rung more than
+  /// the trim; a shield is the slot you buy purely to be harder to hit, so
+  /// it is worth two. The spread is the same on every ladder — the leather
+  /// tiers keep it too — so it belongs to the slot rather than to any one
+  /// material.
+  ///
+  /// [NECK] carries a rung too, but every amulet in the catalog states its
+  /// own [EquipmentItemDefinition.fibLevel], so nothing reads it today.
   ///
   /// Only read for a piece that takes its [EquipmentItemDefinition.fibLevel]
   /// from its material; one that states a rung outright is not offset again.

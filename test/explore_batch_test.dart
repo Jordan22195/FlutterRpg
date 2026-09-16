@@ -335,15 +335,32 @@ void main() {
     });
 
     test('credits item finds to both the player and the zone tally', () {
+      // the mine is where the item table lives: the meadow's is a lone NULL
+      // filler, and a zone with nothing to find is the case below. Which
+      // zone holds what is tuning, so the gate is read off the catalog
+      const zone = ZoneId.FOREST_MINE;
+      final table = zone.definition.discoverableItems
+          .where((e) => e.id != ItemId.NULL)
+          .toList();
+      expect(
+        table,
+        isNotEmpty,
+        reason: '${zone.name} lost its item table; point this at a zone '
+            'whose discoverableItems still hold something',
+      );
+      final gate = table
+          .map((e) => e.unlockLevel)
+          .reduce((a, b) => a < b ? a : b);
+
       final session = buildSession();
       final save = session.saveGameData;
       final world = session.worldController;
+      save.playerData.currentZoneId = zone;
 
-      expect(save.playerData.currentZoneId, ZoneId.TUTORIAL_FARM);
-      // coins are gated behind exploration 3. a batch resolves the whole
-      // run at the level held when it started, so unlike a 300-explore loop
-      // it never levels into its own unlocks part way through
-      setExplorationLevel(session, 5);
+      // a batch resolves the whole run at the level held when it started,
+      // so unlike a 300-explore loop it never levels into its own unlocks
+      // part way through — it has to start above the gate to find anything
+      setExplorationLevel(session, gate);
 
       world.startExplore();
       world.doExplore(300, offline: true);
@@ -352,7 +369,7 @@ void main() {
       expect(
         finds,
         isNotEmpty,
-        reason: 'coins should drop within 300 explores',
+        reason: 'an unlocked find should turn up within 300 explores',
       );
 
       // the item table carries a NULL "found nothing" entry. it is the most

@@ -79,20 +79,29 @@ void main() {
       session.dispose();
     });
 
-    test(
-      'the entrance survives a save round-trip',
-      () {
-        final session = buildSession();
-        final restored = SaveGameData.fromJson(session.saveGameData.toJson());
-        final forest = restored.worldData.zones[ZoneId.DARKWOOD_FOREST]!;
-        final entrance = forest.permanentEntities.whereType<DungeonEntity>();
-        expect(entrance, hasLength(1));
-        expect(entrance.first.dungeonId, DungeonId.SPIDER_DEN);
-        session.dispose();
-      },
-      skip:
-          'pre-existing failure, also fails at commit e642bb3 - predates the batch-explore and offline-progress work',
-    );
+    test('the entrance survives a save round-trip', () {
+      // a zone's landmarks are content, not save state: Zone.fromJson drops
+      // the file's copy and the load rebuilds them off the definition. So
+      // the round trip has to go through create(), the way a relaunch does
+      // — reading SaveGameData.fromJson on its own sees a zone with no
+      // landmarks at all and proves nothing about what the player gets.
+      final session = buildSession();
+      final factory = GameSessionFactory();
+      final reloaded = factory.create(
+        save: SaveGameData.fromJson(session.saveGameData.toJson()),
+        catalogs: factory.catalog1(),
+        vsync: const TestVSync(),
+      );
+
+      final forest = reloaded.saveGameData.worldData.zones[ZoneId
+          .DARKWOOD_FOREST]!;
+      final entrance = forest.permanentEntities.whereType<DungeonEntity>();
+      expect(entrance, hasLength(1));
+      expect(entrance.first.dungeonId, DungeonId.SPIDER_DEN);
+
+      reloaded.dispose();
+      session.dispose();
+    });
   });
 
   group('working down the floor list', () {

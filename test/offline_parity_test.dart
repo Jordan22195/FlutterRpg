@@ -420,12 +420,13 @@ void main() {
       final loopedLevel = levelOf(live, SkillId.WOODCUTTING);
       live.dispose();
 
-      // an hour of felling a level-1 tree is worth dozens of levels, and a
-      // settle that resolved the window at the level it started from would
+      // an hour of felling a level-1 tree is worth many levels, and a settle
+      // that resolved the whole window at the level it started from would
       // come back at a fraction of both numbers. The threshold only has to be
       // high enough that the parity check below is measuring something — the
-      // xp rates behind it are tuning numbers and have already come down once.
-      expect(loopedLevel, greaterThan(20));
+      // xp rates behind it are tuning numbers and have come down twice now,
+      // so it is deliberately far below what the loop currently earns.
+      expect(loopedLevel, greaterThan(10));
       expect(settledLevel, closeTo(loopedLevel, 3));
       expect(
         report.enemiesDefeated,

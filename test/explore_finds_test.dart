@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 
 void main() {
@@ -17,7 +19,25 @@ void main() {
     final world = session.worldController;
     final inventory = save.inventoryData;
 
-    expect(save.playerData.currentZoneId, ZoneId.TUTORIAL_FARM);
+    // the mine is the zone with an item table to find things in — the
+    // starting meadow's is a lone NULL "found nothing" filler. Which zone
+    // holds what is tuning, so the gate is read off the catalog rather
+    // than restated here
+    const zone = ZoneId.FOREST_MINE;
+    final table = zone.definition.discoverableItems
+        .where((e) => e.id != ItemId.NULL)
+        .toList();
+    expect(
+      table,
+      isNotEmpty,
+      reason: '${zone.name} lost its item table; point this at a zone '
+          'whose discoverableItems still hold something',
+    );
+    save.playerData.currentZoneId = zone;
+    final skill = save.playerData.skillData[SkillId.EXPLORATION]!;
+    skill.xp = skill.xpTable[table
+        .map((e) => e.unlockLevel)
+        .reduce((a, b) => a < b ? a : b)];
 
     world.startExplore();
     for (var i = 0; i < 300; i++) {
@@ -25,7 +45,11 @@ void main() {
     }
 
     final finds = world.viewedZoneItems();
-    expect(finds, isNotEmpty, reason: 'coins should drop within 300 rolls');
+    expect(
+      finds,
+      isNotEmpty,
+      reason: 'an unlocked find should turn up within 300 rolls',
+    );
     for (final stack in finds) {
       expect(
         inventory.itemMap[stack.id],

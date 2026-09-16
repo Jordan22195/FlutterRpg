@@ -72,15 +72,28 @@ void main() {
 
   group('what a bonus-rolled kill pays out', () {
     test('a bonus roll is independent of the main pick', () {
-      // the common scarecrow's pitchfork is a 5% roll layered on top of the
-      // main table, not a line competing inside it. That is the whole
-      // difference: the other three drops keep a full third each, and the
-      // pitchfork still arrives as equipment rather than a count.
+      // a layered roll fires on its own chance, on top of whatever the main
+      // table paid — it takes no share of the main pick. The rare
+      // scarecrow is the entity with both halves; which item it layers and
+      // at what chance is tuning, so all of it is read off the definition.
+      const id = EntityId.ROTWOOD_SCARECROW_1;
+      final def = id.definition as CombatEntityDefinition;
+
+      final mainTable = def.itemDrops.flattened.toList();
+      final totalWeight = mainTable.fold<double>(0, (sum, e) => sum + e.weight);
+      final layered = def.bonusDrops.single;
+      final layeredDrop = layered.entries.single;
+      expect(
+        mainTable.map((e) => e.id),
+        isNot(contains(layeredDrop.id)),
+        reason: 'the layered item is also competing inside the main table',
+      );
+
       final session = buildSession();
       final save = session.saveGameData;
       maxOutCombat(session);
 
-      final scarecrow = EntityId.ROTWOOD_SCARECROW.build() as CombatEntity;
+      final scarecrow = id.build() as CombatEntity;
       scarecrow.count = 100000;
       session.encounterService.setEncounterEntity(
         save.encounterData,
@@ -102,37 +115,79 @@ void main() {
       final kills = 100000 - scarecrow.count;
       expect(kills, greaterThan(500), reason: 'too few kills to measure rates');
 
-      // the main table is three equal lines, undiluted by the pitchfork
-      final logs = save.inventoryData.itemMap[ItemId.LOGS] ?? 0;
-      final ore = save.inventoryData.itemMap[ItemId.IRON_ORE] ?? 0;
-      // logs roll 1-4 and ore 1-2, so compare stacks-per-kill against the
-      // average stack rather than against the raw count
-      expect(logs / kills, closeTo(1 / 3 * 2.5, 0.25));
-      expect(ore / kills, closeTo(1 / 3 * 1.5, 0.15));
+      // every main line kept its full share: the layered roll diluted none
+      // of them. A line rolls a stack, so compare items-per-kill against
+      // the share times the average stack rather than against a raw count
+      for (final drop in mainTable) {
+        // equipment arrives as instances, counted below; these are stacks
+        if (drop.id.definition is EquipmentItemDefinition) continue;
+        final top = drop.highCount > drop.lowCount
+            ? drop.highCount
+            : drop.lowCount;
+        final expected =
+            (drop.weight / totalWeight) * (drop.lowCount + top) / 2;
+        final got = (save.inventoryData.itemMap[drop.id] ?? 0) / kills;
+        expect(
+          got,
+          closeTo(expected, expected * 0.2),
+          reason: '${drop.id.name} is not paying its share of the table',
+        );
+      }
 
-      // and the layered roll fires at its own rate, on top of all that
-      final pitchforks = save.inventoryData.equipment
-          .where((item) => item.id == ItemId.PITCHFORK)
+      // and the layered roll fired at its own rate, on top of all that
+      final layeredCount = save.inventoryData.equipment
+          .where((item) => item.id == layeredDrop.id)
           .fold<int>(0, (sum, item) => sum + item.count);
-      expect(pitchforks / kills, closeTo(0.05, 0.02));
-      expect(save.inventoryData.itemMap[ItemId.PITCHFORK], isNull);
+      expect(
+        layeredCount / kills,
+        closeTo(layered.chance, layered.chance * 0.15),
+      );
+      // equipment from a bonus roll is an instance, never a stacked count
+      expect(save.inventoryData.itemMap[layeredDrop.id], isNull);
 
-      // and exactly, off the definition: three main lines at a clean third
-      // each, plus one layered roll. As a main-table line the pitchfork
-      // would make four rows of 31.6% - the dilution this undid.
+      // and exactly, off the definition: the main rows split the whole
+      // table between them, and the layered row sits outside that split
       final details = session.worldController.entityDetails(scarecrow);
       final main = details.drops.where((d) => !d.bonus).toList();
+      expect(main, hasLength(mainTable.length));
       expect(
-        main,
-        hasLength(3),
-        reason: 'the pitchfork is competing for the main pick',
+        main.fold<double>(0, (sum, d) => sum + d.chance),
+        closeTo(1.0, 1e-9),
+        reason: 'the main table does not add up to one pick',
       );
+      final bonusRow = details.drops.singleWhere((d) => d.bonus);
+      expect(bonusRow.itemId, layeredDrop.id);
+      expect(bonusRow.chance, closeTo(layered.chance, 1e-9));
+
+      session.dispose();
+    });
+
+    test('an inline line competes for the pick, the way a bonus roll does '
+        'not', () {
+      // the contrast the test above is measured against. The common
+      // scarecrow carries the same item as a main-table line instead, and
+      // that costs every other line a share of the pick — which is the
+      // whole reason the two payout paths are told apart.
+      const id = EntityId.ROTWOOD_SCARECROW;
+      final def = id.definition as CombatEntityDefinition;
+      expect(def.bonusDrops, isEmpty);
+
+      final session = buildSession();
+      final details = session.worldController.entityDetails(
+        id.build() as CombatEntity,
+      );
+
+      expect(details.drops.where((d) => d.bonus), isEmpty);
+      final main = details.drops.toList();
+      expect(main.length, def.itemDrops.flattened.length);
+      expect(
+        main.fold<double>(0, (sum, d) => sum + d.chance),
+        closeTo(1.0, 1e-9),
+      );
+      // no line can hold a full share once another joins the table
       for (final row in main) {
-        expect(row.chance, closeTo(1 / 3, 1e-9), reason: row.name);
+        expect(row.chance, lessThan(1.0));
       }
-      final layered = details.drops.singleWhere((d) => d.bonus);
-      expect(layered.itemId, ItemId.PITCHFORK);
-      expect(layered.chance, closeTo(0.05, 1e-9));
 
       session.dispose();
     });

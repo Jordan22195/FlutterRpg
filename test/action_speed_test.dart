@@ -64,21 +64,39 @@ void main() {
     }
   }
 
-  test(
-    'the speed stat sets the boost ceiling',
-    () {
-      final player = newPlayer();
-      setLevel(player, SkillId.SPEED, 20);
+  test('the speed stat sets the boost ceiling', () {
+    // the ceiling is 1 + speedStatBonus, and the curve behind that bonus is
+    // a balance number — it has been linear and is a root now. What is
+    // pinned is that the ceiling is that curve, and the shape it has to
+    // keep: every point pays, and no point pays as much as the one before.
+    final player = newPlayer();
+    setLevel(player, SkillId.SPEED, 20);
 
-      final state = ActionTimingData();
-      run(state, player, seconds: 0.1);
+    final state = ActionTimingData();
+    run(state, player, seconds: 0.1);
 
-      // 2.0 base + 0.1 per speed level
-      expect(state.maxBoostMultiplier, closeTo(4.0, 0.001));
-    },
-    skip:
-        'pre-existing failure, also fails at commit e642bb3 - predates the batch-explore and offline-progress work',
-  );
+    expect(state.maxBoostMultiplier, closeTo(1 + speedStatBonus(20), 0.001));
+
+    // a boost ceiling below 1 would be a penalty for having the stat
+    expect(state.maxBoostMultiplier, greaterThan(1.0));
+
+    // rising, and with diminishing returns, all the way up the ladder
+    final service = ActionTimingService();
+    var previous = service.maxSpeedBoostForStat(1);
+    var previousStep = double.infinity;
+    for (var level = 2; level <= 99; level++) {
+      final ceiling = service.maxSpeedBoostForStat(level);
+      final step = ceiling - previous;
+      expect(step, greaterThan(0), reason: 'speed $level bought nothing');
+      expect(
+        step,
+        lessThanOrEqualTo(previousStep + 1e-9),
+        reason: 'speed $level pays more than the point below it',
+      );
+      previous = ceiling;
+      previousStep = step;
+    }
+  });
 
   test('holding the button boosts speed and drains stamina', () {
     final player = newPlayer();
@@ -225,26 +243,51 @@ void main() {
     timing.dispose();
   });
 
-  test(
-    'a gentle boost is sustainable when drain matches recovery',
-    () {
-      final player = newPlayer();
-      setLevel(player, SkillId.RECOVERY, 20); // recovery 2.0/sec
-      setLevel(player, SkillId.SPEED, 10); // boost ceiling 3.0x
-      player.stamina = 10;
+  test('a held boost drains without recovering, however gentle it is', () {
+    // drain and recovery are exclusive, not netted: the frame loop recovers
+    // only while the button is up and the lock is off. So no boost is
+    // sustainable — even one far under the recovery rate costs stamina for
+    // as long as it is held, and letting go is what buys it back.
+    final player = newPlayer();
+    setLevel(player, SkillId.RECOVERY, 20);
+    setLevel(player, SkillId.SPEED, 10);
+    player.stamina = 50;
 
-      final state = ActionTimingData();
-      // hold a boost of exactly +1 speed => drain 1.0/sec < recovery 2.0/sec
-      state.boostLocked = true;
-      state.percentOfMaxBoost = 0.5;
-      run(state, player, seconds: 5);
+    final service = ActionTimingService();
+    final recovery = playerDataService.staminaRecoveryPerSecond(player);
+    final state = ActionTimingData();
+    state.boostLocked = true;
+    state.percentOfMaxBoost = 0.5;
+    run(state, player, seconds: 0.1);
 
-      expect(player.stamina, 10); // recovery kept up; no net loss
-      expect(state.percentOfMaxBoost, closeTo(0.5, 0.001)); // lock held
-    },
-    skip:
-        'pre-existing failure, also fails at commit e642bb3 - predates the batch-explore and offline-progress work',
-  );
+    // the boost this hold is worth, and what the service charges for it
+    final drain = service.boostDrain(
+      service.getCurrentSpeedMultiplier(state),
+      speedStance: true,
+    );
+    expect(drain, greaterThan(0));
+    expect(
+      drain,
+      lessThan(recovery),
+      reason: 'pick a gentler boost: this one out-drains recovery anyway, '
+          'which is not the case under test',
+    );
+
+    final before = player.stamina;
+    run(state, player, seconds: 5);
+
+    // even though recovery alone would more than cover it
+    expect(player.stamina, lessThan(before));
+    expect(state.percentOfMaxBoost, closeTo(0.5, 0.001)); // lock held
+    expect(state.boostLocked, isTrue); // and nowhere near empty
+
+    // release, and recovery comes back
+    state.boostLocked = false;
+    state.buttonHeld = false;
+    final atRelease = player.stamina;
+    run(state, player, seconds: 5);
+    expect(player.stamina, greaterThan(atRelease));
+  });
 
   group('max action interval', () {
     final service = ActionTimingService();

@@ -543,6 +543,175 @@ void main() {
       }
     });
 
+    // Monsters that exist but stand nowhere: no zone discovers them and no
+    // dungeon card queues them, so nothing in the game can currently fight
+    // them. This is the content backlog and it should only ever shrink —
+    // most of it is the high ladder, written well ahead of the zones that
+    // will hold it.
+    //
+    // Adding to it is a deliberate act. That is the point: a monster that
+    // silently falls out of a zone during a rebalance has to be filed here
+    // by whoever moved it, rather than quietly becoming unreachable. Two
+    // already have — the darkwood's tier 4 undead, listed below.
+    //
+    // Rarity variants are excluded: they are placed explicitly the way the
+    // common one is, and most of the catalog's are spares.
+    const knownUnplaced = <EntityId>{
+      // tier 1-2 spares, written before the zones were re-cut around them
+      EntityId.GIANT_RAT,
+      EntityId.GIANT_BAT,
+      EntityId.SLIME,
+      EntityId.KOBOLD,
+      EntityId.NAGA,
+      // the rare scarecrow. Its name predates the _RARE suffix convention,
+      // so it reads as a base entity here rather than as a variant
+      EntityId.ROTWOOD_SCARECROW_1,
+
+      // tier 4. The wraith and the banshee were the darkwood's, and came
+      // out of it when its roster was re-cut; the rest have never been
+      // placed. darkwood_forest_test holds what the zone kept.
+      EntityId.WRAITH,
+      EntityId.BANSHEE,
+      EntityId.MINOTAUR,
+      EntityId.BASILISK,
+      EntityId.DARK_WIZARD,
+      EntityId.GARGOYLE,
+
+      // tier 5 and up: no zone reaches this far yet
+      EntityId.EARTH_ELEMENTAL,
+      EntityId.OGRE,
+      EntityId.STONE_GOLEM,
+      EntityId.GRIFFIN,
+      EntityId.FIRE_ELEMENTAL,
+      EntityId.WATER_ELEMENTAL,
+      EntityId.YETI,
+      EntityId.IRON_GOLEM,
+      EntityId.STEEL_GOLEM,
+      EntityId.LICH,
+      EntityId.CLOUD_GIANT,
+      EntityId.ROC,
+      EntityId.WYVERN,
+      EntityId.DRAKE,
+      EntityId.KRAKEN,
+      EntityId.DRAGON,
+      EntityId.LESSER_DEMON,
+      EntityId.GREATER_DEMON,
+    };
+
+    /// Every entity some zone or dungeon actually puts in front of a player.
+    Set<EntityId> placedEntities() {
+      final placed = <EntityId>{};
+      for (final id in ZoneId.values) {
+        placed.addAll(id.definition.permanentEntities);
+        placed.addAll(id.definition.discoverableEntities.map((e) => e.id));
+      }
+      for (final id in DungeonId.values) {
+        for (final card in id.definition.entries) {
+          placed.addAll(card.entities.map((e) => e.entityId));
+        }
+      }
+      return placed;
+    }
+
+    /// A rarity variant is placed alongside its common form, if at all.
+    bool isRarityVariant(EntityId id) => const [
+      '_UNCOMMON',
+      '_RARE',
+      '_EPIC',
+      '_LEGENDARY',
+    ].any(id.name.endsWith);
+
+    test('every monster stands somewhere, or is on the backlog', () {
+      final placed = placedEntities();
+      final unplaced = <String>[];
+      for (final id in EntityId.values) {
+        if (id.definition is! CombatEntityDefinition) continue;
+        if (isRarityVariant(id)) continue;
+        if (placed.contains(id) || knownUnplaced.contains(id)) continue;
+        unplaced.add(id.name);
+      }
+      expect(
+        unplaced,
+        isEmpty,
+        reason:
+            'these monsters are in no zone and no dungeon, so nothing can '
+            'reach them. Place them, or add them to knownUnplaced: '
+            '${unplaced.join(', ')}',
+      );
+    });
+
+    test('the unplaced backlog has no stale entries', () {
+      // the other half of the contract: an entry that has since been placed
+      // comes back out, so the list stays an accurate to-do rather than
+      // drifting into a list of exceptions nobody reads
+      final placed = placedEntities();
+      final stale = knownUnplaced.where(placed.contains).map((e) => e.name);
+      expect(
+        stale,
+        isEmpty,
+        reason:
+            'these are placed now and should come off knownUnplaced: '
+            '${stale.join(', ')}',
+      );
+    });
+
+    test('every dungeon has a way in', () {
+      // the mirror of the above for the containers: a dungeon nothing opens
+      // is as unreachable as a monster nothing holds. [DungeonType] says
+      // which door to look for — a zone or transient dungeon is entered
+      // through an entrance entity standing in a zone, a landmark through
+      // its own token on the world map.
+      final zoneEntrances = <DungeonId>{};
+      for (final id in ZoneId.values) {
+        final def = id.definition;
+        for (final entityId in [
+          ...def.permanentEntities,
+          ...def.discoverableEntities.map((e) => e.id),
+        ]) {
+          final entityDef = entityId.definition;
+          if (entityDef is DungeonEntityDefinition) {
+            zoneEntrances.add(entityDef.dungeonId);
+          }
+        }
+      }
+      final mapLandmarks = {
+        for (final node in kWorldMapNodes)
+          if (node is LandmarkNode) node.id,
+      };
+
+      for (final id in DungeonId.values) {
+        if (id == DungeonId.NULL) continue;
+        switch (id.definition.type) {
+          case DungeonType.LANDMARK:
+            expect(
+              mapLandmarks,
+              contains(id),
+              reason: '${id.name} is a landmark with no token on the map',
+            );
+          case DungeonType.ZONE:
+          case DungeonType.TRANSIENT:
+            expect(
+              zoneEntrances,
+              contains(id),
+              reason: '${id.name} has no entrance entity in any zone',
+            );
+        }
+      }
+    });
+
+    test('a landmark on the map is a landmark in the catalog', () {
+      // and the other way round, so the map cannot hold a token for a
+      // dungeon that is entered some other way
+      for (final node in kWorldMapNodes) {
+        if (node is! LandmarkNode) continue;
+        expect(
+          node.id.definition.type,
+          DungeonType.LANDMARK,
+          reason: '${node.id.name} has a map token but is not a landmark',
+        );
+      }
+    });
+
     test('every non-dev zone is reachable from the starting farm', () {
       final graph = ZoneTravelGraph();
       // unreleased content: it has a definition but no travel edge yet

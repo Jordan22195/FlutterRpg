@@ -8,11 +8,13 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
 /// Darkwood Forest is the tier 3 zone south of South Haven: the Spider Den
-/// moved here out of Southwood, the tier 3 gathering nodes live here, and the
-/// mudlurcs took the spiders' place back in Southwood.
+/// moved here out of Southwood, taking the spiders with it, and the tier 3
+/// gathering nodes live here.
 ///
 /// These assert the shape of that move rather than any tuning number, so a
-/// rebalance of levels or weights does not drag them down with it.
+/// rebalance of levels or weights does not drag them down with it. Which
+/// undead the zone ends up holding is tuning and has moved once already, so
+/// the roster below is read off the catalog rather than named.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -120,29 +122,35 @@ void main() {
       expect(discoverable(ZoneId.DARKWOOD_FOREST, EntityId.GOLD_VEIN), isFalse);
     });
 
-    test('the undead roster it was written for lives here', () {
-      // tier 3 arrives soon after the door; tier 4 a whole ladder later,
-      // so the zone still opens at 20 against the spiders it already had
-      final door = ZoneId.DARKWOOD_FOREST.definition.explorationLevel;
-      int gateFor(EntityId id) => ZoneId
-          .DARKWOOD_FOREST
-          .definition
-          .discoverableEntities
-          .firstWhere((e) => e.id == id)
-          .unlockLevel;
+    test('the undead arrive after the door, not at it', () {
+      // the zone opens at 20 against the spiders it already had; its undead
+      // are what levelling Exploration here buys. Which undead, and at what
+      // level, is tuning — that they are gated past the front door is not
+      final zone = ZoneId.DARKWOOD_FOREST.definition;
+      final door = zone.explorationLevel;
 
-      for (final id in [EntityId.SKELETON, EntityId.ZOMBIE]) {
-        expect(discoverable(ZoneId.DARKWOOD_FOREST, id), isTrue);
-        expect(gateFor(id), greaterThan(door));
-      }
-      for (final id in [EntityId.WRAITH, EntityId.BANSHEE]) {
-        expect(discoverable(ZoneId.DARKWOOD_FOREST, id), isTrue);
+      const undead = {EntityId.SKELETON, EntityId.ZOMBIE};
+      final here = zone.discoverableEntities
+          .where((e) => undead.contains(e.id))
+          .toList();
+      expect(
+        here.map((e) => e.id).toSet(),
+        undead,
+        reason: 'the darkwood lost the undead it was written for',
+      );
+      for (final entry in here) {
         expect(
-          gateFor(id),
-          greaterThan(gateFor(EntityId.SKELETON)),
-          reason: '${id.name} is tier 4 and should come later',
+          entry.unlockLevel,
+          greaterThan(door),
+          reason: '${entry.id.name} is available the moment the zone opens',
         );
       }
+
+      // and the spiders, which the zone opens on, are not gated at all
+      final spiders = zone.discoverableEntities.firstWhere(
+        (e) => e.id == EntityId.GIANT_SPIDER,
+      );
+      expect(spiders.unlockLevel, lessThanOrEqualTo(door));
     });
 
     test('the new nodes drop the ore and logs they are named for', () {
@@ -161,21 +169,19 @@ void main() {
     });
   });
 
+  // The other half of the move: what Southwood was left with. That the
+  // spiders and their den went is pinned above; the mudlurcs that once stood
+  // in for them here have since moved on to the swamp, where swamp_test
+  // holds them. What is left is the zone's own reason to stop in.
   group('Southwood Forest', () {
-    test('the mudlurcs took the spiders place', () {
-      expect(discoverable(ZoneId.SOUTHWOOD_FOREST, EntityId.MUDLURC), isTrue);
+    test('it kept the river, and a way into the wolf den', () {
+      // the zone still has to be worth stopping in on the way south: its
+      // river and its own dungeon door are what is left of it
+      final southwood = ZoneId.SOUTHWOOD_FOREST.definition;
+      expect(southwood.permanentEntities, contains(EntityId.RIVER));
       expect(
-        discoverable(ZoneId.SOUTHWOOD_FOREST, EntityId.MUDLURC_WARRIOR),
-        isTrue,
-      );
-    });
-
-    test('they are river creatures, and the river is here', () {
-      // the pairing is the reason they were put in this zone rather than
-      // another, so it is worth holding onto
-      expect(
-        ZoneId.SOUTHWOOD_FOREST.definition.permanentEntities,
-        contains(EntityId.RIVER),
+        southwood.permanentEntities,
+        contains(EntityId.WOLF_DEN_ENTRANCE),
       );
     });
   });

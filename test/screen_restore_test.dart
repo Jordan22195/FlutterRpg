@@ -35,12 +35,17 @@ SaveGameData newSave() {
 }
 
 void main() {
-  // skipped: pre-existing failure, also fails at commit e642bb3 - predates
-  // the batch-explore and offline-progress work
   testWidgets('relaunch restores the map tab stack down to the entity '
       'screen', (tester) async {
+    // the anvil has to be standing in the zone the save is in, or this is
+    // the fallback case below rather than the restore one — so take the
+    // zone from the catalog rather than naming one that has an anvil today
+    final zoneId = ZoneId.values.firstWhere(
+      (z) => z.definition.permanentEntities.contains(EntityId.ANVIL),
+    );
+
     final save = newSave();
-    save.playerData.currentZoneId = ZoneId.SOUTHWOOD_FOREST;
+    save.playerData.currentZoneId = zoneId;
     save.playerData.currentEntityViewId = EntityId.ANVIL;
     save.uiState.tabIndex = 0;
     save.uiState.mapRouteStack = ['explore', 'crafting'];
@@ -56,15 +61,14 @@ void main() {
     // the restored stack pops back through explore
     await tester.tap(find.widgetWithIcon(IconButton, Icons.arrow_back));
     await settle(tester);
-    expect(find.text('The Forest'), findsOneWidget);
-  }, skip: true);
+    expect(find.text(zoneId.definition.name), findsWidgets);
+  });
 
-  // skipped: pre-existing failure, also fails at commit e642bb3 - predates
-  // the batch-explore and offline-progress work
   testWidgets('an entity missing from the zone falls back to the nearest '
       'restorable ancestor', (tester) async {
+    const zoneId = ZoneId.SOUTHWOOD_FOREST;
     final save = newSave();
-    save.playerData.currentZoneId = ZoneId.SOUTHWOOD_FOREST;
+    save.playerData.currentZoneId = zoneId;
     // goblins are discovered entities; a new game hasn't found one
     save.playerData.currentEntityViewId = EntityId.GOBLIN;
     save.uiState.tabIndex = 0;
@@ -76,9 +80,9 @@ void main() {
     await settle(tester);
 
     // explore screen restored, encounter screen skipped
-    expect(find.text('The Forest'), findsOneWidget);
+    expect(find.text(zoneId.definition.name), findsWidgets);
     expect(find.text('Action'), findsNothing);
-  }, skip: true);
+  });
 
   testWidgets('relaunch restores a dungeon floor mid-fight', (tester) async {
     // a floor's entity lives in the run, not in any zone, so restoring the

@@ -29,12 +29,12 @@ void main() {
     'HEAVY_DEMONHIDE',
   ];
 
-  // piece suffix -> the slot it fills and the rung tier 1 starts on. Chest and
-  // legs are the major pieces and sit one rung above the rest, the same spread
-  // the metal ladder has.
+  // piece suffix -> the slot it fills and the rung tier 1 starts on. Chest,
+  // legs and shoulders are the major pieces and sit one rung above the rest,
+  // the same spread the metal ladder has.
   const pieces = <String, (ArmorSlots, int)>{
     'COIF': (ArmorSlots.HEAD, 1),
-    'SPAULDERS': (ArmorSlots.SHOULDER, 1),
+    'SPAULDERS': (ArmorSlots.SHOULDER, 2),
     'CHEST': (ArmorSlots.CHEST, 2),
     'BELT': (ArmorSlots.WAIST, 1),
     'BRACERS': (ArmorSlots.WRIST, 1),
