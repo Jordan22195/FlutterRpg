@@ -56,7 +56,8 @@ void main() {
     await settle(tester);
 
     // lands on the anvil's crafting screen
-    expect(find.text('BLACKSMITHING'), findsOneWidget);
+    // the station's header names the skill it trains
+    expect(find.text('Blacksmithing'), findsOneWidget);
 
     // the restored stack pops back through explore
     await tester.tap(find.widgetWithIcon(IconButton, Icons.arrow_back));

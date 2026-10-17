@@ -58,7 +58,8 @@ void main() {
     // ---- Crafting screen (anvil) ----
     await tester.tap(find.text(anvil));
     await settle(tester);
-    expect(find.text('BLACKSMITHING'), findsOneWidget);
+    // the station's header names the skill it trains
+    expect(find.text('Blacksmithing'), findsOneWidget);
     // the action bar is there, but nothing is picked to make yet
     expect(find.text('Crafting'), findsWidgets);
     expect(find.text('Select a recipe'), findsOneWidget);
@@ -102,7 +103,7 @@ void main() {
     // action is running
     expect(find.byType(ActionOrTravelButton), findsOneWidget);
     expect(find.byIcon(Icons.play_arrow), findsOneWidget);
-    expect(find.byIcon(Icons.stop), findsNothing);
+    expect(find.byIcon(Icons.stop_rounded), findsNothing);
 
     // run the fishing action for a few seconds of game time, then stop
     await tester.tap(find.byIcon(Icons.play_arrow));
@@ -110,13 +111,13 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
     }
     expect(
-      find.byIcon(Icons.stop),
+      find.byIcon(Icons.stop_rounded),
       findsOneWidget,
       reason: 'the stop button should appear once the action is running',
     );
-    await tester.tap(find.byIcon(Icons.stop));
+    await tester.tap(find.byIcon(Icons.stop_rounded));
     await settle(tester);
-    expect(find.byIcon(Icons.stop), findsNothing);
+    expect(find.byIcon(Icons.stop_rounded), findsNothing);
 
     // ---- Skills tab ----
     await tester.tap(find.text('Skills'));

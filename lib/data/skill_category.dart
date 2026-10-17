@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/game_colors.dart';
 import 'skill_data.dart';
 
 /// Groups skills into the sections shown on the skills screen. Order here is
@@ -61,19 +62,22 @@ String skillCategoryLabel(SkillCategory category) {
 /// each other. Where a family crowds (the wood and leather browns, the reds
 /// of hitpoints and cooking) the members are spread across that family's
 /// range rather than pulled out of it.
+///
+/// The core-loop stats and the fire skills take their Hearth stat colour, so
+/// a ring and every other mark of that stat agree.
 Color skillRingColor(SkillId id) {
   switch (id) {
     // core loop
     case SkillId.STAMINA:
-      return const Color(0xFF2E9BFF); // sky
+      return GameColors.standard.stamina;
     case SkillId.SPEED:
-      return const Color(0xFFE8D22B); // lightning yellow
+      return GameColors.standard.speed;
     case SkillId.STRENGTH:
       return const Color(0xFFE39AA0); // flesh
     case SkillId.RECOVERY:
-      return const Color(0xFF1FC47D); // mint
+      return GameColors.standard.recovery;
     case SkillId.EXPLORATION:
-      return const Color(0xFFCBA55B); // map parchment
+      return GameColors.standard.exploration;
 
     // combat
     case SkillId.HITPOINTS:
@@ -101,9 +105,9 @@ Color skillRingColor(SkillId id) {
 
     // crafting
     case SkillId.FIREMAKING:
-      return const Color(0xFFF26B1E); // flame
+      return GameColors.standard.firemaking;
     case SkillId.COOKING:
-      return const Color(0xFFB83C22); // seared
+      return GameColors.standard.cooking;
     case SkillId.LEATHERWORKING:
       return const Color(0xFF8E4A33); // tanned hide
     case SkillId.BLACKSMITHING:

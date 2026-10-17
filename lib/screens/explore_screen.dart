@@ -8,10 +8,18 @@ import 'package:rpg/widgets/action_timer.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 
 import '../data/skill_data.dart';
+import '../theme/hearth_theme.dart';
+import '../widgets/action_dock.dart';
+import '../widgets/empty_state.dart';
+import '../widgets/hearth_chip.dart';
+import '../widgets/list_row.dart';
 import '../widgets/primary_button.dart';
+import '../widgets/segmented_tabs.dart';
+import '../widgets/sprite_frame.dart';
 import '../widgets/entity_info_dialog.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/skill_ring_row.dart';
+import '../widgets/zone_header.dart';
 import '../widgets/zone_info_body.dart';
 
 /// What the zone list is showing: the permanent things you can walk into
@@ -50,7 +58,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
       key == SkillId.ATTACK ? 'Combat' : skillDisplayName(key);
 
   Widget _filterChip({
-    required BuildContext context,
     required String label,
     required bool selected,
     required VoidCallback onSelected,
@@ -58,83 +65,44 @@ class _ExploreScreenState extends State<ExploreScreen> {
     Widget? icon,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: ChoiceChip(
-        avatar: icon,
-        // the count rides alongside the label and inherits the chip's own
-        // label color, so it stays legible selected or not
-        label: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label),
-            const SizedBox(width: 5),
-            Opacity(opacity: 0.6, child: Text("$count")),
-          ],
-        ),
+      padding: const EdgeInsets.only(right: 8),
+      child: HearthChip(
+        label: label,
+        count: count,
+        icon: icon,
         selected: selected,
-        showCheckmark: false,
-        visualDensity: VisualDensity.compact,
-        onSelected: (_) => onSelected(),
+        onTap: onSelected,
       ),
     );
   }
 
-  /// The top-level tabs, each carrying how much of that kind the zone
-  /// holds. The segments share the row's width evenly, so the labels are
-  /// kept compact enough to survive a narrow screen.
-  Widget _tabBar(BuildContext context, Map<_ExploreTab, int> counts) {
-    const labels = {
-      _ExploreTab.entities: 'Entities',
-      _ExploreTab.loot: 'Loot',
-      _ExploreTab.info: 'Info',
-    };
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: SizedBox(
-        width: double.infinity,
-        child: SegmentedButton<_ExploreTab>(
-          segments: [
-            for (final tab in _ExploreTab.values)
-              ButtonSegment<_ExploreTab>(
-                value: tab,
-                label: Text(
-                  // info has nothing to count, so its label carries no number
-                  counts.containsKey(tab)
-                      ? '${labels[tab]} · ${counts[tab]}'
-                      : '${labels[tab]}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-          selected: {_tab},
-          // single-select: the set always holds exactly one tab
-          onSelectionChanged: (selection) =>
-              setState(() => _tab = selection.first),
-          // the label already says which tab is open; the checkmark only
-          // costs width the counts need
-          showSelectedIcon: false,
-          style: SegmentedButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-            textStyle: const TextStyle(fontSize: 12),
-          ),
-        ),
-      ),
+  /// The top-level tabs. Entities carries no count of its own — the All
+  /// chip under it does — so the list's size is said once.
+  Widget _tabBar(BuildContext context, {required int lootCount}) {
+    return SegmentedTabs<_ExploreTab>(
+      segments: [
+        const TabSegment(value: _ExploreTab.entities, label: 'Entities'),
+        TabSegment(value: _ExploreTab.loot, label: 'Loot · $lootCount'),
+        const TabSegment(value: _ExploreTab.info, label: 'Info'),
+      ],
+      selected: _tab,
+      onChanged: (tab) => setState(() => _tab = tab),
     );
   }
 
-  Widget _emptyBody(BuildContext context, String text) {
+  /// Labels the two halves of the entities tab: the zone's permanent
+  /// places, and the resource nodes exploring has turned up.
+  Widget _sectionHeader(BuildContext context, String label) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 28),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-        ),
-      ),
+      padding: const EdgeInsets.fromLTRB(2, 8, 2, 10),
+      child: Align(alignment: Alignment.centerLeft, child: SectionLabel(label)),
+    );
+  }
+
+  Widget _emptyBody(BuildContext context, String text, {IconData? icon}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: EmptyState(message: text, icon: icon),
     );
   }
 
@@ -157,6 +125,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         expirationTime: lit ? fire.expirationTime : null,
         typeId: e.craftingSkill,
         typeIds: [e.craftingSkill, if (lit && fire.canCook) SkillId.COOKING],
+        kind: SpriteKind.fire,
         isStructure: true,
         onTap: () => worldController.navigateToEntity(e.id, context),
       );
@@ -168,6 +137,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         name: e.name,
         count: 0,
         typeId: e.craftingSkill,
+        kind: SpriteKind.crafting,
         isStructure: true,
         onTap: () => worldController.navigateToEntity(e.id, context),
       );
@@ -180,6 +150,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         count: 0,
         typeId: e.id,
         subtitle: "Shop",
+        kind: SpriteKind.crafting,
         isStructure: true,
         onTap: () => worldController.navigateToEntity(e.id, context),
       );
@@ -192,6 +163,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         count: 0,
         typeId: e.entityType,
         statLevel: worldController.entityLevel(e),
+        kind: SpriteKind.gathering,
         isStructure: true,
         onTap: () => worldController.navigateToEntity(e.id, context),
         onIconTap: () => showEntityInfoDialog(context, e),
@@ -205,6 +177,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         count: 0,
         typeId: e.id,
         subtitle: "Dungeon",
+        kind: SpriteKind.dungeon,
         isStructure: true,
         onTap: () => worldController.navigateToEntity(e.id, context),
       );
@@ -219,20 +192,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final requiredLevel = worldController.requiredLevelFor(e.id);
     final locked = !worldController.meetsEntityRequirement(e.id);
 
-    // level-gated nodes surface their gate even when unlocked. the chip
-    // beside it already carries the skill icon, so the gate only needs to
-    // say what it asks for
-    final subtitle = requiredLevel > 0 && !locked
-        ? "Requires Lv $requiredLevel"
-        : null;
-
     return ObjectCard(
       key: ValueKey(e.id),
       id: e.id,
       name: e.name,
       count: e.count,
       typeId: e.entityType,
-      subtitle: subtitle,
+      kind: e is CombatEntity ? SpriteKind.combat : SpriteKind.gathering,
       statLevel: worldController.entityLevel(e),
       xpPerUnit: worldController.xpPerUnit(e),
       locked: locked,
@@ -295,139 +261,176 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ? groups[_resourceGroup]!
         : [for (final key in groupKeys) ...groups[key]!];
 
-    final listChildren = <Widget>[
-      _tabBar(context, {
-        _ExploreTab.entities: structures.length + totalResourceCount,
-        _ExploreTab.loot: zoneItems.length,
-      }),
+    final tabBar = _tabBar(context, lootCount: zoneItems.length);
 
-      switch (_tab) {
-        // permanent structures and the resource nodes worked for materials
-        // share a tab: structures list first, then the resource group chips
-        _ExploreTab.entities =>
-          structures.isEmpty && resources.isEmpty
-              ? _emptyBody(context, 'Nothing here yet')
-              : Column(
-                  children: [
+    final Widget tabBody = switch (_tab) {
+      // permanent structures and the resource nodes worked for materials
+      // share a tab: structures list first, then the resource group chips
+      _ExploreTab.entities =>
+        structures.isEmpty && resources.isEmpty
+            ? _emptyBody(context, 'Nothing here yet')
+            : Column(
+                children: [
+                  if (structures.isNotEmpty) ...[
+                    _sectionHeader(context, 'Places'),
                     for (final e in structures)
                       _buildStructureCard(worldController, e),
-                    if (resources.isNotEmpty) ...[
-                      // sub-tabs, each with its own total node count
-                      SizedBox(
-                        height: 48,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          children: [
-                            _filterChip(
-                              context: context,
-                              label: 'All',
-                              count: totalResourceCount,
-                              selected: _resourceGroup == null,
-                              onSelected: () =>
-                                  setState(() => _resourceGroup = null),
-                            ),
-                            for (final key in groupKeys)
-                              _filterChip(
-                                context: context,
-                                label: _resourceGroupLabel(key),
-                                count: groupTotals[key] ?? 0,
-                                selected: _resourceGroup == key,
-                                onSelected: () =>
-                                    setState(() => _resourceGroup = key),
-                                icon: IconRendererChipAvatar(skill: key),
-                              ),
-                          ],
-                        ),
-                      ),
-                      for (final e in openGroup)
-                        _buildResourceCard(worldController, e),
-                    ],
                   ],
-                ),
+                  if (resources.isNotEmpty) ...[
+                    _sectionHeader(context, 'Discovered'),
+                    // sub-tabs, each with its own total node count
+                    SizedBox(
+                      height: HearthChip.height,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _filterChip(
+                            label: 'All',
+                            count: totalResourceCount,
+                            selected: _resourceGroup == null,
+                            onSelected: () =>
+                                setState(() => _resourceGroup = null),
+                          ),
+                          for (final key in groupKeys)
+                            _filterChip(
+                              label: _resourceGroupLabel(key),
+                              count: groupTotals[key] ?? 0,
+                              selected: _resourceGroup == key,
+                              onSelected: () =>
+                                  setState(() => _resourceGroup = key),
+                              icon: IconRendererChipAvatar(skill: key),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    for (final e in openGroup)
+                      _buildResourceCard(worldController, e),
+                  ],
+                ],
+              ),
 
-        // items turned up by exploring, kept per-zone
-        _ExploreTab.loot =>
-          zoneItems.isEmpty
-              ? _emptyBody(context, 'Nothing found here yet')
-              : Card(child: InventoryGrid(items: zoneItems, shrinkWrap: true)),
+      // items turned up by exploring, kept per-zone
+      _ExploreTab.loot =>
+        zoneItems.isEmpty
+            ? _emptyBody(
+                context,
+                'Nothing found here yet',
+                icon: Icons.inventory_2_outlined,
+              )
+            : Card(child: InventoryGrid(items: zoneItems, shrinkWrap: true)),
 
-        // the zone's own difficulty, finds-per-explore and discovery tables
-        _ExploreTab.info => ZoneInfoBody(zoneId: worldController.viewedZoneId),
-      },
-    ];
-    listChildren.insert(
-      0, // Exploration + energy-system skills trained by exploring
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: ActivitySkillRingRow(
-          skills: _exploreSkills,
-          alignment: MainAxisAlignment.spaceEvenly,
-        ),
-      ),
-    );
-    listChildren.insert(
-      0,
-      // exploring has no target and no health, so the action timer is a row
-      // of its own — same label column and same slot on the screen the
-      // combat and gathering timers occupy, so it never moves between them
-      Padding(
-        padding: const EdgeInsets.fromLTRB(8, 10, 8, 2),
-        child: ActionTimerRow(
-          label: 'Exploring',
-          // empty unless exploring is the action running: working an entity
-          // must not fill this zone's timer
-          progress: worldController.exploreProgress,
-          interval: worldController.exploreInterval,
-        ),
-      ),
-    );
+      // the zone's own difficulty, finds-per-explore and discovery tables
+      _ExploreTab.info => ZoneInfoBody(zoneId: worldController.viewedZoneId),
+    };
 
     // IMPORTANT: no Scaffold here — MainShell owns the Scaffold + BottomNav.
+    // the top is left open: the zone's art runs up behind the status bar,
+    // and the header keeps its own rows clear of the inset
     return SafeArea(
+      top: false,
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.of(context).maybePop(),
+          // the zone's art and name collapse into a title bar as the list
+          // scrolls, and the tabs pin beneath it, so switching tabs never
+          // means scrolling back up
+          Expanded(
+            child: CustomScrollView(
+              slivers: [
+                ZoneHeader(
+                  name: zoneDef.name,
+                  iconAsset: zoneDef.iconAsset,
+                  zoneLevel: zoneDef.explorationLevel,
                 ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    zoneDef.name,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: _PinnedTabBar(child: tabBar),
+                ),
+                SliverPadding(
+                  // room at the bottom for the dock's fade to fall on
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+                  sliver: SliverToBoxAdapter(child: tabBody),
                 ),
               ],
             ),
           ),
-          // Zone header, art and skill rings, then the tabbed zone list
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              children: listChildren,
-            ),
-          ),
 
-          // Bottom action bar (sits above the shell bottom nav automatically)
-          ActionButtonRow(
-            actionButton: ActionOrTravelButton(
-              enabled: true,
-              label: "Explore",
-              startActionFunction: () {
-                worldController.startExplore();
-              },
+          // the explore action's progress and the skills it trains sit with
+          // the button that starts it, so they stay in view however far the
+          // list is scrolled
+          ActionDock(
+            topRow: Row(
+              children: [
+                Expanded(
+                  child: ActionTimerRow(
+                    label: 'Exploring',
+                    color: context.gameColors.exploration,
+                    // empty unless exploring is the action running: working
+                    // an entity must not fill this zone's timer
+                    progress: worldController.exploreProgress,
+                    interval: worldController.exploreInterval,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Exploration + energy-system skills trained by exploring
+                const ActivitySkillRingRow(
+                  skills: _exploreSkills,
+                  shrinkWrap: true,
+                ),
+              ],
+            ),
+            buttons: ActionButtonRow(
+              padding: EdgeInsets.zero,
+              actionButton: ActionOrTravelButton(
+                enabled: true,
+                label: "Explore",
+                startActionFunction: () {
+                  worldController.startExplore();
+                },
+              ),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+/// The explore tabs, held under the zone header while the list scrolls.
+/// Opaque, so cards scrolling beneath it don't show through.
+class _PinnedTabBar extends SliverPersistentHeaderDelegate {
+  const _PinnedTabBar({required this.child});
+
+  final Widget child;
+
+  /// The 48pt tabs, 12pt below whatever sits above them.
+  static const double _height = 64;
+
+  @override
+  double get minExtent => _height;
+
+  @override
+  double get maxExtent => _height;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        child: child,
+      ),
+    );
+  }
+
+  // the tab counts change with every find, and the delegate is rebuilt
+  // with the screen anyway
+  @override
+  bool shouldRebuild(_PinnedTabBar oldDelegate) => true;
 }
 
 /// Small skill icon sized for a ChoiceChip avatar.

@@ -6,8 +6,10 @@ import '../controllers/buff_controller.dart';
 import '../data/ObjectStack.dart';
 import '../data/skill_data.dart';
 import 'buff_row.dart';
+import 'empty_state.dart';
 import 'entity_info_dialog.dart';
 import 'inventory_grid.dart';
+import 'segmented_tabs.dart';
 import 'skill_ring_row.dart';
 
 /// Which body the panel is showing. Not every screen offers every one:
@@ -58,8 +60,8 @@ class EncounterInfoPanel extends StatefulWidget {
 
 class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
   /// Tallest of the compact bodies (the loot grid: a 56 tile plus its 12
-  /// padding on both sides), so switching between them never resizes the
-  /// panel. The info body is exempt: it is a page of detail, and sizes to
+  /// padding on both sides, and the empty state's dashed box), so switching
+  /// between them never resizes the panel. The info body is exempt: it is a page of detail, and sizes to
   /// its content.
   static const double _bodyHeight = 80;
 
@@ -82,48 +84,20 @@ class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
     // back to the drops, which every screen has
     if (!tabs.contains(_tab)) _tab = _PanelTab.loot;
 
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<_PanelTab>(
-                segments: [
-                  for (final tab in tabs)
-                    ButtonSegment<_PanelTab>(
-                      value: tab,
-                      label: Text(
-                        _label(tab, buffCount),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                ],
-                selected: {_tab},
-                // single-select: the set always holds exactly one tab
-                onSelectionChanged: (selection) =>
-                    setState(() => _tab = selection.first),
-                // the counts in the labels need the width the checkmark
-                // would take
-                showSelectedIcon: false,
-                style: SegmentedButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 8,
-                  ),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            _body(context, buffCount),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SegmentedTabs<_PanelTab>(
+          segments: [
+            for (final tab in tabs)
+              TabSegment(value: tab, label: _label(tab, buffCount)),
           ],
+          selected: _tab,
+          onChanged: (tab) => setState(() => _tab = tab),
         ),
-      ),
+        const SizedBox(height: 12),
+        _body(context, buffCount),
+      ],
     );
   }
 
@@ -154,7 +128,7 @@ class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
         return SizedBox(
           height: _bodyHeight,
           child: buffCount == 0
-              ? _empty(context, 'No active buffs')
+              ? _empty(context, 'No active buffs', Icons.auto_awesome_outlined)
               : const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
                   child: Center(child: BuffRow(showLabel: false)),
@@ -170,20 +144,13 @@ class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
         return SizedBox(
           height: _bodyHeight,
           child: widget.drops.isEmpty && widget.equipment.isEmpty
-              ? _empty(context, widget.emptyLootLabel)
+              ? _empty(context, widget.emptyLootLabel, Icons.lock_outline)
               : InventoryGrid(items: widget.drops, equipment: widget.equipment),
         );
     }
   }
 
-  Widget _empty(BuildContext context, String text) {
-    return Center(
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-        ),
-      ),
-    );
+  Widget _empty(BuildContext context, String text, IconData icon) {
+    return EmptyState(message: text, icon: icon, height: _bodyHeight);
   }
 }

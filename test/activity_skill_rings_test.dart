@@ -171,8 +171,18 @@ void main() {
     expect(ringIds(tester).length, 6);
     expect(find.byType(OverflowChip), findsNothing);
 
-    // and they shrank to fit, rather than overflowing the row (an overflow
-    // would already have failed this test)
+    // at 6pt apart they fit there at full size
+    expect(tester.widget<SkillTile>(find.byType(SkillTile).first).size, 40);
+
+    // and on a row too narrow for that, they shrink to fit rather than
+    // overflowing it (an overflow would already have failed this test)
+    await pumpRings(
+      tester,
+      width: 240,
+      skills: [SkillId.ATTACK, SkillId.HITPOINTS, SkillId.DEFENCE],
+    );
+    expect(ringIds(tester).length, 6);
+    expect(find.byType(OverflowChip), findsNothing);
     final tile = tester.widget<SkillTile>(find.byType(SkillTile).first);
     expect(tile.size, lessThan(40));
     expect(tile.size, greaterThanOrEqualTo(28));

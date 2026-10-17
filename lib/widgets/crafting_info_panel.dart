@@ -5,8 +5,10 @@ import '../catalogs/items/items.dart';
 import '../controllers/buff_controller.dart';
 import '../data/ObjectStack.dart';
 import 'buff_row.dart';
+import 'empty_state.dart';
 import 'inventory_grid.dart';
 import 'recipe_info_body.dart';
+import 'segmented_tabs.dart';
 
 /// What a crafting bench reports while you work: what this session has
 /// produced, what is buffing it, and the odds behind the recipe itself. The
@@ -24,6 +26,7 @@ class CraftingInfoPanel extends StatefulWidget {
     this.equipment = const [],
     this.craftedLabel = 'Crafted',
     this.emptyCraftedLabel = 'Nothing crafted this session',
+    this.emptyIcon = Icons.inventory_2_outlined,
   });
 
   /// Plain items produced this session.
@@ -44,6 +47,9 @@ class CraftingInfoPanel extends StatefulWidget {
 
   /// What the output tab says before anything has been made.
   final String emptyCraftedLabel;
+
+  /// Beside [emptyCraftedLabel] in the empty state.
+  final IconData emptyIcon;
 
   @override
   State<CraftingInfoPanel> createState() => _CraftingInfoPanelState();
@@ -75,48 +81,25 @@ class _CraftingInfoPanelState extends State<CraftingInfoPanel> {
       _CraftingTab.buffs: buffCount,
     };
 
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<_CraftingTab>(
-                segments: [
-                  for (final tab in _CraftingTab.values)
-                    ButtonSegment<_CraftingTab>(
-                      value: tab,
-                      label: Text(
-                        counts[tab] == null
-                            ? '${labels[tab]}'
-                            : '${labels[tab]} · ${counts[tab]}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                ],
-                selected: {_tab},
-                // single-select: the set always holds exactly one tab
-                onSelectionChanged: (selection) =>
-                    setState(() => _tab = selection.first),
-                showSelectedIcon: false,
-                style: SegmentedButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 8,
-                  ),
-                  textStyle: const TextStyle(fontSize: 12),
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SegmentedTabs<_CraftingTab>(
+          segments: [
+            for (final tab in _CraftingTab.values)
+              TabSegment(
+                value: tab,
+                label: counts[tab] == null
+                    ? '${labels[tab]}'
+                    : '${labels[tab]} · ${counts[tab]}',
               ),
-            ),
-            const SizedBox(height: 8),
-            _body(context, buffCount, craftedCount),
           ],
+          selected: _tab,
+          onChanged: (tab) => setState(() => _tab = tab),
         ),
-      ),
+        const SizedBox(height: 12),
+        _body(context, buffCount, craftedCount),
+      ],
     );
   }
 
@@ -132,7 +115,7 @@ class _CraftingInfoPanelState extends State<CraftingInfoPanel> {
         return SizedBox(
           height: _bodyHeight,
           child: buffCount == 0
-              ? _empty(context, 'No active buffs')
+              ? _empty(context, 'No active buffs', Icons.auto_awesome_outlined)
               : const Center(child: BuffRow(showLabel: false)),
         );
 
@@ -140,7 +123,7 @@ class _CraftingInfoPanelState extends State<CraftingInfoPanel> {
         if (craftedCount == 0) {
           return SizedBox(
             height: _bodyHeight,
-            child: _empty(context, widget.emptyCraftedLabel),
+            child: _empty(context, widget.emptyCraftedLabel, widget.emptyIcon),
           );
         }
         // items and equipment share one grid; the equipment tiles wear
@@ -153,14 +136,7 @@ class _CraftingInfoPanelState extends State<CraftingInfoPanel> {
     }
   }
 
-  Widget _empty(BuildContext context, String text) {
-    return Center(
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-        ),
-      ),
-    );
+  Widget _empty(BuildContext context, String text, IconData icon) {
+    return EmptyState(message: text, icon: icon, height: _bodyHeight);
   }
 }

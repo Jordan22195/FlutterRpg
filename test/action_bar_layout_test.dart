@@ -19,7 +19,8 @@ void main() {
     EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
   });
 
-  /// Renders [child] in the exact slot ActionButtonRow gives a side button.
+  /// Renders [child] in the exact slot ActionButtonRow gives a trailing
+  /// control.
   Future<void> pumpInSideSlot(
     WidgetTester tester,
     Widget child, {
@@ -32,7 +33,7 @@ void main() {
             data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
             child: Align(
               alignment: Alignment.bottomLeft,
-              child: SizedBox(width: kActionBarSideButtonWidth, child: child),
+              child: SizedBox(width: kActionBarTrailingWidth, child: child),
             ),
           ),
         ),
@@ -56,7 +57,9 @@ void main() {
     await pumpInSideSlot(tester, eatButton(hasFood: true, count: 12));
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Eat 12'), findsOneWidget);
+    // "Eat" over how many are left
+    expect(find.text('Eat'), findsOneWidget);
+    expect(find.text('12'), findsOneWidget);
     expect(
       tester.getSize(find.byType(EatFoodButton)).height,
       kActionBarButtonHeight,

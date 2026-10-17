@@ -3,6 +3,7 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/zones/map_node_type.dart';
+import 'package:rpg/theme/zone_palette.dart';
 
 class ZoneDefinition {
   final String name;
@@ -35,6 +36,11 @@ class ZoneDefinition {
   /// outlevelled.
   final double xpPerExplore;
 
+  /// The colours every screen in this zone draws with: backgrounds, text,
+  /// and the accent on the primary action button. Not saved — it's looked
+  /// up from the definition each time the zone is shown.
+  final ZonePalette palette;
+
   const ZoneDefinition({
     required this.name,
     required this.discoverableEntities,
@@ -46,6 +52,7 @@ class ZoneDefinition {
     this.requiredLevel = 0,
     this.explorationLevel = 0,
     this.xpPerExplore = 0,
+    this.palette = ZonePalette.meadow,
   });
 
   /// Every entity id this zone's content declares, permanent or discoverable

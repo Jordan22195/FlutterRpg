@@ -7,6 +7,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
+import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
@@ -173,6 +174,11 @@ void main() {
             ),
             ChangeNotifierProvider<BuffController>.value(
               value: session.buffController,
+            ),
+            // the status row on the art strip reads the encounter for its
+            // damage numbers
+            ChangeNotifierProvider<EncounterController>.value(
+              value: session.encounterController,
             ),
             ChangeNotifierProvider<PlayerDataController>.value(
               value: session.playerDataController,

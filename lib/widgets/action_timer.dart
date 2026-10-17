@@ -2,35 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/action_timing_controller.dart';
+import '../theme/game_colors.dart';
+import '../theme/hearth_text.dart';
+import '../theme/hearth_theme.dart';
 import 'fill_bar.dart';
 
 /// The width every encounter row's label sits in, so the bars below the
 /// labels all start on the same x — on the combat screen, the gathering
 /// screen and the explore screen alike.
-const double kEncounterRowLabelWidth = 58;
+const double kEncounterRowLabelWidth = 56;
 
 /// Travel's colour, on the button that starts a trip and on the bar that
-/// counts it down.
-///
-/// A lighter blue than the banner's energy bar, which it now sits directly
-/// under: a trip and the stamina it costs are related enough to want the
-/// same family and different enough that two identical bars stacked would
-/// read as one bar drawn twice.
-const Color kTravelColor = Color(0xFF4FC3F7);
+/// counts it down. The theme's [GameColors.travel]; kept as a constant for
+/// the callers that compare against it.
+const Color kTravelColor = GameColors.travelColor;
 
-/// Who an [ActionTimer] belongs to. The two are drawn identically; only the
-/// fill hue differs, so a glance reads which timer is which without reading
-/// either one as more important than the other.
+/// Who an [ActionTimer] belongs to. The player's and the enemy's are drawn
+/// identically, so neither reads as more important than the other; travel
+/// takes its own colour, because while it fills nothing is being worked.
 enum ActionTimerActor {
-  /// The player's own action loop. Colored by the skill currently being
-  /// trained, matching the banner's boost bar.
+  /// The player's own action loop.
   player,
 
-  /// A hostile entity winding up its swing. Amber, against combat's red.
+  /// A hostile entity winding up its swing.
   enemy,
 
-  /// The player walking somewhere. Blue, and unmistakably not the purple
-  /// action bar: while this bar is filling, nothing is being worked.
+  /// The player walking somewhere.
   travel,
 }
 
@@ -65,39 +62,26 @@ class ActionTimer extends StatelessWidget {
   /// zero whenever the action running is not this screen's.
   final double Function() progress;
 
-  /// How long this screen's action takes, shown on the chip and sampled per
-  /// frame so it follows stance, boost and gear changes mid-action.
+  /// How long this screen's action takes, shown beside the bar and sampled
+  /// per frame so it follows stance, boost and gear changes mid-action.
   final Duration Function() interval;
 
   /// A hairline, not a headline: the same height for both actors.
-  static const double _barHeight = 5;
-  static const double _barRadius = 3;
+  static const double _barHeight = 4;
+  static const double _barRadius = 2;
 
-  /// Gap between a bar and the chip beside it. Public so a bar built
-  /// somewhere other than here — the banner's road — can sit its chip at the
-  /// same distance.
-  static const double gap = 7;
-
-  static const Color _trackColor = Color(0xFF27212B);
-  static const Color _enemyFill = Color(0xFFEBA941);
-  static const Color _playerFill = Color(0xFFC2A7F4);
-
-  static const Color _chipTextColor = Color(0xFFA8A1AE);
-  static const Color _chipBackgroundColor = Color(0xFF211D24);
-
-  Color _fillColor(BuildContext context) {
-    switch (actor) {
-      case ActionTimerActor.enemy:
-        return _enemyFill;
-      case ActionTimerActor.travel:
-        return kTravelColor;
-      case ActionTimerActor.player:
-        return _playerFill;
-    }
-  }
+  /// Gap between a bar and the timer beside it. Public so a bar built
+  /// somewhere other than here — the banner's road — can sit its timer at
+  /// the same distance.
+  static const double gap = 8;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.gameColors;
+    final fill = actor == ActionTimerActor.travel
+        ? colors.travel
+        : colors.timerFill;
+
     // the loop is the frame clock here, not the data source: it ticks every
     // frame an action is running, which is when the bar has to be re-sampled
     final timing = context.read<ActionTimingController>();
@@ -112,8 +96,8 @@ class ActionTimer extends StatelessWidget {
               value: progress(),
               height: _barHeight,
               borderRadius: _barRadius,
-              backgroundColor: _trackColor,
-              foregroundColor: _fillColor(context),
+              backgroundColor: context.palette.track,
+              foregroundColor: fill,
             ),
           ),
           const SizedBox(width: gap),
@@ -124,9 +108,9 @@ class ActionTimer extends StatelessWidget {
   }
 }
 
-/// A span of seconds, read beside the bar it belongs to.
+/// A span of seconds, read beside the bar it belongs to ("2.00s").
 ///
-/// Monospaced and fixed to two decimals so the digits don't jitter as the
+/// Tabular figures fixed to two decimals, so the digits don't jitter as the
 /// boost moves the number underneath them. What the number *means* is the
 /// caller's business: on an action row it is the interval the bar is filling
 /// over, and on the banner's road it is how much of the trip is left.
@@ -135,25 +119,16 @@ class ActionTimeChip extends StatelessWidget {
 
   final Duration duration;
 
+  static String format(Duration duration) =>
+      '${(duration.inMilliseconds / 1000).toStringAsFixed(2)}s';
+
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: ActionTimer._chipBackgroundColor,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        child: Text(
-          '${(duration.inMilliseconds / 1000).toStringAsFixed(2)}s',
-          style: const TextStyle(
-            fontSize: 9,
-            fontFamily: 'monospace',
-            fontFamilyFallback: ['Menlo', 'Courier New'],
-            color: ActionTimer._chipTextColor,
-            fontFeatures: [FontFeature.tabularFigures()],
-          ),
-        ),
+    return Text(
+      format(duration),
+      style: HearthText.timer.copyWith(
+        fontSize: 12,
+        color: context.palette.textMuted,
       ),
     );
   }
@@ -163,8 +138,8 @@ class ActionTimeChip extends StatelessWidget {
 /// with so the bars and rings below it all line up on the same x.
 ///
 /// The column is a fixed width and the label is held to one line inside it:
-/// a long one ('Exploring') shrinks to fit rather than wrapping, which would
-/// make its row taller than the rows it is supposed to line up with.
+/// a long one shrinks to fit rather than wrapping, which would make its row
+/// taller than the rows it is supposed to line up with.
 class EncounterRowLabel extends StatelessWidget {
   const EncounterRowLabel(this.label, {super.key});
 
@@ -183,10 +158,9 @@ class EncounterRowLabel extends StatelessWidget {
             label,
             maxLines: 1,
             softWrap: false,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            style: HearthText.activityLabel.copyWith(
+              fontSize: 14,
+              color: context.palette.textMuted,
             ),
           ),
         ),
@@ -195,38 +169,65 @@ class EncounterRowLabel extends StatelessWidget {
   }
 }
 
-/// An action timer as a row of its own, for a screen with no target and no
-/// health to hang it under — explore, where the timer is the only bar there
-/// is. Same label column as the combat and gathering rows, so the three
-/// screens' timers land in the same place.
+/// An activity's progress as a row of its own (the Hearth ProgressRow): the
+/// label in the activity's colour with the interval on the right, and a 6px
+/// bar in the same colour underneath. Used where the timer has no target's
+/// row to hang under — exploring, a station's craft.
 class ActionTimerRow extends StatelessWidget {
   const ActionTimerRow({
     super.key,
     required this.label,
     required this.progress,
     required this.interval,
-    this.actor = ActionTimerActor.player,
+    this.color,
   });
 
   final String label;
   final double Function() progress;
   final Duration Function() interval;
-  final ActionTimerActor actor;
+
+  /// The activity's colour — exploration gold for "Exploring", firemaking
+  /// orange for "Tending". Defaults to the neutral timer fill.
+  final Color? color;
+
+  static const double _barHeight = 6;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        EncounterRowLabel(label),
-        SizedBox(width: 2),
-        Expanded(
-          child: ActionTimer(
-            actor: actor,
-            progress: progress,
-            interval: interval,
+    final palette = context.palette;
+    final fill = color ?? context.gameColors.timerFill;
+    final timing = context.read<ActionTimingController>();
+
+    return AnimatedBuilder(
+      animation: timing,
+      builder: (context, _) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: HearthText.activityLabel.copyWith(color: fill),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ActionTimeChip(duration: interval()),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 6),
+          FillBar(
+            value: progress(),
+            height: _barHeight,
+            borderRadius: _barHeight / 2,
+            backgroundColor: palette.track,
+            foregroundColor: fill,
+          ),
+        ],
+      ),
     );
   }
 }

@@ -5,13 +5,20 @@ import 'package:rpg/widgets/encounter_info_panel.dart';
 import 'package:rpg/widgets/entity_info_dialog.dart';
 import 'package:rpg/widgets/eat_food_button.dart';
 import 'package:rpg/widgets/equipment_picker.dart';
-import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entities/entities.dart';
 import '../controllers/encounter_controller.dart';
 import '../controllers/equipment_controller.dart';
 import '../controllers/player_data_controller.dart';
+import '../controllers/world_controller.dart';
+import '../data/skill_category.dart';
+import '../theme/hearth_text.dart';
+import '../theme/hearth_theme.dart';
+import '../widgets/action_dock.dart';
+import '../widgets/art_header.dart';
 import '../widgets/fill_bar.dart';
+import '../widgets/sprite_frame.dart';
+import '../widgets/stage_panel.dart';
 import '../widgets/primary_button.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
@@ -129,52 +136,48 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// Every slot on a status row except the bar itself is a fixed width, so
   /// the entity's bar and the player's bar start and end at the same x no
   /// matter how many digits their numbers run to.
-  static const double _damageSlotWidth = 28;
-  static const double _statTextWidth = 28;
-  static const double _statGap = 10;
+  static const double _labelGap = 12;
+  static const double _statIconSize = 16;
+  static const double _statTextWidth = 30;
+  static const double _statGap = 8;
 
   /// Height of a status row's hp bar. Tall enough to carry its own hp
   /// counter legibly.
-  static const double _hpBarHeight = 20;
+  static const double _hpBarHeight = 22;
 
   /// Gap between a row's hp bar and the action timer beneath it.
-  static const double _timerGap = 5;
+  static const double _timerGap = 6;
 
-  /// Gap between the two participant rows. Wide enough that each row's timer
-  /// reads as belonging to the bar above it rather than the row below.
-  static const double _rowGap = 12;
+  /// Gap between the two participant rows.
+  static const double _rowGap = 10;
 
-  /// The band at the top of a gathering row's column that the 5px timer is
-  /// centred in — as tall as the stat chip's icon beside it, so the label,
-  /// the timer and the chip all read as sitting on one line.
-  static const double _gatheringTimerBand = 22;
+  /// The band at the top of a gathering row's column that the timer is
+  /// centred in — as tall as the hp bar on the row above, so the label, the
+  /// timer and the stat chip all read as sitting on one line.
+  static const double _gatheringTimerBand = _hpBarHeight;
 
-  /// The player's own hp bar. Red like a hostile entity's — it is the same
-  /// kind of bar, measuring the same thing — but a deeper shade, so the two
-  /// rows never read as one.
-  static const Color _playerHpColor = Color(0xFFA33636);
-
-  /// The hp bar colour for an encounter, keyed on what is being worked:
-  /// hostile red for anything that fights back, and the material's own
-  /// colour for each gathering skill, so the bar says what kind of screen
-  /// you are on before you have read a word of it.
+  /// The bar colour for an encounter: hp for anything that fights back, and
+  /// the gathering skill's own colour for a node's durability, so the bar
+  /// says what kind of screen you are on before you have read a word of it.
   static Color entityBarColor(BuildContext context, EncounterEntity entity) {
-    if (entity is CombatEntity) return const Color(0xFFE05252);
+    if (entity is CombatEntity) return context.gameColors.hp;
+    return skillRingColor(entity.entityType);
+  }
 
-    switch (entity.entityType) {
-      case SkillId.MINING:
-        return const Color(0xFF8FA3B0); // ore grey
-      case SkillId.WOODCUTTING:
-        // deep forest green, against herbalism's brighter leaf: the two
-        // gathering greens have to stay apart at a glance
-        return const Color(0xFF3F8F4E);
-      case SkillId.HERBALISM:
-        return const Color(0xFF7FC24B); // leaf
-      case SkillId.FISHING:
-        return const Color(0xFF3FA9C9); // water
-      default:
-        return Theme.of(context).colorScheme.tertiary;
-    }
+  /// Damage dealt or taken, flashed over an hp bar: hp-coloured for a hit,
+  /// muted for a miss.
+  Widget buildDamageNumber(BuildContext context, int damage, int sequence) {
+    return FadingNumber(
+      number: damage,
+      trigger: sequence,
+      autoplay: false,
+      color: damage > 0 ? context.gameColors.hp : context.palette.textMuted,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w800,
+        shadows: [Shadow(blurRadius: 4, color: context.palette.titleShadow)],
+      ),
+    );
   }
 
   /// Who a row belongs to, in the fixed-width slot every row starts with so
@@ -190,15 +193,18 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconRenderer(id: icon, size: 22),
+          IconRenderer(id: icon, size: _statIconSize),
           const SizedBox(width: 4),
           SizedBox(
             width: _statTextWidth,
             child: Text(
               text,
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+              style: HearthText.statusStat.copyWith(
+                fontSize: 15,
+                color: context.palette.text,
               ),
             ),
           ),
@@ -208,15 +214,13 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   }
 
   /// The shared status strip layout: who the row belongs to, the hp bar
-  /// carrying its own counter, then stat chips. Both the entity's row and
-  /// the player's row are built from this so they stay identical. Pass a
-  /// null [hp] for entities without hitpoints; the bar collapses and the
-  /// stats stay right-aligned.
+  /// carrying its own counter with the row's attack timer under it, then
+  /// stat chips. Both the entity's row and the player's row are built from
+  /// this so they stay identical. Pass a null [hp] for entities without
+  /// hitpoints; the bar collapses and the stats stay right-aligned.
   ///
-  /// [timer], when given, is the row's [ActionTimer], drawn directly under the
-  /// hp bar. Both fighters get one, in the same slot of the same shared row,
-  /// so the two racing timers sit one above the other rather than a screen
-  /// apart.
+  /// [damageSlot] flashes over the right end of the bar: the damage the
+  /// other side dealt this action.
   Widget buildStatusRow(
     BuildContext context, {
     required String label,
@@ -230,42 +234,60 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     final double hpPercent = (hp == null || maxHp == null || maxHp <= 0)
         ? 0.0
         : (hp / maxHp).clamp(0.0, 1.0);
+    final palette = context.palette;
+    final colors = context.gameColors;
 
     return Padding(
-      padding: const EdgeInsets.only(top: 2, bottom: _rowGap - 2),
+      padding: const EdgeInsets.only(bottom: _rowGap),
       child: Row(
         children: [
-          SizedBox(width: 10),
           buildRowLabel(context, label),
-          if (hp != null) ...[
-            SizedBox(width: _damageSlotWidth, child: damageSlot),
+          const SizedBox(width: _labelGap),
+          if (hp != null)
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TweenAnimationBuilder<double>(
-                    tween: Tween<double>(end: hpPercent),
-                    duration: const Duration(milliseconds: 100),
-                    builder: (context, animatedValue, child) {
-                      return FillBar(
-                        value: animatedValue,
-                        height: _hpBarHeight,
-                        foregroundColor: barColor,
-                        // the counter rides in the bar, so the bar can be
-                        // as wide as the row allows
-                        child: Text(
-                          '$hp / $maxHp',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(blurRadius: 3, color: Colors.black87),
-                            ],
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(end: hpPercent),
+                        duration: const Duration(milliseconds: 100),
+                        builder: (context, animatedValue, child) {
+                          return FillBar(
+                            value: animatedValue,
+                            height: _hpBarHeight,
+                            borderRadius: 7,
+                            backgroundColor: palette.track,
+                            foregroundColor: barColor ?? colors.hp,
+                            // the counter rides in the bar, so the bar can
+                            // be as wide as the row allows
+                            child: Text(
+                              '$hp / $maxHp',
+                              style: HearthText.ringNumber.copyWith(
+                                color: colors.onHp,
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 3,
+                                    color: palette.titleShadow,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      if (damageSlot != null)
+                        Positioned(
+                          right: 6,
+                          top: 0,
+                          bottom: 0,
+                          child: IgnorePointer(
+                            child: Center(child: damageSlot),
                           ),
                         ),
-                      );
-                    },
+                    ],
                   ),
                   if (timer != null) ...[
                     const SizedBox(height: _timerGap),
@@ -273,8 +295,8 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                   ],
                 ],
               ),
-            ),
-          ] else
+            )
+          else
             const Spacer(),
           ...stats,
         ],
@@ -297,23 +319,20 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       label: 'Player',
       hp: view.playerHp,
       maxHp: maxHp,
-      barColor: _playerHpColor,
+      barColor: context.gameColors.hp,
       // the player's own action timer, in the same slot under the hp bar the
       // entity's sits in on the row above — the two are read against each
-      // other, so they are drawn identically apart from hue
+      // other, so they are drawn identically
       timer: ActionTimer(
         actor: ActionTimerActor.player,
         progress: view.playerActionProgress,
         interval: view.playerActionInterval,
       ),
-      // damage taken from the entity's attacks. the slot is fixed-width so
-      // the flash doesn't shift the hp bar
-      damageSlot: FadingNumber(
-        number: view.entityDamage,
-        trigger: view.entityAttackSequence,
-        autoplay: false,
-        color: view.entityDamage > 0 ? Colors.red : Colors.blue,
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+      // damage taken from the entity's attacks, flashed over the bar
+      damageSlot: buildDamageNumber(
+        context,
+        view.entityDamage,
+        view.entityAttackSequence,
       ),
       stats: [
         buildStatChip(
@@ -354,11 +373,13 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         // drifts down beside the rings and the timer reads as the target's
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(width: 10),
-          buildRowLabel(context, 'You'),
-          // no damage comes back from a gathering target, but the slot is
-          // kept so this column starts where the target's bar above it does
-          const SizedBox(width: _damageSlotWidth),
+          SizedBox(
+            height: _gatheringTimerBand,
+            child: buildRowLabel(context, 'You'),
+          ),
+          // the same gap the bar rows keep, so this column starts where the
+          // target's bar above it does
+          const SizedBox(width: _labelGap),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -372,7 +393,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 ActivitySkillRingRow(skills: trainedSkills),
               ],
             ),
@@ -438,59 +459,62 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     );
   }
 
-  /// Width of the queue rail beside the portrait. Reserved on both sides so
-  /// the portrait sits on the screen's centre line whether or not there is
-  /// a queue behind it.
-  static const double _queueRailWidth = 52;
-
-  /// The entity being worked, with the rest of its queue beside it.
+  /// The entity being worked, standing in a stage panel tinted for what it
+  /// is, with how many are left in the corner and the rest of its queue
+  /// down the left edge.
   ///
   /// The rail runs bottom-up: the next entity sits at the bottom, closest
-  /// to the portrait it is about to replace, and the tail of the queue
-  /// climbs away from the fight. Tiles open their details, which is how a
-  /// boss's drops are read before you reach it.
+  /// to the fight it is about to join, and the tail of the queue climbs away
+  /// from it. Tiles open their details, which is how a boss's drops are
+  /// read before you reach it.
   Widget buildPortrait(BuildContext context, CombatViewState view) {
     final entity = view.entity;
-    final portrait = SizedBox(
-      width: 180,
-      height: 180,
-      child: ItemStackTile(
-        size: 200,
-        count: entity.count,
-        id: entity.id,
-        onTap: portraitTap(context, entity),
-        // nothing left to gather or fight: the action conditions already
-        // reject it, so the portrait reads as spent
-        depleted: entity.count <= 0,
-      ),
-    );
+    final kind = entity is CombatEntity
+        ? SpriteKind.combat
+        : SpriteKind.gathering;
+    final tint = SpriteFrame.tintFor(context, kind);
 
-    if (view.queueRemaining.isEmpty) return Center(child: portrait);
-
-    return Row(
-      children: [
-        SizedBox(
-          width: _queueRailWidth,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              for (final queued in view.queueRemaining.reversed)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: ItemStackTile(
-                    size: 44,
-                    count: queued.count,
-                    id: queued.id,
-                    showInfoDialogOnTap: false,
-                    onTap: () => showEntityInfoDialog(context, queued),
-                  ),
-                ),
-            ],
-          ),
+    Widget sprite = IconRenderer(size: 124, id: entity.id);
+    // nothing left to gather or fight: the action conditions already reject
+    // it, so the sprite reads as spent
+    if (entity.count <= 0) {
+      sprite = ColorFiltered(
+        colorFilter: ColorFilter.mode(
+          context.palette.bg.withValues(alpha: 0.65),
+          BlendMode.srcATop,
         ),
-        Expanded(child: Center(child: portrait)),
-        const SizedBox(width: _queueRailWidth),
-      ],
+        child: sprite,
+      );
+    }
+
+    return StagePanel(
+      tint: tint,
+      sprite: sprite,
+      onTap: portraitTap(context, entity),
+      corner: StageCountPill(count: entity.count, borderColor: tint.border),
+      leading: view.queueRemaining.isEmpty
+          ? null
+          : SizedBox(
+              width: 40,
+              child: ListView(
+                reverse: true,
+                padding: EdgeInsets.zero,
+                children: [
+                  for (final queued in view.queueRemaining)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: SpriteFrame(
+                        id: queued.id,
+                        kind: SpriteKind.combat,
+                        size: 40,
+                        spriteSize: 30,
+                        radius: 10,
+                        onTap: () => showEntityInfoDialog(context, queued),
+                      ),
+                    ),
+                ],
+              ),
+            ),
     );
   }
 
@@ -518,125 +542,118 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
 
     final aboveFight = buildAboveFight(context);
 
+    final zone = context.watch<WorldController>().viewedZoneDefinition();
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final level = entity is CombatEntity ? entity.level : entity.defence;
+
+    // the top is left open: the zone's art strip runs up behind the status
+    // bar, as on the zone screen this one opens from
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(1),
-        child: Column(
-          children: [
-            Row(
+      top: false,
+      child: Column(
+        children: [
+          SizedBox(
+            height: ArtHeader.collapsedHeight(topPadding),
+            child: ArtHeader(
+              title: view.title,
+              subtitle: zone.name,
+              collapse: 1,
+              artAsset: zone.iconAsset.isEmpty ? null : zone.iconAsset,
+              backLabel: 'Back to ${zone.name}',
+              trailing: entityId == EntityId.NULL
+                  ? null
+                  : ArtHeaderChip(
+                      label: 'Lv $level',
+                      semanticsLabel: 'Level $level',
+                    ),
+            ),
+          ),
+          // scrollable middle so short screens don't overflow; the header
+          // above and the dock below stay pinned
+          Expanded(
+            child: ListView(
+              // room at the bottom for the dock's fade to fall on
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
               children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.of(context).maybePop(),
+                if (aboveFight != null) aboveFight,
+
+                // the entity, with whatever is queued behind it. the damage
+                // the player deals reports on the entity's hp bar below, and
+                // the damage coming back on the player's, so the stage
+                // carries nothing but the entity
+                buildPortrait(context, view),
+                const SizedBox(height: 16),
+
+                buildEntityStatusRow(
+                  context,
+                  entity,
+                  view.requiredLevel,
+                  // damage the player dealt this action, mirroring the
+                  // entity's damage on the player's row below
+                  damageSlot: view.showActionFeedback
+                      ? buildDamageNumber(
+                          context,
+                          view.playerDamage,
+                          view.actionSequence,
+                        )
+                      : null,
+                  actionProgress: view.entityActionProgress,
                 ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    view.title,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    overflow: TextOverflow.ellipsis,
+                // combat needs the player's own hp and stats in view;
+                // nothing gathered fights back, so that strip gives way to
+                // the rings for the skills the activity trains
+                if (isCombatEntity)
+                  buildPlayerStatusRow(context, view, skillType)
+                else
+                  buildGatheringStatusRow(
+                    context,
+                    view,
+                    skillType,
+                    trainedSkills,
                   ),
+
+                if (view.locked)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      "Requires Herbalism level ${view.requiredLevel}",
+                      textAlign: TextAlign.center,
+                      style: HearthText.rowMeta.copyWith(
+                        color: context.gameColors.hp,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 6),
+
+                // loot, active buffs and (per screen) trained skills or the
+                // entity's details share one slot, switched by tab
+                EncounterInfoPanel(
+                  // gathering draws its rings above the panel, so the tab
+                  // would only repeat them; it gets the entity's details in
+                  // that slot instead of reaching them by popup. the
+                  // placeholder entity a screen falls back to has no details
+                  // to build, so it gets neither
+                  skills: isCombatEntity ? trainedSkills : null,
+                  infoEntity: entityId == EntityId.NULL ? null : entity,
+                  drops: view.drops,
+                  equipment: view.equipmentDrops,
+                  lootLabel: isCombatEntity ? 'Loot' : 'Gathered',
+                  emptyLootLabel: isCombatEntity
+                      ? 'No loot this session'
+                      : 'Nothing gathered this session',
                 ),
               ],
             ),
-            // scrollable middle so short screens don't overflow; the
-            // header above and action buttons below stay pinned
-            Expanded(
-              child: ListView(
-                children: [
-                  if (aboveFight != null) aboveFight,
+          ),
 
-                  const SizedBox(height: 8),
-
-                  // Centered entity portrait, with whatever is queued behind
-                  // it stacked to the left. The damage the player deals
-                  // reports beside the entity's hp bar below, where the
-                  // damage coming back reports beside the player's, so the
-                  // portrait itself carries nothing but the entity.
-                  buildPortrait(context, view),
-                  const SizedBox(height: 12),
-
-                  buildEntityStatusRow(
-                    context,
-                    entity,
-                    view.requiredLevel,
-                    // damage the player dealt this action, mirroring the
-                    // entity's damage on the player's row below
-                    damageSlot: view.showActionFeedback
-                        ? FadingNumber(
-                            number: view.playerDamage,
-                            trigger: view.actionSequence,
-                            autoplay: false,
-                            color: view.playerDamage > 0
-                                ? Colors.red
-                                : Colors.blue,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
-                    actionProgress: view.entityActionProgress,
-                  ),
-                  // combat needs the player's own hp and stats in view;
-                  // nothing gathered fights back, so that strip gives way to
-                  // the rings for the skills the activity trains
-                  if (isCombatEntity)
-                    buildPlayerStatusRow(context, view, skillType)
-                  else
-                    buildGatheringStatusRow(
-                      context,
-                      view,
-                      skillType,
-                      trainedSkills,
-                    ),
-
-                  if (view.locked)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text(
-                        "Requires Herbalism level ${view.requiredLevel}",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 6),
-
-                  // loot, active buffs and (per screen) trained skills or the
-                  // entity's details share one slot, switched by tab
-                  EncounterInfoPanel(
-                    // gathering draws its rings above the panel, so the tab
-                    // would only repeat them; it gets the entity's details
-                    // in that slot instead of reaching them by popup. the
-                    // placeholder entity a screen falls back to has no
-                    // details to build, so it gets neither
-                    skills: isCombatEntity ? trainedSkills : null,
-                    infoEntity: entityId == EntityId.NULL ? null : entity,
-                    drops: view.drops,
-                    equipment: view.equipmentDrops,
-                    lootLabel: isCombatEntity ? 'Loot' : 'Gathered',
-                    emptyLootLabel: isCombatEntity
-                        ? 'No loot this session'
-                        : 'Nothing gathered this session',
-                  ),
-                ],
-              ),
-            ),
-
-            // stance, pinned with the action bar so it stays reachable
-            // mid-action. an entity with a single stance offers no choice,
-            // so the row is left out entirely
-            if (stances.length > 1)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: StanceButton(stances: stances),
-              ),
-
-            buildActionBar(context, view),
-          ],
-        ),
+          // the style switch rides in the dock with the buttons, so it stays
+          // reachable mid-action. an entity with a single stance offers no
+          // choice, so the row is left out entirely
+          ActionDock(
+            topRow: stances.length > 1 ? StanceButton(stances: stances) : null,
+            buttons: buildActionBar(context, view),
+          ),
+        ],
       ),
     );
   }
@@ -699,6 +716,8 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
     final controller = context.read<EncounterController>();
 
     return ActionButtonRow(
+      // the dock pads the row
+      padding: EdgeInsets.zero,
       actionButton: ActionOrTravelButton(
         // a depleted entity has nothing left to take: the action
         // conditions reject it, so the button says so up front

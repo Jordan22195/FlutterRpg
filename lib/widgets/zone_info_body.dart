@@ -25,8 +25,6 @@ class ZoneInfoBody extends StatelessWidget {
 
     return Column(
       children: [
-        _ZoneBanner(details: details),
-        const SizedBox(height: 12),
         _SummaryCard(details: details),
         if (details.entities.isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -60,32 +58,6 @@ class ZoneInfoBody extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-class _ZoneBanner extends StatelessWidget {
-  const _ZoneBanner({required this.details});
-
-  final ZoneDetails details;
-
-  @override
-  Widget build(BuildContext context) {
-    final asset = details.zone.iconAsset;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: SizedBox(
-        width: double.infinity,
-        height: 120,
-        child: asset.isEmpty
-            ? const ColoredBox(color: Colors.black26)
-            : Image.asset(
-                asset,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) =>
-                    const ColoredBox(color: Colors.black26),
-              ),
-      ),
     );
   }
 }

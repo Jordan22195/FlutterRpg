@@ -71,6 +71,25 @@ flutter:
     - assets/images/entities/
     - assets/images/zones/
 
+  # Hearth UI type: Figtree for everything, Pixelify Sans for titles.
+  # Static instances (OFL, licences alongside) so weights are exact and
+  # the app needs no network to render text.
+  fonts:
+    - family: Figtree
+      fonts:
+        - asset: assets/fonts/Figtree-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Figtree-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Figtree-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Figtree-ExtraBold.ttf
+          weight: 800
+    - family: PixelifySans
+      fonts:
+        - asset: assets/fonts/PixelifySans-SemiBold.ttf
+          weight: 600
+
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

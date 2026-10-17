@@ -4,14 +4,18 @@ import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
-import 'package:rpg/data/skill_category.dart';
 import 'package:rpg/data/skill_data.dart';
-import 'package:rpg/widgets/item_stack_tile.dart';
+import '../theme/hearth_text.dart';
+import '../theme/hearth_theme.dart';
+import '../utilities/util.dart';
 import 'action_timer.dart';
 import 'fading_number.dart';
 import 'icon_renderer.dart';
 import 'fill_bar.dart';
 
+/// The status row: what the player is doing, their stamina and boost, and
+/// the numbers behind them. Character-level state only — it outlives any
+/// one screen, so it rides above all of them.
 class ProgressBars extends StatelessWidget {
   const ProgressBars({
     super.key,
@@ -20,36 +24,33 @@ class ProgressBars extends StatelessWidget {
   });
 
   /// Called with the current activity's icon id when the activity
-  /// icon is tapped. Only invoked while an activity is running.
+  /// button is tapped. Only invoked while an activity is running.
   final void Function(Enum activityIconId)? onActivityTap;
 
   /// Whether an encounter screen is currently visible to the user.
   /// When the active encounter is on screen it shows its own damage
-  /// numbers, so the activity icon stays quiet.
+  /// numbers, so the activity button stays quiet.
   final bool encounterScreenInView;
 
-  // the banner is sized to this row, so everything in it is kept compact
-  // enough to sit inside the shortened toolbar
-  static const double _activityIconSize = 36;
+  /// The row's own height.
+  static const double height = 48;
 
-  /// Gap between the two stacked bars.
-  static const double _barGap = 6;
+  /// Gap between the stacked bars.
+  static const double _barGap = 5;
 
-  /// The banner carries character-level state only: energy, how much of the
-  /// boost is left, and — only while there is a trip to show — the road.
-  /// Per-action progress is encounter state and lives on the acting entity's
-  /// row instead — see [ActionTimer].
+  /// The banner carries character-level state only: stamina, how much of
+  /// the boost is built up, and — only while there is a trip to show — the
+  /// road. Per-action progress is encounter state and lives on the acting
+  /// entity's row instead — see [ActionTimer].
   ///
-  /// A trip belongs here rather than on a screen for the same reason energy
-  /// does: it outlives whatever screen you happen to be reading, and no one
-  /// screen owns it. It is the one bar here that comes and goes, and it can,
-  /// because the banner's height is set by the activity tile beside these
-  /// bars rather than by the bars themselves — three of them still measure
-  /// short of it, so the toolbar never moves.
-  static const double _barHeight = 7;
-  static const double _barRadius = 4;
-
-  static const Color _energyColor = Color(0xFF188CEB);
+  /// A trip belongs here rather than on a screen for the same reason
+  /// stamina does: it outlives whatever screen you happen to be reading,
+  /// and no one screen owns it. It is the one bar here that comes and goes,
+  /// and it can, because the row's height is set by the activity button
+  /// beside these bars rather than by the bars themselves — all three still
+  /// measure short of it, so the row never moves.
+  static const double _staminaHeight = 8;
+  static const double _thinBarHeight = 4;
 
   /// Identifies the trip bar, which is the only one of the three that is not
   /// always there.
@@ -57,148 +58,264 @@ class ProgressBars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final colors = context.gameColors;
     final playerController = context.watch<PlayerDataController>();
     final timing = context.watch<ActionTimingController>();
     final encounter = context.watch<EncounterController>();
     final world = context.watch<WorldController>();
 
-    // flash damage on the icon unless the active encounter's own screen
+    // flash damage on the button unless the active encounter's own screen
     // is in view (it shows the numbers over the entity image instead)
     final damageOnIcon =
         !(encounterScreenInView && encounter.isViewingActiveEncounter());
     final damageDone = encounter.latestActionResult.damageDone;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        // Current activity icon — same tile the explore screen shows for the
-        // entity, with a live count badge. An empty slot is kept when idle so
-        // the bars don't shift.
-        AnimatedBuilder(
-          animation: timing,
-          builder: (_, _) {
-            final iconId = timing.activityIconId;
-            if (iconId == null) {
-              return const SizedBox(
-                width: _activityIconSize,
-                height: _activityIconSize,
+    // the bars sit on a see-through track, so the art behind the row shows
+    final barTrack = palette.borderStrong.withValues(alpha: 0.6);
+
+    return SizedBox(
+      height: height,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          AnimatedBuilder(
+            animation: timing,
+            builder: (_, _) {
+              final iconId = timing.activityIconId;
+              return Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  ActivityButton(
+                    activityId: iconId,
+                    count: timing.activityCount,
+                    onTap: iconId == null || onActivityTap == null
+                        ? null
+                        : () => onActivityTap!(iconId),
+                  ),
+                  // presence, not progress: the pulse says the loop is
+                  // still turning without repeating the action bar the
+                  // acting entity's own row carries. it is what the screens
+                  // with no encounter on them — inventory, skills, gear —
+                  // are glanced at for.
+                  if (iconId != null)
+                    const Positioned(
+                      top: -3,
+                      left: -3,
+                      child: _ActivityPulseDot(),
+                    ),
+                  if (iconId != null && damageOnIcon)
+                    IgnorePointer(
+                      child: FadingNumber(
+                        number: damageDone,
+                        trigger: encounter.actionSequence,
+                        autoplay: false,
+                        color: damageDone > 0 ? colors.hp : palette.textMuted,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          shadows: [
+                            Shadow(blurRadius: 6, color: palette.titleShadow),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               );
-            }
-            return Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
+            },
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                ItemStackTile(
-                  size: _activityIconSize,
-                  count: timing.activityCount,
-                  id: iconId,
-                  showInfoDialogOnTap: false,
-                  onTap: onActivityTap == null
-                      ? null
-                      : () => onActivityTap!(iconId),
+                // Stamina
+                AnimatedBuilder(
+                  animation: timing,
+                  builder: (_, _) => FillBar(
+                    value: playerController.getStaminaPercent(),
+                    height: _staminaHeight,
+                    borderRadius: _staminaHeight / 2,
+                    backgroundColor: barTrack,
+                    foregroundColor: colors.stamina,
+                  ),
                 ),
-                // presence, not progress: the pulse says the loop is still
-                // turning without repeating the action bar the acting
-                // entity's own row now carries. it is what the screens
-                // with no encounter on them — inventory, skills, gear —
-                // are glanced at for.
-                const Positioned(top: -3, left: -3, child: _ActivityPulseDot()),
-                if (damageOnIcon)
-                  IgnorePointer(
-                    child: FadingNumber(
-                      number: damageDone,
-                      trigger: encounter.actionSequence,
-                      autoplay: false,
-                      color: damageDone > 0 ? Colors.red : Colors.blue,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        shadows: [Shadow(blurRadius: 6, color: Colors.black)],
+                const SizedBox(height: _barGap),
+
+                // Boost built up by holding the action button
+                AnimatedBuilder(
+                  animation: timing,
+                  builder: (_, _) => FillBar(
+                    value: timing.percentMaxSpeed,
+                    height: _thinBarHeight,
+                    borderRadius: _thinBarHeight / 2,
+                    backgroundColor: barTrack,
+                    foregroundColor: colors.secondaryBar,
+                  ),
+                ),
+
+                // The road, while there is one to walk. Off the bottom
+                // rather than in among the two that are always there, so
+                // neither of those ever changes position as it comes and
+                // goes. The only bar here that carries a number, because it
+                // is the only one counting down to something.
+                if (world.isShowingTravel)
+                  AnimatedBuilder(
+                    animation: timing,
+                    builder: (_, _) => Padding(
+                      padding: const EdgeInsets.only(top: _barGap),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: FillBar(
+                              key: travelBarKey,
+                              value: world.travelProgress(),
+                              height: _thinBarHeight,
+                              borderRadius: _thinBarHeight / 2,
+                              backgroundColor: barTrack,
+                              foregroundColor: colors.travel,
+                            ),
+                          ),
+                          const SizedBox(width: ActionTimer.gap),
+                          ActionTimeChip(duration: world.travelRemaining()),
+                        ],
                       ),
                     ),
                   ),
               ],
-            );
-          },
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Energy
               AnimatedBuilder(
                 animation: timing,
-                builder: (_, _) => FillBar(
-                  value: playerController.getStaminaPercent(),
-                  height: _barHeight,
-                  borderRadius: _barRadius,
-                  foregroundColor: _energyColor,
+                builder: (_, _) => StatValueLabel(
+                  value: playerController.getStamina(),
+                  max: playerController.getMaxStamina(),
                 ),
               ),
-              const SizedBox(height: _barGap),
+              const SizedBox(height: 2),
+              const ActionIntervalTimer(),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-              // Boost remaining
-              AnimatedBuilder(
-                animation: timing,
-                builder: (_, _) => FillBar(
-                  value: timing.percentMaxSpeed,
-                  height: _barHeight,
-                  borderRadius: _barRadius,
-                ),
-              ),
+/// The status row's activity button: a 44pt square showing what the player
+/// is doing — a compass while exploring, or the target's sprite with how
+/// many are left in a pill across its bottom edge. Empty while idle.
+class ActivityButton extends StatelessWidget {
+  const ActivityButton({
+    super.key,
+    required this.activityId,
+    required this.count,
+    this.onTap,
+  });
 
-              // The road, while there is one to walk. Off the bottom rather
-              // than in among the two that are always there, so neither of
-              // those ever changes position as it comes and goes.
-              //
-              // The only bar here that carries a number, because it is the
-              // only one counting down to something: energy and boost are
-              // levels, and a trip has an end. The chip is the encounter
-              // rows' own, so the two read the same way.
-              //
-              // No gap above it, unlike between the two above: the chip is
-              // taller than the bar it sits beside, so the road's row brings
-              // its own breathing room — and brings it from the same 36px
-              // the activity tile already claims, which is what keeps the
-              // banner exactly as tall with a trip on as without one.
-              if (world.isShowingTravel)
-                AnimatedBuilder(
-                  animation: timing,
-                  builder: (_, _) => Row(
-                    children: [
-                      Expanded(
-                        child: FillBar(
-                          key: travelBarKey,
-                          value: world.travelProgress(),
-                          height: _barHeight,
-                          borderRadius: _barRadius,
-                          foregroundColor: kTravelColor,
-                        ),
-                      ),
-                      const SizedBox(width: ActionTimer.gap),
-                      ActionTimeChip(duration: world.travelRemaining()),
-                    ],
+  final Enum? activityId;
+  final int count;
+  final VoidCallback? onTap;
+
+  static const double size = 44;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final id = activityId;
+
+    final Widget? face;
+    if (id == null) {
+      face = null;
+    } else if (id == SkillId.EXPLORATION) {
+      face = Icon(
+        Icons.explore_outlined,
+        size: 24,
+        color: context.gameColors.exploration,
+      );
+    } else {
+      face = IconRenderer(size: 32, id: id);
+    }
+
+    return Semantics(
+      button: onTap != null,
+      label: id == null
+          ? 'No activity'
+          : id == SkillId.EXPLORATION
+          ? 'Current activity: exploring'
+          : 'Current activity, $count left',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: palette.surface.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: palette.borderOverArt),
                   ),
+                  child: face == null ? null : Center(child: face),
+                ),
+              ),
+              // the count only means something on a target
+              if (id != null && id != SkillId.EXPLORATION && count > 0)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: -7,
+                  child: Center(child: CountPill(count: count)),
                 ),
             ],
           ),
         ),
-        const SizedBox(width: 2),
-        Column(
-          children: [
-            AnimatedBuilder(
-              animation: timing,
-              builder: (_, _) => StatValueLabel(
-                value: playerController.getStamina(),
-                max: playerController.getMaxStamina(),
-              ),
-            ),
-            ActionIntervalTimer(),
-          ],
+      ),
+    );
+  }
+}
+
+/// A small count laid over the edge of a sprite frame ("181k"), shortened
+/// so a six-digit stack doesn't cover the art it counts.
+class CountPill extends StatelessWidget {
+  const CountPill({super.key, required this.count, this.borderColor});
+
+  final int count;
+
+  /// Matches the frame the pill sits on; defaults to the over-art border.
+  final Color? borderColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return Container(
+      height: 16,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: BoxDecoration(
+        color: palette.bg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: borderColor ?? palette.borderOverArt),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        Util.formatShortCount(count),
+        style: HearthText.timer.copyWith(
+          fontSize: 11,
+          height: 1.0,
+          color: palette.text,
         ),
-      ],
+      ),
     );
   }
 }
@@ -212,7 +329,6 @@ class _ActivityPulseDot extends StatefulWidget {
   const _ActivityPulseDot();
 
   static const double _size = 8;
-  static const Color _color = Color(0xFFC0ABE9);
 
   /// The trough of the pulse. Never fully out: the dot is presence, and
   /// blinking it off would read as stopped.
@@ -277,8 +393,8 @@ class _ActivityPulseDotState extends State<_ActivityPulseDot>
         child: Container(
           width: _ActivityPulseDot._size,
           height: _ActivityPulseDot._size,
-          decoration: const BoxDecoration(
-            color: _ActivityPulseDot._color,
+          decoration: BoxDecoration(
+            color: context.palette.text,
             shape: BoxShape.circle,
           ),
         ),
@@ -310,11 +426,13 @@ class StatValueLabel extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconRenderer<SkillId>(size: 15, id: skill),
-        // const SizedBox(width: 4),
+        IconRenderer<SkillId>(size: 16, id: skill),
+        const SizedBox(width: 4),
         Text(
           '${value.round()} / ${max.round()}',
-          style: const TextStyle(fontSize: 12),
+          maxLines: 1,
+          softWrap: false,
+          style: HearthText.statusStat.copyWith(color: context.palette.text),
         ),
       ],
     );
@@ -324,11 +442,11 @@ class StatValueLabel extends StatelessWidget {
 class ActionIntervalTimer extends StatelessWidget {
   const ActionIntervalTimer({super.key});
 
-  static const double _iconSize = 15;
+  static const double _iconSize = 16;
   static const double _iconGap = 4;
 
   /// Room for the label plus the widest icon run: the strong stance's two.
-  static const double _labelWidth = 40;
+  static const double _labelWidth = 46;
   static const double _width =
       _iconGap + (_iconSize + _iconGap) * 2 + _labelWidth;
 
@@ -366,8 +484,6 @@ class ActionIntervalTimer extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              const SizedBox(width: _iconGap),
-
               // wears the icon of whichever stat is actually being trained
               IconRenderer<SkillId>(size: _iconSize, id: boostSkill),
               if (showsTarget) ...[
@@ -377,10 +493,19 @@ class ActionIntervalTimer extends StatelessWidget {
               const SizedBox(width: _iconGap),
               SizedBox(
                 width: _labelWidth, // Fixed so the text doesn't resize
-                child: Text(
-                  label,
-                  textAlign: TextAlign.left,
-                  style: TextStyle(fontSize: 12),
+                // one line, always: a wrapped label would push the row past
+                // its 48pt, so a big text scale shrinks it instead
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: HearthText.statusStat.copyWith(
+                      color: context.palette.text,
+                    ),
+                  ),
                 ),
               ),
             ],

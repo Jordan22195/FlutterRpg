@@ -8,16 +8,23 @@ import '../controllers/action_queue_controller.dart';
 import '../controllers/action_timing_controller.dart';
 import '../controllers/player_data_controller.dart';
 import '../controllers/world_controller.dart';
-import 'action_timer.dart';
+import '../theme/hearth_text.dart';
+import '../theme/hearth_theme.dart';
 
-/// Height shared by every control in the action bar. The primary button and
-/// the fixed-width side buttons flanking it all sit at this height, so the
-/// bar reads as one row of keys.
-const double kActionBarButtonHeight = 62.0;
+/// Height shared by every control in the action bar. The primary button's
+/// face and the side buttons flanking it all sit at this height, so the bar
+/// reads as one row of keys; the primary button's lip hangs below it.
+const double kActionBarButtonHeight = 52.0;
 
-/// Footprint of a side button (stop on the left, eat on the right). Both are
-/// this size, and the primary button takes whatever is left between them.
-const double kActionBarSideButtonWidth = 76.0;
+/// The primary button's lip: how far its face sits above the base, and how
+/// far it travels when pressed.
+const double kActionBarLip = 4.0;
+
+/// Footprint of the stop button on the left: a square.
+const double kActionBarSideButtonWidth = 52.0;
+
+/// Footprint of a screen-specific control on the right, such as Eat.
+const double kActionBarTrailingWidth = 92.0;
 
 class MomentumPrimaryButton extends StatefulWidget {
   const MomentumPrimaryButton({
@@ -27,15 +34,22 @@ class MomentumPrimaryButton extends StatefulWidget {
     required this.startActionFunction,
     this.color,
     this.idleIcon,
+    this.showLabel = false,
   });
 
   final FutureOr<void> Function() startActionFunction;
+
+  /// Draw [label] on the face between the icon and the lock. A station's
+  /// button names its action ("Light Fire"), since which action it runs is
+  /// the point of the screen; elsewhere the icon says enough.
+  final bool showLabel;
   final bool enabled;
   final String label;
 
-  /// The face colour. Defaults to the action bar's purple; travel passes
-  /// its own blue, which is the whole tell that the button will walk you
-  /// somewhere rather than work what's in front of you.
+  /// The face colour. Defaults to the zone's accent — the one place the
+  /// accent appears; travel passes its own blue, which is the whole tell
+  /// that the button will walk you somewhere rather than work what's in
+  /// front of you.
   final Color? color;
 
   /// What the face shows at rest. Defaults to play; travel walks instead.
@@ -52,8 +66,8 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
   // height is fixed, so nothing shifts when the lock icon appears or the
   // play/fast-forward icon swaps out. it is the one control the player
   // holds down for minutes at a time, so it gets the widest target.
-  static const double _buttonHeight = kActionBarButtonHeight;
-  static const double _iconSize = 34.0;
+  static const double _buttonHeight = kActionBarButtonHeight + kActionBarLip;
+  static const double _iconSize = 28.0;
 
   // how far up the button has to be dragged to commit the speed lock. the
   // drag has no visual of its own: the lock icon on the face is what says
@@ -62,7 +76,7 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
 
   // how tall the base lip under the button face is. this is the distance the
   // face travels when pressed: it sinks until it sits flush on the base.
-  static const double _pressDepth = 6.0;
+  static const double _pressDepth = kActionBarLip;
 
   bool _lockTriggeredThisDrag = false;
 
@@ -166,6 +180,28 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
     final locked = controller.getActionSpeedLockState();
     _latched = locked;
 
+    // the accent is the zone's, and this is the only place it is used. a
+    // disabled button is a plain surface with no lip, so it reads as not
+    // there yet rather than as a dimmed version of the live one
+    final palette = context.palette;
+    final custom = widget.color;
+    final Color face;
+    final Color lip;
+    final Color content;
+    if (!widget.enabled) {
+      face = palette.surface;
+      lip = Colors.transparent;
+      content = palette.textMuted;
+    } else if (custom == null) {
+      face = palette.accent;
+      lip = palette.accentLip;
+      content = palette.onAccent;
+    } else {
+      face = custom;
+      lip = _shade(custom, -0.2);
+      content = palette.bg;
+    }
+
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
@@ -209,21 +245,23 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
                   ),
             },
 
-            // button container. a disabled button keeps its footprint and
-            // greys out, so the action bar doesn't reflow when the action
-            // becomes available again
-            child: Opacity(
-              opacity: widget.enabled ? 1.0 : 0.35,
+            // button container. a disabled button keeps its footprint but
+            // drops to a plain surface with no lip, so the action bar
+            // doesn't reflow when the action becomes available again
+            child: Semantics(
+              button: true,
+              enabled: widget.enabled,
+              label: locked ? '${widget.label}, locked' : widget.label,
+              excludeSemantics: true,
               child: RaisedSurface(
                 pressed: _pressed,
                 height: _buttonHeight,
                 depth: _pressDepth,
-                color:
-                    widget.color ??
-                    Theme.of(context).colorScheme.primaryContainer,
+                color: face,
+                lipColor: lip,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
-                  vertical: 12,
+                  vertical: 8,
                 ),
                 // the button fills the middle of the bar, so the icons
                 // center in it
@@ -239,10 +277,25 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
                           ? Icons.fast_forward
                           : (widget.idleIcon ?? Icons.play_arrow),
                       size: _iconSize,
+                      color: content,
                     ),
+                    if (widget.showLabel) ...[
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          widget.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: HearthText.rowTitle.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: content,
+                          ),
+                        ),
+                      ),
+                    ],
                     if (locked) ...[
                       const SizedBox(width: 8),
-                      const Icon(Icons.lock, size: 18, color: Colors.white),
+                      Icon(Icons.lock, size: 18, color: content),
                     ],
                   ],
                 ),
@@ -273,11 +326,16 @@ class ActionOrTravelButton extends StatelessWidget {
     required this.enabled,
     required this.label,
     required this.startActionFunction,
+    this.showLabel = false,
   });
 
   final FutureOr<void> Function() startActionFunction;
   final bool enabled;
   final String label;
+
+  /// See [MomentumPrimaryButton.showLabel]. The travel button always names
+  /// itself by its walking icon alone.
+  final bool showLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -291,6 +349,7 @@ class ActionOrTravelButton extends StatelessWidget {
         enabled: enabled,
         label: label,
         startActionFunction: startActionFunction,
+        showLabel: showLabel,
       );
     }
 
@@ -300,7 +359,7 @@ class ActionOrTravelButton extends StatelessWidget {
       // boosting the walk; otherwise it greys out until the stamina is there
       enabled: world.travelTarget == target || world.canTravelTo(target),
       label: 'Travel',
-      color: kTravelColor,
+      color: context.gameColors.travel,
       idleIcon: Icons.directions_walk,
       startActionFunction: () => world.startTravelTo(target),
     );
@@ -311,18 +370,27 @@ class ActionOrTravelButton extends StatelessWidget {
 /// anchored to the left edge, any screen-specific controls anchored to the
 /// right, and the primary button filling everything between them.
 ///
-/// Both side slots keep their fixed footprint whether or not anything is in
-/// them — the stop button only renders while an action runs, and a screen
-/// with no trailing control still reserves the slot — so the primary button
-/// stays centred on every screen and never changes width mid-action.
+/// The stop slot keeps its footprint whether or not the button is showing —
+/// it only renders while an action runs — so the primary button never
+/// changes width mid-action.
 class ActionButtonRow extends StatelessWidget {
   const ActionButtonRow({
     super.key,
     required this.actionButton,
     this.trailing = const <Widget>[],
+    this.padding = const EdgeInsets.fromLTRB(16, 8, 16, 12),
+    this.trailingWidth = kActionBarTrailingWidth,
   });
 
+  /// The width each trailing control gets: Eat's 92 by default, or a
+  /// square for an icon-only control.
+  final double trailingWidth;
+
   final Widget actionButton;
+
+  /// Room around the row. A screen that puts the row in an action dock
+  /// passes zero and lets the dock pad it.
+  final EdgeInsets padding;
 
   /// Screen-specific controls for the right slot, such as the eat button on
   /// a combat encounter.
@@ -331,30 +399,27 @@ class ActionButtonRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      padding: padding,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        // tops aligned: the primary button's lip hangs below the row of faces
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // left anchor: the stop button's slot, held open while idle
+          // left anchor: the stop button's slot, held open while idle so the
+          // primary button never changes width as an action starts
           const SizedBox(
             width: kActionBarSideButtonWidth,
+            height: kActionBarButtonHeight,
             child: StopPrimaryButton(),
           ),
           const SizedBox(width: 10),
 
           Expanded(child: actionButton),
 
-          // right anchor: screen-specific controls, each the same footprint
-          // as the stop button. a screen with none still reserves one slot,
-          // so the two sides stay symmetric and the primary button sits
-          // centred on every screen rather than sliding right
-          if (trailing.isEmpty)
-            const SizedBox(width: 10 + kActionBarSideButtonWidth)
-          else
-            for (final control in trailing) ...[
-              const SizedBox(width: 10),
-              SizedBox(width: kActionBarSideButtonWidth, child: control),
-            ],
+          // right anchor: screen-specific controls such as Eat
+          for (final control in trailing) ...[
+            const SizedBox(width: 10),
+            SizedBox(width: trailingWidth, child: control),
+          ],
         ],
       ),
     );
@@ -382,9 +447,10 @@ class RaisedSurface extends StatelessWidget {
     required this.height,
     required this.color,
     required this.child,
-    this.depth = 6.0,
-    this.radius = 18.0,
+    this.depth = kActionBarLip,
+    this.radius = 14.0,
     this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    this.lipColor,
   });
 
   final bool pressed;
@@ -394,6 +460,10 @@ class RaisedSurface extends StatelessWidget {
   final Color color;
   final EdgeInsets padding;
   final Widget child;
+
+  /// The base showing below the face. Defaults to a darker shade of
+  /// [color]; the primary button passes its zone's accent lip.
+  final Color? lipColor;
 
   // the face drops fast and springs back a touch slower, which is what makes
   // the travel read as a real button rather than a colour swap
@@ -409,23 +479,15 @@ class RaisedSurface extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // the base. only the strip below the face is ever visible, and a
-          // press swallows it.
+          // the base: a hard lip with no blur. only the strip below the
+          // face is ever visible, and a press swallows it.
           Positioned.fill(
             child: AnimatedContainer(
               duration: duration,
               curve: Curves.easeOut,
               decoration: BoxDecoration(
-                color: _shade(color, -0.17),
+                color: lipColor ?? _shade(color, -0.17),
                 borderRadius: BorderRadius.circular(radius),
-                // the cast shortens with the travel, the way a real key's does
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: pressed ? 0.14 : 0.3),
-                    blurRadius: pressed ? 3 : 8,
-                    offset: Offset(0, pressed ? 1 : 3),
-                  ),
-                ],
               ),
             ),
           ),
@@ -443,14 +505,8 @@ class RaisedSurface extends StatelessWidget {
               curve: Curves.easeOut,
               padding: padding,
               decoration: BoxDecoration(
+                color: color,
                 borderRadius: BorderRadius.circular(radius),
-                // lit from above when raised, flattening out once it's down
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [_shade(color, pressed ? -0.03 : 0.07), color],
-                ),
-                border: Border.all(color: _shade(color, 0.1), width: 1),
               ),
               child: child,
             ),
@@ -476,10 +532,6 @@ class StopPrimaryButton extends StatefulWidget {
 }
 
 class _StopPrimaryButtonState extends State<StopPrimaryButton> {
-  // the same height as the primary button it sits beside, so the action bar
-  // reads as one row of controls
-  static const double _height = kActionBarButtonHeight;
-
   bool _pressed = false;
 
   @override
@@ -487,30 +539,44 @@ class _StopPrimaryButtonState extends State<StopPrimaryButton> {
     final controller = context.watch<ActionTimingController>();
     if (!controller.isRunning) return const SizedBox.shrink();
 
-    final scheme = Theme.of(context).colorScheme;
+    final palette = context.palette;
 
-    return Listener(
-      onPointerDown: (_) => setState(() => _pressed = true),
-      onPointerUp: (_) => setState(() => _pressed = false),
-      onPointerCancel: (_) => setState(() => _pressed = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          HapticFeedback.lightImpact();
-          // a user stop cancels the action queue too; otherwise the
-          // queue would treat the stop as a finished task and advance
-          context.read<ActionQueueController>().stopQueue();
-          controller.stop();
-          widget.onTap?.call();
-        },
-        child: RaisedSurface(
-          pressed: _pressed,
-          height: _height,
-          color: scheme.errorContainer,
-          radius: 14,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Center(
-            child: Icon(Icons.stop, size: 28, color: scheme.onErrorContainer),
+    // deliberately quiet: a plain surface with a small square, so stopping
+    // is always there without the bar reading as a warning
+    return Semantics(
+      button: true,
+      label: 'Stop',
+      excludeSemantics: true,
+      child: Listener(
+        onPointerDown: (_) => setState(() => _pressed = true),
+        onPointerUp: (_) => setState(() => _pressed = false),
+        onPointerCancel: (_) => setState(() => _pressed = false),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            // a user stop cancels the action queue too; otherwise the
+            // queue would treat the stop as a finished task and advance
+            context.read<ActionQueueController>().stopQueue();
+            controller.stop();
+            widget.onTap?.call();
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 60),
+            width: kActionBarSideButtonWidth,
+            height: kActionBarButtonHeight,
+            decoration: BoxDecoration(
+              color: _pressed ? palette.raised : palette.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: palette.borderStrong),
+            ),
+            alignment: Alignment.center,
+            // the rounded glyph's square is half its box: 16pt, radius ~3
+            child: Icon(
+              Icons.stop_rounded,
+              size: 32,
+              color: context.gameColors.stop,
+            ),
           ),
         ),
       ),

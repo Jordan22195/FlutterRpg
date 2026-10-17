@@ -18,8 +18,10 @@ import '../controllers/world_controller.dart';
 import '../game_session.dart';
 import '../services/entity_screen_router_service.dart';
 import '../utilities/top_route_observer.dart';
+import '../widgets/hearth_nav_bar.dart';
 import '../widgets/offline_progress_dialog.dart';
 import '../widgets/progress_bars.dart';
+import '../widgets/status_row.dart';
 
 class MainShell extends StatefulWidget {
   /// Fired whenever the saved ui state (active tab / map tab stack) is
@@ -49,6 +51,18 @@ class _MainShellState extends State<MainShell> {
       index == 0 &&
       _mapTabObserver.topRouteName ==
           EntityScreenRouterService.encounterRouteName;
+
+  // the screens that draw the status row over their zone's art: while one
+  // is on top, the shell's app bar steps aside
+  static const _artHeaderRoutes = {
+    EntityScreenRouterService.exploreRouteName,
+    EntityScreenRouterService.encounterRouteName,
+    EntityScreenRouterService.craftingRouteName,
+    EntityScreenRouterService.firepitRouteName,
+  };
+
+  bool get _artScreenInView =>
+      index == 0 && _artHeaderRoutes.contains(_mapTabObserver.topRouteName);
 
   // the map tab stack to rebuild after the first frame, copied from the
   // save in initState before route changes start overwriting the ui state
@@ -374,60 +388,50 @@ class _MainShellState extends State<MainShell> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        appBar: AppBar(
-          // the bars are the whole banner, so the toolbar is sized to them
-          // rather than to the default title height: it keeps the status
-          // strip tight against the top of the screen and hands the space
-          // back to the screen below
-          toolbarHeight: 40,
-          titleSpacing: 12,
-          title: ProgressBars(
-            onActivityTap: _openActivityScreen,
-            encounterScreenInView: _encounterScreenInView,
+        appBar: _artScreenInView
+            ? null
+            : AppBar(
+                // the bars are the whole banner, so the toolbar is sized to
+                // them rather than to the default title height: it keeps the
+                // status strip tight against the top of the screen and hands
+                // the space back to the screen below
+                toolbarHeight: ProgressBars.height,
+                titleSpacing: 16,
+                title: ProgressBars(
+                  onActivityTap: _openActivityScreen,
+                  encounterScreenInView: _encounterScreenInView,
+                ),
+              ),
+        body: StatusRowScope(
+          onActivityTap: _openActivityScreen,
+          encounterScreenInView: _encounterScreenInView,
+          child: IndexedStack(
+            index: index,
+            children: [
+              _tabNavigator(
+                key: _navKeys[0],
+                root: const MapScreen(),
+                observers: [_mapTabObserver],
+              ),
+              _tabNavigator(key: _navKeys[1], root: const SkillsScreen()),
+              _tabNavigator(key: _navKeys[2], root: const InventoryScreen()),
+              _tabNavigator(key: _navKeys[3], root: const GearScreen()),
+              _tabNavigator(key: _navKeys[4], root: const QueueScreen()),
+            ],
           ),
         ),
-        body: IndexedStack(
-          index: index,
-          children: [
-            _tabNavigator(
-              key: _navKeys[0],
-              root: const MapScreen(),
-              observers: [_mapTabObserver],
-            ),
-            _tabNavigator(key: _navKeys[1], root: const SkillsScreen()),
-            _tabNavigator(key: _navKeys[2], root: const InventoryScreen()),
-            _tabNavigator(key: _navKeys[3], root: const GearScreen()),
-            _tabNavigator(key: _navKeys[4], root: const QueueScreen()),
-          ],
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          // five tabs: fixed keeps labels visible (default flips to
-          // shifting at 4+ items)
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
-          unselectedItemColor: Theme.of(
-            context,
-          ).colorScheme.onSurface.withOpacity(0.6),
+        bottomNavigationBar: HearthNavBar(
           currentIndex: index,
           onTap: (i) {
             setState(() => index = i);
             _captureUiState();
           },
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.auto_graph),
-              label: 'Skills',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.backpack),
-              label: 'Inventory',
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.shield), label: 'Gear'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.playlist_play),
-              label: 'Queue',
-            ),
+            HearthNavItem(icon: Icons.map_outlined, label: 'Map'),
+            HearthNavItem(icon: Icons.trending_up, label: 'Skills'),
+            HearthNavItem(icon: Icons.backpack_outlined, label: 'Inventory'),
+            HearthNavItem(icon: Icons.shield_outlined, label: 'Gear'),
+            HearthNavItem(icon: Icons.playlist_play, label: 'Queue'),
           ],
         ),
       ),

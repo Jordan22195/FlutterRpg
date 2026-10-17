@@ -4,6 +4,7 @@ import 'package:rpg/catalogs/zones/definition/zone_definition.dart';
 import 'package:rpg/catalogs/zones/map_node_type.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/catalogs/entities/entity_id.dart';
+import 'package:rpg/theme/zone_palette.dart';
 
 // ignore_for_file: constant_identifier_names
 
@@ -22,6 +23,7 @@ enum ZoneId {
     ZoneDefinition(
       name: "Southglen Meadow",
       iconAsset: "assets/images/zones/farm.png",
+      palette: ZonePalette.meadow,
       explorationLevel: 1,
       xpPerExplore: 3,
 
@@ -51,6 +53,7 @@ enum ZoneId {
   SOUTHWOOD_FOREST(
     ZoneDefinition(
       iconAsset: 'assets/images/zones/forest.png',
+      palette: ZonePalette.forest,
       explorationLevel: 5,
       xpPerExplore: 5,
 
@@ -290,6 +293,7 @@ enum ZoneId {
     ZoneDefinition(
       name: "Dev Forest",
       iconAsset: 'assets/images/zones/forest.png',
+      palette: ZonePalette.forest,
       xpPerExplore: 10,
 
       permanentEntities: [

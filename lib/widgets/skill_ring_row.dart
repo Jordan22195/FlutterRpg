@@ -19,17 +19,26 @@ class SkillRingRow extends StatelessWidget {
     required this.skills,
     this.maxVisible = 5,
     this.alignment = MainAxisAlignment.center,
+    this.shrinkWrap = false,
+    this.spacing = 6,
   });
+
+  /// The gap between neighbouring rings: 6 in the dock, 14 on a station.
+  final double spacing;
 
   final List<SkillId> skills;
   final int maxVisible;
   final MainAxisAlignment alignment;
 
+  /// Take only the rings' own width rather than the whole row, for a row
+  /// sharing its line with something else (the dock's progress bar).
+  final bool shrinkWrap;
+
   /// The ring size the rows are drawn at when there is room for it.
   static const double _ringSize = 40;
 
-  /// [SkillTile] pads itself by 8 on every side.
-  static const double _tilePadding = 16;
+  /// [SkillTile]'s own horizontal padding, both sides.
+  static final double _tilePadding = SkillTile.padding.horizontal;
 
   /// Below this the icon inside the ring stops being readable; a row that
   /// still does not fit is better served by the +N chip.
@@ -47,19 +56,31 @@ class SkillRingRow extends StatelessWidget {
       builder: (context, constraints) {
         final slots = visible.length + (hidden > 0 ? 1 : 0);
         var ringSize = _ringSize;
+        // the tiles' own padding already makes a 6pt gap; wider spacing adds
+        // the rest between them
+        final extraGap = max(0.0, spacing - _tilePadding);
         if (constraints.maxWidth.isFinite && slots > 0) {
-          final perSlot = constraints.maxWidth / slots - _tilePadding;
+          final perSlot =
+              (constraints.maxWidth - extraGap * (slots - 1)) / slots -
+              _tilePadding;
           ringSize = min(_ringSize, perSlot).clamp(_minRingSize, _ringSize);
         }
 
         return Row(
           mainAxisAlignment: alignment,
+          mainAxisSize: shrinkWrap ? MainAxisSize.min : MainAxisSize.max,
           children: [
-            for (final id in visible)
-              SkillTile(id: id, size: ringSize, strokeWidth: ringSize * 0.125),
+            for (var i = 0; i < visible.length; i++) ...[
+              if (i > 0 && extraGap > 0) SizedBox(width: extraGap),
+              SkillTile(
+                id: visible[i],
+                size: ringSize,
+                strokeWidth: ringSize * 0.075,
+              ),
+            ],
             if (hidden > 0)
               Padding(
-                padding: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.only(left: 6),
                 child: OverflowChip(
                   count: hidden,
                   size: ringSize,
@@ -97,7 +118,15 @@ class ActivitySkillRingRow extends StatelessWidget {
     super.key,
     required this.skills,
     this.alignment = MainAxisAlignment.center,
+    this.shrinkWrap = false,
+    this.spacing = 6,
   });
+
+  /// See [SkillRingRow.spacing].
+  final double spacing;
+
+  /// See [SkillRingRow.shrinkWrap].
+  final bool shrinkWrap;
 
   /// What this activity trains on its own - the gathering or crafting skill,
   /// plus hitpoints and defence in combat.
@@ -123,6 +152,8 @@ class ActivitySkillRingRow extends StatelessWidget {
       // combat trains three of its own, and all six still fit on one line
       maxVisible: 6,
       alignment: alignment,
+      shrinkWrap: shrinkWrap,
+      spacing: spacing,
     );
   }
 }

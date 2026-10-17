@@ -22,6 +22,8 @@ import 'controllers/shop_controller.dart';
 import 'data/skill_data.dart';
 import 'utilities/image_resolver.dart';
 import 'screens/main_shell.dart';
+import 'theme/hearth_theme.dart';
+import 'catalogs/zones/zone_id.dart';
 import 'controllers/potion_controller.dart';
 
 Future<void> main() async {
@@ -180,10 +182,17 @@ class _GameBootstrapState extends State<GameBootstrap>
           value: session.dungeonController,
         ),
       ],
-      child: MaterialApp(
-        title: 'RPG',
-        theme: ThemeData.dark(),
-        home: MainShell(onUiStateChanged: _onUiStateChanged),
+      // the whole app wears the palette of the zone being shown, so the
+      // shell and every screen inside a zone (combat, crafting) share it.
+      // selecting just the zone id keeps world ticks from rebuilding the app
+      child: Selector<WorldController, ZoneId>(
+        selector: (_, world) => world.viewedZoneId,
+        builder: (_, zoneId, home) => MaterialApp(
+          title: 'RPG',
+          theme: hearthTheme(zoneId.definition.palette),
+          home: home,
+        ),
+        child: MainShell(onUiStateChanged: _onUiStateChanged),
       ),
     );
   }

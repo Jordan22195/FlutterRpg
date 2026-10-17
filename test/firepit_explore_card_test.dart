@@ -8,6 +8,7 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
+import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
@@ -82,6 +83,11 @@ void main() {
           ),
           ChangeNotifierProvider<PlayerDataController>.value(
             value: session.playerDataController,
+          ),
+          // the status row over the art reads the encounter for its
+          // damage numbers
+          ChangeNotifierProvider<EncounterController>.value(
+            value: session.encounterController,
           ),
         ],
         child: const MaterialApp(home: Scaffold(body: ExploreScreen())),

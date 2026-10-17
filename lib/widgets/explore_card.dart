@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
-import 'package:rpg/widgets/item_stack_tile.dart';
-import 'package:rpg/widgets/stat_chip.dart';
 import '../data/skill_data.dart';
+import '../theme/hearth_text.dart';
+import '../theme/hearth_theme.dart';
+import '../utilities/util.dart';
 import 'countdown_timer.dart';
+import 'list_row.dart';
+import 'sprite_frame.dart';
 
 /// Human label for a skill on explore cards ("Combat", "Woodcutting").
 String skillDisplayName(Enum skill) {
@@ -31,6 +34,12 @@ String skillActionVerb(Enum skill) {
   }
 }
 
+/// A place or an entity in a zone's list, on the shared [ListRow].
+///
+/// Places (stations, shops, dungeons, fishing spots) end in a chevron and
+/// say what they train; entities found by exploring say how hard they are
+/// and how many are standing ("Lv 3 · 1.57k"), and end in the xp the stack
+/// is worth.
 class ObjectCard<T extends Enum> extends StatefulWidget {
   const ObjectCard({
     required super.key,
@@ -38,10 +47,10 @@ class ObjectCard<T extends Enum> extends StatefulWidget {
     required this.count,
     required this.onTap,
     required this.typeId,
+    required this.kind,
     this.onIconTap,
     this.typeIds,
     this.name,
-    this.height = 64,
     this.expirationTime,
     this.subtitle,
     this.statLevel,
@@ -55,11 +64,14 @@ class ObjectCard<T extends Enum> extends StatefulWidget {
   final int count;
   final VoidCallback onTap;
 
+  /// What the sprite frame is tinted as.
+  final SpriteKind kind;
+
   /// Tapping the entity's portrait, rather than the card body. Used for
   /// the details popup, so the card itself still opens the entity screen.
   final VoidCallback? onIconTap;
 
-  /// The skill this entity trains (drives the subtitle icon/label). For
+  /// The skill this entity trains (drives the meta icon/label). For
   /// structures without a skill (shops, dungeons) pass the entity id and
   /// set [subtitle].
   final Enum typeId;
@@ -70,26 +82,23 @@ class ObjectCard<T extends Enum> extends StatefulWidget {
   final List<Enum>? typeIds;
 
   final String? name;
-  final double height;
 
   /// Campfires: burn-out countdown shown in the trailing slot.
   final DateTime? expirationTime;
 
-  /// Overrides the default subtitle (skill name), e.g. "Shop" / "Dungeon".
+  /// Overrides a place's meta text (skill name), e.g. "Shop" / "Dungeon".
   final String? subtitle;
 
-  /// How hard the entity is, shown as a chip beside its skill icon in
-  /// place of the skill's name: a combat entity's level, a gathering
-  /// node's defence. Null for structures, which have no such number and
-  /// keep the plain skill label.
+  /// How hard the entity is: a combat entity's level, a gathering node's
+  /// defence. Shown as "Lv N". Null for structures with no such number.
   final int? statLevel;
 
   /// Estimated xp for consuming one count. Non-null shows the trailing
   /// xp column (total stack xp + per-action rate).
   final double? xpPerUnit;
 
-  /// Permanent zone entities (stations, shops, dungeons) get an accent
-  /// stripe and a chevron instead of counts/xp.
+  /// Permanent zone entities (stations, shops, dungeons) end in a chevron
+  /// instead of counts/xp.
   final bool isStructure;
 
   /// Level-gated entities render dimmed with the requirement.
@@ -139,10 +148,6 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
     super.dispose();
   }
 
-  String _cardText() {
-    return widget.name ?? widget.id.name;
-  }
-
   static String _formatXp(double xp) {
     final rounded = xp.round();
     final text = '$rounded';
@@ -154,27 +159,28 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
     return buffer.toString();
   }
 
-  Widget _buildSubtitle(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final style = Theme.of(
-      context,
-    ).textTheme.bodySmall?.copyWith(color: scheme.onSurface.withOpacity(0.6));
-
+  Widget _buildMeta(BuildContext context) {
     if (widget.locked) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.lock_outline, size: 14, color: style?.color),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              "Requires ${skillDisplayName(widget.typeId)} "
-              "${widget.requiredLevel}",
-              style: style,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
+      return RowMeta(
+        icons: [
+          Icon(Icons.lock_outline, size: 14, color: context.palette.textMuted),
         ],
+        text:
+            "Requires ${skillDisplayName(widget.typeId)} "
+            "${widget.requiredLevel}",
+      );
+    }
+
+    final level = widget.statLevel;
+
+    // an entity says how hard it is and how many are standing; the frame's
+    // tint and the list's chip already say what kind of thing it is
+    if (!widget.isStructure) {
+      return RowMeta(
+        text: [
+          if (level != null) 'Lv $level',
+          Util.formatShortCount(widget.count),
+        ].join(' · '),
       );
     }
 
@@ -182,53 +188,17 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
     final skills = types
         .where((t) => t is SkillId && t != SkillId.NULL)
         .toList();
+    final label = widget.subtitle ?? types.map(skillDisplayName).join(' · ');
 
-    // an entity with a difficulty says how hard it is rather than what it
-    // is called — the icon already names the skill
-    final level = widget.statLevel;
-    if (level != null && skills.isNotEmpty) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final skill in skills) ...[
-            StatChip(
-              icon: IconRenderer(size: 16, id: skill),
-              value: '$level',
-            ),
-            const SizedBox(width: 6),
-          ],
-          if (widget.subtitle != null)
-            Flexible(
-              child: Text(
-                widget.subtitle!,
-                style: style,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-        ],
-      );
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final skill in skills) ...[
-          IconRenderer(size: 16, id: skill),
-          const SizedBox(width: 4),
-        ],
-        Flexible(
-          child: Text(
-            widget.subtitle ?? types.map(skillDisplayName).join(' · '),
-            style: style,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
+    // a place says what it trains, and how hard it is when it has a number
+    return RowMeta(
+      icons: [for (final skill in skills) IconRenderer(size: 14, id: skill)],
+      text: level != null ? '$label · Lv $level' : label,
     );
   }
 
   Widget _buildTrailing(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final palette = context.palette;
 
     if (widget.expirationTime != null) {
       return CountdownTimer(expirationTime: widget.expirationTime!);
@@ -237,6 +207,7 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
     final xp = widget.xpPerUnit;
     if (xp != null && !widget.locked) {
       final total = xp * widget.count;
+      final xpColor = context.gameColors.xp;
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -244,16 +215,11 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
           Text.rich(
             TextSpan(
               text: _formatXp(total),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.tertiary,
-                fontWeight: FontWeight.w600,
-              ),
+              style: HearthText.xpValue.copyWith(color: xpColor),
               children: [
                 TextSpan(
                   text: " xp",
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.tertiary.withOpacity(0.7),
-                  ),
+                  style: HearthText.xpSuffix.copyWith(color: xpColor),
                 ),
               ],
             ),
@@ -261,103 +227,51 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
           const SizedBox(height: 2),
           Text(
             "+${_formatXp(xp)} / ${skillActionVerb(widget.typeId)}",
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: scheme.onSurface.withOpacity(0.6),
-            ),
+            style: HearthText.rowMeta.copyWith(color: palette.textMuted),
           ),
         ],
       );
     }
 
-    return Icon(
-      Icons.chevron_right,
-      color: scheme.onSurface.withOpacity(widget.locked ? 0.25 : 0.4),
-    );
+    return RowChevron(dimmed: widget.locked);
   }
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    // Use a higher-contrast container color so the flash is visible on most themes.
-    final flashColor = scheme.secondaryContainer.withOpacity(0.35);
-
     // a used-up resource node reads like a locked one. structures carry no
     // count at all (they pass 0), so they are never depleted.
     final depleted = !widget.isStructure && !widget.locked && widget.count <= 0;
+    final flashColor = context.palette.raised;
 
-    final card = Card(
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Stack(
-          children: [
-            // Subtle flash overlay.
-            Positioned.fill(
-              child: IgnorePointer(
-                child: AnimatedBuilder(
-                  animation: _flashController,
-                  builder: (_, _) {
-                    return Opacity(
-                      opacity: _flashOpacity.value,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: flashColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            SizedBox(
-              width: double.infinity,
-              height: widget.height,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Row(
-                  children: [
-                    ItemStackTile(
-                      size: 52,
-                      count: widget.count,
-                      id: widget.id,
-                      onTap: widget.onIconTap,
-                      showInfoDialogOnTap: false,
-                      depleted: depleted,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _cardText(),
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(fontWeight: FontWeight.w500),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          _buildSubtitle(context),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildTrailing(context),
-                  ],
-                ),
-              ),
-            ),
-          ],
+    final row = ListRow(
+      height: widget.isStructure ? ListRow.placeHeight : ListRow.entityHeight,
+      onTap: widget.onTap,
+      leading: SpriteFrame(
+        id: widget.id,
+        kind: widget.kind,
+        size: widget.isStructure ? 48 : 52,
+        spriteSize: widget.isStructure ? 38 : 40,
+        depleted: depleted,
+        onTap: widget.onIconTap,
+      ),
+      title: widget.name ?? widget.id.name,
+      meta: _buildMeta(context),
+      trailing: _buildTrailing(context),
+      // a subtle flash when the stack grows
+      overlay: AnimatedBuilder(
+        animation: _flashController,
+        builder: (_, _) => Opacity(
+          opacity: _flashOpacity.value,
+          child: ColoredBox(color: flashColor),
         ),
       ),
     );
 
-    return widget.locked || depleted
-        ? Opacity(opacity: 0.55, child: card)
-        : card;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: widget.locked || depleted
+          ? Opacity(opacity: 0.55, child: row)
+          : row,
+    );
   }
 }

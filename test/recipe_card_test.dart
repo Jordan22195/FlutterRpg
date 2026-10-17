@@ -10,7 +10,7 @@ import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/utilities/image_resolver.dart';
-import 'package:rpg/widgets/item_stack_tile.dart';
+import 'package:rpg/theme/zone_palette.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 
 // Renders a single RecipeCard through the real provider tree, so what the
@@ -166,8 +166,8 @@ void main() {
     // on a dark theme
     expect(cardBorderColor(tester), isNull);
 
-    final logsTile = tester.widget<ItemStackTile>(
-      find.byWidgetPredicate((w) => w is ItemStackTile && w.id == ItemId.LOGS),
+    final logsTile = tester.widget<RecipeTile>(
+      find.byWidgetPredicate((w) => w is RecipeTile && w.id == ItemId.LOGS),
     );
     expect(logsTile.borderColor, RecipeCard.missingMaterialColor);
 
@@ -185,8 +185,8 @@ void main() {
 
     expect(cardBorderColor(tester), isNull);
 
-    final logsTile = tester.widget<ItemStackTile>(
-      find.byWidgetPredicate((w) => w is ItemStackTile && w.id == ItemId.LOGS),
+    final logsTile = tester.widget<RecipeTile>(
+      find.byWidgetPredicate((w) => w is RecipeTile && w.id == ItemId.LOGS),
     );
     expect(logsTile.borderColor, isNull);
   });
@@ -200,22 +200,40 @@ void main() {
 
     await pumpCard(tester, recipeId: 'cookfire', lockWhenUnderLevel: true);
 
-    final output = tester.widget<ItemStackTile>(
-      find.byWidgetPredicate(
-        (w) => w is ItemStackTile && w.id == ItemId.COOKFIRE,
-      ),
+    final output = tester.widget<RecipeTile>(
+      find.byWidgetPredicate((w) => w is RecipeTile && w.id == ItemId.COOKFIRE),
     );
     expect(output.count, 5);
     expect(output.depleted, isFalse);
 
-    final logs = tester.widget<ItemStackTile>(
-      find.byWidgetPredicate((w) => w is ItemStackTile && w.id == ItemId.LOGS),
+    final logs = tester.widget<RecipeTile>(
+      find.byWidgetPredicate((w) => w is RecipeTile && w.id == ItemId.LOGS),
     );
     expect(logs.count, 2);
 
     // and both numbers are actually painted
     expect(find.text('5'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
+
+    // read left to right: what it costs, then what it makes
+    expect(
+      tester
+          .getTopLeft(
+            find.byWidgetPredicate(
+              (w) => w is RecipeTile && w.id == ItemId.LOGS,
+            ),
+          )
+          .dx,
+      lessThan(
+        tester
+            .getTopLeft(
+              find.byWidgetPredicate(
+                (w) => w is RecipeTile && w.id == ItemId.COOKFIRE,
+              ),
+            )
+            .dx,
+      ),
+    );
   });
 
   testWidgets('nothing craftable reads as depleted, with no zero badge', (
@@ -226,10 +244,8 @@ void main() {
 
     await pumpCard(tester, recipeId: 'cookfire', lockWhenUnderLevel: true);
 
-    final output = tester.widget<ItemStackTile>(
-      find.byWidgetPredicate(
-        (w) => w is ItemStackTile && w.id == ItemId.COOKFIRE,
-      ),
+    final output = tester.widget<RecipeTile>(
+      find.byWidgetPredicate((w) => w is RecipeTile && w.id == ItemId.COOKFIRE),
     );
     expect(output.count, 0);
     // the darkened art is what says it is spent; a "0" badge would only
@@ -256,6 +272,7 @@ void main() {
       lockWhenUnderLevel: true,
       selected: true,
     );
-    expect(cardBorderColor(tester), ThemeData().colorScheme.primary);
+    // outside a zone theme the meadow's palette stands in
+    expect(cardBorderColor(tester), ZonePalette.meadow.text);
   });
 }

@@ -7,6 +7,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
+import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
@@ -14,25 +15,21 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/explore_screen.dart';
 import 'package:rpg/utilities/image_resolver.dart';
-import 'package:rpg/widgets/stat_chip.dart';
 
 /// A zone card says how hard the thing is, not what skill it trains — the
-/// icon already carries the skill. A combat entity shows its level beside
-/// the attack icon; a gathering node shows the defence its skill is
-/// rolled against.
+/// frame's tint and the filter chips already carry the kind. A combat
+/// entity's meta line leads with its level ("Lv 3 · 1.57k"); a gathering
+/// node's with the defence its skill is rolled against.
 void main() {
   Future<void> settle(WidgetTester tester) async {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
   }
 
-  /// The value of the chip on [id]'s card.
-  Finder chipValue(EntityId id, String value) => find.descendant(
+  /// The meta line on [id]'s card, when it leads with level [level].
+  Finder levelMeta(EntityId id, int level) => find.descendant(
     of: find.byKey(ValueKey(id)),
-    matching: find.descendant(
-      of: find.byType(StatChip),
-      matching: find.text(value),
-    ),
+    matching: find.textContaining(RegExp('^Lv $level( · |\$)')),
   );
 
   /// Text rendered on [id]'s card. The resource sub-tab chips carry skill
@@ -84,6 +81,11 @@ void main() {
           ChangeNotifierProvider<PlayerDataController>.value(
             value: session.playerDataController,
           ),
+          // the status row over the art reads the encounter for its
+          // damage numbers
+          ChangeNotifierProvider<EncounterController>.value(
+            value: session.encounterController,
+          ),
         ],
         child: const MaterialApp(home: Scaffold(body: ExploreScreen())),
       ),
@@ -100,7 +102,7 @@ void main() {
 
     final chicken = EntityId.CHICKEN.definition as CombatEntityDefinition;
     expect(chicken.level, 3);
-    expect(chipValue(EntityId.CHICKEN, '${chicken.level}'), findsOneWidget);
+    expect(levelMeta(EntityId.CHICKEN, chicken.level), findsOneWidget);
     expect(cardText(EntityId.CHICKEN, 'Combat'), findsNothing);
 
     session.dispose();
@@ -112,16 +114,16 @@ void main() {
     final session = await pumpExplore(tester);
 
     final tree = EntityId.TREE.definition as EncounterEntityDefinition;
-    expect(chipValue(EntityId.TREE, '${tree.defence}'), findsOneWidget);
+    expect(levelMeta(EntityId.TREE, tree.defence), findsOneWidget);
     expect(cardText(EntityId.TREE, 'Woodcutting'), findsNothing);
 
-    // the pond is a gathering node too, even though it lists as a structure
+    // the pond is a gathering node too, but it lists as a place, and a
+    // place says what it trains before how hard it is
     final pond = EntityId.TRANQUIL_POND.definition as EncounterEntityDefinition;
     expect(
-      chipValue(EntityId.TRANQUIL_POND, '${pond.defence}'),
+      cardText(EntityId.TRANQUIL_POND, 'Fishing · Lv ${pond.defence}'),
       findsOneWidget,
     );
-    expect(cardText(EntityId.TRANQUIL_POND, 'Fishing'), findsNothing);
 
     session.dispose();
   });
@@ -136,7 +138,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byKey(const ValueKey(EntityId.FIREPIT)),
-        matching: find.byType(StatChip),
+        matching: find.textContaining('Lv'),
       ),
       findsNothing,
     );
@@ -164,6 +166,52 @@ void main() {
     expect(world.entityLevel(tree), tree.defence);
 
     session.actionTimingController.stop();
+    session.dispose();
+  });
+
+  testWidgets('places and discoveries list under their own headings', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester);
+
+    final places = tester.getTopLeft(find.text('PLACES')).dy;
+    final discovered = tester.getTopLeft(find.text('DISCOVERED')).dy;
+    // permanent places first, then what exploring turned up
+    expect(
+      places,
+      lessThan(
+        tester.getTopLeft(find.byKey(const ValueKey(EntityId.ANVIL))).dy,
+      ),
+    );
+    expect(
+      tester.getTopLeft(find.byKey(const ValueKey(EntityId.ANVIL))).dy,
+      lessThan(discovered),
+    );
+    expect(
+      discovered,
+      lessThan(
+        tester.getTopLeft(find.byKey(const ValueKey(EntityId.CHICKEN))).dy,
+      ),
+    );
+
+    session.dispose();
+  });
+
+  testWidgets('no row carries a coloured stripe down its edge', (tester) async {
+    final session = await pumpExplore(tester);
+
+    // places used to wear a stripe; the frame's tint and the chevron now
+    // say "place", so no row draws one
+    Finder stripe(EntityId id) => find.descendant(
+      of: find.byKey(ValueKey(id)),
+      matching: find.byWidgetPredicate(
+        (w) => w is Positioned && w.width == 4 && w.child is ColoredBox,
+      ),
+    );
+    expect(stripe(EntityId.ANVIL), findsNothing);
+    expect(stripe(EntityId.CHICKEN), findsNothing);
+    expect(stripe(EntityId.TREE), findsNothing);
+
     session.dispose();
   });
 }

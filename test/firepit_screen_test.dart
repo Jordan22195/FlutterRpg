@@ -8,6 +8,7 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
+import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
@@ -106,6 +107,11 @@ void main() {
           ChangeNotifierProvider<PlayerDataController>.value(
             value: session.playerDataController,
           ),
+          // the status row on the art strip reads the encounter for its
+          // damage numbers
+          ChangeNotifierProvider<EncounterController>.value(
+            value: session.encounterController,
+          ),
         ],
         child: const MaterialApp(home: Scaffold(body: FirepitScreen())),
       ),
@@ -120,8 +126,8 @@ void main() {
     expect(find.text('Firepit'), findsOneWidget);
     // nothing to stack, so the pit shows the fire recipe alone and unnamed
     expect(find.byType(RecipeCard), findsOneWidget);
-    expect(find.text('Firemaking'), findsNothing);
-    expect(find.text('Cooking'), findsNothing);
+    expect(find.text('FIREMAKING'), findsNothing);
+    expect(find.text('COOKING'), findsNothing);
 
     // nothing is burning, so there is no timer and nothing to put out
     expect(find.byType(CountdownTimer), findsNothing);
@@ -138,8 +144,8 @@ void main() {
     expect(find.text('Cookfire'), findsOneWidget);
     // a pit doing two jobs shows both recipes at once, each one named
     expect(find.byType(RecipeCard), findsNWidgets(2));
-    expect(find.text('Firemaking'), findsOneWidget);
-    expect(find.text('Cooking'), findsOneWidget);
+    expect(find.text('FIREMAKING'), findsOneWidget);
+    expect(find.text('COOKING'), findsOneWidget);
 
     // cooking is the section the button runs, so its card carries the mark
     final cards = tester.widgetList<RecipeCard>(find.byType(RecipeCard));
@@ -186,7 +192,7 @@ void main() {
     // the cooking recipe is on screen even though nothing is burning, with
     // what the cook will burn to light the pit
     expect(find.byType(RecipeCard), findsNWidgets(2));
-    expect(find.text('Cooking'), findsOneWidget);
+    expect(find.text('COOKING'), findsOneWidget);
     expect(find.text('Burns 2 × Logs per fire'), findsOneWidget);
     expect(find.byType(CountdownTimer), findsNothing);
 
@@ -334,7 +340,7 @@ void main() {
     expect(find.text('Campfire'), findsOneWidget);
     // a campfire cannot cook, so there is nothing to stack
     expect(find.byType(RecipeCard), findsOneWidget);
-    expect(find.text('Cooking'), findsNothing);
+    expect(find.text('COOKING'), findsNothing);
     expect(find.byIcon(Icons.water_drop_outlined), findsOneWidget);
 
     session.dispose();
@@ -351,20 +357,19 @@ void main() {
     await settle(tester);
 
     expect(find.byType(RecipeCard), findsOneWidget);
-    expect(find.text('Cooking'), findsNothing);
+    expect(find.text('COOKING'), findsNothing);
     expect(find.text('Firepit'), findsOneWidget);
     expect(find.byType(CountdownTimer), findsNothing);
 
     session.dispose();
   });
 
-  testWidgets('lighting a fire does not move the rest of the screen', (
+  testWidgets('lighting a fire does not re-centre the skill rings', (
     tester,
   ) async {
-    // the hero and the skill rings are what sit above the recipe cards, and
-    // neither may shift when a fire catches: the ring row used to re-centre
-    // as it grew from one ring to two. (the cooking card does appear below
-    // them, which is what grows the stack.)
+    // the ring row used to re-centre as it grew from one ring to two. the
+    // recipe cards now sit above the rings, so the cooking card appearing
+    // pushes them down — but they must not slide sideways or change size
     final session = await pumpFirepit(tester);
 
     Offset ringsAt() => tester.getTopLeft(find.byType(SkillRingRow));
@@ -388,7 +393,7 @@ void main() {
     await settle(tester);
 
     expect(find.byType(RecipeCard), findsNWidgets(2));
-    expect(ringsAt(), coldRings);
+    expect(ringsAt().dx, coldRings.dx);
     expect(ringsSize(), coldRingsSize);
 
     session.dispose();

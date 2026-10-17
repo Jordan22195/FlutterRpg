@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/hearth_theme.dart';
+
 class FillBar extends StatelessWidget {
   const FillBar({
     super.key,
@@ -30,7 +32,7 @@ class FillBar extends StatelessWidget {
     final v = value.clamp(0.0, 1.0);
     final scheme = Theme.of(context).colorScheme;
 
-    final bg = backgroundColor ?? scheme.onSurface.withOpacity(0.12);
+    final bg = backgroundColor ?? context.palette.track;
 
     final fg = foregroundColor ?? scheme.primary;
 

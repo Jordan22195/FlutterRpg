@@ -167,3 +167,28 @@ options.
 -multiple fire pits. either one for each or one for cooking and one for buffs
 
 single firepit. selecting a cook fire brings up the cooking menu. and logs are automatically added. 
+
+
+-----
+
+I have 8 or 9 tiers of gear. right monsters level are on the same fib tier system. which means every zone has to increase the cap by 1. you cap out at at steel really fast because its early game. the pacing of the game doesn't work. I think the fib tiering works for the gear stats, and using fib levels for monsters works well for scaling. but not every monster needs be on the fib tier . 
+
+the other approach is that not every zone needs to have harder mobs. a zone could have herb, mining, alch, wood, xp, gold, gear, dungeon.. lots of stuff. not every zone needs to have all the things. I need to think through how to spread that stuff across different zone. and how to orgazine that data in my planning. 
+
+I could flesh out each resource progression, and when making a zone, pick a couple of things to have prog on. 
+
+mining and herb and the next dungeon don't have to be in the same zone. 
+
+alchemny is the tricky part. I need at least 6 different reagents per tier. that match at a least a little bit thematically on what they are buffing. 
+
+my core progression is going to be dungeon progression. there will be at least 1 dungeon per armor material tier. right now that puts me at 8 or 9. a dungeon is the capstone to a zone, so 8 or 9 zones. so I will make the dungeon zones. vary the primary contents in that zone. and then whatever is left, put in parrallel zones. 
+
+so in a zone I can have a bunch of stuff at teh same level. not every single monsters has to have increasing difficultly. 
+
+dungeons are the core progression becuase they drop exclusive gear that you can't craft. 
+you can't craft a cloak. you can't craft jewelry till mid game. dungeons just need to have good drops. I'm thinking at least two items that are reasonably farmable. I suppose they don't ahve to be uniques, they could be rare varient of crafted gear. though crafting a rare item isnn't terribly hard with current scaling. you can get a full kit of rare armor without a huge grind. 
+
+maybe crafting caps out a rare. and you get epics from dungeons. or crafting epics is harders. 
+
+right now you can't craft leather armor. could ba drop. plan on all cloth(attack only ) armor coming from drops. 
+
