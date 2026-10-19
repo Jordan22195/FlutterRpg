@@ -17,13 +17,23 @@ class ItemDropType extends WeightedDropTableEntry<ItemId> {
   /// weights — a common one often, a rare one rarely.
   final Rarity rarity;
 
+  /// [unlockLevel] is the skill level the drop needs before a roll can land
+  /// on it — a fishing spot's fish each ask for their own Fishing level. 0,
+  /// the default, is always available.
   const ItemDropType({
     required ItemId id,
     this.rarity = Rarity.COMMON,
     int lowCount = 1,
     int highCount = 0,
     double weight = 1,
-  }) : super(id: id, count: lowCount, highCount: highCount, weight: weight);
+    int unlockLevel = 0,
+  }) : super(
+         id: id,
+         count: lowCount,
+         highCount: highCount,
+         weight: weight,
+         unlockLevel: unlockLevel,
+       );
 
   /// The bottom of the stack range — [WeightedDropTableEntry.count] under
   /// the name the catalog writes it as.
@@ -45,6 +55,7 @@ class ItemDropType extends WeightedDropTableEntry<ItemId> {
       lowCount: lowCount ?? count ?? this.count,
       highCount: highCount ?? this.highCount,
       weight: weight ?? this.weight,
+      unlockLevel: unlockLevel ?? this.unlockLevel,
     );
   }
 
@@ -258,6 +269,7 @@ extension WeightedDrops on List<ItemDropType> {
         count: drop.lowCount,
         highCount: drop.highCount,
         weight: drop.weight,
+        unlockLevel: drop.unlockLevel,
       ),
   ];
 }

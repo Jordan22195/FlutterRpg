@@ -100,7 +100,8 @@ List<SkillUnlock> unlocksForSkill(SkillId skill, GameCatalogBundle catalogs) {
 
   for (final entityId in EntityId.values) {
     final def = entityId.definition;
-    if (def is! HerbEntityDefinition || def.entityType != skill) continue;
+    if (def is! EncounterEntityDefinition || def.entityType != skill) continue;
+    if (def.requiredLevel <= 0) continue;
     unlocks.add(
       SkillUnlock(
         name: def.name,
@@ -108,6 +109,19 @@ List<SkillUnlock> unlocksForSkill(SkillId skill, GameCatalogBundle catalogs) {
         category: 'Gathering',
       ),
     );
+    // a fishing spot's deeper fish open up one at a time after the spot
+    if (def is FishingEntityDefinition) {
+      for (final fish in def.itemDrops) {
+        if (fish.unlockLevel <= def.requiredLevel) continue;
+        unlocks.add(
+          SkillUnlock(
+            name: '${fish.id.definition.name} (${def.name})',
+            levelRequirement: fish.unlockLevel,
+            category: 'Gathering',
+          ),
+        );
+      }
+    }
   }
 
   if (skill == SkillId.ENCHANTING) {

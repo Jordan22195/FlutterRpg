@@ -36,6 +36,16 @@ class EncounterEntityDefinition extends EntityDefinition {
   List<WeightedDropTableEntry<ItemDropType>> get weightedDropTable =>
       itemDrops.weighted;
 
+  /// The level of [entityType] needed before this can be worked at all. 0,
+  /// the default, is ungated; herbs and fishing spots set their own.
+  int get requiredLevel => 0;
+
+  /// [weightedDropTable] cut to the drops a [level] in [entityType] reaches.
+  /// A drop's own unlock level gates it the way [requiredLevel] gates the
+  /// whole entity — a fishing spot's deeper fish wait on the Fishing level.
+  List<WeightedDropTableEntry<ItemDropType>> dropTableAt(int level) =>
+      WeightedDropTableService.availableAt(weightedDropTable, level);
+
   @override
   EncounterEntity toEntity(EntityId id) => EncounterEntity(id: id);
 

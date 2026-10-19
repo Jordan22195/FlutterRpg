@@ -128,6 +128,10 @@ class WorldController extends ChangeNotifier {
         _exploreZoneId == viewedZoneId;
   }
 
+  /// Whether the zone on screen is the one being explored right now — what
+  /// its action button reads to show the action as running.
+  bool isExploringViewed() => _isExploringViewed();
+
   /// Items turned up by the current explore session in the zone on screen.
   /// Mirrors the encounter screen's session drops: an ended session shows
   /// nothing, and neither does a zone you are only looking at.
@@ -179,17 +183,20 @@ class WorldController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Level required to interact with [id] (herb gates); 0 when ungated.
+  /// Level required to interact with [id] (herb and fishing spot gates); 0
+  /// when ungated.
   int requiredLevelFor(EntityId id) {
     final def = id.definition;
-    return def is HerbEntityDefinition ? def.requiredLevel : 0;
+    return def is EncounterEntityDefinition ? def.requiredLevel : 0;
   }
 
   /// Whether the player's stats (with gear/buffs, matching the zone-gate
   /// convention) meet [id]'s level requirement. True for ungated entities.
   bool meetsEntityRequirement(EntityId id) {
     final def = id.definition;
-    if (def is! HerbEntityDefinition) return true;
+    if (def is! EncounterEntityDefinition || def.requiredLevel <= 0) {
+      return true;
+    }
     final level =
         _playerDataService.getStatTotals(_playerState)[def.entityType] ?? 0;
     return level >= def.requiredLevel;

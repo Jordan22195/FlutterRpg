@@ -172,6 +172,7 @@ class _CraftingScreenState extends State<CraftingScreen>
                 enabled: canCraft,
                 label: "Craft",
                 showLabel: true,
+                isActive: controller.isCraftingHere,
                 startActionFunction: () {
                   controller.startCraftingAction();
                 },

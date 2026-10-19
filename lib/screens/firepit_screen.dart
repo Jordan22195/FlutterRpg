@@ -335,6 +335,7 @@ class _FirepitScreenState extends State<FirepitScreen>
                 enabled: canAct,
                 label: actionLabel,
                 showLabel: true,
+                isActive: controller.isCraftingHere,
                 startActionFunction: () {
                   controller.startCraftingActionFor(
                     selectedId,

@@ -217,7 +217,9 @@ enum EntityId {
   ),
 
   // ── FISHING ─────────────────────────────────────────────────────
-  // FishingEntityDefinition, by the fishing level of what it yields
+  // FishingEntityDefinition, by Fishing level. Each spot is gated at its
+  // first fish's level, its defence matches that gate (as an herb's does),
+  // and its other fish spread from there toward the next spot's level
   TRANQUIL_POND(
     FishingEntityDefinition(
       name: "Pond",
@@ -226,9 +228,25 @@ enum EntityId {
       entityType: SkillId.FISHING,
       defence: 1,
       hitpoints: 10,
+      requiredLevel: 1,
       itemDrops: [
-        ItemDropType(id: ItemId.MINNOW, weight: 1),
-        ItemDropType(id: ItemId.CARP, weight: 0.5),
+        ItemDropType(id: ItemId.MINNOW, weight: 1, unlockLevel: 1),
+        ItemDropType(id: ItemId.CARP, weight: 0.5, unlockLevel: 5),
+      ],
+    ),
+  ),
+  CREEK(
+    FishingEntityDefinition(
+      name: "Creek",
+      iconAsset: "assets/images/entities/creek.png",
+
+      entityType: SkillId.FISHING,
+      defence: 10,
+      hitpoints: 10,
+      requiredLevel: 10,
+      itemDrops: [
+        ItemDropType(id: ItemId.BLUEGILL, weight: 1, unlockLevel: 10),
+        ItemDropType(id: ItemId.TROUT, weight: 0.5, unlockLevel: 15),
       ],
     ),
   ),
@@ -238,12 +256,12 @@ enum EntityId {
       iconAsset: "assets/images/entities/river.png",
 
       entityType: SkillId.FISHING,
-      defence: 1,
+      defence: 20,
       hitpoints: 10,
+      requiredLevel: 20,
       itemDrops: [
-        ItemDropType(id: ItemId.PIKE, weight: 1),
-        ItemDropType(id: ItemId.SALMON, weight: .5),
-        ItemDropType(id: ItemId.TROUT, weight: .25),
+        ItemDropType(id: ItemId.PIKE, weight: 1, unlockLevel: 20),
+        ItemDropType(id: ItemId.SALMON, weight: 0.5, unlockLevel: 35),
       ],
     ),
   ),
@@ -253,12 +271,12 @@ enum EntityId {
       iconAsset: "assets/images/entities/tranquil_pond.png",
 
       entityType: SkillId.FISHING,
-      defence: 10,
+      defence: 50,
       hitpoints: 10,
+      requiredLevel: 50,
       itemDrops: [
-        ItemDropType(id: ItemId.TROUT, weight: 1),
-        ItemDropType(id: ItemId.PIKE, weight: 0.5),
-        ItemDropType(id: ItemId.SALMON, weight: 0.25),
+        ItemDropType(id: ItemId.CATFISH, weight: 1, unlockLevel: 50),
+        ItemDropType(id: ItemId.BASS, weight: 0.5, unlockLevel: 55),
       ],
     ),
   ),
@@ -268,12 +286,11 @@ enum EntityId {
       iconAsset: "assets/images/entities/lake.png",
 
       entityType: SkillId.FISHING,
-      defence: 1,
+      defence: 60,
       hitpoints: 10,
+      requiredLevel: 60,
       itemDrops: [
-        ItemDropType(id: ItemId.WHITEFISH, weight: 1),
-        ItemDropType(id: ItemId.BASS, weight: .5),
-        ItemDropType(id: ItemId.WHITEFISH, weight: .25),
+        ItemDropType(id: ItemId.WHITEFISH, weight: 1, unlockLevel: 60),
       ],
     ),
   ),
@@ -283,12 +300,13 @@ enum EntityId {
       iconAsset: "assets/images/entities/ocean.png",
 
       entityType: SkillId.FISHING,
-      defence: 1,
+      defence: 80,
       hitpoints: 10,
+      requiredLevel: 80,
       itemDrops: [
-        ItemDropType(id: ItemId.TUNA, weight: 1),
-        ItemDropType(id: ItemId.SWORDFISH, weight: .5),
-        ItemDropType(id: ItemId.SHARK, weight: .25),
+        ItemDropType(id: ItemId.TUNA, weight: 1, unlockLevel: 80),
+        ItemDropType(id: ItemId.SWORDFISH, weight: 0.5, unlockLevel: 86),
+        ItemDropType(id: ItemId.SHARK, weight: 0.25, unlockLevel: 93),
       ],
     ),
   ),

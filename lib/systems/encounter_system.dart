@@ -485,27 +485,31 @@ class EncounterSystem {
     return result.damageDone;
   }
 
-  /// Herbalism level required to pick [id]; 0 for non-herb entities.
-  int herbRequiredLevel(EntityId id) {
+  /// The level of its own skill [id] needs before it can be worked — an
+  /// herb's Herbalism, a fishing spot's Fishing; 0 for ungated entities.
+  int requiredLevelFor(EntityId id) {
     final def = id.definition;
-    return def is HerbEntityDefinition ? def.requiredLevel : 0;
+    return def is EncounterEntityDefinition ? def.requiredLevel : 0;
   }
 
-  /// Whether the player's herbalism (with tool bonuses, matching the
-  /// zone-gate convention) meets the herb's level requirement. True for
-  /// non-herb entities.
-  bool meetsHerbRequirement(
+  /// Whether the player's level in [id]'s skill (with tool bonuses, matching
+  /// the zone-gate convention) meets its requirement. True for ungated
+  /// entities.
+  bool meetsLevelRequirement(
     PlayerData playerState,
     EntityId id, {
     DateTime? at,
   }) {
+    final required = requiredLevelFor(id);
+    if (required <= 0) return true;
+    final def = id.definition as EncounterEntityDefinition;
     final level =
         _playerDataService.getStatTotals(
           playerState,
           at: at,
-        )[SkillId.HERBALISM] ??
+        )[def.entityType] ??
         0;
-    return level >= herbRequiredLevel(id);
+    return level >= required;
   }
 
   /// Pays out what the main drop table rolled, into the player's bag and
@@ -634,7 +638,7 @@ class EncounterSystem {
 
     return EntityDetails(
       entity: entity,
-      requiredLevel: herbRequiredLevel(entity.id),
+      requiredLevel: requiredLevelFor(entity.id),
       xpPerUnit: xpPerUnit(entity),
       playerSkillLevel: playerSkill,
       playerDefence: playerDefence,
@@ -750,7 +754,7 @@ class EncounterSystem {
     final e = encounter.entity!;
     final def = e.id.definition;
     if (def is! HerbEntityDefinition) return result;
-    if (!meetsHerbRequirement(playerState, e.id, at: at)) return result;
+    if (!meetsLevelRequirement(playerState, e.id, at: at)) return result;
 
     if (offline) {
       return _settleHerbalism(
@@ -876,6 +880,9 @@ class EncounterSystem {
     }
 
     final e = encounter.entity!;
+    // the spot asks for a Fishing level of its own, as an herb asks for
+    // Herbalism
+    if (!meetsLevelRequirement(playerState, e.id, at: at)) return result;
 
     if (offline) {
       return _settleFishing(
@@ -909,11 +916,13 @@ class EncounterSystem {
       return result; // miss/no progress this tick
     }
 
-    // roll drops
+    // roll drops: only the fish this Fishing level reaches
     final def = e.id.definition;
     if (def is! EncounterEntityDefinition) return result;
+    final catchTable = def.dropTableAt(stats[SkillId.FISHING] ?? 1);
+    if (catchTable.isEmpty) return result;
     final paid = _payOutDrops(
-      [_dropTableService.roll(def.weightedDropTable)],
+      [_dropTableService.roll(catchTable)],
       playerInventory,
       encounter.itemDrops,
       result,
@@ -953,9 +962,12 @@ class EncounterSystem {
             .round();
     if (catches <= 0) return result;
 
+    // only the fish this Fishing level reaches, as a single cast rolls
     final def = e.id.definition as EncounterEntityDefinition;
+    final catchTable = def.dropTableAt(fishingStat);
+    if (catchTable.isEmpty) return result;
     final drops = _payOutDrops(
-      _dropTableService.rollMulitpleTimes(catches, def.weightedDropTable),
+      _dropTableService.rollMulitpleTimes(catches, catchTable),
       playerInventory,
       encounter.itemDrops,
       result,

@@ -25,6 +25,9 @@ import 'package:rpg/data/equipment_data.dart';
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
 const knownMissingArt = <String>{
+  // the creek, added as Southwood Forest's fishing spot before its art
+  'assets/images/entities/creek.png',
+
   // Scene art: zone headers and dungeon splashes. These are the last of the
   // backlog because they are the one kind the generator will not draw —
   // assets/images/{zones,dungeons}/** has no style picked, so

@@ -4,6 +4,9 @@ import '../catalogs/zones/zones.dart';
 /// and what it takes to be able to turn it up. Covers both the entity and
 /// the item table, so the zone detail screen renders them the same way.
 class ZoneDiscovery {
+  /// The entity or item itself.
+  final Enum id;
+
   /// Display name of the entity or item.
   final String name;
 
@@ -31,6 +34,7 @@ class ZoneDiscovery {
   final int maxCount;
 
   const ZoneDiscovery({
+    required this.id,
     required this.name,
     required this.iconAsset,
     required this.unlockLevel,

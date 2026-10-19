@@ -215,6 +215,12 @@ class EnchantingController extends ChangeNotifier {
     return true;
   }
 
+  /// Whether enchanting is the action running — what the bench's action
+  /// button reads to show the action as running. There is one bench, so
+  /// running anywhere is running here.
+  bool isEnchanting() =>
+      _actionTimingController.isRunningAction(doEnchantingAction);
+
   /// How far the bench is through its current action, 0..1 — zero unless
   /// enchanting is the action running.
   double enchantProgress() {

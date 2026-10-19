@@ -130,10 +130,7 @@ class EncounterController extends ChangeNotifier {
     // and there is no queue to advance here
 
     // check action conditions are met before the action fires again
-    if (!_encounterService.fishingConditionsMet(
-      _playerState,
-      _encounterState,
-    )) {
+    if (!_fishingConditionsMet()) {
       _actionTimingController.stop();
     }
     notifyListeners();
@@ -177,7 +174,21 @@ class EncounterController extends ChangeNotifier {
     )) {
       return false;
     }
-    return _encounterSystem.meetsHerbRequirement(
+    return _encounterSystem.meetsLevelRequirement(
+      _playerState,
+      _encounterState.entity!.id,
+    );
+  }
+
+  // basic fishing conditions plus the spot's fishing level gate
+  bool _fishingConditionsMet() {
+    if (!_encounterService.fishingConditionsMet(
+      _playerState,
+      _encounterState,
+    )) {
+      return false;
+    }
+    return _encounterSystem.meetsLevelRequirement(
       _playerState,
       _encounterState.entity!.id,
     );
@@ -329,10 +340,7 @@ class EncounterController extends ChangeNotifier {
   bool _conditionsMetFor(EncounterEntity entity) {
     switch (entity.entityType) {
       case SkillId.FISHING:
-        return _encounterService.fishingConditionsMet(
-          _playerState,
-          _encounterState,
-        );
+        return _fishingConditionsMet();
       case SkillId.HERBALISM:
         return _herbalismConditionsMet();
       default:
@@ -590,6 +598,10 @@ class EncounterController extends ChangeNotifier {
     return isViewingActiveEncounter() && _isRunningAnyEncounterAction();
   }
 
+  /// Whether the entity on screen is the one being worked right now — what
+  /// its action button reads to show the action as running.
+  bool isActingOnViewedEntity() => _isActingOnViewedEntity();
+
   /// How far the player is through the action being performed on the entity
   /// in view, 0..1. Zero unless the action is firing on *this* entity, so a
   /// run against one target never draws progress on another's screen.
@@ -734,17 +746,18 @@ class EncounterController extends ChangeNotifier {
     }
   }
 
-  // herbalism level required to pick the viewed entity; 0 for non-herbs
-  int viewedHerbRequiredLevel() {
+  // the level of its own skill the viewed entity needs; 0 when ungated
+  int viewedRequiredLevel() {
     final e = _resolveViewedEntity();
-    return e == null ? 0 : _encounterSystem.herbRequiredLevel(e.id);
+    return e == null ? 0 : _encounterSystem.requiredLevelFor(e.id);
   }
 
-  // true when the viewed entity is an herb the player can't pick yet
-  bool viewedHerbLocked() {
+  // true when the viewed entity is gated above the player's level — an
+  // herb they can't pick, a spot they can't fish yet
+  bool viewedLocked() {
     final e = _resolveViewedEntity();
     if (e == null) return false;
-    return !_encounterSystem.meetsHerbRequirement(_playerState, e.id);
+    return !_encounterSystem.meetsLevelRequirement(_playerState, e.id);
   }
 
   ItemId getEquipedFoodItemId() {

@@ -20,6 +20,9 @@ enum SpriteKind {
   /// A fire, or anything firemaking.
   fire,
 
+  /// A shop or a trader.
+  shop,
+
   /// A dungeon entrance; framed by its rarity.
   dungeon,
 }
@@ -38,6 +41,7 @@ class SpriteFrame extends StatelessWidget {
     this.radius = 12,
     this.depleted = false,
     this.onTap,
+    this.fill,
   });
 
   final Enum id;
@@ -52,6 +56,10 @@ class SpriteFrame extends StatelessWidget {
   final bool depleted;
   final VoidCallback? onTap;
 
+  /// Overrides the tint's fill, e.g. to sit the sprite flush on the card
+  /// behind it. The tint's border still says what kind of thing it is.
+  final Color? fill;
+
   /// The frame fill and border for [kind] in the current theme.
   static SpriteTint tintFor(BuildContext context, SpriteKind kind) {
     final colors = context.gameColors;
@@ -64,6 +72,7 @@ class SpriteFrame extends StatelessWidget {
       ),
       SpriteKind.crafting => colors.craftingTint,
       SpriteKind.fire => colors.fireTint,
+      SpriteKind.shop => colors.shopTint,
       SpriteKind.dungeon => SpriteTint(
         fill: colors.dungeonTintFill,
         border: palette.borderStrong,
@@ -100,7 +109,7 @@ class SpriteFrame extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: tint.fill,
+        color: fill ?? tint.fill,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(
           color: rarity ?? tint.border,

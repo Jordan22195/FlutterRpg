@@ -35,16 +35,36 @@ enum ZoneId {
         EntityId.GRAINERY_ENTRANCE,
       ],
       discoverableEntities: [
-        WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.CHICKEN, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.COW, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.FIELD_RAT, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TREE,
+          weight: 1,
+          unlockLevel: 1,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.COPPER,
+          weight: 1,
+          unlockLevel: 1,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.CHICKEN,
+          weight: 1,
+          unlockLevel: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.COW,
+          weight: 1,
+          unlockLevel: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.FIELD_RAT,
+          weight: 1,
+          unlockLevel: 2,
+        ),
 
         WeightedDropTableEntry<EntityId>(
           id: EntityId.ROTWOOD_SCARECROW,
           weight: 1,
-          unlockLevel: 8,
+          unlockLevel: 4,
         ),
       ],
       discoverableItems: [WeightedDropTableEntry(id: ItemId.NULL, weight: 1)],
@@ -59,26 +79,50 @@ enum ZoneId {
 
       name: "Southwood Forest",
       permanentEntities: [
-        EntityId.RIVER,
+        EntityId.CREEK,
         EntityId.FIREPIT,
         EntityId.WOLF_DEN_ENTRANCE,
       ],
       discoverableEntities: [
-        WeightedDropTableEntry<EntityId>(id: EntityId.OAK_TREE, weight: .5),
-        WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.OAK_TREE,
+          weight: .5,
+          unlockLevel: 7,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GOBLIN,
+          weight: 1,
+          unlockLevel: 10,
+        ),
 
-        WeightedDropTableEntry<EntityId>(id: EntityId.FOREST_WOLF, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.BEAR, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.FOREST_WOLF,
+          weight: 1,
+          unlockLevel: 12,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.BEAR,
+          weight: 1,
+          unlockLevel: 13,
+        ),
 
-        WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
-        WeightedDropTableEntry(id: EntityId.GOBLIN_CAMP, weight: .01),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.IRON,
+          weight: .5,
+          unlockLevel: 9,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GOBLIN_CAMP,
+          weight: .01,
+          unlockLevel: 5,
+        ),
         // herb geography: the low herbs grow here once you can spot them,
         // which is what makes Herbalism reachable through Exploration
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GUAM,
           weight: 1,
           count: 3,
-          unlockLevel: 8,
+          unlockLevel: 6,
         ),
       ],
       discoverableItems: [
@@ -122,28 +166,40 @@ enum ZoneId {
       discoverableEntities: [
         // tier 3 gathering: willow for woodcutting, coal for mining. The
         // gold vein is the mine's, not the darkwood's.
-        WeightedDropTableEntry<EntityId>(id: EntityId.WILLOW_TREE, weight: 1.5),
-        WeightedDropTableEntry<EntityId>(id: EntityId.COAL_VEIN, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.WILLOW_TREE,
+          weight: 1.5,
+          unlockLevel: 20,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.COAL_VEIN,
+          weight: 1,
+          unlockLevel: 20,
+        ),
         // the spiders that spill out of the den
-        WeightedDropTableEntry<EntityId>(id: EntityId.GIANT_SPIDER, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GIANT_SPIDER,
+          weight: 1,
+          unlockLevel: 20,
+        ),
         // the high herbs grow in the deep woods, the way the low ones grow
         // in Southwood — the next rung of the same Herbalism ladder
         WeightedDropTableEntry<EntityId>(
           id: EntityId.HARRALANDER,
           weight: .6,
           count: 2,
-          unlockLevel: 24,
+          unlockLevel: 21,
         ),
 
         WeightedDropTableEntry<EntityId>(
           id: EntityId.SKELETON,
           weight: 1,
-          unlockLevel: 22,
+          unlockLevel: 23,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.ZOMBIE,
           weight: 1,
-          unlockLevel: 22,
+          unlockLevel: 24,
         ),
       ],
       discoverableItems: [
@@ -169,25 +225,30 @@ enum ZoneId {
 
       permanentEntities: [EntityId.FIREPIT],
       discoverableEntities: [
-        WeightedDropTableEntry<EntityId>(id: EntityId.MUDLURC, weight: 1.5),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MUDLURC,
+          weight: 1.5,
+          unlockLevel: 25,
+        ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.FUNGAL_MONSTER,
           weight: 1.5,
+          unlockLevel: 26,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MUDLURC_WARRIOR,
           weight: .5,
-          unlockLevel: 28,
+          unlockLevel: 27,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GIANT_SCORPION,
           weight: 1,
-          unlockLevel: 30,
+          unlockLevel: 28,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MOSS_GOLEM,
           weight: .3,
-          unlockLevel: 40,
+          unlockLevel: 29,
         ),
       ],
     ),
@@ -203,24 +264,36 @@ enum ZoneId {
 
       permanentEntities: [],
       discoverableEntities: [
-        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 2),
-        WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 2),
-        WeightedDropTableEntry<EntityId>(id: EntityId.GIANT_SPIDER, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.COPPER,
+          weight: 2,
+          unlockLevel: 15,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.IRON,
+          weight: 2,
+          unlockLevel: 15,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GIANT_SPIDER,
+          weight: 1,
+          unlockLevel: 18,
+        ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.COAL_VEIN,
           weight: .8,
-          unlockLevel: 21,
+          unlockLevel: 16,
         ),
         // gold sits with the other veins, deeper in than coal
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GOLD_VEIN,
           weight: .5,
-          unlockLevel: 23,
+          unlockLevel: 17,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GEM_VEIN,
           weight: .08,
-          unlockLevel: 25,
+          unlockLevel: 19,
         ),
       ],
       discoverableItems: [
@@ -252,9 +325,21 @@ enum ZoneId {
       permanentEntities: [],
 
       discoverableEntities: [
-        WeightedDropTableEntry<EntityId>(id: EntityId.TREE, weight: 2),
-        WeightedDropTableEntry<EntityId>(id: EntityId.GOBLIN, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TREE,
+          weight: 2,
+          unlockLevel: 30,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GOBLIN,
+          weight: 1,
+          unlockLevel: 33,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.COPPER,
+          weight: 1,
+          unlockLevel: 31,
+        ),
       ],
     ),
   ),
@@ -270,20 +355,36 @@ enum ZoneId {
 
       permanentEntities: [EntityId.FIREPIT],
       discoverableEntities: [
-        WeightedDropTableEntry<EntityId>(id: EntityId.HARPY, weight: 1.5),
-        WeightedDropTableEntry<EntityId>(id: EntityId.IMP, weight: 1),
-        WeightedDropTableEntry<EntityId>(id: EntityId.ORC, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.HARPY,
+          weight: 1.5,
+          unlockLevel: 35,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.IMP,
+          weight: 1,
+          unlockLevel: 36,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.ORC,
+          weight: 1,
+          unlockLevel: 37,
+        ),
         // tier 4 mining, the rung above the darkwood's coal
-        WeightedDropTableEntry<EntityId>(id: EntityId.MITHRIL_VEIN, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MITHRIL_VEIN,
+          weight: 1,
+          unlockLevel: 35,
+        ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.TROLL,
           weight: .6,
-          unlockLevel: 40,
+          unlockLevel: 38,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.HILL_GIANT,
           weight: .3,
-          unlockLevel: 50,
+          unlockLevel: 39,
         ),
       ],
     ),
@@ -302,6 +403,7 @@ enum ZoneId {
         EntityId.ENCHANTING_BENCH,
         EntityId.JEWELCRAFTING_BENCH,
         EntityId.ALCHEMY_STATION,
+        EntityId.CREEK,
         EntityId.DEEP_POND,
         EntityId.RIVER,
         EntityId.LAKE,

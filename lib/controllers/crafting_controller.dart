@@ -144,6 +144,10 @@ class CraftingController extends ChangeNotifier {
         _actionTimingController.isRunningAction(doCraftingAction);
   }
 
+  /// Whether the station on screen is the one crafting right now — what its
+  /// action button reads to show the action as running.
+  bool isCraftingHere() => _isCraftingHere();
+
   /// How far this station is through its current craft, 0..1 — zero unless
   /// the craft running is this station's.
   double craftProgress() {

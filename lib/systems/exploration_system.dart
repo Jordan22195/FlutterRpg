@@ -210,6 +210,7 @@ class ExplorationSystem {
       final locked = level < entry.unlockLevel;
       entities.add(
         ZoneDiscovery(
+          id: entry.id,
           name: def.name,
           iconAsset: def.iconAsset,
           unlockLevel: entry.unlockLevel,
@@ -240,6 +241,7 @@ class ExplorationSystem {
       final locked = level < entry.unlockLevel;
       items.add(
         ZoneDiscovery(
+          id: entry.id,
           name: def.name,
           iconAsset: def.iconAsset ?? '',
           unlockLevel: entry.unlockLevel,

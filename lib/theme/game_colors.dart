@@ -45,6 +45,7 @@ class GameColors extends ThemeExtension<GameColors> {
     required this.combatTint,
     required this.craftingTint,
     required this.fireTint,
+    required this.shopTint,
     required this.dungeonTintFill,
   });
 
@@ -87,6 +88,7 @@ class GameColors extends ThemeExtension<GameColors> {
   /// Crafting stations (anvil) and crafting inputs.
   final SpriteTint craftingTint;
   final SpriteTint fireTint;
+  final SpriteTint shopTint;
 
   /// Dungeon frames keep their rarity-coloured outline; only the fill is
   /// fixed here.
@@ -114,6 +116,7 @@ class GameColors extends ThemeExtension<GameColors> {
       border: Color(0xFF43382A),
     ),
     fireTint: SpriteTint(fill: Color(0xFF2A1E16), border: Color(0xFF4A3324)),
+    shopTint: SpriteTint(fill: Color(0xFF2A2416), border: Color(0xFF4A3F2A)),
     dungeonTintFill: Color(0xFF1B1D1F),
   );
 
@@ -137,6 +140,7 @@ class GameColors extends ThemeExtension<GameColors> {
     SpriteTint? combatTint,
     SpriteTint? craftingTint,
     SpriteTint? fireTint,
+    SpriteTint? shopTint,
     Color? dungeonTintFill,
   }) {
     return GameColors(
@@ -158,6 +162,7 @@ class GameColors extends ThemeExtension<GameColors> {
       combatTint: combatTint ?? this.combatTint,
       craftingTint: craftingTint ?? this.craftingTint,
       fireTint: fireTint ?? this.fireTint,
+      shopTint: shopTint ?? this.shopTint,
       dungeonTintFill: dungeonTintFill ?? this.dungeonTintFill,
     );
   }
@@ -185,6 +190,7 @@ class GameColors extends ThemeExtension<GameColors> {
       combatTint: SpriteTint.lerp(combatTint, other.combatTint, t),
       craftingTint: SpriteTint.lerp(craftingTint, other.craftingTint, t),
       fireTint: SpriteTint.lerp(fireTint, other.fireTint, t),
+      shopTint: SpriteTint.lerp(shopTint, other.shopTint, t),
       dungeonTintFill: l(dungeonTintFill, other.dungeonTintFill),
     );
   }

@@ -35,9 +35,15 @@ class MomentumPrimaryButton extends StatefulWidget {
     this.color,
     this.idleIcon,
     this.showLabel = false,
+    this.isActive,
   });
 
   final FutureOr<void> Function() startActionFunction;
+
+  /// Whether this screen's own action is the one running. Sampled on every
+  /// tick of the action loop; while it holds, the face shows fast-forward
+  /// rather than [idleIcon], so a running action reads as running.
+  final bool Function()? isActive;
 
   /// Draw [label] on the face between the icon and the lock. A station's
   /// button names its action ("Light Fire"), since which action it runs is
@@ -53,8 +59,8 @@ class MomentumPrimaryButton extends StatefulWidget {
   final Color? color;
 
   /// What the face shows at rest. Defaults to play; travel walks instead.
-  /// Held, every button shows fast-forward — the boost works the same way
-  /// whatever is being boosted.
+  /// Held, locked or running its action, every button shows fast-forward —
+  /// the boost works the same way whatever is being boosted.
   final IconData? idleIcon;
 
   @override
@@ -269,11 +275,13 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // holding the button boosts the speed, so the icon shows
-                    // fast forward for as long as the hold lasts. the button
-                    // no longer stops anything, so it never shows a pause.
+                    // fast forward while the hold boosts the speed, and while
+                    // this screen's action is running at all: the button no
+                    // longer stops anything, so it never shows a pause.
                     Icon(
-                      controller.isButtonHeld || locked
+                      controller.isButtonHeld ||
+                              locked ||
+                              (widget.isActive?.call() ?? false)
                           ? Icons.fast_forward
                           : (widget.idleIcon ?? Icons.play_arrow),
                       size: _iconSize,
@@ -327,11 +335,19 @@ class ActionOrTravelButton extends StatelessWidget {
     required this.label,
     required this.startActionFunction,
     this.showLabel = false,
+    this.idleIcon,
+    this.isActive,
   });
 
   final FutureOr<void> Function() startActionFunction;
   final bool enabled;
   final String label;
+
+  /// See [MomentumPrimaryButton.idleIcon]. The travel button keeps its own.
+  final IconData? idleIcon;
+
+  /// See [MomentumPrimaryButton.isActive].
+  final bool Function()? isActive;
 
   /// See [MomentumPrimaryButton.showLabel]. The travel button always names
   /// itself by its walking icon alone.
@@ -350,6 +366,8 @@ class ActionOrTravelButton extends StatelessWidget {
         label: label,
         startActionFunction: startActionFunction,
         showLabel: showLabel,
+        idleIcon: idleIcon,
+        isActive: isActive,
       );
     }
 

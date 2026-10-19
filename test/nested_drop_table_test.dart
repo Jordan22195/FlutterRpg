@@ -555,20 +555,30 @@ void main() {
     });
 
     test('one item on two lines of a table reads as a single row', () {
-      // the Lake lists whitefish twice, at weight 1 and weight .25 of a
-      // 1.75 total. Two rows saying 57% and 14% is a worse answer than one
-      // saying 71%, and flattening makes the same thing happen whenever two
-      // nested tables can pay the same item
+      // the uncommon giant spider's flattened table pays one item on two
+      // lines. Two rows splitting its odds is a worse answer than one row
+      // carrying their sum, and flattening makes the same thing happen
+      // whenever two nested tables can pay the same item
+      const spider = EntityId.GIANT_SPIDER_UNCOMMON;
+      final lines =
+          (spider.definition as EncounterEntityDefinition).itemDrops.flattened;
+      final total = lines.fold<double>(0, (sum, d) => sum + d.weight);
+      final byItem = <ItemId, double>{};
+      for (final line in lines) {
+        byItem[line.id] = (byItem[line.id] ?? 0) + line.weight;
+      }
+      final doubled = lines
+          .map((d) => d.id)
+          .firstWhere((id) => lines.where((d) => d.id == id).length > 1);
+
       final session = buildSession();
       final details = session.worldController.entityDetails(
-        EntityId.LAKE.build() as EncounterEntity,
+        spider.build() as EncounterEntity,
       );
 
-      expect(details.drops, hasLength(2));
-      final whitefish = details.drops.singleWhere(
-        (d) => d.itemId == ItemId.WHITEFISH,
-      );
-      expect(whitefish.chance, closeTo(1.25 / 1.75, 1e-9));
+      expect(details.drops, hasLength(byItem.length));
+      final merged = details.drops.singleWhere((d) => d.itemId == doubled);
+      expect(merged.chance, closeTo(byItem[doubled]! / total, 1e-9));
       expect(
         details.drops.fold<double>(0, (sum, d) => sum + d.chance),
         closeTo(1.0, 1e-9),

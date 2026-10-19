@@ -466,7 +466,7 @@ class EncounterService {
 
   // herbs don't fight back, so no hp check; unlike fishing spots they
   // deplete, so the count matters. the herbalism level gate needs the
-  // entity catalog and lives in EncounterSystem.meetsHerbRequirement
+  // entity catalog and lives in EncounterSystem.meetsLevelRequirement
   bool herbalismConditionsMet(
     PlayerData playerState,
     EncounterData encounterState,

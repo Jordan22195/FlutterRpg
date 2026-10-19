@@ -174,15 +174,12 @@ void main() {
   // in for them here have since moved on to the swamp, where swamp_test
   // holds them. What is left is the zone's own reason to stop in.
   group('Southwood Forest', () {
-    test('it kept the river, and a way into the wolf den', () {
+    test('it kept a fishing spot, and a way into the wolf den', () {
       // the zone still has to be worth stopping in on the way south: its
-      // river and its own dungeon door are what is left of it
+      // creek and its own dungeon door are what is left of it
       final southwood = ZoneId.SOUTHWOOD_FOREST.definition;
-      expect(southwood.permanentEntities, contains(EntityId.RIVER));
-      expect(
-        southwood.permanentEntities,
-        contains(EntityId.WOLF_DEN_ENTRANCE),
-      );
+      expect(southwood.permanentEntities, contains(EntityId.CREEK));
+      expect(southwood.permanentEntities, contains(EntityId.WOLF_DEN_ENTRANCE));
     });
   });
 }

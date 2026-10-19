@@ -11,6 +11,7 @@ import 'package:rpg/catalogs/rarity.dart';
 // EncounterEntity, so nothing new serializes.
 class HerbEntityDefinition extends EncounterEntityDefinition {
   /// Herbalism level required to pick this herb.
+  @override
   final int requiredLevel;
 
   const HerbEntityDefinition({

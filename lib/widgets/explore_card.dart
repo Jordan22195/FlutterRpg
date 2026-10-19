@@ -253,6 +253,9 @@ class _ObjectCardState<T extends Enum> extends State<ObjectCard<T>>
         spriteSize: widget.isStructure ? 38 : 40,
         depleted: depleted,
         onTap: widget.onIconTap,
+        // the sprite sits on the card's own colour; the frame's border
+        // still says what kind of thing it is
+        fill: context.palette.surface,
       ),
       title: widget.name ?? widget.id.name,
       meta: _buildMeta(context),

@@ -144,9 +144,9 @@ void main() {
             )
             as EncounterEntity;
 
-    expect(session.encounterSystem.herbRequiredLevel(EntityId.TORSTOL), 75);
+    expect(session.encounterSystem.requiredLevelFor(EntityId.TORSTOL), 75);
     expect(
-      session.encounterSystem.meetsHerbRequirement(
+      session.encounterSystem.meetsLevelRequirement(
         save.playerData,
         EntityId.TORSTOL,
       ),

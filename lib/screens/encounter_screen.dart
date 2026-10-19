@@ -16,6 +16,7 @@ import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
 import '../widgets/action_dock.dart';
 import '../widgets/art_header.dart';
+import '../widgets/explore_card.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/sprite_frame.dart';
 import '../widgets/stage_panel.dart';
@@ -616,7 +617,8 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
-                      "Requires Herbalism level ${view.requiredLevel}",
+                      "Requires ${skillDisplayName(skillType)} level "
+                      "${view.requiredLevel}",
                       textAlign: TextAlign.center,
                       style: HearthText.rowMeta.copyWith(
                         color: context.gameColors.hp,
@@ -702,8 +704,8 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
       foodItemId: controller.getEquipedFoodItemId(),
       foodItemCount: controller.getEquipedFoodItemCount(),
       // herbalism level gate: locked herbs stay visible but can't be picked
-      requiredLevel: controller.viewedHerbRequiredLevel(),
-      locked: controller.viewedHerbLocked(),
+      requiredLevel: controller.viewedRequiredLevel(),
+      locked: controller.viewedLocked(),
       entityActionProgress: controller.entityAttackProgress,
       // both gated on this screen being the one the actions fire on
       playerActionProgress: controller.playerActionProgress,
@@ -723,6 +725,7 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
         // conditions reject it, so the button says so up front
         enabled: !view.locked && view.entity.count > 0,
         label: "Action",
+        isActive: controller.isActingOnViewedEntity,
         startActionFunction: () {
           controller.startEncounterAction();
         },

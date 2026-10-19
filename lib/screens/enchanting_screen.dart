@@ -271,6 +271,7 @@ class EnchantingScreen extends StatelessWidget {
               actionButton: ActionOrTravelButton(
                 enabled: controller.selectionReady(),
                 label: disenchantSelected ? 'Disenchant' : 'Enchant',
+                isActive: controller.isEnchanting,
                 startActionFunction: () {
                   controller.startEnchantingAction();
                 },
