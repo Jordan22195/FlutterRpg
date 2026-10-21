@@ -14,6 +14,7 @@ class StatChip extends StatelessWidget {
     required this.value,
     this.deltaText,
     this.deltaColor,
+    this.fontSize = 12,
   });
 
   final Widget icon;
@@ -21,28 +22,35 @@ class StatChip extends StatelessWidget {
   final String? deltaText;
   final Color? deltaColor;
 
+  /// 12 for the compact chips in lists; the equipment details set it larger.
+  /// The padding and gaps grow with it.
+  final double fontSize;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: EdgeInsets.symmetric(
+        horizontal: fontSize / 2,
+        vertical: fontSize / 6,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(
           context,
         ).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(fontSize / 2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           icon,
-          const SizedBox(width: 3),
-          Text(value, style: const TextStyle(fontSize: 12)),
+          SizedBox(width: fontSize / 4),
+          Text(value, style: TextStyle(fontSize: fontSize)),
           if (deltaText != null) ...[
-            const SizedBox(width: 4),
+            SizedBox(width: fontSize / 3),
             Text(
               deltaText!,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: fontSize,
                 fontWeight: FontWeight.w600,
                 color: deltaColor,
               ),

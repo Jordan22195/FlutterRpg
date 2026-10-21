@@ -16,7 +16,9 @@ import 'package:rpg/game_session.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/catalogs/drop_tables.dart';
 import 'package:rpg/widgets/entity_info_dialog.dart';
+import 'package:rpg/widgets/info_section.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
+import 'package:rpg/widgets/stat_chip.dart';
 
 /// What the encounter screen's info tab reports about the player's own side
 /// of the fight — in particular the damage rate, which is the number the
@@ -130,7 +132,11 @@ void main() {
   });
 
   group('the info tab', () {
-    Future<void> pumpInfo(WidgetTester tester, EntityId id) async {
+    Future<void> pumpInfo(
+      WidgetTester tester,
+      EntityId id, {
+      bool showImage = true,
+    }) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -154,7 +160,10 @@ void main() {
           child: MaterialApp(
             home: Scaffold(
               body: SingleChildScrollView(
-                child: EntityInfoBody(entity: id.build() as EncounterEntity),
+                child: EntityInfoBody(
+                  entity: id.build() as EncounterEntity,
+                  showImage: showImage,
+                ),
               ),
             ),
           ),
@@ -163,28 +172,101 @@ void main() {
       await tester.pump();
     }
 
-    testWidgets('puts both sides of the roll on one table row', (tester) async {
+    testWidgets('the header reads the entity\'s own level, not a gate', (
+      tester,
+    ) async {
+      Finder chip(String value) => find.descendant(
+        of: find.byType(StatChip),
+        matching: find.text(value),
+      );
+
+      // a goblin: its combat level, where there used to be a 0
+      final goblin = EntityId.GOBLIN.build() as CombatEntity;
+      await pumpInfo(tester, EntityId.GOBLIN);
+      expect(chip('${goblin.level}'), findsOneWidget);
+      expect(chip('0'), findsNothing);
+
+      // an herb: its defence, and the level it asks for named as a gate
+      final tarromin = EntityId.TARROMIN.build() as EncounterEntity;
+      await pumpInfo(tester, EntityId.TARROMIN);
+      expect(chip('${tarromin.defence}'), findsOneWidget);
+      final gate = (EntityId.TARROMIN.definition as EncounterEntityDefinition)
+          .requiredLevel;
+      expect(find.textContaining('Requires Lv $gate'), findsOneWidget);
+    });
+
+    testWidgets('the popup shows the entity; the info tab leaves it out', (
+      tester,
+    ) async {
+      Finder picture() => find.byWidgetPredicate(
+        (w) => w is ItemStackTile && w.id == EntityId.GOBLIN,
+      );
+
+      await pumpInfo(tester, EntityId.GOBLIN);
+      expect(picture(), findsOneWidget);
+
+      // the encounter screen's tab: the goblin already stands on the stage
+      await pumpInfo(tester, EntityId.GOBLIN, showImage: false);
+      expect(picture(), findsNothing);
+      // the details are all still there
+      expect(find.text('COMBAT STATS'), findsOneWidget);
+    });
+
+    testWidgets('a fight reads as one column of six stats', (tester) async {
       setLevel(SkillId.ATTACK, 40);
       await pumpInfo(tester, EntityId.GOBLIN);
 
       // section headings render upper case
       expect(find.text('COMBAT STATS'), findsOneWidget);
-      // one row now, not one in each of two sections - the player's rate
-      // and the entity's are the same measurement and sit side by side,
-      // under a column each
-      expect(find.text('Damage per second'), findsOneWidget);
-      expect(find.text('YOU'), findsOneWidget);
-      expect(find.text('THEM'), findsOneWidget);
+      // one column: no side-by-side you and them
+      expect(find.text('YOU'), findsNothing);
+      expect(find.text('THEM'), findsNothing);
 
       final details = detailsFor(EntityId.GOBLIN);
-      expect(
-        find.text(details.playerDamagePerSecond.toStringAsFixed(1)),
-        findsWidgets,
-      );
-      expect(
-        find.text(details.entityDamagePerSecond.toStringAsFixed(1)),
-        findsWidgets,
-      );
+      final rows = {
+        'Hit chance': formatPercent(details.playerHitChance),
+        'Block chance': formatPercent(details.blockChance),
+        'Max hit': '${details.playerMaxHit}',
+        'Max take': '${details.entityMaxHit}',
+        'DPS': formatDecimal(details.playerDamagePerSecond),
+        'Actions to kill': details.actionsToKill.toStringAsFixed(2),
+      };
+
+      // in that order, each with its value on its own line
+      double? lastY;
+      for (final entry in rows.entries) {
+        final label = find.text(entry.key);
+        expect(label, findsOneWidget, reason: entry.key);
+        final y = tester.getCenter(label).dy;
+        if (lastY != null) expect(y, greaterThan(lastY), reason: entry.key);
+        lastY = y;
+        final value = find.text(entry.value);
+        expect(value, findsWidgets, reason: entry.key);
+        expect(
+          find
+              .text(entry.value)
+              .evaluate()
+              .any(
+                (e) =>
+                    ((e.renderObject! as RenderBox)
+                                .localToGlobal(Offset.zero)
+                                .dy -
+                            tester.getTopLeft(label).dy)
+                        .abs() <
+                    4,
+              ),
+          isTrue,
+          reason: '${entry.key} value on its line',
+        );
+      }
+
+      // the kill count keeps its fraction
+      expect(rows['Actions to kill'], matches(RegExp(r'^\d+\.\d\d$')));
+
+      // the rows the column replaced are gone
+      expect(find.text('Miss chance'), findsNothing);
+      expect(find.text('Avg damage'), findsNothing);
+      expect(find.text('Damage per second'), findsNothing);
     });
 
     testWidgets('leaves the entity stat block to the encounter screen', (

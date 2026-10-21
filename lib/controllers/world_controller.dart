@@ -160,6 +160,21 @@ class WorldController extends ChangeNotifier {
     return e is CombatEntity ? e.level : e.defence;
   }
 
+  /// The combat level a dungeon's tile shows: its toughest fight, the
+  /// highest-level creature on any of its floors. Null for a dungeon with
+  /// nothing to fight in it.
+  int? dungeonLevel(DungeonEntity e) {
+    int? highest;
+    for (final entry in e.dungeonId.definition.entries) {
+      for (final ref in entry.entities) {
+        final def = ref.entityId.definition;
+        if (def is! CombatEntityDefinition) continue;
+        if (highest == null || def.level > highest) highest = def.level;
+      }
+    }
+    return highest;
+  }
+
   /// Everything the entity details popup shows for [e]: its own stats, its
   /// drop table odds, and the combat rolls both ways against the player's
   /// current stats.
@@ -188,6 +203,14 @@ class WorldController extends ChangeNotifier {
   int requiredLevelFor(EntityId id) {
     final def = id.definition;
     return def is EncounterEntityDefinition ? def.requiredLevel : 0;
+  }
+
+  /// The gathering skill whose tool [id] needs and the player hasn't
+  /// equipped — an axe for a tree, a pickaxe for ore, a rod for a fishing
+  /// spot. Null when nothing is missing.
+  SkillId? missingToolFor(EntityId id) {
+    if (_encounterSystem.hasRequiredTool(_playerState, id)) return null;
+    return _encounterSystem.requiredToolSkill(id);
   }
 
   /// Whether the player's stats (with gear/buffs, matching the zone-gate
@@ -504,22 +527,6 @@ class WorldController extends ChangeNotifier {
       null,
       intervalOverride: travelTimeTo(viewedZoneId),
     );
-  }
-
-  /// How much of the road is left to walk.
-  ///
-  /// Read off the bar rather than off a clock: the interval moves under the
-  /// player's finger as the boost builds, so counting down from the time the
-  /// trip was quoted at would drift away from the bar beside it. This is
-  /// what is left of *this* interval, and it shortens as the boost does its
-  /// work — which is the point of holding the button.
-  ///
-  /// Standing still with a trip merely on offer, it reads the whole trip:
-  /// the chip under an untouched travel button is what the walk will take.
-  Duration travelRemaining() {
-    final total = travelInterval();
-    final left = (1.0 - travelProgress()).clamp(0.0, 1.0);
-    return Duration(microseconds: (total.inMicroseconds * left).round());
   }
 
   /// Whether the progress bars belong to travel rather than to the screen's

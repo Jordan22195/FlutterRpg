@@ -106,14 +106,39 @@ void main() {
     final gotStackable = (inventory.itemMap[entry.itemId] ?? 0) >= 1;
     final gotEquipment = inventory.equipment.any((e) => e.id == entry.itemId);
     expect(gotStackable || gotEquipment, isTrue);
-    // stock decremented (entry removed if it hit zero)
-    final remaining = shop.stock
-        .where((s) => identical(s, entry))
-        .fold<int>(0, (sum, s) => sum + s.count);
-    expect(
-      remaining == startCount - 1 || (startCount == 1 && remaining == 0),
-      isTrue,
+    // stock decremented, the slot still on the shelf
+    expect(shop.stock, contains(same(entry)));
+    expect(entry.count, startCount - 1);
+  });
+
+  test('a bought-out slot stays on the shelf at zero, and sells no more', () {
+    final shop = shopDef(EntityId.TRADING_POST).toEntity(EntityId.TRADING_POST);
+    final def = shopDef(EntityId.TRADING_POST);
+    final inventory = InventoryData(itemMap: {ItemId.COINS: 1000000});
+
+    shopService.restockIfDue(
+      shop,
+      def,
+      now: DateTime(2026, 1, 1),
+      rng: Random(7),
     );
+    final entry = shop.stock.first;
+    final slots = shop.stock.length;
+
+    // buy it out
+    while (entry.count > 0) {
+      expect(shopService.buyItem(shop, entry, def, inventory), isTrue);
+    }
+
+    // it is still there, at zero, in its place
+    expect(shop.stock.length, slots);
+    expect(shop.stock.first, same(entry));
+    expect(entry.count, 0);
+
+    // and buying from it again takes nothing
+    final coins = inventory.itemMap[ItemId.COINS];
+    expect(shopService.buyItem(shop, entry, def, inventory), isFalse);
+    expect(inventory.itemMap[ItemId.COINS], coins);
   });
 
   test('cannot buy without enough coins', () {

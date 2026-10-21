@@ -345,7 +345,8 @@ void main() {
       expect(
         table,
         isNotEmpty,
-        reason: '${zone.name} lost its item table; point this at a zone '
+        reason:
+            '${zone.name} lost its item table; point this at a zone '
             'whose discoverableItems still hold something',
       );
       final gate = table

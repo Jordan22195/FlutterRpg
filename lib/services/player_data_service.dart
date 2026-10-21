@@ -34,6 +34,24 @@ class PlayerDataService {
   Map<SkillId, int> getStatTotals(PlayerData playerState, {DateTime? at}) =>
       getStatBreakdown(playerState, at: at).total;
 
+  /// The player's combat level, by the same measure a creature's level is
+  /// read back from its stats ([CombatType.levelOf]), so the two compare
+  /// directly. Read off the totals — gear, potions and stance included — and
+  /// off whichever of attack, ranged or magic the player hits hardest with.
+  int combatLevel(PlayerData playerState, {DateTime? at}) {
+    final stats = getStatTotals(playerState, at: at);
+    final attack = [
+      SkillId.ATTACK,
+      SkillId.RANGED,
+      SkillId.MAGIC,
+    ].map((skill) => stats[skill] ?? 1).reduce(max);
+    return CombatType.levelOf(
+      attack: attack,
+      defence: stats[SkillId.DEFENCE] ?? 1,
+      hitpoints: stats[SkillId.HITPOINTS] ?? 1,
+    );
+  }
+
   /// The same stats, with the sources kept apart: what the player has earned,
   /// what they are wearing, what they have drunk, and what the stance is
   /// lending them. [total] is exactly what [getStatTotals] answers — it is

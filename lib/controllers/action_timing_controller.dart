@@ -371,6 +371,12 @@ class ActionTimingController extends ChangeNotifier {
   /// True while the action loop is running (any action).
   bool get isRunning => _actionTimingState.running;
 
+  /// What the loop is running, while it runs: the zone and entity of a
+  /// fight or a craft, a dungeon floor, and so on. Null while idle, so a
+  /// paused action reads as nothing being worked.
+  BoundAction? get runningAction =>
+      _actionTimingState.running ? _actionTimingState.boundAction : null;
+
   /// True only once frames are actually arriving. A save restores [isRunning]
   /// before anything has been bound to fire, so that flag alone cannot tell a
   /// live loop from one still waiting to be resumed; the ticker can.

@@ -10,6 +10,7 @@ import 'package:rpg/services/buff_service.dart';
 import 'package:rpg/services/equipment_service.dart';
 import 'package:rpg/services/player_data_service.dart';
 import 'package:rpg/services/skill_service.dart';
+import 'support/gathering_tools.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -175,7 +176,7 @@ void main() {
       final factory = GameSessionFactory();
       final catalogs = factory.catalog1();
       return factory.create(
-        save: factory.newGame(catalogs),
+        save: withGatheringTools(factory.newGame(catalogs)),
         catalogs: catalogs,
         vsync: const TestVSync(),
       );

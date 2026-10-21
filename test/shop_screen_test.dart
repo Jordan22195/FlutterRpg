@@ -170,6 +170,11 @@ void main() {
     );
     await tester.pump();
 
+    // top up the held slot so the hold has something to repeat on: the
+    // trading post's pieces come one to a slot, and a bought-out slot stays
+    // put, sold out, rather than sliding the next one under the finger
+    session.shopController.stock().first.count = 50;
+
     final buyButtons = find.textContaining('Buy ');
     await tester.ensureVisible(buyButtons.first);
     await tester.pumpAndSettle();
@@ -274,6 +279,156 @@ void main() {
     expect(boughtFastPhase, greaterThan(boughtNormalPhase * 3));
 
     await gesture.up();
+    session.dispose();
+  });
+
+  testWidgets('a bought-out slot stays, greyed, saying it is sold out', (
+    tester,
+  ) async {
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final save = factory.newGame(catalogs);
+    final session = factory.create(
+      save: save,
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+    registerCatalogIconResolvers();
+    EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
+
+    save.inventoryData.itemMap[ItemId.COINS] = 1000000;
+    save.playerData.currentZoneId = ZoneId.DEV_FOREST;
+    save.playerData.currentEntityViewId = EntityId.TRADING_POST;
+
+    Future<void> pumpShop() async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<WorldController>.value(
+              value: session.worldController,
+            ),
+            ChangeNotifierProvider<ShopController>.value(
+              value: session.shopController,
+            ),
+            ChangeNotifierProvider<InventoryController>.value(
+              value: session.inventoryController,
+            ),
+          ],
+          child: const MaterialApp(home: Scaffold(body: ShopScreen())),
+        ),
+      );
+      await tester.pump();
+    }
+
+    await pumpShop();
+    final slots = session.shopController.stock().length;
+
+    // buy the shelf's first slot out
+    final entry = session.shopController.stock().first;
+    while (entry.count > 0) {
+      expect(session.shopController.buy(entry), isTrue);
+    }
+    await tester.pump();
+
+    // the row is still there — the shelf is as long as it was — greyed,
+    // with its price swapped for a disabled "Sold out"
+    expect(session.shopController.stock().length, slots);
+    final soldOut = find.text('Sold out');
+    expect(soldOut, findsOneWidget);
+    expect(
+      find.ancestor(of: soldOut, matching: find.byType(Opacity)),
+      findsWidgets,
+    );
+
+    // tapping it buys nothing
+    final coins = session.shopController.playerCoins();
+    await tester.tap(soldOut, warnIfMissed: false);
+    await tester.pump();
+    expect(session.shopController.playerCoins(), coins);
+
+    session.dispose();
+  });
+
+  testWidgets('a held sell row stays put after its stack runs out', (
+    tester,
+  ) async {
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final save = factory.newGame(catalogs);
+    final session = factory.create(
+      save: save,
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+    registerCatalogIconResolvers();
+    EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
+
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    // a short stack to sell out, and the row that would slide under it
+    save.inventoryData.itemMap[ItemId.COPPER_ORE] = 3;
+    save.inventoryData.itemMap[ItemId.LOGS] = 50;
+    save.playerData.currentZoneId = ZoneId.DEV_FOREST;
+    save.playerData.currentEntityViewId = EntityId.TRADING_POST;
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<WorldController>.value(
+            value: session.worldController,
+          ),
+          ChangeNotifierProvider<ShopController>.value(
+            value: session.shopController,
+          ),
+          ChangeNotifierProvider<InventoryController>.value(
+            value: session.inventoryController,
+          ),
+        ],
+        child: const MaterialApp(home: Scaffold(body: ShopScreen())),
+      ),
+    );
+    await tester.pump();
+
+    Finder rowOf(String name) =>
+        find.ancestor(of: find.text(name), matching: find.byType(Card)).first;
+    final copperRow = rowOf('Copper Ore');
+    final sell = find.descendant(
+      of: copperRow,
+      matching: find.textContaining('Sell '),
+    );
+    await tester.ensureVisible(sell);
+    await tester.pump();
+    final rowTop = tester.getTopLeft(copperRow).dy;
+
+    // hold well past three sales' worth of repeats
+    final gesture = await tester.startGesture(tester.getCenter(sell));
+    await tester.pump(kLongPressTimeout + kPressTimeout);
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 120));
+    }
+
+    // the ore is gone, but its row is still there, in its place, empty
+    expect(save.inventoryData.itemMap[ItemId.COPPER_ORE] ?? 0, 0);
+    expect(find.text('Copper Ore'), findsOneWidget);
+    expect(tester.getTopLeft(rowOf('Copper Ore')).dy, rowTop);
+    expect(
+      find.descendant(
+        of: rowOf('Copper Ore'),
+        matching: find.text('None left'),
+      ),
+      findsOneWidget,
+    );
+    // and nothing slid under the finger: the logs were never touched
+    expect(save.inventoryData.itemMap[ItemId.LOGS], 50);
+
+    // letting go clears the empty row
+    await gesture.up();
+    await tester.pump();
+    expect(find.text('Copper Ore'), findsNothing);
+    expect(save.inventoryData.itemMap[ItemId.LOGS], 50);
+
     session.dispose();
   });
 }

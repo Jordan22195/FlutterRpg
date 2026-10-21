@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/items/items.dart';
+import '../controllers/equipment_controller.dart';
 import '../controllers/inventory_controller.dart';
+import 'equipment_picker.dart';
+import 'stat_chip.dart';
 import 'icon_renderer.dart';
 import 'item_stack_tile.dart';
 
+/// The equipment controller, where the screen has one; the comparison is
+/// left out where it doesn't (a bare widget test, say).
+EquipmentController? _equipmentOf(BuildContext context) {
+  try {
+    return Provider.of<EquipmentController>(context, listen: false);
+  } on ProviderNotFoundException {
+    return null;
+  }
+}
+
 /// Info dialog for a unique equipment instance: display name, quality,
-/// effective stats (quality-scaled + enchant), and weapon speed.
+/// effective stats (quality-scaled + enchant) and weapon speed, each set
+/// against the piece the player would be taking off to wear it.
 void showEquipmentInfoDialog(BuildContext context, EquipmentItem item) {
   final inventoryController = context.read<InventoryController>();
 
@@ -25,11 +39,15 @@ void showEquipmentInfoDialog(BuildContext context, EquipmentItem item) {
     builder: (dialogContext) => StatefulBuilder(
       builder: (dialogContext, setDialogState) {
         final qualityColor = rarityBorderColor(current.quality);
-        final stats = current.effectiveSkillBonus;
         final shown = current;
-        final Duration? attackInterval = shown is WeaponItem
-            ? shown.actionInterval
-            : null;
+
+        // what wearing this would take off, unless this is what is worn
+        final equipment = _equipmentOf(dialogContext);
+        final worn = equipment?.isEquipped(shown) ?? false;
+        final baseline = equipment == null || worn
+            ? null
+            : equipment.counterpartFor(shown);
+        final compared = baseline != null;
 
         return AlertDialog(
           title: Text(
@@ -60,33 +78,25 @@ void showEquipmentInfoDialog(BuildContext context, EquipmentItem item) {
                 if (current.enchantName.isNotEmpty)
                   Text('Enchanted: of the ${current.enchantName}'),
                 const SizedBox(height: 8),
-                for (final entry in stats.entries)
-                  Row(
-                    children: [
-                      IconRenderer(size: 24, id: entry.key),
-                      const SizedBox(width: 6),
-                      Text('+${entry.value}'),
-                    ],
-                  ),
-                if (attackInterval != null) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.timer, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${(attackInterval.inMilliseconds / 1000).toStringAsFixed(1)}s',
-                      ),
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 8),
-                Row(
+                // each stat with its change against what would come off,
+                // one to a line; weapon speed last, where faster is the gain
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    IconRenderer(size: 24, id: ItemId.COINS),
-                    const SizedBox(width: 6),
-                    Text('${current.value}'),
+                    for (final chip in equipmentComparisonChips(
+                      shown,
+                      baseline,
+                      showDeltas: compared,
+                      large: true,
+                    )) ...[chip, const SizedBox(height: 8)],
                   ],
+                ),
+                // what it sells for, at the same size as the stats above
+                StatChip(
+                  key: const ValueKey('equipment-value'),
+                  icon: IconRenderer(size: 28, id: ItemId.COINS),
+                  value: '${current.value}',
+                  fontSize: 20,
                 ),
 
                 // dev tool: re-roll the whole stack's quality. quality is

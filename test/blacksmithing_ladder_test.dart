@@ -107,11 +107,9 @@ void main() {
       final bar = catalog.recipeById('smelt_${metal}_bar').output.single.id;
       for (final entry in pieces.entries) {
         final r = forge(metal, entry.key);
-        expect(
-          r.inputs,
-          {bar: entry.value.$2},
-          reason: '$metal ${entry.key} is not ${entry.value.$2} $bar',
-        );
+        expect(r.inputs, {
+          bar: entry.value.$2,
+        }, reason: '$metal ${entry.key} is not ${entry.value.$2} $bar');
       }
     }
   });
@@ -152,7 +150,8 @@ void main() {
         expect(
           forge(metals[i], piece).levelRequirement,
           greaterThan(forge(metals[i - 1], piece).levelRequirement),
-          reason: '$piece does not climb from ${metals[i - 1]} '
+          reason:
+              '$piece does not climb from ${metals[i - 1]} '
               'to ${metals[i]}',
         );
       }

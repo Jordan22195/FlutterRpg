@@ -7,6 +7,7 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'support/gathering_tools.dart';
 
 // A batched fight resolves both sides: the player's kills come off average
 // damage, but the enemy's swings are walked one at a time, because what ends
@@ -18,7 +19,7 @@ void main() {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     return factory.create(
-      save: factory.newGame(catalogs),
+      save: withGatheringTools(factory.newGame(catalogs)),
       catalogs: catalogs,
       vsync: const TestVSync(),
     );
@@ -339,9 +340,10 @@ void main() {
   group('a fight carries across the batches that settle it', () {
     test('a batch that cannot finish one leaves its damage on it', () {
       final session = buildSession();
-      final node = nodeWith(session, EntityId.IRON);
+      final node = nodeWith(session, EntityId.GOLD_VEIN);
 
-      // a minute against an iron vein at level 1: nowhere near a kill
+      // a minute against a gold vein at level 1, even with a stone pickaxe
+      // in hand: nowhere near a kill
       final first = settleFight(
         session,
         count: 20,

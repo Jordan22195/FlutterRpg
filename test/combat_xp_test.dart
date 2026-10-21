@@ -6,6 +6,7 @@ import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/systems/encounter_system.dart';
+import 'support/gathering_tools.dart';
 
 // A fight pays the stance that fought it. Defence used to train only from
 // blocked hits, which meant it barely trained at all; now every point of
@@ -17,7 +18,7 @@ void main() {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     return factory.create(
-      save: factory.newGame(catalogs),
+      save: withGatheringTools(factory.newGame(catalogs)),
       catalogs: catalogs,
       vsync: const TestVSync(),
     );

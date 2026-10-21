@@ -7,6 +7,7 @@ import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'support/gathering_tools.dart';
 
 // What a level gates: a zone's discoveries open up across the Exploration
 // levels between it and the next zone, a fishing spot waits on a Fishing
@@ -125,6 +126,28 @@ void main() {
       }
     });
 
+    test('a fish cooks at the Fishing level that catches it', () {
+      final cooking = GameSessionFactory()
+          .catalog1()
+          .recipeCatalog
+          .recipesForSkill(SkillId.COOKING);
+      var checked = 0;
+      for (final id in spots.keys) {
+        for (final fish in def(id).itemDrops) {
+          final recipes = cooking.where((r) => r.inputs.containsKey(fish.id));
+          for (final recipe in recipes) {
+            expect(
+              recipe.levelRequirement,
+              fish.unlockLevel,
+              reason: '${recipe.id} cooks ${fish.id.name}',
+            );
+            checked++;
+          }
+        }
+      }
+      expect(checked, greaterThanOrEqualTo(10));
+    });
+
     test('every fish has one home', () {
       final homes = <ItemId, EntityId>{};
       for (final id in spots.keys) {
@@ -153,7 +176,7 @@ void main() {
       final factory = GameSessionFactory();
       final catalogs = factory.catalog1();
       return factory.create(
-        save: factory.newGame(catalogs),
+        save: withGatheringTools(factory.newGame(catalogs)),
         catalogs: catalogs,
         vsync: const TestVSync(),
       );
@@ -200,7 +223,8 @@ void main() {
 
     test('below a spot\'s level, casting there catches nothing', () {
       final session = buildSession();
-      setLevel(session, SkillId.FISHING, 19);
+      // well under the river's 20: the rod in hand adds Fishing of its own
+      setLevel(session, SkillId.FISHING, 12);
       fishAt(session, EntityId.RIVER);
 
       expect(
@@ -240,7 +264,8 @@ void main() {
 
     test('the zone card and the screen read the same gate', () {
       final session = buildSession();
-      setLevel(session, SkillId.FISHING, 9);
+      // the rod in hand adds Fishing of its own, so stay well under 10
+      setLevel(session, SkillId.FISHING, 5);
 
       expect(session.worldController.requiredLevelFor(EntityId.CREEK), 10);
       expect(

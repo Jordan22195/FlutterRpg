@@ -142,10 +142,10 @@ class ShopService {
 
     _inventoryService.removeItems(inventoryState, ItemId.COINS, price);
 
+    // a bought-out slot stays on the shelf at zero, so the shop can show
+    // it as sold out until the restock rebuilds the shelf; the check above
+    // already refuses to sell from it
     entry.count -= 1;
-    if (entry.count <= 0) {
-      shop.stock.remove(entry);
-    }
 
     // equipment is a unique instance; everything else is a stackable count
     final item = entry.itemId.build();

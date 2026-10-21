@@ -18,6 +18,7 @@ import 'package:rpg/services/skill_service.dart';
 import 'package:rpg/systems/offline_progress_system.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/systems/potion_system.dart';
+import 'support/gathering_tools.dart';
 
 // What the player is told when they come back: an offline settle buffers
 // everything its actions produce into one report, and the shell shows it.
@@ -46,7 +47,7 @@ void main() {
   GameSession newSession() {
     final catalogs = factory.catalog1();
     return factory.create(
-      save: factory.newGame(catalogs),
+      save: withGatheringTools(factory.newGame(catalogs)),
       catalogs: catalogs,
       vsync: const TestVSync(),
     );
@@ -233,7 +234,8 @@ void main() {
       );
     });
 
-    PlayerData newPlayer() => factory.newGame(factory.catalog1()).playerData;
+    PlayerData newPlayer() =>
+        withGatheringTools(factory.newGame(factory.catalog1())).playerData;
 
     // a stand-in action that reports what it did, the way a real one does:
     // the report is built out of results, so an action that says nothing

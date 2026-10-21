@@ -18,6 +18,7 @@ import '../widgets/crafting_info_panel.dart';
 import '../widgets/list_row.dart';
 import '../widgets/sprite_frame.dart';
 import '../widgets/stage_panel.dart';
+import '../widgets/travel_row.dart';
 import '../widgets/picker_list.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/recipe_card.dart';
@@ -223,8 +224,9 @@ class _FirepitScreenState extends State<FirepitScreen>
 
           Expanded(
             child: ListView(
-              // room at the bottom for the dock's fade to fall on
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              // no room under the tabs: a screen whose content fits springs
+              // back to rest when dragged, instead of settling scrolled
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               children: [
                 // the fire itself, with its burn time where an entity count
                 // would normally sit
@@ -296,12 +298,17 @@ class _FirepitScreenState extends State<FirepitScreen>
 
                 // the pit's action timer, in the row of its own the other
                 // station screens give it
-                ActionTimerRow(
-                  label: 'Tending',
-                  color: colors.firemaking,
-                  progress: controller.craftProgress,
-                  interval: controller.craftInterval,
-                ),
+                // a pit a zone away is walked to first: its row is the road
+                // there until the player arrives
+                if (context.watch<WorldController>().isViewingCurrentZone)
+                  ActionTimerRow(
+                    label: 'Tending',
+                    color: colors.firemaking,
+                    progress: controller.craftProgress,
+                    interval: controller.craftInterval,
+                  )
+                else
+                  const TravelRow(),
                 const SizedBox(height: 12),
 
                 // the skills the pit trains stay in view whichever recipe is
@@ -392,7 +399,6 @@ class _FireHero extends StatelessWidget {
     return StagePanel(
       tint: tint,
       height: 148,
-      shadow: false,
       sprite: SpriteFrame.sprite(f?.id ?? EntityId.FIREPIT, size: 116),
       corner: f == null
           ? null

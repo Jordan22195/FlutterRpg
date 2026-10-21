@@ -39,6 +39,11 @@ class GameColors extends ThemeExtension<GameColors> {
     required this.attack,
     required this.stop,
     required this.gathering,
+    required this.levelHard,
+    required this.levelEven,
+    required this.levelEasy,
+    required this.upgrade,
+    required this.heal,
     required this.secondaryBar,
     required this.timerFill,
     required this.travel,
@@ -67,6 +72,18 @@ class GameColors extends ThemeExtension<GameColors> {
   /// The square on the Stop button.
   final Color stop;
   final Color gathering;
+
+  /// A level read against the player's own: well above it ([levelHard]),
+  /// about even ([levelEven]), or well below it ([levelEasy]).
+  final Color levelHard;
+  final Color levelEven;
+  final Color levelEasy;
+
+  /// The dot on a gear slot that something in the bag would improve.
+  final Color upgrade;
+
+  /// How much a food heals, on its tile.
+  final Color heal;
   final Color secondaryBar;
 
   /// The thin attack-timer fill in combat.
@@ -107,6 +124,11 @@ class GameColors extends ThemeExtension<GameColors> {
     attack: Color(0xFFE8806B),
     stop: Color(0xFFE8806B),
     gathering: Color(0xFF7FC08A),
+    levelHard: Color(0xFFEF6B5E),
+    levelEven: Color(0xFFE9C23A),
+    levelEasy: Color(0xFF6CC86F),
+    upgrade: Color(0xFF6CC86F),
+    heal: Color(0xFF7EE0A6),
     secondaryBar: Color(0xFFCDBF9F),
     timerFill: Color(0xFF8F836E),
     travel: travelColor,
@@ -134,6 +156,11 @@ class GameColors extends ThemeExtension<GameColors> {
     Color? attack,
     Color? stop,
     Color? gathering,
+    Color? levelHard,
+    Color? levelEven,
+    Color? levelEasy,
+    Color? upgrade,
+    Color? heal,
     Color? secondaryBar,
     Color? timerFill,
     Color? travel,
@@ -156,6 +183,11 @@ class GameColors extends ThemeExtension<GameColors> {
       attack: attack ?? this.attack,
       stop: stop ?? this.stop,
       gathering: gathering ?? this.gathering,
+      levelHard: levelHard ?? this.levelHard,
+      levelEven: levelEven ?? this.levelEven,
+      levelEasy: levelEasy ?? this.levelEasy,
+      upgrade: upgrade ?? this.upgrade,
+      heal: heal ?? this.heal,
       secondaryBar: secondaryBar ?? this.secondaryBar,
       timerFill: timerFill ?? this.timerFill,
       travel: travel ?? this.travel,
@@ -184,6 +216,11 @@ class GameColors extends ThemeExtension<GameColors> {
       attack: l(attack, other.attack),
       stop: l(stop, other.stop),
       gathering: l(gathering, other.gathering),
+      levelHard: l(levelHard, other.levelHard),
+      levelEven: l(levelEven, other.levelEven),
+      levelEasy: l(levelEasy, other.levelEasy),
+      upgrade: l(upgrade, other.upgrade),
+      heal: l(heal, other.heal),
       secondaryBar: l(secondaryBar, other.secondaryBar),
       timerFill: l(timerFill, other.timerFill),
       travel: l(travel, other.travel),

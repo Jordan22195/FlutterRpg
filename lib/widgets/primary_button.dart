@@ -43,6 +43,11 @@ class MomentumPrimaryButton extends StatefulWidget {
   /// Whether this screen's own action is the one running. Sampled on every
   /// tick of the action loop; while it holds, the face shows fast-forward
   /// rather than [idleIcon], so a running action reads as running.
+  ///
+  /// It also owns the boost's tells: the lock, the latched-down face and
+  /// fast-forward all belong to the running action, so a screen looking at
+  /// anything else rests on [idleIcon] whatever the loop is doing. Null
+  /// means the button is always its screen's action, e.g. the queue's.
   final bool Function()? isActive;
 
   /// Draw [label] on the face between the icon and the lock. A station's
@@ -97,7 +102,12 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
   /// held rather than merely pressed.
   bool get _pressed => widget.enabled && (_fingerDown || _latched);
 
-  /// Mirror of the controller's speed lock, refreshed in build. It only feeds
+  /// Whether the running action is this button's own; see
+  /// [MomentumPrimaryButton.isActive].
+  bool get _ownsAction => widget.isActive?.call() ?? true;
+
+  /// Mirror of the controller's speed lock while this button's action is the
+  /// running one, refreshed in build. It only feeds
   /// the resting depth of the face, and the controller rebuilds us whenever it
   /// changes, so it needs no setState of its own.
   bool _latched = false;
@@ -184,7 +194,6 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
   Widget build(BuildContext context) {
     final controller = context.watch<ActionTimingController>();
     final locked = controller.getActionSpeedLockState();
-    _latched = locked;
 
     // the accent is the zone's, and this is the only place it is used. a
     // disabled button is a plain surface with no lip, so it reads as not
@@ -214,6 +223,11 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
         // the face tracks the finger itself, ahead of any recognizer
         // claiming the gesture, so the button is down the moment it is
         // touched and back up the moment it is let go
+        // the lock and the boost belong to whichever action is running, so
+        // they only show on its own screen; anywhere else the face rests
+        final owns = _ownsAction;
+        final showsLock = locked && owns;
+        _latched = showsLock;
         return Listener(
           // press and release drive the whole interaction, straight off the
           // raw pointer: pressing down starts the action and begins the
@@ -257,7 +271,7 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
             child: Semantics(
               button: true,
               enabled: widget.enabled,
-              label: locked ? '${widget.label}, locked' : widget.label,
+              label: showsLock ? '${widget.label}, locked' : widget.label,
               excludeSemantics: true,
               child: RaisedSurface(
                 pressed: _pressed,
@@ -275,13 +289,15 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // fast forward while the hold boosts the speed, and while
-                    // this screen's action is running at all: the button no
-                    // longer stops anything, so it never shows a pause.
+                    // fast forward while this screen's action is running:
+                    // the button no longer stops anything, so it never shows
+                    // a pause. a hold or lock boosting some other screen's
+                    // action leaves this one at rest.
                     Icon(
-                      controller.isButtonHeld ||
-                              locked ||
-                              (widget.isActive?.call() ?? false)
+                      owns &&
+                              (controller.isButtonHeld ||
+                                  locked ||
+                                  widget.isActive != null)
                           ? Icons.fast_forward
                           : (widget.idleIcon ?? Icons.play_arrow),
                       size: _iconSize,
@@ -301,7 +317,7 @@ class _MomentumPrimaryButtonState extends State<MomentumPrimaryButton> {
                         ),
                       ),
                     ],
-                    if (locked) ...[
+                    if (showsLock) ...[
                       const SizedBox(width: 8),
                       Icon(Icons.lock, size: 18, color: content),
                     ],
@@ -379,6 +395,7 @@ class ActionOrTravelButton extends StatelessWidget {
       label: 'Travel',
       color: context.gameColors.travel,
       idleIcon: Icons.directions_walk,
+      isActive: () => world.travelTarget == target,
       startActionFunction: () => world.startTravelTo(target),
     );
   }

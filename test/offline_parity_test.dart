@@ -8,6 +8,7 @@ import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'support/gathering_tools.dart';
 
 /// An offline batch is a shortcut, not a different game: it stands in for the
 /// actions the loop would have run one at a time, so it has to pay what they
@@ -31,7 +32,7 @@ void main() {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     return factory.create(
-      save: factory.newGame(catalogs),
+      save: withGatheringTools(factory.newGame(catalogs)),
       catalogs: catalogs,
       vsync: const TestVSync(),
     );

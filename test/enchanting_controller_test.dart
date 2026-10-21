@@ -201,8 +201,10 @@ void main() {
       final session = buildSession();
       final controller = session.enchantingController;
 
-      expect(controller.startEnchantingActionFor('minor_enchant', 'nope'),
-          isFalse);
+      expect(
+        controller.startEnchantingActionFor('minor_enchant', 'nope'),
+        isFalse,
+      );
       expect(session.actionTimingController.isRunning, isFalse);
 
       session.dispose();
@@ -328,7 +330,8 @@ void main() {
       expect(
         target.stackKey,
         isNot(startKey),
-        reason: 'the enchant did not move the piece onto a new stack, so '
+        reason:
+            'the enchant did not move the piece onto a new stack, so '
             'there is nothing here for the guard to catch',
       );
       // material is left, so nothing else would have stopped the bench
@@ -344,7 +347,11 @@ void main() {
       );
       expect(controller.sessionEquipment(), hasLength(1));
       expect(
-        controller.sessionEquipment().single.effectiveSkillBonus.values
+        controller
+            .sessionEquipment()
+            .single
+            .effectiveSkillBonus
+            .values
             .fold<int>(0, (a, b) => a + b),
         bonus,
         reason: 'an enchant was applied on top of an enchant',

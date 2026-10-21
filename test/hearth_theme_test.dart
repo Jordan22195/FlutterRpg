@@ -33,6 +33,9 @@ void main() {
           'textSubtitle on bg': (p.textSubtitle, p.bg),
           'textNavInactive on bg': (p.textNavInactive, p.bg),
           'xp on surface': (GameColors.standard.xp, p.surface),
+          'hard level on surface': (GameColors.standard.levelHard, p.surface),
+          'even level on surface': (GameColors.standard.levelEven, p.surface),
+          'easy level on surface': (GameColors.standard.levelEasy, p.surface),
         };
         for (final MapEntry(key: name, value: (fg, bg)) in pairs.entries) {
           expect(

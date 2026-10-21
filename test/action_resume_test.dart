@@ -8,6 +8,7 @@ import 'package:rpg/data/bound_action.dart';
 import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'support/gathering_tools.dart';
 
 // The action loop fires a closure, which no save can hold. These cover the
 // way round that: the loop records what was bound, and a relaunch re-runs the
@@ -25,7 +26,8 @@ void main() {
     );
   }
 
-  GameSession newSession() => sessionFrom(factory.newGame(factory.catalog1()));
+  GameSession newSession() =>
+      sessionFrom(withGatheringTools(factory.newGame(factory.catalog1())));
 
   // what the app does across a restart: write the save out, read it back,
   // and build a session on the result

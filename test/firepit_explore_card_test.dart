@@ -17,6 +17,7 @@ import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/explore_screen.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/countdown_timer.dart';
+import 'package:rpg/widgets/icon_renderer.dart';
 
 // The explore list is the only place that tells you a fire can be cooked at,
 // so the firepit card has to change with what is burning in it.
@@ -98,11 +99,22 @@ void main() {
     return session;
   }
 
+  /// The skill sprites on the firepit's tile, in order.
+  List<SkillId?> skillSprites(WidgetTester tester) => tester
+      .widgetList<IconRenderer<SkillId>>(
+        find.descendant(
+          of: find.byKey(const ValueKey(EntityId.FIREPIT)),
+          matching: find.byWidgetPredicate((w) => w is IconRenderer<SkillId>),
+        ),
+      )
+      .map((w) => w.id)
+      .toList();
+
   testWidgets('a cold firepit advertises firemaking only', (tester) async {
     final session = await pumpExplore(tester);
 
     expect(find.text('Firepit'), findsOneWidget);
-    expect(find.text('Firemaking'), findsOneWidget);
+    expect(skillSprites(tester), [SkillId.FIREMAKING]);
     expect(find.byType(CountdownTimer), findsNothing);
 
     session.dispose();
@@ -111,10 +123,10 @@ void main() {
   testWidgets('a lit cookfire advertises cooking too', (tester) async {
     final session = await pumpExplore(tester, lightRecipeId: 'cookfire');
 
-    // the card becomes the fire, and says both skills it now trains
+    // the card becomes the fire, and shows both skills it now trains
     expect(find.text('Cookfire'), findsOneWidget);
     expect(find.text('Firepit'), findsNothing);
-    expect(find.text('Firemaking · Cooking'), findsOneWidget);
+    expect(skillSprites(tester), [SkillId.FIREMAKING, SkillId.COOKING]);
     expect(find.byType(CountdownTimer), findsOneWidget);
 
     session.dispose();
@@ -124,8 +136,7 @@ void main() {
     final session = await pumpExplore(tester, lightRecipeId: 'basic_campfire');
 
     expect(find.text('Campfire'), findsOneWidget);
-    expect(find.text('Firemaking'), findsOneWidget);
-    expect(find.text('Firemaking · Cooking'), findsNothing);
+    expect(skillSprites(tester), [SkillId.FIREMAKING]);
     expect(find.byType(CountdownTimer), findsOneWidget);
 
     session.dispose();

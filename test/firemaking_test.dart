@@ -340,11 +340,11 @@ void main() {
     // so a higher-tier fire is simply a higher effective cooking level
     final base = craftingService.calculateBurnChance(
       level: 1 + cookfire.skillBonus[SkillId.COOKING]!,
-      difficultyScale: 1,
+      requiredLevel: 1,
     );
     final oak = craftingService.calculateBurnChance(
       level: 1 + oakCookfire.skillBonus[SkillId.COOKING]!,
-      difficultyScale: 1,
+      requiredLevel: 1,
     );
 
     expect(oak, lessThan(base));

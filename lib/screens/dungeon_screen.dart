@@ -3,23 +3,27 @@ import 'package:provider/provider.dart';
 
 import '../catalogs/dungeons/dungeons.dart';
 import '../catalogs/entities/entities.dart';
+import '../controllers/action_timing_controller.dart';
 import '../controllers/dungeon_controller.dart';
 import '../services/entity_screen_router_service.dart';
+import '../widgets/discovery_tile.dart';
 import '../widgets/entity_info_dialog.dart';
 import '../widgets/entity_queue_card.dart';
 import '../widgets/item_stack_tile.dart';
 import 'encounter_screen.dart';
 
 /// A dungeon: one ordered list of floors, first at the top. Each floor is a
-/// queue of entities; tapping an unlocked one opens the ordinary encounter
-/// screen against its queue, and keeps fighting that floor on a loop until
-/// something else takes the action.
+/// queue of entities; tapping an unlocked one enters it — the ordinary
+/// encounter screen against its queue, not yet fighting. Its action button
+/// starts the floor, which then loops until something else takes the
+/// action.
 ///
 /// There is no lobby, no enter button and no leaving. Opening the list costs
 /// nothing and backing out costs nothing — the floor you started keeps
 /// swinging while you read the zone or the map. A floor cleared once is
-/// unlocked forever; what a floor holds, and what those entities drop, is
-/// read by tapping their tiles.
+/// unlocked forever; what an open floor holds, and what those entities
+/// drop, is read by tapping their tiles. A sealed floor keeps its tiles
+/// blurred and shut until it opens.
 class DungeonScreen extends StatelessWidget {
   const DungeonScreen({super.key, required this.dungeonId});
 
@@ -33,6 +37,18 @@ class DungeonScreen extends StatelessWidget {
     }
     final def = dungeonId.definition;
     final slots = controller.slotsFor(dungeonId);
+    // the floor the loop is firing into, while it fires — a paused loop
+    // works nothing. read off the timing's run state alone, so the list
+    // rebuilds as a floor starts or stops rather than every frame
+    final looping = context.select<ActionTimingController, bool>(
+      (timing) => timing.isRunning,
+    );
+    final activeFloor =
+        looping &&
+            controller.hasActiveRun &&
+            controller.activeDungeonId == dungeonId
+        ? controller.runningSlot
+        : -1;
 
     return SafeArea(
       child: Padding(
@@ -48,6 +64,7 @@ class DungeonScreen extends StatelessWidget {
                   for (int i = 0; i < slots.length; i++)
                     EntityQueueCard(
                       title: slots[i].name,
+                      active: i == activeFloor,
                       entities: slots[i].members,
                       cleared: controller.isCleared(dungeonId, i),
                       lockReason: controller.lockReason(dungeonId, i),
@@ -56,8 +73,12 @@ class DungeonScreen extends StatelessWidget {
                       onTap: controller.startable(dungeonId, i)
                           ? () => _openSlot(context, controller, i)
                           : null,
-                      onEntityTap: (entity) =>
-                          _showEntityDetails(context, entity),
+                      // tapping a tile reads what it is and what it drops;
+                      // a sealed floor's tiles are hidden and take no taps
+                      entityTileBuilder: (entity) => DiscoveryTile(
+                        entity: entity,
+                        onTap: () => _showEntityDetails(context, entity),
+                      ),
                     ),
                 ],
               ),
@@ -192,8 +213,11 @@ class DungeonScreen extends StatelessWidget {
       if (confirmed != true) return;
     }
 
-    if (!controller.startSlot(dungeonId, i)) return;
-    navigator.push(
+    // entering opens the floor without starting it: the fight begins on
+    // the encounter screen's action button, as any other encounter does
+    final token = controller.enterSlot(dungeonId, i);
+    if (token == null) return;
+    await navigator.push(
       MaterialPageRoute(
         settings: RouteSettings(
           name: EntityScreenRouterService.encounterRouteName,
@@ -202,6 +226,7 @@ class DungeonScreen extends StatelessWidget {
         builder: (_) => const EncounterScreen(),
       ),
     );
+    controller.leaveSlot(token);
   }
 
   void _showEntityDetails(BuildContext context, EncounterEntity entity) {

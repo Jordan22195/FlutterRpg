@@ -269,7 +269,8 @@ void main() {
     expect(
       drain,
       lessThan(recovery),
-      reason: 'pick a gentler boost: this one out-drains recovery anyway, '
+      reason:
+          'pick a gentler boost: this one out-drains recovery anyway, '
           'which is not the case under test',
     );
 

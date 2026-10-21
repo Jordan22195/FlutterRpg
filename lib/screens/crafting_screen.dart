@@ -18,6 +18,7 @@ import '../widgets/explore_card.dart';
 import '../widgets/icon_renderer.dart';
 import '../widgets/sprite_frame.dart';
 import '../widgets/stage_panel.dart';
+import '../widgets/travel_row.dart';
 
 class CraftingScreen extends StatefulWidget {
   const CraftingScreen({super.key});
@@ -118,14 +119,14 @@ class _CraftingScreenState extends State<CraftingScreen>
 
           Expanded(
             child: ListView(
-              // room at the bottom for the dock's fade to fall on
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              // no room under the tabs: a screen whose content fits springs
+              // back to rest when dragged, instead of settling scrolled
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               children: [
                 // the station itself, on a crafting-tinted stage
                 StagePanel(
                   tint: context.gameColors.craftingTint,
                   height: 148,
-                  shadow: false,
                   sprite: SpriteFrame.sprite(station, size: 116),
                 ),
                 const SizedBox(height: 12),
@@ -141,12 +142,17 @@ class _CraftingScreenState extends State<CraftingScreen>
                 // the station has no target and no health, so the action
                 // timer is a row of its own above the rings — the same slot
                 // the explore screen gives it
-                ActionTimerRow(
-                  label: 'Crafting',
-                  color: skillRingColor(skillId),
-                  progress: controller.craftProgress,
-                  interval: controller.craftInterval,
-                ),
+                // a station a zone away is walked to first: its row is the
+                // road there until the player arrives
+                if (context.watch<WorldController>().isViewingCurrentZone)
+                  ActionTimerRow(
+                    label: 'Crafting',
+                    color: skillRingColor(skillId),
+                    progress: controller.craftProgress,
+                    interval: controller.craftInterval,
+                  )
+                else
+                  const TravelRow(),
                 const SizedBox(height: 12),
 
                 // the skills this station trains stay in view whichever tab

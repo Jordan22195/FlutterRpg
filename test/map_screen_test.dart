@@ -20,6 +20,7 @@ import 'package:rpg/widgets/map_edge_painter.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/map_node_token.dart';
 import 'package:rpg/widgets/recipe_card.dart';
+import 'support/gathering_tools.dart';
 
 // Fixed pumps (the app has periodic timers that never settle).
 Future<void> settle(WidgetTester tester) async {
@@ -53,7 +54,10 @@ ActionTimeChip chipBeside(WidgetTester tester, Key barKey) {
   return tester.widget<ActionTimeChip>(
     find.descendant(
       of: find
-          .ancestor(of: find.byKey(barKey), matching: find.byType(Row))
+          .ancestor(
+            of: find.byKey(barKey),
+            matching: find.byType(ActionTimerRow),
+          )
           .first,
       matching: find.byType(ActionTimeChip),
     ),
@@ -565,19 +569,27 @@ void main() {
       expect(button.color, kTravelColor);
       expect(button.idleIcon, Icons.directions_walk);
 
-      // the banner has grown the road, before a step has been taken, and it
-      // is the travel button's own colour
-      var road = tester.widget<FillBar>(find.byKey(ProgressBars.travelBarKey));
+      // the road has taken the explore row's slot, before a step has been
+      // taken, and it is the travel button's own colour
+      var road = tester.widget<FillBar>(find.byKey(kTravelBarKey));
       expect(road.foregroundColor, kTravelColor);
       expect(road.value, 0.0);
-      // the screen's own timer is left alone — the road did not take its slot
-      expect(find.text('Exploring'), findsOneWidget);
+      expect(find.text('Exploring'), findsNothing);
+      expect(find.text('Travel'), findsOneWidget);
+      // and the status row carries no road of its own
+      expect(
+        find.descendant(
+          of: find.byType(ProgressBars),
+          matching: find.byKey(kTravelBarKey),
+        ),
+        findsNothing,
+      );
 
-      // with the whole trip still ahead, the chip reads the whole trip:
-      // 7.5s of road, cut by the speed stat
-      var left = chipBeside(tester, ProgressBars.travelBarKey).duration;
-      expect(left, lessThan(const Duration(milliseconds: 7500)));
-      expect(left, greaterThan(const Duration(seconds: 5)));
+      // the chip reads the whole trip, as the explore chip reads a whole
+      // explore: 7.5s of road, cut by the speed stat
+      final trip = chipBeside(tester, kTravelBarKey).duration;
+      expect(trip, lessThan(const Duration(milliseconds: 7500)));
+      expect(trip, greaterThan(const Duration(seconds: 5)));
 
       // pressing it pays the fare and puts the road on the clock
       await tester.press(find.byType(MomentumPrimaryButton));
@@ -586,12 +598,18 @@ void main() {
       expect(player.stamina, lessThan(200));
       expect(session.worldController.isTravelling, isTrue);
       expect(session.worldController.travelTarget, ZoneId.SOUTH_HAVEN);
-      road = tester.widget<FillBar>(find.byKey(ProgressBars.travelBarKey));
+      road = tester.widget<FillBar>(find.byKey(kTravelBarKey));
       expect(road.value, greaterThan(0.0));
-      // and the chip counts down as the bar fills
+      expect(find.text('Travelling'), findsOneWidget);
+      // under way, the chip still reads the whole trip, not what is left of
+      // it: the bar is what fills
       expect(
-        chipBeside(tester, ProgressBars.travelBarKey).duration,
-        lessThan(left),
+        chipBeside(tester, kTravelBarKey).duration,
+        session.worldController.travelInterval(),
+      );
+      expect(
+        chipBeside(tester, kTravelBarKey).duration,
+        greaterThan(const Duration(seconds: 5)),
       );
 
       session.worldController.cancelTravel();
@@ -603,6 +621,8 @@ void main() {
     ) async {
       await pumpMap(tester);
       final session = sessionOf(tester);
+      // the tree wants an axe once the walk is done
+      equipGatheringTools(session.saveGameData);
       final player = session.saveGameData.playerData;
       player.skillData[SkillId.STAMINA]!.xp =
           player.skillData[SkillId.STAMINA]!.xpTable[20];
@@ -645,8 +665,8 @@ void main() {
       expect(session.worldController.currentZoneId, ZoneId.SOUTH_HAVEN);
       expect(session.actionTimingController.isRunning, isFalse);
       expect(session.worldController.isTravelling, isFalse);
-      // and the road is off the banner, because there is no road left
-      expect(find.byKey(ProgressBars.travelBarKey), findsNothing);
+      // and the road is gone, because there is no road left
+      expect(find.byKey(kTravelBarKey), findsNothing);
 
       await gesture.up();
       await settle(tester);
@@ -670,7 +690,9 @@ void main() {
       await settle(tester);
     });
 
-    testWidgets('no road to show, no road in the banner', (tester) async {
+    testWidgets('no road to show, the row is the explore timer', (
+      tester,
+    ) async {
       await pumpMap(tester);
 
       // standing in the place you are reading: nothing to walk
@@ -678,11 +700,11 @@ void main() {
       await tester.tap(find.text('Enter'));
       await settle(tester);
 
-      expect(find.byKey(ProgressBars.travelBarKey), findsNothing);
+      expect(find.byKey(kTravelBarKey), findsNothing);
       expect(find.text('Exploring'), findsOneWidget);
     });
 
-    testWidgets('the banner does not resize when the road appears', (
+    testWidgets('the road takes the explore row\'s place, not a new one', (
       tester,
     ) async {
       await pumpMap(tester);
@@ -691,16 +713,25 @@ void main() {
           player.skillData[SkillId.EXPLORATION]!.xpTable[10];
       await settle(tester);
 
-      // the banner is sized by the activity tile beside the bars, so a third
-      // bar fits under the other two without pushing the toolbar down
-      final before = tester.getSize(find.byType(ProgressBars));
+      // standing in the zone on screen: the explore row
+      await select(tester, 'TUTORIAL_FARM');
+      await tester.tap(find.text('Enter'));
+      await settle(tester);
+      final exploreRow = tester.getRect(find.byType(ActionTimerRow));
+      final banner = tester.getSize(find.byType(ProgressBars));
+      await tester.tap(find.byTooltip('Back'));
+      await settle(tester);
 
+      // a zone away: the road, in exactly the same place
       await select(tester, 'SOUTH_HAVEN');
       await tester.tap(find.text('Enter'));
       await settle(tester);
 
-      expect(find.byKey(ProgressBars.travelBarKey), findsOneWidget);
-      expect(tester.getSize(find.byType(ProgressBars)), before);
+      expect(find.byType(ActionTimerRow), findsOneWidget);
+      expect(find.byKey(kTravelBarKey), findsOneWidget);
+      expect(tester.getRect(find.byType(ActionTimerRow)), exploreRow);
+      // and the status row is the size it always was
+      expect(tester.getSize(find.byType(ProgressBars)), banner);
     });
 
     testWidgets('the way into a locked place is shut', (tester) async {

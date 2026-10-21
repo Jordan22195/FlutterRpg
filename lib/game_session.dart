@@ -688,6 +688,10 @@ class GameSessionFactory {
       encounterController.releaseDungeonFloor();
     };
 
+    // a floor that laps or resets is rebuilt under the dungeon list, which
+    // only redraws when its own controller says so
+    encounterController.onDungeonFloorChanged = dungeonController.refresh;
+
     return GameSession(
       saveGameData: save,
       offlineProgressData: offlineProgressData,

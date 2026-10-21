@@ -6,11 +6,13 @@ import '../data/skill_data.dart';
 import '../theme/game_colors.dart';
 import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
+import 'item_stack_tile.dart';
 import 'progress_bars.dart';
 import 'sprite_frame.dart';
 
 /// One side of a recipe: a tinted frame with the item in it and a count
-/// pill over its bottom-right corner.
+/// pill over its bottom-right corner. Tapping it opens the item's details;
+/// the card around it keeps the rest of its area for picking the recipe.
 class RecipeTile extends StatelessWidget {
   const RecipeTile({
     super.key,
@@ -41,6 +43,21 @@ class RecipeTile extends StatelessWidget {
     final tint = SpriteFrame.tintFor(context, kind);
     final border = borderColor ?? tint.border;
 
+    return Semantics(
+      button: true,
+      label: '${id.definition.name}, $count, details',
+      excludeSemantics: true,
+      child: GestureDetector(
+        // opaque: the whole frame is the tile's own target, so a tap on it
+        // reads the item rather than falling through to pick the recipe
+        behavior: HitTestBehavior.opaque,
+        onTap: () => showItemInfoDialog(context, id),
+        child: _frame(tint.fill, border),
+      ),
+    );
+  }
+
+  Widget _frame(Color fill, Color border) {
     return SizedBox(
       width: size + 6,
       height: size + 6,
@@ -51,7 +68,7 @@ class RecipeTile extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: tint.fill,
+              color: fill,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: border,
@@ -69,6 +86,13 @@ class RecipeTile extends StatelessWidget {
               right: 0,
               bottom: 0,
               child: CountPill(count: count, borderColor: border),
+            ),
+          // a food says how much it heals, top-left, as on every item tile
+          if (HealBadge.amountFor(id) case final heal?)
+            Positioned(
+              left: 3,
+              top: 3,
+              child: HealBadge(amount: heal, tileSize: size),
             ),
         ],
       ),
@@ -163,6 +187,10 @@ class RecipeCard extends StatelessWidget {
       ? SpriteKind.fire
       : SpriteKind.crafting;
 
+  /// "25" for a whole amount, "7.5" for a fractional one.
+  static String _formatXp(double xp) =>
+      xp == xp.roundToDouble() ? '${xp.round()}' : xp.toStringAsFixed(1);
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
@@ -193,18 +221,19 @@ class RecipeCard extends StatelessWidget {
     }
 
     final inputs = recipe.inputs.entries.toList();
-    final locked =
-        lockWhenUnderLevel && !crafting.meetsRecipeLevelRequirement(recipeId);
-    // a locked recipe is already unavailable on its own terms; flagging the
-    // materials too would just be noise on top of that
+    final underLevel = !crafting.meetsRecipeLevelRequirement(recipeId);
+    final locked = lockWhenUnderLevel && underLevel;
+    // a recipe above the player's level is unavailable on its own terms,
+    // locked or not; flagging the materials too would just be noise on top
+    // of that, so the red only marks a shortfall the player could go and fix
     final missingMaterials =
-        !locked && !crafting.hasMaterialsForRecipe(recipeId);
+        !underLevel && !crafting.hasMaterialsForRecipe(recipeId);
 
     // both kinds of unavailable grey the recipe out. the dim is applied per
     // element rather than over the whole card, so the short input keeps its
     // red border at full strength — that marker is the one thing the player
     // is meant to read off a greyed row
-    final dimmed = locked || missingMaterials;
+    final dimmed = underLevel || missingMaterials;
     Widget dim(Widget child) =>
         dimmed ? Opacity(opacity: 0.45, child: child) : child;
 
@@ -280,19 +309,12 @@ class RecipeCard extends StatelessWidget {
                 dim(RecipeOutputTile(recipeId: recipeId)),
                 const Spacer(),
 
-                // the level it asks for
+                // the level it asks for, and what one craft is worth
                 dim(
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        'Requires',
-                        style: HearthText.rowMeta.copyWith(
-                          fontSize: 12,
-                          color: palette.textMuted,
-                        ),
-                      ),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -307,6 +329,26 @@ class RecipeCard extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                      // what one craft is worth, in the xp gold every xp
+                      // number wears
+                      Text.rich(
+                        TextSpan(
+                          text: '+${_formatXp(recipe.xp)}',
+                          style: HearthText.xpValue.copyWith(
+                            fontSize: 13,
+                            color: context.gameColors.xp,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: ' xp',
+                              style: HearthText.xpSuffix.copyWith(
+                                fontSize: 11,
+                                color: context.gameColors.xp,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

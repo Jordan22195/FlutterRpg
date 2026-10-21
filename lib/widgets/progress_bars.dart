@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
-import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/data/skill_data.dart';
 import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
@@ -38,23 +37,19 @@ class ProgressBars extends StatelessWidget {
   /// Gap between the stacked bars.
   static const double _barGap = 5;
 
-  /// The banner carries character-level state only: stamina, how much of
-  /// the boost is built up, and — only while there is a trip to show — the
-  /// road. Per-action progress is encounter state and lives on the acting
-  /// entity's row instead — see [ActionTimer].
-  ///
-  /// A trip belongs here rather than on a screen for the same reason
-  /// stamina does: it outlives whatever screen you happen to be reading,
-  /// and no one screen owns it. It is the one bar here that comes and goes,
-  /// and it can, because the row's height is set by the activity button
-  /// beside these bars rather than by the bars themselves — all three still
-  /// measure short of it, so the row never moves.
+  /// The banner carries character-level state only: stamina and how much
+  /// of the boost is built up. Per-action progress is encounter state and
+  /// lives on the acting entity's row instead — see [ActionTimer] — and a
+  /// trip's road takes the zone screen's progress row while the zone on
+  /// screen is not where the player stands.
   static const double _staminaHeight = 8;
   static const double _thinBarHeight = 4;
+  static const double _hpBarHeight = 6;
 
-  /// Identifies the trip bar, which is the only one of the three that is not
-  /// always there.
-  static const Key travelBarKey = Key('travel-progress');
+  /// In a fight three rows share the 48pt instead of two, so stamina slims
+  /// down and the rows close up.
+  static const double _compactStaminaHeight = 4;
+  static const double _compactBarGap = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +58,6 @@ class ProgressBars extends StatelessWidget {
     final playerController = context.watch<PlayerDataController>();
     final timing = context.watch<ActionTimingController>();
     final encounter = context.watch<EncounterController>();
-    final world = context.watch<WorldController>();
 
     // flash damage on the button unless the active encounter's own screen
     // is in view (it shows the numbers over the entity image instead)
@@ -73,6 +67,11 @@ class ProgressBars extends StatelessWidget {
 
     // the bars sit on a see-through track, so the art behind the row shows
     final barTrack = palette.borderStrong.withValues(alpha: 0.6);
+
+    final inCombat = encounter.isInCombat();
+    final hp = encounter.getPlayerHp();
+    final maxHp = playerController.getStatTotal(SkillId.HITPOINTS);
+    final staminaHeight = inCombat ? _compactStaminaHeight : _staminaHeight;
 
     return SizedBox(
       height: height,
@@ -130,80 +129,104 @@ class ProgressBars extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Stamina
+                // Hitpoints, on top while a fight is running: the one number
+                // a fight can end on, so it rides above everything else.
+                // Out of combat it isn't moving, and the row stays as it was
+                if (inCombat) ...[
+                  _BarRow(
+                    key: const ValueKey('status-hp'),
+                    bar: FillBar(
+                      value: maxHp <= 0 ? 0 : hp / maxHp,
+                      height: _hpBarHeight,
+                      borderRadius: _hpBarHeight / 2,
+                      backgroundColor: barTrack,
+                      foregroundColor: colors.hp,
+                    ),
+                    label: StatValueLabel(
+                      value: hp.toDouble(),
+                      max: maxHp.toDouble(),
+                      skill: SkillId.HITPOINTS,
+                      compact: true,
+                    ),
+                  ),
+                  const SizedBox(height: _compactBarGap),
+                ],
+
+                // Stamina — slimmer while the hp row needs the room
                 AnimatedBuilder(
                   animation: timing,
-                  builder: (_, _) => FillBar(
-                    value: playerController.getStaminaPercent(),
-                    height: _staminaHeight,
-                    borderRadius: _staminaHeight / 2,
-                    backgroundColor: barTrack,
-                    foregroundColor: colors.stamina,
+                  builder: (_, _) => _BarRow(
+                    key: const ValueKey('status-stamina'),
+                    bar: FillBar(
+                      value: playerController.getStaminaPercent(),
+                      height: staminaHeight,
+                      borderRadius: staminaHeight / 2,
+                      backgroundColor: barTrack,
+                      foregroundColor: colors.stamina,
+                    ),
+                    label: StatValueLabel(
+                      value: playerController.getStamina(),
+                      max: playerController.getMaxStamina(),
+                      compact: inCombat,
+                    ),
                   ),
                 ),
-                const SizedBox(height: _barGap),
+                SizedBox(height: inCombat ? _compactBarGap : _barGap),
 
                 // Boost built up by holding the action button
                 AnimatedBuilder(
                   animation: timing,
-                  builder: (_, _) => FillBar(
-                    value: timing.percentMaxSpeed,
-                    height: _thinBarHeight,
-                    borderRadius: _thinBarHeight / 2,
-                    backgroundColor: barTrack,
-                    foregroundColor: colors.secondaryBar,
+                  builder: (_, _) => _BarRow(
+                    key: const ValueKey('status-boost'),
+                    bar: FillBar(
+                      value: timing.percentMaxSpeed,
+                      height: _thinBarHeight,
+                      borderRadius: _thinBarHeight / 2,
+                      backgroundColor: barTrack,
+                      foregroundColor: colors.secondaryBar,
+                    ),
+                    label: const ActionIntervalTimer(),
                   ),
                 ),
-
-                // The road, while there is one to walk. Off the bottom
-                // rather than in among the two that are always there, so
-                // neither of those ever changes position as it comes and
-                // goes. The only bar here that carries a number, because it
-                // is the only one counting down to something.
-                if (world.isShowingTravel)
-                  AnimatedBuilder(
-                    animation: timing,
-                    builder: (_, _) => Padding(
-                      padding: const EdgeInsets.only(top: _barGap),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: FillBar(
-                              key: travelBarKey,
-                              value: world.travelProgress(),
-                              height: _thinBarHeight,
-                              borderRadius: _thinBarHeight / 2,
-                              backgroundColor: barTrack,
-                              foregroundColor: colors.travel,
-                            ),
-                          ),
-                          const SizedBox(width: ActionTimer.gap),
-                          ActionTimeChip(duration: world.travelRemaining()),
-                        ],
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AnimatedBuilder(
-                animation: timing,
-                builder: (_, _) => StatValueLabel(
-                  value: playerController.getStamina(),
-                  max: playerController.getMaxStamina(),
-                ),
-              ),
-              const SizedBox(height: 2),
-              const ActionIntervalTimer(),
-            ],
-          ),
         ],
       ),
+    );
+  }
+}
+
+/// One bar of the status row with its readout beside it, on the bar's own
+/// line. The readout gets a fixed slot, so every bar runs the same length
+/// and every readout starts at the same x whatever its digits.
+class _BarRow extends StatelessWidget {
+  const _BarRow({super.key, required this.bar, required this.label});
+
+  final Widget bar;
+  final Widget label;
+
+  /// Room for the widest readout, the boost's two-icon stance.
+  static const double labelWidth = 96;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: bar),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: labelWidth,
+          // a big text scale shrinks the readout rather than pushing the
+          // row past its 48pt
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: label,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -289,9 +312,20 @@ class ActivityButton extends StatelessWidget {
 /// A small count laid over the edge of a sprite frame ("181k"), shortened
 /// so a six-digit stack doesn't cover the art it counts.
 class CountPill extends StatelessWidget {
-  const CountPill({super.key, required this.count, this.borderColor});
+  const CountPill({
+    super.key,
+    required this.count,
+    this.borderColor,
+    this.height = 16,
+    this.fontSize = 11,
+  });
 
   final int count;
+
+  /// 16 tall with 11pt figures over a sprite; a discovery tile's line sets
+  /// it a touch larger, where it sits on its own.
+  final double height;
+  final double fontSize;
 
   /// Matches the frame the pill sits on; defaults to the over-art border.
   final Color? borderColor;
@@ -300,18 +334,18 @@ class CountPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     return Container(
-      height: 16,
-      padding: const EdgeInsets.symmetric(horizontal: 5),
+      height: height,
+      padding: EdgeInsets.symmetric(horizontal: height * 5 / 16),
       decoration: BoxDecoration(
         color: palette.bg,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(height / 2),
         border: Border.all(color: borderColor ?? palette.borderOverArt),
       ),
       alignment: Alignment.center,
       child: Text(
         Util.formatShortCount(count),
         style: HearthText.timer.copyWith(
-          fontSize: 11,
+          fontSize: fontSize,
           height: 1.0,
           color: palette.text,
         ),
@@ -415,24 +449,32 @@ class StatValueLabel extends StatelessWidget {
     required this.value,
     required this.max,
     this.skill = SkillId.STAMINA,
+    this.compact = false,
   });
 
   final double value;
   final double max;
   final SkillId skill;
 
+  /// The smaller readout a fight's three-row status bar uses.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconRenderer<SkillId>(size: 16, id: skill),
-        const SizedBox(width: 4),
+        IconRenderer<SkillId>(size: compact ? 12 : 16, id: skill),
+        SizedBox(width: compact ? 3 : 4),
         Text(
           '${value.round()} / ${max.round()}',
           maxLines: 1,
           softWrap: false,
-          style: HearthText.statusStat.copyWith(color: context.palette.text),
+          style: HearthText.statusStat.copyWith(
+            fontSize: compact ? 11 : null,
+            height: compact ? 1.0 : null,
+            color: context.palette.text,
+          ),
         ),
       ],
     );

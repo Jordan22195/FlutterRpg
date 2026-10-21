@@ -48,6 +48,55 @@ class EquipmentService {
     return (skillLevels[needed.skill] ?? 0) >= needed.level;
   }
 
+  /// What [item] would be measured against: the piece wearing it would
+  /// take off. Its own slot for armour; whatever weapon is in hand for a
+  /// weapon, one- or two-handed; the tool for its skill for a tool; and the
+  /// weaker of the two rings for a ring, since that is the one to replace.
+  /// Null when that place is empty.
+  EquipmentItem? counterpartFor(
+    EquipmentItem item,
+    EquipmentData equipmentState,
+  ) {
+    final slots = equipmentState.armorEquipment;
+    switch (item.armorSlot) {
+      case ArmorSlots.TOOL:
+        return equipmentState.equipedTools[item.skillRequirement];
+      case ArmorSlots.WEAPON_1H || ArmorSlots.WEAPON_2H:
+        return slots[ArmorSlots.WEAPON_1H] ?? slots[ArmorSlots.WEAPON_2H];
+      case ArmorSlots.FINGER || ArmorSlots.FINGER_2:
+        final a = slots[ArmorSlots.FINGER];
+        final b = slots[ArmorSlots.FINGER_2];
+        if (a == null || b == null) return null;
+        return statTotal(a) <= statTotal(b) ? a : b;
+      default:
+        return slots[item.armorSlot];
+    }
+  }
+
+  /// Whether this very piece is the one being worn.
+  bool isEquipped(EquipmentItem item, EquipmentData equipmentState) =>
+      equippedItems(
+        equipmentState,
+      ).any((worn) => worn.instanceId == item.instanceId);
+
+  /// Everything [item] adds, summed across its stats; 0 for nothing.
+  int statTotal(EquipmentItem? item) =>
+      item?.effectiveSkillBonus.values.fold<int>(0, (sum, v) => sum + v) ?? 0;
+
+  /// Whether any of [candidates] would be an upgrade on [equipped]: one the
+  /// player can wear right now whose stats add up to more. An empty slot
+  /// counts as nothing, so anything wearable is an upgrade on it.
+  bool hasUpgrade(
+    EquipmentItem? equipped,
+    Iterable<EquipmentItem> candidates,
+    Map<SkillId, int> skillLevels,
+  ) {
+    final current = statTotal(equipped);
+    return candidates.any(
+      (c) => meetsRequirement(c, skillLevels) && statTotal(c) > current,
+    );
+  }
+
   /// Equips [item] into its slot, applying weapon exclusivity rules.
   /// [toSlot] picks between the slots an item accepts (which ring finger
   /// it goes on); without it the first empty one wins. Returns the

@@ -7,6 +7,7 @@ import 'package:rpg/widgets/eat_food_button.dart';
 import 'package:rpg/widgets/equipment_picker.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entities/entities.dart';
+import '../controllers/dungeon_controller.dart';
 import '../controllers/encounter_controller.dart';
 import '../controllers/equipment_controller.dart';
 import '../controllers/player_data_controller.dart';
@@ -20,6 +21,7 @@ import '../widgets/explore_card.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/sprite_frame.dart';
 import '../widgets/stage_panel.dart';
+import '../widgets/travel_row.dart';
 import '../widgets/primary_button.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
@@ -69,6 +71,10 @@ class CombatViewState {
   final int requiredLevel;
   final bool locked;
 
+  /// The gathering skill whose tool the entity needs and the player hasn't
+  /// equipped — an axe for a tree. Null when nothing is missing.
+  final SkillId? missingTool;
+
   /// How far the entity is through its attack windup, 0..1. A getter rather
   /// than a value: the swing runs on wall clock between the attacks that
   /// notify, so the bar samples it every frame.
@@ -100,6 +106,7 @@ class CombatViewState {
     this.queueRemaining = const [],
     this.requiredLevel = 0,
     this.locked = false,
+    this.missingTool,
     this.entityActionProgress,
   });
 }
@@ -573,8 +580,9 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
           // above and the dock below stay pinned
           Expanded(
             child: ListView(
-              // room at the bottom for the dock's fade to fall on
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              // no room under the tabs: a screen whose content fits springs
+              // back to rest when dragged, instead of settling scrolled
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               children: [
                 if (aboveFight != null) aboveFight,
 
@@ -617,8 +625,14 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(
-                      "Requires ${skillDisplayName(skillType)} level "
-                      "${view.requiredLevel}",
+                      // the level reads first; with it met, the missing tool
+                      view.missingTool != null &&
+                              view.requiredLevel <=
+                                  (view.playerStats[skillType] ?? 0)
+                          ? "Needs ${toolNoun(view.missingTool!)} — equip "
+                                "one in Gear"
+                          : "Requires ${skillDisplayName(skillType)} level "
+                                "${view.requiredLevel}",
                       textAlign: TextAlign.center,
                       style: HearthText.rowMeta.copyWith(
                         color: context.gameColors.hp,
@@ -652,6 +666,11 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
           // reachable mid-action. an entity with a single stance offers no
           // choice, so the row is left out entirely
           ActionDock(
+            // a fight a zone away is walked to first: the road rides above
+            // the style switch, which can be set before arriving
+            banner: context.watch<WorldController>().isViewingCurrentZone
+                ? null
+                : const TravelRow(),
             topRow: stances.length > 1 ? StanceButton(stances: stances) : null,
             buttons: buildActionBar(context, view),
           ),
@@ -706,6 +725,7 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
       // herbalism level gate: locked herbs stay visible but can't be picked
       requiredLevel: controller.viewedRequiredLevel(),
       locked: controller.viewedLocked(),
+      missingTool: controller.viewedMissingTool(),
       entityActionProgress: controller.entityAttackProgress,
       // both gated on this screen being the one the actions fire on
       playerActionProgress: controller.playerActionProgress,
@@ -727,6 +747,9 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
         label: "Action",
         isActive: controller.isActingOnViewedEntity,
         startActionFunction: () {
+          // a dungeon floor entered but not yet started begins here; once it
+          // runs, a press carries on with it like any other encounter
+          if (context.read<DungeonController>().startViewedFloor()) return;
           controller.startEncounterAction();
         },
       ),

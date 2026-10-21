@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/action_queue_data.dart';
 import 'package:rpg/game_session.dart';
+import 'support/gathering_tools.dart';
 
 // lets pending microtasks run (the queue advances in a microtask)
 Future<void> flushMicrotasks() => Future<void>(() {});
@@ -13,7 +14,7 @@ void main() {
   GameSession buildSession() {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
-    final save = factory.newGame(catalogs);
+    final save = withGatheringTools(factory.newGame(catalogs));
     return factory.create(
       save: save,
       catalogs: catalogs,

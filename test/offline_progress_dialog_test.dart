@@ -17,6 +17,7 @@ import 'package:rpg/data/offline_progress_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/offline_progress_dialog.dart';
+import 'support/gathering_tools.dart';
 
 // Coming back to a running action: the first frame settles the time away and
 // the shell reports it, whichever screen the app was closed on.
@@ -38,7 +39,7 @@ Map<String, dynamic> toRawSave(SaveGameData save) {
 Map<String, dynamic> savedMidExplore(Duration away) {
   final factory = GameSessionFactory();
   final catalogs = factory.catalog1();
-  final save = factory.newGame(catalogs);
+  final save = withGatheringTools(factory.newGame(catalogs));
   final session = factory.create(
     save: save,
     catalogs: catalogs,
@@ -60,7 +61,7 @@ Map<String, dynamic> savedMidExplore(Duration away) {
 Map<String, dynamic> savedMidEncounter(Duration away) {
   final factory = GameSessionFactory();
   final catalogs = factory.catalog1();
-  final save = factory.newGame(catalogs);
+  final save = withGatheringTools(factory.newGame(catalogs));
   final session = factory.create(
     save: save,
     catalogs: catalogs,
@@ -85,7 +86,7 @@ Map<String, dynamic> savedMidEncounter(Duration away) {
 Map<String, dynamic> savedMidCombat(Duration away) {
   final factory = GameSessionFactory();
   final catalogs = factory.catalog1();
-  final save = factory.newGame(catalogs);
+  final save = withGatheringTools(factory.newGame(catalogs));
   final session = factory.create(
     save: save,
     catalogs: catalogs,
@@ -206,7 +207,7 @@ void main() {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     final session = factory.create(
-      save: factory.newGame(catalogs),
+      save: withGatheringTools(factory.newGame(catalogs)),
       catalogs: catalogs,
       vsync: const TestVSync(),
     );

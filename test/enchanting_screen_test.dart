@@ -44,7 +44,8 @@ void main() {
       inventory.itemMap[input.key] =
           (inventory.itemMap[input.key] ?? 0) + input.value * times;
     }
-    final skill = session.saveGameData.playerData.skillData[SkillId.ENCHANTING]!;
+    final skill =
+        session.saveGameData.playerData.skillData[SkillId.ENCHANTING]!;
     skill.xp = skill.xpTable[recipe.levelRequirement];
     return recipe;
   }
@@ -251,8 +252,10 @@ void main() {
     await settle(tester);
 
     expect(find.text('Select an item'), findsNothing);
-    expect(session.enchantingController.selectedTarget?.instanceId,
-        helmet.instanceId);
+    expect(
+      session.enchantingController.selectedTarget?.instanceId,
+      helmet.instanceId,
+    );
     expect(
       tester
           .widget<ActionOrTravelButton>(find.byType(ActionOrTravelButton))
@@ -269,7 +272,8 @@ void main() {
     final session = await pumpBench(tester);
     final recipe = EnchantmentCatalog().recipes.first;
     // the level, but none of the materials
-    final skill = session.saveGameData.playerData.skillData[SkillId.ENCHANTING]!;
+    final skill =
+        session.saveGameData.playerData.skillData[SkillId.ENCHANTING]!;
     skill.xp = skill.xpTable[recipe.levelRequirement];
     addHelmet(session);
 

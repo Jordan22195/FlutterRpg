@@ -19,6 +19,7 @@ import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/countdown_timer.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
+import 'support/gathering_tools.dart';
 
 // The minor potion tier, end to end: what the six potions are, how they are
 // brewed, and what drinking one does. The distinction that drives most of
@@ -31,6 +32,7 @@ void main() {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     final save = factory.newGame(catalogs);
+    equipGatheringTools(save);
     return factory.create(
       save: save,
       catalogs: catalogs,

@@ -15,7 +15,9 @@ import 'package:rpg/services/exploration_service.dart';
 import '../data/bound_action.dart';
 import '../data/offline_progress_data.dart';
 import '../services/offline_progress_service.dart';
+import '../catalogs/dungeons/dungeons.dart';
 import '../data/dungeon_run.dart';
+import '../data/entity_queue.dart';
 import '../data/encounter_data.dart';
 import '../services/dungeon_service.dart';
 import '../services/encounter_service.dart';
@@ -180,7 +182,7 @@ class EncounterController extends ChangeNotifier {
     );
   }
 
-  // basic fishing conditions plus the spot's fishing level gate
+  // basic fishing conditions plus the spot's fishing level gate and a rod
   bool _fishingConditionsMet() {
     if (!_encounterService.fishingConditionsMet(
       _playerState,
@@ -188,7 +190,18 @@ class EncounterController extends ChangeNotifier {
     )) {
       return false;
     }
-    return _encounterSystem.meetsLevelRequirement(
+    return _encounterSystem.canWork(_playerState, _encounterState.entity!.id);
+  }
+
+  // basic fight-or-gather conditions plus, for a tree or ore, the tool
+  bool _encounterConditionsMet() {
+    if (!_encounterService.encounterConditionsMet(
+      _playerState,
+      _encounterState,
+    )) {
+      return false;
+    }
+    return _encounterSystem.hasRequiredTool(
       _playerState,
       _encounterState.entity!.id,
     );
@@ -242,10 +255,7 @@ class EncounterController extends ChangeNotifier {
     }
 
     // check action conditions are met before the action fires again
-    if (!_encounterService.encounterConditionsMet(
-      _playerState,
-      _encounterState,
-    )) {
+    if (!_encounterConditionsMet()) {
       // stop action timing
       _actionTimingController.stop();
       // todo reset encouter state
@@ -254,6 +264,62 @@ class EncounterController extends ChangeNotifier {
   }
 
   // ---- dungeon cards ----
+
+  /// Called when a floor's queue changes under the dungeon list: its next
+  /// member steps up, it laps and refills, or it is sent back to the top.
+  /// A refill builds the floor afresh, so the list has to be told to read
+  /// it again or it keeps drawing the spent members. Wired to the dungeon
+  /// controller in GameSessionFactory; this controller can't see it.
+  VoidCallback? onDungeonFloorChanged;
+
+  /// The dungeon floor open on the encounter screen. Entering a floor opens
+  /// it without starting it — the action button does that — so until then
+  /// the screen shows the floor's lead member off this rather than off the
+  /// running floor. [preview] stands in for the floor while the run is in
+  /// another dungeon (or none); once the run is in this one, the live floor
+  /// is read instead.
+  ({DungeonId id, int index, EntityQueue preview})? _viewedFloor;
+
+  /// Opens floor [index] of [id] on the encounter screen without starting
+  /// it. Returns a token for [closeDungeonFloor].
+  Object viewDungeonFloor(DungeonId id, int index, EntityQueue preview) {
+    final view = (id: id, index: index, preview: preview);
+    _viewedFloor = view;
+    final entity = preview.displayed;
+    if (entity != null) _playerState.currentEntityViewId = entity.id;
+    notifyListeners();
+    return view;
+  }
+
+  /// Closes the floor opened by [viewDungeonFloor] — the screen it was
+  /// opened for has gone. A later view is left alone.
+  void closeDungeonFloor(Object token) {
+    if (!identical(_viewedFloor, token)) return;
+    _viewedFloor = null;
+    notifyListeners();
+  }
+
+  /// The floor open on screen when it is not the one running: what the
+  /// screen shows until the action button starts it. Null when no floor is
+  /// open, or the open floor is already the running one.
+  EntityQueue? get _idleFloor {
+    final view = _viewedFloor;
+    if (view == null) return null;
+    if (_dungeonRun.active && _dungeonRun.dungeonId == view.id) {
+      if (_dungeonRun.runningSlot == view.index) return null;
+      return _dungeonService.slotAt(_dungeonRun, view.index);
+    }
+    return view.preview;
+  }
+
+  /// The floor open on screen that the action button would start, or null
+  /// when none is open or it is already running — a press then carries on
+  /// with the running floor rather than starting it over.
+  ({DungeonId id, int index})? get floorToStart {
+    final view = _viewedFloor;
+    if (view == null || _idleFloor == null) return null;
+    return (id: view.id, index: view.index);
+  }
 
   /// Starts dungeon floor [index] — the encounter behind a floor tap. Only
   /// one floor runs at a time, so this drops whatever was running.
@@ -301,13 +367,17 @@ class EncounterController extends ChangeNotifier {
     final index = _dungeonRun.runningSlot;
 
     final next = _dungeonService.advanceRunning(_dungeonRun);
-    if (next != null) return _handOffTo(next);
+    if (next != null) {
+      onDungeonFloorChanged?.call();
+      return _handOffTo(next);
+    }
 
     _dungeonSystem.recordFloorCleared(_dungeonProgress, _dungeonRun, index);
 
     // a lap of the same floor is the same haul carrying on, so the
     // encounter panel's drop log stands across it
     final member = _dungeonSystem.openSlot(_dungeonRun, index);
+    onDungeonFloorChanged?.call();
     if (member != null) return _handOffTo(member);
 
     // a floor that refilled to nothing would clear again the instant it
@@ -344,10 +414,7 @@ class EncounterController extends ChangeNotifier {
       case SkillId.HERBALISM:
         return _herbalismConditionsMet();
       default:
-        return _encounterService.encounterConditionsMet(
-          _playerState,
-          _encounterState,
-        );
+        return _encounterConditionsMet();
     }
   }
 
@@ -391,12 +458,22 @@ class EncounterController extends ChangeNotifier {
     if (index < 0) return;
     _dungeonSystem.resetSlot(_dungeonRun, index);
     _dungeonService.clearRunningSlot(_dungeonRun);
+    onDungeonFloorChanged?.call();
   }
+
+  /// The dungeon whose floor the loop is in, or NULL when no floor runs —
+  /// what lights a dungeon entrance's tile in its zone.
+  DungeonId get runningDungeonId =>
+      _dungeonRun.active && _dungeonRun.runningSlot >= 0
+      ? _dungeonRun.dungeonId
+      : DungeonId.NULL;
 
   /// The members still queued behind the one on screen, in queue order.
   /// Empty for an ordinary world encounter.
   List<EncounterEntity> queueRemaining() =>
-      _dungeonService.runningSlot(_dungeonRun)?.remaining ?? const [];
+      _idleFloor?.remaining ??
+      _dungeonService.runningSlot(_dungeonRun)?.remaining ??
+      const [];
 
   // todo move this logic to the enoucnter system
   // fires a single time when action button is pressed
@@ -584,6 +661,13 @@ class EncounterController extends ChangeNotifier {
   /// True while the loop is running any of the encounter actions. Fishing
   /// and herbalism bind their own, so a check against [doEncounterAction]
   /// alone reads "not running" on exactly those two screens.
+  /// Whether the player is in a fight right now: the loop is swinging at a
+  /// creature, anywhere. What puts the hp bar on the status row, which is
+  /// on every screen — so it reads the running encounter, not the viewed one.
+  bool isInCombat() =>
+      _encounterState.entity is CombatEntity &&
+      _actionTimingController.isRunningAction(doEncounterAction);
+
   bool _isRunningAnyEncounterAction() {
     return _actionTimingController.isRunningAction(doEncounterAction) ||
         _actionTimingController.isRunningAction(doFishingEncounterAction) ||
@@ -643,6 +727,11 @@ class EncounterController extends ChangeNotifier {
   /// from the zone, and its screen still has to show the encounter that just
   /// finished rather than going blank.
   EncounterEntity? _resolveViewedEntity() {
+    // a floor open but not started shows its lead member, whatever else
+    // the loop is doing
+    final idle = _idleFloor;
+    if (idle != null) return idle.displayed;
+
     // a dungeon card owns the entity being worked. the same EntityId can
     // sit in several cards of the same dungeon, so it resolves through the
     // running card rather than through currentEntityViewId
@@ -695,6 +784,10 @@ class EncounterController extends ChangeNotifier {
   bool isViewingActiveEncounter() {
     final active = _encounterState.entity;
     if (active == null) return false;
+
+    // a floor that hasn't been started is never the one being worked, even
+    // when its lead member is the same kind as the running fight
+    if (_idleFloor != null) return false;
 
     final inCard = _dungeonService.runningEntity(_dungeonRun);
     if (inCard != null) return identical(active, inCard);
@@ -752,12 +845,21 @@ class EncounterController extends ChangeNotifier {
     return e == null ? 0 : _encounterSystem.requiredLevelFor(e.id);
   }
 
-  // true when the viewed entity is gated above the player's level — an
-  // herb they can't pick, a spot they can't fish yet
+  // true when the viewed entity can't be worked yet — an herb above the
+  // player's level, a spot they can't fish yet, a tree with no axe in hand
   bool viewedLocked() {
     final e = _resolveViewedEntity();
     if (e == null) return false;
-    return !_encounterSystem.meetsLevelRequirement(_playerState, e.id);
+    return !_encounterSystem.canWork(_playerState, e.id);
+  }
+
+  // the gathering skill whose tool the viewed entity needs and the player
+  // hasn't equipped; null when nothing is missing
+  SkillId? viewedMissingTool() {
+    final e = _resolveViewedEntity();
+    if (e == null) return null;
+    if (_encounterSystem.hasRequiredTool(_playerState, e.id)) return null;
+    return _encounterSystem.requiredToolSkill(e.id);
   }
 
   ItemId getEquipedFoodItemId() {

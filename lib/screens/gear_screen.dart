@@ -8,6 +8,8 @@ import '../controllers/equipment_controller.dart';
 import '../controllers/inventory_controller.dart';
 import '../data/equipment_data.dart';
 import '../data/skill_data.dart';
+import '../theme/hearth_text.dart';
+import '../theme/hearth_theme.dart';
 import '../widgets/equipment_picker.dart';
 import '../widgets/icon_renderer.dart';
 import '../widgets/item_stack_tile.dart';
@@ -41,9 +43,12 @@ class _GearScreenState extends State<GearScreen> {
     ArmorSlots.FINGER,
     ArmorSlots.FINGER_2,
   ];
+
+  /// One-handed and two-handed weapons share a single tile: only one is
+  /// ever held, so [ArmorSlots.WEAPON_1H] stands for whichever it is — see
+  /// [_slotItem] and [_slotCandidates].
   static const List<ArmorSlots> _weaponSlots = [
     ArmorSlots.WEAPON_1H,
-    ArmorSlots.WEAPON_2H,
     ArmorSlots.OFFHAND,
   ];
 
@@ -73,8 +78,7 @@ class _GearScreenState extends State<GearScreen> {
     ArmorSlots.NECK: 'Neck',
     ArmorSlots.FINGER: 'Ring 1',
     ArmorSlots.FINGER_2: 'Ring 2',
-    ArmorSlots.WEAPON_1H: 'Main hand',
-    ArmorSlots.WEAPON_2H: 'Two-hand',
+    ArmorSlots.WEAPON_1H: 'Weapon',
     ArmorSlots.OFFHAND: 'Offhand',
   };
 
@@ -92,8 +96,7 @@ class _GearScreenState extends State<GearScreen> {
     ArmorSlots.NECK: 'Neck',
     ArmorSlots.FINGER: 'Ring 1',
     ArmorSlots.FINGER_2: 'Ring 2',
-    ArmorSlots.WEAPON_1H: '1H',
-    ArmorSlots.WEAPON_2H: '2H',
+    ArmorSlots.WEAPON_1H: 'Weapon',
     ArmorSlots.OFFHAND: 'Off',
   };
 
@@ -123,19 +126,39 @@ class _GearScreenState extends State<GearScreen> {
     return 'Needs ${_skillLabel(needed.skill)} ${needed.level}';
   }
 
+  /// What the tile for [slot] shows: the weapon in hand, one- or
+  /// two-handed, for the weapon tile; the slot's own piece otherwise.
+  EquipmentItem? _slotItem(EquipmentController controller, ArmorSlots slot) =>
+      slot == ArmorSlots.WEAPON_1H
+      ? controller.getEquipedWeapon()
+      : controller.getItemInSlot(slot);
+
+  /// What the bag can put in [slot]: both kinds of weapon for the weapon
+  /// tile, so one picker swaps between them.
+  List<EquipmentItem> _slotCandidates(ArmorSlots slot) {
+    final inventory = context.read<InventoryController>();
+    if (slot != ArmorSlots.WEAPON_1H) return inventory.getSlotItemList(slot);
+    return [
+      ...inventory.getSlotItemList(ArmorSlots.WEAPON_1H),
+      ...inventory.getSlotItemList(ArmorSlots.WEAPON_2H),
+    ];
+  }
+
   void _openSlotPicker(ArmorSlots slot) {
     final equipmentController = context.read<EquipmentController>();
-    final inventoryController = context.read<InventoryController>();
-    final equipped = equipmentController.getItemInSlot(slot);
+    final equipped = _slotItem(equipmentController, slot);
+    final isWeapon = slot == ArmorSlots.WEAPON_1H;
     EquipmentPicker.show(
       context,
       title: 'Change ${_slotLabels[slot]!.toLowerCase()}',
       slotLabel: _slotLabels[slot]!,
       equipped: equipped,
-      available: inventoryController.getSlotItemList(slot),
+      available: _slotCandidates(slot),
       lockedReason: (item) => _lockedReason(equipmentController, item),
       onEquip: (item) {
-        equipmentController.equipItem(item, toSlot: slot);
+        // a weapon goes to its own hand slot; the equip rules clear the
+        // other one, so the tile only ever holds one
+        equipmentController.equipItem(item, toSlot: isWeapon ? null : slot);
         setState(() {
           _selectedSlot = slot;
           _selectedTool = null;
@@ -143,7 +166,9 @@ class _GearScreenState extends State<GearScreen> {
       },
       onUnequip: equipped == null
           ? null
-          : () => equipmentController.unequipSlot(slot),
+          : () => equipmentController.unequipSlot(
+              isWeapon ? equipped.armorSlot : slot,
+            ),
     );
   }
 
@@ -201,12 +226,15 @@ class _GearScreenState extends State<GearScreen> {
     final equipmentController = context.watch<EquipmentController>();
     // the buff tick is what moves the buff column as a potion runs down
     context.watch<BuffController>();
+    // the bag, so a slot's upgrade dot comes and goes with what is picked up
+    context.watch<InventoryController>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Gear')),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 16),
         children: [
+          _combatLevelRow(context, equipmentController.getCombatLevel()),
           _statsTable(context, equipmentController.getStatBreakdown()),
           _paperDoll(context, equipmentController),
           _weaponRow(context, equipmentController),
@@ -216,6 +244,40 @@ class _GearScreenState extends State<GearScreen> {
           _sectionHeader(context, 'Potions'),
           const PotionsPanel(),
         ],
+      ),
+    );
+  }
+
+  /// The player's combat level, read off what they are wearing — the number
+  /// a creature's level on the zone screen is coloured against.
+  Widget _combatLevelRow(BuildContext context, int level) {
+    final palette = context.palette;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Semantics(
+        label: 'Combat level $level',
+        excludeSemantics: true,
+        child: Row(
+          children: [
+            const IconRenderer(size: 20, id: SkillId.ATTACK),
+            const SizedBox(width: 8),
+            Text(
+              'Combat level',
+              style: HearthText.rowTitle.copyWith(
+                fontSize: 15,
+                color: palette.text,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              '$level',
+              style: HearthText.xpValue.copyWith(
+                fontSize: 20,
+                color: palette.text,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -386,11 +448,13 @@ class _GearScreenState extends State<GearScreen> {
           for (final slot in slots) ...[
             _slotTile(
               context,
-              item: equipmentController.getItemInSlot(slot),
+              key: ValueKey('gear-slot-${slot.name}'),
+              item: _slotItem(equipmentController, slot),
               selected: _selectedSlot == slot,
               emptyLabel: _slotShortLabels[slot]!,
+              upgrade: _slotHasUpgrade(equipmentController, slot),
               onTap: () =>
-                  _onSlotTap(slot, equipmentController.getItemInSlot(slot)),
+                  _onSlotTap(slot, _slotItem(equipmentController, slot)),
             ),
             if (slot != slots.last) const SizedBox(height: 10),
           ],
@@ -438,11 +502,13 @@ class _GearScreenState extends State<GearScreen> {
           for (final slot in _weaponSlots) ...[
             _slotTile(
               context,
-              item: equipmentController.getItemInSlot(slot),
+              key: ValueKey('gear-slot-${slot.name}'),
+              item: _slotItem(equipmentController, slot),
               selected: _selectedSlot == slot,
               emptyLabel: _slotShortLabels[slot]!,
+              upgrade: _slotHasUpgrade(equipmentController, slot),
               onTap: () =>
-                  _onSlotTap(slot, equipmentController.getItemInSlot(slot)),
+                  _onSlotTap(slot, _slotItem(equipmentController, slot)),
             ),
             if (slot != _weaponSlots.last) const SizedBox(width: 10),
           ],
@@ -465,9 +531,16 @@ class _GearScreenState extends State<GearScreen> {
                 children: [
                   _slotTile(
                     context,
+                    key: ValueKey('gear-tool-${skill.name}'),
                     item: equipmentController.getToolForSkill(skill),
                     selected: _selectedTool == skill,
                     emptyLabel: _toolLabels[skill]!,
+                    upgrade: equipmentController.hasUpgrade(
+                      equipmentController.getToolForSkill(skill),
+                      context
+                          .read<InventoryController>()
+                          .getSlotItemListForSkill(ArmorSlots.TOOL, skill),
+                    ),
                     onTap: () => _onToolTap(
                       skill,
                       equipmentController.getToolForSkill(skill),
@@ -489,18 +562,27 @@ class _GearScreenState extends State<GearScreen> {
     );
   }
 
+  /// Whether the bag holds something wearable for [slot] that adds up to
+  /// more than what is in it — the same list the slot's picker offers.
+  bool _slotHasUpgrade(EquipmentController controller, ArmorSlots slot) =>
+      controller.hasUpgrade(_slotItem(controller, slot), _slotCandidates(slot));
+
+  /// [upgrade] puts a dot in the corner: something in the bag would do
+  /// better here.
   Widget _slotTile(
     BuildContext context, {
+    Key? key,
     required EquipmentItem? item,
     required bool selected,
     required String emptyLabel,
     required VoidCallback onTap,
+    bool upgrade = false,
   }) {
     final scheme = Theme.of(context).colorScheme;
     final qualityColor = item == null ? null : rarityBorderColor(item.quality);
     final borderColor = qualityColor ?? scheme.outline.withOpacity(0.5);
 
-    return InkWell(
+    final tile = InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -537,6 +619,33 @@ class _GearScreenState extends State<GearScreen> {
               ),
       ),
     );
+
+    return Semantics(
+      label: upgrade ? 'Upgrade available' : null,
+      child: Stack(
+        key: key,
+        clipBehavior: Clip.none,
+        children: [
+          tile,
+          if (upgrade)
+            Positioned(
+              top: -3,
+              right: -3,
+              child: Container(
+                key: const ValueKey('upgrade-dot'),
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: context.gameColors.upgrade,
+                  shape: BoxShape.circle,
+                  // a ring in the background colour lifts it off the tile
+                  border: Border.all(color: context.palette.bg, width: 2),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   Widget _detailCard(
@@ -556,7 +665,7 @@ class _GearScreenState extends State<GearScreen> {
     } else {
       final slot = _selectedSlot ?? ArmorSlots.HEAD;
       slotLabel = _slotLabels[slot]!;
-      item = equipmentController.getItemInSlot(slot);
+      item = _slotItem(equipmentController, slot);
       onChange = () => _openSlotPicker(slot);
     }
 

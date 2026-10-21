@@ -53,6 +53,19 @@ class EquipmentController extends ChangeNotifier {
   bool canEquip(EquipmentItem item) =>
       _equipmentService.meetsRequirement(item, _skillLevels);
 
+  /// The piece [item] would replace if worn; null when that place is empty.
+  EquipmentItem? counterpartFor(EquipmentItem item) =>
+      _equipmentService.counterpartFor(item, _playerState.equipmentData);
+
+  /// Whether [item] is the very piece being worn.
+  bool isEquipped(EquipmentItem item) =>
+      _equipmentService.isEquipped(item, _playerState.equipmentData);
+
+  /// Whether any of [candidates] — what the bag holds for a slot — is
+  /// something the player can wear that adds up to more than [equipped].
+  bool hasUpgrade(EquipmentItem? equipped, List<EquipmentItem> candidates) =>
+      _equipmentService.hasUpgrade(equipped, candidates, _skillLevels);
+
   EquipmentItem? getItemInSlot(ArmorSlots slot) {
     return _equipmentService.getItemInSlot(slot, _playerState.equipmentData);
   }
@@ -74,6 +87,10 @@ class EquipmentController extends ChangeNotifier {
     Map<SkillId, int> total,
   })
   getStatBreakdown() => _playerDataService.getStatBreakdown(_playerState);
+
+  /// The player's combat level with what they are wearing — the number a
+  /// creature's level is read against.
+  int getCombatLevel() => _playerDataService.combatLevel(_playerState);
 
   /// [toSlot] picks between the slots the item accepts, for gear with more
   /// than one home (rings); without it the first empty one wins. False when

@@ -112,11 +112,10 @@ void main() {
       contains(row.itemId),
       reason: 'the trading post sells equipment only',
     );
-    expect(
-      shop.stock.map((s) => s.itemId),
-      isNot(contains(row.itemId)),
-      reason: 'the single piece on that row came off the shelf',
-    );
+    // and it was the shelf's own slot that sold: its single piece is gone,
+    // the slot left on the shelf at zero, showing as sold out
+    expect(shop.stock, contains(same(row)));
+    expect(row.count, 0);
   });
 
   group('the screen', () {

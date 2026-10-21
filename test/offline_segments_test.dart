@@ -10,6 +10,7 @@ import 'package:rpg/data/offline_progress_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'support/gathering_tools.dart';
 
 /// What an offline settle owes the player, across every activity the loop
 /// can be bound to and every condition that cuts a segment short.
@@ -24,7 +25,7 @@ void main() {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     return factory.create(
-      save: factory.newGame(catalogs),
+      save: withGatheringTools(factory.newGame(catalogs)),
       catalogs: catalogs,
       vsync: const TestVSync(),
     );

@@ -16,11 +16,15 @@ import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/explore_screen.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/data/level_standing.dart';
 import 'package:rpg/theme/game_colors.dart';
 import 'package:rpg/theme/zone_palette.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/segmented_tabs.dart';
-import 'package:rpg/widgets/sprite_frame.dart';
+import 'package:rpg/widgets/fill_bar.dart';
+import 'package:rpg/widgets/icon_renderer.dart';
+import 'package:rpg/widgets/progress_bars.dart';
+import 'support/gathering_tools.dart';
 
 /// A zone card says how hard the thing is, not what skill it trains — the
 /// frame's tint and the filter chips already carry the kind. A combat
@@ -33,20 +37,46 @@ void main() {
   }
 
   /// The meta line on [id]'s card, when it leads with level [level].
-  Finder levelMeta(EntityId id, int level) => find.descendant(
-    of: find.byKey(ValueKey(id)),
-    matching: find.textContaining(RegExp('^Lv $level( · |\$)')),
-  );
+  /// [id]'s tile reads [level] beside [skill]'s icon.
+  bool showsLevel(WidgetTester tester, EntityId id, SkillId skill, int level) {
+    final tile = find.byKey(ValueKey(id));
+    final icon = find.descendant(
+      of: tile,
+      matching: find.byWidgetPredicate(
+        (w) => w is IconRenderer<SkillId> && w.id == skill,
+      ),
+    );
+    // the level, not the count chip beside it, which can read the same
+    final numbers = find
+        .descendant(of: tile, matching: find.text('$level'))
+        .evaluate()
+        .where((e) => e.findAncestorWidgetOfExactType<CountPill>() == null)
+        .toList();
+    if (icon.evaluate().isEmpty || numbers.isEmpty) return false;
+    // side by side on one line
+    final iconY = tester.getCenter(icon).dy;
+    return numbers.any((e) {
+      final box = e.renderObject! as RenderBox;
+      final y = box.localToGlobal(box.size.center(Offset.zero)).dy;
+      return (y - iconY).abs() < 4;
+    });
+  }
 
   /// Text rendered on [id]'s card. The resource sub-tab chips carry skill
   /// names of their own, so a card claim has to be scoped to the card.
   Finder cardText(EntityId id, String text) =>
       find.descendant(of: find.byKey(ValueKey(id)), matching: find.text(text));
 
-  Future<GameSession> pumpExplore(WidgetTester tester) async {
+  /// [tools] equips the starter axe, pickaxe and rod, so trees, ore and
+  /// the pond read as workable; off, they read as locked.
+  Future<GameSession> pumpExplore(
+    WidgetTester tester, {
+    bool tools = true,
+  }) async {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     final save = factory.newGame(catalogs);
+    if (tools) equipGatheringTools(save);
     final session = factory.create(
       save: save,
       catalogs: catalogs,
@@ -108,7 +138,10 @@ void main() {
 
     final chicken = EntityId.CHICKEN.definition as CombatEntityDefinition;
     expect(chicken.level, 3);
-    expect(levelMeta(EntityId.CHICKEN, chicken.level), findsOneWidget);
+    expect(
+      showsLevel(tester, EntityId.CHICKEN, SkillId.ATTACK, chicken.level),
+      isTrue,
+    );
     expect(cardText(EntityId.CHICKEN, 'Combat'), findsNothing);
 
     session.dispose();
@@ -120,27 +153,46 @@ void main() {
     final session = await pumpExplore(tester);
 
     final tree = EntityId.TREE.definition as EncounterEntityDefinition;
-    expect(levelMeta(EntityId.TREE, tree.defence), findsOneWidget);
+    expect(
+      showsLevel(tester, EntityId.TREE, SkillId.WOODCUTTING, tree.defence),
+      isTrue,
+    );
     expect(cardText(EntityId.TREE, 'Woodcutting'), findsNothing);
 
-    // the pond is a gathering node too, but it lists as a place, and a
-    // place says what it trains before how hard it is
+    // the pond is a gathering node too, but it lists as a place: the
+    // fishing sprite beside the level it asks for, with no words
     final pond = EntityId.TRANQUIL_POND.definition as FishingEntityDefinition;
     expect(
-      cardText(EntityId.TRANQUIL_POND, 'Fishing · Lv ${pond.requiredLevel}'),
-      findsOneWidget,
+      showsLevel(
+        tester,
+        EntityId.TRANQUIL_POND,
+        SkillId.FISHING,
+        pond.requiredLevel,
+      ),
+      isTrue,
     );
+    expect(cardText(EntityId.TRANQUIL_POND, 'Fishing'), findsNothing);
 
     session.dispose();
   });
 
-  testWidgets('a structure with no difficulty keeps its skill label', (
+  testWidgets('a structure with no difficulty shows its skill sprite', (
     tester,
   ) async {
     final session = await pumpExplore(tester);
 
-    // a firepit has no stat to rank it by, so it still says what it trains
-    expect(cardText(EntityId.FIREPIT, 'Firemaking'), findsOneWidget);
+    // a firepit has no stat to rank it by: it shows what it trains by the
+    // skill's sprite alone, with no label and no level
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey(EntityId.FIREPIT)),
+        matching: find.byWidgetPredicate(
+          (w) => w is IconRenderer<SkillId> && w.id == SkillId.FIREMAKING,
+        ),
+      ),
+      findsOneWidget,
+    );
+    expect(cardText(EntityId.FIREPIT, 'Firemaking'), findsNothing);
     expect(
       find.descendant(
         of: find.byKey(const ValueKey(EntityId.FIREPIT)),
@@ -265,17 +317,17 @@ void main() {
     final zone = session.worldController.viewedZoneDefinition();
     final ids = zone.discoverableEntities.map((e) => e.id).toList();
 
-    // the order the cards sit in, top to bottom
+    // the order the tiles sit in: row by row, left to right
     List<EntityId> onScreen() =>
         ids
             .where((id) => find.byKey(ValueKey(id)).evaluate().isNotEmpty)
             .toList()
-          ..sort(
-            (a, b) => tester
-                .getTopLeft(find.byKey(ValueKey(a)))
-                .dy
-                .compareTo(tester.getTopLeft(find.byKey(ValueKey(b))).dy),
-          );
+          ..sort((a, b) {
+            final pa = tester.getTopLeft(find.byKey(ValueKey(a)));
+            final pb = tester.getTopLeft(find.byKey(ValueKey(b)));
+            final byRow = pa.dy.compareTo(pb.dy);
+            return byRow != 0 ? byRow : pa.dx.compareTo(pb.dx);
+          });
 
     // clustered by kind — combat first, then the gathering skills in skill
     // order — and in the zone's own table order within a kind, whether or
@@ -286,10 +338,19 @@ void main() {
       return (e as EncounterEntity).entityType.index;
     }
 
+    // fights easiest first, by combat level
+    int combatLevel(EntityId id) {
+      final e = id.build();
+      return e is CombatEntity ? e.level : 0;
+    }
+
     final expected = List.of(ids)
       ..sort((a, b) {
         final byKind = rank(a).compareTo(rank(b));
-        return byKind != 0 ? byKind : ids.indexOf(a).compareTo(ids.indexOf(b));
+        if (byKind != 0) return byKind;
+        final byLevel = combatLevel(a).compareTo(combatLevel(b));
+        if (byLevel != 0) return byLevel;
+        return ids.indexOf(a).compareTo(ids.indexOf(b));
       });
     expect(onScreen(), expected);
 
@@ -330,13 +391,14 @@ void main() {
 
     // one lock per gated card, each carrying the level it opens at
     expect(find.byIcon(Icons.lock), findsNWidgets(gated.length));
-    final lockYs = tester
+    // tiles share rows, so a lock belongs to the tile it sits inside
+    final locks = tester
         .widgetList(find.byIcon(Icons.lock))
-        .map((w) => tester.getCenter(find.byWidget(w)).dy)
+        .map((w) => tester.getCenter(find.byWidget(w)))
         .toList();
     bool hasLock(EntityId id) {
       final rect = tester.getRect(find.byKey(ValueKey(id)));
-      return lockYs.any((y) => rect.top < y && y < rect.bottom);
+      return locks.any(rect.contains);
     }
 
     for (final entry in gated) {
@@ -371,33 +433,62 @@ void main() {
     session.dispose();
   });
 
-  testWidgets('a discovery card\'s sprite sits on the card colour', (
+  testWidgets('discoveries are the same 3-column grid of tinted tiles', (
     tester,
   ) async {
     final session = await pumpExplore(tester);
 
-    Color? frameFill(EntityId id) => tester
-        .widget<SpriteFrame>(
-          find.descendant(
-            of: find.byKey(ValueKey(id)),
-            matching: find.byType(SpriteFrame),
-          ),
-        )
-        .fill;
-    Color cardFill(EntityId id) => tester
-        .widget<Material>(
-          find
-              .descendant(
-                of: find.byKey(ValueKey(id)),
-                matching: find.byType(Material),
-              )
-              .first,
-        )
-        .color!;
+    BoxDecoration frameOf(EntityId id) =>
+        tester
+                .widget<Container>(
+                  find
+                      .descendant(
+                        of: find.byKey(ValueKey(id)),
+                        matching: find.byWidgetPredicate(
+                          (w) =>
+                              w is Container &&
+                              w.constraints?.maxWidth == 64 &&
+                              w.constraints?.maxHeight == 56,
+                        ),
+                      )
+                      .first,
+                )
+                .decoration!
+            as BoxDecoration;
 
-    for (final id in [EntityId.CHICKEN, EntityId.TREE]) {
-      expect(frameFill(id), cardFill(id), reason: '$id');
+    // a fight sits in the combat tint, a node in the zone's gathering tint
+    expect(
+      frameOf(EntityId.CHICKEN).color,
+      GameColors.standard.combatTint.fill,
+    );
+    expect(frameOf(EntityId.TREE).color, ZonePalette.meadow.gatherTintFill);
+
+    // the same tile and columns as the places above them
+    final width = (1000 - 2 * 16 - 2 * 10) / 3;
+    final zone = session.worldController.viewedZoneDefinition();
+    for (final e in zone.discoverableEntities) {
+      final rect = tester.getRect(find.byKey(ValueKey(e.id)));
+      expect(rect.width, closeTo(width, 0.01), reason: '${e.id}');
+      expect(rect.height, 120, reason: '${e.id}');
     }
+    // and three to a row: the second tile sits beside the first
+    final first = tester.getRect(find.byKey(const ValueKey(EntityId.CHICKEN)));
+    final firstRow = zone.discoverableEntities
+        .map((e) => tester.getRect(find.byKey(ValueKey(e.id))))
+        .where((r) => r.top == first.top)
+        .length;
+    expect(firstRow, 3);
+
+    session.dispose();
+  });
+
+  testWidgets('a long press on a discovery opens its details', (tester) async {
+    final session = await pumpExplore(tester);
+
+    await tester.longPress(find.byKey(const ValueKey(EntityId.CHICKEN)));
+    await settle(tester);
+
+    expect(find.byType(AlertDialog), findsOneWidget);
 
     session.dispose();
   });
@@ -496,14 +587,33 @@ void main() {
       find.bySemanticsLabel('Pond, Fishing level ${pond.requiredLevel}'),
       findsOneWidget,
     );
-    expect(find.text('Smithing'), findsOneWidget);
-    expect(find.text('Buy & sell'), findsOneWidget);
+    // the labels are gone from the tiles; a screen reader still hears them
+    expect(find.text('Smithing'), findsNothing);
+    expect(find.text('Buy & sell'), findsNothing);
+    expect(cardText(EntityId.GRAINERY_ENTRANCE, 'Dungeon'), findsNothing);
     expect(
       find.descendant(
-        of: find.byKey(const ValueKey(EntityId.GRAINERY_ENTRANCE)),
-        matching: find.text('Dungeon'),
+        of: find.byKey(const ValueKey(EntityId.ANVIL)),
+        matching: find.byWidgetPredicate(
+          (w) => w is IconRenderer<SkillId> && w.id == SkillId.BLACKSMITHING,
+        ),
       ),
       findsOneWidget,
+    );
+
+    // a dungeon reads its combat level the way a fight does
+    final dungeonLevel = session.worldController.dungeonLevel(
+      EntityId.GRAINERY_ENTRANCE.build() as DungeonEntity,
+    );
+    expect(dungeonLevel, isNotNull);
+    expect(
+      showsLevel(
+        tester,
+        EntityId.GRAINERY_ENTRANCE,
+        SkillId.ATTACK,
+        dungeonLevel!,
+      ),
+      isTrue,
     );
 
     semantics.dispose();
@@ -526,9 +636,13 @@ void main() {
       find.byKey(const ValueKey(EntityId.GRAINERY_ENTRANCE)),
     );
     final discoveries = tester.getRect(find.text('DISCOVERIES'));
-    final firstCard = tester.getRect(
-      find.byKey(const ValueKey(EntityId.CHICKEN)),
-    );
+    // the first tile in the grid, whichever discovery it is
+    final firstCard = ZoneId.TUTORIAL_FARM.definition.discoverableEntities
+        .map((e) => tester.getRect(find.byKey(ValueKey(e.id))))
+        .reduce(
+          (a, b) =>
+              a.top < b.top || (a.top == b.top && a.left < b.left) ? a : b,
+        );
 
     expect(places.top - tabs.bottom, 16);
     expect(firstTile.top - places.bottom, 8);
@@ -540,6 +654,222 @@ void main() {
     // the discoveries start straight under their label: no filter chips
     expect(find.text('All'), findsNothing);
     expect(find.text('Combat'), findsNothing);
+
+    session.dispose();
+  });
+
+  testWidgets('without its tool, a tree or the pond reads as locked', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester, tools: false);
+
+    Finder within(EntityId id, Finder f) =>
+        find.descendant(of: find.byKey(ValueKey(id)), matching: f);
+
+    // the tree says what it wants, under a lock, and dims
+    expect(within(EntityId.TREE, find.text('Needs an axe')), findsOneWidget);
+    expect(within(EntityId.TREE, find.byIcon(Icons.lock_outline)), findsOne);
+    expect(within(EntityId.TREE, find.byType(Opacity)), findsWidgets);
+
+    // the pond, its level met, asks for a rod
+    expect(
+      within(EntityId.TRANQUIL_POND, find.text('Needs a fishing rod')),
+      findsOneWidget,
+    );
+
+    // a fight asks for nothing
+    expect(
+      within(EntityId.CHICKEN, find.byIcon(Icons.lock_outline)),
+      findsNothing,
+    );
+
+    session.dispose();
+  });
+
+  testWidgets('a discovery\'s count sits in a chip, with no separator', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester);
+    final chicken = session.worldController
+        .viewedZoneEntities()
+        .whereType<CombatEntity>()
+        .firstWhere((e) => e.id == EntityId.CHICKEN);
+
+    final pill = tester.widget<CountPill>(
+      find.descendant(
+        of: find.byKey(const ValueKey(EntityId.CHICKEN)),
+        matching: find.byType(CountPill),
+      ),
+    );
+    expect(pill.count, chicken.count);
+    // a touch larger than the 16pt pills that sit over sprites
+    expect(
+      tester
+          .getSize(
+            find.descendant(
+              of: find.byKey(const ValueKey(EntityId.CHICKEN)),
+              matching: find.byType(CountPill),
+            ),
+          )
+          .height,
+      18,
+    );
+    // the line is the icon, the level and the chip: no "·" between them
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey(EntityId.CHICKEN)),
+        matching: find.textContaining('·'),
+      ),
+      findsNothing,
+    );
+
+    session.dispose();
+  });
+
+  testWidgets('fights run easiest first', (tester) async {
+    final session = await pumpExplore(tester);
+    final zone = session.worldController.viewedZoneDefinition();
+    final fights = [
+      for (final e in zone.discoverableEntities)
+        if (e.id.build() case final CombatEntity c) c,
+    ];
+    final byPosition = List.of(fights)
+      ..sort((a, b) {
+        final pa = tester.getTopLeft(find.byKey(ValueKey(a.id)));
+        final pb = tester.getTopLeft(find.byKey(ValueKey(b.id)));
+        final byRow = pa.dy.compareTo(pb.dy);
+        return byRow != 0 ? byRow : pa.dx.compareTo(pb.dx);
+      });
+    final levels = [for (final f in byPosition) f.level];
+    expect(levels, List.of(levels)..sort());
+
+    session.dispose();
+  });
+
+  testWidgets(
+    'a discovery\'s level is coloured by how it reads against yours',
+    (tester) async {
+      final session = await pumpExplore(tester);
+      final colors = GameColors.standard;
+      Color expected(LevelStanding standing) => switch (standing) {
+        LevelStanding.hard => colors.levelHard,
+        LevelStanding.even => colors.levelEven,
+        LevelStanding.easy => colors.levelEasy,
+      };
+      Color levelColor(EntityId id, int level) => tester
+          .widgetList<Text>(
+            find.descendant(
+              of: find.byKey(ValueKey(id)),
+              matching: find.text('$level'),
+            ),
+          )
+          .firstWhere((t) => t.style?.fontSize == 12 && t.style?.height == 1.1)
+          .style!
+          .color!;
+
+      // a fight against the player's combat level
+      final chicken = EntityId.CHICKEN.build() as CombatEntity;
+      final combat = session.playerDataController.getCombatLevel();
+      expect(
+        levelColor(EntityId.CHICKEN, chicken.level),
+        expected(LevelStanding.of(chicken.level, combat)),
+      );
+
+      // a node against the skill that works it
+      final tree = EntityId.TREE.build() as EncounterEntity;
+      final woodcutting = session.playerDataController.getStatTotal(
+        SkillId.WOODCUTTING,
+      );
+      expect(
+        levelColor(EntityId.TREE, tree.defence),
+        expected(LevelStanding.of(tree.defence, woodcutting)),
+      );
+
+      session.dispose();
+    },
+  );
+
+  testWidgets('discovery art sits a quarter closer than a place\'s', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester);
+    double zoom(EntityId id) => tester
+        .widget<Transform>(
+          find
+              .descendant(
+                of: find.byKey(ValueKey(id)),
+                matching: find.byType(Transform),
+              )
+              .first,
+        )
+        .transform
+        .getMaxScaleOnAxis();
+
+    expect(zoom(EntityId.CHICKEN), closeTo(1.25, 1e-9));
+    expect(zoom(EntityId.ANVIL), closeTo(1.0, 1e-9));
+
+    session.dispose();
+  });
+
+  testWidgets('the tile being worked is marked active, and only while it '
+      'runs', (tester) async {
+    final session = await pumpExplore(tester);
+
+    Finder barOn(EntityId id) => find.descendant(
+      of: find.byKey(ValueKey(id)),
+      matching: find.byKey(const ValueKey('place-tile-progress')),
+    );
+    expect(find.byKey(const ValueKey('place-tile-progress')), findsNothing);
+
+    // start chopping the zone's own tree
+    final zone = session
+        .saveGameData
+        .worldData
+        .zones[session.saveGameData.playerData.currentZoneId]!;
+    final tree = zone.discoveredEntities.firstWhere(
+      (e) => e.id == EntityId.TREE,
+    );
+    session.saveGameData.playerData.currentEntityViewId = EntityId.TREE;
+    session.encounterController.startEncounterActionFor(
+      tree as EncounterEntity,
+    );
+    await settle(tester);
+
+    // a small bar along its foot fills with the action in hand, on that
+    // tile alone, with no badge over the sprite
+    final progress = barOn(EntityId.TREE);
+    expect(progress, findsOneWidget);
+    expect(barOn(EntityId.CHICKEN), findsNothing);
+    expect(find.byKey(const ValueKey('place-tile-progress')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey(EntityId.TREE)),
+        matching: find.byIcon(Icons.fast_forward),
+      ),
+      findsNothing,
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      tester
+          .widget<FillBar>(
+            find.descendant(of: progress, matching: find.byType(FillBar)),
+          )
+          .value,
+      closeTo(session.actionTimingController.actionProgress, 1e-9),
+    );
+    expect(
+      tester
+          .widget<FillBar>(
+            find.descendant(of: progress, matching: find.byType(FillBar)),
+          )
+          .value,
+      greaterThan(0),
+    );
+
+    // a paused loop is working nothing
+    session.actionTimingController.stop();
+    await settle(tester);
+    expect(find.byKey(const ValueKey('place-tile-progress')), findsNothing);
 
     session.dispose();
   });

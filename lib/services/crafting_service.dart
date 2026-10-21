@@ -14,17 +14,23 @@ class CraftingService {
     Map<SkillId, int> skillLevels,
   ) {
     final skillLevel = skillLevels[SkillId.COOKING] ?? 1;
+    final burn = calculateBurnChance(
+      level: skillLevel,
+      requiredLevel: recipe.levelRequirement,
+    );
+
+    // the burn line's weight is set against everything else on the table,
+    // so that burning comes up [burn] of the time — the weight is not the
+    // chance itself, which against a cooked line of weight 1 would read 50%
+    // as 33%
+    final rest = recipe.output
+        .where((entry) => entry.id != ItemId.BURNT_FOOD)
+        .fold<double>(0, (sum, entry) => sum + entry.weight);
 
     return [
       for (final entry in recipe.output)
         if (entry.id == ItemId.BURNT_FOOD)
-          entry.copyWith(
-            // Higher burnChance means more likely to get burnt food.
-            weight: calculateBurnChance(
-              level: skillLevel,
-              difficultyScale: recipe.levelRequirement.toDouble(),
-            ),
-          )
+          entry.copyWith(weight: rest * burn / (1 - burn))
         else
           entry,
     ];
@@ -40,14 +46,21 @@ class CraftingService {
     return true;
   }
 
+  /// How likely one cook of a recipe asking for [requiredLevel] is to burn
+  /// at cooking [level] (fire bonuses included): [burnAtRequirement] at the
+  /// recipe's own level, falling in a straight line to [minBurnChance]
+  /// [burnStopMargin] levels past it. Measured from the requirement, so a
+  /// hard recipe is no more hopeless at 99 than an easy one at 21 — what
+  /// counts is how far past it the cook is.
   double calculateBurnChance({
     required int level,
-    required double difficultyScale,
-    double baseBurnChance = 0.6, // 60% burn at lvl 1 for difficultyScale=1
-    double slope = 0.05, // how fast skill reduces burn
-    double minBurnChance = 0.01, // never completely zero (optional)
+    required int requiredLevel,
+    double burnAtRequirement = 0.5,
+    int burnStopMargin = 20,
+    double minBurnChance = 0.01, // never completely zero
   }) {
-    final raw = baseBurnChance * difficultyScale / (1 + level * slope);
-    return raw.clamp(minBurnChance, 1.0);
+    final margin = (level - requiredLevel).clamp(0, burnStopMargin);
+    final chance = burnAtRequirement * (1 - margin / burnStopMargin);
+    return chance.clamp(minBurnChance, burnAtRequirement);
   }
 }

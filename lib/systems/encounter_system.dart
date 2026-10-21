@@ -94,6 +94,8 @@ class EncounterSystem {
     }
 
     final e = encounter.entity!;
+    // a tree wants an axe, ore a pickaxe: no swing without one
+    if (!hasRequiredTool(playerState, e.id)) return result;
 
     if (offline) {
       // how the player's swings land on this entity. null means they cannot
@@ -504,13 +506,38 @@ class EncounterSystem {
     if (required <= 0) return true;
     final def = id.definition as EncounterEntityDefinition;
     final level =
-        _playerDataService.getStatTotals(
-          playerState,
-          at: at,
-        )[def.entityType] ??
+        _playerDataService.getStatTotals(playerState, at: at)[def.entityType] ??
         0;
     return level >= required;
   }
+
+  /// The gathering skill whose tool [id] is worked with — an axe for a
+  /// tree, a pickaxe for ore, a rod for a fishing spot. Null when it takes
+  /// none: fights use the weapon slots, and herbs are picked by hand.
+  SkillId? requiredToolSkill(EntityId id) {
+    final def = id.definition;
+    if (def is! EncounterEntityDefinition) return null;
+    return switch (def.entityType) {
+      SkillId.WOODCUTTING ||
+      SkillId.MINING ||
+      SkillId.FISHING => def.entityType,
+      _ => null,
+    };
+  }
+
+  /// Whether the player has the tool [id] is worked with equipped. True for
+  /// anything that takes no tool.
+  bool hasRequiredTool(PlayerData playerState, EntityId id) {
+    final skill = requiredToolSkill(id);
+    if (skill == null) return true;
+    return playerState.equipmentData.equipedTools[skill] != null;
+  }
+
+  /// Whether [id] can be worked at all: its skill level is met and its tool
+  /// is in hand.
+  bool canWork(PlayerData playerState, EntityId id, {DateTime? at}) =>
+      meetsLevelRequirement(playerState, id, at: at) &&
+      hasRequiredTool(playerState, id);
 
   /// Pays out what the main drop table rolled, into the player's bag and
   /// the encounter's own tally of what the fight has produced.
@@ -881,8 +908,8 @@ class EncounterSystem {
 
     final e = encounter.entity!;
     // the spot asks for a Fishing level of its own, as an herb asks for
-    // Herbalism
-    if (!meetsLevelRequirement(playerState, e.id, at: at)) return result;
+    // Herbalism, and a rod to fish it with
+    if (!canWork(playerState, e.id, at: at)) return result;
 
     if (offline) {
       return _settleFishing(

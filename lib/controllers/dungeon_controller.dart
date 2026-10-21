@@ -153,6 +153,47 @@ class DungeonController extends ChangeNotifier {
 
   // ---- lifecycle ----
 
+  /// Enters floor [index] of [id]: opens it on the encounter screen without
+  /// starting it — the action button does that, through [startViewedFloor].
+  /// Pays the key if this is a keyed dungeon's first floor and it is still
+  /// owed, since entering is what the key buys. Returns a token for
+  /// [leaveSlot], or null when the floor is locked or holds nothing.
+  ///
+  /// Whatever is running carries on: entering touches nothing but the view.
+  Object? enterSlot(DungeonId id, int index) {
+    if (!id.isReal || !unlocked(id, index)) return null;
+    final floors = slotsFor(id);
+    if (index < 0 || index >= floors.length) return null;
+    final floor = floors[index];
+    if (floor.displayed == null) return null;
+
+    _dungeonSystem.spendKey(
+      dungeonId: id,
+      def: id.definition,
+      index: index,
+      progress: _progress,
+      playerInventory: _inventoryState,
+    );
+
+    final token = _encounterController.viewDungeonFloor(id, index, floor);
+    notifyListeners();
+    return token;
+  }
+
+  /// Closes the floor [enterSlot] opened, once its screen is gone. The
+  /// floor keeps running if it was started; only the view goes.
+  void leaveSlot(Object token) => _encounterController.closeDungeonFloor(token);
+
+  /// Starts the floor open on screen — the action button's press. False,
+  /// starting nothing, when no floor is open or it is already the one
+  /// running: the button fires on every press to boost, and restarting a
+  /// running floor would send it back to the top each time.
+  bool startViewedFloor() {
+    final floor = _encounterController.floorToStart;
+    if (floor == null) return false;
+    return startSlot(floor.id, floor.index);
+  }
+
   /// Starts floor [index] of [id]: pays the key if this is the first ever
   /// start of a keyed dungeon's first floor, refills a spent floor, and
   /// hands the queue to the encounter loop. Returns false when the floor is

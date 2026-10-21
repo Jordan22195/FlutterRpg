@@ -8,6 +8,10 @@ import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/skill_grid_tile.dart';
+import 'package:provider/provider.dart';
+import 'package:rpg/game_session.dart';
+import 'package:rpg/screens/map_screen.dart';
+import 'support/gathering_tools.dart';
 
 // Boots the real app (new-game save) and taps through every screen.
 // Uses fixed pumps instead of pumpAndSettle because BuffController
@@ -28,6 +32,13 @@ void main() {
       MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
     );
     await settle(tester);
+    // the pond further down wants a rod
+    equipGatheringTools(
+      Provider.of<GameSession>(
+        tester.element(find.byType(MapScreen)),
+        listen: false,
+      ).saveGameData,
+    );
 
     // ---- Map tab ----
     expect(find.text('World Map'), findsOneWidget);

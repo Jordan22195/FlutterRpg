@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'equipment_info_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
@@ -8,6 +9,7 @@ import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/repeat_press_button.dart';
 import '../utilities/image_resolver.dart';
 import '../data/skill_data.dart';
+import '../theme/hearth_theme.dart';
 import '../utilities/util.dart';
 import '../widgets/countdown_timer.dart';
 
@@ -28,6 +30,18 @@ Color? rarityBorderColor(Rarity rarity) {
     case Rarity.LEGENDARY:
       return Colors.orange;
   }
+}
+
+/// Opens the details for [id] that tapping its tile would: the equipment
+/// dialog, with the piece's stats, for something wearable; the item dialog
+/// for anything else.
+void showItemInfoDialog(BuildContext context, ItemId id) {
+  final item = id.build();
+  if (item is EquipmentItem) {
+    showEquipmentInfoDialog(context, item);
+    return;
+  }
+  ItemStackTile(size: 48, count: 0, id: id)._showInfoDialog(context);
 }
 
 class ItemStackTile<T extends Enum> extends StatelessWidget {
@@ -117,6 +131,15 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   /// a six-digit count at full size covers the art it is counting and the
   /// reader only wants the magnitude anyway.
   final bool compactCount;
+
+  /// The smallest tile that carries a food's heal badge.
+  static const double _healBadgeMinTile = 36;
+
+  /// How much this tile's item heals, if it is a food.
+  int? get _healAmount {
+    final currentId = id;
+    return currentId == null ? null : HealBadge.amountFor(currentId);
+  }
 
   void _showInfoDialog(BuildContext context) {
     final currentId = id;
@@ -385,6 +408,16 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
               ),
             ),
 
+          // a food says how much it heals, top-left, clear of the count and
+          // the buff timer along the bottom. a tile too small for three
+          // corners keeps the count and leaves this out
+          if (_healAmount case final heal? when size >= _healBadgeMinTile)
+            Positioned(
+              left: 4,
+              top: 4,
+              child: HealBadge(amount: heal, tileSize: size),
+            ),
+
           // this item's own buff, ticking down in the corner opposite the
           // count. no clock icon: the two corners share one tile's width,
           // and the count is the one that must never be crowded out
@@ -407,6 +440,60 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
           onTap ??
           (showInfoDialogOnTap ? () => _showInfoDialog(context) : null),
       child: child,
+    );
+  }
+}
+
+/// How much a food heals: a heart and the amount in green, on the same dark
+/// backing the count wears, scaled with the tile the way the count is.
+/// Every tile that shows a food wears one, top-left.
+class HealBadge extends StatelessWidget {
+  const HealBadge({super.key, required this.amount, required this.tileSize});
+
+  /// How much [id] heals when eaten; null for anything that isn't food.
+  static int? amountFor(Enum id) {
+    if (id is! ItemId) return null;
+    final def = id.definition;
+    return def is FoodItemDefinition ? def.restoreAmount : null;
+  }
+
+  final int amount;
+  final double tileSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final fontSize = (tileSize * 0.16).clamp(9.0, 28.0);
+    final colors = context.gameColors;
+
+    return Semantics(
+      label: 'Heals $amount',
+      excludeSemantics: true,
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: fontSize * 0.35,
+          vertical: fontSize * 0.11,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.75),
+          borderRadius: BorderRadius.circular(fontSize * 0.9),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.favorite, size: fontSize, color: colors.hp),
+            SizedBox(width: fontSize * 0.2),
+            Text(
+              '$amount',
+              style: TextStyle(
+                color: colors.heal,
+                fontSize: fontSize,
+                fontWeight: FontWeight.w700,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

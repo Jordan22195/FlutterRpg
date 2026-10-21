@@ -10,6 +10,11 @@ import 'package:rpg/widgets/action_timer.dart';
 import 'package:rpg/widgets/inventory_grid.dart';
 
 import '../data/skill_data.dart';
+import '../data/bound_action.dart';
+import '../controllers/encounter_controller.dart';
+import '../controllers/action_timing_controller.dart';
+import '../data/level_standing.dart';
+import '../controllers/player_data_controller.dart';
 import '../data/zone_details.dart';
 import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
@@ -21,7 +26,9 @@ import '../widgets/place_tile.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/segmented_tabs.dart';
 import '../widgets/sprite_frame.dart';
+import '../widgets/travel_row.dart';
 import '../widgets/entity_info_dialog.dart';
+import '../widgets/discovery_tile.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/skill_ring_row.dart';
 import '../widgets/zone_header.dart';
@@ -90,27 +97,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  /// A crafting skill's name, shortened where the full one would not fit a
-  /// place tile's line.
-  static String _shortSkillName(SkillId skill) => switch (skill) {
-    SkillId.BLACKSMITHING => 'Smithing',
-    SkillId.LEATHERWORKING => 'Leatherwork',
-    SkillId.JEWELCRAFTING => 'Jewelcraft',
-    _ => skillDisplayName(skill),
-  };
+  /// What the loop is running, read once per build so the tiles light up
+  /// as an action starts, stops or moves on — and only then.
+  BoundAction? _running;
 
-  static IconData _craftIcon(SkillId skill) => switch (skill) {
-    SkillId.BLACKSMITHING => Icons.hardware,
-    SkillId.ENCHANTING => Icons.auto_awesome,
-    SkillId.JEWELCRAFTING => Icons.diamond_outlined,
-    SkillId.ALCHEMY => Icons.science_outlined,
-    SkillId.LEATHERWORKING || SkillId.TAILORING => Icons.content_cut,
-    _ => Icons.handyman,
-  };
+  /// Whether [e] is what the action loop is running on right now: the
+  /// fight, node or station it is bound to in the zone on screen, or the
+  /// dungeon one of whose floors is running. A paused loop runs nothing.
+  bool _isActive(WorldController worldController, Entity e) {
+    final running = _running;
+    if (running == null) return false;
+    switch (running.kind) {
+      case BoundActionKind.ENCOUNTER || BoundActionKind.CRAFT:
+        return running.zoneId == worldController.viewedZoneId &&
+            running.entityId == e.id;
+      case BoundActionKind.DUNGEON_SLOT:
+        return e is DungeonEntity &&
+            context.read<EncounterController>().runningDungeonId == e.dungeonId;
+      default:
+        return false;
+    }
+  }
 
   /// One of the zone's places, as a tile in the places grid. Tapping it
   /// opens the place, as the card it replaces did.
   Widget _buildPlaceTile(WorldController worldController, Entity e) {
+    final active = _isActive(worldController, e);
     void open() => worldController.navigateToEntity(e.id, context);
 
     // a firepit shows whatever is burning in it — the fire's art, its name
@@ -122,12 +134,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
           fire is FireItem && fire.expirationTime.isAfter(DateTime.now());
       return PlaceTile(
         key: ValueKey(e.id),
+        active: active,
         id: lit ? fire.id : e.id,
         name: lit ? fire.name : e.name,
         subtitle: lit && fire.canCook
             ? 'Firemaking · Cooking'
             : skillDisplayName(e.craftingSkill),
-        subtitleIcon: Icons.local_fire_department_outlined,
+        // the skills it trains, by their sprites: a lit cookfire adds
+        // cooking beside firemaking
+        subtitleRow: PlaceLine(
+          skills: [e.craftingSkill, if (lit && fire.canCook) SkillId.COOKING],
+        ),
         kind: SpriteKind.fire,
         corner: lit ? _BurnTime(expirationTime: fire.expirationTime) : null,
         onTap: open,
@@ -136,10 +153,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (e is CraftingEntity) {
       return PlaceTile(
         key: ValueKey(e.id),
+        active: active,
         id: e.id,
         name: e.name,
-        subtitle: _shortSkillName(e.craftingSkill),
-        subtitleIcon: _craftIcon(e.craftingSkill),
+        subtitle: skillDisplayName(e.craftingSkill),
+        subtitleRow: PlaceLine(skills: [e.craftingSkill]),
         kind: SpriteKind.crafting,
         onTap: open,
       );
@@ -147,37 +165,71 @@ class _ExploreScreenState extends State<ExploreScreen> {
     if (e is ShopEntity) {
       return PlaceTile(
         key: ValueKey(e.id),
+        active: active,
         id: e.id,
         name: e.name,
-        subtitle: 'Buy & sell',
-        subtitleIcon: Icons.paid_outlined,
+        // a shop trains nothing, so its tile is its name alone
+        subtitle: 'Shop',
+        subtitleRow: const SizedBox.shrink(),
         kind: SpriteKind.shop,
         fallbackIcon: Icons.storefront,
         onTap: open,
       );
     }
     if (e is FishingEntity) {
-      // a spot asks for a Fishing level of its own, and locks until then
+      // a spot asks for a Fishing level of its own and a rod, and locks
+      // until it has both. the level reads first; with it met, the rod
+      final underLevel = !worldController.meetsEntityRequirement(e.id);
+      final noRod = worldController.missingToolFor(e.id) != null;
+      final required = worldController.requiredLevelFor(e.id);
+      final needsRod = !underLevel && noRod;
       return PlaceTile(
         key: ValueKey(e.id),
+        active: active,
         id: e.id,
         name: e.name,
-        subtitle: 'Fishing · Lv ${worldController.requiredLevelFor(e.id)}',
-        subtitleIcon: Icons.phishing,
+        subtitle: needsRod
+            ? 'Needs ${toolNoun(SkillId.FISHING)}'
+            : 'Fishing · Lv $required',
+        // the skill's sprite and the level the spot asks for, coloured
+        // against the player's fishing; a missing rod keeps its words
+        subtitleRow: needsRod
+            ? null
+            : PlaceLine(
+                skills: const [SkillId.FISHING],
+                level: required > 0 ? required : null,
+                standing: LevelStanding.of(
+                  required,
+                  context.watch<PlayerDataController>().getStatTotal(
+                    SkillId.FISHING,
+                  ),
+                ),
+              ),
         kind: SpriteKind.gathering,
-        locked: !worldController.meetsEntityRequirement(e.id),
+        locked: underLevel || noRod,
         onTap: open,
       );
     }
     if (e is DungeonEntity) {
       // zone dungeons carry a rarity but no key: the rarity is the frame's
-      // outline, and the line just says what it is
+      // outline, and the line is its combat level, read like a fight's
+      final level = worldController.dungeonLevel(e);
       return PlaceTile(
         key: ValueKey(e.id),
+        active: active,
         id: e.id,
         name: e.name,
-        subtitle: 'Dungeon',
-        subtitleIcon: Icons.castle_outlined,
+        subtitle: level == null ? 'Dungeon' : 'Combat · Lv $level',
+        subtitleRow: level == null
+            ? const SizedBox.shrink()
+            : PlaceLine(
+                skills: const [SkillId.ATTACK],
+                level: level,
+                standing: LevelStanding.of(
+                  level,
+                  context.watch<PlayerDataController>().getCombatLevel(),
+                ),
+              ),
         kind: SpriteKind.dungeon,
         fallbackIcon: Icons.fort,
         onTap: open,
@@ -186,32 +238,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildResourceCard(
-    WorldController worldController,
-    EncounterEntity e,
-  ) {
-    final requiredLevel = worldController.requiredLevelFor(e.id);
-    final locked = !worldController.meetsEntityRequirement(e.id);
-
-    return ObjectCard(
-      key: ValueKey(e.id),
-      id: e.id,
-      name: e.name,
-      count: e.count,
-      typeId: e.entityType,
-      kind: e is CombatEntity ? SpriteKind.combat : SpriteKind.gathering,
-      statLevel: worldController.entityLevel(e),
-      xpPerUnit: worldController.xpPerUnit(e),
-      locked: locked,
-      requiredLevel: requiredLevel,
-      onTap: () => worldController.navigateToEntity(e.id, context),
-      onIconTap: () => showEntityInfoDialog(context, e),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final worldController = context.watch<WorldController>();
+    _running = context.select<ActionTimingController, BoundAction?>(
+      (timing) => timing.runningAction,
+    );
     final zoneDef = worldController.viewedZoneDefinition();
     final entities = worldController.viewedZoneEntities();
     final zoneItems = worldController.viewedZoneItems();
@@ -238,9 +270,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
         .toList();
 
     // every discoverable has one fixed slot, found or not: clustered by kind
-    // (combat first, then the gathering skills in skill order), and in the
-    // zone's own table order within a kind. an unfound card sits where it
-    // will be once found, so a find never reshuffles the list
+    // (combat first, then the gathering skills in skill order). fights run
+    // easiest first, by combat level; the gathering kinds keep the zone's own
+    // table order. ties fall back to the table too. an unfound card sits
+    // where it will be once found, so a find never reshuffles the list
     final tableOrder = {
       for (var i = 0; i < zoneDef.discoverableEntities.length; i++)
         zoneDef.discoverableEntities[i].id: i,
@@ -249,7 +282,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
     int slot(EntityId id) => tableOrder[id] ?? tableOrder.length;
     int bySlot(_ListSlot a, _ListSlot b) {
       final byGroup = groupRank(a.group).compareTo(groupRank(b.group));
-      return byGroup != 0 ? byGroup : a.slot.compareTo(b.slot);
+      if (byGroup != 0) return byGroup;
+      if (a.group == SkillId.ATTACK) {
+        final byLevel = a.level.compareTo(b.level);
+        if (byLevel != 0) return byLevel;
+      }
+      return a.slot.compareTo(b.slot);
     }
 
     final foundSlots = [
@@ -257,7 +295,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
         _ListSlot(
           group: _resourceGroupKey(e),
           slot: slot(e.id),
-          build: () => _buildResourceCard(worldController, e),
+          level: worldController.entityLevel(e),
+          build: () => DiscoveryTile(
+            key: ValueKey(e.id),
+            entity: e,
+            active: _isActive(worldController, e),
+            onTap: () => worldController.navigateToEntity(e.id, context),
+            onLongPress: () => showEntityInfoDialog(context, e),
+          ),
         ),
     ];
     final unfoundSlots = [
@@ -268,6 +313,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
             _ => SkillId.NULL,
           },
           slot: slot(d.id as EntityId),
+          level: switch ((d.id as EntityId).build()) {
+            final EncounterEntity e => worldController.entityLevel(e),
+            _ => 0,
+          },
           build: () => _UndiscoveredCard(
             key: ValueKey('undiscovered-${d.name}'),
             discovery: d,
@@ -281,7 +330,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
     final Widget tabBody = switch (_tab) {
       // permanent places and the resource nodes worked for materials share
-      // a tab: the places as a grid of tiles, then the discoveries as a list
+      // a tab, each as a grid of tiles
       _ExploreTab.entities =>
         structures.isEmpty && resources.isEmpty && undiscovered.isEmpty
             ? _emptyBody(context, 'Nothing here yet')
@@ -303,7 +352,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       'Discoveries',
                       above: structures.isEmpty ? 8 : 24,
                     ),
-                    for (final entry in discoveries) entry.build(),
+                    PlaceGrid(
+                      tiles: [for (final entry in discoveries) entry.build()],
+                    ),
                   ],
                 ],
               ),
@@ -360,14 +411,19 @@ class _ExploreScreenState extends State<ExploreScreen> {
             topRow: Row(
               children: [
                 Expanded(
-                  child: ActionTimerRow(
-                    label: 'Exploring',
-                    color: context.gameColors.exploration,
-                    // empty unless exploring is the action running: working
-                    // an entity must not fill this zone's timer
-                    progress: worldController.exploreProgress,
-                    interval: worldController.exploreInterval,
-                  ),
+                  // a zone the player is not standing in has nothing to
+                  // explore yet: its row is the road there instead
+                  child: worldController.isViewingCurrentZone
+                      ? ActionTimerRow(
+                          key: const ValueKey('explore-row'),
+                          label: 'Exploring',
+                          color: context.gameColors.exploration,
+                          // empty unless exploring is the action running:
+                          // working an entity must not fill this zone's timer
+                          progress: worldController.exploreProgress,
+                          interval: worldController.exploreInterval,
+                        )
+                      : const TravelRow(key: ValueKey('travel-row')),
                 ),
                 const SizedBox(width: 12),
                 // Exploration + energy-system skills trained by exploring
@@ -398,21 +454,28 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 }
 
+/// A discovery tile's second line: the skill's icon with the level beside
+/// it, then how many are standing, in a chip.
 /// One row of the discoveries list: the kind it clusters under, its place
 /// in the zone's table, and how to draw it — found or not.
 class _ListSlot {
   const _ListSlot({
     required this.group,
     required this.slot,
+    required this.level,
     required this.build,
   });
 
   final SkillId group;
   final int slot;
+
+  /// How hard it is — a fight's combat level, a node's defence. Fights
+  /// sort by it.
+  final int level;
   final Widget Function() build;
 }
 
-/// Something the zone can turn up that exploring hasn't found yet: its card,
+/// Something the zone can turn up that exploring hasn't found yet: its tile,
 /// blurred past reading so what it is stays a surprise. One still behind an
 /// exploration level carries a lock and the level over the blur. It opens
 /// nothing — there is nothing here to work until it is found.
@@ -429,15 +492,15 @@ class _UndiscoveredCard extends StatelessWidget {
     final entity = id.build();
     final encounter = entity is EncounterEntity ? entity : null;
 
-    final card = ObjectCard(
+    final tile = PlaceTile(
       key: ValueKey(id),
       id: id,
       name: entity.name,
-      count: 0,
-      typeId: encounter?.entityType ?? id,
+      subtitle: encounter == null ? '' : 'Lv ${world.entityLevel(encounter)}',
       kind: entity is CombatEntity ? SpriteKind.combat : SpriteKind.gathering,
-      statLevel: encounter == null ? null : world.entityLevel(encounter),
-      onTap: () {},
+      onTap: null,
+      // a creature's art has a margin of its own; sit closer
+      spriteScale: 1.25,
     );
 
     return Semantics(
@@ -450,30 +513,35 @@ class _UndiscoveredCard extends StatelessWidget {
           IgnorePointer(
             child: ImageFiltered(
               imageFilter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
-              child: card,
+              child: tile,
             ),
           ),
           if (discovery.locked)
             Positioned.fill(
-              // the card keeps an 8pt gap under itself; centre on the card
-              bottom: 8,
               child: Center(
                 child: Container(
-                  height: 32,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: palette.bg.withValues(alpha: 0.75),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: palette.borderOverArt),
                   ),
-                  child: Row(
+                  // stacked, so it fits a third of the screen's width
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.lock, size: 16, color: palette.text),
-                      const SizedBox(width: 6),
+                      Icon(Icons.lock, size: 18, color: palette.text),
+                      const SizedBox(height: 2),
                       Text(
                         'Exploration ${discovery.unlockLevel}',
-                        style: HearthText.timer.copyWith(color: palette.text),
+                        maxLines: 1,
+                        style: HearthText.timer.copyWith(
+                          fontSize: 11,
+                          color: palette.text,
+                        ),
                       ),
                     ],
                   ),

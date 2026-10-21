@@ -72,7 +72,7 @@ enum CombatType {
     required int attack,
     required int defence,
     required int hitpoints,
-  }) => ((attack + defence + hitpoints / 5) / 3).round();
+  }) => ((attack + defence + hitpoints / 3) / 3).round();
 }
 
 // The per-level math, taking the weights explicitly so it can be exercised
@@ -85,4 +85,4 @@ int combatDefenceAt(int level, int weight, int totalWeight) =>
     Util.weightedShare(level * 3, weight, totalWeight);
 
 int combatHitpointsAt(int level, int weight, int totalWeight) =>
-    Util.weightedShare(level * 3 * 5, weight, totalWeight);
+    Util.weightedShare(level * 3 * 3, weight, totalWeight);

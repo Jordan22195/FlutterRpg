@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../catalogs/entities/entities.dart';
 import '../catalogs/items/items.dart';
-import '../controllers/buff_controller.dart';
 import '../data/ObjectStack.dart';
 import '../data/skill_data.dart';
-import 'buff_row.dart';
 import 'empty_state.dart';
 import 'entity_info_dialog.dart';
 import 'inventory_grid.dart';
@@ -15,12 +12,12 @@ import 'skill_ring_row.dart';
 /// Which body the panel is showing. Not every screen offers every one:
 /// combat carries its trained skills here, while gathering hoists them above
 /// the panel and shows the entity's details in their place.
-enum _PanelTab { loot, skills, buffs, info }
+enum _PanelTab { loot, skills, info }
 
 /// The one panel under the fight that holds everything the encounter has to
-/// report: what dropped, what the activity trains, what is buffing you, and
-/// what the entity itself is. All of it used to be stacked, which pushed the
-/// action bar around as buffs came and went; as tabs they occupy one slot.
+/// report: what dropped, what the activity trains, and what the entity
+/// itself is. All of it used to be stacked, which pushed the action bar
+/// around; as tabs they occupy one slot.
 class EncounterInfoPanel extends StatefulWidget {
   const EncounterInfoPanel({
     super.key,
@@ -59,24 +56,19 @@ class EncounterInfoPanel extends StatefulWidget {
 }
 
 class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
-  /// Tallest of the compact bodies (the loot grid: a 56 tile plus its 12
-  /// padding on both sides, and the empty state's dashed box), so switching
-  /// between them never resizes the panel. The info body is exempt: it is a page of detail, and sizes to
-  /// its content.
+  /// The height of the compact bodies — the skill rings and the empty
+  /// states — so switching between them never resizes the panel.
+  /// A loot haul and the info page are exempt: each sizes to its content,
+  /// and the screen around them scrolls.
   static const double _bodyHeight = 80;
 
   _PanelTab _tab = _PanelTab.loot;
 
   @override
   Widget build(BuildContext context) {
-    final buffs = context.watch<BuffController>();
-    final buffCount =
-        buffs.getCurrentZoneBuffs().length + buffs.getGlobalBuffs().length;
-
     final tabs = <_PanelTab>[
       _PanelTab.loot,
       if (widget.skills != null) _PanelTab.skills,
-      _PanelTab.buffs,
       if (widget.infoEntity != null) _PanelTab.info,
     ];
 
@@ -89,32 +81,29 @@ class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
       children: [
         SegmentedTabs<_PanelTab>(
           segments: [
-            for (final tab in tabs)
-              TabSegment(value: tab, label: _label(tab, buffCount)),
+            for (final tab in tabs) TabSegment(value: tab, label: _label(tab)),
           ],
           selected: _tab,
           onChanged: (tab) => setState(() => _tab = tab),
         ),
         const SizedBox(height: 12),
-        _body(context, buffCount),
+        _body(context),
       ],
     );
   }
 
-  String _label(_PanelTab tab, int buffCount) {
+  String _label(_PanelTab tab) {
     switch (tab) {
       case _PanelTab.loot:
         return '${widget.lootLabel} · ${widget.drops.length + widget.equipment.length}';
       case _PanelTab.skills:
         return 'Skills';
-      case _PanelTab.buffs:
-        return 'Buffs · $buffCount';
       case _PanelTab.info:
         return 'Info';
     }
   }
 
-  Widget _body(BuildContext context, int buffCount) {
+  Widget _body(BuildContext context) {
     switch (_tab) {
       case _PanelTab.skills:
         return SizedBox(
@@ -124,28 +113,30 @@ class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
           ),
         );
 
-      case _PanelTab.buffs:
-        return SizedBox(
-          height: _bodyHeight,
-          child: buffCount == 0
-              ? _empty(context, 'No active buffs', Icons.auto_awesome_outlined)
-              : const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Center(child: BuffRow(showLabel: false)),
-                ),
-        );
-
       // the details page, at whatever height it needs: the screen around it
       // scrolls, so there is nothing to fit it into
       case _PanelTab.info:
-        return EntityInfoBody(entity: widget.infoEntity!);
+        // the entity already stands on the stage above the tabs. the page
+        // scrolls to reach the foot of it, so it keeps room under it for the
+        // dock's fade to fall on
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 32),
+          child: EntityInfoBody(entity: widget.infoEntity!, showImage: false),
+        );
 
       case _PanelTab.loot:
-        return SizedBox(
-          height: _bodyHeight,
-          child: widget.drops.isEmpty && widget.equipment.isEmpty
-              ? _empty(context, widget.emptyLootLabel, Icons.lock_outline)
-              : InventoryGrid(items: widget.drops, equipment: widget.equipment),
+        if (widget.drops.isEmpty && widget.equipment.isEmpty) {
+          return SizedBox(
+            height: _bodyHeight,
+            child: _empty(context, widget.emptyLootLabel, Icons.lock_outline),
+          );
+        }
+        // the whole haul at its own height, every row of it: the screen
+        // around it scrolls, so the grid never scrolls inside its card
+        return InventoryGrid(
+          items: widget.drops,
+          equipment: widget.equipment,
+          shrinkWrap: true,
         );
     }
   }

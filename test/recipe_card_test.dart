@@ -5,11 +5,13 @@ import 'package:provider/provider.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/utilities/image_resolver.dart';
+import 'package:rpg/theme/game_colors.dart';
 import 'package:rpg/theme/zone_palette.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 
@@ -35,6 +37,10 @@ void main() {
           ),
           ChangeNotifierProvider<InventoryController>.value(
             value: session.inventoryController,
+          ),
+          // the item details a tile opens read the buffs
+          ChangeNotifierProvider<BuffController>.value(
+            value: session.buffController,
           ),
         ],
         child: MaterialApp(
@@ -177,6 +183,24 @@ void main() {
     expect(taps, 1);
   });
 
+  testWidgets('under its level, a recipe flags no missing ingredient', (
+    tester,
+  ) async {
+    // bonfire needs firemaking 15, and there are no logs to burn
+    setLevel(SkillId.FIREMAKING, 1);
+    save.inventoryData.itemMap[ItemId.LOGS] = 0;
+
+    // in the picker, where it locks, and as the station's own card, where
+    // it does not: the level is what stands in the way, so no input is red
+    for (final lock in [true, false]) {
+      await pumpCard(tester, recipeId: 'bonfire', lockWhenUnderLevel: lock);
+      final flagged = tester
+          .widgetList<RecipeTile>(find.byType(RecipeTile))
+          .where((tile) => tile.borderColor != null);
+      expect(flagged, isEmpty, reason: 'lockWhenUnderLevel: $lock');
+    }
+  });
+
   testWidgets('enough materials leave the card unflagged', (tester) async {
     setLevel(SkillId.FIREMAKING, 20);
     save.inventoryData.itemMap[ItemId.LOGS] = 10;
@@ -274,5 +298,170 @@ void main() {
     );
     // outside a zone theme the meadow's palette stands in
     expect(cardBorderColor(tester), ZonePalette.meadow.text);
+  });
+
+  testWidgets('the level reads on its own, with no "Requires" before it', (
+    tester,
+  ) async {
+    setLevel(SkillId.FIREMAKING, 20);
+    await pumpCard(tester, recipeId: 'cookfire', lockWhenUnderLevel: true);
+
+    final level = session.craftingController
+        .getRecipe('cookfire')
+        .levelRequirement;
+    expect(find.text('Lv $level'), findsOneWidget);
+    expect(find.text('Requires'), findsNothing);
+  });
+
+  testWidgets('the card says what one craft is worth in xp', (tester) async {
+    setLevel(SkillId.FIREMAKING, 20);
+    await pumpCard(tester, recipeId: 'cookfire', lockWhenUnderLevel: true);
+
+    final xp = session.craftingController.getRecipe('cookfire').xp;
+    final shown = xp == xp.roundToDouble()
+        ? '${xp.round()}'
+        : xp.toStringAsFixed(1);
+    final label = find.textContaining('+$shown', findRichText: true);
+    expect(label, findsOneWidget);
+
+    // in the xp gold, as every xp number is
+    final spans = <TextSpan>[];
+    tester.widget<RichText>(label).text.visitChildren((span) {
+      if (span is TextSpan) spans.add(span);
+      return true;
+    });
+    final number = spans.firstWhere((span) => span.text == '+$shown');
+    expect(number.style?.color, GameColors.standard.xp);
+  });
+
+  testWidgets('a cooked food on the card says how much it heals', (
+    tester,
+  ) async {
+    save.inventoryData.itemMap[ItemId.CHICKEN_MEAT] = 5;
+    await pumpCard(tester, recipeId: 'cook_chicken', lockWhenUnderLevel: true);
+
+    Finder heartOn(ItemId id) => find.descendant(
+      of: find.byWidgetPredicate((w) => w is RecipeTile && w.id == id),
+      matching: find.byIcon(Icons.favorite),
+    );
+    final heal =
+        (ItemId.COOKED_CHICKEN.definition as FoodItemDefinition).restoreAmount;
+
+    // the cooked chicken it makes heals; the raw meat it costs does not
+    expect(heartOn(ItemId.COOKED_CHICKEN), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byWidgetPredicate(
+          (w) => w is RecipeTile && w.id == ItemId.COOKED_CHICKEN,
+        ),
+        matching: find.text('$heal'),
+      ),
+      findsOneWidget,
+    );
+    expect(heartOn(ItemId.CHICKEN_MEAT), findsNothing);
+  });
+
+  group('taps', () {
+    Finder tileOf(ItemId id) =>
+        find.byWidgetPredicate((w) => w is RecipeTile && w.id == id);
+
+    testWidgets('a tile opens its item\'s details, not the recipe', (
+      tester,
+    ) async {
+      setLevel(SkillId.FIREMAKING, 20);
+      save.inventoryData.itemMap[ItemId.LOGS] = 10;
+      var taps = 0;
+      await pumpCard(
+        tester,
+        recipeId: 'cookfire',
+        lockWhenUnderLevel: true,
+        onTap: () => taps++,
+      );
+
+      // the input
+      await tester.tap(tileOf(ItemId.LOGS));
+      await tester.pump();
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text(ItemId.LOGS.definition.name),
+        ),
+        findsOneWidget,
+      );
+      expect(taps, 0);
+      Navigator.of(tester.element(find.byType(AlertDialog))).pop();
+      await tester.pump();
+
+      // and the output
+      await tester.tap(tileOf(ItemId.COOKFIRE));
+      await tester.pump();
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text(ItemId.COOKFIRE.definition.name),
+        ),
+        findsOneWidget,
+      );
+      expect(taps, 0);
+    });
+
+    testWidgets('the card around the tiles picks the recipe', (tester) async {
+      setLevel(SkillId.FIREMAKING, 20);
+      save.inventoryData.itemMap[ItemId.LOGS] = 10;
+      var taps = 0;
+      await pumpCard(
+        tester,
+        recipeId: 'cookfire',
+        lockWhenUnderLevel: true,
+        onTap: () => taps++,
+      );
+
+      // the level column is dead space as far as the tiles go
+      await tester.tap(find.textContaining('Lv '));
+      await tester.pump();
+      expect(taps, 1);
+      expect(find.byType(AlertDialog), findsNothing);
+    });
+
+    testWidgets('a locked recipe still opens its items\' details', (
+      tester,
+    ) async {
+      setLevel(SkillId.FIREMAKING, 1);
+      var taps = 0;
+      await pumpCard(
+        tester,
+        recipeId: 'cookfire',
+        lockWhenUnderLevel: true,
+        onTap: () => taps++,
+      );
+
+      await tester.tap(tileOf(ItemId.COOKFIRE));
+      await tester.pump();
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(taps, 0);
+    });
+
+    testWidgets('a piece of equipment opens the equipment details', (
+      tester,
+    ) async {
+      await pumpCard(
+        tester,
+        recipeId: 'forge_copper_dagger',
+        lockWhenUnderLevel: false,
+      );
+
+      await tester.tap(tileOf(ItemId.COPPER_DAGGER));
+      await tester.pump();
+      // the equipment dialog titles the piece by its display name
+      final piece = ItemId.COPPER_DAGGER.build() as EquipmentItem;
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text(piece.displayName),
+        ),
+        findsOneWidget,
+      );
+    });
   });
 }

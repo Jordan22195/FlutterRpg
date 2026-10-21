@@ -93,8 +93,8 @@ void main() {
         vsync: const TestVSync(),
       );
 
-      final forest = reloaded.saveGameData.worldData.zones[ZoneId
-          .DARKWOOD_FOREST]!;
+      final forest =
+          reloaded.saveGameData.worldData.zones[ZoneId.DARKWOOD_FOREST]!;
       final entrance = forest.permanentEntities.whereType<DungeonEntity>();
       expect(entrance, hasLength(1));
       expect(entrance.first.dungeonId, DungeonId.SPIDER_DEN);

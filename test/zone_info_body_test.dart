@@ -81,11 +81,9 @@ void main() {
   String label(ZoneDiscovery d) =>
       d.hasCountRange ? '${d.name}  ${d.minCount}-${d.maxCount}' : d.name;
 
-  ZoneDetails detailsOf(GameSession session, ZoneId zoneId) =>
-      session.explorationSystem.buildZoneDetails(
-        session.saveGameData.playerData,
-        zoneId,
-      );
+  ZoneDetails detailsOf(GameSession session, ZoneId zoneId) => session
+      .explorationSystem
+      .buildZoneDetails(session.saveGameData.playerData, zoneId);
 
   testWidgets('zone detail shows finds per explore, odds and locked rows', (
     tester,
@@ -191,37 +189,38 @@ void main() {
       return null;
     }
 
-    testWidgets('a gated find is listed, locked, with the level that opens it', (
-      tester,
-    ) async {
-      final found = zoneWithItemFinds();
-      expect(found, isNotNull, reason: 'no zone has an item table any more');
-      final (zone, entry) = found!;
-      expect(
-        entry.unlockLevel,
-        greaterThan(1),
-        reason: 'expected the first find to be gated',
-      );
+    testWidgets(
+      'a gated find is listed, locked, with the level that opens it',
+      (tester) async {
+        final found = zoneWithItemFinds();
+        expect(found, isNotNull, reason: 'no zone has an item table any more');
+        final (zone, entry) = found!;
+        expect(
+          entry.unlockLevel,
+          greaterThan(1),
+          reason: 'expected the first find to be gated',
+        );
 
-      final session = await pumpZoneDetail(
-        tester,
-        explorationLevel: 1,
-        zoneId: zone,
-      );
-      final details = detailsOf(session, zone);
-      expect(details.items, isNotEmpty);
+        final session = await pumpZoneDetail(
+          tester,
+          explorationLevel: 1,
+          zoneId: zone,
+        );
+        final details = detailsOf(session, zone);
+        expect(details.items, isNotEmpty);
 
-      await tester.scrollUntilVisible(find.text('FINDS'), 120);
-      for (final d in details.items) {
-        expect(d.locked, isTrue);
-        expect(find.text(label(d)), findsWidgets);
-        expect(find.text('Exploration ${d.unlockLevel}'), findsWidgets);
-        // a locked row shows no odds, only the level that opens it
-        expect(d.chance, 0);
-      }
+        await tester.scrollUntilVisible(find.text('FINDS'), 120);
+        for (final d in details.items) {
+          expect(d.locked, isTrue);
+          expect(find.text(label(d)), findsWidgets);
+          expect(find.text('Exploration ${d.unlockLevel}'), findsWidgets);
+          // a locked row shows no odds, only the level that opens it
+          expect(d.chance, 0);
+        }
 
-      session.dispose();
-    });
+        session.dispose();
+      },
+    );
 
     testWidgets('an open find shows its stack range and odds, but no xp', (
       tester,

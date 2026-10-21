@@ -123,9 +123,7 @@ void main() {
           final zone = zones[zoneId.name] as Map<String, dynamic>;
           // the same landmarks, filed as discoveries the way an old save
           // that found them before they were promoted would have
-          zone['discoveredEntities'] = [
-            ...zone['permanentEntities'] as List,
-          ];
+          zone['discoveredEntities'] = [...zone['permanentEntities'] as List];
           return json;
         },
       );

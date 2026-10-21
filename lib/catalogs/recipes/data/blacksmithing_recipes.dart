@@ -128,8 +128,8 @@ const _tiers = <_Tier>[
     baseLevel: 1,
     bar: ItemId.COPPER_BAR,
     smeltInputs: {ItemId.COPPER_ORE: 1},
-    smeltXp: 1,
-    xpPerBar: 2,
+    smeltXp: 3,
+    xpPerBar: 3,
     rungs: _stretchedRungs,
   ),
   _Tier(

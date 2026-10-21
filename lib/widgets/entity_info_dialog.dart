@@ -52,9 +52,19 @@ void showEntityInfoDialog(BuildContext context, EncounterEntity entity) {
 /// Sizes to its content, so it can be dropped into a scrolling page as
 /// readily as into the details dialog.
 class EntityInfoBody extends StatefulWidget {
-  const EntityInfoBody({super.key, required this.entity, this.onDevSetCount});
+  const EntityInfoBody({
+    super.key,
+    required this.entity,
+    this.onDevSetCount,
+    this.showImage = true,
+  });
 
   final EncounterEntity entity;
+
+  /// Draw the entity's picture at the top. The popup does; the encounter
+  /// screen's info tab doesn't, since the entity stands on the stage right
+  /// above it.
+  final bool showImage;
 
   /// Called after the dev count is applied — the dialog closes on it, an
   /// inline panel has nothing to do.
@@ -91,7 +101,7 @@ class _EntityInfoBodyState extends State<EntityInfoBody> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Header(details: details),
+        _Header(details: details, showImage: widget.showImage),
         _RollTable(details: details),
         _DropTable(details: details),
 
@@ -127,38 +137,45 @@ class _EntityInfoBodyState extends State<EntityInfoBody> {
   }
 }
 
-/// Portrait, plus the skill this entity trains and its level gate.
+/// Portrait, plus the entity's own level beside the skill it trains, and
+/// its level gate when it has one.
 class _Header extends StatelessWidget {
-  const _Header({required this.details});
+  const _Header({required this.details, required this.showImage});
 
   final EntityDetails details;
+  final bool showImage;
 
   @override
   Widget build(BuildContext context) {
     final entity = details.entity;
+    // how hard it is, the number its zone tile reads as "Lv N": a fight's
+    // combat level, a node's defence. not the gate, which most things lack
+    final level = entity is CombatEntity ? entity.level : entity.defence;
     final gate = details.requiredLevel > 0
-        ? ' · Lv ${details.requiredLevel}'
+        ? ' · Requires Lv ${details.requiredLevel}'
         : '';
 
     return Column(
       children: [
-        Center(
-          child: ItemStackTile(
-            size: 96,
-            count: entity.count,
-            id: entity.id,
-            showInfoDialogOnTap: false,
-            depleted: entity.count <= 0,
+        if (showImage) ...[
+          Center(
+            child: ItemStackTile(
+              size: 96,
+              count: entity.count,
+              id: entity.id,
+              showInfoDialogOnTap: false,
+              depleted: entity.count <= 0,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
+          const SizedBox(height: 8),
+        ],
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const SizedBox(width: 4),
             StatChip(
               icon: IconRenderer(size: 18, id: details.skill),
-              value: '${details.requiredLevel}',
+              value: '$level',
             ),
             Text(
               '${skillDisplayName(details.skill)}$gate',
@@ -173,10 +190,10 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// Both sides of the roll on one table: how often each side lands, how
-/// hard, and how fast. The player's column and the entity's carry the same
-/// measurements, so a fight is read across a line instead of by holding one
-/// section's numbers in your head while you scroll to the other's.
+/// The roll as one column of stats. A fight reads as the six numbers that
+/// decide it — how often you land, how often you turn its swing aside, the
+/// hardest either side hits, your damage rate and how many actions a kill
+/// takes; anything else rolls one way and lists only its own side.
 ///
 /// Everything here is resolved against the player's *current* stats, boost
 /// included, so the rates move as the fight does.
@@ -197,11 +214,11 @@ class _RollTable extends StatelessWidget {
     }
   }
 
-  /// The rows, with an entity column only when something is rolling back.
+  /// The rows, one value each.
   List<InfoTableRow> _rows() {
     final combat = details.isCombat;
-    InfoTableRow row(String label, String you, [String? them]) =>
-        InfoTableRow(label, [you, if (combat) them ?? InfoTable.blank]);
+    InfoTableRow row(String label, String value) =>
+        InfoTableRow(label, [value]);
 
     // herbs are never missed: the roll only decides how much the pick
     // yields, so hit/miss and damage don't apply
@@ -213,34 +230,35 @@ class _RollTable extends StatelessWidget {
     }
 
     final actionsToKill = details.actionsToKill;
+    // to two places: a kill that takes 3.40 actions and one that takes 3.95
+    // land on the same whole number, and it is the fraction that moves as
+    // gear and the boost do
+    final toKill = actionsToKill.isFinite
+        ? actionsToKill.toStringAsFixed(2)
+        : 'never';
+
+    if (combat) {
+      return [
+        row('Hit chance', formatPercent(details.playerHitChance)),
+        // the enemy's misses: a blocked swing deals nothing
+        row('Block chance', formatPercent(details.blockChance)),
+        row('Max hit', '${details.playerMaxHit}'),
+        // the hardest the enemy can hit back
+        row('Max take', '${details.entityMaxHit}'),
+        row('DPS', formatDecimal(details.playerDamagePerSecond)),
+        row('Actions to kill', toKill),
+      ];
+    }
 
     return [
-      row(
-        combat ? 'Hit chance' : 'Success chance',
-        formatPercent(details.playerHitChance),
-        formatPercent(details.entityHitChance),
-      ),
-      // the entity's misses are the player's blocks - the same roll read
-      // from the other end, which is exactly what a column is for
-      row(
-        combat ? 'Miss chance' : 'Fail chance',
-        formatPercent(details.playerMissChance),
-        formatPercent(details.blockChance),
-      ),
-      row('Max hit', '${details.playerMaxHit}', '${details.entityMaxHit}'),
-      row(
-        'Avg damage',
-        formatDecimal(details.playerAverageDamage),
-        formatDecimal(details.entityAverageDamage),
-      ),
+      row('Success chance', formatPercent(details.playerHitChance)),
+      row('Fail chance', formatPercent(details.playerMissChance)),
+      row('Max hit', '${details.playerMaxHit}'),
+      row('Avg damage', formatDecimal(details.playerAverageDamage)),
       if (details.usesDamage) ...[
+        row('Damage per second', formatDecimal(details.playerDamagePerSecond)),
         row(
-          'Damage per second',
-          formatDecimal(details.playerDamagePerSecond),
-          formatDecimal(details.entityDamagePerSecond),
-        ),
-        row(
-          combat ? 'Actions to kill' : 'Actions to clear',
+          'Actions to clear',
           actionsToKill.isFinite ? '~${actionsToKill.ceil()}' : 'never',
         ),
       ],
@@ -261,10 +279,7 @@ class _RollTable extends StatelessWidget {
       children: [
         // the levels the columns below are rolled from. A line rather than
         // rows of their own: they belong to the player either way, so a
-        InfoTable(
-          headers: combat ? ['You', 'Them'] : const [''],
-          rows: _rows(),
-        ),
+        InfoTable(headers: const [''], rows: _rows()),
       ],
     );
   }

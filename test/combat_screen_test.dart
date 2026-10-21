@@ -15,6 +15,8 @@ import 'package:rpg/widgets/action_dock.dart';
 import 'package:rpg/widgets/art_header.dart';
 import 'package:rpg/widgets/eat_food_button.dart';
 import 'package:rpg/widgets/empty_state.dart';
+import 'package:rpg/widgets/entity_info_dialog.dart';
+import 'package:rpg/widgets/encounter_info_panel.dart';
 import 'package:rpg/widgets/fill_bar.dart';
 import 'package:rpg/widgets/stage_panel.dart';
 import 'package:rpg/widgets/stance_button.dart';
@@ -98,6 +100,20 @@ void main() {
     final stage = tester.widget<StagePanel>(find.byType(StagePanel));
     expect(stage.tint, GameColors.standard.combatTint);
     expect(find.byType(StageCountPill), findsOneWidget);
+    // and nothing under its feet: no shadow disc drawn on the stage
+    expect(
+      find.descendant(
+        of: find.byType(StagePanel),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Container &&
+              w.decoration is BoxDecoration &&
+              (w.decoration! as BoxDecoration).borderRadius ==
+                  const BorderRadius.all(Radius.elliptical(75, 11)),
+        ),
+      ),
+      findsNothing,
+    );
 
     // both hp bars are the hp colour, on the track
     final hpBars = tester
@@ -112,10 +128,10 @@ void main() {
     expect(find.text('Enemy'), findsOneWidget);
     expect(find.text('Player'), findsOneWidget);
 
-    // the tabs, opening on an empty loot list
+    // the tabs, opening on an empty loot list. there is no buffs tab
     expect(find.text('Loot · 0'), findsOneWidget);
     expect(find.text('Skills'), findsWidgets);
-    expect(find.textContaining('Buffs'), findsOneWidget);
+    expect(find.textContaining('Buffs'), findsNothing);
     expect(find.text('Info'), findsOneWidget);
     expect(
       find.widgetWithText(EmptyState, 'No loot this session'),
@@ -135,6 +151,42 @@ void main() {
     expect(
       tester.getSize(find.byType(EatFoodButton)).width,
       greaterThanOrEqualTo(92),
+    );
+
+    // an empty loot tab fits the screen with nothing under it, so a drag
+    // springs back to rest rather than leaving the page scrolled. at this
+    // height the page only just fits: padding left under the tabs would tip
+    // it into scrolling
+    tester.view.physicalSize = const Size(390, 780);
+    await settle(tester);
+    final page = tester
+        .state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(EncounterScreen),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        )
+        .position;
+    expect(page.maxScrollExtent, 0);
+    tester.view.physicalSize = const Size(390, 844);
+    await settle(tester);
+
+    // the entity's info page runs past the screen, so it keeps room under it for the
+    // dock's fade to fall on
+    final infoTab = find.descendant(
+      of: find.byType(EncounterInfoPanel),
+      matching: find.text('Info'),
+    );
+    await tester.ensureVisible(infoTab);
+    await settle(tester);
+    await tester.tap(infoTab);
+    await settle(tester);
+    expect(
+      tester.getBottomLeft(find.byType(EncounterInfoPanel)).dy -
+          tester.getBottomLeft(find.byType(EntityInfoBody)).dy,
+      32,
     );
 
     // and back goes back to the zone, under its open art again

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:rpg/data/ObjectStack.dart';
+import 'package:rpg/widgets/action_dock.dart';
+import 'package:rpg/widgets/primary_button.dart';
+import 'package:rpg/widgets/travel_row.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/shop_controller.dart';
@@ -16,8 +20,31 @@ shop screen contents:
 -"sell" list: the player's items with sell buttons (price = value)
 */
 
-class ShopScreen extends StatelessWidget {
+class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
+
+  @override
+  State<ShopScreen> createState() => _ShopScreenState();
+}
+
+class _ShopScreenState extends State<ShopScreen> {
+  /// The sell row under a held button, kept on the list in its place after
+  /// its stack runs out, until the finger comes off. Without it the row
+  /// would vanish mid-hold and the next one would slide under the finger
+  /// and start selling instead. [_heldIndex] is where it sat.
+  ItemId? _heldItem;
+  EquipmentItem? _heldEquipment;
+  int _heldIndex = 0;
+
+  void _holdItem(ItemId id, int index, bool held) => setState(() {
+    _heldItem = held ? id : null;
+    _heldIndex = index;
+  });
+
+  void _holdEquipment(EquipmentItem item, int index, bool held) => setState(() {
+    _heldEquipment = held ? item : null;
+    _heldIndex = index;
+  });
 
   Widget _sectionHeader(BuildContext context, String title) {
     return Padding(
@@ -33,14 +60,22 @@ class ShopScreen extends StatelessWidget {
   /// a zone away does with every row: the stock is worth reading before you
   /// make the trip, but the counter is not in reach until you are standing
   /// at it — and this screen has no action bar to offer the trip on.
+  ///
+  /// [soldOut] keeps a bought-out shelf slot in its place, greyed, with the
+  /// price swapped for a disabled "Sold out" until the restock.
   Widget _tradeRow({
     required BuildContext context,
     required Widget tile,
     required String name,
     required String buttonLabel,
     required VoidCallback? onPressed,
+    bool soldOut = false,
+    String soldOutLabel = 'Sold out',
+    Key? key,
+    ValueChanged<bool>? onHoldChanged,
   }) {
-    return Card(
+    final row = Card(
+      key: key,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Row(
@@ -48,11 +83,18 @@ class ShopScreen extends StatelessWidget {
             tile,
             const SizedBox(width: 12),
             Expanded(child: Text(name, overflow: TextOverflow.ellipsis)),
-            RepeatPressButton(label: buttonLabel, onPressed: onPressed),
+            RepeatPressButton(
+              label: soldOut ? soldOutLabel : buttonLabel,
+              onPressed: soldOut ? null : onPressed,
+              onHoldChanged: onHoldChanged,
+            ),
           ],
         ),
       ),
     );
+    // one wrapper either way, so a row that empties under a held button
+    // keeps its element, and with it the hold
+    return Opacity(key: key, opacity: soldOut ? 0.5 : 1, child: row);
   }
 
   /// One control for the whole screen: the shelf and both sell lists read
@@ -84,8 +126,27 @@ class ShopScreen extends StatelessWidget {
     final controller = context.watch<ShopController>();
     final canTrade = context.watch<WorldController>().isViewingCurrentZone;
     final stock = controller.stock();
-    final sellableItems = controller.sellableItems();
-    final sellableEquipment = controller.sellableEquipment();
+    final sellableItems = [...controller.sellableItems()];
+    final sellableEquipment = [...controller.sellableEquipment()];
+
+    // a held row whose stack just ran out stays where it was, at zero
+    final heldItem = _heldItem;
+    if (heldItem != null && sellableItems.every((s) => s.id != heldItem)) {
+      sellableItems.insert(
+        _heldIndex.clamp(0, sellableItems.length),
+        ObjectStack(id: heldItem, count: 0),
+      );
+    }
+    final heldEquipment = _heldEquipment;
+    if (heldEquipment != null &&
+        sellableEquipment.every(
+          (e) => e.instanceId != heldEquipment.instanceId,
+        )) {
+      sellableEquipment.insert(
+        _heldIndex.clamp(0, sellableEquipment.length),
+        heldEquipment,
+      );
+    }
     final nextRestockAt = controller.nextRestockAt();
 
     return SafeArea(
@@ -145,10 +206,13 @@ class ShopScreen extends StatelessWidget {
                   for (final entry in stock)
                     _tradeRow(
                       context: context,
+                      soldOut: entry.count <= 0,
                       tile: ItemStackTile(
                         size: 48,
                         count: entry.count,
                         id: entry.itemId,
+                        // bought out: the art darkens with the row
+                        depleted: entry.count <= 0,
                       ),
                       name: controller.itemName(entry.itemId),
                       buttonLabel: "Buy ${controller.buyPrice(entry.itemId)}c",
@@ -164,13 +228,19 @@ class ShopScreen extends StatelessWidget {
                       padding: EdgeInsets.all(8),
                       child: Text("Nothing to sell."),
                     ),
-                  for (final item in sellableItems)
+                  for (final (index, item) in sellableItems.indexed)
                     _tradeRow(
                       context: context,
+                      key: ValueKey(('sell', item.id)),
+                      onHoldChanged: (held) => _holdItem(item.id, index, held),
+                      // sold down to nothing under a held button
+                      soldOut: item.count <= 0,
+                      soldOutLabel: 'None left',
                       tile: ItemStackTile(
                         size: 48,
                         count: item.count,
                         id: item.id,
+                        depleted: item.count <= 0,
                       ),
                       name: controller.itemName(item.id),
                       buttonLabel: "Sell ${controller.sellPrice(item.id)}c",
@@ -178,9 +248,17 @@ class ShopScreen extends StatelessWidget {
                           ? () => controller.sellOne(item.id)
                           : null,
                     ),
-                  for (final item in sellableEquipment)
+                  for (final (index, item) in sellableEquipment.indexed)
                     _tradeRow(
                       context: context,
+                      key: ValueKey(('sell', item.instanceId)),
+                      onHoldChanged: (held) =>
+                          _holdEquipment(item, index, held),
+                      // sold out of the bag under a held button
+                      soldOut: controller.sellableEquipment().every(
+                        (e) => e.instanceId != item.instanceId,
+                      ),
+                      soldOutLabel: 'None left',
                       tile: ItemStackTile(
                         size: 48,
                         count: item.count,
@@ -197,6 +275,24 @@ class ShopScreen extends StatelessWidget {
                 ],
               ),
             ),
+
+            // a shop a zone away trades nothing until the player has walked
+            // there, so under the shelves is the way there: the road, and
+            // the travel button that walks it
+            if (!canTrade)
+              ActionDock(
+                banner: const TravelRow(),
+                buttons: ActionButtonRow(
+                  padding: EdgeInsets.zero,
+                  // away from the zone this is always the travel button; the
+                  // shop has no action of its own to start
+                  actionButton: ActionOrTravelButton(
+                    enabled: true,
+                    label: 'Trade',
+                    startActionFunction: () {},
+                  ),
+                ),
+              ),
           ],
         ),
       ),

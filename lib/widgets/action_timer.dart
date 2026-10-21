@@ -17,6 +17,10 @@ const double kEncounterRowLabelWidth = 56;
 /// the callers that compare against it.
 const Color kTravelColor = GameColors.travelColor;
 
+/// Identifies the travel bar: the zone screen's progress row while it shows
+/// the road to a zone the player is not standing in.
+const Key kTravelBarKey = Key('travel-progress');
+
 /// Who an [ActionTimer] belongs to. The player's and the enemy's are drawn
 /// identically, so neither reads as more important than the other; travel
 /// takes its own colour, because while it fills nothing is being worked.
@@ -180,11 +184,15 @@ class ActionTimerRow extends StatelessWidget {
     required this.progress,
     required this.interval,
     this.color,
+    this.barKey,
   });
 
   final String label;
   final double Function() progress;
   final Duration Function() interval;
+
+  /// Keys the bar itself, e.g. [kTravelBarKey].
+  final Key? barKey;
 
   /// The activity's colour — exploration gold for "Exploring", firemaking
   /// orange for "Tending". Defaults to the neutral timer fill.
@@ -220,6 +228,7 @@ class ActionTimerRow extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           FillBar(
+            key: barKey,
             value: progress(),
             height: _barHeight,
             borderRadius: _barHeight / 2,

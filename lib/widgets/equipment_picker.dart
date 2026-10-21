@@ -383,53 +383,73 @@ class _PickerCard extends StatelessWidget {
     );
   }
 
-  /// One chip per stat in the union of this item's and the baseline's
-  /// stats, so a stat the candidate lacks still shows as a red loss.
-  List<Widget> _statChips(BuildContext context) {
-    final mine = item.effectiveSkillBonus;
-    final base = baseline?.effectiveSkillBonus ?? const <SkillId, int>{};
-    final keys = {...mine.keys, ...base.keys}.toList()
-      ..sort((a, b) => a.index.compareTo(b.index));
+  List<Widget> _statChips(BuildContext context) =>
+      equipmentComparisonChips(item, baseline);
+}
 
-    final chips = <Widget>[];
-    for (final key in keys) {
-      final value = mine[key] ?? 0;
-      final delta = value - (base[key] ?? 0);
-      if (value == 0 && delta == 0) continue;
-      chips.add(
-        StatChip(
-          icon: IconRenderer(size: 14, id: key),
-          value: '$value',
-          deltaText: delta == 0 ? null : (delta > 0 ? '+$delta' : '−${-delta}'),
-          deltaColor: delta > 0 ? statGainColor : statLossColor,
-        ),
-      );
-    }
+/// One chip per stat in the union of [item]'s and [baseline]'s stats, each
+/// with its change against [baseline] — so a stat [item] lacks still shows
+/// as a red loss — then the weapon speed, where faster is the gain. With no
+/// [baseline] every stat reads as a plain gain over an empty slot.
+///
+/// [showDeltas] off draws the values alone, for a piece with nothing to be
+/// measured against (the one being worn, say). [large] draws them at the
+/// details popup's size rather than the picker's.
+List<Widget> equipmentComparisonChips(
+  EquipmentItem item,
+  EquipmentItem? baseline, {
+  bool showDeltas = true,
+  bool large = false,
+}) {
+  // the details popup lists them big, one to a line; the picker keeps them
+  // compact
+  final iconSize = large ? 28.0 : 14.0;
+  final fontSize = large ? 20.0 : 12.0;
+  final mine = item.effectiveSkillBonus;
+  final base = baseline?.effectiveSkillBonus ?? const <SkillId, int>{};
+  final keys = {...mine.keys, ...base.keys}.toList()
+    ..sort((a, b) => a.index.compareTo(b.index));
 
-    // weapon speed; lower interval is better, so faster = green
-    final currentItem = item;
-    if (currentItem is WeaponItem) {
-      final mySpeed = currentItem.actionInterval.inMilliseconds / 1000.0;
-      final baselineItem = baseline;
-      final baseSpeed = baselineItem is WeaponItem
-          ? baselineItem.actionInterval.inMilliseconds / 1000.0
-          : null;
-      final diff = baseSpeed == null ? null : mySpeed - baseSpeed;
-      chips.add(
-        StatChip(
-          icon: const Icon(Icons.timer, size: 14, color: Colors.grey),
-          value: '${mySpeed.toStringAsFixed(1)}s',
-          deltaText: (diff == null || diff == 0)
-              ? null
-              : (diff > 0
-                    ? '+${diff.toStringAsFixed(1)}s'
-                    : '−${(-diff).toStringAsFixed(1)}s'),
-          deltaColor: (diff != null && diff < 0)
-              ? statGainColor
-              : statLossColor,
-        ),
-      );
-    }
-    return chips;
+  final chips = <Widget>[];
+  for (final key in keys) {
+    final value = mine[key] ?? 0;
+    final delta = value - (base[key] ?? 0);
+    if (value == 0 && delta == 0) continue;
+    chips.add(
+      StatChip(
+        icon: IconRenderer(size: iconSize, id: key),
+        value: '$value',
+        fontSize: fontSize,
+        deltaText: !showDeltas || delta == 0
+            ? null
+            : (delta > 0 ? '+$delta' : '−${-delta}'),
+        deltaColor: delta > 0 ? statGainColor : statLossColor,
+      ),
+    );
   }
+
+  // weapon speed; lower interval is better, so faster = green
+  final currentItem = item;
+  if (currentItem is WeaponItem) {
+    final mySpeed = currentItem.actionInterval.inMilliseconds / 1000.0;
+    final baselineItem = baseline;
+    final baseSpeed = baselineItem is WeaponItem
+        ? baselineItem.actionInterval.inMilliseconds / 1000.0
+        : null;
+    final diff = baseSpeed == null ? null : mySpeed - baseSpeed;
+    chips.add(
+      StatChip(
+        icon: Icon(Icons.timer, size: iconSize, color: Colors.grey),
+        value: '${mySpeed.toStringAsFixed(1)}s',
+        fontSize: fontSize,
+        deltaText: (!showDeltas || diff == null || diff == 0)
+            ? null
+            : (diff > 0
+                  ? '+${diff.toStringAsFixed(1)}s'
+                  : '−${(-diff).toStringAsFixed(1)}s'),
+        deltaColor: (diff != null && diff < 0) ? statGainColor : statLossColor,
+      ),
+    );
+  }
+  return chips;
 }

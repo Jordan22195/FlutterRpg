@@ -109,6 +109,15 @@ class PlayerDataController extends ChangeNotifier {
     return _playerDataService.getSkillLevel(id, _playerData);
   }
 
+  /// [id]'s level with gear, potions and stance on top — what the game
+  /// actually rolls with.
+  int getStatTotal(SkillId id) {
+    return _playerDataService.getStatTotals(_playerData)[id] ?? 1;
+  }
+
+  /// The player's combat level, on the same scale as a creature's.
+  int getCombatLevel() => _playerDataService.combatLevel(_playerData);
+
   double getSkillXp(SkillId id) {
     return _playerDataService.getSkillXp(id, _playerData);
   }

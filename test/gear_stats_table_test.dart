@@ -76,6 +76,24 @@ void main() {
       .map((t) => t.data ?? '')
       .toList();
 
+  testWidgets('the gear tab leads with the player\'s combat level', (
+    tester,
+  ) async {
+    final session = buildSession();
+    await pumpGear(tester, session);
+
+    final level = session.equipmentController.getCombatLevel();
+    expect(find.text('Combat level'), findsOneWidget);
+    expect(find.text('$level'), findsWidgets);
+    // at the head of the tab, above the gear sections
+    expect(
+      tester.getTopLeft(find.text('Combat level')).dy,
+      lessThan(tester.getTopLeft(find.text('TOOLS')).dy),
+    );
+
+    session.dispose();
+  });
+
   testWidgets('the stat icon rides with the total it labels', (tester) async {
     final session = buildSession();
     session.equipmentService.equipItem(

@@ -6,6 +6,7 @@ import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/game_session.dart';
+import 'support/gathering_tools.dart';
 
 // Fishing and herbalism settle a whole stretch of time away in one fire, the
 // way combat and crafting do. These cover what a batch owes the loop it
@@ -18,7 +19,7 @@ void main() {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     return factory.create(
-      save: factory.newGame(catalogs),
+      save: withGatheringTools(factory.newGame(catalogs)),
       catalogs: catalogs,
       vsync: const TestVSync(),
     );

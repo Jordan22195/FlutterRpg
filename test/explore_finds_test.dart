@@ -30,14 +30,16 @@ void main() {
     expect(
       table,
       isNotEmpty,
-      reason: '${zone.name} lost its item table; point this at a zone '
+      reason:
+          '${zone.name} lost its item table; point this at a zone '
           'whose discoverableItems still hold something',
     );
     save.playerData.currentZoneId = zone;
     final skill = save.playerData.skillData[SkillId.EXPLORATION]!;
-    skill.xp = skill.xpTable[table
-        .map((e) => e.unlockLevel)
-        .reduce((a, b) => a < b ? a : b)];
+    skill.xp =
+        skill.xpTable[table
+            .map((e) => e.unlockLevel)
+            .reduce((a, b) => a < b ? a : b)];
 
     world.startExplore();
     for (var i = 0; i < 300; i++) {

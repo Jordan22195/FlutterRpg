@@ -17,10 +17,15 @@ class RepeatPressButton extends StatefulWidget {
     super.key,
     required this.label,
     required this.onPressed,
+    this.onHoldChanged,
   });
 
   final String label;
   final VoidCallback? onPressed;
+
+  /// Told true when a hold starts repeating and false when it lets go, so a
+  /// screen can keep the row under the finger where it is until then.
+  final ValueChanged<bool>? onHoldChanged;
 
   @override
   State<RepeatPressButton> createState() => _RepeatPressButtonState();
@@ -34,7 +39,11 @@ class _RepeatPressButtonState extends State<RepeatPressButton> {
   final _repeat = IntervalRunner();
   Timer? _accelerateTimer;
 
+  bool _holding = false;
+
   void _startRepeating() {
+    _holding = true;
+    widget.onHoldChanged?.call(true);
     // the long press already stood in for the first tap, so fire once
     // immediately rather than waiting a full interval for the first one
     widget.onPressed?.call();
@@ -49,10 +58,16 @@ class _RepeatPressButtonState extends State<RepeatPressButton> {
     _repeat.stop();
     _accelerateTimer?.cancel();
     _accelerateTimer = null;
+    if (_holding) {
+      _holding = false;
+      widget.onHoldChanged?.call(false);
+    }
   }
 
   @override
   void dispose() {
+    // no hold-end report from here: the screen that asked is coming down
+    _holding = false;
     _stopRepeating();
     super.dispose();
   }

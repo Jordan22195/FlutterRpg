@@ -7,14 +7,13 @@ import '../utilities/util.dart';
 
 /// The big tinted panel the subject of a combat or crafting screen stands
 /// in: the same tints as the sprite frames, at radius 20, with the sprite
-/// centred on a soft shadow.
+/// centred.
 class StagePanel extends StatelessWidget {
   const StagePanel({
     super.key,
     required this.tint,
     required this.sprite,
     this.height = 164,
-    this.shadow = true,
     this.corner,
     this.leading,
     this.onTap,
@@ -23,9 +22,6 @@ class StagePanel extends StatelessWidget {
   final SpriteTint tint;
   final Widget sprite;
   final double height;
-
-  /// The soft dark ellipse the sprite stands on.
-  final bool shadow;
 
   /// Pinned to the bottom-right corner, e.g. a [StageCountPill].
   final Widget? corner;
@@ -36,8 +32,6 @@ class StagePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
-
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -50,20 +44,6 @@ class StagePanel extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            if (shadow)
-              Align(
-                alignment: const Alignment(0, 0.78),
-                child: Container(
-                  width: 150,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    color: palette.titleShadow.withValues(alpha: 0.45),
-                    borderRadius: const BorderRadius.all(
-                      Radius.elliptical(75, 11),
-                    ),
-                  ),
-                ),
-              ),
             Center(child: sprite),
             if (leading != null)
               Positioned(left: 10, top: 10, bottom: 10, child: leading!),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/widgets/action_timer.dart';
+import 'package:rpg/widgets/travel_row.dart';
+import 'package:rpg/controllers/world_controller.dart';
 import 'package:provider/provider.dart';
 
 import '../catalogs/enchantments/enchantments.dart';
@@ -167,11 +169,16 @@ class EnchantingScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   // the bench's action timer, in the row of its own the
                   // explore and crafting screens give it
-                  ActionTimerRow(
-                    label: 'Enchanting',
-                    progress: controller.enchantProgress,
-                    interval: controller.enchantInterval,
-                  ),
+                  // a bench a zone away is walked to first: its row is the
+                  // road there until the player arrives
+                  if (context.watch<WorldController>().isViewingCurrentZone)
+                    ActionTimerRow(
+                      label: 'Enchanting',
+                      progress: controller.enchantProgress,
+                      interval: controller.enchantInterval,
+                    )
+                  else
+                    const TravelRow(),
                   const SizedBox(height: 8),
                   const ActivitySkillRingRow(skills: [SkillId.ENCHANTING]),
                   const SizedBox(height: 4),

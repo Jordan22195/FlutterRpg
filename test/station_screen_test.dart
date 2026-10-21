@@ -4,11 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/main.dart';
+import 'package:rpg/screens/crafting_screen.dart';
+import 'package:rpg/screens/firepit_screen.dart';
 import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/theme/game_colors.dart';
 import 'package:rpg/widgets/action_dock.dart';
 import 'package:rpg/widgets/art_header.dart';
 import 'package:rpg/widgets/empty_state.dart';
+import 'package:rpg/widgets/recipe_info_body.dart';
+import 'package:rpg/widgets/crafting_info_panel.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/stage_panel.dart';
 import 'package:rpg/widgets/status_row.dart';
@@ -92,10 +96,32 @@ void main() {
     );
 
     expect(find.text('Cooked · 0'), findsOneWidget);
+    // the panel's tabs are the output and the recipe, with no buffs tab
+    expect(find.textContaining('Buffs'), findsNothing);
     expect(
       find.widgetWithText(EmptyState, 'Nothing cooked this session'),
       findsOneWidget,
     );
+
+    // an empty cooked tab fits the screen with nothing under it, so a drag
+    // springs back to rest rather than leaving the page scrolled. at this
+    // height the page only just fits: padding left under the tabs would tip
+    // it into scrolling
+    tester.view.physicalSize = const Size(390, 780);
+    await settle(tester);
+    final page = tester
+        .state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(FirepitScreen),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        )
+        .position;
+    expect(page.maxScrollExtent, 0);
+    tester.view.physicalSize = const Size(390, 844);
+    await settle(tester);
 
     await tester.tap(find.byTooltip('Back to ${zoneId.definition.name}'));
     await settle(tester);
@@ -122,6 +148,42 @@ void main() {
         matching: find.text('Craft'),
       ),
       findsOneWidget,
+    );
+
+    // an empty crafted tab fits the screen with nothing under it, so a drag
+    // springs back to rest rather than leaving the page scrolled. at this
+    // height the page only just fits: padding left under the tabs would tip
+    // it into scrolling
+    tester.view.physicalSize = const Size(390, 780);
+    await settle(tester);
+    final page = tester
+        .state<ScrollableState>(
+          find
+              .descendant(
+                of: find.byType(CraftingScreen),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        )
+        .position;
+    expect(page.maxScrollExtent, 0);
+    tester.view.physicalSize = const Size(390, 844);
+    await settle(tester);
+
+    // the recipe's info page runs past the screen, so it keeps room under it for the
+    // dock's fade to fall on
+    final infoTab = find.descendant(
+      of: find.byType(CraftingInfoPanel),
+      matching: find.text('Info'),
+    );
+    await tester.ensureVisible(infoTab);
+    await settle(tester);
+    await tester.tap(infoTab);
+    await settle(tester);
+    expect(
+      tester.getBottomLeft(find.byType(CraftingInfoPanel)).dy -
+          tester.getBottomLeft(find.byType(RecipeInfoBody)).dy,
+      32,
     );
   });
 }
