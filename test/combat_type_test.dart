@@ -1,4 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rpg/data/combat_tuning.dart';
+import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/game_session.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 
 /// A combat entity's stats are a level (the size of the budget) split by a
@@ -73,7 +76,8 @@ void main() {
           CombatType.BALANCE.defenceAt(10),
           CombatType.BALANCE.hitpointsAt(10),
         ],
-        [9, 9, 60],
+        // hp: 4/10 of a 3 * level budget, times the hp a point is worth
+        [9, 9, 12 * hitpointsPerStatPoint],
       );
       expect(
         [
@@ -81,7 +85,7 @@ void main() {
           CombatType.ROCK_CRAB.defenceAt(10),
           CombatType.ROCK_CRAB.hitpointsAt(10),
         ],
-        [3, 3, 120],
+        [3, 3, 24 * hitpointsPerStatPoint],
       );
       expect(
         [
@@ -89,7 +93,7 @@ void main() {
           CombatType.GLASS_CANNON.defenceAt(10),
           CombatType.GLASS_CANNON.hitpointsAt(10),
         ],
-        [24, 3, 15],
+        [24, 3, 3 * hitpointsPerStatPoint],
       );
     });
 
@@ -102,6 +106,46 @@ void main() {
         }
       }
       expect(CombatType.SHELL.attackAt(1), 1);
+    });
+  });
+
+  group('a hitpoint stat point', () {
+    // one constant prices a point of hitpoints for both sides of a fight
+    test('pays a creature the shared rate', () {
+      // a creature that is all hitpoints spends its whole 3 * level budget
+      // on them, at the shared rate per point
+      for (final level in [1, 10, 50]) {
+        expect(
+          combatHitpointsAt(level, 1, 1),
+          level * 3 * hitpointsPerStatPoint,
+        );
+      }
+    });
+
+    test('pays the player the same rate', () {
+      final factory = GameSessionFactory();
+      final catalogs = factory.catalog1();
+      final session = factory.create(
+        save: factory.newGame(catalogs),
+        catalogs: catalogs,
+        vsync: const TestVSync(),
+      );
+      final player = session.saveGameData.playerData;
+      final stat = session.playerDataService.getStatTotals(
+        player,
+      )[SkillId.HITPOINTS]!;
+
+      expect(
+        session.playerDataService.maxHitpoints(player),
+        stat * hitpointsPerStatPoint,
+      );
+      // a new player starts at full health, and healing stops at the pool
+      expect(player.hitpoints, stat * hitpointsPerStatPoint);
+      player.hitpoints = 1;
+      session.playerDataService.heal(10000, player);
+      expect(player.hitpoints, stat * hitpointsPerStatPoint);
+
+      session.dispose();
     });
   });
 

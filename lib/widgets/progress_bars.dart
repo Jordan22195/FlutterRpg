@@ -70,7 +70,7 @@ class ProgressBars extends StatelessWidget {
 
     final inCombat = encounter.isInCombat();
     final hp = encounter.getPlayerHp();
-    final maxHp = playerController.getStatTotal(SkillId.HITPOINTS);
+    final maxHp = playerController.getMaxHitpoints();
     final staminaHeight = inCombat ? _compactStaminaHeight : _staminaHeight;
 
     return SizedBox(

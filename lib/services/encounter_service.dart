@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
+import '../data/combat_tuning.dart';
 import '../services/inventory_service.dart';
 import '../data/combat_segment_outcome.dart';
 import '../data/encounter_data.dart';
@@ -417,7 +418,7 @@ class EncounterService {
     result.damageDone = calculateAttackDamage(
       attackerAttack: e.attack,
       defenderDefense: defence,
-      defenderHp: playerStatTotals[SkillId.HITPOINTS] ?? 0,
+      defenderHp: maxHitpointsFrom(playerStatTotals),
     );
 
     return result;

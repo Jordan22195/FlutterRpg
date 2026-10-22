@@ -23,10 +23,12 @@ import '../widgets/sprite_frame.dart';
 import '../widgets/stage_panel.dart';
 import '../widgets/travel_row.dart';
 import '../widgets/primary_button.dart';
+import '../data/combat_tuning.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../widgets/stance_button.dart';
 import '../widgets/icon_renderer.dart';
+import '../widgets/item_stack_tile.dart';
 import '../widgets/fading_number.dart';
 import '../widgets/skill_ring_row.dart';
 import '../data/ObjectStack.dart';
@@ -320,7 +322,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     SkillId attackSkillType,
   ) {
     final stats = view.playerStats;
-    final int maxHp = stats[SkillId.HITPOINTS] ?? 1;
+    final int maxHp = maxHitpointsFrom(stats);
 
     return buildStatusRow(
       context,
@@ -498,6 +500,9 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     return StagePanel(
       tint: tint,
       sprite: sprite,
+      // a creature rarer than common is outlined in its rarity, as its tile
+      // was on the zone that led here
+      outline: rarityBorderColor(entity.id.definition.rarity),
       onTap: portraitTap(context, entity),
       corner: StageCountPill(count: entity.count, borderColor: tint.border),
       leading: view.queueRemaining.isEmpty

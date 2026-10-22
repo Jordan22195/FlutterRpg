@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:rpg/data/skill_data.dart';
+import '../data/combat_tuning.dart';
 
 import '../services/combat_auto_eat_service.dart';
 import '../services/encounter_service.dart';
@@ -383,7 +384,7 @@ class EncounterSystem {
     required double seconds,
     required EncounterActionResult result,
   }) {
-    final maxHp = stats[SkillId.HITPOINTS] ?? 1;
+    final maxHp = maxHitpointsFrom(stats);
     final defence = stats[SkillId.DEFENCE] ?? 1;
     final food = _autoEatService.equippedFood(playerState);
 
@@ -407,6 +408,8 @@ class EncounterSystem {
         playerState.equipmentData.equipedFood,
         outcome.foodEaten,
       );
+      // a stretch that finished the stack hands the next one to the next
+      _autoEatService.switchFoodIfOut(playerState, playerInventory);
     }
     _playerDataService.setHitpoints(outcome.hitpoints, playerState);
 
@@ -460,12 +463,12 @@ class EncounterSystem {
       return false;
     }
 
-    final maxHp =
-        _playerDataService.getStatTotals(playerState)[SkillId.HITPOINTS] ?? 1;
+    final maxHp = _playerDataService.maxHitpoints(playerState);
     if (playerState.hitpoints >= maxHp) return false; // don't waste food
 
     _inventoryService.removeItems(playerInventory, foodId, 1);
     _playerDataService.heal(def.restoreAmount, playerState);
+    _autoEatService.switchFoodIfOut(playerState, playerInventory);
     return true;
   }
 
@@ -669,7 +672,7 @@ class EncounterSystem {
       xpPerUnit: xpPerUnit(entity),
       playerSkillLevel: playerSkill,
       playerDefence: playerDefence,
-      playerMaxHp: stats[SkillId.HITPOINTS] ?? 1,
+      playerMaxHp: maxHitpointsFrom(stats),
       playerHitChance: playerHitChance,
       playerMaxHit: _encounterService.computeMaxHit(
         attack: playerSkill,

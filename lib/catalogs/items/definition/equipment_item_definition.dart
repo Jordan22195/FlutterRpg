@@ -139,12 +139,51 @@ class EquipmentItemDefinition extends ItemDefinition {
   /// Splitting [budget] by the weights — the one place the split happens,
   /// so [budgetAt]'s floor is measured against the same numbers the player
   /// ends up reading.
+  ///
+  /// A hide splits its budget exactly, so its stats add up to the rung's
+  /// own fib value; anything else rounds each share on its own.
   Map<SkillId, int> _statsFor(int budget) {
+    if (materialId.parameters is LeatherEquipmentParameters) {
+      return exactSplit(budget, statWeights);
+    }
     final total = totalWeight;
     return {
       for (final entry in statWeights.entries)
         entry.key: Util.weightedShare(budget, entry.value, total),
     };
+  }
+
+  /// [budget] shared out by [weights] so the shares add up to exactly
+  /// [budget]: each stat takes its whole share, and the points left over
+  /// go one at a time to the largest remainders. A tie goes to attack,
+  /// then to the order the weights are listed in — so leather's even
+  /// split of 3 is attack 2, defence 1.
+  static Map<SkillId, int> exactSplit(int budget, Map<SkillId, int> weights) {
+    final total = weights.values.fold(0, (sum, weight) => sum + weight);
+    if (total <= 0) return {for (final skill in weights.keys) skill: 0};
+
+    final shares = {
+      for (final entry in weights.entries)
+        entry.key: budget * entry.value ~/ total,
+    };
+    var left = budget - shares.values.fold(0, (sum, share) => sum + share);
+
+    final listed = weights.keys.toList();
+    int remainder(SkillId skill) => budget * weights[skill]! % total;
+    final byRemainder = [...listed]
+      ..sort((a, b) {
+        final byLeft = remainder(b).compareTo(remainder(a));
+        if (byLeft != 0) return byLeft;
+        if (a == SkillId.ATTACK) return -1;
+        if (b == SkillId.ATTACK) return 1;
+        return listed.indexOf(a).compareTo(listed.indexOf(b));
+      });
+    for (final skill in byRemainder) {
+      if (left <= 0) break;
+      shares[skill] = shares[skill]! + 1;
+      left--;
+    }
+    return shares;
   }
 
   int _statTotalFor(int budget) =>

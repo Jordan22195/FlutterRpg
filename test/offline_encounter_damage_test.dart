@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rpg/data/combat_tuning.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
@@ -207,6 +208,29 @@ void main() {
     session.dispose();
   });
 
+  test('a stretch that finishes the stack moves on to the next food', () {
+    final session = buildSession();
+    final save = session.saveGameData;
+    setLevel(session, SkillId.ATTACK, 10);
+    // two chickens to eat, and a bag of minnows under them
+    equipFood(session, count: 2);
+    session.inventoryService.setItemCount(
+      save.inventoryData,
+      ItemId.COOKED_MINNOW,
+      500,
+    );
+    fightWith(session, EntityId.FIELD_RAT);
+
+    settleFight(session, count: 1200, span: const Duration(hours: 1));
+
+    // an hour against a rat eats more than two, so the stack ran out and
+    // the next food down is the one equipped for the stretch after
+    expect(foodLeft(session), 0);
+    expect(save.playerData.equipmentData.equipedFood, ItemId.COOKED_MINNOW);
+
+    session.dispose();
+  });
+
   test('a node that cannot fight back never swings', () {
     final session = buildSession();
     final save = session.saveGameData;
@@ -220,8 +244,9 @@ void main() {
       span: const Duration(hours: 1),
     );
 
+    // still at the full health a new player starts on
     expect(result.playerDied, isFalse);
-    expect(save.playerData.hitpoints, 10);
+    expect(save.playerData.hitpoints, 10 * hitpointsPerStatPoint);
     expect(result.actionsPerformed, 1200);
 
     session.dispose();

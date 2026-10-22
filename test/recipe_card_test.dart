@@ -13,6 +13,7 @@ import 'package:rpg/game_session.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/theme/game_colors.dart';
 import 'package:rpg/theme/zone_palette.dart';
+import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 
 // Renders a single RecipeCard through the real provider tree, so what the
@@ -462,6 +463,51 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+  });
+
+  group('the output wears its stats', () {
+    Finder chipFor(SkillId skill) =>
+        find.byWidgetPredicate((w) => w is BuffBadge && w.skill == skill);
+
+    testWidgets('a fire says what it burns for', (tester) async {
+      await pumpCard(tester, recipeId: 'cookfire', lockWhenUnderLevel: true);
+
+      // the cookfire raises cooking and hitpoints: a chip for each, on the
+      // fire's own tile
+      final fire = (ItemId.COOKFIRE.definition as FireItemDefinition);
+      for (final stat in fire.skillBonus.entries) {
+        final chip = chipFor(stat.key);
+        expect(chip, findsOneWidget, reason: stat.key.name);
+        expect(
+          find.ancestor(of: chip, matching: find.byType(RecipeTile)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: chip, matching: find.text('${stat.value}')),
+          findsOneWidget,
+        );
+      }
+    });
+
+    testWidgets('a campfire wears its two stats', (tester) async {
+      await pumpCard(
+        tester,
+        recipeId: 'basic_campfire',
+        lockWhenUnderLevel: true,
+      );
+      expect(chipFor(SkillId.STAMINA), findsOneWidget);
+      expect(chipFor(SkillId.RECOVERY), findsOneWidget);
+    });
+
+    testWidgets('a smithed piece wears none', (tester) async {
+      await pumpCard(
+        tester,
+        recipeId: 'forge_copper_dagger',
+        lockWhenUnderLevel: false,
+      );
+      expect(find.byType(BuffBadge), findsNothing);
+      expect(find.byType(HealBadge), findsNothing);
     });
   });
 }

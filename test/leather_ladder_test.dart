@@ -211,59 +211,72 @@ void main() {
     }
   });
 
-  test('the hybrid split cost the shipped light leather no defence', () {
-    // these six were pure-defence pieces before the ladder existed. Moving
-    // them up a rung is what pays for the attack rider, so a save that
-    // already holds one loads no weaker than it was.
-    const before = {
-      ItemId.LIGHT_LETHER_CHEST: 2,
-      ItemId.LIGHT_LEATHER_PANTS: 2,
-      ItemId.LIGHT_LEATHER_BOOTS: 1,
-      ItemId.LIGHT_LEATHER_GLOVES: 1,
-      ItemId.LIGHT_LEATHER_BELT: 1,
-      ItemId.LIGHT_LEATHER_BRACERS: 1,
-    };
-    for (final entry in before.entries) {
-      final piece = entry.key.build() as EquipmentItem;
-      expect(
-        piece.effectiveSkillBonus[SkillId.DEFENCE],
-        greaterThanOrEqualTo(entry.value),
-        reason: '${entry.key.name} lost defence',
-      );
-      expect(
-        piece.effectiveSkillBonus[SkillId.ATTACK],
-        greaterThan(0),
-        reason: '${entry.key.name} gained no attack for the trade',
-      );
+  test('a piece\'s stats add up to its budget, the odd point to attack', () {
+    // the rung's fib value split exactly: nothing rounds up on both sides,
+    // and an odd budget gives its spare point to attack
+    for (var tier = 0; tier < tiers.length; tier++) {
+      for (final piece in pieces.keys) {
+        final def = defFor(tier, piece);
+        for (final rarity in Rarity.values) {
+          final stats = def.statsAt(rarity);
+          final attack = stats[SkillId.ATTACK]!;
+          final defence = stats[SkillId.DEFENCE]!;
+          final name = '${tiers[tier]}_$piece at ${rarity.name}';
+          expect(attack + defence, def.budgetAt(rarity), reason: name);
+          expect(attack - defence, anyOf(0, 1), reason: name);
+        }
+      }
     }
   });
 
-  test('leather trades a rung of defence for the attack it carries', () {
-    // the whole point of the split, asserted against the metal spine rather
-    // than assumed: leather at rung n defends like plate at rung n-1
-    int defenceOf(ItemId id) =>
-        (id.build() as EquipmentItem).effectiveSkillBonus[SkillId.DEFENCE]!;
+  test('the common pieces read straight off the fib ladder', () {
+    // rung -> fib: 1 -> 2, 2 -> 3, 3 -> 5, 4 -> 8, 5 -> 13
+    Map<SkillId, int> common(ItemId id) =>
+        (id.build() as EquipmentItem).effectiveSkillBonus;
 
-    // light leather jerkin sits at rung 2, copper chestplate at rung 1
-    expect(defFor(0, 'CHEST').fibLevel, 2);
+    // light leather: a minor piece at rung 1, a major one at rung 2
+    expect(common(ItemId.LIGHT_LEATHER_BOOTS), {
+      SkillId.ATTACK: 1,
+      SkillId.DEFENCE: 1,
+    });
+    expect(common(ItemId.LIGHT_LETHER_CHEST), {
+      SkillId.ATTACK: 2,
+      SkillId.DEFENCE: 1,
+    });
+    // medium leather, a rung up: 3 and 5
+    expect(common(idFor(1, 'BOOTS')), {SkillId.ATTACK: 2, SkillId.DEFENCE: 1});
+    expect(common(idFor(1, 'CHEST')), {SkillId.ATTACK: 3, SkillId.DEFENCE: 2});
+    // heavy leather's chest at rung 4 is an even 8
+    expect(common(idFor(2, 'CHEST')), {SkillId.ATTACK: 4, SkillId.DEFENCE: 4});
+  });
+
+  test('the exact split favours attack only on a tie', () {
+    // the rule itself, off the ladder: larger remainders win the spare
+    // points first, and a tie goes to attack whatever order it is listed in
     expect(
-      (ItemId.COPPER_CHESTPLATE.definition as EquipmentItemDefinition).fibLevel,
-      1,
+      EquipmentItemDefinition.exactSplit(3, {
+        SkillId.DEFENCE: 1,
+        SkillId.ATTACK: 1,
+      }),
+      {SkillId.DEFENCE: 1, SkillId.ATTACK: 2},
     );
     expect(
-      defenceOf(ItemId.LIGHT_LETHER_CHEST),
-      defenceOf(ItemId.COPPER_CHESTPLATE),
+      EquipmentItemDefinition.exactSplit(10, {
+        SkillId.ATTACK: 1,
+        SkillId.DEFENCE: 2,
+      }),
+      {SkillId.ATTACK: 3, SkillId.DEFENCE: 7},
     );
-    expect(
-      (ItemId.LIGHT_LETHER_CHEST.build() as EquipmentItem)
-          .effectiveSkillBonus[SkillId.ATTACK],
-      greaterThan(0),
-    );
-    expect(
-      (ItemId.COPPER_CHESTPLATE.build() as EquipmentItem)
-          .effectiveSkillBonus[SkillId.ATTACK],
-      anyOf(isNull, 0),
-    );
+  });
+
+  test('plate keeps its own rounding', () {
+    // only the hides split exactly; a pure-defence plate piece is its whole
+    // budget, as before
+    final plate =
+        ItemId.COPPER_CHESTPLATE.definition as EquipmentItemDefinition;
+    expect(plate.statsAt(Rarity.COMMON), {
+      SkillId.DEFENCE: plate.budgetAt(Rarity.COMMON),
+    });
   });
 
   group('the shoulder slot, which nothing in the game filled before', () {

@@ -513,4 +513,53 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
   });
+
+  testWidgets('a floor keeps looping while the player looks at a firepit', (
+    tester,
+  ) async {
+    await openDungeonFromSave(tester, DungeonId.SPIDER_DEN);
+    final session = sessionOf(tester, at: find.byType(DungeonScreen));
+    makeStrong(session);
+
+    const id = DungeonId.SPIDER_DEN;
+    final progress = session.saveGameData.dungeonProgress;
+    final player = session.saveGameData.playerData;
+    session.dungeonController.startSlot(id, 0);
+    await settle(tester);
+    expect(session.saveGameData.dungeonRun.runningSlot, 0);
+
+    // what opening a place in the zone does: the firepit is the entity in
+    // view, and the controllers hear the view changed
+    player.currentEntityViewId = EntityId.FIREPIT;
+    session.encounterController.onEntityViewChanged();
+    session.craftingController.onEntityViewChanged();
+
+    // the floor is still the running action, and the screen on top is the
+    // firepit's rather than the floor's member
+    expect(session.saveGameData.dungeonRun.runningSlot, 0);
+    expect(session.encounterController.isViewingActiveEncounter(), isFalse);
+    expect(session.encounterController.queueRemaining(), isEmpty);
+
+    // a whole lap goes by: members hand on, the floor refills, and the loop
+    // keeps swinging
+    var ticks = 0;
+    while (progress.runsFor(id, 0) == 0 && ticks < 20000) {
+      session.encounterController.doEncounterAction(1);
+      ticks++;
+    }
+    expect(progress.runsFor(id, 0), 1);
+    expect(session.saveGameData.dungeonRun.runningSlot, 0);
+    expect(session.actionTimingController.isRunning, isTrue);
+    // and the hand-offs never pulled the view off the firepit
+    expect(player.currentEntityViewId, EntityId.FIREPIT);
+
+    // back on the floor's own screen, it reads as the running fight again
+    session.encounterController.viewRunningFloor();
+    expect(session.encounterController.isViewingActiveEncounter(), isTrue);
+
+    session.actionTimingController.stop();
+    await settle(tester);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
 }

@@ -72,11 +72,17 @@ void main() {
   Future<GameSession> pumpExplore(
     WidgetTester tester, {
     bool tools = true,
+    // stands the player in another zone; the starting one by default
+    ZoneId? zoneId,
   }) async {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     final save = factory.newGame(catalogs);
     if (tools) equipGatheringTools(save);
+    if (zoneId != null) {
+      save.playerData.currentZoneId = zoneId;
+      save.playerData.currentZoneViewId = zoneId;
+    }
     final session = factory.create(
       save: save,
       catalogs: catalogs,
@@ -870,6 +876,42 @@ void main() {
     session.actionTimingController.stop();
     await settle(tester);
     expect(find.byKey(const ValueKey('place-tile-progress')), findsNothing);
+
+    session.dispose();
+  });
+
+  testWidgets('an unfound place waits under Places, not Discoveries', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester, zoneId: ZoneId.SOUTHWOOD_FOREST);
+
+    // the goblin camp is a dungeon: unfound, it is a blurred tile among
+    // the places, after the ones already standing
+    final camp = find.byKey(
+      ValueKey('undiscovered-${EntityId.GOBLIN_CAMP.definition.name}'),
+    );
+    expect(camp, findsOneWidget);
+    final places = tester.getTopLeft(find.text('PLACES')).dy;
+    final discoveries = tester.getTopLeft(find.text('DISCOVERIES')).dy;
+    final campY = tester.getTopLeft(camp).dy;
+    expect(campY, greaterThan(places));
+    expect(campY, lessThan(discoveries));
+    expect(
+      campY,
+      greaterThanOrEqualTo(
+        tester.getTopLeft(find.byKey(const ValueKey(EntityId.FIREPIT))).dy,
+      ),
+    );
+
+    // once found it is an ordinary place tile, listed once
+    final zone = session.saveGameData.worldData.zones[ZoneId.SOUTHWOOD_FOREST]!;
+    zone.discoveredEntities.add(EntityId.GOBLIN_CAMP.build());
+    session.worldController.notifyListeners();
+    await settle(tester);
+    expect(camp, findsNothing);
+    final found = find.byKey(const ValueKey(EntityId.GOBLIN_CAMP));
+    expect(found, findsOneWidget);
+    expect(tester.getTopLeft(found).dy, lessThan(discoveries));
 
     session.dispose();
   });

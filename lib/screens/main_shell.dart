@@ -286,6 +286,8 @@ class _MainShellState extends State<MainShell> {
             // either way
             if (!dungeons.hasActiveRun) return;
             if (dungeons.slotAt(slot)?.displayed == null) return;
+            // the floor's own screen is the one in view again
+            context.read<EncounterController>().viewRunningFloor();
             nav.push(
               MaterialPageRoute(
                 settings: RouteSettings(
@@ -324,6 +326,9 @@ class _MainShellState extends State<MainShell> {
     final dungeons = context.read<DungeonController>();
     if (dungeons.hasActiveRun && dungeons.runningSlot >= 0) {
       final dungeonId = dungeons.activeDungeonId;
+      // the floor's own screen is the one in view again, wherever the player
+      // had wandered off to look
+      context.read<EncounterController>().viewRunningFloor();
       nav.push(
         MaterialPageRoute(
           settings: RouteSettings(

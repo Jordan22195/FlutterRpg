@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rpg/data/combat_tuning.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
@@ -63,7 +64,8 @@ void main() {
         CombatType.levelOf(
           attack: best,
           defence: stats[SkillId.DEFENCE] ?? 1,
-          hitpoints: stats[SkillId.HITPOINTS] ?? 1,
+          // the health pool, as a creature's hitpoints are
+          hitpoints: maxHitpointsFrom(stats),
         ),
       );
       expect(

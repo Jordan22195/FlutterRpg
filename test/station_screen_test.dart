@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rpg/data/skill_data.dart';
+import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/game_session.dart';
+import 'package:provider/provider.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
@@ -103,25 +107,19 @@ void main() {
       findsOneWidget,
     );
 
-    // an empty cooked tab fits the screen with nothing under it, so a drag
-    // springs back to rest rather than leaving the page scrolled. at this
-    // height the page only just fits: padding left under the tabs would tip
-    // it into scrolling
-    tester.view.physicalSize = const Size(390, 780);
-    await settle(tester);
-    final page = tester
-        .state<ScrollableState>(
-          find
-              .descendant(
-                of: find.byType(FirepitScreen),
-                matching: find.byType(Scrollable),
-              )
-              .first,
-        )
-        .position;
-    expect(page.maxScrollExtent, 0);
-    tester.view.physicalSize = const Size(390, 844);
-    await settle(tester);
+    // nothing is padded under the tabs, so a page that fits springs back
+    // to rest when dragged. the firepit always stacks cooking under the
+    // fire, so its page runs past a phone's height and that can't be
+    // measured by scroll extent as the anvil's is; the padding is the thing
+    final list = tester.widget<ListView>(
+      find
+          .descendant(
+            of: find.byType(FirepitScreen),
+            matching: find.byType(ListView),
+          )
+          .first,
+    );
+    expect((list.padding! as EdgeInsets).bottom, 0);
 
     await tester.tap(find.byTooltip('Back to ${zoneId.definition.name}'));
     await settle(tester);
@@ -185,5 +183,64 @@ void main() {
           tester.getBottomLeft(find.byType(RecipeInfoBody)).dy,
       32,
     );
+  });
+
+  testWidgets('picking another recipe mid-craft puts the button back at rest', (
+    tester,
+  ) async {
+    await openStation(tester, EntityId.ANVIL);
+    final session = Provider.of<GameSession>(
+      tester.element(find.byType(CraftingScreen)),
+      listen: false,
+    );
+    session.inventoryService.setItemCount(
+      session.saveGameData.inventoryData,
+      ItemId.COPPER_BAR,
+      50,
+    );
+    final smithing =
+        session.saveGameData.playerData.skillData[SkillId.BLACKSMITHING]!;
+    smithing.xp = smithing.xpTable[40];
+    final crafting = session.craftingController;
+    // two recipes the anvil offers out of copper bars alone
+    final copper = crafting
+        .availableRecipes()
+        .where(
+          (r) =>
+              r.inputs.keys.toSet().containsAll({ItemId.COPPER_BAR}) &&
+              r.inputs.length == 1 &&
+              crafting.meetsRecipeLevelRequirement(r.id),
+        )
+        .map((r) => r.id)
+        .toList();
+    expect(copper.length, greaterThanOrEqualTo(2));
+
+    Finder buttonIcon(IconData icon) => find.descendant(
+      of: find.byType(MomentumPrimaryButton),
+      matching: find.byIcon(icon),
+    );
+
+    crafting.selectRecipe(copper[0]);
+    await settle(tester);
+    await tester.tap(find.byType(MomentumPrimaryButton));
+    await settle(tester);
+    expect(crafting.activeRecipeId, copper[0]);
+    expect(buttonIcon(Icons.fast_forward), findsOneWidget);
+
+    // another recipe picked: it is not the one being made, so the button
+    // offers to start it rather than claiming it is already running
+    crafting.selectRecipe(copper[1]);
+    await settle(tester);
+    expect(buttonIcon(Icons.play_arrow), findsOneWidget);
+    expect(buttonIcon(Icons.fast_forward), findsNothing);
+
+    // and pressing it makes the pick
+    await tester.tap(find.byType(MomentumPrimaryButton));
+    await settle(tester);
+    expect(crafting.activeRecipeId, copper[1]);
+    expect(buttonIcon(Icons.fast_forward), findsOneWidget);
+
+    session.actionTimingController.stop();
+    await settle(tester);
   });
 }

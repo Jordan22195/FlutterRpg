@@ -18,6 +18,7 @@ import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/firepit_screen.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/countdown_timer.dart';
+import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/skill_ring_row.dart';
@@ -120,60 +121,35 @@ void main() {
     return session;
   }
 
-  testWidgets('a cold firepit offers fire only', (tester) async {
-    final session = await pumpFirepit(tester);
+  final cookingCard = find.byKey(const ValueKey('firepit-cooking-card'));
 
-    expect(find.text('Firepit'), findsOneWidget);
-    // nothing to stack, so the pit shows the fire recipe alone and unnamed
-    expect(find.byType(RecipeCard), findsOneWidget);
-    expect(find.text('FIREMAKING'), findsNothing);
-    expect(find.text('COOKING'), findsNothing);
-
-    // nothing is burning, so there is no timer and nothing to put out
-    expect(find.byType(CountdownTimer), findsNothing);
-    expect(find.byIcon(Icons.water_drop_outlined), findsNothing);
-    expect(find.text('Light Fire'), findsOneWidget);
-
-    session.dispose();
-  });
-
-  testWidgets('a lit cookfire stacks cooking under firemaking', (tester) async {
-    final session = await pumpFirepit(tester, lightRecipeId: 'cookfire');
-
-    // the header and hero become the fire
-    expect(find.text('Cookfire'), findsOneWidget);
-    // a pit doing two jobs shows both recipes at once, each one named
-    expect(find.byType(RecipeCard), findsNWidgets(2));
-    expect(find.text('FIREMAKING'), findsOneWidget);
-    expect(find.text('COOKING'), findsOneWidget);
-
-    // cooking is the section the button runs, so its card carries the mark
-    final cards = tester.widgetList<RecipeCard>(find.byType(RecipeCard));
-    expect(cards.map((c) => c.selected), [false, true]);
-
-    // and the cooking card sits below the firemaking one
-    expect(
-      tester.getTopLeft(find.byType(RecipeCard).at(1)).dy,
-      greaterThan(tester.getTopLeft(find.byType(RecipeCard).first).dy),
+  /// Whether the cooking card is locked: greyed and shut to taps.
+  bool cookingLocked(WidgetTester tester) {
+    final gate = tester.widget<IgnorePointer>(
+      find
+          .ancestor(of: cookingCard, matching: find.byType(IgnorePointer))
+          .first,
     );
+    final dim = tester.widget<Opacity>(
+      find.ancestor(of: cookingCard, matching: find.byType(Opacity)).first,
+    );
+    expect(dim.opacity, gate.ignoring ? 0.45 : 1);
+    return gate.ignoring;
+  }
 
-    // burn time in the hero's corner, and the fire can be put out
-    expect(find.byType(CountdownTimer), findsWidgets);
-    expect(find.byIcon(Icons.water_drop_outlined), findsOneWidget);
+  /// Which card carries the mark, firemaking first.
+  List<bool> marks(WidgetTester tester) => tester
+      .widgetList<RecipeCard>(find.byType(RecipeCard))
+      .map((c) => c.selected)
+      .toList();
 
-    session.dispose();
-  });
+  bool buttonEnabled(WidgetTester tester) => tester
+      .widget<MomentumPrimaryButton>(find.byType(MomentumPrimaryButton))
+      .enabled;
 
-  testWidgets('picking a cookfire opens cooking before it is lit', (
-    tester,
-  ) async {
-    final session = await pumpFirepit(tester);
-
-    // nothing picked yet, so the cold pit is still fire-only
-    expect(find.byType(RecipeCard), findsOneWidget);
-
-    // pick the cookfire out of the fire card's picker (catalog order:
-    // 0 = cookfire, 1 = campfire)
+  /// Opens the fire card's picker and takes row [row] (catalog order:
+  /// 0 = cookfire, 1 = campfire).
+  Future<void> pickFire(WidgetTester tester, int row) async {
     await tester.tap(find.byType(RecipeCard).first);
     await settle(tester);
     await tester.tap(
@@ -182,33 +158,126 @@ void main() {
             of: find.byType(AlertDialog),
             matching: find.byType(RecipeCard),
           )
-          .first,
+          .at(row),
     );
     // the picker dismisses on a transition, so give it longer than the
     // shared two-pump settle to leave the tree
     await settle(tester);
     await tester.pump(const Duration(milliseconds: 400));
+  }
 
-    // the cooking recipe is on screen even though nothing is burning, with
-    // what the cook will burn to light the pit
+  /// Taps the cooking card — the highlight moves to it and its picker
+  /// opens — and closes the picker again.
+  Future<void> chooseCooking(WidgetTester tester) async {
+    await tester.tap(cookingCard);
+    await settle(tester);
+    await tester.tap(find.text('Close'));
+    await settle(tester);
+    await tester.pump(const Duration(milliseconds: 400));
+  }
+
+  testWidgets('a cold firepit shows cooking locked under the fire', (
+    tester,
+  ) async {
+    final session = await pumpFirepit(tester);
+
+    expect(find.text('Firepit'), findsOneWidget);
+    // both recipes are always on screen, each named
     expect(find.byType(RecipeCard), findsNWidgets(2));
+    expect(find.text('FIREMAKING'), findsOneWidget);
     expect(find.text('COOKING'), findsOneWidget);
-    expect(find.text('Burns 2 × Logs per fire'), findsOneWidget);
-    expect(find.byType(CountdownTimer), findsNothing);
+    expect(
+      tester.getTopLeft(cookingCard).dy,
+      greaterThan(tester.getTopLeft(find.byType(RecipeCard).first).dy),
+    );
 
-    // a cookfire is only ever lit by cooking on it, so even though the fire
-    // card was the one tapped, the button cooks
-    final cards = tester.widgetList<RecipeCard>(find.byType(RecipeCard));
-    expect(cards.map((c) => c.selected), [false, true]);
-    expect(find.text('Cook'), findsOneWidget);
-    expect(find.text('Light Fire'), findsNothing);
+    // no cookfire picked, so cooking is locked and says what opens it
+    expect(cookingLocked(tester), isTrue);
+    expect(find.text('Pick a cookfire to cook'), findsOneWidget);
+    expect(find.byIcon(Icons.lock_outline), findsWidgets);
+
+    // the fire is what the button runs
+    expect(marks(tester), [true, false]);
+    expect(find.text('Light Fire'), findsOneWidget);
+
+    // nothing is burning, so there is no timer and nothing to put out
+    expect(find.byType(CountdownTimer), findsNothing);
+    expect(find.byIcon(Icons.water_drop_outlined), findsNothing);
+
+    // a locked card takes no taps: no picker, and the mark stays put
+    await tester.tap(cookingCard, warnIfMissed: false);
+    await settle(tester);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(marks(tester), [true, false]);
 
     session.dispose();
   });
 
-  testWidgets('a cold pit with a cookfire picked defaults to Cook', (
-    tester,
-  ) async {
+  testWidgets('picking a cookfire unlocks cooking; the button still builds '
+      'the fire', (tester) async {
+    final session = await pumpFirepit(tester);
+
+    await pickFire(tester, 0);
+
+    // cooking opens, with what the cook would burn to light the pit
+    expect(cookingLocked(tester), isFalse);
+    expect(find.text('Burns 2 × Logs per fire'), findsOneWidget);
+    expect(find.text('Pick a cookfire to cook'), findsNothing);
+
+    // but the fire card is still the one picked, so the button lights it
+    expect(marks(tester), [true, false]);
+    expect(find.text('Light Fire'), findsOneWidget);
+    expect(find.text('Cook'), findsNothing);
+    expect(buttonEnabled(tester), isTrue);
+
+    session.dispose();
+  });
+
+  testWidgets('with the cookfire picked, firemaking keeps building '
+      'cookfires', (tester) async {
+    final session = await pumpFirepit(
+      tester,
+      selections: {SkillId.FIREMAKING: 'cookfire'},
+    );
+    expect(marks(tester), [true, false]);
+
+    // the button's start path for the highlighted card, then two ticks
+    expect(
+      session.craftingController.startCraftingActionFor(
+        'cookfire',
+        EntityId.FIREPIT,
+      ),
+      isTrue,
+    );
+    session.craftingController.doCraftingAction(1);
+    session.buffController.refresh();
+    await settle(tester);
+
+    // the first tick lights a cookfire
+    expect(find.text('Cookfire'), findsOneWidget);
+    final fire = session.craftingController.activeFire()!;
+    final firstBurnsUntil = fire.expirationTime;
+
+    // and the loop carries on building it, logs going into the same fire
+    session.craftingController.doCraftingAction(1);
+    session.buffController.refresh();
+    await settle(tester);
+    expect(session.actionTimingController.isRunning, isTrue);
+    expect(
+      session.craftingController.activeFire()!.expirationTime.isAfter(
+        firstBurnsUntil,
+      ),
+      isTrue,
+    );
+    // the fire card still carries the mark, now feeding the burning fire
+    expect(marks(tester), [true, false]);
+    expect(find.text('Add Logs'), findsOneWidget);
+
+    session.actionTimingController.stop();
+    session.dispose();
+  });
+
+  testWidgets('tapping the cooking card makes the button cook', (tester) async {
     final session = await pumpFirepit(
       tester,
       selections: {
@@ -216,25 +285,21 @@ void main() {
         SkillId.COOKING: 'cook_minnow',
       },
     );
+    expect(marks(tester), [true, false]);
 
-    // nothing is burning, but the cook lights the pit itself, so cooking
-    // is what the button runs
-    expect(find.byType(CountdownTimer), findsNothing);
-    final cards = tester.widgetList<RecipeCard>(find.byType(RecipeCard));
-    expect(cards.map((c) => c.selected), [false, true]);
+    await chooseCooking(tester);
+
+    // the highlight moves down, and the cook lights the pit itself
+    expect(marks(tester), [false, true]);
     expect(find.text('Cook'), findsOneWidget);
-    expect(
-      tester
-          .widget<MomentumPrimaryButton>(find.byType(MomentumPrimaryButton))
-          .enabled,
-      isTrue,
-    );
+    expect(find.text('Light Fire'), findsNothing);
+    expect(buttonEnabled(tester), isTrue);
     expect(find.text('Burns 2 × Logs per fire'), findsOneWidget);
 
     session.dispose();
   });
 
-  testWidgets('without logs the Cook button waits', (tester) async {
+  testWidgets('without logs neither card can run', (tester) async {
     final session = await pumpFirepit(
       tester,
       logs: 0,
@@ -244,37 +309,42 @@ void main() {
       },
     );
 
-    // still the cook's card, still says what it needs - but nothing to
-    // light the pit with, so the button stays down
-    final cards = tester.widgetList<RecipeCard>(find.byType(RecipeCard));
-    expect(cards.map((c) => c.selected), [false, true]);
+    // the fire card: nothing to burn
+    expect(marks(tester), [true, false]);
+    expect(buttonEnabled(tester), isFalse);
+
+    // the cook: nothing to light the pit with
+    await chooseCooking(tester);
+    expect(marks(tester), [false, true]);
     expect(find.text('Burns 2 × Logs per fire'), findsOneWidget);
-    expect(
-      tester
-          .widget<MomentumPrimaryButton>(find.byType(MomentumPrimaryButton))
-          .enabled,
-      isFalse,
-    );
+    expect(buttonEnabled(tester), isFalse);
 
     session.dispose();
   });
 
-  testWidgets('a lit cookfire keeps the log-cost hint', (tester) async {
+  testWidgets('picking a fire that cannot cook hands the button back', (
+    tester,
+  ) async {
     final session = await pumpFirepit(
       tester,
-      lightRecipeId: 'cookfire',
-      selections: {SkillId.FIREMAKING: 'cookfire'},
+      selections: {
+        SkillId.FIREMAKING: 'cookfire',
+        SkillId.COOKING: 'cook_minnow',
+      },
     );
+    await chooseCooking(tester);
+    expect(marks(tester), [false, true]);
 
-    expect(find.byType(RecipeCard), findsNWidgets(2));
-    expect(find.text('Burns 2 × Logs per fire'), findsOneWidget);
-    expect(find.text('Pick a cookfire to cook'), findsNothing);
-    expect(find.text('Cook'), findsOneWidget);
+    // a campfire: cooking locks again, and the fire takes the button back
+    await pickFire(tester, 1);
+    expect(cookingLocked(tester), isTrue);
+    expect(marks(tester), [true, false]);
+    expect(find.text('Light Fire'), findsOneWidget);
 
     session.dispose();
   });
 
-  testWidgets('a lit cookfire with a campfire picked says to pick a cookfire', (
+  testWidgets('a lit cookfire with a campfire picked keeps cooking locked', (
     tester,
   ) async {
     final session = await pumpFirepit(
@@ -286,16 +356,12 @@ void main() {
       },
     );
 
-    // the fire is cooking now, so the button runs; but once it dies the
-    // cook has nothing it is allowed to relight with, and the card says so
+    // it is the pick that opens cooking, not what happens to be burning
+    expect(find.text('Cookfire'), findsOneWidget);
+    expect(cookingLocked(tester), isTrue);
     expect(find.text('Pick a cookfire to cook'), findsOneWidget);
-    expect(find.text('Cook'), findsOneWidget);
-    expect(
-      tester
-          .widget<MomentumPrimaryButton>(find.byType(MomentumPrimaryButton))
-          .enabled,
-      isTrue,
-    );
+    expect(marks(tester), [true, false]);
+    expect(find.text('Light Fire'), findsOneWidget);
 
     session.dispose();
   });
@@ -334,21 +400,29 @@ void main() {
     session.dispose();
   });
 
-  testWidgets('a campfire burns without opening cooking', (tester) async {
-    final session = await pumpFirepit(tester, lightRecipeId: 'basic_campfire');
+  testWidgets('a campfire burns with cooking locked', (tester) async {
+    final session = await pumpFirepit(
+      tester,
+      lightRecipeId: 'basic_campfire',
+      selections: {SkillId.FIREMAKING: 'basic_campfire'},
+    );
 
     expect(find.text('Campfire'), findsOneWidget);
-    // a campfire cannot cook, so there is nothing to stack
-    expect(find.byType(RecipeCard), findsOneWidget);
-    expect(find.text('COOKING'), findsNothing);
+    expect(find.byType(RecipeCard), findsNWidgets(2));
+    expect(cookingLocked(tester), isTrue);
     expect(find.byIcon(Icons.water_drop_outlined), findsOneWidget);
 
     session.dispose();
   });
 
-  testWidgets('putting the fire out closes cooking again', (tester) async {
-    final session = await pumpFirepit(tester, lightRecipeId: 'cookfire');
-    expect(find.byType(RecipeCard), findsNWidgets(2));
+  testWidgets('putting the fire out leaves cooking open on a picked '
+      'cookfire', (tester) async {
+    final session = await pumpFirepit(
+      tester,
+      lightRecipeId: 'cookfire',
+      selections: {SkillId.FIREMAKING: 'cookfire'},
+    );
+    expect(cookingLocked(tester), isFalse);
 
     await tester.tap(find.byIcon(Icons.water_drop_outlined));
     await settle(tester);
@@ -356,10 +430,11 @@ void main() {
     await tester.tap(find.text('Put out'));
     await settle(tester);
 
-    expect(find.byType(RecipeCard), findsOneWidget);
-    expect(find.text('COOKING'), findsNothing);
     expect(find.text('Firepit'), findsOneWidget);
     expect(find.byType(CountdownTimer), findsNothing);
+    // the cookfire is still the pick, so the cook could light it again
+    expect(find.byType(RecipeCard), findsNWidgets(2));
+    expect(cookingLocked(tester), isFalse);
 
     session.dispose();
   });
@@ -404,7 +479,7 @@ void main() {
   ) async {
     final session = await pumpFirepit(tester, lightRecipeId: 'basic_campfire');
 
-    // a campfire cannot cook, so the pit is fire-only and the button lights
+    // nothing picked yet, so the fire card runs and the button lights
     expect(find.text('Light Fire'), findsOneWidget);
 
     // picks the nth firemaking recipe out of the fire card's picker.
@@ -427,14 +502,136 @@ void main() {
     expect(find.text('Add Logs'), findsOneWidget);
     expect(find.text('Replaces the current fire'), findsNothing);
 
-    // a cookfire would take the firepit over, and the card says so - but
-    // a cookfire is lit by cooking on it, so the button cooks rather than
-    // lighting it by hand
+    // a cookfire would take the firepit over, and the card says so. the
+    // fire card is still the one picked, so the button lights it by hand
     await pickFire(0);
     expect(find.text('Replaces the current fire'), findsOneWidget);
-    expect(find.text('Cook'), findsOneWidget);
-    expect(find.text('Light Fire'), findsNothing);
+    expect(find.text('Light Fire'), findsOneWidget);
+    expect(find.text('Cook'), findsNothing);
 
+    session.dispose();
+  });
+
+  Finder buttonIcon(IconData icon) => find.descendant(
+    of: find.byType(MomentumPrimaryButton),
+    matching: find.byIcon(icon),
+  );
+
+  testWidgets('picking another fire mid-burn puts the button back at rest', (
+    tester,
+  ) async {
+    final session = await pumpFirepit(
+      tester,
+      selections: {SkillId.FIREMAKING: 'basic_campfire'},
+    );
+
+    // building campfires: the button reads as running
+    expect(
+      session.craftingController.startCraftingActionFor(
+        'basic_campfire',
+        EntityId.FIREPIT,
+      ),
+      isTrue,
+    );
+    session.craftingController.doCraftingAction(1);
+    session.buffController.refresh();
+    await settle(tester);
+    expect(buttonIcon(Icons.fast_forward), findsOneWidget);
+
+    // pick the cookfire: it is not what is burning, so the button offers
+    // to start it rather than claiming it is already running
+    await pickFire(tester, 0);
+    expect(find.text('Light Fire'), findsOneWidget);
+    expect(buttonIcon(Icons.play_arrow), findsOneWidget);
+    expect(buttonIcon(Icons.fast_forward), findsNothing);
+
+    // and pressing it builds the pick
+    await tester.tap(find.byType(MomentumPrimaryButton));
+    await settle(tester);
+    expect(session.craftingController.activeRecipeId, 'cookfire');
+    expect(buttonIcon(Icons.fast_forward), findsOneWidget);
+
+    session.actionTimingController.stop();
+    session.dispose();
+  });
+
+  testWidgets('picking a fire mid-cook hands the button to the fire', (
+    tester,
+  ) async {
+    final session = await pumpFirepit(
+      tester,
+      selections: {
+        SkillId.FIREMAKING: 'cookfire',
+        SkillId.COOKING: 'cook_minnow',
+      },
+    );
+    await chooseCooking(tester);
+    expect(
+      session.craftingController.startCraftingActionFor(
+        'cook_minnow',
+        EntityId.FIREPIT,
+      ),
+      isTrue,
+    );
+    session.craftingController.doCraftingAction(1);
+    session.buffController.refresh();
+    await settle(tester);
+    expect(marks(tester), [false, true]);
+    expect(find.text('Cook'), findsOneWidget);
+
+    // the fire card is picked: the button is the fire's now, at rest
+    await pickFire(tester, 0);
+    expect(marks(tester), [true, false]);
+    expect(find.text('Cook'), findsNothing);
+    expect(buttonIcon(Icons.play_arrow), findsOneWidget);
+
+    session.actionTimingController.stop();
+    session.dispose();
+  });
+
+  testWidgets('a lit fire wears what it gives, and the picker lists it', (
+    tester,
+  ) async {
+    final session = await pumpFirepit(
+      tester,
+      lightRecipeId: 'cookfire',
+      selections: {SkillId.FIREMAKING: 'cookfire'},
+    );
+
+    // the burning cookfire on the stage: a chip for cooking and hitpoints
+    final hero = find.byKey(const ValueKey('fire-hero-stats'));
+    expect(hero, findsOneWidget);
+    Finder chipIn(Finder scope, SkillId skill) => find.descendant(
+      of: scope,
+      matching: find.byWidgetPredicate(
+        (w) => w is BuffBadge && w.skill == skill,
+      ),
+    );
+    expect(chipIn(hero, SkillId.COOKING), findsOneWidget);
+    expect(chipIn(hero, SkillId.HITPOINTS), findsOneWidget);
+
+    // every fire in the picker says what it burns for
+    await tester.tap(find.byType(RecipeCard).first);
+    await settle(tester);
+    final rows = find.descendant(
+      of: find.byType(AlertDialog),
+      matching: find.byType(RecipeCard),
+    );
+    expect(rows, findsWidgets);
+    for (var i = 0; i < rows.evaluate().length; i++) {
+      expect(
+        find.descendant(of: rows.at(i), matching: find.byType(BuffBadge)),
+        findsWidgets,
+        reason: 'picker row $i',
+      );
+    }
+
+    session.dispose();
+  });
+
+  testWidgets('a cold pit has nothing to wear', (tester) async {
+    final session = await pumpFirepit(tester);
+    expect(find.byKey(const ValueKey('fire-hero-stats')), findsNothing);
     session.dispose();
   });
 }

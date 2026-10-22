@@ -957,7 +957,9 @@ enum ItemId {
     FireItemDefinition(
       name: "Cookfire",
       value: 4,
-      skillBonus: {SkillId.COOKING: 3},
+      // a cookfire is a meal and a warm seat: cooking, and hitpoints on the
+      // same rung
+      skillBonus: {SkillId.COOKING: 3, SkillId.HITPOINTS: 3},
       duration: Duration(minutes: 3),
       canCook: true,
       iconAsset: "assets/images/entities/cookfire.png",
@@ -986,8 +988,9 @@ enum ItemId {
       name: "Oak Cookfire",
       value: 10,
       // 5, not 6: the three cookfires run 3 / 5 / 8 so the fire ladder
-      // carries the same Fibonacci step as the gear tiers
-      skillBonus: {SkillId.COOKING: 5},
+      // carries the same Fibonacci step as the gear tiers. hitpoints ride
+      // the same rung
+      skillBonus: {SkillId.COOKING: 5, SkillId.HITPOINTS: 5},
       duration: Duration(minutes: 5),
       canCook: true,
       iconAsset: "assets/images/entities/oak_cookfire.png",
@@ -1018,7 +1021,7 @@ enum ItemId {
     FireItemDefinition(
       name: "Willow Cookfire",
       value: 22,
-      skillBonus: {SkillId.COOKING: 8},
+      skillBonus: {SkillId.COOKING: 8, SkillId.HITPOINTS: 8},
       duration: Duration(minutes: 8),
       canCook: true,
       iconAsset: "assets/images/entities/willow_cookfire.png",

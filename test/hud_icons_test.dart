@@ -148,7 +148,7 @@ void main() {
     await settle(tester);
     expect(hp, findsOneWidget);
     final player = session.saveGameData.playerData;
-    final max = session.playerDataController.getStatTotal(SkillId.HITPOINTS);
+    final max = session.playerDataController.getMaxHitpoints();
     expect(
       find.descendant(
         of: hp,

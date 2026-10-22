@@ -21,6 +21,7 @@ import '../theme/hearth_theme.dart';
 import '../widgets/action_dock.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/countdown_timer.dart';
+import '../widgets/item_stack_tile.dart';
 import '../widgets/list_row.dart';
 import '../widgets/place_tile.dart';
 import '../widgets/primary_button.dart';
@@ -119,6 +120,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  /// Whether [e] lists under Places rather than Discoveries: anything that
+  /// isn't fought or gathered for materials. A fishing spot is an encounter
+  /// but never depletes, so it sits with the places too.
+  static bool _isPlace(Entity e) => e is! EncounterEntity || e is FishingEntity;
+
   /// One of the zone's places, as a tile in the places grid. Tapping it
   /// opens the place, as the card it replaces did.
   Widget _buildPlaceTile(WorldController worldController, Entity e) {
@@ -147,6 +153,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
         kind: SpriteKind.fire,
         corner: lit ? _BurnTime(expirationTime: fire.expirationTime) : null,
+        // what the burning fire is giving, in the chips its item wears
+        leadingCorner: lit
+            ? StatChips(
+                key: const ValueKey('place-tile-fire-stats'),
+                id: fire.id,
+                tileSize: 56,
+              )
+            : null,
         onTap: open,
       );
     }
@@ -254,20 +268,31 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final structures = <Entity>[];
     final resources = <EncounterEntity>[];
     for (final e in entities) {
-      if (e is EncounterEntity && e is! FishingEntity) {
-        resources.add(e);
-      } else {
+      if (_isPlace(e)) {
         structures.add(e);
+      } else {
+        resources.add(e as EncounterEntity);
       }
     }
 
-    // everything the zone can turn up that exploring hasn't found yet
-    final discoveredIds = {for (final e in resources) e.id};
+    // everything the zone can turn up that exploring hasn't found yet —
+    // places as well as resources, so a found dungeon isn't listed twice
+    final discoveredIds = {for (final e in entities) e.id};
     final undiscovered = worldController
         .zoneDetails(worldController.viewedZoneId)
         .entities
         .where((d) => d.id is EntityId && !discoveredIds.contains(d.id))
         .toList();
+    // an unfound place waits under Places, in the slot it will take once
+    // found; only things to fight or gather wait under Discoveries
+    final unfoundPlaces = [
+      for (final d in undiscovered)
+        if (_isPlace((d.id as EntityId).build())) d,
+    ];
+    final unfoundResources = [
+      for (final d in undiscovered)
+        if (!_isPlace((d.id as EntityId).build())) d,
+    ];
 
     // every discoverable has one fixed slot, found or not: clustered by kind
     // (combat first, then the gathering skills in skill order). fights run
@@ -306,7 +331,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         ),
     ];
     final unfoundSlots = [
-      for (final d in undiscovered)
+      for (final d in unfoundResources)
         _ListSlot(
           group: switch ((d.id as EntityId).build()) {
             final EncounterEntity e => _resourceGroupKey(e),
@@ -336,13 +361,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ? _emptyBody(context, 'Nothing here yet')
             : Column(
                 children: [
-                  if (structures.isNotEmpty) ...[
+                  if (structures.isNotEmpty || unfoundPlaces.isNotEmpty) ...[
                     // 16 under the tabs, with their own 4 and the body's 4
                     _sectionHeader(context, 'Places', above: 8),
                     PlaceGrid(
                       tiles: [
                         for (final e in structures)
                           _buildPlaceTile(worldController, e),
+                        for (final d in unfoundPlaces)
+                          _UndiscoveredCard(
+                            key: ValueKey('undiscovered-${d.name}'),
+                            discovery: d,
+                          ),
                       ],
                     ),
                   ],
@@ -350,7 +380,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     _sectionHeader(
                       context,
                       'Discoveries',
-                      above: structures.isEmpty ? 8 : 24,
+                      above: structures.isEmpty && unfoundPlaces.isEmpty
+                          ? 8
+                          : 24,
                     ),
                     PlaceGrid(
                       tiles: [for (final entry in discoveries) entry.build()],
@@ -497,7 +529,11 @@ class _UndiscoveredCard extends StatelessWidget {
       id: id,
       name: entity.name,
       subtitle: encounter == null ? '' : 'Lv ${world.entityLevel(encounter)}',
-      kind: entity is CombatEntity ? SpriteKind.combat : SpriteKind.gathering,
+      kind: switch (entity) {
+        CombatEntity() => SpriteKind.combat,
+        DungeonEntity() => SpriteKind.dungeon,
+        _ => SpriteKind.gathering,
+      },
       onTap: null,
       // a creature's art has a margin of its own; sit closer
       spriteScale: 1.25,

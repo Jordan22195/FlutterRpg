@@ -17,9 +17,15 @@ class StagePanel extends StatelessWidget {
     this.corner,
     this.leading,
     this.onTap,
+    this.outline,
   });
 
   final SpriteTint tint;
+
+  /// Drawn 2px in place of the tint's border — the subject's rarity, as its
+  /// tile on the zone and its frame in a queue are outlined. Null keeps the
+  /// tint's own 1px border.
+  final Color? outline;
   final Widget sprite;
   final double height;
 
@@ -40,7 +46,10 @@ class StagePanel extends StatelessWidget {
         decoration: BoxDecoration(
           color: tint.fill,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: tint.border),
+          border: Border.all(
+            color: outline ?? tint.border,
+            width: outline != null ? 2 : 1,
+          ),
         ),
         child: Stack(
           children: [

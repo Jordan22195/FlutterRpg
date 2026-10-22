@@ -18,6 +18,7 @@ import 'package:rpg/widgets/empty_state.dart';
 import 'package:rpg/widgets/entity_info_dialog.dart';
 import 'package:rpg/widgets/encounter_info_panel.dart';
 import 'package:rpg/widgets/fill_bar.dart';
+import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/stage_panel.dart';
 import 'package:rpg/widgets/stance_button.dart';
 import 'package:rpg/widgets/status_row.dart';
@@ -30,6 +31,19 @@ Future<void> settle(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 500));
   await tester.pump(const Duration(milliseconds: 500));
   await tester.pump(const Duration(milliseconds: 100));
+}
+
+/// The border the stage panel draws around the creature.
+BorderSide stageBorder(WidgetTester tester) {
+  final box = tester.widget<Container>(
+    find
+        .descendant(
+          of: find.byType(StagePanel),
+          matching: find.byType(Container),
+        )
+        .first,
+  );
+  return ((box.decoration! as BoxDecoration).border! as Border).top;
 }
 
 void main() {
@@ -100,6 +114,9 @@ void main() {
     final stage = tester.widget<StagePanel>(find.byType(StagePanel));
     expect(stage.tint, GameColors.standard.combatTint);
     expect(find.byType(StageCountPill), findsOneWidget);
+    // a common creature keeps the tint's own 1px border
+    expect(stage.outline, isNull);
+    expect(stageBorder(tester).width, 1);
     // and nothing under its feet: no shadow disc drawn on the stage
     expect(
       find.descendant(
@@ -194,5 +211,54 @@ void main() {
     await settle(tester);
     expect(find.byType(EncounterScreen), findsNothing);
     expect(find.byType(ArtHeader), findsOneWidget);
+  });
+
+  testWidgets('a rare creature stands on a stage outlined in its rarity', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
+    );
+    await settle(tester);
+
+    const zoneId = ZoneId.TUTORIAL_FARM;
+    final session = Provider.of<GameSession>(
+      tester.element(find.byType(MapScreen)),
+      listen: false,
+    );
+    final rare = EntityId.CHICKEN_RARE.build() as EncounterEntity;
+    session.saveGameData.worldData.zones[zoneId]!.discoveredEntities.add(rare);
+
+    await tester.tap(find.byKey(ValueKey('map-node-${zoneId.name}')));
+    await settle(tester);
+    await tester.tap(find.text('Enter'));
+    await settle(tester);
+    final tile = find.byKey(const ValueKey(EntityId.CHICKEN_RARE));
+    await tester.scrollUntilVisible(
+      tile,
+      100,
+      scrollable: find
+          .descendant(
+            of: find.byType(CustomScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.ensureVisible(tile);
+    await settle(tester);
+    await tester.tap(tile);
+    await settle(tester);
+    expect(find.byType(EncounterScreen), findsOneWidget);
+
+    final rarity = rarityBorderColor(EntityId.CHICKEN_RARE.definition.rarity);
+    expect(rarity, isNotNull);
+    expect(tester.widget<StagePanel>(find.byType(StagePanel)).outline, rarity);
+    final side = stageBorder(tester);
+    expect(side.color, rarity);
+    expect(side.width, 2);
   });
 }

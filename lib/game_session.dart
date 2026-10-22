@@ -40,6 +40,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/player_data.dart';
+import 'package:rpg/data/combat_tuning.dart';
 import 'package:rpg/services/skill_service.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 import 'package:rpg/services/exploration_service.dart';
@@ -260,7 +261,8 @@ class GameSessionFactory {
         buffData: BuffData(),
         skillData: skillData,
         equipmentData: EquipmentData(),
-        hitpoints: 10,
+        // a new player starts at full health
+        hitpoints: 10 * hitpointsPerStatPoint,
         // matches max stamina at stamina level 1 (10 per level)
         stamina: 10,
       ),
@@ -391,8 +393,9 @@ class GameSessionFactory {
     final hpSkill = save.playerData.skillData[SkillId.HITPOINTS];
     if (hpSkill != null && hpSkill.xp < hpSkill.xpTable[10]) {
       hpSkill.xp = hpSkill.xpTable[10];
-      if (save.playerData.hitpoints < 10) {
-        save.playerData.hitpoints = 10;
+      final floor = 10 * hitpointsPerStatPoint;
+      if (save.playerData.hitpoints < floor) {
+        save.playerData.hitpoints = floor;
       }
     }
 

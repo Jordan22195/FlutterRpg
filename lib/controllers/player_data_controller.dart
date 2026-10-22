@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../data/auto_eat_rule.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:rpg/services/player_data_service.dart';
@@ -114,6 +115,19 @@ class PlayerDataController extends ChangeNotifier {
   int getStatTotal(SkillId id) {
     return _playerDataService.getStatTotals(_playerData)[id] ?? 1;
   }
+
+  /// The share of max hp auto-eat eats at or below, 0..1.
+  double getAutoEatThreshold() => _playerData.autoEatRule.threshold;
+
+  /// Sets the hp share auto-eat eats at, clamped to 0..1. Saved with the
+  /// player, so every fight — live, queued, dungeon and offline — eats on it.
+  void setAutoEatThreshold(double threshold) {
+    _playerData.autoEatRule = AutoEatRule(threshold: threshold.clamp(0.0, 1.0));
+    notifyListeners();
+  }
+
+  /// The player's health pool — see [PlayerDataService.maxHitpoints].
+  int getMaxHitpoints() => _playerDataService.maxHitpoints(_playerData);
 
   /// The player's combat level, on the same scale as a creature's.
   int getCombatLevel() => _playerDataService.combatLevel(_playerData);

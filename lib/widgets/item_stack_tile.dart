@@ -12,6 +12,7 @@ import '../data/skill_data.dart';
 import '../theme/hearth_theme.dart';
 import '../utilities/util.dart';
 import '../widgets/countdown_timer.dart';
+import 'explore_card.dart';
 
 /// Border color used to signal rarity — an entity's, or the tier a piece of
 /// equipment rolled, which are one ladder. A rare vein and a rare sword are
@@ -134,12 +135,6 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
 
   /// The smallest tile that carries a food's heal badge.
   static const double _healBadgeMinTile = 36;
-
-  /// How much this tile's item heals, if it is a food.
-  int? get _healAmount {
-    final currentId = id;
-    return currentId == null ? null : HealBadge.amountFor(currentId);
-  }
 
   void _showInfoDialog(BuildContext context) {
     final currentId = id;
@@ -411,11 +406,12 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
           // a food says how much it heals, top-left, clear of the count and
           // the buff timer along the bottom. a tile too small for three
           // corners keeps the count and leaves this out
-          if (_healAmount case final heal? when size >= _healBadgeMinTile)
+          // and a buff says what it raises, in the same corner
+          if (size >= _healBadgeMinTile && StatChips.hasAny(id))
             Positioned(
               left: 4,
               top: 4,
-              child: HealBadge(amount: heal, tileSize: size),
+              child: StatChips(id: id, tileSize: size),
             ),
 
           // this item's own buff, ticking down in the corner opposite the
@@ -444,6 +440,46 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   }
 }
 
+/// The chips an item wears top-left on every tile that shows it: a food's
+/// heal, or one chip per stat a buff raises, stacked in the order the item
+/// lists them. Bag tiles, recipe rows and a burning fire all use this, so an
+/// item reads the same wherever it is drawn. Nothing for anything else.
+class StatChips extends StatelessWidget {
+  const StatChips({super.key, required this.id, required this.tileSize});
+
+  final Enum? id;
+
+  /// The tile the chips sit on; they scale with it.
+  final double tileSize;
+
+  /// Whether [id] has anything to wear.
+  static bool hasAny(Enum? id) =>
+      id != null &&
+      (HealBadge.amountFor(id) != null ||
+          (BuffBadge.bonusFor(id)?.isNotEmpty ?? false));
+
+  @override
+  Widget build(BuildContext context) {
+    final currentId = id;
+    if (currentId == null) return const SizedBox.shrink();
+    if (HealBadge.amountFor(currentId) case final heal?) {
+      return HealBadge(amount: heal, tileSize: tileSize);
+    }
+    final bonus = BuffBadge.bonusFor(currentId);
+    if (bonus == null || bonus.isEmpty) return const SizedBox.shrink();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final (i, stat) in bonus.entries.indexed) ...[
+          if (i > 0) SizedBox(height: tileSize * 0.03),
+          BuffBadge(skill: stat.key, amount: stat.value, tileSize: tileSize),
+        ],
+      ],
+    );
+  }
+}
+
 /// How much a food heals: a heart and the amount in green, on the same dark
 /// backing the count wears, scaled with the tile the way the count is.
 /// Every tile that shows a food wears one, top-left.
@@ -462,11 +498,76 @@ class HealBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fontSize = (tileSize * 0.16).clamp(9.0, 28.0);
+    final fontSize = _StatChip.fontSizeFor(tileSize);
+    return _StatChip(
+      label: 'Heals $amount',
+      amount: amount,
+      tileSize: tileSize,
+      icon: Icon(Icons.favorite, size: fontSize, color: context.gameColors.hp),
+    );
+  }
+}
+
+/// What a buff raises, one stat a chip: the stat's sprite and the amount,
+/// on the chip a food's heal wears. A potion or a fire with two stats wears
+/// two, stacked in the same corner.
+class BuffBadge extends StatelessWidget {
+  const BuffBadge({
+    super.key,
+    required this.skill,
+    required this.amount,
+    required this.tileSize,
+  });
+
+  /// The stats [id] raises while its buff runs, in the order the item
+  /// lists them; null for anything that isn't a buff.
+  static Map<SkillId, int>? bonusFor(Enum? id) {
+    if (id is! ItemId) return null;
+    final def = id.definition;
+    return def is BuffItemDefinition ? def.skillBonus : null;
+  }
+
+  final SkillId skill;
+  final int amount;
+  final double tileSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final fontSize = _StatChip.fontSizeFor(tileSize);
+    return _StatChip(
+      label: '${skillDisplayName(skill)} +$amount',
+      amount: amount,
+      tileSize: tileSize,
+      icon: IconRenderer<SkillId>(size: fontSize * 1.2, id: skill),
+    );
+  }
+}
+
+/// The chip a tile's stat readouts share: an icon and an amount in the heal
+/// green, on the count's dark backing, sized off the tile.
+class _StatChip extends StatelessWidget {
+  const _StatChip({
+    required this.label,
+    required this.amount,
+    required this.tileSize,
+    required this.icon,
+  });
+
+  final String label;
+  final int amount;
+  final double tileSize;
+  final Widget icon;
+
+  static double fontSizeFor(double tileSize) =>
+      (tileSize * 0.16).clamp(9.0, 28.0);
+
+  @override
+  Widget build(BuildContext context) {
+    final fontSize = fontSizeFor(tileSize);
     final colors = context.gameColors;
 
     return Semantics(
-      label: 'Heals $amount',
+      label: label,
       excludeSemantics: true,
       child: Container(
         padding: EdgeInsets.symmetric(
@@ -480,7 +581,7 @@ class HealBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.favorite, size: fontSize, color: colors.hp),
+            icon,
             SizedBox(width: fontSize * 0.2),
             Text(
               '$amount',

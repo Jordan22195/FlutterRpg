@@ -87,12 +87,13 @@ class RecipeTile extends StatelessWidget {
               bottom: 0,
               child: CountPill(count: count, borderColor: border),
             ),
-          // a food says how much it heals, top-left, as on every item tile
-          if (HealBadge.amountFor(id) case final heal?)
+          // a food's heal or a buff's stats, top-left, as on every item
+          // tile — so a fire in the picker says what it burns for
+          if (StatChips.hasAny(id))
             Positioned(
               left: 3,
               top: 3,
-              child: HealBadge(amount: heal, tileSize: size),
+              child: StatChips(id: id, tileSize: size),
             ),
         ],
       ),

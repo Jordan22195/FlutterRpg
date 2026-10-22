@@ -15,6 +15,7 @@ import '../widgets/action_dock.dart';
 import '../widgets/art_header.dart';
 import '../widgets/countdown_timer.dart';
 import '../widgets/crafting_info_panel.dart';
+import '../widgets/item_stack_tile.dart';
 import '../widgets/list_row.dart';
 import '../widgets/sprite_frame.dart';
 import '../widgets/stage_panel.dart';
@@ -29,11 +30,12 @@ firepit screen contents:
 -the zone's art strip, naming whatever is burning, or the firepit when it
  is cold
 -the fire on a stage, with its remaining burn time in the corner
--a firemaking recipe card, with the cooking recipe stacked below it as soon
- as a cookfire is picked; the highlighted card is what the action button
- runs. cooking tends its own fire: Cook lights the picked cookfire on its
- first tick and relights it whenever it burns out, so with a cookfire
- picked the button always cooks and the fire card only chooses the fire
+-a firemaking recipe card with the cooking recipe stacked below it; the
+ highlighted card is what the action button runs. cooking is locked until a
+ cookfire is the picked fire. with the fire card highlighted the button
+ builds the picked fire over and over - a cookfire included; with the
+ cooking card highlighted it cooks, lighting the picked cookfire on its
+ first tick and relighting it whenever it burns out
 -the Tending timer and the skill rings
 -tabbed panel of items cooked this session, active buffs, and recipe stats
 -the dock: stop, the button naming its action, and put-out beside it
@@ -49,33 +51,29 @@ class FirepitScreen extends StatefulWidget {
 class _FirepitScreenState extends State<FirepitScreen>
     with TickerProviderStateMixin {
   /// Which of the stacked recipe cards the action button runs. Null until
-  /// the player picks, so the screen can default to cooking whenever a
-  /// cookfire is lit or picked.
+  /// the player picks one, which reads as the fire.
   SkillId? _activeSection;
 
   SkillId _resolveActiveSection(
     CraftingController controller, {
-    required bool showCooking,
-    required bool cookfirePicked,
+    required bool cookingUnlocked,
   }) {
-    // a running action owns the selection: the button must describe what it
-    // is actually doing
+    // until the player picks a card, a running action owns the selection,
+    // so a screen opened mid-action describes what it is doing. a pick
+    // always wins after that: the button runs whatever is highlighted
     final running = context.read<ActionTimingController>().isRunning;
-    if (running) {
+    if (running && _activeSection == null) {
       final activeSkill = controller.getRecipe(controller.activeRecipeId).skill;
       if (activeSkill == SkillId.COOKING) return SkillId.COOKING;
       if (activeSkill == SkillId.FIREMAKING) return SkillId.FIREMAKING;
     }
 
-    // a cookfire is only ever lit by cooking on it: the cook pays its logs
-    // and relights it itself, so the button cooks and the fire card is just
-    // the choice of which fire it burns
-    if (cookfirePicked) return SkillId.COOKING;
-
-    if (!showCooking) return SkillId.FIREMAKING;
-    if (_activeSection == SkillId.FIREMAKING) return SkillId.FIREMAKING;
-    // cooking is the reason you walked over to a lit cookfire
-    return SkillId.COOKING;
+    // whatever card was picked runs — cooking only while it is unlocked,
+    // so picking a fire that can't cook hands the button back to the fire
+    if (_activeSection == SkillId.COOKING && cookingUnlocked) {
+      return SkillId.COOKING;
+    }
+    return SkillId.FIREMAKING;
   }
 
   void _showRecipePicker(
@@ -156,7 +154,7 @@ class _FirepitScreenState extends State<FirepitScreen>
   Widget build(BuildContext context) {
     final controller = context.watch<CraftingController>();
     // BuffController ticks once a second, so watching it is what makes the
-    // cook section and the put-out button disappear when a fire burns out
+    // put-out button disappear when a fire burns out
     context.watch<BuffController>();
     final fire = controller.activeFire();
     final canCook = fire?.canCook ?? false;
@@ -164,14 +162,14 @@ class _FirepitScreenState extends State<FirepitScreen>
     final fireRecipeId = controller.selectedRecipeIdFor(SkillId.FIREMAKING);
     final cookRecipeId = controller.selectedRecipeIdFor(SkillId.COOKING);
 
-    // picking a cookfire is enough to put the cooking recipe on screen: the
-    // cook lights it itself. a lit cookfire shows it too, whatever is picked
+    // cooking is always on screen, but locked until the picked fire is a
+    // cookfire: the cook lights and relights that fire itself, so without
+    // one there is nothing for it to cook over
     final cookFireRecipe = controller.cookFireRecipe();
-    final showCooking = canCook || cookFireRecipe != null;
+    final cookingUnlocked = cookFireRecipe != null;
     final activeSection = _resolveActiveSection(
       controller,
-      showCooking: showCooking,
-      cookfirePicked: cookFireRecipe != null,
+      cookingUnlocked: cookingUnlocked,
     );
 
     final selectedId = activeSection == SkillId.COOKING
@@ -233,11 +231,11 @@ class _FirepitScreenState extends State<FirepitScreen>
                 _FireHero(fire: fire, key: ValueKey(fire?.id ?? ItemId.NULL)),
                 const SizedBox(height: 12),
 
-                // the fire the pit burns is always the first choice. a
-                // cookfire is a pit doing two jobs, so its cooking recipe
-                // stacks underneath rather than hiding in a tab: both
-                // recipes stay in view, and the highlighted card is the one
-                // the action button runs.
+                // the fire the pit burns is always the first choice, and the
+                // cooking recipe stacks underneath rather than hiding in a
+                // tab: both recipes stay in view, and the highlighted card
+                // is the one the action button runs. cooking waits, locked,
+                // until a cookfire is the picked fire.
                 AnimatedSize(
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
@@ -245,14 +243,11 @@ class _FirepitScreenState extends State<FirepitScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // the cards name themselves only when there are two of
-                      // them; alone, the screen is already unambiguous
-                      if (showCooking) const _SectionLabel('Firemaking'),
+                      const _SectionLabel('Firemaking'),
                       _FireRecipeCard(
                         recipeId: fireRecipeId,
                         burningFireId: fire?.id,
-                        selected:
-                            showCooking && activeSection == SkillId.FIREMAKING,
+                        selected: activeSection == SkillId.FIREMAKING,
                         onTap: () {
                           setState(() => _activeSection = SkillId.FIREMAKING);
                           _showRecipePicker(
@@ -262,35 +257,41 @@ class _FirepitScreenState extends State<FirepitScreen>
                           );
                         },
                       ),
-                      if (showCooking) ...[
-                        const _SectionLabel('Cooking'),
-                        RecipeCard(
-                          recipeId: cookRecipeId,
-                          selected: activeSection == SkillId.COOKING,
-                          onTap: () {
-                            setState(() => _activeSection = SkillId.COOKING);
-                            _showRecipePicker(
-                              context,
-                              controller,
-                              SkillId.COOKING,
-                            );
-                          },
-                        ),
-                        // what the cook burns to keep its fire going, lit or
-                        // not: it relights out of the same logs either way.
-                        // cooking shown only because a cookfire is burning
-                        // has nothing to relight with, and says so
-                        if (cookFireRecipe != null)
-                          _CardHint(
-                            icon: Icons.local_fire_department_outlined,
-                            text: _fireCostLabel(cookFireRecipe),
-                          )
-                        else
-                          const _CardHint(
-                            icon: Icons.swap_horiz,
-                            text: 'Pick a cookfire to cook',
+                      const _SectionLabel('Cooking'),
+                      // locked: greyed and shut to taps, so it can be neither
+                      // picked nor run until the fire above is a cookfire
+                      IgnorePointer(
+                        ignoring: !cookingUnlocked,
+                        child: Opacity(
+                          opacity: cookingUnlocked ? 1 : 0.45,
+                          child: RecipeCard(
+                            key: const ValueKey('firepit-cooking-card'),
+                            recipeId: cookRecipeId,
+                            selected: activeSection == SkillId.COOKING,
+                            onTap: () {
+                              setState(() => _activeSection = SkillId.COOKING);
+                              _showRecipePicker(
+                                context,
+                                controller,
+                                SkillId.COOKING,
+                              );
+                            },
                           ),
-                      ],
+                        ),
+                      ),
+                      // what the cook burns to keep its fire going, lit or
+                      // not: it relights out of the same logs either way.
+                      // locked, it says what opens it
+                      if (cookFireRecipe != null)
+                        _CardHint(
+                          icon: Icons.local_fire_department_outlined,
+                          text: _fireCostLabel(cookFireRecipe),
+                        )
+                      else
+                        const _CardHint(
+                          icon: Icons.lock_outline,
+                          text: 'Pick a cookfire to cook',
+                        ),
                     ],
                   ),
                 ),
@@ -342,7 +343,11 @@ class _FirepitScreenState extends State<FirepitScreen>
                 enabled: canAct,
                 label: actionLabel,
                 showLabel: true,
-                isActive: controller.isCraftingHere,
+                // running only when the highlighted recipe is the one being
+                // made: picking another fire mid-burn puts it back at rest
+                isActive: () =>
+                    controller.isCraftingHere() &&
+                    controller.activeRecipeId == selectedId,
                 startActionFunction: () {
                   controller.startCraftingActionFor(
                     selectedId,
@@ -400,6 +405,17 @@ class _FireHero extends StatelessWidget {
       tint: tint,
       height: 148,
       sprite: SpriteFrame.sprite(f?.id ?? EntityId.FIREPIT, size: 116),
+      // what the burning fire is giving, in the chips its tile wears
+      leading: f == null
+          ? null
+          : Align(
+              alignment: Alignment.topLeft,
+              child: StatChips(
+                key: const ValueKey('fire-hero-stats'),
+                id: f.id,
+                tileSize: 80,
+              ),
+            ),
       corner: f == null
           ? null
           : Container(

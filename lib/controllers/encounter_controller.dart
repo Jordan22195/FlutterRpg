@@ -280,11 +280,33 @@ class EncounterController extends ChangeNotifier {
   /// is read instead.
   ({DungeonId id, int index, EntityQueue preview})? _viewedFloor;
 
+  /// The player has gone to look at a place in a zone — a firepit, a tree,
+  /// a shop — while a floor may still be running. Looking costs nothing: the
+  /// floor keeps looping, and only starting another action leaves it. But
+  /// the screen on top is the zone's, so nothing here may resolve it to the
+  /// dungeon's member. Cleared again by anything that puts a floor's own
+  /// screen back in view.
+  bool _viewingZoneEntity = false;
+
+  /// The running floor's member, while its screen is the one in view; null
+  /// while the player is looking at a zone place instead.
+  EncounterEntity? get _runningMemberInView =>
+      _viewingZoneEntity ? null : _dungeonService.runningEntity(_dungeonRun);
+
+  /// The running floor's own screen is back in view — opened from the
+  /// status row, or rebuilt on a relaunch.
+  void viewRunningFloor() {
+    if (!_viewingZoneEntity) return;
+    _viewingZoneEntity = false;
+    notifyListeners();
+  }
+
   /// Opens floor [index] of [id] on the encounter screen without starting
   /// it. Returns a token for [closeDungeonFloor].
   Object viewDungeonFloor(DungeonId id, int index, EntityQueue preview) {
     final view = (id: id, index: index, preview: preview);
     _viewedFloor = view;
+    _viewingZoneEntity = false;
     final entity = preview.displayed;
     if (entity != null) _playerState.currentEntityViewId = entity.id;
     notifyListeners();
@@ -332,6 +354,7 @@ class EncounterController extends ChangeNotifier {
     // to decide whether this start is leaving the dungeon
     _dungeonRun.runningSlot = index;
     _playerState.currentEntityViewId = entity.id;
+    _viewingZoneEntity = false;
 
     return startEncounterActionFor(entity);
   }
@@ -426,7 +449,10 @@ class EncounterController extends ChangeNotifier {
   /// built up mid-card, and start() is a no-op while already running.
   void _startDungeonMember(EncounterEntity entity) {
     _encounterService.setEncounterEntity(_encounterState, entity);
-    _playerState.currentEntityViewId = entity.id;
+    // the view follows the floor only while its screen is the one up: a
+    // hand-off while the player is at a firepit must not pull the firepit's
+    // screen over to the new member
+    if (!_viewingZoneEntity) _playerState.currentEntityViewId = entity.id;
     // the next member may not offer the stance the last one did
     _playerDataService.coerceStanceFor(entity, _playerState);
 
@@ -472,7 +498,9 @@ class EncounterController extends ChangeNotifier {
   /// Empty for an ordinary world encounter.
   List<EncounterEntity> queueRemaining() =>
       _idleFloor?.remaining ??
-      _dungeonService.runningSlot(_dungeonRun)?.remaining ??
+      (_viewingZoneEntity
+          ? null
+          : _dungeonService.runningSlot(_dungeonRun)?.remaining) ??
       const [];
 
   // todo move this logic to the enoucnter system
@@ -481,8 +509,9 @@ class EncounterController extends ChangeNotifier {
   void startEncounterAction() {
     // inside a dungeon floor the button re-starts THAT floor's member. the
     // zone lookup below can't see it — and with the same EntityId sitting
-    // in the zone it would happily start the wrong fight
-    final inCard = _dungeonService.runningEntity(_dungeonRun);
+    // in the zone it would happily start the wrong fight. a zone place on
+    // screen starts its own action, which leaves the floor
+    final inCard = _runningMemberInView;
     if (inCard != null) {
       startEncounterActionFor(inCard);
       return;
@@ -734,8 +763,9 @@ class EncounterController extends ChangeNotifier {
 
     // a dungeon card owns the entity being worked. the same EntityId can
     // sit in several cards of the same dungeon, so it resolves through the
-    // running card rather than through currentEntityViewId
-    final inCard = _dungeonService.runningEntity(_dungeonRun);
+    // running card rather than through currentEntityViewId — while its
+    // screen is the one up
+    final inCard = _runningMemberInView;
     if (inCard != null) return inCard;
 
     // keyed on zone as well as id, so a tree in one zone never resolves to
@@ -789,7 +819,12 @@ class EncounterController extends ChangeNotifier {
     // when its lead member is the same kind as the running fight
     if (_idleFloor != null) return false;
 
-    final inCard = _dungeonService.runningEntity(_dungeonRun);
+    // a zone place on screen is never the running floor's member
+    if (_viewingZoneEntity &&
+        _dungeonService.runningEntity(_dungeonRun) != null) {
+      return false;
+    }
+    final inCard = _runningMemberInView;
     if (inCard != null) return identical(active, inCard);
 
     // identity, not id: two zones can each hold an Oak Tree, and working
@@ -829,9 +864,11 @@ class EncounterController extends ChangeNotifier {
   // action is running the previous session is over, so its drops are
   // cleared; a still-running session keeps its drops
   void onEntityViewChanged() {
-    // navigating to a zone entity leaves the dungeon card behind. dungeon
-    // cards don't route through here, so this only ever fires on the way out
-    releaseDungeonFloor();
+    // a zone place is on screen now. looking costs nothing — a running
+    // floor keeps looping, and only starting another action leaves it —
+    // so this only stops the screen resolving to the floor's member.
+    // dungeon floors don't route through here
+    _viewingZoneEntity = true;
 
     if (!_isRunningAnyEncounterAction()) {
       _inventoryService.clearItems(_encounterState.itemDrops);

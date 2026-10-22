@@ -59,15 +59,23 @@ class InventoryService {
         foodItems.add(entry.key);
       }
     }
-    foodItems.sort((a, b) {
-      final defA = a.definition;
-      final defB = b.definition;
-      // the list was built by filtering on FoodItemDefinition above, so this
-      // only has to satisfy the type system
-      if (defA is! FoodItemDefinition || defB is! FoodItemDefinition) return 0;
-      return defB.restoreAmount.compareTo(defA.restoreAmount);
-    });
+    foodItems.sort(compareFoodByHealing);
     return foodItems;
+  }
+
+  /// The order food is listed and cycled in: most healing first, a tie by
+  /// name so the order never shuffles between reads. The picker and the
+  /// switch to the next food when a stack runs out both use it, so the
+  /// next food is always the one listed under the last.
+  static int compareFoodByHealing(ItemId a, ItemId b) {
+    int heal(ItemId id) {
+      final def = id.definition;
+      return def is FoodItemDefinition ? def.restoreAmount : 0;
+    }
+
+    final byHeal = heal(b).compareTo(heal(a));
+    if (byHeal != 0) return byHeal;
+    return a.definition.name.compareTo(b.definition.name);
   }
 
   // ---- unique equipment instances ----

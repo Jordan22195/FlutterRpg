@@ -18,31 +18,31 @@ enum EquipmentMaterialId {
   // each tier asks for is the one the plate a rung below it asks for. The
   // top two run past the end of the metal ladder, so they run up to the cap.
   LIGHT_LEATHER(
-    LeatherEquipmentParameters(fibLevel: 1, skillLevelRequirement: 1),
+    LeatherEquipmentParameters(fibLevel: 0, skillLevelRequirement: 1),
   ),
   MEDIUM_LEATHER(
-    LeatherEquipmentParameters(fibLevel: 2, skillLevelRequirement: 20),
+    LeatherEquipmentParameters(fibLevel: 1, skillLevelRequirement: 20),
   ),
   HEAVY_LEATHER(
-    LeatherEquipmentParameters(fibLevel: 3, skillLevelRequirement: 40),
+    LeatherEquipmentParameters(fibLevel: 2, skillLevelRequirement: 40),
   ),
   LIGHT_DRAGONHIDE(
-    LeatherEquipmentParameters(fibLevel: 4, skillLevelRequirement: 60),
+    LeatherEquipmentParameters(fibLevel: 3, skillLevelRequirement: 60),
   ),
   MEDIUM_DRAGONHIDE(
-    LeatherEquipmentParameters(fibLevel: 5, skillLevelRequirement: 70),
+    LeatherEquipmentParameters(fibLevel: 4, skillLevelRequirement: 70),
   ),
   HEAVY_DRAGONHIDE(
-    LeatherEquipmentParameters(fibLevel: 6, skillLevelRequirement: 80),
+    LeatherEquipmentParameters(fibLevel: 5, skillLevelRequirement: 80),
   ),
   LIGHT_DEMONHIDE(
-    LeatherEquipmentParameters(fibLevel: 7, skillLevelRequirement: 90),
+    LeatherEquipmentParameters(fibLevel: 6, skillLevelRequirement: 90),
   ),
   MEDIUM_DEMONHIDE(
-    LeatherEquipmentParameters(fibLevel: 8, skillLevelRequirement: 95),
+    LeatherEquipmentParameters(fibLevel: 7, skillLevelRequirement: 95),
   ),
   HEAVY_DEMONHIDE(
-    LeatherEquipmentParameters(fibLevel: 9, skillLevelRequirement: 99),
+    LeatherEquipmentParameters(fibLevel: 8, skillLevelRequirement: 99),
   );
 
   // Added example values for iron

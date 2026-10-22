@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/data/combat_tuning.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/crafting_service.dart';
@@ -715,5 +716,52 @@ void main() {
     );
 
     session.dispose();
+  });
+
+  group('a cookfire gives hitpoints', () {
+    test('every cookfire buffs hitpoints on its own cooking rung', () {
+      // 3 / 5 / 8, the same as the cooking it already gave
+      for (final id in [
+        ItemId.COOKFIRE,
+        ItemId.OAK_COOKFIRE,
+        ItemId.WILLOW_COOKFIRE,
+      ]) {
+        final def = id.definition as FireItemDefinition;
+        expect(def.canCook, isTrue);
+        expect(
+          def.skillBonus[SkillId.HITPOINTS],
+          def.skillBonus[SkillId.COOKING],
+          reason: id.name,
+        );
+      }
+      // the other fires are left as they were
+      for (final id in [ItemId.BASIC_CAMPFIRE, ItemId.BONFIRE]) {
+        final def = id.definition as FireItemDefinition;
+        expect(def.skillBonus.containsKey(SkillId.HITPOINTS), isFalse);
+      }
+    });
+
+    test('a lit cookfire raises max hp while it burns', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      final player = save.playerData;
+      stockForFiremaking(session);
+      final before = session.playerDataService.maxHitpoints(player);
+
+      craftAt(session, 'cookfire', EntityId.FIREPIT);
+
+      // +3 hitpoints, at the shared rate a point
+      expect(
+        session.playerDataService.maxHitpoints(player),
+        before + 3 * hitpointsPerStatPoint,
+      );
+
+      // and a heal can now fill the bigger pool
+      player.hitpoints = 1;
+      session.playerDataService.heal(10000, player);
+      expect(player.hitpoints, before + 3 * hitpointsPerStatPoint);
+
+      session.dispose();
+    });
   });
 }

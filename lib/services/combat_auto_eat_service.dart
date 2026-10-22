@@ -2,7 +2,6 @@ import '../catalogs/items/items.dart';
 import '../data/auto_eat_rule.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';
-import '../data/skill_data.dart';
 import 'inventory_service.dart';
 import 'player_data_service.dart';
 
@@ -36,8 +35,7 @@ class CombatAutoEatService {
     if (food == null) return false;
     if (availableFood(playerState, playerInventory) <= 0) return false;
 
-    final maxHp =
-        _playerDataService.getStatTotals(playerState)[SkillId.HITPOINTS] ?? 1;
+    final maxHp = _playerDataService.maxHitpoints(playerState);
     if (!shouldEat(
       hitpoints: playerState.hitpoints,
       maxHp: maxHp,
@@ -52,6 +50,35 @@ class CombatAutoEatService {
       1,
     );
     _playerDataService.heal(food.restoreAmount, playerState);
+    switchFoodIfOut(playerState, playerInventory);
+    return true;
+  }
+
+  /// Once the equipped stack is spent, equips the next food in the healing
+  /// order: the first one listed below it, or — when nothing heals less —
+  /// the top of the list again. Returns true when it switched. Leaves the
+  /// spent food equipped when there is nothing else to eat, so the next
+  /// stack of it picked up is used straight away.
+  ///
+  /// Every path that eats calls this after it eats — auto-eat, the eat
+  /// button and an offline settle alike — so a fight never stalls on an
+  /// empty stack with food still in the bag.
+  bool switchFoodIfOut(PlayerData playerState, InventoryData playerInventory) {
+    final current = playerState.equipmentData.equipedFood;
+    if (current == ItemId.NULL) return false;
+    if (_inventoryService.getItemCount(playerInventory, current) > 0) {
+      return false;
+    }
+
+    final carried = _inventoryService.getFoodItemsSortedByHealing(
+      playerInventory,
+    );
+    if (carried.isEmpty) return false;
+    final next = carried.firstWhere(
+      (id) => InventoryService.compareFoodByHealing(id, current) > 0,
+      orElse: () => carried.first,
+    );
+    playerState.equipmentData.equipedFood = next;
     return true;
   }
 

@@ -32,6 +32,7 @@ class PlaceTile extends StatelessWidget {
     this.locked = false,
     this.dimmed = false,
     this.corner,
+    this.leadingCorner,
     this.semanticsLabel,
     this.subtitleRow,
     this.spriteScale = 1,
@@ -78,6 +79,10 @@ class PlaceTile extends StatelessWidget {
 
   /// Laid over the sprite frame's top-right corner, e.g. a fire's burn time.
   final Widget? corner;
+
+  /// Laid over the sprite frame's top-left corner, e.g. the stats a burning
+  /// fire is giving.
+  final Widget? leadingCorner;
 
   /// The action running right now is this place's: the tile is ringed in
   /// the accent and a thin bar along its foot fills with each action, so
@@ -182,6 +187,8 @@ class PlaceTile extends StatelessWidget {
                         frame,
                         if (corner != null)
                           Positioned(top: -6, right: -10, child: corner!),
+                        if (leadingCorner != null)
+                          Positioned(top: -6, left: -10, child: leadingCorner!),
                       ],
                     ),
                     // a custom line runs taller than the text one, so the gaps

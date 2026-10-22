@@ -178,7 +178,11 @@ class _CraftingScreenState extends State<CraftingScreen>
                 enabled: canCraft,
                 label: "Craft",
                 showLabel: true,
-                isActive: controller.isCraftingHere,
+                // running only when the selected recipe is the one being
+                // made: picking another mid-craft puts the button at rest
+                isActive: () =>
+                    controller.isCraftingHere() &&
+                    controller.activeRecipeId == controller.selectedRecipeId,
                 startActionFunction: () {
                   controller.startCraftingAction();
                 },

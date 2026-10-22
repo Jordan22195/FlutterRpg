@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
+import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/data/skill_data.dart';
 import '../catalogs/items/items.dart';
 import '../widgets/food_card.dart';
@@ -8,34 +9,76 @@ import 'icon_renderer.dart';
 import 'item_stack_tile.dart';
 import 'stat_chip.dart';
 
+/// The food dialog: which food fights are fed with, and when auto-eat eats
+/// it. Food lists most healing first — the order auto-eat moves down when a
+/// stack runs out.
 class FoodPicker {
+  /// The auto-eat slider's range, as a share of max hp. Below 5% the next
+  /// hit would usually land first; above 95% it eats on every scratch.
+  static const double minThreshold = 0.05;
+  static const double maxThreshold = 0.95;
+
   static void build(
     BuildContext context,
     Function(ItemId id) onEquip, {
     SkillId skillFilter = SkillId.NULL,
   }) {
     final controller = context.read<InventoryController>();
+    final player = context.read<PlayerDataController>();
     final list = controller.getFoodItems();
     showDialog(
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Select Item'),
+          title: const Text('Select Food'),
           content: SizedBox(
             width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: list.length,
-              itemBuilder: (context, i) {
-                final id = list[i];
-                return FoodCard(
-                  id: id,
-                  onTap: () {
-                    onEquip(id);
-                    Navigator.of(ctx).pop();
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const _AutoEatHelp(),
+                const SizedBox(height: 4),
+                // StatefulBuilder: the dialog is built once, but the slider
+                // has to move as it is dragged
+                StatefulBuilder(
+                  builder: (context, setState) {
+                    final threshold = player.getAutoEatThreshold().clamp(
+                      minThreshold,
+                      maxThreshold,
+                    );
+                    return _AutoEatSlider(
+                      threshold: threshold,
+                      onChanged: (value) {
+                        player.setAutoEatThreshold(value);
+                        setState(() {});
+                      },
+                    );
                   },
-                );
-              },
+                ),
+                const SizedBox(height: 8),
+                Flexible(
+                  child: list.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(child: Text('No food in the bag')),
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: list.length,
+                          itemBuilder: (context, i) {
+                            final id = list[i];
+                            return FoodCard(
+                              id: id,
+                              onTap: () {
+                                onEquip(id);
+                                Navigator.of(ctx).pop();
+                              },
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
           ),
           actions: [
@@ -46,6 +89,61 @@ class FoodPicker {
           ],
         );
       },
+    );
+  }
+}
+
+/// How auto-eat works, in a line or two above its slider.
+class _AutoEatHelp extends StatelessWidget {
+  const _AutoEatHelp();
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Auto-eat: during a fight, one of the selected food is eaten whenever '
+      'your HP drops to the threshold below. When a stack runs out, the next '
+      'food down this list is selected, wrapping back to the top.',
+      key: const ValueKey('auto-eat-help'),
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+      ),
+    );
+  }
+}
+
+/// The share of max hp auto-eat eats at, in 5% steps.
+class _AutoEatSlider extends StatelessWidget {
+  const _AutoEatSlider({required this.threshold, required this.onChanged});
+
+  final double threshold;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final percent = (threshold * 100).round();
+    return Row(
+      children: [
+        Expanded(
+          child: Slider(
+            key: const ValueKey('auto-eat-slider'),
+            value: threshold,
+            min: FoodPicker.minThreshold,
+            max: FoodPicker.maxThreshold,
+            divisions: 18,
+            label: '$percent%',
+            onChanged: onChanged,
+          ),
+        ),
+        SizedBox(
+          width: 92,
+          child: Text(
+            'Eat at $percent%',
+            key: const ValueKey('auto-eat-threshold'),
+            textAlign: TextAlign.end,
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+        ),
+      ],
     );
   }
 }

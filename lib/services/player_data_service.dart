@@ -6,6 +6,7 @@ import '../catalogs/entities/entities.dart';
 import '../catalogs/zones/zones.dart';
 
 import '../data/player_data.dart';
+import '../data/combat_tuning.dart';
 import '../data/skill_data.dart';
 
 import '../services/equipment_service.dart';
@@ -48,9 +49,16 @@ class PlayerDataService {
     return CombatType.levelOf(
       attack: attack,
       defence: stats[SkillId.DEFENCE] ?? 1,
-      hitpoints: stats[SkillId.HITPOINTS] ?? 1,
+      // the health pool, which is what a creature's hitpoints are
+      hitpoints: maxHitpointsFrom(stats),
     );
   }
+
+  /// The player's health pool: the Hitpoints stat times
+  /// [hitpointsPerStatPoint], the rate a creature's hitpoint weight pays
+  /// out at too.
+  int maxHitpoints(PlayerData playerState, {DateTime? at}) =>
+      maxHitpointsFrom(getStatTotals(playerState, at: at));
 
   /// The same stats, with the sources kept apart: what the player has earned,
   /// what they are wearing, what they have drunk, and what the stance is
@@ -284,7 +292,7 @@ class PlayerDataService {
   /// arrived at, rather than replaying every hit and heal through
   /// [applyDamage] and [heal].
   void setHitpoints(int hp, PlayerData playerState, {DateTime? at}) {
-    final maxHp = getStatTotals(playerState, at: at)[SkillId.HITPOINTS] ?? 1;
+    final maxHp = maxHitpoints(playerState, at: at);
     playerState.hitpoints = hp.clamp(0, maxHp);
   }
 
@@ -295,10 +303,10 @@ class PlayerDataService {
     }
   }
 
-  // restore hitpoints, capped at the player's max hp stat
+  // restore hitpoints, capped at the player's health pool
   void heal(int amount, PlayerData playerState) {
     if (amount <= 0) return;
-    final maxHp = getStatTotals(playerState)[SkillId.HITPOINTS] ?? 1;
+    final maxHp = maxHitpoints(playerState);
     playerState.hitpoints += amount;
     if (playerState.hitpoints > maxHp) {
       playerState.hitpoints = maxHp;
