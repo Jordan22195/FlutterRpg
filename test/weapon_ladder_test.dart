@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/data/combat_tuning.dart';
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/utilities/util.dart';
@@ -118,23 +119,30 @@ void main() {
     }
   });
 
-  test('a tool pours its rung into its own skill, not into attack', () {
-    const tools = {
-      'AXE': SkillId.WOODCUTTING,
-      'PICKAXE': SkillId.MINING,
-      'SICKLE': SkillId.HERBALISM,
-    };
+  test('an axe and a pickaxe swing damage; a sickle pours its rung', () {
     for (final metal in metals.keys) {
-      for (final tool in tools.entries) {
-        final def = defFor(metal, tool.key);
+      for (final tool in ['AXE', 'PICKAXE']) {
+        final def = defFor(metal, tool);
         expect(def.armorSlot, ArmorSlots.TOOL);
-        expect(def.statWeights.keys, [tool.value]);
+        // no stat to add: the swing's damage is what the tool is
+        expect(def.statWeights, isEmpty, reason: '${metal}_$tool');
+        expect(def.usesDamage, isTrue);
         expect(
-          def.statsAt(Rarity.COMMON)[tool.value],
-          Util.fib(def.fibLevel),
-          reason: '${metal}_${tool.key} does not pay out its whole rung',
+          def.damageAt(Rarity.COMMON),
+          weaponDamageForRung(metals[metal]!.parameters.fibLevel) *
+              2 *
+              toolDamageScale,
+          reason: '${metal}_$tool is off the damage ladder',
         );
       }
+      // a sickle does not hit anything: herbalism is what its roll reads
+      final sickle = defFor(metal, 'SICKLE');
+      expect(sickle.usesDamage, isFalse);
+      expect(sickle.statWeights.keys, [SkillId.HERBALISM]);
+      expect(
+        sickle.statsAt(Rarity.COMMON)[SkillId.HERBALISM],
+        Util.fib(sickle.fibLevel),
+      );
     }
   });
 
@@ -181,31 +189,42 @@ void main() {
     }
   });
 
-  test('moving weapons onto the pair changed nobody\'s gear', () {
-    // every attack total the hand-written ladder paid out, frozen from the
-    // catalog as it shipped
-    const before = <ItemId, List<int>>{
-      // COMMON, UNCOMMON, RARE, EPIC, LEGENDARY
-      ItemId.COPPER_DAGGER: [1, 2, 3, 4, 5],
-      ItemId.IRON_DAGGER: [2, 3, 4, 5, 6],
-      ItemId.STEEL_DAGGER: [3, 4, 5, 6, 7],
-      ItemId.MITHRIL_DAGGER: [5, 6, 7, 8, 9],
-      ItemId.COPPER_SWORD: [2, 3, 4, 5, 6],
-      ItemId.IRON_SWORD: [3, 4, 5, 6, 7],
-      ItemId.STEEL_SWORD: [5, 6, 7, 8, 9],
-      ItemId.MITHRIL_SWORD: [8, 10, 11, 13, 14],
-      ItemId.COPPER_GREATSWORD: [3, 4, 5, 6, 7],
-      ItemId.IRON_GREATSWORD: [5, 6, 7, 8, 9],
-      ItemId.STEEL_GREATSWORD: [8, 10, 11, 13, 14],
-      ItemId.MITHRIL_GREATSWORD: [13, 16, 18, 21, 23],
-    };
-    for (final entry in before.entries) {
-      final def = entry.key.definition as WeaponItemDefinition;
-      expect(
-        [for (final r in Rarity.values) def.statsAt(r)[SkillId.ATTACK]],
-        entry.value,
-        reason: '${entry.key.name} is not the weapon it used to be',
-      );
+  test('every shape of a metal lands the same damage per second', () {
+    // a slower shape hits harder by exactly what it gives up in speed, so
+    // the shapes differ in which stance boost they take, not in their rate
+    for (final metal in metals.entries) {
+      final perSecond = <double>[];
+      for (final shape in ['DAGGER', 'SWORD', 'GREATSWORD']) {
+        final def = defFor(metal.key, shape);
+        // the damage is the whole of what it is: no attack on it
+        expect(def.statWeights, isEmpty, reason: '${metal.key}_$shape');
+        expect(def.statsAt(Rarity.COMMON), isEmpty);
+        final seconds = def.actionInterval.inMicroseconds / 1e6;
+        perSecond.add(def.damageAt(Rarity.COMMON) / seconds);
+
+        // a better roll scales it the way it scales any piece's stats
+        for (final rarity in Rarity.values) {
+          expect(
+            def.damageAt(rarity),
+            closeTo(def.damageAt(Rarity.COMMON) * rarity.statMultiplier, 1e-9),
+          );
+        }
+      }
+      expect(perSecond.toSet(), {
+        weaponDamageForRung(metal.value.parameters.fibLevel),
+      }, reason: '${metal.key} shapes are not even per second');
     }
+  });
+
+  test('the shapes lean on different stances', () {
+    // a dagger turns speed into the most swings, a greatsword strength into
+    // the most damage, and a sword sits between
+    final dagger = WeaponTypeId.DAGGER.parameters;
+    final sword = WeaponTypeId.SWORD.parameters;
+    final greatsword = WeaponTypeId.GREATSWORD.parameters;
+    expect(dagger.speedAffinity, greaterThan(sword.speedAffinity));
+    expect(sword.speedAffinity, greaterThan(greatsword.speedAffinity));
+    expect(greatsword.strengthAffinity, greaterThan(sword.strengthAffinity));
+    expect(sword.strengthAffinity, greaterThan(dagger.strengthAffinity));
   });
 }

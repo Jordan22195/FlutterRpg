@@ -2,20 +2,25 @@ import '../data/skill_data.dart';
 
 class SkillService {
   double percentProgressToLevelUp(SkillData skillState) {
-    final curLevel = getLevel(skillState);
+    return progressAtXp(skillState.xp, skillState);
+  }
+
+  /// The share of the way from its level to the next that [xp] sits, on
+  /// [skillState]'s table — for showing an xp the skill no longer has, like
+  /// where it stood before an offline settle. Maxed reads as 1.
+  double progressAtXp(double xp, SkillData skillState) {
+    final curLevel = getLevelFromXp(xp, skillState);
 
     // Maxed (level 99 if table is 99)
     if (curLevel >= skillState.xpTable.length - 1) return 1.0;
 
     final curLvlXp = skillState.xpTable[curLevel];
-    final nextLvlXp = nextLevelXp(skillState);
+    final nextLvlXp = skillState.xpTable[curLevel + 1];
     final span = nextLvlXp - curLvlXp;
 
     if (span <= 0) return 0.0;
 
-    final intoLevel = (skillState.xp - curLvlXp);
-
-    return (intoLevel / span).clamp(0.0, 1.0);
+    return ((xp - curLvlXp) / span).clamp(0.0, 1.0);
   }
 
   double nextLevelXp(SkillData skillState) {

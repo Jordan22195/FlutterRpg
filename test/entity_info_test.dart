@@ -13,6 +13,7 @@ import 'package:rpg/data/entity_details.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'package:rpg/services/encounter_service.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/catalogs/drop_tables.dart';
 import 'package:rpg/widgets/entity_info_dialog.dart';
@@ -104,9 +105,9 @@ void main() {
       );
     });
 
-    test('rises with the points a strength stance lends the attack', () {
-      // a strength boost is paid into the stat rather than the interval, so
-      // it has to reach the rate through the damage roll instead
+    test('rises with what a strength stance lends', () {
+      // a strength boost lends flat attack and multiplies the max hit rather
+      // than shortening the interval, so it reaches the rate through both
       setLevel(SkillId.ATTACK, 30);
       setLevel(SkillId.STRENGTH, 40);
       save.playerData.stance = Stance.strong;
@@ -118,9 +119,23 @@ void main() {
       final boosted = detailsFor(EntityId.GOBLIN);
 
       expect(boosted.playerSkillLevel, greaterThan(resting.playerSkillLevel));
+      expect(boosted.playerMaxHit, greaterThan(resting.playerMaxHit));
       expect(
         boosted.playerDamagePerSecond,
         greaterThan(resting.playerDamagePerSecond),
+      );
+      // the max hit is the swing off the lent attack, times the stance's
+      // multiplier - the same number the roll uses
+      expect(
+        boosted.playerMaxHit,
+        EncounterService().weaponMaxHit(
+          damage: boosted.playerSwingDamage,
+          attack: boosted.playerSkillLevel,
+          defense: boosted.entity.defence,
+          multiplier: session.playerDataService.strengthDamageMultiplier(
+            save.playerData,
+          ),
+        ),
       );
     });
 

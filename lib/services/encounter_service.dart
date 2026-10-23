@@ -1,4 +1,6 @@
 import 'dart:math';
+
+import 'package:flutter/foundation.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
@@ -22,53 +24,31 @@ class EncounterService {
   // repopulating; the next member of a queue is a different enemy stepping
   // up, which shouldn't stall — and a deferred reset would land 200ms later
   // on an enemy the player has already started hitting
+  //
+  // [carry] is damage a swing had left after felling what it felled: the
+  // next one stands up already cut by it
   Future<void> respawn(
     EncounterData encounterState,
     EncounterEntity entity, {
     bool instant = false,
+    int carry = 0,
   }) async {
+    int fresh() {
+      final hp = entity.maxHitPoints - carry;
+      return hp < 1 ? 1 : hp;
+    }
+
     if (instant) {
-      entity.hitpoints = entity.maxHitPoints;
+      entity.hitpoints = fresh();
       return;
     }
 
     encounterState.respawning = true;
 
     await Future.delayed(const Duration(milliseconds: 50));
-    entity.hitpoints = entity.maxHitPoints;
+    entity.hitpoints = fresh();
 
     encounterState.respawning = false;
-  }
-
-  /// Expected damage per action: the to-hit roll times the uniform
-  /// 1..maxHit damage roll.
-  double playerAverageDamage(
-    Map<SkillId, int> playerStatTotals,
-    PlayerData playerState,
-    EncounterData encounterState,
-  ) {
-    if (encounterState.isActive == false) {
-      return 0;
-    }
-    final entity = encounterState.entity;
-    if (entity == null) {
-      return 0;
-    }
-
-    final skillId = entity.entityType;
-
-    int playerOffenseSkillStat = playerStatTotals[skillId] ?? 0;
-
-    int encounterDefence = entity.defence;
-    double avgDamage =
-        chanceToHit(playerOffenseSkillStat, encounterDefence) *
-        (1 +
-            computeMaxHit(
-              attack: playerOffenseSkillStat,
-              defense: encounterDefence,
-            )) /
-        2.0;
-    return avgDamage;
   }
 
   /// Actions needed to take one count down from full hitpoints. Infinite
@@ -88,27 +68,65 @@ class EncounterService {
   SwingProfile? playerSwingProfile(
     Map<SkillId, int> playerStatTotals,
     PlayerData playerState,
-    EncounterData encounterState,
-  ) {
+    EncounterData encounterState, {
+    double? damage,
+    double multiplier = 1,
+  }) {
     final entity = encounterState.entity;
     if (entity == null || encounterState.isActive == false) return null;
 
     final attack = playerStatTotals[entity.entityType] ?? 0;
     final hitChance = chanceToHit(attack, entity.defence);
-    final maxHit = computeMaxHit(attack: attack, defense: entity.defence);
+    // no damage: an action that rolls its skill rather than swinging
+    final maxHit = damage == null
+        ? computeMaxHit(attack: attack, defense: entity.defence)
+        : weaponMaxHit(
+            damage: damage,
+            attack: attack,
+            defense: entity.defence,
+            multiplier: multiplier,
+          );
     if (hitChance <= 0 || maxHit <= 0) return null;
 
-    return SwingProfile(hitChance: hitChance, maxHit: maxHit);
+    return SwingProfile(
+      hitChance: hitChance,
+      maxHit: maxHit,
+      overflow: overflows(entity),
+    );
   }
+
+  /// Whether node overflow is live. Off: it is to come back as a special
+  /// weapon modifier — a heavy axe that cleaves — rather than as a rule every
+  /// swing follows, so for now a swing stops at the one standing, as it
+  /// always did. The live carry and the batch's per-pool cost are kept, and
+  /// their tests switch this on to keep them honest.
+  @visibleForTesting
+  static bool nodeOverflowEnabled = false;
+
+  /// Whether a heavy swing at [entity] carries what it has left over into
+  /// the next one. A tree or a vein is a stack of identical pools, and a
+  /// swing that fells one with damage to spare fells part of the next. A
+  /// creature is not — each one is its own fight, and its death is where a
+  /// swing stops. Only while [nodeOverflowEnabled] is on.
+  static bool overflows(EncounterEntity entity) =>
+      nodeOverflowEnabled &&
+      entity is! CombatEntity &&
+      (entity.entityType == SkillId.MINING ||
+          entity.entityType == SkillId.WOODCUTTING);
 
   /// [rng] is here for tests: a live swing rolls its own [Random], which
   /// makes a run of them impossible to reproduce, and the batch it is
   /// compared against in test/offline_parity_test.dart has to land on the
   /// same numbers twice. Nothing in the game passes it.
+  ///
+  /// [multiplier] is a strength stance's, on the swing's max hit - see
+  /// [weaponMaxHit].
   EncounterActionResult resolvePlayerDamage(
     Map<SkillId, int> playerStatTotals,
     PlayerData playerState,
     EncounterData encounterState, {
+    double? damage,
+    double multiplier = 1,
     Random? rng,
   }) {
     EncounterActionResult res = EncounterActionResult();
@@ -126,27 +144,63 @@ class EncounterService {
     int playerOffenseSkillStat = playerStatTotals[skillId] ?? 0;
 
     int encounterDefence = entity.defence;
-    int dmg = calculateAttackDamage(
+    final overflow = overflows(entity);
+    final rolled = calculateAttackDamage(
       attackerAttack: playerOffenseSkillStat,
       defenderDefense: encounterDefence,
-      defenderHp: entity.hitpoints,
+      // a node lets a swing run past the one standing; a creature does not
+      defenderHp: overflow
+          ? entity.hitpoints + (entity.count - 1) * entity.maxHitPoints
+          : entity.hitpoints,
+      weaponDamage: damage,
+      multiplier: multiplier,
       rng: rng,
     );
-    encounterState.lastPlayerDamage = dmg;
-    entity.hitpoints -= dmg;
+    encounterState.lastPlayerDamage = rolled;
 
-    res.damageDone = dmg;
-    res.enemyDied = entity.hitpoints <= 0;
+    if (!overflow || rolled < entity.hitpoints) {
+      entity.hitpoints -= rolled;
+      res.damageDone = rolled;
+      res.enemyDied = entity.hitpoints <= 0;
+      res.kills = res.enemyDied ? 1 : 0;
+      return res;
+    }
 
+    // the one standing goes down, then whole ones behind it, and whatever
+    // is left chips at the next — which [respawn] stands up already cut
+    var left = rolled - entity.hitpoints;
+    var kills = 1;
+    final pool = entity.maxHitPoints;
+    if (pool > 0) {
+      final more = left ~/ pool;
+      kills += more;
+      left -= more * pool;
+    }
+    if (kills >= entity.count) {
+      kills = entity.count;
+      left = 0;
+    }
+    entity.hitpoints = 0;
+    res.damageDone = rolled;
+    res.enemyDied = true;
+    res.kills = kills;
+    res.overflowCarry = left;
     return res;
   }
 
   // return damage roll for given attack and defence stats
   // damage does not exceed the hp parameter
+  //
+  // [weaponDamage] prices the swing the player's way — damage times the
+  // attack multiplier, times [multiplier] for a strength stance — and
+  // leaving it out prices it the creature's way, off attack alone. see
+  // [weaponMaxHit] and [computeMaxHit]
   int calculateAttackDamage({
     required int attackerAttack,
     required int defenderDefense,
     required int defenderHp,
+    double? weaponDamage,
+    double multiplier = 1,
     Random? rng,
   }) {
     final random = rng ?? Random();
@@ -163,6 +217,8 @@ class EncounterService {
     int damage = rollDamageUniform(
       attack: attackerAttack,
       defense: defenderDefense,
+      weaponDamage: weaponDamage,
+      multiplier: multiplier,
       rng: random,
     );
 
@@ -384,14 +440,42 @@ class EncounterService {
     return max(minMaxHit, pow(effective, exponent).floor());
   }
 
+  /// Max hit for a swing the player makes: the weapon's or tool's [damage],
+  /// times what the attacking stat multiplies it by ([attackMultiplier]),
+  /// soaked by the target's defence the way [computeMaxHit] soaks it, times
+  /// a strength stance's [multiplier]. Creatures still swing off
+  /// [computeMaxHit]: they carry no weapon, and their numbers stand.
+  int weaponMaxHit({
+    required double damage,
+    required int attack,
+    required int defense,
+    double multiplier = 1,
+    double defenceK = maxHitDefenceK,
+    int minMaxHit = 1,
+  }) {
+    final d = defense.clamp(0, 100000);
+    final soak = defenceK / (defenceK + d);
+    final hit = damage * attackMultiplier(attack) * soak * multiplier;
+    return max(minMaxHit, hit.floor());
+  }
+
   // roll for damange (1 - max hit)
   int rollDamageUniform({
     required int attack,
     required int defense,
+    double? weaponDamage,
+    double multiplier = 1,
     Random? rng,
   }) {
     final r = rng ?? Random();
-    final maxHit = computeMaxHit(attack: attack, defense: defense);
+    final maxHit = weaponDamage == null
+        ? computeMaxHit(attack: attack, defense: defense)
+        : weaponMaxHit(
+            damage: weaponDamage,
+            attack: attack,
+            defense: defense,
+            multiplier: multiplier,
+          );
 
     // Uniform integer in [1, maxHit]
     return 1 + r.nextInt(maxHit);

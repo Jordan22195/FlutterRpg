@@ -1,6 +1,7 @@
 // ignore_for_file: constant_identifier_names
 
 import 'package:rpg/catalogs/items/attack_speed.dart';
+import 'package:rpg/data/combat_tuning.dart';
 import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/skill_data.dart';
 
@@ -12,14 +13,18 @@ import 'package:rpg/data/skill_data.dart';
 /// dagger, a sword and a greatsword — so they are named separately and a
 /// weapon is the pair of them.
 enum WeaponTypeId {
-  // combat. The spread is the trade the player is making: a dagger swings
-  // three times in the time a greatsword swings once, so it is worth two
-  // rungs less to land on the same damage over a fight.
+  // combat. A swing's damage scales with how long it takes, so every shape
+  // of the same metal lands the same damage per second at rest. What sets
+  // them apart is which stance boost they take best: a dagger turns speed
+  // into the most extra swings, a greatsword turns strength into the most
+  // extra damage, and a sword — with a shield beside it — sits between.
   DAGGER(
     WeaponEquipmentParameters(
       slot: ArmorSlots.WEAPON_1H,
       fibOffset: 0,
       actionInterval: FastAttackSpeed,
+      speedAffinity: 1.0,
+      strengthAffinity: 0.5,
     ),
   ),
   SWORD(
@@ -34,18 +39,23 @@ enum WeaponTypeId {
       slot: ArmorSlots.WEAPON_2H,
       fibOffset: 2,
       actionInterval: SlowAttackSpeed,
+      speedAffinity: 0.5,
+      strengthAffinity: 1.0,
     ),
   ),
 
-  // gathering tools. A tool pours its rung into the skill it is for rather
-  // than into attack, which is the whole of what makes it a tool.
+  // gathering tools. An axe and a pickaxe swing at a node the way a weapon
+  // swings at a monster, so they carry damage (a share of a weapon's — see
+  // toolDamageScale) and the skill they are for is the multiplier. A sickle
+  // and a rod do not hit anything: they still pour their rung into the
+  // skill, which is what the herb and fishing rolls read.
   AXE(
     WeaponEquipmentParameters(
       slot: ArmorSlots.TOOL,
       fibOffset: 1,
       actionInterval: MediumAttackSpeed,
       skillRequirement: SkillId.WOODCUTTING,
-      statWeight: {SkillId.WOODCUTTING: 1},
+      damageScale: toolDamageScale,
     ),
   ),
   PICKAXE(
@@ -54,7 +64,7 @@ enum WeaponTypeId {
       fibOffset: 1,
       actionInterval: MediumAttackSpeed,
       skillRequirement: SkillId.MINING,
-      statWeight: {SkillId.MINING: 1},
+      damageScale: toolDamageScale,
     ),
   ),
   SICKLE(
@@ -64,6 +74,7 @@ enum WeaponTypeId {
       actionInterval: MediumAttackSpeed,
       skillRequirement: SkillId.HERBALISM,
       statWeight: {SkillId.HERBALISM: 1},
+      usesDamage: false,
     ),
   ),
   FISHING_ROD(
@@ -73,6 +84,7 @@ enum WeaponTypeId {
       actionInterval: MediumAttackSpeed,
       skillRequirement: SkillId.FISHING,
       statWeight: {SkillId.FISHING: 1},
+      usesDamage: false,
     ),
   ),
 
@@ -83,6 +95,8 @@ enum WeaponTypeId {
       slot: ArmorSlots.WEAPON_2H,
       fibOffset: 2,
       actionInterval: SlowAttackSpeed,
+      speedAffinity: 0.5,
+      strengthAffinity: 1.0,
     ),
   ),
   SCEPTER(
@@ -125,15 +139,37 @@ class WeaponEquipmentParameters {
   /// The *level* it asks for stays the material's.
   final SkillId skillRequirement;
 
-  /// What the weapon pours its budget into. Attack for anything that fights;
-  /// a tool names the skill it speeds up instead.
+  /// Stats the weapon adds on top of its damage. Nothing, for anything that
+  /// swings — its damage is the whole of what it is, and Attack is the
+  /// multiplier on it. A sickle or a rod, which do not hit, pour their rung
+  /// into their skill instead; a unique may carry a rider.
   final Map<SkillId, int> statWeight;
+
+  /// Whether a swing of this shape deals [WeaponItemDefinition.damage]. Off
+  /// for the tools whose rolls read a skill rather than hit a pool.
+  final bool usesDamage;
+
+  /// The share of a weapon's damage on the same rung this shape carries:
+  /// 1 for anything that fights, [toolDamageScale] for a gathering tool.
+  final double damageScale;
+
+  /// How much of the fast stance's boost this shape turns into extra swings,
+  /// 0..1. A dagger takes it all; a greatsword half.
+  final double speedAffinity;
+
+  /// How much of a strength stance's boost this shape turns into extra
+  /// damage, 0..1. A greatsword takes it all; a dagger half.
+  final double strengthAffinity;
 
   const WeaponEquipmentParameters({
     required this.slot,
     required this.fibOffset,
     required this.actionInterval,
     this.skillRequirement = SkillId.ATTACK,
-    this.statWeight = const {SkillId.ATTACK: 1},
+    this.statWeight = const {},
+    this.usesDamage = true,
+    this.damageScale = 1.0,
+    this.speedAffinity = 0.75,
+    this.strengthAffinity = 0.75,
   });
 }

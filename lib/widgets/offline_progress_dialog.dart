@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,9 +8,11 @@ import '../data/offline_progress_data.dart';
 import '../data/skill_category.dart';
 import '../data/skill_data.dart';
 import '../game_session.dart';
-import 'icon_renderer.dart';
 import 'inventory_grid.dart';
 import 'item_stack_tile.dart';
+import 'skil_tile.dart';
+import '../theme/hearth_text.dart';
+import '../theme/hearth_theme.dart';
 import '../catalogs/items/items.dart';
 
 /// What the loop paid out while the player was away, shown once on the way
@@ -100,7 +104,8 @@ class OfflineProgressBody extends StatelessWidget {
           _Section(
             title: 'Experience',
             children: [
-              for (final entry in xp) _XpRow(skill: entry.key, xp: entry.value),
+              for (final (index, entry) in xp.indexed)
+                _XpRingRow(skill: entry.key, xp: entry.value, order: index),
             ],
           ),
       ],
@@ -163,37 +168,252 @@ String _formatDuration(Duration away) {
   return '${away.inSeconds}s';
 }
 
-/// One skill's haul, with its icon so the list scans like the skills screen.
-class _XpRow extends StatelessWidget {
-  const _XpRow({required this.skill, required this.xp});
+/// One skill's haul, played back: the ring as it stood before the player
+/// left, the xp popping in beside it, then the ring filling by that much —
+/// wrapping and ticking the level over for every level it crosses — so the
+/// player watches themselves level up.
+///
+/// The settle has already paid the xp in by the time the dialog opens, so
+/// the start is worked back from the skill's xp now. That is read once:
+/// the loop keeps running under the dialog, and a ring chasing it would
+/// never settle on what the report says.
+class _XpRingRow extends StatefulWidget {
+  const _XpRingRow({
+    required this.skill,
+    required this.xp,
+    required this.order,
+  });
 
   final SkillId skill;
   final double xp;
 
+  /// Place in the list; each row starts a beat after the one above.
+  final int order;
+
+  static const double ringSize = 44;
+  static const int staggerMs = 250;
+  static const int appearMs = 250;
+  static const int popStartMs = 350;
+  static const int popMs = 350;
+  static const int fillStartMs = 750;
+  static const int badgeMs = 300;
+
+  @override
+  State<_XpRingRow> createState() => _XpRingRowState();
+}
+
+class _XpRingRowState extends State<_XpRingRow>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  late final int _startLevel;
+  late final int _endLevel;
+  late final double _endProgress;
+
+  /// Where the ring stands as one number: level plus progress into it.
+  /// Animating this rather than xp gives every level the same time on
+  /// screen, where xp would race through the cheap early ones.
+  late final double _startPos;
+  late final double _endPos;
+
+  // the row's timeline, as fractions of the controller
+  late final Interval _appear;
+  late final Interval _pop;
+  late final Interval _fill;
+  late final Interval _badge;
+
+  @override
+  void initState() {
+    super.initState();
+    final player = context.read<GameSession>().playerDataController;
+    final endXp = player.getSkillXp(widget.skill);
+    final startXp = max(0.0, endXp - widget.xp);
+
+    _startLevel = player.getSkillLevelAtXp(widget.skill, startXp);
+    _endLevel = player.getSkillLevelAtXp(widget.skill, endXp);
+    _endProgress = player.getSkillProgressAtXp(widget.skill, endXp);
+    _startPos =
+        _startLevel + player.getSkillProgressAtXp(widget.skill, startXp);
+    _endPos = _endLevel + _endProgress;
+
+    // a sliver of a level fills briskly; each level crossed adds a beat,
+    // capped so a long absence doesn't hold the dialog hostage
+    final fillMs = (700 + 500 * (_endPos - _startPos)).clamp(700, 3000).round();
+    final delay = widget.order * _XpRingRow.staggerMs;
+    final fillStart = delay + _XpRingRow.fillStartMs;
+    final total = fillStart + fillMs + _XpRingRow.badgeMs;
+
+    Interval at(int from, int length, Curve curve) =>
+        Interval(from / total, (from + length) / total, curve: curve);
+    _appear = at(delay, _XpRingRow.appearMs, Curves.easeOut);
+    _pop = at(
+      delay + _XpRingRow.popStartMs,
+      _XpRingRow.popMs,
+      Curves.easeOutBack,
+    );
+    _fill = at(fillStart, fillMs, Curves.easeInOutCubic);
+    _badge = at(fillStart + fillMs, _XpRingRow.badgeMs, Curves.easeOutBack);
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: total),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_controller.isAnimating || _controller.isCompleted) return;
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+      _controller.value = 1;
+    } else {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          IconRenderer(id: skill, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
+    final levelsGained = _endLevel - _startLevel;
+
+    return Semantics(
+      label:
+          '${skillLabel(widget.skill)}, plus ${widget.xp.round()} xp'
+          '${levelsGained > 0 ? ', level $_startLevel to $_endLevel' : ', level $_endLevel'}',
+      excludeSemantics: true,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          final t = _controller.value;
+          final appear = _appear.transform(t);
+          final pop = _pop.transform(t);
+          final badge = _badge.transform(t);
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Opacity(
+                  opacity: appear,
+                  child: Transform.scale(
+                    scale: 0.8 + 0.2 * appear,
+                    child: _ring(context, _fill.transform(t)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Opacity(
+                        opacity: appear,
+                        child: Text(
+                          skillLabel(widget.skill),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                        ),
+                      ),
+                      Opacity(
+                        opacity: pop.clamp(0.0, 1.0),
+                        child: Transform.scale(
+                          scale: pop,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '+${widget.xp.round()} xp',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: skillRingColor(widget.skill),
+                                ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (levelsGained > 0 && badge > 0)
+                  Opacity(
+                    opacity: badge.clamp(0.0, 1.0),
+                    child: Transform.scale(
+                      scale: badge,
+                      child: Text(
+                        levelsGained == 1
+                            ? 'Level up!'
+                            : '+$levelsGained levels',
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: skillRingColor(widget.skill),
+                            ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// The ring part-way through its fill, [fill] running 0 to 1.
+  Widget _ring(BuildContext context, double fill) {
+    final palette = context.palette;
+    final pos = _startPos + (_endPos - _startPos) * fill;
+
+    // the end is read exactly, so a maxed skill closes its ring rather than
+    // reading as level 99 with nothing in it
+    final int level;
+    final double progress;
+    if (fill >= 1) {
+      level = _endLevel;
+      progress = _endProgress;
+    } else {
+      level = min(pos.floor(), _endLevel);
+      progress = pos - level;
+    }
+
+    // a level just crossed: the ring swells and settles back
+    final intoLevel = pos - pos.floor();
+    final bump = level > _startLevel && intoLevel < 0.2
+        ? 1 - intoLevel / 0.2
+        : 0.0;
+
+    const size = _XpRingRow.ringSize;
+    const strokeWidth = size * 0.075;
+    return Transform.scale(
+      scale: 1 + 0.12 * bump,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(
+          painter: SkillRingPainter(
+            progress: progress,
+            color: skillRingColor(widget.skill),
+            track: palette.borderStrong,
+            fill: palette.surface,
+            strokeWidth: strokeWidth,
+          ),
+          child: Center(
             child: Text(
-              skillLabel(skill),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              '$level',
+              style: HearthText.ringNumber.copyWith(
+                color: palette.text,
+                fontSize: size * 0.325,
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            '+${xp.round()} xp',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-          ),
-        ],
+        ),
       ),
     );
   }

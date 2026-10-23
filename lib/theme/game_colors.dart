@@ -43,6 +43,8 @@ class GameColors extends ThemeExtension<GameColors> {
     required this.levelEven,
     required this.levelEasy,
     required this.upgrade,
+    required this.boostPartial,
+    required this.boostFull,
     required this.heal,
     required this.secondaryBar,
     required this.timerFill,
@@ -81,6 +83,11 @@ class GameColors extends ThemeExtension<GameColors> {
 
   /// The dot on a gear slot that something in the bag would improve.
   final Color upgrade;
+
+  /// A stat a strength stance is lending points to, with the boost bar part
+  /// way up ([boostPartial]) or held full ([boostFull]).
+  final Color boostPartial;
+  final Color boostFull;
 
   /// How much a food heals, on its tile.
   final Color heal;
@@ -128,6 +135,8 @@ class GameColors extends ThemeExtension<GameColors> {
     levelEven: Color(0xFFE9C23A),
     levelEasy: Color(0xFF6CC86F),
     upgrade: Color(0xFF6CC86F),
+    boostPartial: Color(0xFFF2B866),
+    boostFull: Color(0xFFFF7A45),
     heal: Color(0xFF7EE0A6),
     secondaryBar: Color(0xFFCDBF9F),
     timerFill: Color(0xFF8F836E),
@@ -160,6 +169,8 @@ class GameColors extends ThemeExtension<GameColors> {
     Color? levelEven,
     Color? levelEasy,
     Color? upgrade,
+    Color? boostPartial,
+    Color? boostFull,
     Color? heal,
     Color? secondaryBar,
     Color? timerFill,
@@ -187,6 +198,8 @@ class GameColors extends ThemeExtension<GameColors> {
       levelEven: levelEven ?? this.levelEven,
       levelEasy: levelEasy ?? this.levelEasy,
       upgrade: upgrade ?? this.upgrade,
+      boostPartial: boostPartial ?? this.boostPartial,
+      boostFull: boostFull ?? this.boostFull,
       heal: heal ?? this.heal,
       secondaryBar: secondaryBar ?? this.secondaryBar,
       timerFill: timerFill ?? this.timerFill,
@@ -220,6 +233,8 @@ class GameColors extends ThemeExtension<GameColors> {
       levelEven: l(levelEven, other.levelEven),
       levelEasy: l(levelEasy, other.levelEasy),
       upgrade: l(upgrade, other.upgrade),
+      boostPartial: l(boostPartial, other.boostPartial),
+      boostFull: l(boostFull, other.boostFull),
       heal: l(heal, other.heal),
       secondaryBar: l(secondaryBar, other.secondaryBar),
       timerFill: l(timerFill, other.timerFill),

@@ -90,6 +90,11 @@ class PlayerDataController extends ChangeNotifier {
     return _playerDataService.currentStrengthBoostPoints(_playerData);
   }
 
+  /// Which stats the strength stance's bar is lifting right now, and how
+  /// far - see [PlayerDataService.statBoosts].
+  Map<SkillId, StatBoost> statBoosts() =>
+      _playerDataService.statBoosts(_playerData);
+
   /// The skill the action loop's boost is currently training - speed when
   /// running fast, strength in the strong stance.
   SkillId getBoostSkill() {
@@ -138,6 +143,15 @@ class PlayerDataController extends ChangeNotifier {
 
   double getSkillProgress(SkillId id) {
     return _playerDataService.getSkillProgress(id, _playerData);
+  }
+
+  /// [id]'s level had it [xp], rather than what it has now.
+  int getSkillLevelAtXp(SkillId id, double xp) {
+    return _playerDataService.getSkillLevelAtXp(id, xp, _playerData);
+  }
+
+  double getSkillProgressAtXp(SkillId id, double xp) {
+    return _playerDataService.getSkillProgressAtXp(id, xp, _playerData);
   }
 
   double getNextLevelXp(SkillId id) {

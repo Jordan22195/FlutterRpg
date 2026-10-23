@@ -780,4 +780,73 @@ void main() {
       session.dispose();
     });
   });
+
+  group('a run saved against an older definition', () {
+    // the save's own toJson, loaded back through create() the way a
+    // relaunch does
+    GameSession reload(Map<String, dynamic> json) {
+      final factory = GameSessionFactory();
+      return factory.create(
+        save: SaveGameData.fromJson(json),
+        catalogs: factory.catalog1(),
+        vsync: const TestVSync(),
+      );
+    }
+
+    List<List<EntityId>> rosterOf(DungeonRun run) => [
+      for (final slot in run.slots) [for (final m in slot.members) m.id],
+    ];
+
+    List<List<EntityId>> definitionRoster(DungeonId id) => [
+      for (final entry in id.definition.entries)
+        [for (final ref in entry.entities) ref.entityId],
+    ];
+
+    test('floors that changed or were added are rebuilt on load', () {
+      final session = buildSession();
+      session.dungeonSystem.beginRun(
+        session.saveGameData.dungeonRun,
+        DungeonId.WOLF_DEN,
+      );
+
+      // what an older save holds: the first floor with a different roster,
+      // and no third floor at all
+      final json = session.saveGameData.toJson();
+      final slots =
+          (json['dungeonRun'] as Map<String, dynamic>)['slots'] as List;
+      slots.removeLast();
+      final firstMembers =
+          (slots.first as Map<String, dynamic>)['members'] as List;
+      (firstMembers.first as Map<String, dynamic>)['id'] = EntityId.GOBLIN.name;
+
+      final loaded = reload(json);
+      final run = loaded.saveGameData.dungeonRun;
+      expect(run.active, isTrue);
+      expect(rosterOf(run), definitionRoster(DungeonId.WOLF_DEN));
+
+      session.dispose();
+      loaded.dispose();
+    });
+
+    test('a floor that still matches resumes in place', () {
+      final session = buildSession();
+      session.dungeonSystem.beginRun(
+        session.saveGameData.dungeonRun,
+        DungeonId.WOLF_DEN,
+      );
+      // part way through the first member of the first floor
+      final live = session.saveGameData.dungeonRun.slots.first.current!;
+      live.count = 3;
+
+      final loaded = reload(session.saveGameData.toJson());
+      expect(
+        loaded.saveGameData.dungeonRun.slots.first.current!.count,
+        3,
+        reason: 'an unchanged floor was rebuilt and lost its progress',
+      );
+
+      session.dispose();
+      loaded.dispose();
+    });
+  });
 }

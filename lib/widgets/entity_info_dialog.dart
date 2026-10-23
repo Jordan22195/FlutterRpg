@@ -9,6 +9,7 @@ import '../data/entity_details.dart';
 import '../data/skill_data.dart';
 import 'explore_card.dart';
 import 'icon_renderer.dart';
+import 'equipment_picker.dart';
 import 'info_section.dart';
 import 'item_stack_tile.dart';
 
@@ -243,6 +244,9 @@ class _RollTable extends StatelessWidget {
         // the enemy's misses: a blocked swing deals nothing
         row('Block chance', formatPercent(details.blockChance)),
         row('Max hit', '${details.playerMaxHit}'),
+        // what one swing deals before Attack multiplies it
+        if (details.playerSwingDamage > 0)
+          row('Weapon damage', formatDamage(details.playerSwingDamage)),
         // the hardest the enemy can hit back
         row('Max take', '${details.entityMaxHit}'),
         row('DPS', formatDecimal(details.playerDamagePerSecond)),
@@ -254,6 +258,8 @@ class _RollTable extends StatelessWidget {
       row('Success chance', formatPercent(details.playerHitChance)),
       row('Fail chance', formatPercent(details.playerMissChance)),
       row('Max hit', '${details.playerMaxHit}'),
+      if (details.playerSwingDamage > 0)
+        row('Tool damage', formatDamage(details.playerSwingDamage)),
       row('Avg damage', formatDecimal(details.playerAverageDamage)),
       if (details.usesDamage) ...[
         row('Damage per second', formatDecimal(details.playerDamagePerSecond)),

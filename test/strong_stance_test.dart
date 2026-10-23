@@ -4,6 +4,7 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/data/combat_tuning.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/buff_service.dart';
@@ -69,9 +70,10 @@ void main() {
     playerDataService.setStance(Stance.strong, player);
 
     // the stance alone already pays the idle curve, so 20 mining at 10
-    // strength reads 20 plus those points before any boost
+    // strength is lent points before any boost
     final baseline = playerDataService.getStatTotals(player);
     expect(baseline[SkillId.MINING], 20 + strengthIdleBonus(10).round());
+    expect(baseline[SkillId.MINING], greaterThan(20));
     // and only that one stat - woodcutting isn't what is being worked
     expect(baseline[SkillId.WOODCUTTING], 20);
 
@@ -249,78 +251,117 @@ void main() {
     });
   });
 
-  // Both boost stats run on one curve: a root rather than a line, so a
-  // hundred points is worth about triple rather than eleven times, with an
-  // idle share that is always on and a boost bar that buys the rest.
+  // Both boost stats run on one curve. The fast stance spends it on the
+  // swing rate; a strength stance spends it on the hit, multiplying the max
+  // hit by the curve's factor. It also lends flat points to the stat it is
+  // spent on - attack, the gathering skill on a rock or tree, or defence -
+  // which the hit chance and max hit read like any other.
   group('the boost curve', () {
-    // the stat a strength stance is spent on, at a given boost multiplier
-    // gear stats live on the item's definition, so the fixture wears a real
-    // pickaxe and reads what it is worth rather than writing a number onto
-    // the instance
-    final pickaxeMining =
-        (ItemId.COPPER_PICKAXE.definition as EquipmentItemDefinition).statsAt(
-          Rarity.COMMON,
-        )[SkillId.MINING]!;
+    /// The damage factor a strength stance is worth at [fill], for a shape
+    /// that takes [affinity] of it.
+    double factor(int strength, double fill, double affinity) =>
+        1 + affinity * (stanceBoost(strength, fill) - 1);
 
-    int minedAt(
-      double fill, {
-      int strength = 10,
-      bool geared = false,
-      int mining = 20,
-    }) {
+    PlayerData minerAt(double fill, {int strength = 10, int mining = 20}) {
       final player = newPlayer();
       setLevel(player, SkillId.STRENGTH, strength);
       setLevel(player, SkillId.MINING, mining);
       player.currentEntityViewId = EntityId.COPPER;
       playerDataService.setStance(Stance.strong, player);
       playerDataService.setBoostFill(fill, player);
-      if (geared) {
-        final pickaxe = ItemId.COPPER_PICKAXE.build() as EquipmentItem;
-        player.equipmentData.equipedTools[SkillId.MINING] = pickaxe;
-      }
-      return playerDataService.getStatTotals(player)[SkillId.MINING]!;
+      return player;
     }
 
-    test('standing still is worth the idle curve', () {
+    // the stat a strength stance is spent on, at a given fill of the bar
+    int minedAt(double fill, {int strength = 10, int mining = 20}) =>
+        playerDataService.getStatTotals(
+          minerAt(fill, strength: strength, mining: mining),
+        )[SkillId.MINING]!;
+
+    test('standing still lends the idle curve', () {
       for (final strength in [10, 99]) {
-        final expected = 20 + strengthIdleBonus(strength).round();
-        expect(minedAt(0.0, strength: strength), expected, reason: '$strength');
+        expect(
+          minedAt(0.0, strength: strength),
+          20 + strengthIdleBonus(strength).round(),
+          reason: '$strength',
+        );
       }
     });
 
-    test('a full bar is worth the max curve, and half a bar half of it', () {
+    test('a full bar lends the max curve, and half a bar between', () {
       final full = minedAt(1.0);
       final half = minedAt(0.5);
       final idle = minedAt(0.0);
 
       expect(full, 20 + strengthMaxBonus(10).round());
-      // composed, not competing: the first stretch of the bar pays from the
-      // moment it leaves zero, where the old max() left it dead until it
-      // beat standing still
       expect(half, greaterThan(idle));
       expect(half, lessThan(full));
-      expect(half, closeTo((idle + full) / 2, 1));
     });
 
-    test('gear is added flat, not multiplied', () {
-      // the same skill with and without the pickaxe differs by exactly what
-      // the pickaxe is worth, at rest and at full tilt alike - multiplying
-      // the geared total was where most of the old overpowering lived
-      expect(minedAt(0.0, geared: true) - minedAt(0.0), pickaxeMining);
-      expect(minedAt(1.0, geared: true) - minedAt(1.0), pickaxeMining);
+    test('the points are the same whatever the skill started at', () {
+      // additive, so a stance is not worth more on a higher skill
+      expect(minedAt(1.0, mining: 60) - 60, minedAt(1.0) - 20);
     });
 
-    test('the boost is added, not multiplied', () {
-      // the whole point of the additive curve: a stance is worth the same
-      // number of points whether it lands on mining 20 or mining 60, where
-      // the old multiplier paid three times as much on the higher skill
+    test('the max hit multiplier climbs with the bar', () {
+      // nothing equipped to set the share, so a bare hand's middle cut
       for (final fill in [0.0, 0.5, 1.0]) {
         expect(
-          minedAt(fill, mining: 60) - 60,
-          minedAt(fill, mining: 20) - 20,
+          playerDataService.strengthDamageMultiplier(minerAt(fill)),
+          closeTo(factor(10, fill, unarmedAffinity), 1e-9),
           reason: 'fill $fill',
         );
       }
+      expect(
+        playerDataService.strengthDamageMultiplier(minerAt(1.0)),
+        greaterThan(playerDataService.strengthDamageMultiplier(minerAt(0.0))),
+      );
+    });
+
+    test('the multiplier is 1 in a stance that does not swing harder', () {
+      for (final stance in [Stance.fast, Stance.defensive]) {
+        final player = newPlayer();
+        setLevel(player, SkillId.STRENGTH, 40);
+        playerDataService.setStance(stance, player);
+        playerDataService.setBoostFill(1.0, player);
+        expect(
+          playerDataService.strengthDamageMultiplier(player),
+          1.0,
+          reason: stance.name,
+        );
+      }
+    });
+
+    test('a shape that leans on strength gets more of the multiplier', () {
+      // the same bar multiplies a greatsword's hit more than a dagger's: the
+      // greatsword takes the whole curve, the dagger half. the flat attack
+      // points are the same for both
+      PlayerData wielding(ItemId weapon) {
+        final player = newPlayer();
+        setLevel(player, SkillId.STRENGTH, 40);
+        setLevel(player, SkillId.ATTACK, 40);
+        playerDataService.setStance(Stance.offensive, player);
+        playerDataService.setBoostFill(1.0, player);
+        final def = weapon.definition as WeaponItemDefinition;
+        player.equipmentData.armorEquipment[def.armorSlot] =
+            weapon.build() as EquipmentItem;
+        return player;
+      }
+
+      final dagger = wielding(ItemId.MITHRIL_DAGGER);
+      final greatsword = wielding(ItemId.MITHRIL_GREATSWORD);
+      expect(
+        playerDataService.strengthDamageMultiplier(dagger),
+        closeTo(factor(40, 1, 0.5), 1e-9),
+      );
+      expect(
+        playerDataService.strengthDamageMultiplier(greatsword),
+        closeTo(factor(40, 1, 1.0), 1e-9),
+      );
+      expect(
+        playerDataService.getStatBreakdown(dagger).stance[SkillId.ATTACK],
+        playerDataService.getStatBreakdown(greatsword).stance[SkillId.ATTACK],
+      );
     });
 
     test('the curve exponents are what they are tuned to', () {

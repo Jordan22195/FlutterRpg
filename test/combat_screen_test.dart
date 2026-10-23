@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/data/player_data.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/main.dart';
 import 'package:rpg/screens/encounter_screen.dart';
@@ -46,48 +48,105 @@ BorderSide stageBorder(WidgetTester tester) {
   return ((box.decoration! as BoxDecoration).border! as Border).top;
 }
 
+/// Boots the app and walks into a fight with a chicken in the starting
+/// zone, the way a player would.
+Future<({GameSession session, EncounterEntity chicken})> openChickenFight(
+  WidgetTester tester,
+) async {
+  tester.view.physicalSize = const Size(390, 844);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.reset);
+
+  await tester.pumpWidget(
+    MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
+  );
+  await settle(tester);
+
+  // a chicken turned up in the starting zone
+  const zoneId = ZoneId.TUTORIAL_FARM;
+  final session = Provider.of<GameSession>(
+    tester.element(find.byType(MapScreen)),
+    listen: false,
+  );
+  final chicken = EntityId.CHICKEN.build() as EncounterEntity;
+  session.saveGameData.worldData.zones[zoneId]!.discoveredEntities.add(chicken);
+
+  await tester.tap(find.byKey(ValueKey('map-node-${zoneId.name}')));
+  await settle(tester);
+  await tester.tap(find.text('Enter'));
+  await settle(tester);
+  await tester.scrollUntilVisible(
+    find.text(chicken.name),
+    100,
+    // the page's own scroll, not the horizontal chip row inside it
+    scrollable: find
+        .descendant(
+          of: find.byType(CustomScrollView),
+          matching: find.byType(Scrollable),
+        )
+        .first,
+  );
+  // built isn't on screen: bring the row fully into the viewport
+  await tester.ensureVisible(find.text(chicken.name));
+  await settle(tester);
+  await tester.tap(find.text(chicken.name));
+  await settle(tester);
+  return (session: session, chicken: chicken);
+}
+
 void main() {
+  testWidgets('a boosted stat is tinted part way up and held full', (
+    tester,
+  ) async {
+    final (:session, chicken: _) = await openChickenFight(tester);
+    expect(find.byType(EncounterScreen), findsOneWidget);
+
+    Text chipText(SkillId skill) => tester.widget<Text>(
+      find.descendant(
+        of: find.byKey(ValueKey('playerStat-${skill.name}')),
+        matching: find.byType(Text),
+      ),
+    );
+
+    final player = session.saveGameData.playerData;
+    session.playerDataController.debugSetSkillLevel(SkillId.STRENGTH, 40);
+    session.playerDataController.setStance(Stance.offensive);
+    await settle(tester);
+
+    final palette = ZonePalette.meadow;
+    final colors = GameColors.standard;
+
+    // standing still with the bar empty: plain, like defence beside it
+    expect(chipText(SkillId.ATTACK).style!.color, palette.text);
+    expect(chipText(SkillId.DEFENCE).style!.color, palette.text);
+    final resting = int.parse(chipText(SkillId.ATTACK).data!);
+
+    // part way up the bar
+    player.boostFill = 0.5;
+    session.actionTimingController.notifyListeners();
+    await tester.pump();
+    expect(chipText(SkillId.ATTACK).style!.color, colors.boostPartial);
+    expect(int.parse(chipText(SkillId.ATTACK).data!), greaterThan(resting));
+    // defence is not what the offensive stance lends to
+    expect(chipText(SkillId.DEFENCE).style!.color, palette.text);
+
+    // held full
+    player.boostFill = 1.0;
+    session.actionTimingController.notifyListeners();
+    await tester.pump();
+    expect(chipText(SkillId.ATTACK).style!.color, colors.boostFull);
+
+    // and plain again once the bar drains
+    player.boostFill = 0.0;
+    session.actionTimingController.notifyListeners();
+    await tester.pump();
+    expect(chipText(SkillId.ATTACK).style!.color, palette.text);
+    expect(int.parse(chipText(SkillId.ATTACK).data!), resting);
+  });
+
   testWidgets('a fight in the meadow wears the Hearth layout', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
-
-    await tester.pumpWidget(
-      MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
-    );
-    await settle(tester);
-
-    // a chicken turned up in the starting zone
     const zoneId = ZoneId.TUTORIAL_FARM;
-    final session = Provider.of<GameSession>(
-      tester.element(find.byType(MapScreen)),
-      listen: false,
-    );
-    final chicken = EntityId.CHICKEN.build() as EncounterEntity;
-    session.saveGameData.worldData.zones[zoneId]!.discoveredEntities.add(
-      chicken,
-    );
-
-    await tester.tap(find.byKey(ValueKey('map-node-${zoneId.name}')));
-    await settle(tester);
-    await tester.tap(find.text('Enter'));
-    await settle(tester);
-    await tester.scrollUntilVisible(
-      find.text(chicken.name),
-      100,
-      // the page's own scroll, not the horizontal chip row inside it
-      scrollable: find
-          .descendant(
-            of: find.byType(CustomScrollView),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
-    // built isn't on screen: bring the row fully into the viewport
-    await tester.ensureVisible(find.text(chicken.name));
-    await settle(tester);
-    await tester.tap(find.text(chicken.name));
-    await settle(tester);
+    final (:session, :chicken) = await openChickenFight(tester);
 
     expect(find.byType(EncounterScreen), findsOneWidget);
 

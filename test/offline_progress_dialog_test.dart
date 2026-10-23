@@ -244,4 +244,67 @@ void main() {
     expect(find.text('3'), findsOneWidget);
     session.dispose();
   });
+
+  testWidgets('xp gained plays back on the skill ring, levelling it up', (
+    tester,
+  ) async {
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final session = factory.create(
+      save: withGatheringTools(factory.newGame(catalogs)),
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+    registerCatalogIconResolvers();
+    EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
+
+    // the settle pays the xp in before the dialog opens: two levels' worth
+    final player = session.playerDataController;
+    final startLevel = player.getSkillLevel(SkillId.WOODCUTTING);
+    final startXp = player.getSkillXp(SkillId.WOODCUTTING);
+    player.debugSetSkillLevel(SkillId.WOODCUTTING, startLevel + 2);
+    final gained = player.getSkillXp(SkillId.WOODCUTTING) - startXp;
+
+    final report = OfflineProgressReport()
+      ..timeAway = const Duration(minutes: 5)
+      ..xp = {SkillId.WOODCUTTING: gained};
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<GameSession>.value(value: session),
+          ChangeNotifierProvider<InventoryController>.value(
+            value: session.inventoryController,
+          ),
+          ChangeNotifierProvider<BuffController>.value(
+            value: session.buffController,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: OfflineProgressBody(report: report),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // the ring opens where the skill stood before the player left
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('$startLevel'), findsOneWidget);
+    expect(find.text('Level up!'), findsNothing);
+    expect(find.text('+2 levels'), findsNothing);
+
+    // then fills by the xp, ticking the level over as it goes
+    await settle(tester);
+    await settle(tester);
+    await settle(tester);
+    await settle(tester);
+    expect(find.text('+${gained.round()} xp'), findsOneWidget);
+    expect(find.text('${startLevel + 2}'), findsOneWidget);
+    expect(find.text('+2 levels'), findsOneWidget);
+
+    session.dispose();
+  });
 }

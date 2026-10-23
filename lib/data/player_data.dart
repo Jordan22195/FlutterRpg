@@ -11,6 +11,10 @@ import '../catalogs/items/items.dart';
 /// Picked on the combat screen; sets [PlayerData.skillBoost].
 enum Stance { offensive, defensive, strong, fast }
 
+/// How far a strength stance's boost bar is lifting the stat it lends to:
+/// part way up, or held full. Standing still with the bar empty is neither.
+enum StatBoost { partial, full }
+
 const Map<Stance, SkillId> kStanceBoostSkill = {
   Stance.offensive: SkillId.ATTACK,
   Stance.defensive: SkillId.DEFENCE,
@@ -50,6 +54,15 @@ double speedStatBonus(int stat) => 0.1 * sqrt(stat < 0 ? 0 : stat);
 /// approaches zero without ever arriving - which is what lets the old hard
 /// floor go.
 double speedIdleBonus(int stat) => 0.05 * sqrt(stat < 0 ? 0 : stat);
+
+/// What a stance's boost is worth at [fill] of the bar, as a multiplier:
+/// the idle cut standing still, times the ceiling's share the bar has
+/// filled. The fast stance spends it on the swing rate and a strength stance
+/// on the hit, so the two are priced on one curve — and a weapon's affinity
+/// for each decides how much of it lands.
+double stanceBoost(int stat, double fill) =>
+    (1 + speedIdleBonus(stat)) *
+    (1 + fill.clamp(0.0, 1.0) * speedStatBonus(stat));
 
 /// The share of [boostStatBonus] a strength stance is worth standing
 /// still. Small but always on; the boost bar buys the rest.

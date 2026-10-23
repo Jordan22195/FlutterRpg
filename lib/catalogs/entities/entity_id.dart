@@ -996,8 +996,8 @@ enum EntityId {
       rarity: Rarity.RARE,
       itemDrops: [
         NestedDrop(cookedFishDropTable, weight: 2),
-        NestedDrop(steelMinorArmorDropTable, weight: 1, rarity: Rarity.RARE),
-        NestedDrop(steelToolsDropTable, weight: 1, rarity: Rarity.RARE),
+        NestedDrop(ironToolsDropTable, weight: 1, rarity: Rarity.RARE),
+        NestedDrop(ironMinorArmorDropTable, weight: 1, rarity: Rarity.RARE),
         ItemDropType(id: ItemId.COINS, lowCount: 50, weight: 1),
       ],
     ),

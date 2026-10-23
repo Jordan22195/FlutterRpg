@@ -526,6 +526,30 @@ List<Widget> equipmentComparisonChips(
     );
   }
 
+  // what one swing deals before the attack multiplier; more is the gain
+  final swinging = item;
+  if (swinging is WeaponItem && swinging.definition.usesDamage) {
+    final mine = swinging.damage;
+    final baselineItem = baseline;
+    final theirs =
+        baselineItem is WeaponItem && baselineItem.definition.usesDamage
+        ? baselineItem.damage
+        : null;
+    final diff = theirs == null ? null : mine - theirs;
+    chips.add(
+      StatChip(
+        key: const ValueKey('stat-chip-damage'),
+        icon: Icon(Icons.gavel, size: iconSize, color: Colors.grey),
+        value: formatDamage(mine),
+        fontSize: fontSize,
+        deltaText: (!showDeltas || diff == null || diff.abs() < 0.05)
+            ? null
+            : (diff > 0 ? '+${formatDamage(diff)}' : '−${formatDamage(-diff)}'),
+        deltaColor: (diff ?? 0) > 0 ? statGainColor : statLossColor,
+      ),
+    );
+  }
+
   // weapon speed; lower interval is better, so faster = green
   final currentItem = item;
   if (currentItem is WeaponItem) {
@@ -550,4 +574,13 @@ List<Widget> equipmentComparisonChips(
     );
   }
   return chips;
+}
+
+/// A swing's damage as the chips print it: whole when it is, one place when
+/// a rarity roll has scaled it ("3", "3.6").
+String formatDamage(double damage) {
+  final rounded = (damage * 10).round() / 10;
+  return rounded == rounded.roundToDouble()
+      ? '${rounded.round()}'
+      : rounded.toStringAsFixed(1);
 }

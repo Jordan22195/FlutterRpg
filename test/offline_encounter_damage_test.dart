@@ -8,6 +8,7 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'package:rpg/services/encounter_service.dart';
 import 'support/gathering_tools.dart';
 
 // A batched fight resolves both sides: the player's kills come off average
@@ -276,7 +277,7 @@ void main() {
   group('a kill costs a whole action', () {
     test('a node the player one-shots pays at most a kill an action', () {
       final session = buildSession();
-      setLevel(session, SkillId.WOODCUTTING, 20); // fells it in a swing
+      setLevel(session, SkillId.WOODCUTTING, 20);
       nodeWith(session, EntityId.TREE);
 
       final result = settleFight(
@@ -286,12 +287,94 @@ void main() {
       );
 
       expect(result.actionsPerformed, 1200);
-      // one hit is enough, so the only thing between an action and a kill
-      // is the swings that miss. what that leaves is pinned against a live
-      // loop in test/offline_parity_test.dart; here it is the ceiling that
-      // matters - it used to come back at several times the action count.
-      expect(result.entitiesDefeated.single.count, lessThan(1200));
-      expect(result.entitiesDefeated.single.count, greaterThan(600));
+      // with overflow off a swing stops at the tree it fells, so the only
+      // thing between an action and a kill is the swings that miss — or a
+      // swing too small to fell one. what that leaves is pinned against a
+      // live loop in test/offline_parity_test.dart; here it is the ceiling
+      // that matters
+      expect(result.entitiesDefeated.single.count, lessThanOrEqualTo(1200));
+      expect(result.entitiesDefeated.single.count, greaterThan(0));
+
+      session.dispose();
+    });
+
+    test('with overflow off, even a heavy axe fells one tree a swing', () {
+      // the game's default until overflow returns as a weapon modifier
+      expect(EncounterService.nodeOverflowEnabled, isFalse);
+
+      GameSession heavy() {
+        final session = buildSession();
+        setLevel(session, SkillId.WOODCUTTING, 99);
+        session.saveGameData.playerData.equipmentData.equipedTools[SkillId
+                .WOODCUTTING] =
+            ItemId.MITHRIL_AXE.build() as EquipmentItem;
+        nodeWith(session, EntityId.TREE, count: 100000);
+        return session;
+      }
+
+      // live: one swing, one tree at most, however hard it lands
+      final live = heavy();
+      final save = live.saveGameData;
+      for (var i = 0; i < 200; i++) {
+        final r = live.encounterSystem.executePlayerAction(
+          playerState: save.playerData,
+          encounter: save.encounterData,
+          worldState: save.worldData,
+          playerInventory: save.inventoryData,
+          instantRespawn: true,
+          rng: Random(i),
+        );
+        expect(r.kills, lessThanOrEqualTo(1));
+      }
+      live.dispose();
+
+      // offline: a stretch fells no more trees than it swung
+      final batch = heavy();
+      final result = settleFight(
+        batch,
+        count: 1200,
+        span: const Duration(hours: 1),
+      );
+      expect(result.entitiesDefeated.single.count, lessThanOrEqualTo(1200));
+      batch.dispose();
+    });
+
+    test('a heavy swing at a node fells the ones behind it too', () {
+      // overflow is off in the game until it returns as a weapon modifier;
+      // this keeps the code it runs on honest in the meantime
+      EncounterService.nodeOverflowEnabled = true;
+      addTearDown(() => EncounterService.nodeOverflowEnabled = false);
+
+      final session = buildSession();
+      final player = session.saveGameData.playerData;
+      setLevel(session, SkillId.WOODCUTTING, 99);
+      // a mithril axe hits for several trees' worth at once
+      player.equipmentData.equipedTools[SkillId.WOODCUTTING] =
+          ItemId.MITHRIL_AXE.build() as EquipmentItem;
+      nodeWith(session, EntityId.TREE, count: 100000);
+
+      final result = settleFight(
+        session,
+        count: 1200,
+        span: const Duration(hours: 1),
+      );
+
+      expect(result.actionsPerformed, 1200);
+      // damage past one tree runs on into the next, so a swing fells about
+      // its average hit's worth of trees — well over one a swing here. the
+      // same stretch is pinned against a live loop in offline_parity_test
+      final axe = (ItemId.MITHRIL_AXE.definition as WeaponItemDefinition);
+      final maxHit = session.encounterService.weaponMaxHit(
+        damage: axe.damageAt(Rarity.COMMON),
+        attack: 99,
+        defense: EntityId.TREE.build() is EncounterEntity
+            ? (EntityId.TREE.build() as EncounterEntity).defence
+            : 0,
+      );
+      final perSwing = (1 + maxHit) / 2 / 5; // a tree is 5 hitpoints
+      final felled = result.entitiesDefeated.single.count;
+      expect(felled, greaterThan(1200));
+      expect(felled, closeTo(1200 * perSwing, 1200 * perSwing * 0.05));
 
       session.dispose();
     });

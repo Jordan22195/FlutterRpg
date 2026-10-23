@@ -77,6 +77,11 @@ class EntityDetails {
 
   final List<EntityDropChance> drops;
 
+  /// What one of the player's swings deals before the attack multiplier —
+  /// the equipped weapon's or tool's damage. 0 for an action that does not
+  /// swing at a pool (fishing, herbs).
+  final double playerSwingDamage;
+
   const EntityDetails({
     required this.entity,
     required this.requiredLevel,
@@ -86,6 +91,7 @@ class EntityDetails {
     required this.playerMaxHp,
     required this.playerHitChance,
     required this.playerMaxHit,
+    this.playerSwingDamage = 0,
     required this.playerActionInterval,
     required this.entityHitChance,
     required this.entityMaxHit,

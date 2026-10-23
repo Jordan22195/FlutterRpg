@@ -48,6 +48,51 @@ class DungeonSystem {
     run.sessionRuns = {};
   }
 
+  /// Brings a run loaded from a save in line with its dungeon's current
+  /// definition. The run serializes its floors' members, so a definition
+  /// edited after the save was written would otherwise keep showing the old
+  /// floors until the run was left. A floor whose name or roster no longer
+  /// matches is rebuilt fresh; floors added to the definition are appended,
+  /// floors removed from it are dropped. A floor that still matches keeps
+  /// its hp and counts, so an untouched dungeon resumes exactly in place.
+  void reconcileRun(DungeonRun run) {
+    if (!run.active || !run.dungeonId.isReal) return;
+    final def = run.dungeonId.definition;
+
+    final slots = <EntityQueue>[];
+    for (int i = 0; i < def.entries.length; i++) {
+      final fresh = _buildSlot(def, i);
+      final saved = i < run.slots.length ? run.slots[i] : null;
+      if (saved != null && _matches(saved, fresh)) {
+        slots.add(saved);
+        continue;
+      }
+      slots.add(fresh);
+      run.sessionRuns.remove(i);
+    }
+    run.slots = slots;
+    run.sessionRuns.removeWhere((index, _) => index >= slots.length);
+    if (run.runningSlot >= slots.length) run.runningSlot = -1;
+  }
+
+  /// Whether [saved] is a partly fought copy of [fresh]: the same members in
+  /// the same order, with nothing waiting holding more than the definition
+  /// gives it now.
+  bool _matches(EntityQueue saved, EntityQueue fresh) {
+    if (saved.name != fresh.name) return false;
+    if (saved.members.length != fresh.members.length) return false;
+    for (int i = 0; i < fresh.members.length; i++) {
+      final had = saved.members[i];
+      final now = fresh.members[i];
+      if (had.id != now.id) return false;
+      // the live member may be part way through its count; the ones behind
+      // it have not been touched, so they must match exactly
+      if (i > saved.index && had.count != now.count) return false;
+      if (i == saved.index && had.count > now.count) return false;
+    }
+    return true;
+  }
+
   /// Every floor of [def] as a fresh queue. Used to build a run, and to
   /// render a dungeon the player is only looking at.
   List<EntityQueue> buildSlots(DungeonDefinition def) => [

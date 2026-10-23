@@ -126,18 +126,30 @@ enum DungeonId {
         DungeonEntry(
           name: "Cave Entrance",
           entities: [
-            DungeonEntityRef(EntityId.GOBLIN, count: 20),
-            DungeonEntityRef(EntityId.GOBLIN_UNCOMMON, count: 10),
-            DungeonEntityRef(EntityId.GOBLIN_RARE, count: 1),
+            DungeonEntityRef(EntityId.GOBLIN_UNCOMMON, count: 15),
+            DungeonEntityRef(EntityId.GOBLIN_RARE, count: 8),
+            DungeonEntityRef(EntityId.FOREST_WOLF_RARE, count: 1),
           ],
         ),
 
         DungeonEntry(
           name: "Deep Lair",
           entities: [
-            DungeonEntityRef(EntityId.FOREST_WOLF, count: 20),
             DungeonEntityRef(EntityId.FOREST_WOLF_UNCOMMON, count: 10),
-            DungeonEntityRef(EntityId.FOREST_WOLF_RARE, count: 10),
+            DungeonEntityRef(EntityId.BEAR_UNCOMMON, count: 5),
+            DungeonEntityRef(EntityId.GIANT_BAT_UNCOMMON, count: 5),
+            DungeonEntityRef(EntityId.FUNGAL_MONSTER_UNCOMMON, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "Sunken Grotto",
+          entities: [
+            DungeonEntityRef(EntityId.SLIME_UNCOMMON, count: 10),
+            DungeonEntityRef(EntityId.KOBOLD_UNCOMMON, count: 10),
+            DungeonEntityRef(EntityId.GIANT_BAT_UNCOMMON, count: 5),
+            DungeonEntityRef(EntityId.GIANT_SPIDER_UNCOMMON, count: 5),
+            DungeonEntityRef(EntityId.NAGA),
           ],
         ),
       ],

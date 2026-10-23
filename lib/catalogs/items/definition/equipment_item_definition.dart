@@ -120,6 +120,10 @@ class EquipmentItemDefinition extends ItemDefinition {
   int budgetAt(Rarity rarity) {
     final base = Util.fib(fibLevel);
     if (rarity == Rarity.COMMON) return base;
+    // a piece with no stats to split — a weapon, whose damage is the whole
+    // of what it is — has nothing for the floor below to measure, and the
+    // walk up to it would never arrive
+    if (statWeights.isEmpty) return base;
 
     final below = Rarity.values[rarity.index - 1];
     final floor = max(

@@ -563,7 +563,6 @@ void main() {
       EntityId.GIANT_BAT,
       EntityId.SLIME,
       EntityId.KOBOLD,
-      EntityId.NAGA,
       // the rare scarecrow. Its name predates the _RARE suffix convention,
       // so it reads as a base entity here rather than as a variant
       EntityId.ROTWOOD_SCARECROW_1,

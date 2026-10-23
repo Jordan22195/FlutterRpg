@@ -194,18 +194,20 @@ void main() {
 
   testWidgets('a stat nothing touches keeps out of the table', (tester) async {
     final session = buildSession();
-    final pickaxe = ItemId.COPPER_PICKAXE.build() as EquipmentItem;
+    // a sickle still pours its rung into herbalism (an axe or a pickaxe
+    // carries damage instead, which is no stat at all)
+    final sickle = ItemId.COPPER_SICKLE.build() as EquipmentItem;
     session.equipmentService.equipTool(
-      SkillId.MINING,
-      pickaxe,
+      SkillId.HERBALISM,
+      sickle,
       session.saveGameData.playerData.equipmentData,
     );
     await pumpGear(tester, session);
 
-    // the pickaxe is a mining tool, so mining is the row that appears
-    expect(rowFor(SkillId.MINING), findsOneWidget);
+    // the sickle is a herbalism tool, so herbalism is the row that appears
+    expect(rowFor(SkillId.HERBALISM), findsOneWidget);
     expect(rowFor(SkillId.DEFENCE), findsNothing);
-    expect(rowFor(SkillId.WOODCUTTING), findsNothing);
+    expect(rowFor(SkillId.MINING), findsNothing);
 
     session.dispose();
   });
@@ -215,24 +217,22 @@ void main() {
   ) async {
     final session = buildSession();
     final player = session.saveGameData.playerData;
-    // an offensive stance with a full boost bar lends attack off strength
-    player.skillBoost = SkillId.ATTACK;
+    // a defensive stance with a full boost bar lends defence off strength.
+    // it is the one stance still lending points: an offensive or strong one
+    // multiplies the hit instead, which is no stat to tabulate
+    player.skillBoost = SkillId.DEFENCE;
     session.playerDataService.setBoostFill(1.0, player);
-    session.equipmentService.equipItem(
-      ItemId.COPPER_HELMET.build() as EquipmentItem,
-      player.equipmentData,
-    );
     await pumpGear(tester, session);
 
     final stats = session.equipmentController.getStatBreakdown();
-    expect(stats.stance[SkillId.ATTACK], greaterThan(0));
+    expect(stats.stance[SkillId.DEFENCE], greaterThan(0));
     expect(find.text('STANCE'), findsOneWidget);
-    expect(cells(tester, SkillId.ATTACK), [
-      '${stats.skills[SkillId.ATTACK]}',
+    expect(cells(tester, SkillId.DEFENCE), [
+      '${stats.skills[SkillId.DEFENCE]}',
       '—',
       '—',
-      '+${stats.stance[SkillId.ATTACK]}',
-      '${stats.total[SkillId.ATTACK]}',
+      '+${stats.stance[SkillId.DEFENCE]}',
+      '${stats.total[SkillId.DEFENCE]}',
     ]);
 
     session.dispose();
@@ -241,7 +241,7 @@ void main() {
   testWidgets('the table fits a phone, stance column and all', (tester) async {
     final session = buildSession();
     final player = session.saveGameData.playerData;
-    player.skillBoost = SkillId.ATTACK;
+    player.skillBoost = SkillId.DEFENCE;
     session.playerDataService.setBoostFill(1.0, player);
     for (final id in [
       ItemId.MITHRIL_HELMET,

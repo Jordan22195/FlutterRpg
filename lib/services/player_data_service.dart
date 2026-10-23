@@ -98,8 +98,10 @@ class PlayerDataService {
     // a strength stance raises the stat it is spent on: flat points added,
     // the idle curve at an empty bar and the max curve at a full one. added
     // rather than multiplied, so a stance is worth the same however high
-    // the skill it lands on already is. strength itself is left alone so it
-    // can't compound on itself.
+    // the skill it lands on already is. on attack, or the gathering skill on
+    // a rock or tree, the swing's max hit is multiplied on top of this - see
+    // [strengthDamageMultiplier]. strength itself is left alone so it can't
+    // compound on itself, and speed shortens the interval instead.
     if (playerState.skillBoost != SkillId.SPEED &&
         playerState.skillBoost != SkillId.STRENGTH) {
       // DISABLED: the multiplicative version. it scaled the skill half of
@@ -152,18 +154,50 @@ class PlayerDataService {
     return idle + (max - idle) * fill.clamp(0.0, 1.0);
   }
 
-  /// The `+n` the banner shows for the current stance: zero in a fast
-  /// stance, and in a strength stance with nothing to lend itself to (a
-  /// bench or a shop, where [setStance] leaves the boost on strength).
-  int currentStrengthBoostPoints(PlayerData playerState) {
-    if (playerState.skillBoost == SkillId.SPEED ||
-        playerState.skillBoost == SkillId.STRENGTH) {
-      return 0;
+  /// What a strength stance multiplies a swing's max hit by: the stance
+  /// boost off strength at the bar's fill, of which the equipped shape takes
+  /// its strength affinity. 1 in every stance that doesn't swing harder -
+  /// fast, defensive, and a strong stance with nothing to swing at.
+  double strengthDamageMultiplier(PlayerData playerState, {DateTime? at}) {
+    final boosted = playerState.skillBoost;
+    if (boosted == SkillId.DEFENCE ||
+        boosted == SkillId.SPEED ||
+        boosted == SkillId.STRENGTH) {
+      return 1.0;
     }
-    // no recursion: strength is never the boosted skill here, so
-    // getStatTotals cannot re-enter through this
-    final strength = getStatTotals(playerState)[SkillId.STRENGTH] ?? 0;
-    return strengthBoostBonus(strength, playerState.boostFill).round();
+    final strength = getStatTotals(playerState, at: at)[SkillId.STRENGTH] ?? 0;
+    final affinity = _equipmentService
+        .affinityFor(boosted, playerState.equipmentData)
+        .strength;
+    return 1 + affinity * (stanceBoost(strength, playerState.boostFill) - 1);
+  }
+
+  /// What one swing of [skill]'s action deals before the attack multiplier;
+  /// null for an action that does not swing at a pool (fishing, herbs).
+  double? swingDamage(PlayerData playerState, SkillId skill) =>
+      _equipmentService.swingDamageFor(skill, playerState.equipmentData);
+
+  /// The `+n` the banner shows for a strength stance: the points it lends
+  /// the stat it is spent on. Zero in the fast stance, and in a strength
+  /// stance with nothing to lend itself to (a bench or a shop, where
+  /// [setStance] leaves the boost on strength).
+  int currentStrengthBoostPoints(PlayerData playerState) {
+    final boosted = playerState.skillBoost;
+    if (boosted == SkillId.SPEED || boosted == SkillId.STRENGTH) return 0;
+    return getStatBreakdown(playerState).stance[boosted] ?? 0;
+  }
+
+  /// The stats a strength stance is lifting with the boost bar right now,
+  /// and how far: [StatBoost.full] with the bar held full, [StatBoost.partial]
+  /// part way up. Empty with the bar empty, and in a stance that lends
+  /// nothing (fast, or strong with nothing to swing at).
+  Map<SkillId, StatBoost> statBoosts(PlayerData playerState) {
+    final boosted = playerState.skillBoost;
+    final fill = playerState.boostFill;
+    if (boosted == SkillId.SPEED || boosted == SkillId.STRENGTH || fill <= 0) {
+      return const {};
+    }
+    return {boosted: fill >= 1.0 ? StatBoost.full : StatBoost.partial};
   }
 
   /// The skill the action loop's boost trains: speed in the fast stance,
@@ -236,6 +270,15 @@ class PlayerDataService {
     return _skillService.percentProgressToLevelUp(
       getSkillData(id, playerState),
     );
+  }
+
+  /// [id]'s level and progress had it [xp] — see [SkillService.progressAtXp].
+  int getSkillLevelAtXp(SkillId id, double xp, PlayerData playerState) {
+    return _skillService.getLevelFromXp(xp, getSkillData(id, playerState));
+  }
+
+  double getSkillProgressAtXp(SkillId id, double xp, PlayerData playerState) {
+    return _skillService.progressAtXp(xp, getSkillData(id, playerState));
   }
 
   double getNextLevelXp(SkillId id, PlayerData playerState) {

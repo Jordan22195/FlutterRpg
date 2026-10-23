@@ -8,6 +8,7 @@ import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'package:rpg/services/encounter_service.dart';
 import 'support/gathering_tools.dart';
 
 /// An offline batch is a shortcut, not a different game: it stands in for the
@@ -192,6 +193,41 @@ void main() {
         expect(batched.xp, closeTo(looped.xp, looped.xp * 0.15));
       });
     }
+
+    test('several a swing pays what the loop pays', () {
+      // overflow is off in the game until it returns as a weapon modifier;
+      // this keeps the code it runs on honest in the meantime
+      EncounterService.nodeOverflowEnabled = true;
+      addTearDown(() => EncounterService.nodeOverflowEnabled = false);
+
+      // a heavy axe fells a few trees a swing: live has to carry what each
+      // swing has left over into the next tree, the way the batch spends
+      // its damage by the pool, or the two drift apart by a whole tree a
+      // swing
+      GameSession heavy(GameSession session) {
+        setLevel(session, SkillId.WOODCUTTING, 99);
+        session.saveGameData.playerData.equipmentData.equipedTools[SkillId
+                .WOODCUTTING] =
+            ItemId.MITHRIL_AXE.build() as EquipmentItem;
+        standUp(session, EntityId.TREE, count: 100000);
+        return session;
+      }
+
+      final live = heavy(buildSession());
+      final looped = fightLive(live, count: actions, seed: 20261022);
+      live.dispose();
+
+      final batch = heavy(buildSession());
+      final batched = fightBatched(batch, count: actions, interval: interval);
+      batch.dispose();
+
+      // well over one a swing, either way
+      expect(looped.kills, greaterThan(actions));
+      expect(batched.kills, greaterThan(actions));
+      expect(batched.kills, closeTo(looped.kills, looped.kills * 0.05));
+      expect(batched.drops, closeTo(looped.drops, looped.drops * 0.05));
+      expect(batched.xp, closeTo(looped.xp, looped.xp * 0.05));
+    });
 
     test('a group is cleared by the same number of actions either way', () {
       // only 50 to fell, and far more actions than that needs: both sides

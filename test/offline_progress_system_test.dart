@@ -360,7 +360,8 @@ void main() {
       final player = newPlayer();
       final (state, fired) = recordingState();
       final now = goOffline(player, 60);
-      // 30s in: 10 of the 20 actions the gap is worth
+      // 30s in: halfway through the 21 actions the gap is worth at the
+      // fast stance's 2.86s interval
       lightFireUntil(
         player,
         player.lastActionTime.add(const Duration(seconds: 30)),
@@ -368,8 +369,10 @@ void main() {
 
       system.settle(player, state, now: now);
 
-      // a probe, the rest of the fire's 30s, then the unlit remainder
-      expect(counts(fired), [1, 9, 10]);
+      // a probe, the rest of the fire's 30s, then the unlit remainder. the
+      // fire goes out half way through an action, and that half carries
+      // into the unlit stretch rather than being thrown away at the cut
+      expect(counts(fired), [1, 9, 11]);
     });
 
     test('an auto-drink potion is put back at the cut it lapsed on', () {
@@ -388,7 +391,7 @@ void main() {
 
       // the same cuts as a fire going out: the dose drunk at 30s runs past
       // the end of the gap, so it cuts nothing more
-      expect(counts(fired), [1, 9, 10]);
+      expect(counts(fired), [1, 9, 11]);
       expect(
         buffService.getGlobalBuff(
           player.buffData,
@@ -434,8 +437,10 @@ void main() {
 
       system.settle(player, state, now: now);
 
-      // probe, up to 15s, up to 30s, then the rest - 42s never cuts
-      expect(counts(fired), [1, 4, 5, 10]);
+      // probe, up to 15s, up to 30s, then the rest - 42s never cuts. each
+      // cut's part-done action carries into the next stretch, so the gap
+      // still comes to its 21
+      expect(counts(fired), [1, 4, 5, 11]);
     });
 
     test('a buff is swept at the instant it went out, not at the end', () {

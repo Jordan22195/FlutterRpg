@@ -195,11 +195,18 @@ class InventoryService {
     InventoryData inventoryState,
     SkillId skillId,
   ) {
-    // a positive weight, not merely a key: a piece weighted 0 in a skill
-    // carries none of it, and offering it as that skill's tool would be a
-    // tool worth nothing
+    // the skill a tool is wielded with says what it is for. an axe or a
+    // pickaxe carries damage rather than its skill, so its weights name
+    // nothing; a sickle or a rod still pours its rung into its skill, which
+    // is the positive weight — not merely a key, since a piece weighted 0
+    // carries none of it
     return inventoryState.equipment
-        .where((e) => e.armorSlot == slot && (e.statWeights[skillId] ?? 0) > 0)
+        .where(
+          (e) =>
+              e.armorSlot == slot &&
+              (e.skillRequirement == skillId ||
+                  (e.statWeights[skillId] ?? 0) > 0),
+        )
         .toList();
   }
 

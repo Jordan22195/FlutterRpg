@@ -89,6 +89,11 @@ class EncounterSystem {
     final result = EncounterActionResult();
 
     final stats = _playerDataService.getStatTotals(playerState, at: at);
+    // a strength stance swings harder on top of the points it lends
+    final multiplier = _playerDataService.strengthDamageMultiplier(
+      playerState,
+      at: at,
+    );
 
     if (!_encounterService.encounterConditionsMet(playerState, encounter)) {
       return result;
@@ -107,6 +112,8 @@ class EncounterSystem {
         stats,
         playerState,
         encounter,
+        damage: _playerDataService.swingDamage(playerState, e.entityType),
+        multiplier: multiplier,
       );
       // a pool of nothing is not a fight anyone can model: live, every swing
       // caps at the target's 0 hitpoints and "kills" it. bad content, so
@@ -227,10 +234,13 @@ class EncounterSystem {
       stats,
       playerState,
       encounter,
+      damage: _playerDataService.swingDamage(playerState, e.entityType),
+      multiplier: multiplier,
       rng: rng,
     );
     result.damageDone = r.damageDone;
     result.enemyDied = r.enemyDied;
+    result.kills = r.kills;
 
     if (result.damageDone <= 0) {
       return result; // miss/no progress this tick
@@ -246,12 +256,19 @@ class EncounterSystem {
 
     // Handle death
     if (result.enemyDied) {
-      result.entitiesDefeated = [ObjectStack<EntityId>(id: e.id, count: 1)];
+      // one, or more when a heavy swing at a node ran on into the next
+      final kills = r.kills < 1 ? 1 : r.kills;
+      result.entitiesDefeated = [ObjectStack<EntityId>(id: e.id, count: kills)];
 
       // decrement world entity count
-      encounter.entity!.count--;
+      encounter.entity!.count -= kills;
       if (encounter.entity!.count > 0) {
-        _encounterService.respawn(encounter, e, instant: instantRespawn);
+        _encounterService.respawn(
+          encounter,
+          e,
+          instant: instantRespawn,
+          carry: r.overflowCarry,
+        );
       } else {
         //_explorationService.removeEntityFromZone(
         //  e.id,
@@ -270,18 +287,20 @@ class EncounterSystem {
       // silently probabilistic.
       final def = e.id.definition;
       if (def is! EncounterEntityDefinition) return result;
-      _payOutDrops(
-        [_dropTableService.roll(def.weightedDropTable, rng: rng)],
-        playerInventory,
-        encounter.itemDrops,
-        result,
-      );
-      _payOutDrops(
-        _dropTableService.rollBonus(def.bonusDrops, rng: rng),
-        playerInventory,
-        encounter.itemDrops,
-        result,
-      );
+      for (var i = 0; i < kills; i++) {
+        _payOutDrops(
+          [_dropTableService.roll(def.weightedDropTable, rng: rng)],
+          playerInventory,
+          encounter.itemDrops,
+          result,
+        );
+        _payOutDrops(
+          _dropTableService.rollBonus(def.bonusDrops, rng: rng),
+          playerInventory,
+          encounter.itemDrops,
+          result,
+        );
+      }
     }
 
     // Apply XP to player
@@ -647,6 +666,25 @@ class EncounterSystem {
   /// standing start. It is passed in rather than worked out here: the
   /// interval depends on equipment and the speed stance, which the timing
   /// system owns.
+  /// The top of the player's damage roll against [entity] as things stand:
+  /// the swing's damage, times the attack multiplier, times a strength
+  /// stance's multiplier at the current bar fill. Null for an action that
+  /// does not swing at a pool (fishing, herbs).
+  int? playerSwingMaxHit(PlayerData playerState, EncounterEntity entity) {
+    final damage = _playerDataService.swingDamage(
+      playerState,
+      entity.entityType,
+    );
+    if (damage == null) return null;
+    final stats = _playerDataService.getStatTotals(playerState);
+    return _encounterService.weaponMaxHit(
+      damage: damage,
+      attack: stats[entity.entityType] ?? 0,
+      defense: entity.defence,
+      multiplier: _playerDataService.strengthDamageMultiplier(playerState),
+    );
+  }
+
   EntityDetails buildEntityDetails({
     required PlayerData playerState,
     required EncounterEntity entity,
@@ -674,10 +712,14 @@ class EncounterSystem {
       playerDefence: playerDefence,
       playerMaxHp: maxHitpointsFrom(stats),
       playerHitChance: playerHitChance,
-      playerMaxHit: _encounterService.computeMaxHit(
-        attack: playerSkill,
-        defense: entity.defence,
-      ),
+      playerMaxHit:
+          playerSwingMaxHit(playerState, entity) ??
+          _encounterService.computeMaxHit(
+            attack: playerSkill,
+            defense: entity.defence,
+          ),
+      playerSwingDamage:
+          _playerDataService.swingDamage(playerState, entity.entityType) ?? 0,
       playerActionInterval: actionInterval.inMicroseconds / 1e6,
       entityHitChance: combat == null
           ? 0

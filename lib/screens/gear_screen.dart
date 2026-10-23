@@ -748,6 +748,14 @@ class _GearScreenState extends State<GearScreen> {
         ),
     ];
     final currentItem = item;
+    if (currentItem is WeaponItem && currentItem.definition.usesDamage) {
+      chips.add(
+        StatChip(
+          icon: const Icon(Icons.gavel, size: 14, color: Colors.grey),
+          value: formatDamage(currentItem.damage),
+        ),
+      );
+    }
     if (currentItem is WeaponItem) {
       chips.add(
         StatChip(

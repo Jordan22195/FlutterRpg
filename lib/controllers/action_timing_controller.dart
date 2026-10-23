@@ -264,8 +264,8 @@ class ActionTimingController extends ChangeNotifier {
   /// than the player is having.
   ///
   /// Momentum only touches the interval in the fast stance — a strength
-  /// boost is paid into the stat being rolled instead, and reaches the same
-  /// readouts through [PlayerDataService.getStatTotals].
+  /// boost lifts the stat being rolled instead, and reaches the same readouts
+  /// through [PlayerDataService.getStatTotals].
   Duration boostedActionDurationFor(SkillId? skill) {
     final interval = _actionSpeedSystem.intervalFor(skill, _playerState);
     if (!_actionTimingState.boostingSpeed) return interval;
@@ -488,9 +488,17 @@ class ActionTimingSystem {
     final idle = _actionTimingService.idleSpeedMultiplier(
       stats[SkillId.SPEED] ?? 0,
       speedStance: speedStance,
+      speedAffinity: speedAffinity(state.actionSkill, playerState),
     );
     return idle * _actionTimingService.getCurrentSpeedMultiplier(state);
   }
+
+  /// How much of the fast stance's boost [actionSkill]'s action takes, off
+  /// the shape of what is equipped to perform it. 1 when nothing paces it.
+  double speedAffinity(SkillId? actionSkill, PlayerData playerState) =>
+      _equipmentService
+          .affinityFor(actionSkill, playerState.equipmentData)
+          .speed;
 
   /// The unboosted interval an action training [actionSkill] would run at
   /// from a standing start, with whatever is equipped to perform it.
@@ -523,6 +531,7 @@ class ActionTimingSystem {
       speedStance:
           _playerDataService.getBoostSkill(playerState) == SkillId.SPEED,
       speedStat: stats[SkillId.SPEED] ?? 1,
+      speedAffinity: speedAffinity(actionSkill, playerState),
     );
   }
 
@@ -546,6 +555,7 @@ class ActionTimingSystem {
                 )),
       speedStance: speedStance,
       speedStat: stats[SkillId.SPEED] ?? 1,
+      speedAffinity: speedAffinity(actionSkill, playerState),
     );
   }
 
@@ -594,7 +604,13 @@ class ActionTimingSystem {
     final boostSkill = _playerDataService.getBoostSkill(playerState);
     actionTimingState.boostingSpeed = boostSkill == SkillId.SPEED;
     actionTimingState.maxBoostMultiplier = actionTimingState.boostingSpeed
-        ? _actionTimingService.maxSpeedBoostForStat(stats[SkillId.SPEED] ?? 1)
+        ? _actionTimingService.maxSpeedBoostForStat(
+            stats[SkillId.SPEED] ?? 1,
+            speedAffinity: speedAffinity(
+              actionTimingState.actionSkill,
+              playerState,
+            ),
+          )
         : _actionTimingService.maxStrengthBoostForStat(
             stats[SkillId.STRENGTH] ?? 1,
           );
@@ -730,15 +746,21 @@ class ActionTimingService {
   /// Divided rather than subtracted, so the interval approaches zero
   /// without arriving. That is what replaced the old hard floor, where
   /// every point of speed past 85 was worth exactly nothing.
+  ///
+  /// [speedAffinity] is how much of the cut the equipped weapon or tool
+  /// takes: a dagger all of it, a greatsword half — see
+  /// [WeaponEquipmentParameters.speedAffinity]. 1 for an action nothing
+  /// equipped paces.
   Duration maxIntervalFor({
     required Duration? equippedInterval,
     required bool speedStance,
     required int speedStat,
+    double speedAffinity = 1.0,
   }) {
     final base = equippedInterval ?? defaultMaxInterval;
     if (!speedStance) return base;
 
-    final rate = 1 + speedIdleBonus(speedStat);
+    final rate = 1 + speedAffinity * speedIdleBonus(speedStat);
     return Duration(microseconds: (base.inMicroseconds / rate).round());
   }
 
@@ -747,14 +769,19 @@ class ActionTimingService {
   /// only in the fast stance, matching it. Surfaced so the banner can show
   /// it: it is real speed the player has, and it lives in the interval
   /// rather than in the momentum multiplier, so nothing else reports it.
-  double idleSpeedMultiplier(int speedStat, {required bool speedStance}) {
+  double idleSpeedMultiplier(
+    int speedStat, {
+    required bool speedStance,
+    double speedAffinity = 1.0,
+  }) {
     if (!speedStance) return 1.0;
-    return 1 + speedIdleBonus(speedStat);
+    return 1 + speedAffinity * speedIdleBonus(speedStat);
   }
 
-  /// The boost ceiling granted by the speed stat.
-  double maxSpeedBoostForStat(int speedStat) {
-    return 1.0 + speedStatBonus(speedStat);
+  /// The boost ceiling granted by the speed stat, of which the equipped
+  /// shape takes [speedAffinity] — see [maxIntervalFor].
+  double maxSpeedBoostForStat(int speedStat, {double speedAffinity = 1.0}) {
+    return 1.0 + speedAffinity * speedStatBonus(speedStat);
   }
 
   /// The boost ceiling granted by the strength stat.

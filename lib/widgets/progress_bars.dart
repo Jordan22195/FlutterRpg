@@ -506,8 +506,8 @@ class ActionIntervalTimer extends StatelessWidget {
     final showsTarget = boostedStat != boostSkill;
 
     // the two stances buy different things, so they read differently: a
-    // strength stance adds flat stat points, so it shows +n stepping in
-    // whole points; the fast stance buys rate, so it stays a multiplier.
+    // strength stance lends points to the stat it is spent on, so it shows
+    // +n; the fast stance buys rate, so it stays a multiplier.
     //
     // the speed multiplier is the total - the cut the speed stat already
     // makes to the interval times the momentum on top - so standing still

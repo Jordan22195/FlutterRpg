@@ -352,6 +352,11 @@ void main() {
       save.actionTimingData.maxBoostMultiplier = stance == Stance.fast
           ? ActionTimingService().maxSpeedBoostForStat(
               stats[SkillId.SPEED] ?? 1,
+              // the share the equipped shape takes, as the settle does
+              speedAffinity: session.actionTimingSystem.speedAffinity(
+                save.actionTimingData.actionSkill,
+                save.playerData,
+              ),
             )
           : ActionTimingService().maxStrengthBoostForStat(
               stats[SkillId.STRENGTH] ?? 1,
@@ -1597,6 +1602,12 @@ void main() {
       final session = buildSession();
       final save = session.saveGameData;
       makePlayerStrong(session);
+      // nothing restores hitpoints between laps, and ten minutes of goblins
+      // and spiders takes about two thirds of a 99 pool - an unfed player
+      // dies before the end about one gap in fifty, live and offline alike.
+      // fed, the loop is still running at the end, which is what this checks
+      save.inventoryData.itemMap[ItemId.COOKED_CHICKEN] = 500;
+      save.playerData.equipmentData.equipedFood = ItemId.COOKED_CHICKEN;
       const id = DungeonId.DEV_TRANSIENT_DUNGEON;
       // the queue floor: three goblins, then a giant spider
       enterFloor(session, id, 0);

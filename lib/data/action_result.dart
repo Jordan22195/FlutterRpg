@@ -19,6 +19,14 @@ class EncounterActionResult {
   bool enemyDied = false;
   int damageDone = 0;
 
+  /// How many a single live swing took down: one, or more when a heavy
+  /// swing at a node runs on into the ones behind it.
+  int kills = 0;
+
+  /// Damage a live swing had left after its last whole kill, which the next
+  /// one stands up already cut by.
+  int overflowCarry = 0;
+
   /// How many actions this result accounts for. A batch settling time away
   /// reports what it actually did, which is not always the count it was
   /// handed: materials run out, a fire goes out, a node is stripped.

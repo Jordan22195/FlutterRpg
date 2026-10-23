@@ -1,3 +1,4 @@
+import '../data/combat_tuning.dart';
 import '../data/equipment_data.dart';
 import '../data/skill_data.dart';
 import '../catalogs/items/items.dart';
@@ -79,9 +80,69 @@ class EquipmentService {
         equipmentState,
       ).any((worn) => worn.instanceId == item.instanceId);
 
-  /// Everything [item] adds, summed across its stats; 0 for nothing.
-  int statTotal(EquipmentItem? item) =>
-      item?.effectiveSkillBonus.values.fold<int>(0, (sum, v) => sum + v) ?? 0;
+  /// Everything [item] adds, summed across its stats; 0 for nothing. A
+  /// weapon or tool that swings counts its damage per second of swing too —
+  /// its damage is most of what it is worth, and per second so a dagger and
+  /// a greatsword of the same metal weigh the same.
+  int statTotal(EquipmentItem? item) {
+    if (item == null) return 0;
+    final stats = item.effectiveSkillBonus.values.fold<int>(
+      0,
+      (sum, v) => sum + v,
+    );
+    return stats + damagePerSecondOf(item).round();
+  }
+
+  /// [item]'s damage per second of swing, before the attack multiplier; 0
+  /// for anything that does not swing.
+  double damagePerSecondOf(EquipmentItem item) {
+    final def = item.definition;
+    if (def is! WeaponItemDefinition || !def.usesDamage) return 0;
+    final seconds = def.actionInterval.inMicroseconds / 1e6;
+    return seconds <= 0 ? 0 : def.damageAt(item.quality) / seconds;
+  }
+
+  /// The skills whose action is a swing that deals damage to a pool: a
+  /// fight, a tree and a vein. Fishing and herbs roll their skill instead.
+  static const Set<SkillId> damageSkills = {
+    ...weaponSkills,
+    SkillId.MINING,
+    SkillId.WOODCUTTING,
+  };
+
+  /// What one swing of [skill]'s action deals before the attack multiplier:
+  /// the equipped weapon's or tool's damage, or a bare hand's when nothing
+  /// that swings is equipped for it. Null for an action that is not a
+  /// swing at a pool at all, which then rolls the way it always has.
+  double? swingDamageFor(SkillId skill, EquipmentData equipmentState) {
+    if (!damageSkills.contains(skill)) return null;
+    // read off the definition rather than the instance's class: what makes
+    // a piece a weapon is what it is defined as
+    final item = actionItemFor(skill, equipmentState);
+    final def = item?.definition;
+    if (item != null && def is WeaponItemDefinition && def.usesDamage) {
+      return def.damageAt(item.quality);
+    }
+    return unarmedDamage;
+  }
+
+  /// How much of each stance boost [skill]'s action takes, from the shape of
+  /// what is equipped to perform it — see [WeaponEquipmentParameters].
+  ///
+  /// With nothing that swings equipped, speed is taken whole: exploring and
+  /// bench work have no shape to trade it against, and keep the boost they
+  /// always had. A bare-handed swing's strength takes the middle share.
+  ({double speed, double strength}) affinityFor(
+    SkillId? skill,
+    EquipmentData equipmentState,
+  ) {
+    final item = skill == null ? null : actionItemFor(skill, equipmentState);
+    final def = item?.definition;
+    if (def is! WeaponItemDefinition || !def.usesDamage) {
+      return (speed: 1.0, strength: unarmedAffinity);
+    }
+    return (speed: def.speedAffinity, strength: def.strengthAffinity);
+  }
 
   /// Whether any of [candidates] would be an upgrade on [equipped]: one the
   /// player can wear right now whose stats add up to more. An empty slot

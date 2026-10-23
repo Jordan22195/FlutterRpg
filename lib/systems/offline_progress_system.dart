@@ -115,6 +115,24 @@ class OfflineProgressSystem {
     var xpPerAction = <SkillId, double>{};
     var probing = true;
 
+    // an unlocked bar is only kept up by a finger on the button, and the
+    // frames stopped with nothing holding it: live it emptied within the
+    // first second and a half of the gap. read as-is it would boost the
+    // whole gap and never drain, since only a locked boost is charged here
+    if (!timingState.boostLocked) timingState.percentOfMaxBoost = 0.0;
+
+    // how far through its current action the loop is, as a share of one -
+    // the same running fraction the frame loop keeps. it comes in from the
+    // last live frame, every segment adds its time to it at that segment's
+    // interval, whole actions are fired off the top, and whatever is left
+    // goes back to the loop at the end. without it the part of an action
+    // done before the gap is thrown away, and so is every gap's remainder
+    // under one action - all of a gap too short to hold one.
+    var progress = timingState.actionProgressPercentComplete.clamp(
+      0.0,
+      1.0 - 1e-9,
+    );
+
     // both are backstops rather than part of the algorithm - see the
     // constants for what they are guarding against
     var segments = 0;
@@ -146,16 +164,19 @@ class OfflineProgressSystem {
 
       // ---- cut the segment at the nearest threshold
       var segment = remaining;
+      // the cuts that count in actions land on the action that crosses
+      // them, so the share of the next one already done comes off the front
+      final lead = progress * intervalSeconds;
       segment = _min(
         segment,
-        _boostEndsIn(playerState, timingState, intervalSeconds),
+        _boostEndsIn(playerState, timingState, intervalSeconds, lead),
       );
       segment = _min(segment, _nextBuffExpiryIn(playerState));
       segment = _min(
         segment,
-        _levelUpIn(playerState, xpPerAction, intervalSeconds),
+        _levelUpIn(playerState, xpPerAction, intervalSeconds, lead),
       );
-      if (probing) segment = _min(segment, intervalSeconds);
+      if (probing) segment = _min(segment, intervalSeconds - lead);
       if (segment <= 0) break;
 
       // ---- fire one batch, and remember what the report said before it so
@@ -165,7 +186,8 @@ class OfflineProgressSystem {
       // always n — which would silently drop the very action the cut was
       // made for. A level-up threshold is exactly that shape, so without
       // the tolerance a long gap loses one action per level it earns.
-      final actions = (segment / intervalSeconds + 1e-9).floor();
+      final reached = progress + segment / intervalSeconds;
+      final actions = (reached + 1e-9).floor();
       final xpBefore = Map<SkillId, double>.from(
         _offlineProgressData.report.xp,
       );
@@ -193,9 +215,20 @@ class OfflineProgressSystem {
       final handedOff = _offlineProgressService.takeEarlyStop(
         _offlineProgressData,
       );
-      final spanUsed = ((!timingState.running || handedOff) && actions > 0)
-          ? segment * performedThisSegment / actions
-          : segment;
+      // the actions it did perform took the lead the segment started on
+      // plus a whole interval for each after the first
+      final double spanUsed;
+      if ((!timingState.running || handedOff) && actions > 0) {
+        final used = performedThisSegment * intervalSeconds - lead;
+        spanUsed = used <= 0 ? 0 : (used < segment ? used : segment);
+        // whatever was part done went with the loop, or with the member
+        // it handed to
+        progress = 0;
+      } else {
+        spanUsed = segment;
+        progress = reached - actions;
+        if (progress < 0) progress = 0;
+      }
 
       _applyStamina(playerState, timingState, spanUsed, performedThisSegment);
       playerState.lastActionTime = playerState.lastActionTime.add(
@@ -249,6 +282,13 @@ class OfflineProgressSystem {
 
     playerState.lastActionTime = at;
 
+    // the action the gap ended part way through carries on where it got to,
+    // the way it would have had the frames kept coming. a loop that stopped
+    // has already been reset to nothing
+    if (timingState.running) {
+      timingState.actionProgressPercentComplete = progress;
+    }
+
     // where in the gap the fight ended, for the report to tell the player
     if (_offlineProgressData.report.died) {
       _offlineProgressService.recordDeathTime(
@@ -285,7 +325,14 @@ class OfflineProgressSystem {
     final boostSkill = _playerDataService.getBoostSkill(playerState);
     timingState.boostingSpeed = boostSkill == SkillId.SPEED;
     timingState.maxBoostMultiplier = timingState.boostingSpeed
-        ? _actionTimingService.maxSpeedBoostForStat(stats[SkillId.SPEED] ?? 1)
+        ? _actionTimingService.maxSpeedBoostForStat(
+            stats[SkillId.SPEED] ?? 1,
+            // the same share of it the live frame gives what is equipped
+            speedAffinity: _actionTimingSystem.speedAffinity(
+              timingState.actionSkill,
+              playerState,
+            ),
+          )
         : _actionTimingService.maxStrengthBoostForStat(
             stats[SkillId.STRENGTH] ?? 1,
           );
@@ -307,11 +354,13 @@ class OfflineProgressSystem {
   ///
   /// A speed boost burns by the second, so the answer is a division; a
   /// strength one burns by the action, so its stamina buys a number of
-  /// actions which [intervalSeconds] turns back into time.
+  /// actions which [intervalSeconds] turns back into time - less the [lead]
+  /// the next of them already has.
   double? _boostEndsIn(
     PlayerData playerState,
     ActionTimingData timingState,
     double intervalSeconds,
+    double lead,
   ) {
     if (!timingState.boostLocked) return null;
     final drain = _actionTimingService.boostDrain(
@@ -329,7 +378,7 @@ class OfflineProgressSystem {
     // of one - and a segment that fires nothing spends nothing, so the
     // residue would never clear and the rest of the gap would settle at zero
     // actions.
-    return (playerState.stamina / drain).ceil() * intervalSeconds;
+    return (playerState.stamina / drain).ceil() * intervalSeconds - lead;
   }
 
   /// How long until the next buff runs out — a fire going cold is what stops
@@ -345,12 +394,14 @@ class OfflineProgressSystem {
     return next.difference(playerState.lastActionTime).inMicroseconds / 1e6;
   }
 
-  /// How long until the measured xp rate levels a skill up. Null until a
-  /// segment has been measured, and for a rate that never gets there.
+  /// How long until the measured xp rate levels a skill up, the next action
+  /// being [lead] of the way there already. Null until a segment has been
+  /// measured, and for a rate that never gets there.
   double? _levelUpIn(
     PlayerData playerState,
     Map<SkillId, double> xpPerAction,
     double intervalSeconds,
+    double lead,
   ) {
     double? soonest;
     for (final entry in xpPerAction.entries) {
@@ -359,7 +410,7 @@ class OfflineProgressSystem {
       if (skill == null) continue;
       final xpToGo = _skillService.xpToLevelUp(skill);
       if (xpToGo <= 0) continue;
-      final seconds = (xpToGo / entry.value).ceil() * intervalSeconds;
+      final seconds = (xpToGo / entry.value).ceil() * intervalSeconds - lead;
       if (soonest == null || seconds < soonest) soonest = seconds;
     }
     return soonest;

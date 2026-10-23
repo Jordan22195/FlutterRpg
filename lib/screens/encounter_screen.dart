@@ -7,6 +7,7 @@ import 'package:rpg/widgets/eat_food_button.dart';
 import 'package:rpg/widgets/equipment_picker.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/entities/entities.dart';
+import '../controllers/action_timing_controller.dart';
 import '../controllers/dungeon_controller.dart';
 import '../controllers/encounter_controller.dart';
 import '../controllers/equipment_controller.dart';
@@ -197,7 +198,15 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       EncounterRowLabel(label);
 
   /// One stat chip on a status row: icon plus a fixed-width value.
-  Widget buildStatChip(BuildContext context, SkillId icon, String text) {
+  ///
+  /// [boost] tints the value while a strength stance is lending to it: one
+  /// colour while the bar is part way up, a hotter one held full.
+  Widget buildStatChip(
+    BuildContext context,
+    SkillId icon,
+    String text, {
+    StatBoost? boost,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(left: _statGap),
       child: Row(
@@ -214,7 +223,11 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
               overflow: TextOverflow.visible,
               style: HearthText.statusStat.copyWith(
                 fontSize: 15,
-                color: context.palette.text,
+                color: switch (boost) {
+                  StatBoost.partial => context.gameColors.boostPartial,
+                  StatBoost.full => context.gameColors.boostFull,
+                  null => context.palette.text,
+                },
               ),
             ),
           ),
@@ -222,6 +235,23 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       ),
     );
   }
+
+  /// One of the player's own stat chips. It rebuilds with the action loop
+  /// rather than with the screen, so the value and its boost tint follow the
+  /// strength stance's bar frame by frame as it fills and drains.
+  Widget buildPlayerStatChip(BuildContext context, SkillId skill) => Builder(
+    key: ValueKey('playerStat-${skill.name}'),
+    builder: (context) {
+      context.watch<ActionTimingController>();
+      final player = context.read<PlayerDataController>();
+      return buildStatChip(
+        context,
+        skill,
+        '${player.getStatTotal(skill)}',
+        boost: player.statBoosts()[skill],
+      );
+    },
+  );
 
   /// The shared status strip layout: who the row belongs to, the hp bar
   /// carrying its own counter with the row's attack timer under it, then
@@ -345,16 +375,8 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         view.entityAttackSequence,
       ),
       stats: [
-        buildStatChip(
-          context,
-          SkillId.DEFENCE,
-          '${stats[SkillId.DEFENCE] ?? 1}',
-        ),
-        buildStatChip(
-          context,
-          attackSkillType,
-          '${stats[attackSkillType] ?? 1}',
-        ),
+        buildPlayerStatChip(context, SkillId.DEFENCE),
+        buildPlayerStatChip(context, attackSkillType),
       ],
     );
   }
@@ -408,11 +430,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
               ],
             ),
           ),
-          buildStatChip(
-            context,
-            gatheringSkill,
-            '${view.playerStats[gatheringSkill] ?? 1}',
-          ),
+          buildPlayerStatChip(context, gatheringSkill),
         ],
       ),
     );

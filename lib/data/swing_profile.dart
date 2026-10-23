@@ -22,7 +22,17 @@ class SwingProfile {
   /// The top of the uniform 1..maxHit damage roll a landing swing makes.
   final int maxHit;
 
-  SwingProfile({required this.hitChance, required this.maxHit});
+  /// Whether a swing's damage past one pool runs on into the next — a node's
+  /// stack, see [EncounterService.overflows]. Then a pool costs its share
+  /// of an average hit, however small, rather than the whole rolls it takes
+  /// to empty on its own.
+  final bool overflow;
+
+  SwingProfile({
+    required this.hitChance,
+    required this.maxHit,
+    this.overflow = false,
+  });
 
   /// What a landing swing deals on average.
   double get damagePerHit => (1 + maxHit) / 2.0;
@@ -54,6 +64,9 @@ class SwingProfile {
   /// worth a fraction of a swing still takes a swing to empty.
   double hitsToRemove(int hitpoints) {
     if (hitpoints <= 0) return 0;
+    // a swing that runs on spends exactly its average on the pool and
+    // carries the rest, so the pool costs its share of a hit
+    if (overflow) return hitpoints / damagePerHit;
     if (hitpoints > _tableLimit) {
       // past the bend the curve is a straight line of slope 1/damagePerHit
       return hitsToRemove(_tableLimit) +

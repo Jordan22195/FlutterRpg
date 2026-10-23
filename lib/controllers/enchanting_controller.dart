@@ -239,22 +239,32 @@ class EnchantingController extends ChangeNotifier {
   }
 
   // function bound to the action button. executes periodically: each
-  // fire disenchants or enchants ONE item from the selected stack
+  // action disenchants or enchants ONE item from the selected stack. a live
+  // fire is one action; an offline settle hands over a whole stretch as one
+  // fire of [count], which the bench still works through an item at a time
   void doEnchantingAction(
     int count, {
     bool offline = false,
     DateTime? at,
     Duration? span,
   }) {
+    for (var i = 0; i < count; i++) {
+      if (!_enchantOne(at: at)) break;
+    }
+    notifyListeners();
+  }
+
+  /// One item off the selected stack. False once the loop has stopped, so a
+  /// batch ends where its stack or its materials did.
+  bool _enchantOne({DateTime? at}) {
     final target = selectedTarget;
     if (target == null || target.stackKey != _runningTargetStackKey) {
       _actionTimingController.stop();
-      notifyListeners();
-      return;
+      return false;
     }
 
-    // what this fire produced, reported when the timing system is settling
-    // time away and ignored otherwise
+    // what this action produced, reported when the timing system is
+    // settling time away and ignored otherwise
     final EncounterActionResult result;
 
     if (disenchantSelected) {
@@ -278,8 +288,7 @@ class EnchantingController extends ChangeNotifier {
             );
       if (result.equipment.isEmpty) {
         _actionTimingController.stop();
-        notifyListeners();
-        return;
+        return false;
       }
       // session grid gets its own copy: sharing one object between two
       // inventories would double-count when stacks merge
@@ -294,7 +303,8 @@ class EnchantingController extends ChangeNotifier {
     // stop when the stack ran out or the next action can't be afforded
     if (!selectionReady()) {
       _actionTimingController.stop();
+      return false;
     }
-    notifyListeners();
+    return true;
   }
 }

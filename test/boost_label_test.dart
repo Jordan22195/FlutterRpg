@@ -14,8 +14,9 @@ import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/progress_bars.dart';
 
 /// The banner's boost readout. The two stances buy different things, so
-/// they read differently: a strength stance adds flat stat points and shows
-/// `+n`, the fast stance buys rate and shows a multiplier. Both show what
+/// they read differently: a strength stance lends flat points to the stat it
+/// is spent on and shows `+n`, the fast stance buys rate and shows a
+/// multiplier. Both show what
 /// the stance is worth standing still rather than nothing - the label used
 /// to collapse to a flat "1.00x" the moment the boost bar emptied, which
 /// hid the idle half of both curves.
@@ -74,7 +75,9 @@ void main() {
     return session;
   }
 
-  testWidgets('a strength stance reads +n, in whole points', (tester) async {
+  testWidgets('a strength stance reads +n, the points it lends', (
+    tester,
+  ) async {
     final session = await pumpLabel(tester, (save) {
       final player = save.playerData;
       setLevel(player, SkillId.STRENGTH, 16);
@@ -87,16 +90,16 @@ void main() {
 
     // standing still is the idle curve: 16 ^ 0.75 is exactly 8
     expect(find.text('+8'), findsOneWidget);
-    // and no multiplier anywhere - that reading is retired for this stance
+    // and no multiplier anywhere - that reading belongs to the fast stance
     expect(find.textContaining('x'), findsNothing);
 
-    // strength says where the points come from, mining where they land
+    // strength says where the boost comes from, mining where it lands
     expect(renderedIcons(), [SkillId.STRENGTH, SkillId.MINING]);
 
     session.dispose();
   });
 
-  testWidgets('a full boost bar reads the max curve', (tester) async {
+  testWidgets('a full boost bar lends the whole curve', (tester) async {
     final session = await pumpLabel(tester, (save) {
       final player = save.playerData;
       setLevel(player, SkillId.STRENGTH, 16);
@@ -108,8 +111,23 @@ void main() {
       player.boostFill = 1.0;
     });
 
-    // 16 ^ 1 + 1
+    // a full bar is the max curve: 16 ^ 1 + 1
     expect(find.text('+17'), findsOneWidget);
+
+    session.dispose();
+  });
+
+  testWidgets('a defensive stance reads +n, in whole points', (tester) async {
+    final session = await pumpLabel(tester, (save) {
+      final player = save.playerData;
+      setLevel(player, SkillId.STRENGTH, 16);
+      player.stance = Stance.defensive;
+      player.skillBoost = SkillId.DEFENCE;
+    });
+
+    // standing still is the idle curve: 16 ^ 0.75 is exactly 8
+    expect(find.text('+8'), findsOneWidget);
+    expect(find.textContaining('x'), findsNothing);
 
     session.dispose();
   });

@@ -1,4 +1,5 @@
 import 'package:rpg/data/equipment_data.dart';
+import 'package:rpg/data/combat_tuning.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/catalogs/rarity.dart';
@@ -39,6 +40,35 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
 
   @override
   int get fibOffset => super.fibOffset + weaponType.parameters.fibOffset;
+
+  /// Whether a swing of this weapon deals [damageAt]. Off for the sickle and
+  /// the rod, which roll a skill rather than hit a pool.
+  bool get usesDamage => weaponType.parameters.usesDamage;
+
+  /// The rung this weapon is made from: its own rung less what its shape
+  /// adds over the metal. A copper greatsword is copper, whatever its shape
+  /// is worth on the stat ladder.
+  int get materialRung => fibLevel - weaponType.parameters.fibOffset;
+
+  /// What one swing deals before the attack multiplier, at [rarity]: the
+  /// rung's damage per second times how long the swing takes, so a slower
+  /// shape hits harder by exactly what it gives up in speed. A tool carries
+  /// its type's share of it; a better roll scales it the way it scales any
+  /// piece's stats.
+  double damageAt(Rarity rarity) {
+    if (!usesDamage) return 0;
+    final seconds = actionInterval.inMicroseconds / 1e6;
+    return weaponDamageForRung(materialRung) *
+        seconds *
+        weaponType.parameters.damageScale *
+        rarity.statMultiplier;
+  }
+
+  /// See [WeaponEquipmentParameters.speedAffinity].
+  double get speedAffinity => weaponType.parameters.speedAffinity;
+
+  /// See [WeaponEquipmentParameters.strengthAffinity].
+  double get strengthAffinity => weaponType.parameters.strengthAffinity;
 
   const WeaponItemDefinition({
     required super.name,
