@@ -103,11 +103,13 @@ class EquipmentService {
   }
 
   /// The skills whose action is a swing that deals damage to a pool: a
-  /// fight, a tree and a vein. Fishing and herbs roll their skill instead.
+  /// fight, a tree, a vein and a cast into a fishing spot. Herbs roll their
+  /// skill instead.
   static const Set<SkillId> damageSkills = {
     ...weaponSkills,
     SkillId.MINING,
     SkillId.WOODCUTTING,
+    SkillId.FISHING,
   };
 
   /// What one swing of [skill]'s action deals before the attack multiplier:

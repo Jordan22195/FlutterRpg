@@ -123,7 +123,7 @@ void main() {
         ),
         (
           name: 'fishing',
-          stances: [Stance.fast],
+          stances: [Stance.fast, Stance.strong],
           bind: (s) => bindNode(s, EntityId.TRANQUIL_POND),
           band: 0.15,
           seconds: 600,

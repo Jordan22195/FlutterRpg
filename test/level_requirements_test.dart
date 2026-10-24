@@ -241,6 +241,67 @@ void main() {
       session.dispose();
     });
 
+    // a potion and the Fisherman's set: +5 and +2 a piece, lifting the
+    // Fishing total well past the earned level
+    void boostFishing(GameSession session) {
+      final save = session.saveGameData;
+      save.inventoryData.itemMap[ItemId.MINOR_FISHING_POTION] = 1;
+      session.inventoryController.drinkPotion(ItemId.MINOR_FISHING_POTION);
+      final armour = save.playerData.equipmentData;
+      for (final id in [
+        ItemId.FISHERMANS_BOOTS,
+        ItemId.FISHERMANS_HAT,
+        ItemId.FISHERMANS_TUNIC,
+      ]) {
+        final piece = id.build() as EquipmentItem;
+        armour.armorEquipment[(id.definition as EquipmentItemDefinition)
+                .armorSlot] =
+            piece;
+      }
+    }
+
+    test('gear and potions do not open a spot the earned level has not', () {
+      final session = buildSession();
+      final player = session.saveGameData.playerData;
+      setLevel(session, SkillId.FISHING, 15);
+      boostFishing(session);
+      // the total is past the river's 20; the earned level is not
+      expect(
+        session.playerDataService.getStatTotals(player)[SkillId.FISHING],
+        greaterThanOrEqualTo(20),
+      );
+
+      expect(
+        session.encounterSystem.meetsLevelRequirement(player, EntityId.RIVER),
+        isFalse,
+      );
+      expect(
+        session.worldController.meetsEntityRequirement(EntityId.RIVER),
+        isFalse,
+      );
+      fishAt(session, EntityId.RIVER);
+      expect(cast(session, 500).items, isEmpty);
+
+      session.dispose();
+    });
+
+    test('gear and potions do not let a fish bite before its level', () {
+      final session = buildSession();
+      final player = session.saveGameData.playerData;
+      // carp opens at 5: a level-1 angler lifted past it still lands minnows
+      setLevel(session, SkillId.FISHING, 1);
+      boostFishing(session);
+      expect(
+        session.playerDataService.getStatTotals(player)[SkillId.FISHING],
+        greaterThanOrEqualTo(5),
+      );
+      fishAt(session, EntityId.TRANQUIL_POND);
+
+      expect(caught(cast(session, 2000)), {ItemId.MINNOW});
+
+      session.dispose();
+    });
+
     test('at the spot\'s level only its first fish bites', () {
       final session = buildSession();
       setLevel(session, SkillId.FISHING, 1);

@@ -22,6 +22,14 @@ class EntityDropChance {
   /// Rolled by a layered bonus roll rather than the main drop table.
   final bool bonus;
 
+  /// The skill level this line opens at - a fish's own Fishing level - when
+  /// the player hasn't reached it yet; 0 for a line that can drop now. A
+  /// locked line has no [chance]: the table it would roll in is cut to what
+  /// the player can catch.
+  final int lockedUntil;
+
+  bool get locked => lockedUntil > 0;
+
   const EntityDropChance({
     required this.itemId,
     required this.name,
@@ -30,6 +38,7 @@ class EntityDropChance {
     required this.minCount,
     required this.maxCount,
     required this.bonus,
+    this.lockedUntil = 0,
   });
 
   /// True when the stack size varies (count..highCount).
@@ -48,6 +57,11 @@ class EntityDetails {
 
   /// Estimated xp for consuming one count, matching the explore card.
   final double xpPerUnit;
+
+  /// What one catch is worth on average to a fishing spot's skill: the fish
+  /// table cut to the level the player has earned, weighted. 0 for anything
+  /// that isn't fished.
+  final double xpPerCatch;
 
   /// The player skill rolled against this entity (its [entityType]).
   final int playerSkillLevel;
@@ -86,6 +100,7 @@ class EntityDetails {
     required this.entity,
     required this.requiredLevel,
     required this.xpPerUnit,
+    this.xpPerCatch = 0,
     required this.playerSkillLevel,
     required this.playerDefence,
     required this.playerMaxHp,
@@ -111,6 +126,41 @@ class EntityDetails {
   bool get usesDamage => skill != SkillId.FISHING && skill != SkillId.HERBALISM;
 
   double get playerMissChance => 1.0 - playerHitChance;
+
+  /// Fish an average cast lands, misses included: the catch chance times
+  /// the mean catches a landed cast makes, its damage uniform over
+  /// 1..[playerMaxHit] — see [EncounterService.meanCatchesPerHit].
+  double get playerAverageCatches {
+    final pool = entity.maxHitPoints;
+    if (playerMaxHit <= 0) return 0;
+    if (pool <= 0) return playerHitChance;
+    var total = 0;
+    for (var d = 1; d <= playerMaxHit; d++) {
+      total += (d + pool - 1) ~/ pool;
+    }
+    return playerHitChance * total / playerMaxHit;
+  }
+
+  /// [playerAverageCatches] at the player's own cast rate: the fish an hour
+  /// of casting lands. 0 with no interval to divide by.
+  double get playerCatchesPerHour {
+    if (playerActionInterval <= 0) return 0;
+    return playerAverageCatches * 3600 / playerActionInterval;
+  }
+
+  /// [playerCatchesPerHour] at [xpPerCatch] a catch: the Fishing xp an hour
+  /// of casting pays.
+  double get playerXpPerHour => playerCatchesPerHour * xpPerCatch;
+
+  /// The most fish one cast can land: a pool's worth of damage is a catch,
+  /// and each further pool's worth of overkill rolls the table again — see
+  /// [EncounterService.catchesFor].
+  int get playerMaxCatch {
+    final pool = entity.maxHitPoints;
+    if (playerMaxHit <= 0) return 0;
+    if (pool <= 0) return 1;
+    return (playerMaxHit + pool - 1) ~/ pool;
+  }
 
   /// Expected damage per action: the to-hit roll times the uniform
   /// 1..maxHit damage roll.

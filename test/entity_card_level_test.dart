@@ -10,6 +10,7 @@ import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
+import 'package:rpg/controllers/potion_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
@@ -116,6 +117,9 @@ void main() {
           ),
           ChangeNotifierProvider<ActionTimingController>.value(
             value: session.actionTimingController,
+          ),
+          ChangeNotifierProvider<PotionController>.value(
+            value: session.potionController,
           ),
           ChangeNotifierProvider<ActionQueueController>.value(
             value: session.actionQueueController,

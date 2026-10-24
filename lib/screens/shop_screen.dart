@@ -180,11 +180,22 @@ class _ShopScreenState extends State<ShopScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 children: [
+                  // the balance reads beside the coin rather than as a badge
+                  // on it: a count of one draws no badge
                   ItemStackTile(
                     size: 40,
-                    count: controller.playerCoins(),
+                    count: 1,
                     id: ItemId.COINS,
                     showInfoDialogOnTap: false,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${controller.playerCoins()}',
+                    key: const ValueKey('shop-coin-balance'),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const Spacer(),
                   const Text("Restock "),

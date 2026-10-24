@@ -209,7 +209,7 @@ void main() {
     test('a node coerces a stance it does not offer', () {
       final session = buildSession();
       final save = session.saveGameData;
-      // a fishing spot offers nothing to choose between
+      // a fishing spot offers only the tool stances: a combat one coerces
       final pond = EntityId.TRANQUIL_POND.build() as EncounterEntity;
       save.worldData.zones[save.playerData.currentZoneId]!.discoveredEntities
           .add(pond);
@@ -218,6 +218,7 @@ void main() {
       expect(session.encounterController.startEncounterActionFor(pond), isTrue);
 
       expect(save.playerData.stance, Stance.fast);
+      expect(stancesForEntity(pond), [Stance.strong, Stance.fast]);
 
       session.actionTimingController.stop();
       session.dispose();

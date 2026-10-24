@@ -36,13 +36,15 @@ class PotionController extends ChangeNotifier {
        _inventoryService = inventoryService;
 
   /// Every potion the player holds, plus any armed to auto-drink even with
-  /// none left - the toggle is still worth seeing. Catalog order, so the
-  /// grid never reshuffles as stacks come and go.
+  /// none left - the toggle is still worth seeing - and any whose buff is
+  /// still up, so disarming the last one drunk doesn't take its running
+  /// buff off the screen with it. Catalog order, so the grid never
+  /// reshuffles as stacks come and go.
   List<ItemId> potions() {
     return [
       for (final id in ItemId.values)
         if (_potionSystem.isDrinkable(id) &&
-            (heldCount(id) > 0 || isAutoDrink(id)))
+            (heldCount(id) > 0 || isAutoDrink(id) || activeBuff(id) != null))
           id,
     ];
   }

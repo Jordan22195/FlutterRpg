@@ -6,6 +6,7 @@ import 'package:rpg/data/action_result.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/game_session.dart';
+import 'package:rpg/services/encounter_service.dart';
 import 'support/gathering_tools.dart';
 
 // Fishing and herbalism settle a whole stretch of time away in one fire, the
@@ -46,12 +47,13 @@ void main() {
   }
 
   // how many actions a gap of [seconds] is worth at the interval the loop
-  // will run at: the bench default divided by the fast stance's speed
-  // curve, rounded to the millisecond the way getCurrentActionDuration does
-  int actionsIn(GameSession session, double seconds) {
+  // will run at: the [skill]'s tool interval (the bench default without
+  // one) divided by the fast stance's speed curve, rounded to the
+  // millisecond the way getCurrentActionDuration does
+  int actionsIn(GameSession session, double seconds, {SkillId? skill}) {
     final scratch = ActionTimingData()
       ..maxInterval = session.actionTimingSystem.intervalFor(
-        null,
+        skill,
         session.saveGameData.playerData,
       );
     final interval = ActionTimingService().getCurrentActionDuration(scratch);
@@ -242,6 +244,168 @@ void main() {
       session.dispose();
     });
 
+    test('a spot\'s pool grows with the spot, 5 up to the ocean\'s 25', () {
+      const pools = {
+        EntityId.TRANQUIL_POND: 5,
+        EntityId.CREEK: 5,
+        EntityId.RIVER: 10,
+        EntityId.DEEP_POND: 15,
+        EntityId.LAKE: 20,
+        EntityId.OCEAN: 25,
+      };
+      for (final pool in pools.entries) {
+        final def = pool.key.definition as EncounterEntityDefinition;
+        expect(def.hitpoints, pool.value, reason: pool.key.name);
+      }
+    });
+
+    test('a pool\'s worth of damage is a catch, and overkill rolls again', () {
+      final service = EncounterService();
+      expect(service.catchesFor(0, 10), 0);
+      expect(service.catchesFor(1, 10), 1);
+      expect(service.catchesFor(10, 10), 1);
+      expect(service.catchesFor(11, 10), 2);
+      expect(service.catchesFor(25, 10), 3);
+      // a landed cast at max hit 11 against a 10-hp pool: ten single
+      // catches and one double, over eleven equally likely rolls
+      expect(service.meanCatchesPerHit(11, 10), closeTo(12 / 11, 1e-9));
+      expect(service.meanCatchesPerHit(10, 10), 1);
+    });
+
+    test('a live cast catches once per pool\'s worth and pays every fish', () {
+      final session = buildSession();
+      // well past the pond, so a cast can run a pool over
+      setLevel(session, SkillId.FISHING, 60);
+      final pond = encounterWith(session, EntityId.TRANQUIL_POND, 1);
+      // the rod's swing: its damage, times what Fishing multiplies it by
+      final maxHit = session.encounterSystem.playerSwingMaxHit(
+        session.saveGameData.playerData,
+        pond,
+      )!;
+      expect(maxHit, greaterThan(pond.maxHitPoints));
+
+      var sawOverkill = false;
+      var sawMaxHit = false;
+      for (var i = 0; i < 300; i++) {
+        final xpBefore = xpFor(session, SkillId.FISHING);
+        final r = cast(session, offline: false);
+        expect(r.actionsPerformed, 1);
+        expect(
+          r.catches,
+          session.encounterService.catchesFor(r.damageDone, pond.maxHitPoints),
+        );
+        // every pond fish comes up one to a roll
+        expect(itemsIn(r), r.catches);
+        // every roll that lands the most fish a cast can is a max catch,
+        // not only the top damage roll
+        expect(
+          r.maxHit,
+          r.catches > 1 &&
+              r.catches ==
+                  session.encounterService.catchesFor(
+                    maxHit,
+                    pond.maxHitPoints,
+                  ),
+        );
+        // the pool stands full for the next cast
+        expect(pond.hitpoints, pond.maxHitPoints);
+
+        var fishXp = 0.0;
+        for (final stack in r.items) {
+          fishXp += stack.id.definition.xpValue * stack.count;
+        }
+        expect(
+          xpFor(session, SkillId.FISHING) - xpBefore,
+          closeTo(fishXp, 1e-6),
+        );
+
+        if (r.catches > 1) sawOverkill = true;
+        if (r.maxHit) sawMaxHit = true;
+      }
+      expect(sawOverkill, isTrue);
+      expect(sawMaxHit, isTrue);
+      session.dispose();
+    });
+
+    test('every cast that lands the max catch is a max catch', () {
+      final session = buildSession();
+      final pond = encounterWith(session, EntityId.TRANQUIL_POND, 1);
+      final pool = pond.maxHitPoints;
+
+      // a level whose top catch is reached by more than one damage roll -
+      // three catches off 21 to 24 damage, say - which is the case that
+      // used to light up only on the top roll
+      late int maxHit;
+      for (var level = 30; level <= 99; level++) {
+        setLevel(session, SkillId.FISHING, level);
+        maxHit = session.encounterSystem.playerSwingMaxHit(
+          session.saveGameData.playerData,
+          pond,
+        )!;
+        if (maxHit > pool && (maxHit - 1) % pool >= 1) break;
+      }
+      final maxCatch = session.encounterService.catchesFor(maxHit, pool);
+
+      var sawLowRollMaxCatch = false;
+      for (var i = 0; i < 2000 && !sawLowRollMaxCatch; i++) {
+        final r = cast(session, offline: false);
+        if (r.catches == maxCatch) {
+          expect(r.maxHit, isTrue, reason: 'damage ${r.damageDone}');
+          if (r.damageDone < maxHit) sawLowRollMaxCatch = true;
+        } else {
+          expect(r.maxHit, isFalse, reason: 'damage ${r.damageDone}');
+        }
+      }
+      expect(sawLowRollMaxCatch, isTrue);
+      session.dispose();
+    });
+
+    test('a spot a cast cannot run over never lights a max catch', () {
+      final session = buildSession();
+      // a fresh angler at the pond: the rod's best swing is a pool's worth,
+      // so every catch is the most a cast can land - and none is a max catch
+      setLevel(session, SkillId.FISHING, 1);
+      final pond = encounterWith(session, EntityId.TRANQUIL_POND, 1);
+      final maxHit = session.encounterSystem.playerSwingMaxHit(
+        session.saveGameData.playerData,
+        pond,
+      )!;
+      expect(session.encounterService.catchesFor(maxHit, pond.maxHitPoints), 1);
+
+      var caught = 0;
+      for (var i = 0; i < 200; i++) {
+        final r = cast(session, offline: false);
+        caught += r.catches;
+        expect(r.maxHit, isFalse);
+      }
+      expect(caught, greaterThan(0));
+      session.dispose();
+    });
+
+    test('a batch at overkill levels still matches the casts', () {
+      const casts = 400;
+
+      final looped = buildSession();
+      setLevel(looped, SkillId.FISHING, 60);
+      encounterWith(looped, EntityId.TRANQUIL_POND, 1);
+      var loopedCatch = 0;
+      for (var i = 0; i < casts; i++) {
+        loopedCatch += itemsIn(cast(looped, offline: false));
+      }
+
+      final batched = buildSession();
+      setLevel(batched, SkillId.FISHING, 60);
+      encounterWith(batched, EntityId.TRANQUIL_POND, 1);
+      final batchedCatch = itemsIn(cast(batched, actionCount: casts));
+
+      // overkill lifts both above one fish a cast
+      expect(loopedCatch, greaterThan(casts));
+      expect(batchedCatch, greaterThan(casts));
+      expect(batchedCatch, closeTo(loopedCatch, loopedCatch * 0.15));
+      looped.dispose();
+      batched.dispose();
+    });
+
     test('a batch catches what the same number of casts would', () {
       const casts = 400;
 
@@ -320,7 +484,10 @@ void main() {
       final report = session.actionTimingController.pendingOfflineReport;
       expect(report, isNotNull);
       // a spot never runs dry, so every cast the gap was worth happens
-      expect(report!.actionCount, actionsIn(session, 60));
+      expect(
+        report!.actionCount,
+        actionsIn(session, 60, skill: SkillId.FISHING),
+      );
       expect(
         report.items.itemMap.values.fold<int>(0, (a, b) => a + b),
         greaterThan(0),

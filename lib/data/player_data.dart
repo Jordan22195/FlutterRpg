@@ -127,14 +127,16 @@ String stanceLabel(Stance stance) {
 }
 
 /// The stances an encounter offers, in display order. Combat picks an attack
-/// style; mining and woodcutting trade power for pace. Everything else runs
+/// style; the tool skills - mining, woodcutting, fishing - trade power for
+/// pace. Everything else runs
 /// fast with nothing to choose - see [PlayerDataService.coerceStanceFor].
 List<Stance> stancesForEntity(EncounterEntity entity) {
   if (entity is CombatEntity) {
     return const [Stance.offensive, Stance.defensive, Stance.fast];
   }
   if (entity.entityType == SkillId.MINING ||
-      entity.entityType == SkillId.WOODCUTTING) {
+      entity.entityType == SkillId.WOODCUTTING ||
+      entity.entityType == SkillId.FISHING) {
     return const [Stance.strong, Stance.fast];
   }
   return const [Stance.fast];

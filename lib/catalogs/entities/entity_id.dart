@@ -220,6 +220,9 @@ enum EntityId {
   // FishingEntityDefinition, by Fishing level. Each spot is gated at its
   // first fish's level, its defence matches that gate (as an herb's does),
   // and its other fish spread from there toward the next spot's level
+  // A spot's hitpoints are a catch's worth of damage - each further pool's
+  // worth of overkill rolls the table again - and climb with the spot: 5 at
+  // the pond and creek, up by 5 a spot to the ocean's 25
   TRANQUIL_POND(
     FishingEntityDefinition(
       name: "Pond",
@@ -227,7 +230,7 @@ enum EntityId {
 
       entityType: SkillId.FISHING,
       defence: 1,
-      hitpoints: 10,
+      hitpoints: 5,
       requiredLevel: 1,
       itemDrops: [
         ItemDropType(id: ItemId.MINNOW, weight: 1, unlockLevel: 1),
@@ -242,7 +245,7 @@ enum EntityId {
 
       entityType: SkillId.FISHING,
       defence: 10,
-      hitpoints: 10,
+      hitpoints: 5,
       requiredLevel: 10,
       itemDrops: [
         ItemDropType(id: ItemId.BLUEGILL, weight: 1, unlockLevel: 10),
@@ -272,7 +275,7 @@ enum EntityId {
 
       entityType: SkillId.FISHING,
       defence: 50,
-      hitpoints: 10,
+      hitpoints: 15,
       requiredLevel: 50,
       itemDrops: [
         ItemDropType(id: ItemId.CATFISH, weight: 1, unlockLevel: 50),
@@ -287,7 +290,7 @@ enum EntityId {
 
       entityType: SkillId.FISHING,
       defence: 60,
-      hitpoints: 10,
+      hitpoints: 20,
       requiredLevel: 60,
       itemDrops: [
         ItemDropType(id: ItemId.WHITEFISH, weight: 1, unlockLevel: 60),
@@ -301,7 +304,7 @@ enum EntityId {
 
       entityType: SkillId.FISHING,
       defence: 80,
-      hitpoints: 10,
+      hitpoints: 25,
       requiredLevel: 80,
       itemDrops: [
         ItemDropType(id: ItemId.TUNA, weight: 1, unlockLevel: 80),
@@ -805,6 +808,13 @@ enum EntityId {
         ),
         ItemDropType(id: ItemId.WOOL_CLOAK, weight: .002, rarity: Rarity.RARE),
       ],
+      // the Wolf Den's first boss: one of the Fisherman's set, a tenth of kills
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [ItemDropType(id: ItemId.FISHERMANS_BOOTS)],
+        ),
+      ],
     ),
   ),
   FOREST_WOLF_EPIC(
@@ -1223,6 +1233,13 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
       ],
+      // the Wolf Den's second boss: one of the Fisherman's set, a tenth of kills
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [ItemDropType(id: ItemId.FISHERMANS_HAT)],
+        ),
+      ],
     ),
   ),
   FUNGAL_MONSTER_RARE(
@@ -1541,6 +1558,13 @@ enum EntityId {
       name: "Naga",
       itemDrops: [
         ItemDropType(id: ItemId.COINS, lowCount: 55, highCount: 165, weight: 1),
+      ],
+      // the Wolf Den's last boss: one of the Fisherman's set, a tenth of kills
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [ItemDropType(id: ItemId.FISHERMANS_TUNIC)],
+        ),
       ],
     ),
   ),
@@ -4059,8 +4083,9 @@ enum EntityId {
       iconAsset: "assets/images/entities/trading_post.png",
       rarity: Rarity.UNCOMMON,
       shopStockPool: [
-        // the full iron set, one entry per slot: exactly stockSlots many, so
-        // a restock puts the whole set on the shelf
+        // the full iron set, one entry per slot, and the Fisherman's pants,
+        // gloves and cloak: more than stockSlots, so a restock shelves a
+        // rotating ten of them
         ShopStockEntry(itemId: ItemId.IRON_HELMET, count: 1),
         ShopStockEntry(itemId: ItemId.IRON_CHESTPLATE, count: 1),
         ShopStockEntry(itemId: ItemId.IRON_LEGS, count: 1),
@@ -4071,6 +4096,9 @@ enum EntityId {
         ShopStockEntry(itemId: ItemId.IRON_AXE, count: 1),
         ShopStockEntry(itemId: ItemId.IRON_PICKAXE, count: 1),
         ShopStockEntry(itemId: ItemId.IRON_SICKLE, count: 1),
+        ShopStockEntry(itemId: ItemId.FISHERMANS_PANTS, count: 1),
+        ShopStockEntry(itemId: ItemId.FISHERMANS_GLOVES, count: 1),
+        ShopStockEntry(itemId: ItemId.FISHERMANS_CLOAK, count: 1),
       ],
       // defaults: 25% markup, 6 hour restock, 10 stock slots
     ),

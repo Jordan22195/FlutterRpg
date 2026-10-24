@@ -95,6 +95,45 @@ void main() {
   );
   Finder cardFor(ItemId id) => find.byKey(ValueKey('potion-card-${id.name}'));
 
+  testWidgets('disarming the last potion keeps its running buff in view', (
+    tester,
+  ) async {
+    // one potion, armed: drinking it leaves the bag empty with the buff up
+    final session = await pumpPotions(
+      tester,
+      held: {ItemId.MINOR_SPEED_POTION: 1},
+      auto: {ItemId.MINOR_SPEED_POTION},
+    );
+    session.inventoryController.drinkPotion(ItemId.MINOR_SPEED_POTION);
+    await settle(tester);
+    expect(session.potionController.heldCount(ItemId.MINOR_SPEED_POTION), 0);
+    expect(
+      session.potionController.activeBuff(ItemId.MINOR_SPEED_POTION),
+      isNotNull,
+    );
+
+    await tester.tap(switchFor(ItemId.MINOR_SPEED_POTION));
+    await settle(tester);
+
+    // disarmed, the buff runs on, and so does the card that shows it
+    expect(
+      session.potionController.isAutoDrink(ItemId.MINOR_SPEED_POTION),
+      isFalse,
+    );
+    final buff = session.potionController.activeBuff(ItemId.MINOR_SPEED_POTION);
+    expect(buff, isNotNull);
+    expect(cardFor(ItemId.MINOR_SPEED_POTION), findsOneWidget);
+    expect(session.potionController.activeCount, 1);
+    expect(
+      find.descendant(
+        of: cardFor(ItemId.MINOR_SPEED_POTION),
+        matching: find.byType(CountdownTimer),
+      ),
+      findsOneWidget,
+    );
+    session.dispose();
+  });
+
   testWidgets('lists held potions and armed ones, nothing else', (
     tester,
   ) async {

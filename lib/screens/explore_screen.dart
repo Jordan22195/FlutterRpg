@@ -212,9 +212,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
             : PlaceLine(
                 skills: const [SkillId.FISHING],
                 level: required > 0 ? required : null,
+                // coloured against earned Fishing, which is what opens it
                 standing: LevelStanding.of(
                   required,
-                  context.watch<PlayerDataController>().getStatTotal(
+                  context.watch<PlayerDataController>().getSkillLevel(
                     SkillId.FISHING,
                   ),
                 ),

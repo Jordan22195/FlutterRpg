@@ -527,10 +527,19 @@ class EncounterSystem {
     final required = requiredLevelFor(id);
     if (required <= 0) return true;
     final def = id.definition as EncounterEntityDefinition;
-    final level =
-        _playerDataService.getStatTotals(playerState, at: at)[def.entityType] ??
-        0;
-    return level >= required;
+    return unlockLevel(playerState, def.entityType, at: at) >= required;
+  }
+
+  /// The level [skill]'s unlocks are read against. Fishing's - the spots
+  /// and the fish in them - open on the level the player has earned, not on
+  /// what a rod, gear or a potion lifts it to: those make a cast land, they
+  /// don't let a better fish bite. Everything else gated here reads the
+  /// total, gear and buffs included.
+  int unlockLevel(PlayerData playerState, SkillId skill, {DateTime? at}) {
+    if (skill == SkillId.FISHING) {
+      return _playerDataService.getSkillLevel(skill, playerState);
+    }
+    return _playerDataService.getStatTotals(playerState, at: at)[skill] ?? 0;
   }
 
   /// The gathering skill whose tool [id] is worked with — an axe for a
@@ -659,6 +668,24 @@ class EncounterSystem {
     }
   }
 
+  /// The weighted xp of one catch at fishing spot [e], over only the fish
+  /// the player's earned level reaches - what a live cast rolls. 0 for
+  /// anything that isn't fished.
+  double _xpPerCatch(PlayerData playerState, EncounterEntity e) {
+    final def = e.id.definition;
+    if (e.entityType != SkillId.FISHING || def is! EncounterEntityDefinition) {
+      return 0;
+    }
+    final table = def.dropTableAt(unlockLevel(playerState, SkillId.FISHING));
+    var weight = 0.0;
+    var xp = 0.0;
+    for (final entry in table) {
+      weight += entry.weight;
+      xp += entry.weight * entry.id.id.definition.xpValue * entry.count;
+    }
+    return weight <= 0 ? 0 : xp / weight;
+  }
+
   /// Assembles the entity details snapshot the info popup renders: the
   /// entity's own stats, its drop table with per-kill probabilities, and
   /// the to-hit rolls both ways against the player's current stats.
@@ -708,6 +735,7 @@ class EncounterSystem {
       entity: entity,
       requiredLevel: requiredLevelFor(entity.id),
       xpPerUnit: xpPerUnit(entity),
+      xpPerCatch: _xpPerCatch(playerState, entity),
       playerSkillLevel: playerSkill,
       playerDefence: playerDefence,
       playerMaxHp: maxHitpointsFrom(stats),
@@ -734,19 +762,58 @@ class EncounterSystem {
       expectedYield: entity.entityType == SkillId.HERBALISM
           ? 1 + EncounterService.herbBonusRolls * playerHitChance
           : 0,
-      drops: _buildDropChances(entity.id),
+      drops: _buildDropChances(entity.id, playerState),
     );
   }
 
   /// The entity's drop table as per-kill probabilities: the main table
   /// always yields exactly one pick, and each layered bonus roll
   /// contributes its own pick with its own firing chance.
-  List<EntityDropChance> _buildDropChances(EntityId id) {
+  ///
+  /// A fishing spot's table is cut to the fish the player's earned level
+  /// reaches, the way a cast rolls it, so the odds are the ones a cast has
+  /// now. The fish past that level follow, locked, with the level each one
+  /// opens at.
+  List<EntityDropChance> _buildDropChances(
+    EntityId id,
+    PlayerData playerState,
+  ) {
     final def = id.definition;
     if (def is! EncounterEntityDefinition) return const [];
 
+    final main = def.itemDrops.flattened;
+    if (def.entityType == SkillId.FISHING) {
+      final level = unlockLevel(playerState, SkillId.FISHING);
+      final locked = main.where((e) => e.unlockLevel > level).toList()
+        ..sort((a, b) => a.unlockLevel.compareTo(b.unlockLevel));
+      return [
+        ..._dropRows(
+          main.where((e) => e.unlockLevel <= level).toList(),
+          rollChance: 1.0,
+          bonus: false,
+        ),
+        for (final e in locked)
+          EntityDropChance(
+            itemId: e.id,
+            name: e.id.definition.name,
+            rarity: e.rarity,
+            chance: 0,
+            minCount: e.lowCount,
+            maxCount: e.highCount > e.lowCount ? e.highCount : e.lowCount,
+            bonus: false,
+            lockedUntil: e.unlockLevel,
+          ),
+        for (final roll in def.bonusDrops)
+          ..._dropRows(
+            roll.entries.flattened,
+            rollChance: roll.chance,
+            bonus: true,
+          ),
+      ];
+    }
+
     return [
-      ..._dropRows(def.itemDrops.flattened, rollChance: 1.0, bonus: false),
+      ..._dropRows(main, rollChance: 1.0, bonus: false),
       for (final roll in def.bonusDrops)
         ..._dropRows(
           roll.entries.flattened,
@@ -963,43 +1030,68 @@ class EncounterSystem {
         playerInventory: playerInventory,
         actionCount: actionCount,
         fishingStat: stats[SkillId.FISHING] ?? 1,
+        fishingLevel: unlockLevel(playerState, SkillId.FISHING),
+        maxHit: _castMaxHit(playerState, e, stats, at: at),
       );
-    }
-
-    // fishing spots replenish rather than deplete: a spot at 0 hp would cap
-    // every damage roll at 0 and never yield another catch
-    if (e.hitpoints <= 0) {
-      e.hitpoints = e.maxHitPoints;
     }
 
     // a cast is a cast whether or not it catches
     result.actionsPerformed = 1;
 
-    // do damage
-    final r = _encounterService.resolvePlayerDamage(
-      stats,
-      playerState,
-      encounter,
+    // a cast deals damage to the pool. the pool never takes it: it stands
+    // full for every cast, and its hitpoints are the measure of a catch —
+    // a pool's worth lands one fish, and each further pool's worth of
+    // overkill rolls the table again
+    final fishing = stats[SkillId.FISHING] ?? 1;
+    final maxHit = _castMaxHit(playerState, e, stats, at: at);
+    final damage = _encounterService.calculateAttackDamage(
+      attackerAttack: fishing,
+      defenderDefense: e.defence,
+      // uncapped: the overkill is what pays
+      defenderHp: maxHit,
+      weaponDamage: _playerDataService.swingDamage(
+        playerState,
+        SkillId.FISHING,
+      ),
+      multiplier: _playerDataService.strengthDamageMultiplier(
+        playerState,
+        at: at,
+      ),
     );
-    result.damageDone = r.damageDone;
-    result.enemyDied = r.enemyDied;
+    e.hitpoints = e.maxHitPoints;
+    encounter.lastPlayerDamage = damage;
+    result.damageDone = damage;
 
-    if (result.damageDone <= 0) {
+    if (damage <= 0) {
       return result; // miss/no progress this tick
     }
 
     // roll drops: only the fish this Fishing level reaches
     final def = e.id.definition;
     if (def is! EncounterEntityDefinition) return result;
-    final catchTable = def.dropTableAt(stats[SkillId.FISHING] ?? 1);
+    final catchTable = def.dropTableAt(
+      unlockLevel(playerState, SkillId.FISHING),
+    );
     if (catchTable.isEmpty) return result;
+    result.catches = _encounterService.catchesFor(damage, e.maxHitPoints);
+    // the top of what a cast can land, not of its damage roll: a range of
+    // rolls all land the same number of fish, and every one of them is a
+    // max catch. One fish is not one, though - at a spot a cast can't
+    // overkill, every catch would light up
+    result.maxHit =
+        result.catches > 1 &&
+        result.catches >= _encounterService.catchesFor(maxHit, e.maxHitPoints);
     final paid = _payOutDrops(
-      [_dropTableService.roll(catchTable)],
+      [
+        for (var i = 0; i < result.catches; i++)
+          _dropTableService.roll(catchTable),
+      ],
       playerInventory,
       encounter.itemDrops,
       result,
     );
 
+    // xp is the fish's, each one of them, not the cast's
     result.xp[SkillId.FISHING] = _xpFor(paid);
 
     // Apply XP to player
@@ -1010,18 +1102,50 @@ class EncounterSystem {
     return result;
   }
 
+  /// The top of a cast's damage roll at [e]: the rod's damage, times what
+  /// Fishing multiplies it by, soaked by the spot's defence and lifted by a
+  /// strength stance - the same max hit an axe swings at a tree with.
+  int _castMaxHit(
+    PlayerData playerState,
+    EncounterEntity e,
+    Map<SkillId, int> stats, {
+    DateTime? at,
+  }) {
+    final fishing = stats[SkillId.FISHING] ?? 1;
+    final damage = _playerDataService.swingDamage(playerState, SkillId.FISHING);
+    if (damage == null) {
+      return _encounterService.computeMaxHit(
+        attack: fishing,
+        defense: e.defence,
+      );
+    }
+    return _encounterService.weaponMaxHit(
+      damage: damage,
+      attack: fishing,
+      defense: e.defence,
+      multiplier: _playerDataService.strengthDamageMultiplier(
+        playerState,
+        at: at,
+      ),
+    );
+  }
+
   /// A batch of [actionCount] casts, settled in one pass.
   ///
-  /// A cast catches when its roll against the spot beats the spot, so the
-  /// catches are the casts times that chance - the exact mean rather than a
-  /// roll each. The spot's hitpoints are left alone: they are the cadence of
-  /// a single cast, and a spot replenishes rather than depleting.
+  /// A cast catches when its roll against the spot beats the spot, and
+  /// catches again for each pool's worth of overkill, so the catches are the
+  /// casts times that chance times the mean catches a landed cast makes -
+  /// the exact mean rather than a roll each. The spot's hitpoints are left
+  /// alone: they are the measure of a catch, and a spot replenishes rather
+  /// than depleting.
   EncounterActionResult _settleFishing({
     required PlayerData playerState,
     required EncounterData encounter,
     required InventoryData playerInventory,
     required int actionCount,
     required int fishingStat,
+    required int fishingLevel,
+    required int maxHit,
   }) {
     final result = EncounterActionResult();
     final e = encounter.entity!;
@@ -1029,14 +1153,18 @@ class EncounterSystem {
     // every cast is an action, whether or not it caught anything
     result.actionsPerformed = actionCount;
 
+    // casts that land, times the mean catches a landed cast makes off its
+    // overkill
     final catches =
-        (actionCount * _encounterService.chanceToHit(fishingStat, e.defence))
+        (actionCount *
+                _encounterService.chanceToHit(fishingStat, e.defence) *
+                _encounterService.meanCatchesPerHit(maxHit, e.maxHitPoints))
             .round();
     if (catches <= 0) return result;
 
     // only the fish this Fishing level reaches, as a single cast rolls
     final def = e.id.definition as EncounterEntityDefinition;
-    final catchTable = def.dropTableAt(fishingStat);
+    final catchTable = def.dropTableAt(fishingLevel);
     if (catchTable.isEmpty) return result;
     final drops = _payOutDrops(
       _dropTableService.rollMulitpleTimes(catches, catchTable),

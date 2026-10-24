@@ -539,6 +539,27 @@ class EncounterService {
     return r;
   }
 
+  /// How many catches a cast lands for [damage] dealt to a pool of [poolHp]:
+  /// the first pool's worth is one fish, and every further pool's worth of
+  /// overkill rolls the table again. A miss catches nothing.
+  int catchesFor(int damage, int poolHp) {
+    if (damage <= 0) return 0;
+    if (poolHp <= 0) return 1;
+    return (damage + poolHp - 1) ~/ poolHp;
+  }
+
+  /// The mean [catchesFor] a cast that lands makes, its damage uniform over
+  /// 1..[maxHit] the way [rollDamageUniform] rolls it. What a batch of casts
+  /// settles each hit at.
+  double meanCatchesPerHit(int maxHit, int poolHp) {
+    if (maxHit <= 0) return 0;
+    var total = 0;
+    for (var d = 1; d <= maxHit; d++) {
+      total += catchesFor(d, poolHp);
+    }
+    return total / maxHit;
+  }
+
   bool fishingConditionsMet(
     PlayerData playerState,
     EncounterData encounterState,

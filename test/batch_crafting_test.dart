@@ -367,7 +367,7 @@ void main() {
       );
 
       expect(result.actionsPerformed, 20);
-      expect(result.xp[SkillId.COOKING], 10 * 20);
+      expect(result.xp[SkillId.COOKING], xpPerCraft('cook_minnow') * 20);
       expect(minnowsLeft(session), 180);
       session.dispose();
     });
@@ -721,7 +721,7 @@ void main() {
       final report = session.actionTimingController.pendingOfflineReport;
       expect(report, isNotNull);
       expect(report!.actionCount, 10);
-      expect(report.xp[SkillId.COOKING], 10 * 10);
+      expect(report.xp[SkillId.COOKING], xpPerCraft('cook_minnow') * 10);
       // the fire going out is what stopped the loop, so the rest of the gap
       // was spent idle
       expect(session.actionTimingController.isRunning, isFalse);
@@ -767,7 +767,7 @@ void main() {
       expect(logsLeft(session), 196);
       final cooks = 200 - minnowsLeft(session);
       expect(report.actionCount, cooks + 1);
-      expect(report.xp[SkillId.COOKING], 10 * cooks);
+      expect(report.xp[SkillId.COOKING], xpPerCraft('cook_minnow') * cooks);
       // well past the fire's own share, and as near the whole gap as the
       // level-up cuts let it get (a cut at a fraction of an interval pays
       // the fraction out idle)

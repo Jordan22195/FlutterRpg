@@ -12,9 +12,14 @@ class FadingNumber extends StatefulWidget {
     this.curve = Curves.easeOut,
     this.onFinished,
     this.autoplay = true,
+    this.child,
   });
 
   final int number;
+
+  /// Drawn in place of [number] when set: a chip that shows and fades the
+  /// same way.
+  final Widget? child;
 
   /// Replays the fade whenever this value changes, even if [number]
   /// stays the same. Increment it once per event to show.
@@ -62,16 +67,22 @@ class FadingNumberState extends State<FadingNumber>
     }
   }
 
-  /// Call this to show the number again and fade it away.
+  /// Bumped by every [replay], so a hold that a newer replay has overtaken
+  /// knows not to start its fade over the newer number.
+  int _replays = 0;
+
+  /// Call this to show the number again and fade it away. It shows at full
+  /// strength at once — only the way out fades.
   Future<void> replay() async {
     if (!mounted) return;
 
+    final replay = ++_replays;
     _controller.stop();
     _controller.value = 0.0; // 0 => fully visible (begin)
 
     if (widget.hold > Duration.zero) {
       await Future.delayed(widget.hold);
-      if (!mounted) return;
+      if (!mounted || replay != _replays) return;
     }
 
     await _controller.forward();
@@ -100,7 +111,7 @@ class FadingNumberState extends State<FadingNumber>
 
     return FadeTransition(
       opacity: _opacity,
-      child: Text('${widget.number}', style: effectiveStyle),
+      child: widget.child ?? Text('${widget.number}', style: effectiveStyle),
     );
   }
 }

@@ -442,6 +442,16 @@ enum ItemId {
       iconAsset: "assets/icons/items/minor_speed_potion.png",
     ),
   ),
+  MINOR_FISHING_POTION(
+    BuffItemDefinition(
+      name: "Minor Fishing Potion",
+      value: 12,
+      description: "Guam soaked with a minnow. Lands a little more.",
+      skillBonus: {SkillId.FISHING: 5},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/minor_fishing_potion.png",
+    ),
+  ),
   MINOR_DEFENCE_POTION(
     BuffItemDefinition(
       name: "Minor Defence Potion",
@@ -513,12 +523,17 @@ enum ItemId {
 
   // ── RAW FOOD · FISH ─────────────────────────────────────────────
   // fishing level ascending
+  //
+  // A fish's xp is about what one blacksmithing action pays at the level the
+  // fish opens at - the tier's xp per bar, 3 at copper up to 17.5 at dragon -
+  // so a cast and a smelt train at the same rate. Every fish a cast lands
+  // pays it, overkill catches included.
   MINNOW(
     ItemDefinition(
       name: "Minnow",
       value: 1,
       iconAsset: "assets/icons/items/minnow.png",
-      xpValue: 5,
+      xpValue: 3,
     ),
   ),
   CARP(
@@ -526,7 +541,7 @@ enum ItemId {
       name: "Carp",
       value: 2,
       iconAsset: "assets/icons/items/carp.png",
-      xpValue: 10,
+      xpValue: 3,
     ),
   ),
   BLUEGILL(
@@ -534,7 +549,7 @@ enum ItemId {
       name: "Bluegill",
       value: 3,
       iconAsset: "assets/icons/items/bluegill.png",
-      xpValue: 15,
+      xpValue: 3,
     ),
   ),
   TROUT(
@@ -542,7 +557,7 @@ enum ItemId {
       name: "Trout",
       value: 5,
       iconAsset: "assets/icons/items/trout.png",
-      xpValue: 25,
+      xpValue: 4,
     ),
   ),
   PIKE(
@@ -550,7 +565,7 @@ enum ItemId {
       name: "Pike",
       value: 7,
       iconAsset: "assets/icons/items/pike.png",
-      xpValue: 30,
+      xpValue: 5,
     ),
   ),
   SALMON(
@@ -558,7 +573,7 @@ enum ItemId {
       name: "Salmon",
       value: 10,
       iconAsset: "assets/icons/items/salmon.png",
-      xpValue: 50,
+      xpValue: 6,
     ),
   ),
   CATFISH(
@@ -566,7 +581,7 @@ enum ItemId {
       name: "Catfish",
       value: 15,
       iconAsset: "assets/icons/items/catfish.png",
-      xpValue: 75,
+      xpValue: 8,
     ),
   ),
   BASS(
@@ -574,7 +589,7 @@ enum ItemId {
       name: "Bass",
       value: 20,
       iconAsset: "assets/icons/items/bass.png",
-      xpValue: 100,
+      xpValue: 8,
     ),
   ),
   WHITEFISH(
@@ -582,7 +597,7 @@ enum ItemId {
       name: "Whitefish",
       value: 25,
       iconAsset: "assets/icons/items/whitefish.png",
-      xpValue: 125,
+      xpValue: 10,
     ),
   ),
   TUNA(
@@ -590,7 +605,7 @@ enum ItemId {
       name: "Tuna",
       value: 30,
       iconAsset: "assets/icons/items/tuna.png",
-      xpValue: 125,
+      xpValue: 15,
     ),
   ),
   SWORDFISH(
@@ -598,7 +613,7 @@ enum ItemId {
       name: "Swordfish",
       value: 50,
       iconAsset: "assets/icons/items/swordfish.png",
-      xpValue: 150,
+      xpValue: 16,
     ),
   ),
   SHARK(
@@ -606,7 +621,7 @@ enum ItemId {
       name: "Shark",
       value: 100,
       iconAsset: "assets/icons/items/shark.png",
-      xpValue: 200,
+      xpValue: 18,
     ),
   ),
 
@@ -1814,6 +1829,71 @@ enum ItemId {
       fibLevel: 2,
       statWeights: {SkillId.DEFENCE: 3},
       iconAsset: "assets/icons/items/linen_cape.png",
+    ),
+  ),
+
+  // ── ARMOUR · FISHERMAN'S SET ────────────────────────────────────
+  // +2 fishing a piece, and nothing else. The boots, hat and tunic drop off
+  // the Wolf Den's bosses; the pants, gloves and cloak rotate through the
+  // trading post, whose markup puts them at 1,000 coins
+  FISHERMANS_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Fisherman's Boots",
+      value: 800,
+      fibLevel: 1,
+      statWeights: {SkillId.FISHING: 1},
+      iconAsset: "assets/icons/items/fishermans_boots.png",
+    ),
+  ),
+  FISHERMANS_HAT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Fisherman's Hat",
+      value: 800,
+      fibLevel: 1,
+      statWeights: {SkillId.FISHING: 1},
+      iconAsset: "assets/icons/items/fishermans_hat.png",
+    ),
+  ),
+  FISHERMANS_TUNIC(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Fisherman's Tunic",
+      value: 800,
+      fibLevel: 1,
+      statWeights: {SkillId.FISHING: 1},
+      iconAsset: "assets/icons/items/fishermans_tunic.png",
+    ),
+  ),
+  FISHERMANS_PANTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Fisherman's Pants",
+      value: 800,
+      fibLevel: 1,
+      statWeights: {SkillId.FISHING: 1},
+      iconAsset: "assets/icons/items/fishermans_pants.png",
+    ),
+  ),
+  FISHERMANS_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Fisherman's Gloves",
+      value: 800,
+      fibLevel: 1,
+      statWeights: {SkillId.FISHING: 1},
+      iconAsset: "assets/icons/items/fishermans_gloves.png",
+    ),
+  ),
+  FISHERMANS_CLOAK(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Fisherman's Cloak",
+      value: 800,
+      fibLevel: 1,
+      statWeights: {SkillId.FISHING: 1},
+      iconAsset: "assets/icons/items/fishermans_cloak.png",
     ),
   ),
 

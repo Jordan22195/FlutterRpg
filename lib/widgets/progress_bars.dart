@@ -157,12 +157,27 @@ class ProgressBars extends StatelessWidget {
                   animation: timing,
                   builder: (_, _) => _BarRow(
                     key: const ValueKey('status-stamina'),
-                    bar: FillBar(
-                      value: playerController.getStaminaPercent(),
-                      height: staminaHeight,
-                      borderRadius: staminaHeight / 2,
-                      backgroundColor: barTrack,
-                      foregroundColor: colors.stamina,
+                    // with a boost spending it, how long what is left lasts
+                    // at that boost: the chip takes the bar's left end, so
+                    // the bar gives way from that side and the count to its
+                    // right stays put
+                    bar: Row(
+                      children: [
+                        StaminaTimeChip(
+                          left: timing.staminaTimeLeft,
+                          compact: inCombat,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: FillBar(
+                            value: playerController.getStaminaPercent(),
+                            height: staminaHeight,
+                            borderRadius: staminaHeight / 2,
+                            backgroundColor: barTrack,
+                            foregroundColor: colors.stamina,
+                          ),
+                        ),
+                      ],
                     ),
                     label: StatValueLabel(
                       value: playerController.getStamina(),
@@ -194,6 +209,77 @@ class ProgressBars extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// How long stamina lasts at the boost being held: an hourglass and the
+/// time, in the stamina colour, at the left end of the stamina bar. Always
+/// there; with nothing spending stamina it reads ∞, muted.
+class StaminaTimeChip extends StatelessWidget {
+  const StaminaTimeChip({super.key, required this.left, this.compact = false});
+
+  /// Null while nothing is spending stamina: the chip stays, reading ∞.
+  final Duration? left;
+
+  /// The slimmer chip a fight's three-row status bar has room for.
+  final bool compact;
+
+  /// Fixed, so the bar beside it holds still as the digits run down.
+  static const double width = 50;
+
+  /// Fixed too, so the row it sits in never grows to fit it: the 48pt status
+  /// row holds three rows in a fight.
+  static const double height = 16;
+  static const double compactHeight = 12;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final color = context.gameColors.stamina;
+    final draining = left != null;
+    return Container(
+      key: const ValueKey('stamina-time-chip'),
+      width: width,
+      height: compact ? compactHeight : height,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: palette.surface.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.hourglass_bottom,
+              size: 11,
+              color: draining ? color : palette.textMuted,
+            ),
+            const SizedBox(width: 2),
+            Text(
+              draining ? _format(left!) : '∞',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: draining ? palette.text : palette.textMuted,
+                // even-width digits, so the time doesn't jitter as it counts
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// m:ss under an hour, so the seconds can be watched running down;
+  /// hours and minutes past it.
+  static String _format(Duration d) {
+    if (d.inHours > 0) return '${d.inHours}h ${d.inMinutes % 60}m';
+    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '${d.inMinutes}:$seconds';
   }
 }
 

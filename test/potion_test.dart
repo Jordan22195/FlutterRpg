@@ -21,7 +21,7 @@ import 'package:rpg/widgets/inventory_grid.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'support/gathering_tools.dart';
 
-// The minor potion tier, end to end: what the six potions are, how they are
+// The minor potion tier, end to end: what the seven potions are, how they are
 // brewed, and what drinking one does. The distinction that drives most of
 // this is global-vs-zone — a potion buffs the player and travels with them,
 // where a fire buffs the zone and stays behind.
@@ -40,9 +40,10 @@ void main() {
     );
   }
 
-  // the six, paired with the stat each is supposed to move
+  // the seven, paired with the stat each is supposed to move
   const potionStats = <ItemId, SkillId>{
     ItemId.MINOR_SPEED_POTION: SkillId.SPEED,
+    ItemId.MINOR_FISHING_POTION: SkillId.FISHING,
     ItemId.MINOR_DEFENCE_POTION: SkillId.DEFENCE,
     ItemId.MINOR_STAMINA_POTION: SkillId.STAMINA,
     ItemId.MINOR_RECOVERY_POTION: SkillId.RECOVERY,
@@ -52,7 +53,7 @@ void main() {
 
   // The minor tier's shape, read off the catalog rather than written down:
   // the tier has been retuned once already (+1 for a minute became +5 for
-  // three), and these tests are meant to pin that the six agree with each
+  // three), and these tests are meant to pin that the seven agree with each
   // other and that drinking one works — not to freeze the numbers.
   final minorPotion =
       ItemId.MINOR_SPEED_POTION.definition as BuffItemDefinition;
@@ -143,10 +144,11 @@ void main() {
   });
 
   group('the alchemy recipes', () {
-    test('six recipes, two per level tier, xp climbing with level', () {
+    test('seven recipes by level tier, xp climbing with level', () {
       final recipes = RecipeCatalog().recipesForSkill(SkillId.ALCHEMY);
-      expect(recipes.length, 6);
+      expect(recipes.length, 7);
       expect(recipes.map((r) => r.levelRequirement).toList()..sort(), [
+        1,
         1,
         1,
         5,
@@ -166,6 +168,31 @@ void main() {
           );
         }
       }
+    });
+
+    test('the fishing potion is guam and a minnow', () {
+      final recipe = RecipeCatalog()
+          .recipesForSkill(SkillId.ALCHEMY)
+          .singleWhere(
+            (r) => r.output.single.id == ItemId.MINOR_FISHING_POTION,
+          );
+      expect(recipe.inputs, {ItemId.GUAM_LEAF: 1, ItemId.MINNOW: 1});
+      expect(recipe.levelRequirement, 1);
+    });
+
+    test('drinking the fishing potion lifts fishing by its bonus', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      int fishing() => session.playerDataService.getStatTotals(
+        save.playerData,
+      )[SkillId.FISHING]!;
+      final before = fishing();
+
+      save.inventoryData.itemMap[ItemId.MINOR_FISHING_POTION] = 1;
+      session.inventoryController.drinkPotion(ItemId.MINOR_FISHING_POTION);
+
+      expect(fishing(), before + minorBonus);
+      session.dispose();
     });
 
     test('every alchemy recipe is one guam leaf plus one reagent', () {

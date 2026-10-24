@@ -33,6 +33,7 @@ import '../widgets/item_stack_tile.dart';
 import '../widgets/fading_number.dart';
 import '../widgets/skill_ring_row.dart';
 import '../data/ObjectStack.dart';
+import '../data/item_drop_type.dart';
 
 /// Snapshot of everything the shared combat layout renders for one frame.
 /// World encounters and dungeon runs each build one from their own
@@ -52,6 +53,15 @@ class CombatViewState {
   final int actionSequence;
   final int entityDamage;
   final int entityAttackSequence;
+
+  /// What the player's last fishing cast landed: the times it rolled the
+  /// catch table, and whether its damage was the top of its range.
+  final int playerCatches;
+  final bool playerMaxHit;
+
+  /// The fish the last cast brought up, for the catch chip's icon. Null on
+  /// a miss.
+  final ItemId? playerCatchItem;
 
   /// Whether per-action damage numbers belong on this screen right now.
   final bool showActionFeedback;
@@ -99,6 +109,9 @@ class CombatViewState {
     required this.actionSequence,
     required this.entityDamage,
     required this.entityAttackSequence,
+    this.playerCatches = 0,
+    this.playerMaxHit = false,
+    this.playerCatchItem,
     required this.showActionFeedback,
     required this.drops,
     this.equipmentDrops = const [],
@@ -159,6 +172,11 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// Gap between a row's hp bar and the action timer beneath it.
   static const double _timerGap = 6;
 
+  /// How long a cast's catch chip stays up at full strength before it
+  /// fades: long enough to read the fish and the count, where a damage
+  /// number is a single figure taken in at a glance.
+  static const Duration catchChipHold = Duration(milliseconds: 800);
+
   /// Gap between the two participant rows.
   static const double _rowGap = 10;
 
@@ -189,6 +207,68 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         shadows: [Shadow(blurRadius: 4, color: context.palette.titleShadow)],
       ),
     );
+  }
+
+  /// A fishing cast's catches, flashed where the damage number sits on the
+  /// other screens: the fish's icon and how many it rolled, muted for a
+  /// miss, in [GameColors.maxHit] for a max-hit cast. A miss brought nothing
+  /// up, so it shows the spot's first fish.
+  Widget buildCatchChip(
+    BuildContext context,
+    EncounterEntity entity,
+    ItemId? fish,
+    int catches,
+    bool maxHit,
+    int sequence,
+  ) {
+    final palette = context.palette;
+    final colors = context.gameColors;
+    final color = catches <= 0
+        ? palette.textMuted
+        : maxHit
+        ? colors.maxHit
+        : palette.text;
+    return FadingNumber(
+      key: const ValueKey('catch-chip'),
+      number: catches,
+      trigger: sequence,
+      autoplay: false,
+      hold: catchChipHold,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration: BoxDecoration(
+          color: palette.track,
+          borderRadius: BorderRadius.circular(_hpBarHeight / 2),
+          border: Border.all(
+            color: maxHit && catches > 0 ? colors.maxHit : palette.track,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconRenderer(id: fish ?? _firstFish(entity), size: _statIconSize),
+            const SizedBox(width: 3),
+            Text(
+              '$catches',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: color,
+                shadows: [Shadow(blurRadius: 4, color: palette.titleShadow)],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static ItemId? _firstFish(EncounterEntity entity) {
+    final def = entity.id.definition;
+    if (def is! EncounterEntityDefinition) return null;
+    final drops = def.itemDrops.flattened;
+    return drops.isEmpty ? null : drops.first.id;
   }
 
   /// Who a row belongs to, in the fixed-width slot every row starts with so
@@ -334,6 +414,21 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                     timer,
                   ],
                 ],
+              ),
+            )
+          else if (damageSlot != null)
+            // no bar to ride over, so the slot keeps the bar's band and the
+            // same right-hand spot the damage number takes over a bar
+            Expanded(
+              child: SizedBox(
+                height: _hpBarHeight,
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: IgnorePointer(child: damageSlot),
+                  ),
+                ),
               ),
             )
           else
@@ -622,13 +717,24 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                   view.requiredLevel,
                   // damage the player dealt this action, mirroring the
                   // entity's damage on the player's row below
-                  damageSlot: view.showActionFeedback
-                      ? buildDamageNumber(
+                  // a fishing spot has no bar, so its cast reports what it
+                  // caught instead
+                  damageSlot: !view.showActionFeedback
+                      ? null
+                      : skillType == SkillId.FISHING
+                      ? buildCatchChip(
+                          context,
+                          entity,
+                          view.playerCatchItem,
+                          view.playerCatches,
+                          view.playerMaxHit,
+                          view.actionSequence,
+                        )
+                      : buildDamageNumber(
                           context,
                           view.playerDamage,
                           view.actionSequence,
-                        )
-                      : null,
+                        ),
                   actionProgress: view.entityActionProgress,
                 ),
                 // combat needs the player's own hp and stats in view;
@@ -734,6 +840,12 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
       playerHp: controller.getPlayerHp(),
       playerStats: controller.getPlayerStats(),
       playerDamage: controller.latestActionResult.damageDone,
+      playerCatches: controller.latestActionResult.catches,
+      playerMaxHit: controller.latestActionResult.maxHit,
+      playerCatchItem: controller.latestActionResult.items
+          .map((stack) => stack.id)
+          .whereType<ItemId>()
+          .firstOrNull,
       actionSequence: controller.actionSequence,
       entityDamage: controller.latestEntityDamage,
       entityAttackSequence: controller.entityAttackSequence,

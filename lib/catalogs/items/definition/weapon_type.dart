@@ -44,11 +44,12 @@ enum WeaponTypeId {
     ),
   ),
 
-  // gathering tools. An axe and a pickaxe swing at a node the way a weapon
-  // swings at a monster, so they carry damage (a share of a weapon's — see
-  // toolDamageScale) and the skill they are for is the multiplier. A sickle
-  // and a rod do not hit anything: they still pour their rung into the
-  // skill, which is what the herb and fishing rolls read.
+  // gathering tools. An axe, a pickaxe and a rod swing at a node the way a
+  // weapon swings at a monster, so they carry damage (a share of a weapon's
+  // — see toolDamageScale) and the skill they are for is the multiplier: a
+  // rod's cast deals damage to the pool, and every pool's worth is a catch.
+  // A sickle does not hit anything: it still pours its rung into the skill,
+  // which is what the herb roll reads.
   AXE(
     WeaponEquipmentParameters(
       slot: ArmorSlots.TOOL,
@@ -83,8 +84,7 @@ enum WeaponTypeId {
       fibOffset: 0,
       actionInterval: MediumAttackSpeed,
       skillRequirement: SkillId.FISHING,
-      statWeight: {SkillId.FISHING: 1},
-      usesDamage: false,
+      damageScale: toolDamageScale,
     ),
   ),
 

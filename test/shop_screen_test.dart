@@ -2,6 +2,7 @@ import 'package:rpg/catalogs/catalog_icons.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:provider/provider.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
@@ -63,6 +64,17 @@ void main() {
     // header + for-sale section render
     expect(find.text('Trading Post'), findsOneWidget);
     expect(find.text('For Sale'), findsOneWidget);
+
+    // the balance reads beside the coin, not as a badge on it
+    expect(
+      tester.widget<Text>(find.byKey(const ValueKey('shop-coin-balance'))).data,
+      '10000',
+    );
+    final coinTile = tester.widget<ItemStackTile>(
+      find.byWidgetPredicate((w) => w is ItemStackTile && w.id == ItemId.COINS),
+    );
+    expect(coinTile.count, 1);
+    expect(coinTile.alwaysShowCount, isFalse);
 
     // restock filled the shelf with 10 items (the lazy ListView only
     // builds the visible subset, so assert stock via the controller)

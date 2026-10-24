@@ -25,6 +25,17 @@ import 'package:rpg/data/equipment_data.dart';
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
 const knownMissingArt = <String>{
+  // the minor fishing potion, added before its art
+  'assets/icons/items/minor_fishing_potion.png',
+
+  // the Fisherman's set, added before its art
+  'assets/icons/items/fishermans_boots.png',
+  'assets/icons/items/fishermans_hat.png',
+  'assets/icons/items/fishermans_tunic.png',
+  'assets/icons/items/fishermans_pants.png',
+  'assets/icons/items/fishermans_gloves.png',
+  'assets/icons/items/fishermans_cloak.png',
+
   // the creek, added as Southwood Forest's fishing spot before its art
   'assets/images/entities/creek.png',
 

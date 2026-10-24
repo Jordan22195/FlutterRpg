@@ -299,6 +299,31 @@ class ActionTimingController extends ChangeNotifier {
     return _actionTimingService.getCurrentSpeedMultiplier(_actionTimingState);
   }
 
+  /// How long stamina lasts at the boost as it stands right now, or null
+  /// while nothing is spending it - the bar sits at 1x, or nothing holds it
+  /// up, so recovery is running instead.
+  ///
+  /// A speed boost burns by the second; a strength one by the action, so
+  /// it is spread over the action's current length - and only spent while
+  /// actions are firing.
+  Duration? get staminaTimeLeft {
+    final state = _actionTimingState;
+    if (!state.buttonHeld && !state.boostLocked) return null;
+    final speed = state.boostingSpeed;
+    if (!speed && !state.running) return null;
+    final drain = _actionTimingService.boostDrain(
+      getCurrentSpeedMultiplier(),
+      speedStance: speed,
+    );
+    if (drain <= 0) return null;
+    final seconds = getCurrentActionDuration().inMicroseconds / 1e6;
+    final perSecond = speed ? drain : (seconds <= 0 ? 0.0 : drain / seconds);
+    if (perSecond <= 0) return null;
+    return Duration(
+      milliseconds: (_playerState.stamina / perSecond * 1000).round(),
+    );
+  }
+
   /// Total rate multiplier: the cut the speed stat already makes to the
   /// interval, times the momentum boost on top. Standing still this is the
   /// stat's own cut rather than a flat 1.00x - see

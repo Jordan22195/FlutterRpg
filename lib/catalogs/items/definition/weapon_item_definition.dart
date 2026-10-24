@@ -41,8 +41,8 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
   @override
   int get fibOffset => super.fibOffset + weaponType.parameters.fibOffset;
 
-  /// Whether a swing of this weapon deals [damageAt]. Off for the sickle and
-  /// the rod, which roll a skill rather than hit a pool.
+  /// Whether a swing of this weapon deals [damageAt]. Off for the sickle,
+  /// which rolls a skill rather than hit a pool.
   bool get usesDamage => weaponType.parameters.usesDamage;
 
   /// The rung this weapon is made from: its own rung less what its shape

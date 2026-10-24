@@ -6,8 +6,9 @@ import 'package:rpg/services/weighted_drop_table_service.dart';
 /// Alchemy. A herb and a reagent into a potion: the herb sets the tier,
 /// the reagent picks the stat.
 const List<CraftingRecipe> alchemyRecipes = [
-  // The minor tier, all off guam leaf. Level 1 is the pair whose reagents
-  // already drop (feathers off chickens, iron off a vein), so alchemy is
+  // The minor tier, all off guam leaf. Level 1 is the three whose reagents
+  // already drop (feathers off chickens, minnows off the pond, iron off a
+  // vein), so alchemy is
   // trainable from a fresh save; the tiers above wait on reagents that
   // have no source yet.
   CraftingRecipe(
@@ -20,6 +21,21 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(
         id: ItemId.MINOR_SPEED_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_minor_fishing_potion',
+    name: 'Minor Fishing Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 1,
+    xp: 15,
+    inputs: {ItemId.GUAM_LEAF: 1, ItemId.MINNOW: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.MINOR_FISHING_POTION,
         count: 1,
         weight: 1,
       ),

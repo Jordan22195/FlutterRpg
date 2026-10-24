@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rpg/controllers/potion_controller.dart';
 import 'package:provider/provider.dart';
 
 import 'package:rpg/catalogs/catalog_icons.dart';
@@ -171,6 +172,10 @@ void main() {
             ChangeNotifierProvider<ActionTimingController>.value(
               value: session.actionTimingController,
             ),
+            // and this one, with the two above, so they track a potion
+            ChangeNotifierProvider<PotionController>.value(
+              value: session.potionController,
+            ),
           ],
           child: MaterialApp(
             home: Scaffold(
@@ -282,6 +287,219 @@ void main() {
       expect(find.text('Miss chance'), findsNothing);
       expect(find.text('Avg damage'), findsNothing);
       expect(find.text('Damage per second'), findsNothing);
+      // the debug readout is fishing's alone
+      expect(find.text('DEBUG'), findsNothing);
+    });
+
+    testWidgets('a fishing spot reads in catches, not damage', (tester) async {
+      // well past the pond, so a cast can run a pool over
+      setLevel(SkillId.FISHING, 60);
+      await pumpInfo(tester, EntityId.TRANQUIL_POND);
+
+      final details = detailsFor(EntityId.TRANQUIL_POND);
+      expect(details.playerMaxCatch, greaterThan(1));
+      expect(
+        details.playerMaxCatch,
+        EncounterService().catchesFor(
+          details.playerMaxHit,
+          details.entity.maxHitPoints,
+        ),
+      );
+
+      final catchChance = find.text('Catch chance');
+      final maxCatch = find.text('Max catch');
+      expect(catchChance, findsOneWidget);
+      expect(maxCatch, findsOneWidget);
+      expect(
+        tester.getCenter(maxCatch).dy,
+        greaterThan(tester.getCenter(catchChance).dy),
+      );
+      expect(find.text(formatPercent(details.playerHitChance)), findsWidgets);
+      expect(find.text('${details.playerMaxCatch}'), findsWidgets);
+
+      for (final gone in ['Success chance', 'Fail chance', 'Avg damage']) {
+        expect(find.text(gone), findsNothing, reason: gone);
+      }
+
+      // the debug section under the casts: the pool's hp and the cast's max
+      // damage, which max catch is worked out from
+      expect(find.text('DEBUG'), findsOneWidget);
+      final poolHp = find.text('Pool hp');
+      final maxHit = find.text('Max hit');
+      expect(poolHp, findsOneWidget);
+      expect(maxHit, findsOneWidget);
+      expect(
+        tester.getCenter(poolHp).dy,
+        greaterThan(tester.getCenter(maxCatch).dy),
+      );
+      expect(
+        tester.getCenter(maxHit).dy,
+        greaterThan(tester.getCenter(poolHp).dy),
+      );
+      expect(find.text('${details.entity.maxHitPoints}'), findsWidgets);
+      expect(find.text('${details.playerMaxHit}'), findsWidgets);
+
+      // the average a cast lands, misses and all, to two places - checked
+      // against the engine's own mean rather than worked out again here
+      final service = EncounterService();
+      final average =
+          details.playerHitChance *
+          service.meanCatchesPerHit(
+            details.playerMaxHit,
+            details.entity.maxHitPoints,
+          );
+      expect(details.playerAverageCatches, closeTo(average, 1e-9));
+      final avgRow = find.text('Avg catches / cast');
+      expect(avgRow, findsOneWidget);
+      expect(
+        tester.getCenter(avgRow).dy,
+        greaterThan(tester.getCenter(maxHit).dy),
+      );
+      expect(find.text(average.toStringAsFixed(2)), findsWidgets);
+
+      // and an hour of it, at the cast rate the dialog divides by
+      expect(
+        details.playerCatchesPerHour,
+        closeTo(average * 3600 / details.playerActionInterval, 1e-9),
+      );
+      final perHour = find.text('Catches / hour');
+      expect(perHour, findsOneWidget);
+      expect(
+        tester.getCenter(perHour).dy,
+        greaterThan(tester.getCenter(avgRow).dy),
+      );
+      expect(
+        find.text(details.playerCatchesPerHour.toStringAsFixed(0)),
+        findsWidgets,
+      );
+
+      // and the xp those catches pay: the weighted fish the earned level
+      // reaches, each catch worth one of them
+      final pond =
+          EntityId.TRANQUIL_POND.definition as EncounterEntityDefinition;
+      final table = pond.dropTableAt(60);
+      var weight = 0.0;
+      var xp = 0.0;
+      for (final entry in table) {
+        weight += entry.weight;
+        xp += entry.weight * entry.id.id.definition.xpValue * entry.count;
+      }
+      expect(details.xpPerCatch, closeTo(xp / weight, 1e-9));
+      expect(
+        details.playerXpPerHour,
+        closeTo(details.playerCatchesPerHour * xp / weight, 1e-6),
+      );
+      final xpRow = find.text('Xp / hour');
+      expect(xpRow, findsOneWidget);
+      expect(
+        tester.getCenter(xpRow).dy,
+        greaterThan(tester.getCenter(perHour).dy),
+      );
+      expect(
+        find.text(details.playerXpPerHour.toStringAsFixed(0)),
+        findsWidgets,
+      );
+    });
+
+    testWidgets('drinking a potion refreshes the numbers at once', (
+      tester,
+    ) async {
+      setLevel(SkillId.FISHING, 60);
+      await pumpInfo(tester, EntityId.TRANQUIL_POND);
+
+      // the value on the Max hit row: a text at the label's height
+      String? maxHitValue() {
+        final y = tester.getCenter(find.text('Max hit')).dy;
+        for (final e in find.byType(Text).evaluate()) {
+          final text = e.widget as Text;
+          if (text.data == null || text.data == 'Max hit') continue;
+          final box = e.renderObject! as RenderBox;
+          final mid = box.localToGlobal(box.size.center(Offset.zero)).dy;
+          if ((mid - y).abs() < 4) return text.data;
+        }
+        return null;
+      }
+
+      final before = detailsFor(EntityId.TRANQUIL_POND).playerMaxHit;
+      expect(maxHitValue(), '$before');
+
+      // drunk from the item dialog, with no action running to tick
+      expect(session.actionTimingController.isRunning, isFalse);
+      session.saveGameData.inventoryData.itemMap[ItemId.MINOR_FISHING_POTION] =
+          1;
+      expect(
+        session.inventoryController.drinkPotion(ItemId.MINOR_FISHING_POTION),
+        isTrue,
+      );
+      // one frame, well short of the buff tick's second
+      await tester.pump();
+
+      final after = detailsFor(EntityId.TRANQUIL_POND).playerMaxHit;
+      expect(after, greaterThan(before));
+      expect(maxHitValue(), '$after');
+    });
+
+    testWidgets('a fish past your level shows locked in the drop table', (
+      tester,
+    ) async {
+      // carp opens at 5. a potion lifts the total past it, but the fish
+      // open on the level earned, so it stays shut
+      setLevel(SkillId.FISHING, 1);
+      session.saveGameData.inventoryData.itemMap[ItemId.MINOR_FISHING_POTION] =
+          1;
+      session.inventoryController.drinkPotion(ItemId.MINOR_FISHING_POTION);
+      await pumpInfo(tester, EntityId.TRANQUIL_POND);
+
+      final drops = detailsFor(EntityId.TRANQUIL_POND).drops;
+      final minnow = drops.singleWhere((d) => d.itemId == ItemId.MINNOW);
+      final carp = drops.singleWhere((d) => d.itemId == ItemId.CARP);
+      // the odds are the ones a cast has now: the minnow is the whole table
+      expect(minnow.locked, isFalse);
+      expect(minnow.chance, 1.0);
+      expect(carp.locked, isTrue);
+      expect(carp.lockedUntil, 5);
+      expect(carp.chance, 0);
+
+      final carpRow = find.byKey(const ValueKey('drop-CARP-COMMON-locked'));
+      await tester.ensureVisible(carpRow);
+      expect(carpRow, findsOneWidget);
+      expect(
+        find.descendant(of: carpRow, matching: find.text('Lv 5')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: carpRow, matching: find.byIcon(Icons.lock)),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<Opacity>(
+              find
+                  .descendant(of: carpRow, matching: find.byType(Opacity))
+                  .first,
+            )
+            .opacity,
+        lessThan(1),
+      );
+      expect(find.byKey(const ValueKey('drop-MINNOW-COMMON')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('drop-MINNOW-COMMON-locked')),
+        findsNothing,
+      );
+
+      // at 5 it opens, with real odds
+      setLevel(SkillId.FISHING, 5);
+      await pumpInfo(tester, EntityId.TRANQUIL_POND);
+      final opened = detailsFor(
+        EntityId.TRANQUIL_POND,
+      ).drops.singleWhere((d) => d.itemId == ItemId.CARP);
+      expect(opened.locked, isFalse);
+      expect(opened.chance, closeTo(0.5 / 1.5, 1e-9));
+      expect(
+        find.byKey(const ValueKey('drop-CARP-COMMON-locked')),
+        findsNothing,
+      );
+      expect(find.byKey(const ValueKey('drop-CARP-COMMON')), findsOneWidget);
     });
 
     testWidgets('leaves the entity stat block to the encounter screen', (

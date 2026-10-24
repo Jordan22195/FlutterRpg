@@ -4,6 +4,9 @@ import 'package:rpg/widgets/stat_chip.dart';
 import '../catalogs/entities/entities.dart';
 import '../catalogs/items/items.dart';
 import '../controllers/action_timing_controller.dart';
+import '../controllers/buff_controller.dart';
+import '../controllers/inventory_controller.dart';
+import '../controllers/potion_controller.dart';
 import '../controllers/world_controller.dart';
 import '../data/entity_details.dart';
 import '../data/skill_data.dart';
@@ -95,6 +98,12 @@ class _EntityInfoBodyState extends State<EntityInfoBody> {
     // each tick, so watching it is what keeps the readouts honest while the
     // button is held rather than freezing them at the rate you started at.
     context.watch<ActionTimingController>();
+    // a potion moves them too, and the timer doesn't tick while idle: the
+    // bag notifies on a drink from the item dialog, the potion card on one
+    // drunk by arming it, and the buff tick on auto-drink and on expiry
+    context.watch<InventoryController>();
+    context.watch<PotionController>();
+    context.watch<BuffController>();
     final worldController = context.read<WorldController>();
     final details = worldController.entityDetails(widget.entity);
 
@@ -104,6 +113,8 @@ class _EntityInfoBodyState extends State<EntityInfoBody> {
       children: [
         _Header(details: details, showImage: widget.showImage),
         _RollTable(details: details),
+        // dev readout: the numbers a cast's catches are worked out from
+        if (details.skill == SkillId.FISHING) _FishingDebug(details: details),
         _DropTable(details: details),
 
         // dev tool: force how many of this entity are left in the zone
@@ -230,6 +241,15 @@ class _RollTable extends StatelessWidget {
       ];
     }
 
+    // a cast either lands or it doesn't, and what it lands is counted in
+    // fish rather than damage: overkill rolls the whole table again
+    if (details.skill == SkillId.FISHING) {
+      return [
+        row('Catch chance', formatPercent(details.playerHitChance)),
+        row('Max catch', '${details.playerMaxCatch}'),
+      ];
+    }
+
     final actionsToKill = details.actionsToKill;
     // to two places: a kill that takes 3.40 actions and one that takes 3.95
     // land on the same whole number, and it is the fraction that moves as
@@ -291,6 +311,44 @@ class _RollTable extends StatelessWidget {
   }
 }
 
+/// What a fishing cast's catches come from: the pool's hitpoints, and the
+/// most damage a cast can deal to it. Max catch is the one over the other,
+/// rounded up; the average is what a cast lands over many, misses and all.
+class _FishingDebug extends StatelessWidget {
+  const _FishingDebug({required this.details});
+
+  final EntityDetails details;
+
+  @override
+  Widget build(BuildContext context) {
+    return InfoSection(
+      title: 'Debug',
+      children: [
+        InfoTable(
+          headers: const [''],
+          rows: [
+            InfoTableRow('Pool hp', ['${details.entity.maxHitPoints}']),
+            InfoTableRow('Max hit', ['${details.playerMaxHit}']),
+            // to two places: at a low max hit the overkill share is a few
+            // hundredths, and it is the fraction that moves as levels do
+            InfoTableRow('Avg catches / cast', [
+              details.playerAverageCatches.toStringAsFixed(2),
+            ]),
+            // at the cast rate as it stands, boost and stance included
+            InfoTableRow('Catches / hour', [
+              details.playerCatchesPerHour.toStringAsFixed(0),
+            ]),
+            // those catches at what the fish this level reaches are worth
+            InfoTableRow('Xp / hour', [
+              details.playerXpPerHour.toStringAsFixed(0),
+            ]),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _DropTable extends StatelessWidget {
   const _DropTable({required this.details});
 
@@ -311,60 +369,89 @@ class _DropTable extends StatelessWidget {
       children: [
         for (final drop in details.drops)
           Padding(
+            // the quality is in it because a table can list one item at
+            // several, and a key has to be unique among its rows
+            key: ValueKey(
+              'drop-${drop.itemId.name}-${drop.rarity.name}'
+              '${drop.locked ? '-locked' : ''}',
+            ),
             padding: const EdgeInsets.symmetric(vertical: 3),
-            child: Row(
-              children: [
-                // the standard tile, so a drop is framed by the quality
-                // it rolls and opens the same item dialog the bag does -
-                // the table is where you go to find out what a monster is
-                // worth killing for, which is exactly when you want to read
-                // the item. No count on the badge: a drop is a range, and
-                // the column to the right is the one that can say so
-                ItemStackTile<ItemId>(
-                  size: 36,
-                  id: drop.itemId,
-                  count: 0,
-                  quality: drop.rarity,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // the quality prefix, the way EquipmentItem.displayName
-                      // writes it: a table can list the same item at two
-                      // qualities, which reads as a duplicate row without it
-                      Text(
-                        drop.rarity.label.isEmpty
-                            ? drop.name
-                            : '${drop.rarity.label} ${drop.name}',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      // a layered roll lands on top of the main drop, so
-                      // its odds are independent of the rows above
-                      if (drop.bonus) Text('bonus roll', style: subtleStyle),
-                    ],
+            child: Opacity(
+              // a fish past the player's level: in the table, but dimmed, with
+              // the level it opens at where its odds would be
+              opacity: drop.locked ? 0.5 : 1,
+              child: Row(
+                children: [
+                  // the standard tile, so a drop is framed by the quality
+                  // it rolls and opens the same item dialog the bag does -
+                  // the table is where you go to find out what a monster is
+                  // worth killing for, which is exactly when you want to read
+                  // the item. No count on the badge: a drop is a range, and
+                  // the column to the right is the one that can say so
+                  ItemStackTile<ItemId>(
+                    size: 36,
+                    id: drop.itemId,
+                    count: 0,
+                    quality: drop.rarity,
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  drop.hasCountRange
-                      ? '${drop.minCount}-${drop.maxCount}'
-                      : '${drop.minCount}',
-                  style: subtleStyle,
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 56,
-                  child: Text(
-                    formatPercent(drop.chance),
-                    textAlign: TextAlign.end,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // the quality prefix, the way EquipmentItem.displayName
+                        // writes it: a table can list the same item at two
+                        // qualities, which reads as a duplicate row without it
+                        Text(
+                          drop.rarity.label.isEmpty
+                              ? drop.name
+                              : '${drop.rarity.label} ${drop.name}',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        // a layered roll lands on top of the main drop, so
+                        // its odds are independent of the rows above
+                        if (drop.bonus) Text('bonus roll', style: subtleStyle),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Text(
+                    drop.hasCountRange
+                        ? '${drop.minCount}-${drop.maxCount}'
+                        : '${drop.minCount}',
+                    style: subtleStyle,
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 56,
+                    // scaled to the odds column: "Lv 35" and a lock run
+                    // wider than a percentage does
+                    child: drop.locked
+                        ? FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.lock, size: 12),
+                                const SizedBox(width: 2),
+                                Text(
+                                  'Lv ${drop.lockedUntil}',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Text(
+                            formatPercent(drop.chance),
+                            textAlign: TextAlign.end,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
       ],

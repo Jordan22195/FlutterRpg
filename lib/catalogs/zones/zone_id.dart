@@ -162,7 +162,11 @@ enum ZoneId {
       // The Spider Den moved here from Southwood: the den's own cards run to
       // the Broodmother at level 55, which never sat comfortably behind a
       // level-5 zone's front door.
-      permanentEntities: [EntityId.FIREPIT, EntityId.SPIDER_DEN_ENTRANCE],
+      permanentEntities: [
+        EntityId.FIREPIT,
+        EntityId.SPIDER_DEN_ENTRANCE,
+        EntityId.RIVER,
+      ],
       discoverableEntities: [
         // tier 3 gathering: willow for woodcutting, coal for mining. The
         // gold vein is the mine's, not the darkwood's.

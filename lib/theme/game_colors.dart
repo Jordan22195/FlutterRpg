@@ -45,6 +45,7 @@ class GameColors extends ThemeExtension<GameColors> {
     required this.upgrade,
     required this.boostPartial,
     required this.boostFull,
+    required this.maxHit,
     required this.heal,
     required this.secondaryBar,
     required this.timerFill,
@@ -88,6 +89,9 @@ class GameColors extends ThemeExtension<GameColors> {
   /// way up ([boostPartial]) or held full ([boostFull]).
   final Color boostPartial;
   final Color boostFull;
+
+  /// A roll that came up the top of its range: a max-hit catch.
+  final Color maxHit;
 
   /// How much a food heals, on its tile.
   final Color heal;
@@ -137,6 +141,7 @@ class GameColors extends ThemeExtension<GameColors> {
     upgrade: Color(0xFF6CC86F),
     boostPartial: Color(0xFFF2B866),
     boostFull: Color(0xFFFF7A45),
+    maxHit: Color(0xFFFFD54F),
     heal: Color(0xFF7EE0A6),
     secondaryBar: Color(0xFFCDBF9F),
     timerFill: Color(0xFF8F836E),
@@ -171,6 +176,7 @@ class GameColors extends ThemeExtension<GameColors> {
     Color? upgrade,
     Color? boostPartial,
     Color? boostFull,
+    Color? maxHit,
     Color? heal,
     Color? secondaryBar,
     Color? timerFill,
@@ -200,6 +206,7 @@ class GameColors extends ThemeExtension<GameColors> {
       upgrade: upgrade ?? this.upgrade,
       boostPartial: boostPartial ?? this.boostPartial,
       boostFull: boostFull ?? this.boostFull,
+      maxHit: maxHit ?? this.maxHit,
       heal: heal ?? this.heal,
       secondaryBar: secondaryBar ?? this.secondaryBar,
       timerFill: timerFill ?? this.timerFill,
@@ -235,6 +242,7 @@ class GameColors extends ThemeExtension<GameColors> {
       upgrade: l(upgrade, other.upgrade),
       boostPartial: l(boostPartial, other.boostPartial),
       boostFull: l(boostFull, other.boostFull),
+      maxHit: l(maxHit, other.maxHit),
       heal: l(heal, other.heal),
       secondaryBar: l(secondaryBar, other.secondaryBar),
       timerFill: l(timerFill, other.timerFill),

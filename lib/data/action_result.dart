@@ -27,6 +27,15 @@ class EncounterActionResult {
   /// one stands up already cut by.
   int overflowCarry = 0;
 
+  /// How many times a fishing cast rolled the catch table: one for landing,
+  /// one more for each pool's worth of overkill. Zero on a miss.
+  int catches = 0;
+
+  /// The swing rolled the top of its range. For a fishing cast that is the
+  /// most fish a cast can land, which a range of damage rolls reaches - and
+  /// only when that is more than one.
+  bool maxHit = false;
+
   /// How many actions this result accounts for. A batch settling time away
   /// reports what it actually did, which is not always the count it was
   /// handed: materials run out, a fire goes out, a node is stripped.

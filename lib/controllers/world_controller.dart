@@ -213,16 +213,15 @@ class WorldController extends ChangeNotifier {
     return _encounterSystem.requiredToolSkill(id);
   }
 
-  /// Whether the player's stats (with gear/buffs, matching the zone-gate
-  /// convention) meet [id]'s level requirement. True for ungated entities.
+  /// Whether the player meets [id]'s level requirement, read the way the
+  /// action reads it - see [EncounterSystem.unlockLevel]. True for ungated
+  /// entities.
   bool meetsEntityRequirement(EntityId id) {
     final def = id.definition;
     if (def is! EncounterEntityDefinition || def.requiredLevel <= 0) {
       return true;
     }
-    final level =
-        _playerDataService.getStatTotals(_playerState)[def.entityType] ?? 0;
-    return level >= def.requiredLevel;
+    return _encounterSystem.meetsLevelRequirement(_playerState, id);
   }
 
   // ---- the zone on screen ----

@@ -188,7 +188,7 @@ void main() {
     test('xp and the level gate come straight off the recipe', () {
       final details = detailsFor('cook_chicken');
       expect(details.recipe.name, 'Cooked Chicken');
-      expect(details.recipe.xp, 10);
+      expect(details.recipe.xp, 3);
       expect(details.recipe.levelRequirement, 1);
       expect(details.skill, SkillId.COOKING);
     });

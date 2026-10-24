@@ -4,6 +4,11 @@ import 'package:provider/provider.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
+import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/data/ObjectStack.dart';
+import 'package:rpg/data/action_result.dart';
+import 'package:rpg/widgets/icon_renderer.dart';
+import 'support/gathering_tools.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
@@ -319,5 +324,124 @@ void main() {
     final side = stageBorder(tester);
     expect(side.color, rarity);
     expect(side.width, 2);
+  });
+
+  testWidgets('a cast flashes its catches with the fish caught', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
+    );
+    await settle(tester);
+
+    const zoneId = ZoneId.TUTORIAL_FARM;
+    final session = Provider.of<GameSession>(
+      tester.element(find.byType(MapScreen)),
+      listen: false,
+    );
+    equipGatheringTools(session.saveGameData);
+    final pond =
+        session.saveGameData.worldData.zones[zoneId]!.permanentEntities
+                .firstWhere((e) => e.id == EntityId.TRANQUIL_POND)
+            as EncounterEntity;
+
+    await tester.tap(find.byKey(ValueKey('map-node-${zoneId.name}')));
+    await settle(tester);
+    await tester.tap(find.text('Enter'));
+    await settle(tester);
+    await tester.scrollUntilVisible(
+      find.text(pond.name),
+      100,
+      scrollable: find
+          .descendant(
+            of: find.byType(CustomScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.ensureVisible(find.text(pond.name));
+    await settle(tester);
+    await tester.tap(find.text(pond.name));
+    await settle(tester);
+    expect(find.byType(EncounterScreen), findsOneWidget);
+
+    final controller = session.encounterController;
+    expect(controller.startEncounterActionFor(pond), isTrue);
+
+    void land(int catches, {required bool maxHit}) {
+      controller.latestActionResult = EncounterActionResult()
+        ..damageDone = catches * 10
+        ..catches = catches
+        ..maxHit = maxHit
+        ..items.add(ObjectStack(id: ItemId.CARP, count: catches));
+      controller.actionSequence++;
+      controller.notifyListeners();
+    }
+
+    Finder chip() => find.byKey(const ValueKey('catch-chip'));
+    Text count() => tester.widget<Text>(
+      find.descendant(of: chip(), matching: find.byType(Text)),
+    );
+
+    land(2, maxHit: false);
+    await tester.pump();
+    expect(chip(), findsOneWidget);
+    expect(count().data, '2');
+    // the fish it caught, not the spot it came out of
+    // generic over its id's enum, so matched by predicate, not by type
+    final icon = tester.widget<IconRenderer>(
+      find.descendant(
+        of: chip(),
+        matching: find.byWidgetPredicate((w) => w is IconRenderer),
+      ),
+    );
+    expect(icon.id, ItemId.CARP);
+    expect(count().style!.color, isNot(GameColors.standard.maxHit));
+
+    land(3, maxHit: true);
+    await tester.pump();
+    expect(count().data, '3');
+    expect(count().style!.color, GameColors.standard.maxHit);
+
+    // it shows at full strength straight away, and only fades on the way
+    // out
+    double opacity() => tester
+        .widget<FadeTransition>(
+          find.descendant(of: chip(), matching: find.byType(FadeTransition)),
+        )
+        .opacity
+        .value;
+    const hold = CombatScreenState.catchChipHold;
+    const step = Duration(milliseconds: 100);
+    expect(opacity(), 1.0);
+    // still full strength just short of the hold — past where a damage
+    // number's whole fade would already be over
+    await tester.pump(hold - step);
+    expect(opacity(), 1.0);
+    // past the hold, then through the fade
+    await tester.pump(step * 2);
+    await tester.pump(step * 3);
+    expect(opacity(), inExclusiveRange(0.0, 1.0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(opacity(), 0.0);
+
+    // a cast that lands during the last one's hold shows at full strength
+    // for a hold of its own, not the remainder of the last one's
+    land(1, maxHit: false);
+    await tester.pump();
+    await tester.pump(hold - step * 2);
+    land(2, maxHit: false);
+    await tester.pump();
+    await tester.pump(hold - step * 2);
+    expect(count().data, '2');
+    expect(opacity(), 1.0);
+    await tester.pump(const Duration(seconds: 3));
+
+    session.actionTimingController.stop();
+    await tester.pump(const Duration(seconds: 1));
   });
 }
