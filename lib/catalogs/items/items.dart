@@ -11,6 +11,7 @@ export 'definition/equipment_material.dart';
 export 'definition/fire_item_definition.dart';
 export 'definition/food_item_definition.dart';
 export 'definition/item_definition.dart';
+export 'definition/skilling_gear_definition.dart';
 export 'definition/weapon_item_definition.dart';
 export 'definition/weapon_type.dart';
 export 'definition/zone_buff_item_definition.dart';

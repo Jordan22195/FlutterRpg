@@ -249,9 +249,9 @@ void main() {
       session.inventoryController.drinkPotion(ItemId.MINOR_FISHING_POTION);
       final armour = save.playerData.equipmentData;
       for (final id in [
-        ItemId.FISHERMANS_BOOTS,
-        ItemId.FISHERMANS_HAT,
-        ItemId.FISHERMANS_TUNIC,
+        ItemId.BASIC_FISHERS_BOOTS,
+        ItemId.BASIC_FISHERS_HAT,
+        ItemId.BASIC_FISHERS_TUNIC,
       ]) {
         final piece = id.build() as EquipmentItem;
         armour.armorEquipment[(id.definition as EquipmentItemDefinition)

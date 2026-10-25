@@ -122,9 +122,21 @@ class OfflineProgressService {
 
   /// Closes the buffer. A report that is empty, or covers too short a gap to
   /// be worth interrupting the player over, is dropped rather than shown.
+  ///
+  /// One that lands while the last is still waiting to be read - its dialog
+  /// up when the app went away again - is folded into that one instead of
+  /// replacing or queueing behind it. The dialog is what [consume]s, so
+  /// otherwise closing it would throw away a gap the player never saw, and
+  /// they would come back from hours away to a summary of the minute before.
   void finish(OfflineProgressData data) {
     data.processing = false;
     if (data.report.isEmpty) return;
+    final unread = data.pending;
+    if (unread != null) {
+      _merge(unread, data.report);
+      data.reportSequence++;
+      return;
+    }
     // dying is always worth saying, however brief the gap
     if (!data.report.died && data.report.timeAway < reportThreshold) return;
     data.pending = data.report;
@@ -134,6 +146,51 @@ class OfflineProgressService {
   /// Called once the ui has shown the report.
   void consume(OfflineProgressData data) {
     data.pending = null;
+  }
+
+  /// Adds [later] - the gap after [into]'s - onto [into]: one absence, as
+  /// long as the two together, that paid out everything both did.
+  void _merge(OfflineProgressReport into, OfflineProgressReport later) {
+    if (later.died) {
+      into.died = true;
+      into.killedBy = later.killedBy;
+      // its clock started where the first gap ended
+      if (later.diedAfter != null) {
+        into.diedAfter = into.timeAway + later.diedAfter!;
+      }
+    }
+    into.timeAway += later.timeAway;
+    into.actionCount += later.actionCount;
+    for (final entry in later.xp.entries) {
+      into.xp.update(
+        entry.key,
+        (total) => total + entry.value,
+        ifAbsent: () => entry.value,
+      );
+    }
+    _inventoryService.addItems(
+      into.items,
+      _inventoryService.getObjectStackList(later.items),
+    );
+    for (final piece in later.items.equipment) {
+      _inventoryService.addEquipment(
+        into.items,
+        piece.copy()..count = piece.count,
+      );
+    }
+    void addCounts<K>(Map<K, int> to, Map<K, int> from) {
+      for (final entry in from.entries) {
+        to.update(
+          entry.key,
+          (n) => n + entry.value,
+          ifAbsent: () => entry.value,
+        );
+      }
+    }
+
+    addCounts(into.entities, later.entities);
+    addCounts(into.entitiesDefeated, later.entitiesDefeated);
+    addCounts(into.potionsUsed, later.potionsUsed);
   }
 
   /// The actions one fire actually performed, which is not always the count

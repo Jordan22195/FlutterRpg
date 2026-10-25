@@ -95,7 +95,7 @@ class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
   String _label(_PanelTab tab) {
     switch (tab) {
       case _PanelTab.loot:
-        return '${widget.lootLabel} · ${widget.drops.length + widget.equipment.length}';
+        return widget.lootLabel;
       case _PanelTab.skills:
         return 'Skills';
       case _PanelTab.info:

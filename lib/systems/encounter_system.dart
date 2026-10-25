@@ -287,13 +287,18 @@ class EncounterSystem {
       // silently probabilistic.
       final def = e.id.definition;
       if (def is! EncounterEntityDefinition) return result;
+      // an entity may drop nothing at all but its bonus rolls; an empty main
+      // table has no pick to make, and rolling it would not return one
+      final mainTable = def.weightedDropTable;
       for (var i = 0; i < kills; i++) {
-        _payOutDrops(
-          [_dropTableService.roll(def.weightedDropTable, rng: rng)],
-          playerInventory,
-          encounter.itemDrops,
-          result,
-        );
+        if (mainTable.isNotEmpty) {
+          _payOutDrops(
+            [_dropTableService.roll(mainTable, rng: rng)],
+            playerInventory,
+            encounter.itemDrops,
+            result,
+          );
+        }
         _payOutDrops(
           _dropTableService.rollBonus(def.bonusDrops, rng: rng),
           playerInventory,

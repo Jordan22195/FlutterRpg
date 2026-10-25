@@ -1,0 +1,2 @@
+run generate_assets_rd.py --list to get a list of missing assets. 
+update rd_prompt_overrides with the missing assets. 

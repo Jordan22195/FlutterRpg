@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../catalogs/items/items.dart';
 import '../data/equipment_data.dart';
+import '../data/gear_set.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
@@ -152,5 +153,66 @@ class EquipmentController extends ChangeNotifier {
       _inventoryState,
     );
     notifyListeners();
+  }
+
+  List<GearSet> get gearSets =>
+      List.unmodifiable(_playerState.equipmentData.gearSets);
+
+  bool get canSaveGearSet =>
+      _playerState.equipmentData.gearSets.length < EquipmentService.maxGearSets;
+
+  /// Whether the set at [index] is exactly what is worn right now.
+  bool isWearingGearSet(int index) => _equipmentService.isWearingGearSet(
+    _playerState.equipmentData.gearSets[index],
+    _playerState.equipmentData,
+  );
+
+  String defaultGearSetName() =>
+      _equipmentService.defaultGearSetName(_playerState.equipmentData);
+
+  /// Saves what is worn as a new set; null when the list is full.
+  GearSet? saveGearSet({String? name, required bool includeTools}) {
+    final set = _equipmentService.saveGearSet(
+      _playerState.equipmentData,
+      name: name,
+      includeTools: includeTools,
+    );
+    notifyListeners();
+    return set;
+  }
+
+  /// Replaces the set at [index] with what is worn now.
+  void overwriteGearSet(int index, {required bool includeTools}) {
+    _equipmentService.overwriteGearSet(
+      index,
+      _playerState.equipmentData,
+      includeTools: includeTools,
+    );
+    notifyListeners();
+  }
+
+  void renameGearSet(int index, String name) {
+    _equipmentService.renameGearSet(index, name, _playerState.equipmentData);
+    notifyListeners();
+  }
+
+  void deleteGearSet(int index) {
+    _equipmentService.deleteGearSet(index, _playerState.equipmentData);
+    notifyListeners();
+  }
+
+  /// Changes into the set at [index]. Returns the pieces it had to leave
+  /// out — see [EquipmentSystem.applyGearSet].
+  List<GearSetSkip> swapToGearSet(int index) {
+    final sets = _playerState.equipmentData.gearSets;
+    if (index < 0 || index >= sets.length) return const [];
+    final skipped = _equipmentSystem.applyGearSet(
+      sets[index],
+      _playerState.equipmentData,
+      _inventoryState,
+      skillLevels: _skillLevels,
+    );
+    notifyListeners();
+    return skipped;
   }
 }

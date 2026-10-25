@@ -353,7 +353,7 @@ Set<ItemId> _readAutoDrinkPotions(Object? raw) {
   final ids = <ItemId>{};
   for (final entry in raw) {
     if (entry is! String) continue;
-    final id = ItemId.values.asNameMap()[entry];
+    final id = ItemId.byName(entry);
     if (id != null) ids.add(id);
   }
   return ids;

@@ -489,7 +489,7 @@ void main() {
   });
 
   group('what the player is shown', () {
-    test('the goblin reads as nine flat rows adding to one', () {
+    test('the goblin reads as one flat row per item, adding to one', () {
       final session = buildSession();
       final details = session.worldController.entityDetails(
         EntityId.GOBLIN.build() as EncounterEntity,
@@ -502,7 +502,7 @@ void main() {
           cookedFishDropTable.length +
           ironToolsDropTable.length +
           ironMinorArmorDropTable.length +
-          1;
+          mediumLeatherMinorArmorDropTable.length;
       expect(
         main,
         hasLength(reachable),
@@ -523,7 +523,6 @@ void main() {
         chanceFor(ironToolsDropTable.first.id),
         closeTo(1 / 5 / ironToolsDropTable.length, 1e-9),
       );
-      expect(chanceFor(ItemId.COINS), closeTo(0.2, 1e-9));
 
       // the reference's placeholder id never reaches a row
       expect(details.drops.map((d) => d.itemId), isNot(contains(ItemId.NULL)));

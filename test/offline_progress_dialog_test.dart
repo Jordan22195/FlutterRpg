@@ -203,6 +203,49 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('going away again with the report up adds to it', (tester) async {
+    // back after a minute: the report goes up
+    final raw = savedMidExplore(const Duration(minutes: 1));
+    await tester.pumpWidget(
+      MyApp(rawSave: raw, fileManagerService: FileManagerService()),
+    );
+    await settle(tester);
+    expect(find.text('While you were away'), findsOneWidget);
+    expect(find.text('1m'), findsOneWidget);
+
+    // and away again for two hours without reading it: the app is suspended
+    // with the dialog up, and the first frame back sees the gap
+    final session = Provider.of<GameSession>(
+      tester.element(find.text('While you were away')),
+      listen: false,
+    );
+    final timing = session.actionTimingController;
+    final first = timing.pendingOfflineReport!;
+    final firstActions = first.actionCount;
+    session.saveGameData.playerData.lastActionTime = DateTime.now().subtract(
+      const Duration(hours: 2),
+    );
+    await settle(tester);
+
+    // one dialog, saying both: the minute and the two hours after it
+    expect(find.text('While you were away'), findsOneWidget);
+    expect(identical(timing.pendingOfflineReport, first), isTrue);
+    expect(first.timeAway, greaterThan(const Duration(hours: 2)));
+    expect(first.actionCount, greaterThan(firstActions));
+    expect(find.text('2h 1m'), findsOneWidget);
+    expect(find.text('1m'), findsNothing);
+    expect(find.text('${first.actionCount}'), findsOneWidget);
+
+    // closing it closes the lot: nothing left behind to raise again
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue'));
+    await settle(tester);
+    expect(find.text('While you were away'), findsNothing);
+    expect(timing.pendingOfflineReport, isNull);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
   testWidgets('potions drunk while away are listed under Used', (tester) async {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();

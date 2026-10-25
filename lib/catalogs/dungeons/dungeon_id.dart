@@ -70,7 +70,7 @@ enum DungeonId {
           entities: [
             DungeonEntityRef(EntityId.GIANT_SPIDER, count: 10),
             DungeonEntityRef(EntityId.GIANT_SPIDER_UNCOMMON, count: 10),
-            DungeonEntityRef(EntityId.ZOMBIE_UNCOMMON, count: 1),
+            DungeonEntityRef(EntityId.THICKET_ZOMBIE, count: 1),
           ],
         ),
 
@@ -128,7 +128,7 @@ enum DungeonId {
           entities: [
             DungeonEntityRef(EntityId.GOBLIN_UNCOMMON, count: 15),
             DungeonEntityRef(EntityId.GOBLIN_RARE, count: 8),
-            DungeonEntityRef(EntityId.FOREST_WOLF_RARE, count: 1),
+            DungeonEntityRef(EntityId.CAVE_BEAR, count: 1),
           ],
         ),
 
@@ -137,19 +137,16 @@ enum DungeonId {
           entities: [
             DungeonEntityRef(EntityId.FOREST_WOLF_UNCOMMON, count: 10),
             DungeonEntityRef(EntityId.BEAR_UNCOMMON, count: 5),
-            DungeonEntityRef(EntityId.GIANT_BAT_UNCOMMON, count: 5),
-            DungeonEntityRef(EntityId.FUNGAL_MONSTER_UNCOMMON, count: 1),
+            DungeonEntityRef(EntityId.DEN_ALPHA_WOLF, count: 1),
           ],
         ),
 
         DungeonEntry(
           name: "Sunken Grotto",
           entities: [
-            DungeonEntityRef(EntityId.SLIME_UNCOMMON, count: 10),
-            DungeonEntityRef(EntityId.KOBOLD_UNCOMMON, count: 10),
             DungeonEntityRef(EntityId.GIANT_BAT_UNCOMMON, count: 5),
-            DungeonEntityRef(EntityId.GIANT_SPIDER_UNCOMMON, count: 5),
-            DungeonEntityRef(EntityId.NAGA),
+            DungeonEntityRef(EntityId.SLIME_UNCOMMON, count: 10),
+            DungeonEntityRef(EntityId.GROTTO_FUNGAL_MONSTER, count: 1),
           ],
         ),
       ],

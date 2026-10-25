@@ -80,6 +80,11 @@ class _MainShellState extends State<MainShell> {
   int _handledOfflineSequence = 0;
   bool _offlineDialogOpen = false;
 
+  /// Bumped when a later absence is folded into the report the open dialog
+  /// is showing, so it redraws with both - see [OfflineProgressService
+  /// .finish].
+  final _offlineRevision = ValueNotifier<int>(0);
+
   void _onMapTabRouteChanged() {
     _captureUiState();
 
@@ -126,6 +131,7 @@ class _MainShellState extends State<MainShell> {
   void dispose() {
     _encounter.removeListener(_onEncounterChanged);
     _timing.removeListener(_onTimingChanged);
+    _offlineRevision.dispose();
     super.dispose();
   }
 
@@ -136,7 +142,13 @@ class _MainShellState extends State<MainShell> {
     _handledOfflineSequence = _timing.offlineReportSequence;
 
     final report = _timing.pendingOfflineReport;
-    if (report == null || _offlineDialogOpen) return;
+    if (report == null) return;
+    // still up from the last time the app came back: the new gap was
+    // folded into the report it is showing, so it only has to redraw
+    if (_offlineDialogOpen) {
+      _offlineRevision.value++;
+      return;
+    }
 
     // the settle lands mid-frame inside the action tick, same as a death:
     // showing a dialog has to wait for the frame to finish
@@ -146,7 +158,11 @@ class _MainShellState extends State<MainShell> {
         _offlineDialogOpen = false;
         return;
       }
-      await showOfflineProgressDialog(context, report);
+      await showOfflineProgressDialog(
+        context,
+        report,
+        revision: _offlineRevision,
+      );
       _offlineDialogOpen = false;
       _timing.consumeOfflineReport();
     });

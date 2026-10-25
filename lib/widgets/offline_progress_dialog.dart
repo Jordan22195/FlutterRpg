@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,16 +19,33 @@ import '../catalogs/items/items.dart';
 /// What the loop paid out while the player was away, shown once on the way
 /// back in. Raised by [MainShell] rather than any one screen, so it reaches
 /// the player wherever the app was closed.
+///
+/// [revision] redraws it in place: a later absence is folded into [report]
+/// while the dialog is still up, and bumping it shows the two together.
 Future<void> showOfflineProgressDialog(
   BuildContext context,
-  OfflineProgressReport report,
-) {
+  OfflineProgressReport report, {
+  ValueListenable<int>? revision,
+}) {
   return showDialog<void>(
     context: context,
     builder: (dialogContext) => AlertDialog(
       title: const Text('While you were away'),
       content: SingleChildScrollView(
-        child: SizedBox(width: 320, child: OfflineProgressBody(report: report)),
+        child: SizedBox(
+          width: 320,
+          child: revision == null
+              ? OfflineProgressBody(report: report)
+              : ValueListenableBuilder<int>(
+                  valueListenable: revision,
+                  builder: (_, _, _) => OfflineProgressBody(
+                    // keyed to the revision, so every tile below is rebuilt
+                    // from the merged report rather than kept from the last
+                    key: ValueKey(revision.value),
+                    report: report,
+                  ),
+                ),
+        ),
       ),
       actions: [
         FilledButton(

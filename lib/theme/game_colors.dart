@@ -111,6 +111,11 @@ class GameColors extends ThemeExtension<GameColors> {
   /// it is the one thing standing between you and the action.
   static const Color missingColor = Color(0xFFE53935);
 
+  /// A dungeon floor's boss: its tile's ring and wash, and its ribbon. A
+  /// deep crimson, so it does not read as [missingColor]'s shortfall.
+  static const Color bossColor = Color(0xFFB3261E);
+  static const Color onBossColor = Color(0xFFFFFFFF);
+
   final SpriteTint combatTint;
 
   /// Crafting stations (anvil) and crafting inputs.

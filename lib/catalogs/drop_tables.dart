@@ -102,6 +102,14 @@ const List<ItemDropType> ironMinorArmorDropTable = [
   ItemDropType(id: ItemId.IRON_BOOTS, weight: 1),
 ];
 
+/// The medium leather extremities, the way [ironMinorArmorDropTable] is the
+/// iron ones: the goblins wear both. The body pieces are the trading post's.
+const List<ItemDropType> mediumLeatherMinorArmorDropTable = [
+  ItemDropType(id: ItemId.MEDIUM_LEATHER_COIF, weight: 1),
+  ItemDropType(id: ItemId.MEDIUM_LEATHER_GLOVES, weight: 1),
+  ItemDropType(id: ItemId.MEDIUM_LEATHER_BOOTS, weight: 1),
+];
+
 const List<ItemDropType> ironMajorArmorDropTable = [
   ItemDropType(id: ItemId.IRON_CHESTPLATE, weight: 1),
   ItemDropType(id: ItemId.IRON_LEGS, weight: 1),
@@ -192,3 +200,49 @@ List<ItemDropType> getScaledDropTable(
   }
   return outTable;
 }
+
+/// One of every skill's basic hat, evenly: a Wolf Den boss rolls it on top of
+/// its own drops, so a run can turn up any skill's piece for that slot.
+const List<ItemDropType> basicSkillingHeadDropTable = [
+  ItemDropType(id: ItemId.BASIC_FISHERS_HAT),
+  ItemDropType(id: ItemId.BASIC_MINERS_HAT),
+  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_HAT),
+  ItemDropType(id: ItemId.BASIC_HERBALISTS_HAT),
+  ItemDropType(id: ItemId.BASIC_FIREMAKERS_HAT),
+  ItemDropType(id: ItemId.BASIC_COOKS_HAT),
+  ItemDropType(id: ItemId.BASIC_BLACKSMITHS_HAT),
+  ItemDropType(id: ItemId.BASIC_ENCHANTERS_HAT),
+  ItemDropType(id: ItemId.BASIC_JEWELERS_HAT),
+  ItemDropType(id: ItemId.BASIC_ALCHEMISTS_HAT),
+  ItemDropType(id: ItemId.BASIC_EXPLORERS_HAT),
+];
+
+/// One of every skill's basic tunic, evenly. See [basicSkillingHeadDropTable].
+const List<ItemDropType> basicSkillingBodyDropTable = [
+  ItemDropType(id: ItemId.BASIC_FISHERS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_MINERS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_HERBALISTS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_FIREMAKERS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_COOKS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_BLACKSMITHS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_ENCHANTERS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_JEWELERS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_ALCHEMISTS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_EXPLORERS_TUNIC),
+];
+
+/// One of every skill's basic pants, evenly. See [basicSkillingHeadDropTable].
+const List<ItemDropType> basicSkillingLegDropTable = [
+  ItemDropType(id: ItemId.BASIC_FISHERS_PANTS),
+  ItemDropType(id: ItemId.BASIC_MINERS_PANTS),
+  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_PANTS),
+  ItemDropType(id: ItemId.BASIC_HERBALISTS_PANTS),
+  ItemDropType(id: ItemId.BASIC_FIREMAKERS_PANTS),
+  ItemDropType(id: ItemId.BASIC_COOKS_PANTS),
+  ItemDropType(id: ItemId.BASIC_BLACKSMITHS_PANTS),
+  ItemDropType(id: ItemId.BASIC_ENCHANTERS_PANTS),
+  ItemDropType(id: ItemId.BASIC_JEWELERS_PANTS),
+  ItemDropType(id: ItemId.BASIC_ALCHEMISTS_PANTS),
+  ItemDropType(id: ItemId.BASIC_EXPLORERS_PANTS),
+];

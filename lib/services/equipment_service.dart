@@ -1,5 +1,6 @@
 import '../data/combat_tuning.dart';
 import '../data/equipment_data.dart';
+import '../data/gear_set.dart';
 import '../data/skill_data.dart';
 import '../catalogs/items/items.dart';
 import '../utilities/util.dart';
@@ -336,5 +337,127 @@ class EquipmentService {
     final old = equipmentState.equipedTools[skill];
     equipmentState.equipedTools[skill] = null;
     return old;
+  }
+
+  /// How many outfits a player can keep saved at once.
+  static const int maxGearSets = 6;
+
+  /// "Set N" for the lowest N no saved set is already called.
+  String defaultGearSetName(EquipmentData equipmentState) {
+    final taken = {for (final set in equipmentState.gearSets) set.name};
+    var n = 1;
+    while (taken.contains('Set $n')) {
+      n++;
+    }
+    return 'Set $n';
+  }
+
+  /// [name] trimmed to what a set may be called, or the default name when
+  /// nothing is left of it.
+  String _gearSetName(String? name, EquipmentData equipmentState) {
+    final trimmed = (name ?? '').trim();
+    if (trimmed.isEmpty) return defaultGearSetName(equipmentState);
+    return trimmed.length > GearSet.maxNameLength
+        ? trimmed.substring(0, GearSet.maxNameLength)
+        : trimmed;
+  }
+
+  static GearSetPiece _pieceOf(EquipmentItem item) => GearSetPiece(
+    instanceId: item.instanceId,
+    stackKey: item.stackKey,
+    label: item.displayName,
+  );
+
+  /// What the player is wearing right now as a set — every armour and
+  /// weapon slot, and the tools only when [includeTools].
+  GearSet captureGearSet(
+    String name,
+    EquipmentData equipmentState, {
+    required bool includeTools,
+  }) {
+    return GearSet(
+      name: name,
+      armor: {
+        for (final entry in equipmentState.armorEquipment.entries)
+          if (entry.value != null) entry.key: _pieceOf(entry.value!),
+      },
+      includesTools: includeTools,
+      tools: includeTools
+          ? {
+              for (final entry in equipmentState.equipedTools.entries)
+                if (entry.value != null) entry.key: _pieceOf(entry.value!),
+            }
+          : null,
+    );
+  }
+
+  /// Saves what is worn as a new set at the end of the list. Null when the
+  /// list is already full.
+  GearSet? saveGearSet(
+    EquipmentData equipmentState, {
+    String? name,
+    required bool includeTools,
+  }) {
+    if (equipmentState.gearSets.length >= maxGearSets) return null;
+    final set = captureGearSet(
+      _gearSetName(name, equipmentState),
+      equipmentState,
+      includeTools: includeTools,
+    );
+    equipmentState.gearSets.add(set);
+    return set;
+  }
+
+  /// Replaces the set at [index] with what is worn now, keeping its name.
+  GearSet? overwriteGearSet(
+    int index,
+    EquipmentData equipmentState, {
+    required bool includeTools,
+  }) {
+    if (index < 0 || index >= equipmentState.gearSets.length) return null;
+    final set = captureGearSet(
+      equipmentState.gearSets[index].name,
+      equipmentState,
+      includeTools: includeTools,
+    );
+    equipmentState.gearSets[index] = set;
+    return set;
+  }
+
+  void renameGearSet(int index, String name, EquipmentData equipmentState) {
+    if (index < 0 || index >= equipmentState.gearSets.length) return;
+    final set = equipmentState.gearSets[index];
+    // an empty rename keeps the old name rather than inventing a new one
+    if (name.trim().isEmpty) return;
+    set.name = _gearSetName(name, equipmentState);
+  }
+
+  void deleteGearSet(int index, EquipmentData equipmentState) {
+    if (index < 0 || index >= equipmentState.gearSets.length) return;
+    equipmentState.gearSets.removeAt(index);
+  }
+
+  /// Whether what is worn is exactly [set]: every slot it fills holds its
+  /// piece (or an identical one) and every slot it leaves empty is empty.
+  bool isWearingGearSet(GearSet set, EquipmentData equipmentState) {
+    bool same(EquipmentItem? worn, GearSetPiece? piece) {
+      if (worn == null || piece == null) return worn == null && piece == null;
+      return worn.instanceId == piece.instanceId ||
+          worn.stackKey == piece.stackKey;
+    }
+
+    for (final entry in equipmentState.armorEquipment.entries) {
+      if (!same(entry.value, set.armor[entry.key])) return false;
+    }
+    if (!set.includesTools) return true;
+    for (final skill in {
+      ...set.tools.keys,
+      ...equipmentState.equipedTools.keys,
+    }) {
+      if (!same(equipmentState.equipedTools[skill], set.tools[skill])) {
+        return false;
+      }
+    }
+    return true;
   }
 }

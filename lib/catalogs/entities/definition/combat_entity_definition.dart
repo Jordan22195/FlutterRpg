@@ -22,12 +22,18 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
   /// The monster this is a variant of.
   final CombatArchetype archetype;
 
+  /// Set on the one monster that ends a dungeon floor, and on nothing else:
+  /// a boss is its own entity, so a monster that is a boss in one place is
+  /// never also a regular somewhere. The dungeon screen draws its tile apart.
+  final bool isDungeonBoss;
+
   const CombatEntityDefinition(
     this.archetype, {
     required super.name,
     super.rarity,
     required super.itemDrops,
     super.bonusDrops,
+    this.isDungeonBoss = false,
     // art comes from the archetype, and the combat stats are derived from
     // level and type by the getters below; the fields the parent stores
     // for all of them are never read.
@@ -82,6 +88,7 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
     int? hitpoints,
     List<ItemDropType>? itemDrops,
     List<DropRoll>? bonusDrops,
+    bool? isDungeonBoss,
   }) {
     assert(
       iconAsset == null && defence == null && hitpoints == null,
@@ -94,6 +101,7 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
       rarity: rarity ?? this.rarity,
       itemDrops: itemDrops ?? this.itemDrops,
       bonusDrops: bonusDrops ?? this.bonusDrops,
+      isDungeonBoss: isDungeonBoss ?? this.isDungeonBoss,
     );
   }
 }

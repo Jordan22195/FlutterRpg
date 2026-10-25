@@ -33,7 +33,7 @@ class InventoryData {
 
     final itemMap = <ItemId, int>{};
     for (final entry in rawItems.entries) {
-      final id = ItemId.values.asNameMap()[entry.key];
+      final id = ItemId.byName(entry.key);
       final count = entry.value;
       if (id == null || count is! int) continue;
       itemMap[id] = count;

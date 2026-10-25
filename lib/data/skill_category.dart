@@ -17,8 +17,6 @@ const Map<SkillCategory, List<SkillId>> kSkillsByCategory = {
     SkillId.HITPOINTS,
     SkillId.ATTACK,
     SkillId.DEFENCE,
-    SkillId.RANGED,
-    SkillId.MAGIC,
     SkillId.EXPLORATION,
   ],
   SkillCategory.gathering: [
@@ -30,10 +28,7 @@ const Map<SkillCategory, List<SkillId>> kSkillsByCategory = {
   SkillCategory.crafting: [
     SkillId.FIREMAKING,
     SkillId.COOKING,
-    SkillId.LEATHERWORKING,
     SkillId.BLACKSMITHING,
-    SkillId.TAILORING,
-    SkillId.FLETCHING,
     SkillId.ENCHANTING,
     SkillId.JEWELCRAFTING,
     SkillId.ALCHEMY,

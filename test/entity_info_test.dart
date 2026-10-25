@@ -287,8 +287,27 @@ void main() {
       expect(find.text('Miss chance'), findsNothing);
       expect(find.text('Avg damage'), findsNothing);
       expect(find.text('Damage per second'), findsNothing);
-      // the debug readout is fishing's alone
-      expect(find.text('DEBUG'), findsNothing);
+    });
+
+    testWidgets('a fight\'s debug section names its combat type', (
+      tester,
+    ) async {
+      await pumpInfo(tester, EntityId.GOBLIN);
+
+      final def = EntityId.GOBLIN.definition as CombatEntityDefinition;
+      expect(find.text('DEBUG'), findsOneWidget);
+      expect(find.text('Combat type'), findsOneWidget);
+      expect(find.text(def.combatType.label), findsOneWidget);
+      // below the stats it explains
+      expect(
+        tester.getTopLeft(find.text('DEBUG')).dy,
+        greaterThan(tester.getTopLeft(find.text('COMBAT STATS')).dy),
+      );
+    });
+
+    testWidgets('a gathering node has no combat debug', (tester) async {
+      await pumpInfo(tester, EntityId.TRANQUIL_POND);
+      expect(find.text('Combat type'), findsNothing);
     });
 
     testWidgets('a fishing spot reads in catches, not damage', (tester) async {

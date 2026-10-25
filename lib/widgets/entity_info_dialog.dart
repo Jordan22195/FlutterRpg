@@ -115,6 +115,9 @@ class _EntityInfoBodyState extends State<EntityInfoBody> {
         _RollTable(details: details),
         // dev readout: the numbers a cast's catches are worked out from
         if (details.skill == SkillId.FISHING) _FishingDebug(details: details),
+        // dev readout: what the monster's stats are built from
+        if (widget.entity case final CombatEntity monster)
+          _CombatDebug(monster: monster),
         _DropTable(details: details),
 
         // dev tool: force how many of this entity are left in the zone
@@ -342,6 +345,29 @@ class _FishingDebug extends StatelessWidget {
             InfoTableRow('Xp / hour', [
               details.playerXpPerHour.toStringAsFixed(0),
             ]),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// What a monster's stats are built from: its combat type, which splits its
+/// level's stat budget between attack, defence and hitpoints.
+class _CombatDebug extends StatelessWidget {
+  const _CombatDebug({required this.monster});
+
+  final CombatEntity monster;
+
+  @override
+  Widget build(BuildContext context) {
+    return InfoSection(
+      title: 'Debug',
+      children: [
+        InfoTable(
+          headers: const [''],
+          rows: [
+            InfoTableRow('Combat type', [monster.definition.combatType.label]),
           ],
         ),
       ],

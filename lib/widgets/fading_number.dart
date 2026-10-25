@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class FadingNumber extends StatefulWidget {
@@ -67,26 +69,33 @@ class FadingNumberState extends State<FadingNumber>
     }
   }
 
-  /// Bumped by every [replay], so a hold that a newer replay has overtaken
-  /// knows not to start its fade over the newer number.
-  int _replays = 0;
+  /// The hold before the fade. A timer rather than a delayed future so it
+  /// can be called off: a newer [replay] takes over from it - or it would
+  /// start its fade over the newer number - and so does the widget going
+  /// away mid-hold.
+  Timer? _hold;
 
   /// Call this to show the number again and fade it away. It shows at full
   /// strength at once — only the way out fades.
-  Future<void> replay() async {
+  void replay() {
     if (!mounted) return;
 
-    final replay = ++_replays;
+    _hold?.cancel();
     _controller.stop();
     _controller.value = 0.0; // 0 => fully visible (begin)
 
     if (widget.hold > Duration.zero) {
-      await Future.delayed(widget.hold);
-      if (!mounted || replay != _replays) return;
+      _hold = Timer(widget.hold, _fade);
+    } else {
+      _fade();
     }
+  }
 
+  Future<void> _fade() async {
+    _hold = null;
+    if (!mounted) return;
     await _controller.forward();
-    widget.onFinished?.call();
+    if (mounted) widget.onFinished?.call();
   }
 
   @override
@@ -100,6 +109,7 @@ class FadingNumberState extends State<FadingNumber>
 
   @override
   void dispose() {
+    _hold?.cancel();
     _controller.dispose();
     super.dispose();
   }

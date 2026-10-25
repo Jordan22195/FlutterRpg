@@ -86,6 +86,40 @@ Future<void> openLair(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('a floor\'s boss gets the boss tile, and only the boss', (
+    tester,
+  ) async {
+    await openDungeonFromSave(tester, DungeonId.WOLF_DEN);
+
+    final card = find.ancestor(
+      of: find.text('Cave Entrance'),
+      matching: find.byType(EntityQueueCard),
+    );
+    final bosses = find.descendant(of: card, matching: find.byType(BossTile));
+    expect(bosses, findsOneWidget);
+    expect(tester.widget<BossTile>(bosses).entity.id, EntityId.CAVE_BEAR);
+    expect(
+      find.descendant(of: bosses, matching: find.text('BOSS')),
+      findsOneWidget,
+    );
+
+    // the queue in front of it draws as ordinary tiles
+    final tiles = tester
+        .widgetList<DiscoveryTile>(
+          find.descendant(of: card, matching: find.byType(DiscoveryTile)),
+        )
+        .toList();
+    expect(tiles.map((t) => t.entity.id), [
+      EntityId.GOBLIN_UNCOMMON,
+      EntityId.GOBLIN_RARE,
+      EntityId.CAVE_BEAR,
+    ]);
+    expect(tiles.map((t) => t.boss), [false, false, true]);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
   testWidgets('landmark lists its floors top to bottom, key gates the first', (
     tester,
   ) async {

@@ -52,11 +52,8 @@ Map<SkillId, int> skillBonusFromJson(Map<String, dynamic> json, String key) {
 }
 
 ItemId parseItemId(String rawValue, {String fieldName = 'id'}) {
-  return ItemId.values.firstWhere(
-    (value) => value.name == rawValue,
-    orElse: () =>
-        throw FormatException('Invalid ItemId "$rawValue" for "$fieldName".'),
-  );
+  return ItemId.byName(rawValue) ??
+      (throw FormatException('Invalid ItemId "$rawValue" for "$fieldName".'));
 }
 
 EntityId parseEntityId(String rawValue, {String fieldName = 'id'}) {

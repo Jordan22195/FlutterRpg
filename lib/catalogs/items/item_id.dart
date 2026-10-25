@@ -66,7 +66,27 @@ enum ItemId {
       iconAsset: "assets/icons/items/cow_hide.png",
     ),
   ),
-  ANIMAL_PELT(ItemDefinition(name: "Fur Pelt", value: 1)),
+  ANIMAL_PELT(
+    ItemDefinition(
+      name: "Fur Pelt",
+      value: 1,
+      iconAsset: "assets/icons/items/fur_pelt.png",
+    ),
+  ),
+  WOLF_PELT(
+    ItemDefinition(
+      name: "Wolf Pelt",
+      value: 1,
+      iconAsset: "assets/icons/items/wolf_pelt.png",
+    ),
+  ),
+  BEAR_HIDE(
+    ItemDefinition(
+      name: "Bear Hide",
+      value: 1,
+      iconAsset: "assets/icons/items/bear_hide.png",
+    ),
+  ),
 
   // ── LOGS ────────────────────────────────────────────────────────
   // tier ascending
@@ -416,6 +436,20 @@ enum ItemId {
       iconAsset: "assets/icons/items/claw.png",
     ),
   ),
+  WOLF_CLAW(
+    ItemDefinition(
+      name: "Wolf Claw",
+      value: 6,
+      iconAsset: "assets/icons/items/wolf_claw.png",
+    ),
+  ),
+  BEAR_CLAW(
+    ItemDefinition(
+      name: "Bear Claw",
+      value: 6,
+      iconAsset: "assets/icons/items/bear_claw.png",
+    ),
+  ),
   VENOM(
     ItemDefinition(
       name: "Venom",
@@ -518,6 +552,13 @@ enum ItemId {
       value: 1,
       iconAsset: "assets/icons/items/cow_meat.png",
       xpValue: 5,
+    ),
+  ),
+  BEAR_RUMP(
+    ItemDefinition(
+      name: "Bear Rump",
+      value: 2,
+      iconAsset: "assets/icons/items/bear_rump.png",
     ),
   ),
 
@@ -1832,68 +1873,3314 @@ enum ItemId {
     ),
   ),
 
-  // ── ARMOUR · FISHERMAN'S SET ────────────────────────────────────
-  // +2 fishing a piece, and nothing else. The boots, hat and tunic drop off
-  // the Wolf Den's bosses; the pants, gloves and cloak rotate through the
-  // trading post, whose markup puts them at 1,000 coins
-  FISHERMANS_BOOTS(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.FEET,
-      name: "Fisherman's Boots",
-      value: 800,
-      fibLevel: 1,
-      statWeights: {SkillId.FISHING: 1},
-      iconAsset: "assets/icons/items/fishermans_boots.png",
-    ),
-  ),
-  FISHERMANS_HAT(
-    EquipmentItemDefinition(
+  // ── ARMOUR · SKILLING GEAR ──────────────────────────────────────
+  // A set per gathering and crafting skill, and one for exploration, a
+  // piece in each of six slots, at five tiers. Every piece pours its whole
+  // rung into its one skill — +2,
+  // +3, +5, +8, +13 a common piece — and asks for 1, 20, 40, 60 or 80 in it
+  // (see SkillingGearTier). By skill, then tier, then slot.
+  //
+  // The basic fisher's boots, hat and tunic drop off the Wolf Den's bosses;
+  // the pants, gloves and cloak rotate through the trading post, whose
+  // markup puts them at 1,000 coins. Nothing else has a source yet
+  BASIC_FISHERS_HAT(
+    SkillingGearDefinition(
       armorSlot: ArmorSlots.HEAD,
-      name: "Fisherman's Hat",
+      name: "Basic Fisher's Hat",
       value: 800,
-      fibLevel: 1,
-      statWeights: {SkillId.FISHING: 1},
-      iconAsset: "assets/icons/items/fishermans_hat.png",
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_fishers_hat.png",
     ),
   ),
-  FISHERMANS_TUNIC(
-    EquipmentItemDefinition(
+  BASIC_FISHERS_TUNIC(
+    SkillingGearDefinition(
       armorSlot: ArmorSlots.CHEST,
-      name: "Fisherman's Tunic",
+      name: "Basic Fisher's Tunic",
       value: 800,
-      fibLevel: 1,
-      statWeights: {SkillId.FISHING: 1},
-      iconAsset: "assets/icons/items/fishermans_tunic.png",
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_fishers_tunic.png",
     ),
   ),
-  FISHERMANS_PANTS(
-    EquipmentItemDefinition(
+  BASIC_FISHERS_PANTS(
+    SkillingGearDefinition(
       armorSlot: ArmorSlots.LEGS,
-      name: "Fisherman's Pants",
+      name: "Basic Fisher's Pants",
       value: 800,
-      fibLevel: 1,
-      statWeights: {SkillId.FISHING: 1},
-      iconAsset: "assets/icons/items/fishermans_pants.png",
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_fishers_pants.png",
     ),
   ),
-  FISHERMANS_GLOVES(
-    EquipmentItemDefinition(
+  BASIC_FISHERS_GLOVES(
+    SkillingGearDefinition(
       armorSlot: ArmorSlots.HANDS,
-      name: "Fisherman's Gloves",
+      name: "Basic Fisher's Gloves",
       value: 800,
-      fibLevel: 1,
-      statWeights: {SkillId.FISHING: 1},
-      iconAsset: "assets/icons/items/fishermans_gloves.png",
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_fishers_gloves.png",
     ),
   ),
-  FISHERMANS_CLOAK(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.BACK,
-      name: "Fisherman's Cloak",
+  BASIC_FISHERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Fisher's Boots",
       value: 800,
-      fibLevel: 1,
-      statWeights: {SkillId.FISHING: 1},
-      iconAsset: "assets/icons/items/fishermans_cloak.png",
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_fishers_boots.png",
+    ),
+  ),
+  BASIC_FISHERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Fisher's Cloak",
+      value: 800,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_fishers_cloak.png",
+    ),
+  ),
+  NOVICE_FISHERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Fisher's Hat",
+      value: 1600,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_fishers_hat.png",
+    ),
+  ),
+  NOVICE_FISHERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Fisher's Tunic",
+      value: 1600,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_fishers_tunic.png",
+    ),
+  ),
+  NOVICE_FISHERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Fisher's Pants",
+      value: 1600,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_fishers_pants.png",
+    ),
+  ),
+  NOVICE_FISHERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Fisher's Gloves",
+      value: 1600,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_fishers_gloves.png",
+    ),
+  ),
+  NOVICE_FISHERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Fisher's Boots",
+      value: 1600,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_fishers_boots.png",
+    ),
+  ),
+  NOVICE_FISHERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Fisher's Cloak",
+      value: 1600,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_fishers_cloak.png",
+    ),
+  ),
+  APPRENTICE_FISHERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Fisher's Hat",
+      value: 3200,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_fishers_hat.png",
+    ),
+  ),
+  APPRENTICE_FISHERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Fisher's Tunic",
+      value: 3200,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_fishers_tunic.png",
+    ),
+  ),
+  APPRENTICE_FISHERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Fisher's Pants",
+      value: 3200,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_fishers_pants.png",
+    ),
+  ),
+  APPRENTICE_FISHERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Fisher's Gloves",
+      value: 3200,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_fishers_gloves.png",
+    ),
+  ),
+  APPRENTICE_FISHERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Fisher's Boots",
+      value: 3200,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_fishers_boots.png",
+    ),
+  ),
+  APPRENTICE_FISHERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Fisher's Cloak",
+      value: 3200,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_fishers_cloak.png",
+    ),
+  ),
+  ADVANCED_FISHERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Fisher's Hat",
+      value: 6400,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_fishers_hat.png",
+    ),
+  ),
+  ADVANCED_FISHERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Fisher's Tunic",
+      value: 6400,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_fishers_tunic.png",
+    ),
+  ),
+  ADVANCED_FISHERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Fisher's Pants",
+      value: 6400,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_fishers_pants.png",
+    ),
+  ),
+  ADVANCED_FISHERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Fisher's Gloves",
+      value: 6400,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_fishers_gloves.png",
+    ),
+  ),
+  ADVANCED_FISHERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Fisher's Boots",
+      value: 6400,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_fishers_boots.png",
+    ),
+  ),
+  ADVANCED_FISHERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Fisher's Cloak",
+      value: 6400,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_fishers_cloak.png",
+    ),
+  ),
+  MASTER_FISHERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Fisher's Hat",
+      value: 12800,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_fishers_hat.png",
+    ),
+  ),
+  MASTER_FISHERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Fisher's Tunic",
+      value: 12800,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_fishers_tunic.png",
+    ),
+  ),
+  MASTER_FISHERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Fisher's Pants",
+      value: 12800,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_fishers_pants.png",
+    ),
+  ),
+  MASTER_FISHERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Fisher's Gloves",
+      value: 12800,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_fishers_gloves.png",
+    ),
+  ),
+  MASTER_FISHERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Fisher's Boots",
+      value: 12800,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_fishers_boots.png",
+    ),
+  ),
+  MASTER_FISHERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Fisher's Cloak",
+      value: 12800,
+      skill: SkillId.FISHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_fishers_cloak.png",
+    ),
+  ),
+  BASIC_MINERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Basic Miner's Hat",
+      value: 800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_miners_hat.png",
+    ),
+  ),
+  BASIC_MINERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Basic Miner's Tunic",
+      value: 800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_miners_tunic.png",
+    ),
+  ),
+  BASIC_MINERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Basic Miner's Pants",
+      value: 800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_miners_pants.png",
+    ),
+  ),
+  BASIC_MINERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Basic Miner's Gloves",
+      value: 800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_miners_gloves.png",
+    ),
+  ),
+  BASIC_MINERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Miner's Boots",
+      value: 800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_miners_boots.png",
+    ),
+  ),
+  BASIC_MINERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Miner's Cloak",
+      value: 800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_miners_cloak.png",
+    ),
+  ),
+  NOVICE_MINERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Miner's Hat",
+      value: 1600,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_miners_hat.png",
+    ),
+  ),
+  NOVICE_MINERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Miner's Tunic",
+      value: 1600,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_miners_tunic.png",
+    ),
+  ),
+  NOVICE_MINERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Miner's Pants",
+      value: 1600,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_miners_pants.png",
+    ),
+  ),
+  NOVICE_MINERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Miner's Gloves",
+      value: 1600,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_miners_gloves.png",
+    ),
+  ),
+  NOVICE_MINERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Miner's Boots",
+      value: 1600,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_miners_boots.png",
+    ),
+  ),
+  NOVICE_MINERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Miner's Cloak",
+      value: 1600,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_miners_cloak.png",
+    ),
+  ),
+  APPRENTICE_MINERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Miner's Hat",
+      value: 3200,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_miners_hat.png",
+    ),
+  ),
+  APPRENTICE_MINERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Miner's Tunic",
+      value: 3200,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_miners_tunic.png",
+    ),
+  ),
+  APPRENTICE_MINERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Miner's Pants",
+      value: 3200,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_miners_pants.png",
+    ),
+  ),
+  APPRENTICE_MINERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Miner's Gloves",
+      value: 3200,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_miners_gloves.png",
+    ),
+  ),
+  APPRENTICE_MINERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Miner's Boots",
+      value: 3200,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_miners_boots.png",
+    ),
+  ),
+  APPRENTICE_MINERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Miner's Cloak",
+      value: 3200,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_miners_cloak.png",
+    ),
+  ),
+  ADVANCED_MINERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Miner's Hat",
+      value: 6400,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_miners_hat.png",
+    ),
+  ),
+  ADVANCED_MINERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Miner's Tunic",
+      value: 6400,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_miners_tunic.png",
+    ),
+  ),
+  ADVANCED_MINERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Miner's Pants",
+      value: 6400,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_miners_pants.png",
+    ),
+  ),
+  ADVANCED_MINERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Miner's Gloves",
+      value: 6400,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_miners_gloves.png",
+    ),
+  ),
+  ADVANCED_MINERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Miner's Boots",
+      value: 6400,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_miners_boots.png",
+    ),
+  ),
+  ADVANCED_MINERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Miner's Cloak",
+      value: 6400,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_miners_cloak.png",
+    ),
+  ),
+  MASTER_MINERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Miner's Hat",
+      value: 12800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_miners_hat.png",
+    ),
+  ),
+  MASTER_MINERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Miner's Tunic",
+      value: 12800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_miners_tunic.png",
+    ),
+  ),
+  MASTER_MINERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Miner's Pants",
+      value: 12800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_miners_pants.png",
+    ),
+  ),
+  MASTER_MINERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Miner's Gloves",
+      value: 12800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_miners_gloves.png",
+    ),
+  ),
+  MASTER_MINERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Miner's Boots",
+      value: 12800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_miners_boots.png",
+    ),
+  ),
+  MASTER_MINERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Miner's Cloak",
+      value: 12800,
+      skill: SkillId.MINING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_miners_cloak.png",
+    ),
+  ),
+  BASIC_WOODCUTTERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Basic Woodcutter's Hat",
+      value: 800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_woodcutters_hat.png",
+    ),
+  ),
+  BASIC_WOODCUTTERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Basic Woodcutter's Tunic",
+      value: 800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_woodcutters_tunic.png",
+    ),
+  ),
+  BASIC_WOODCUTTERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Basic Woodcutter's Pants",
+      value: 800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_woodcutters_pants.png",
+    ),
+  ),
+  BASIC_WOODCUTTERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Basic Woodcutter's Gloves",
+      value: 800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_woodcutters_gloves.png",
+    ),
+  ),
+  BASIC_WOODCUTTERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Woodcutter's Boots",
+      value: 800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_woodcutters_boots.png",
+    ),
+  ),
+  BASIC_WOODCUTTERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Woodcutter's Cloak",
+      value: 800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_woodcutters_cloak.png",
+    ),
+  ),
+  NOVICE_WOODCUTTERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Woodcutter's Hat",
+      value: 1600,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_woodcutters_hat.png",
+    ),
+  ),
+  NOVICE_WOODCUTTERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Woodcutter's Tunic",
+      value: 1600,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_woodcutters_tunic.png",
+    ),
+  ),
+  NOVICE_WOODCUTTERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Woodcutter's Pants",
+      value: 1600,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_woodcutters_pants.png",
+    ),
+  ),
+  NOVICE_WOODCUTTERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Woodcutter's Gloves",
+      value: 1600,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_woodcutters_gloves.png",
+    ),
+  ),
+  NOVICE_WOODCUTTERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Woodcutter's Boots",
+      value: 1600,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_woodcutters_boots.png",
+    ),
+  ),
+  NOVICE_WOODCUTTERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Woodcutter's Cloak",
+      value: 1600,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_woodcutters_cloak.png",
+    ),
+  ),
+  APPRENTICE_WOODCUTTERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Woodcutter's Hat",
+      value: 3200,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_woodcutters_hat.png",
+    ),
+  ),
+  APPRENTICE_WOODCUTTERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Woodcutter's Tunic",
+      value: 3200,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_woodcutters_tunic.png",
+    ),
+  ),
+  APPRENTICE_WOODCUTTERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Woodcutter's Pants",
+      value: 3200,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_woodcutters_pants.png",
+    ),
+  ),
+  APPRENTICE_WOODCUTTERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Woodcutter's Gloves",
+      value: 3200,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_woodcutters_gloves.png",
+    ),
+  ),
+  APPRENTICE_WOODCUTTERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Woodcutter's Boots",
+      value: 3200,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_woodcutters_boots.png",
+    ),
+  ),
+  APPRENTICE_WOODCUTTERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Woodcutter's Cloak",
+      value: 3200,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_woodcutters_cloak.png",
+    ),
+  ),
+  ADVANCED_WOODCUTTERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Woodcutter's Hat",
+      value: 6400,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_woodcutters_hat.png",
+    ),
+  ),
+  ADVANCED_WOODCUTTERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Woodcutter's Tunic",
+      value: 6400,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_woodcutters_tunic.png",
+    ),
+  ),
+  ADVANCED_WOODCUTTERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Woodcutter's Pants",
+      value: 6400,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_woodcutters_pants.png",
+    ),
+  ),
+  ADVANCED_WOODCUTTERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Woodcutter's Gloves",
+      value: 6400,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_woodcutters_gloves.png",
+    ),
+  ),
+  ADVANCED_WOODCUTTERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Woodcutter's Boots",
+      value: 6400,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_woodcutters_boots.png",
+    ),
+  ),
+  ADVANCED_WOODCUTTERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Woodcutter's Cloak",
+      value: 6400,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_woodcutters_cloak.png",
+    ),
+  ),
+  MASTER_WOODCUTTERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Woodcutter's Hat",
+      value: 12800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_woodcutters_hat.png",
+    ),
+  ),
+  MASTER_WOODCUTTERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Woodcutter's Tunic",
+      value: 12800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_woodcutters_tunic.png",
+    ),
+  ),
+  MASTER_WOODCUTTERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Woodcutter's Pants",
+      value: 12800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_woodcutters_pants.png",
+    ),
+  ),
+  MASTER_WOODCUTTERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Woodcutter's Gloves",
+      value: 12800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_woodcutters_gloves.png",
+    ),
+  ),
+  MASTER_WOODCUTTERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Woodcutter's Boots",
+      value: 12800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_woodcutters_boots.png",
+    ),
+  ),
+  MASTER_WOODCUTTERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Woodcutter's Cloak",
+      value: 12800,
+      skill: SkillId.WOODCUTTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_woodcutters_cloak.png",
+    ),
+  ),
+  BASIC_HERBALISTS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Basic Herbalist's Hat",
+      value: 800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_herbalists_hat.png",
+    ),
+  ),
+  BASIC_HERBALISTS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Basic Herbalist's Tunic",
+      value: 800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_herbalists_tunic.png",
+    ),
+  ),
+  BASIC_HERBALISTS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Basic Herbalist's Pants",
+      value: 800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_herbalists_pants.png",
+    ),
+  ),
+  BASIC_HERBALISTS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Basic Herbalist's Gloves",
+      value: 800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_herbalists_gloves.png",
+    ),
+  ),
+  BASIC_HERBALISTS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Herbalist's Boots",
+      value: 800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_herbalists_boots.png",
+    ),
+  ),
+  BASIC_HERBALISTS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Herbalist's Cloak",
+      value: 800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_herbalists_cloak.png",
+    ),
+  ),
+  NOVICE_HERBALISTS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Herbalist's Hat",
+      value: 1600,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_herbalists_hat.png",
+    ),
+  ),
+  NOVICE_HERBALISTS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Herbalist's Tunic",
+      value: 1600,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_herbalists_tunic.png",
+    ),
+  ),
+  NOVICE_HERBALISTS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Herbalist's Pants",
+      value: 1600,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_herbalists_pants.png",
+    ),
+  ),
+  NOVICE_HERBALISTS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Herbalist's Gloves",
+      value: 1600,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_herbalists_gloves.png",
+    ),
+  ),
+  NOVICE_HERBALISTS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Herbalist's Boots",
+      value: 1600,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_herbalists_boots.png",
+    ),
+  ),
+  NOVICE_HERBALISTS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Herbalist's Cloak",
+      value: 1600,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_herbalists_cloak.png",
+    ),
+  ),
+  APPRENTICE_HERBALISTS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Herbalist's Hat",
+      value: 3200,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_herbalists_hat.png",
+    ),
+  ),
+  APPRENTICE_HERBALISTS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Herbalist's Tunic",
+      value: 3200,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_herbalists_tunic.png",
+    ),
+  ),
+  APPRENTICE_HERBALISTS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Herbalist's Pants",
+      value: 3200,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_herbalists_pants.png",
+    ),
+  ),
+  APPRENTICE_HERBALISTS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Herbalist's Gloves",
+      value: 3200,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_herbalists_gloves.png",
+    ),
+  ),
+  APPRENTICE_HERBALISTS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Herbalist's Boots",
+      value: 3200,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_herbalists_boots.png",
+    ),
+  ),
+  APPRENTICE_HERBALISTS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Herbalist's Cloak",
+      value: 3200,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_herbalists_cloak.png",
+    ),
+  ),
+  ADVANCED_HERBALISTS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Herbalist's Hat",
+      value: 6400,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_herbalists_hat.png",
+    ),
+  ),
+  ADVANCED_HERBALISTS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Herbalist's Tunic",
+      value: 6400,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_herbalists_tunic.png",
+    ),
+  ),
+  ADVANCED_HERBALISTS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Herbalist's Pants",
+      value: 6400,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_herbalists_pants.png",
+    ),
+  ),
+  ADVANCED_HERBALISTS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Herbalist's Gloves",
+      value: 6400,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_herbalists_gloves.png",
+    ),
+  ),
+  ADVANCED_HERBALISTS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Herbalist's Boots",
+      value: 6400,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_herbalists_boots.png",
+    ),
+  ),
+  ADVANCED_HERBALISTS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Herbalist's Cloak",
+      value: 6400,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_herbalists_cloak.png",
+    ),
+  ),
+  MASTER_HERBALISTS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Herbalist's Hat",
+      value: 12800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_herbalists_hat.png",
+    ),
+  ),
+  MASTER_HERBALISTS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Herbalist's Tunic",
+      value: 12800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_herbalists_tunic.png",
+    ),
+  ),
+  MASTER_HERBALISTS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Herbalist's Pants",
+      value: 12800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_herbalists_pants.png",
+    ),
+  ),
+  MASTER_HERBALISTS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Herbalist's Gloves",
+      value: 12800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_herbalists_gloves.png",
+    ),
+  ),
+  MASTER_HERBALISTS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Herbalist's Boots",
+      value: 12800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_herbalists_boots.png",
+    ),
+  ),
+  MASTER_HERBALISTS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Herbalist's Cloak",
+      value: 12800,
+      skill: SkillId.HERBALISM,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_herbalists_cloak.png",
+    ),
+  ),
+  BASIC_FIREMAKERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Basic Firemaker's Hat",
+      value: 800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_firemakers_hat.png",
+    ),
+  ),
+  BASIC_FIREMAKERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Basic Firemaker's Tunic",
+      value: 800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_firemakers_tunic.png",
+    ),
+  ),
+  BASIC_FIREMAKERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Basic Firemaker's Pants",
+      value: 800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_firemakers_pants.png",
+    ),
+  ),
+  BASIC_FIREMAKERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Basic Firemaker's Gloves",
+      value: 800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_firemakers_gloves.png",
+    ),
+  ),
+  BASIC_FIREMAKERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Firemaker's Boots",
+      value: 800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_firemakers_boots.png",
+    ),
+  ),
+  BASIC_FIREMAKERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Firemaker's Cloak",
+      value: 800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_firemakers_cloak.png",
+    ),
+  ),
+  NOVICE_FIREMAKERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Firemaker's Hat",
+      value: 1600,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_firemakers_hat.png",
+    ),
+  ),
+  NOVICE_FIREMAKERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Firemaker's Tunic",
+      value: 1600,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_firemakers_tunic.png",
+    ),
+  ),
+  NOVICE_FIREMAKERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Firemaker's Pants",
+      value: 1600,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_firemakers_pants.png",
+    ),
+  ),
+  NOVICE_FIREMAKERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Firemaker's Gloves",
+      value: 1600,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_firemakers_gloves.png",
+    ),
+  ),
+  NOVICE_FIREMAKERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Firemaker's Boots",
+      value: 1600,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_firemakers_boots.png",
+    ),
+  ),
+  NOVICE_FIREMAKERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Firemaker's Cloak",
+      value: 1600,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_firemakers_cloak.png",
+    ),
+  ),
+  APPRENTICE_FIREMAKERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Firemaker's Hat",
+      value: 3200,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_firemakers_hat.png",
+    ),
+  ),
+  APPRENTICE_FIREMAKERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Firemaker's Tunic",
+      value: 3200,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_firemakers_tunic.png",
+    ),
+  ),
+  APPRENTICE_FIREMAKERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Firemaker's Pants",
+      value: 3200,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_firemakers_pants.png",
+    ),
+  ),
+  APPRENTICE_FIREMAKERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Firemaker's Gloves",
+      value: 3200,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_firemakers_gloves.png",
+    ),
+  ),
+  APPRENTICE_FIREMAKERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Firemaker's Boots",
+      value: 3200,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_firemakers_boots.png",
+    ),
+  ),
+  APPRENTICE_FIREMAKERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Firemaker's Cloak",
+      value: 3200,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_firemakers_cloak.png",
+    ),
+  ),
+  ADVANCED_FIREMAKERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Firemaker's Hat",
+      value: 6400,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_firemakers_hat.png",
+    ),
+  ),
+  ADVANCED_FIREMAKERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Firemaker's Tunic",
+      value: 6400,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_firemakers_tunic.png",
+    ),
+  ),
+  ADVANCED_FIREMAKERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Firemaker's Pants",
+      value: 6400,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_firemakers_pants.png",
+    ),
+  ),
+  ADVANCED_FIREMAKERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Firemaker's Gloves",
+      value: 6400,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_firemakers_gloves.png",
+    ),
+  ),
+  ADVANCED_FIREMAKERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Firemaker's Boots",
+      value: 6400,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_firemakers_boots.png",
+    ),
+  ),
+  ADVANCED_FIREMAKERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Firemaker's Cloak",
+      value: 6400,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_firemakers_cloak.png",
+    ),
+  ),
+  MASTER_FIREMAKERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Firemaker's Hat",
+      value: 12800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_firemakers_hat.png",
+    ),
+  ),
+  MASTER_FIREMAKERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Firemaker's Tunic",
+      value: 12800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_firemakers_tunic.png",
+    ),
+  ),
+  MASTER_FIREMAKERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Firemaker's Pants",
+      value: 12800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_firemakers_pants.png",
+    ),
+  ),
+  MASTER_FIREMAKERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Firemaker's Gloves",
+      value: 12800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_firemakers_gloves.png",
+    ),
+  ),
+  MASTER_FIREMAKERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Firemaker's Boots",
+      value: 12800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_firemakers_boots.png",
+    ),
+  ),
+  MASTER_FIREMAKERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Firemaker's Cloak",
+      value: 12800,
+      skill: SkillId.FIREMAKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_firemakers_cloak.png",
+    ),
+  ),
+  BASIC_COOKS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Basic Cook's Hat",
+      value: 800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_cooks_hat.png",
+    ),
+  ),
+  BASIC_COOKS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Basic Cook's Tunic",
+      value: 800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_cooks_tunic.png",
+    ),
+  ),
+  BASIC_COOKS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Basic Cook's Pants",
+      value: 800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_cooks_pants.png",
+    ),
+  ),
+  BASIC_COOKS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Basic Cook's Gloves",
+      value: 800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_cooks_gloves.png",
+    ),
+  ),
+  BASIC_COOKS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Cook's Boots",
+      value: 800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_cooks_boots.png",
+    ),
+  ),
+  BASIC_COOKS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Cook's Cloak",
+      value: 800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_cooks_cloak.png",
+    ),
+  ),
+  NOVICE_COOKS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Cook's Hat",
+      value: 1600,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_cooks_hat.png",
+    ),
+  ),
+  NOVICE_COOKS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Cook's Tunic",
+      value: 1600,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_cooks_tunic.png",
+    ),
+  ),
+  NOVICE_COOKS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Cook's Pants",
+      value: 1600,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_cooks_pants.png",
+    ),
+  ),
+  NOVICE_COOKS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Cook's Gloves",
+      value: 1600,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_cooks_gloves.png",
+    ),
+  ),
+  NOVICE_COOKS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Cook's Boots",
+      value: 1600,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_cooks_boots.png",
+    ),
+  ),
+  NOVICE_COOKS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Cook's Cloak",
+      value: 1600,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_cooks_cloak.png",
+    ),
+  ),
+  APPRENTICE_COOKS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Cook's Hat",
+      value: 3200,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_cooks_hat.png",
+    ),
+  ),
+  APPRENTICE_COOKS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Cook's Tunic",
+      value: 3200,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_cooks_tunic.png",
+    ),
+  ),
+  APPRENTICE_COOKS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Cook's Pants",
+      value: 3200,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_cooks_pants.png",
+    ),
+  ),
+  APPRENTICE_COOKS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Cook's Gloves",
+      value: 3200,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_cooks_gloves.png",
+    ),
+  ),
+  APPRENTICE_COOKS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Cook's Boots",
+      value: 3200,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_cooks_boots.png",
+    ),
+  ),
+  APPRENTICE_COOKS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Cook's Cloak",
+      value: 3200,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_cooks_cloak.png",
+    ),
+  ),
+  ADVANCED_COOKS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Cook's Hat",
+      value: 6400,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_cooks_hat.png",
+    ),
+  ),
+  ADVANCED_COOKS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Cook's Tunic",
+      value: 6400,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_cooks_tunic.png",
+    ),
+  ),
+  ADVANCED_COOKS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Cook's Pants",
+      value: 6400,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_cooks_pants.png",
+    ),
+  ),
+  ADVANCED_COOKS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Cook's Gloves",
+      value: 6400,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_cooks_gloves.png",
+    ),
+  ),
+  ADVANCED_COOKS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Cook's Boots",
+      value: 6400,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_cooks_boots.png",
+    ),
+  ),
+  ADVANCED_COOKS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Cook's Cloak",
+      value: 6400,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_cooks_cloak.png",
+    ),
+  ),
+  MASTER_COOKS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Cook's Hat",
+      value: 12800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_cooks_hat.png",
+    ),
+  ),
+  MASTER_COOKS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Cook's Tunic",
+      value: 12800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_cooks_tunic.png",
+    ),
+  ),
+  MASTER_COOKS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Cook's Pants",
+      value: 12800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_cooks_pants.png",
+    ),
+  ),
+  MASTER_COOKS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Cook's Gloves",
+      value: 12800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_cooks_gloves.png",
+    ),
+  ),
+  MASTER_COOKS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Cook's Boots",
+      value: 12800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_cooks_boots.png",
+    ),
+  ),
+  MASTER_COOKS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Cook's Cloak",
+      value: 12800,
+      skill: SkillId.COOKING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_cooks_cloak.png",
+    ),
+  ),
+  BASIC_BLACKSMITHS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Basic Blacksmith's Hat",
+      value: 800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_blacksmiths_hat.png",
+    ),
+  ),
+  BASIC_BLACKSMITHS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Basic Blacksmith's Tunic",
+      value: 800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_blacksmiths_tunic.png",
+    ),
+  ),
+  BASIC_BLACKSMITHS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Basic Blacksmith's Pants",
+      value: 800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_blacksmiths_pants.png",
+    ),
+  ),
+  BASIC_BLACKSMITHS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Basic Blacksmith's Gloves",
+      value: 800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_blacksmiths_gloves.png",
+    ),
+  ),
+  BASIC_BLACKSMITHS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Blacksmith's Boots",
+      value: 800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_blacksmiths_boots.png",
+    ),
+  ),
+  BASIC_BLACKSMITHS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Blacksmith's Cloak",
+      value: 800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_blacksmiths_cloak.png",
+    ),
+  ),
+  NOVICE_BLACKSMITHS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Blacksmith's Hat",
+      value: 1600,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_blacksmiths_hat.png",
+    ),
+  ),
+  NOVICE_BLACKSMITHS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Blacksmith's Tunic",
+      value: 1600,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_blacksmiths_tunic.png",
+    ),
+  ),
+  NOVICE_BLACKSMITHS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Blacksmith's Pants",
+      value: 1600,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_blacksmiths_pants.png",
+    ),
+  ),
+  NOVICE_BLACKSMITHS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Blacksmith's Gloves",
+      value: 1600,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_blacksmiths_gloves.png",
+    ),
+  ),
+  NOVICE_BLACKSMITHS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Blacksmith's Boots",
+      value: 1600,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_blacksmiths_boots.png",
+    ),
+  ),
+  NOVICE_BLACKSMITHS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Blacksmith's Cloak",
+      value: 1600,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_blacksmiths_cloak.png",
+    ),
+  ),
+  APPRENTICE_BLACKSMITHS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Blacksmith's Hat",
+      value: 3200,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_blacksmiths_hat.png",
+    ),
+  ),
+  APPRENTICE_BLACKSMITHS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Blacksmith's Tunic",
+      value: 3200,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_blacksmiths_tunic.png",
+    ),
+  ),
+  APPRENTICE_BLACKSMITHS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Blacksmith's Pants",
+      value: 3200,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_blacksmiths_pants.png",
+    ),
+  ),
+  APPRENTICE_BLACKSMITHS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Blacksmith's Gloves",
+      value: 3200,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_blacksmiths_gloves.png",
+    ),
+  ),
+  APPRENTICE_BLACKSMITHS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Blacksmith's Boots",
+      value: 3200,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_blacksmiths_boots.png",
+    ),
+  ),
+  APPRENTICE_BLACKSMITHS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Blacksmith's Cloak",
+      value: 3200,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_blacksmiths_cloak.png",
+    ),
+  ),
+  ADVANCED_BLACKSMITHS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Blacksmith's Hat",
+      value: 6400,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_blacksmiths_hat.png",
+    ),
+  ),
+  ADVANCED_BLACKSMITHS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Blacksmith's Tunic",
+      value: 6400,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_blacksmiths_tunic.png",
+    ),
+  ),
+  ADVANCED_BLACKSMITHS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Blacksmith's Pants",
+      value: 6400,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_blacksmiths_pants.png",
+    ),
+  ),
+  ADVANCED_BLACKSMITHS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Blacksmith's Gloves",
+      value: 6400,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_blacksmiths_gloves.png",
+    ),
+  ),
+  ADVANCED_BLACKSMITHS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Blacksmith's Boots",
+      value: 6400,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_blacksmiths_boots.png",
+    ),
+  ),
+  ADVANCED_BLACKSMITHS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Blacksmith's Cloak",
+      value: 6400,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_blacksmiths_cloak.png",
+    ),
+  ),
+  MASTER_BLACKSMITHS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Blacksmith's Hat",
+      value: 12800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_blacksmiths_hat.png",
+    ),
+  ),
+  MASTER_BLACKSMITHS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Blacksmith's Tunic",
+      value: 12800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_blacksmiths_tunic.png",
+    ),
+  ),
+  MASTER_BLACKSMITHS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Blacksmith's Pants",
+      value: 12800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_blacksmiths_pants.png",
+    ),
+  ),
+  MASTER_BLACKSMITHS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Blacksmith's Gloves",
+      value: 12800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_blacksmiths_gloves.png",
+    ),
+  ),
+  MASTER_BLACKSMITHS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Blacksmith's Boots",
+      value: 12800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_blacksmiths_boots.png",
+    ),
+  ),
+  MASTER_BLACKSMITHS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Blacksmith's Cloak",
+      value: 12800,
+      skill: SkillId.BLACKSMITHING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_blacksmiths_cloak.png",
+    ),
+  ),
+  BASIC_ENCHANTERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Basic Enchanter's Hat",
+      value: 800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_enchanters_hat.png",
+    ),
+  ),
+  BASIC_ENCHANTERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Basic Enchanter's Tunic",
+      value: 800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_enchanters_tunic.png",
+    ),
+  ),
+  BASIC_ENCHANTERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Basic Enchanter's Pants",
+      value: 800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_enchanters_pants.png",
+    ),
+  ),
+  BASIC_ENCHANTERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Basic Enchanter's Gloves",
+      value: 800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_enchanters_gloves.png",
+    ),
+  ),
+  BASIC_ENCHANTERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Enchanter's Boots",
+      value: 800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_enchanters_boots.png",
+    ),
+  ),
+  BASIC_ENCHANTERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Enchanter's Cloak",
+      value: 800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_enchanters_cloak.png",
+    ),
+  ),
+  NOVICE_ENCHANTERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Enchanter's Hat",
+      value: 1600,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_enchanters_hat.png",
+    ),
+  ),
+  NOVICE_ENCHANTERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Enchanter's Tunic",
+      value: 1600,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_enchanters_tunic.png",
+    ),
+  ),
+  NOVICE_ENCHANTERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Enchanter's Pants",
+      value: 1600,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_enchanters_pants.png",
+    ),
+  ),
+  NOVICE_ENCHANTERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Enchanter's Gloves",
+      value: 1600,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_enchanters_gloves.png",
+    ),
+  ),
+  NOVICE_ENCHANTERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Enchanter's Boots",
+      value: 1600,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_enchanters_boots.png",
+    ),
+  ),
+  NOVICE_ENCHANTERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Enchanter's Cloak",
+      value: 1600,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_enchanters_cloak.png",
+    ),
+  ),
+  APPRENTICE_ENCHANTERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Enchanter's Hat",
+      value: 3200,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_enchanters_hat.png",
+    ),
+  ),
+  APPRENTICE_ENCHANTERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Enchanter's Tunic",
+      value: 3200,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_enchanters_tunic.png",
+    ),
+  ),
+  APPRENTICE_ENCHANTERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Enchanter's Pants",
+      value: 3200,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_enchanters_pants.png",
+    ),
+  ),
+  APPRENTICE_ENCHANTERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Enchanter's Gloves",
+      value: 3200,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_enchanters_gloves.png",
+    ),
+  ),
+  APPRENTICE_ENCHANTERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Enchanter's Boots",
+      value: 3200,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_enchanters_boots.png",
+    ),
+  ),
+  APPRENTICE_ENCHANTERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Enchanter's Cloak",
+      value: 3200,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_enchanters_cloak.png",
+    ),
+  ),
+  ADVANCED_ENCHANTERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Enchanter's Hat",
+      value: 6400,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_enchanters_hat.png",
+    ),
+  ),
+  ADVANCED_ENCHANTERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Enchanter's Tunic",
+      value: 6400,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_enchanters_tunic.png",
+    ),
+  ),
+  ADVANCED_ENCHANTERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Enchanter's Pants",
+      value: 6400,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_enchanters_pants.png",
+    ),
+  ),
+  ADVANCED_ENCHANTERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Enchanter's Gloves",
+      value: 6400,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_enchanters_gloves.png",
+    ),
+  ),
+  ADVANCED_ENCHANTERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Enchanter's Boots",
+      value: 6400,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_enchanters_boots.png",
+    ),
+  ),
+  ADVANCED_ENCHANTERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Enchanter's Cloak",
+      value: 6400,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_enchanters_cloak.png",
+    ),
+  ),
+  MASTER_ENCHANTERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Enchanter's Hat",
+      value: 12800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_enchanters_hat.png",
+    ),
+  ),
+  MASTER_ENCHANTERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Enchanter's Tunic",
+      value: 12800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_enchanters_tunic.png",
+    ),
+  ),
+  MASTER_ENCHANTERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Enchanter's Pants",
+      value: 12800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_enchanters_pants.png",
+    ),
+  ),
+  MASTER_ENCHANTERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Enchanter's Gloves",
+      value: 12800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_enchanters_gloves.png",
+    ),
+  ),
+  MASTER_ENCHANTERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Enchanter's Boots",
+      value: 12800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_enchanters_boots.png",
+    ),
+  ),
+  MASTER_ENCHANTERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Enchanter's Cloak",
+      value: 12800,
+      skill: SkillId.ENCHANTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_enchanters_cloak.png",
+    ),
+  ),
+  BASIC_JEWELERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Basic Jeweler's Hat",
+      value: 800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_jewelers_hat.png",
+    ),
+  ),
+  BASIC_JEWELERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Basic Jeweler's Tunic",
+      value: 800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_jewelers_tunic.png",
+    ),
+  ),
+  BASIC_JEWELERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Basic Jeweler's Pants",
+      value: 800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_jewelers_pants.png",
+    ),
+  ),
+  BASIC_JEWELERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Basic Jeweler's Gloves",
+      value: 800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_jewelers_gloves.png",
+    ),
+  ),
+  BASIC_JEWELERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Jeweler's Boots",
+      value: 800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_jewelers_boots.png",
+    ),
+  ),
+  BASIC_JEWELERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Jeweler's Cloak",
+      value: 800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_jewelers_cloak.png",
+    ),
+  ),
+  NOVICE_JEWELERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Jeweler's Hat",
+      value: 1600,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_jewelers_hat.png",
+    ),
+  ),
+  NOVICE_JEWELERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Jeweler's Tunic",
+      value: 1600,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_jewelers_tunic.png",
+    ),
+  ),
+  NOVICE_JEWELERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Jeweler's Pants",
+      value: 1600,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_jewelers_pants.png",
+    ),
+  ),
+  NOVICE_JEWELERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Jeweler's Gloves",
+      value: 1600,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_jewelers_gloves.png",
+    ),
+  ),
+  NOVICE_JEWELERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Jeweler's Boots",
+      value: 1600,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_jewelers_boots.png",
+    ),
+  ),
+  NOVICE_JEWELERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Jeweler's Cloak",
+      value: 1600,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_jewelers_cloak.png",
+    ),
+  ),
+  APPRENTICE_JEWELERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Jeweler's Hat",
+      value: 3200,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_jewelers_hat.png",
+    ),
+  ),
+  APPRENTICE_JEWELERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Jeweler's Tunic",
+      value: 3200,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_jewelers_tunic.png",
+    ),
+  ),
+  APPRENTICE_JEWELERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Jeweler's Pants",
+      value: 3200,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_jewelers_pants.png",
+    ),
+  ),
+  APPRENTICE_JEWELERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Jeweler's Gloves",
+      value: 3200,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_jewelers_gloves.png",
+    ),
+  ),
+  APPRENTICE_JEWELERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Jeweler's Boots",
+      value: 3200,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_jewelers_boots.png",
+    ),
+  ),
+  APPRENTICE_JEWELERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Jeweler's Cloak",
+      value: 3200,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_jewelers_cloak.png",
+    ),
+  ),
+  ADVANCED_JEWELERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Jeweler's Hat",
+      value: 6400,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_jewelers_hat.png",
+    ),
+  ),
+  ADVANCED_JEWELERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Jeweler's Tunic",
+      value: 6400,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_jewelers_tunic.png",
+    ),
+  ),
+  ADVANCED_JEWELERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Jeweler's Pants",
+      value: 6400,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_jewelers_pants.png",
+    ),
+  ),
+  ADVANCED_JEWELERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Jeweler's Gloves",
+      value: 6400,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_jewelers_gloves.png",
+    ),
+  ),
+  ADVANCED_JEWELERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Jeweler's Boots",
+      value: 6400,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_jewelers_boots.png",
+    ),
+  ),
+  ADVANCED_JEWELERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Jeweler's Cloak",
+      value: 6400,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_jewelers_cloak.png",
+    ),
+  ),
+  MASTER_JEWELERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Jeweler's Hat",
+      value: 12800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_jewelers_hat.png",
+    ),
+  ),
+  MASTER_JEWELERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Jeweler's Tunic",
+      value: 12800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_jewelers_tunic.png",
+    ),
+  ),
+  MASTER_JEWELERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Jeweler's Pants",
+      value: 12800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_jewelers_pants.png",
+    ),
+  ),
+  MASTER_JEWELERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Jeweler's Gloves",
+      value: 12800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_jewelers_gloves.png",
+    ),
+  ),
+  MASTER_JEWELERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Jeweler's Boots",
+      value: 12800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_jewelers_boots.png",
+    ),
+  ),
+  MASTER_JEWELERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Jeweler's Cloak",
+      value: 12800,
+      skill: SkillId.JEWELCRAFTING,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_jewelers_cloak.png",
+    ),
+  ),
+  BASIC_ALCHEMISTS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Basic Alchemist's Hat",
+      value: 800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_alchemists_hat.png",
+    ),
+  ),
+  BASIC_ALCHEMISTS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Basic Alchemist's Tunic",
+      value: 800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_alchemists_tunic.png",
+    ),
+  ),
+  BASIC_ALCHEMISTS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Basic Alchemist's Pants",
+      value: 800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_alchemists_pants.png",
+    ),
+  ),
+  BASIC_ALCHEMISTS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Basic Alchemist's Gloves",
+      value: 800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_alchemists_gloves.png",
+    ),
+  ),
+  BASIC_ALCHEMISTS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Alchemist's Boots",
+      value: 800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_alchemists_boots.png",
+    ),
+  ),
+  BASIC_ALCHEMISTS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Alchemist's Cloak",
+      value: 800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_alchemists_cloak.png",
+    ),
+  ),
+  NOVICE_ALCHEMISTS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Alchemist's Hat",
+      value: 1600,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_alchemists_hat.png",
+    ),
+  ),
+  NOVICE_ALCHEMISTS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Alchemist's Tunic",
+      value: 1600,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_alchemists_tunic.png",
+    ),
+  ),
+  NOVICE_ALCHEMISTS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Alchemist's Pants",
+      value: 1600,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_alchemists_pants.png",
+    ),
+  ),
+  NOVICE_ALCHEMISTS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Alchemist's Gloves",
+      value: 1600,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_alchemists_gloves.png",
+    ),
+  ),
+  NOVICE_ALCHEMISTS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Alchemist's Boots",
+      value: 1600,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_alchemists_boots.png",
+    ),
+  ),
+  NOVICE_ALCHEMISTS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Alchemist's Cloak",
+      value: 1600,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_alchemists_cloak.png",
+    ),
+  ),
+  APPRENTICE_ALCHEMISTS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Alchemist's Hat",
+      value: 3200,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_alchemists_hat.png",
+    ),
+  ),
+  APPRENTICE_ALCHEMISTS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Alchemist's Tunic",
+      value: 3200,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_alchemists_tunic.png",
+    ),
+  ),
+  APPRENTICE_ALCHEMISTS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Alchemist's Pants",
+      value: 3200,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_alchemists_pants.png",
+    ),
+  ),
+  APPRENTICE_ALCHEMISTS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Alchemist's Gloves",
+      value: 3200,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_alchemists_gloves.png",
+    ),
+  ),
+  APPRENTICE_ALCHEMISTS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Alchemist's Boots",
+      value: 3200,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_alchemists_boots.png",
+    ),
+  ),
+  APPRENTICE_ALCHEMISTS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Alchemist's Cloak",
+      value: 3200,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_alchemists_cloak.png",
+    ),
+  ),
+  ADVANCED_ALCHEMISTS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Alchemist's Hat",
+      value: 6400,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_alchemists_hat.png",
+    ),
+  ),
+  ADVANCED_ALCHEMISTS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Alchemist's Tunic",
+      value: 6400,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_alchemists_tunic.png",
+    ),
+  ),
+  ADVANCED_ALCHEMISTS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Alchemist's Pants",
+      value: 6400,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_alchemists_pants.png",
+    ),
+  ),
+  ADVANCED_ALCHEMISTS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Alchemist's Gloves",
+      value: 6400,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_alchemists_gloves.png",
+    ),
+  ),
+  ADVANCED_ALCHEMISTS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Alchemist's Boots",
+      value: 6400,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_alchemists_boots.png",
+    ),
+  ),
+  ADVANCED_ALCHEMISTS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Alchemist's Cloak",
+      value: 6400,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_alchemists_cloak.png",
+    ),
+  ),
+  MASTER_ALCHEMISTS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Alchemist's Hat",
+      value: 12800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_alchemists_hat.png",
+    ),
+  ),
+  MASTER_ALCHEMISTS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Alchemist's Tunic",
+      value: 12800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_alchemists_tunic.png",
+    ),
+  ),
+  MASTER_ALCHEMISTS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Alchemist's Pants",
+      value: 12800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_alchemists_pants.png",
+    ),
+  ),
+  MASTER_ALCHEMISTS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Alchemist's Gloves",
+      value: 12800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_alchemists_gloves.png",
+    ),
+  ),
+  MASTER_ALCHEMISTS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Alchemist's Boots",
+      value: 12800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_alchemists_boots.png",
+    ),
+  ),
+  MASTER_ALCHEMISTS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Alchemist's Cloak",
+      value: 12800,
+      skill: SkillId.ALCHEMY,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_alchemists_cloak.png",
+    ),
+  ),
+  BASIC_EXPLORERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Basic Explorer's Hat",
+      value: 800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_explorers_hat.png",
+    ),
+  ),
+  BASIC_EXPLORERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Basic Explorer's Tunic",
+      value: 800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_explorers_tunic.png",
+    ),
+  ),
+  BASIC_EXPLORERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Basic Explorer's Pants",
+      value: 800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_explorers_pants.png",
+    ),
+  ),
+  BASIC_EXPLORERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Basic Explorer's Gloves",
+      value: 800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_explorers_gloves.png",
+    ),
+  ),
+  BASIC_EXPLORERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Basic Explorer's Boots",
+      value: 800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_explorers_boots.png",
+    ),
+  ),
+  BASIC_EXPLORERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Basic Explorer's Cloak",
+      value: 800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.BASIC,
+      iconAsset: "assets/icons/items/basic_explorers_cloak.png",
+    ),
+  ),
+  NOVICE_EXPLORERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Novice Explorer's Hat",
+      value: 1600,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_explorers_hat.png",
+    ),
+  ),
+  NOVICE_EXPLORERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Novice Explorer's Tunic",
+      value: 1600,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_explorers_tunic.png",
+    ),
+  ),
+  NOVICE_EXPLORERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Novice Explorer's Pants",
+      value: 1600,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_explorers_pants.png",
+    ),
+  ),
+  NOVICE_EXPLORERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Novice Explorer's Gloves",
+      value: 1600,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_explorers_gloves.png",
+    ),
+  ),
+  NOVICE_EXPLORERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Novice Explorer's Boots",
+      value: 1600,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_explorers_boots.png",
+    ),
+  ),
+  NOVICE_EXPLORERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Novice Explorer's Cloak",
+      value: 1600,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.NOVICE,
+      iconAsset: "assets/icons/items/novice_explorers_cloak.png",
+    ),
+  ),
+  APPRENTICE_EXPLORERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Apprentice Explorer's Hat",
+      value: 3200,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_explorers_hat.png",
+    ),
+  ),
+  APPRENTICE_EXPLORERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Apprentice Explorer's Tunic",
+      value: 3200,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_explorers_tunic.png",
+    ),
+  ),
+  APPRENTICE_EXPLORERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Apprentice Explorer's Pants",
+      value: 3200,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_explorers_pants.png",
+    ),
+  ),
+  APPRENTICE_EXPLORERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Apprentice Explorer's Gloves",
+      value: 3200,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_explorers_gloves.png",
+    ),
+  ),
+  APPRENTICE_EXPLORERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Apprentice Explorer's Boots",
+      value: 3200,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_explorers_boots.png",
+    ),
+  ),
+  APPRENTICE_EXPLORERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Apprentice Explorer's Cloak",
+      value: 3200,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.APPRENTICE,
+      iconAsset: "assets/icons/items/apprentice_explorers_cloak.png",
+    ),
+  ),
+  ADVANCED_EXPLORERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Advanced Explorer's Hat",
+      value: 6400,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_explorers_hat.png",
+    ),
+  ),
+  ADVANCED_EXPLORERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Advanced Explorer's Tunic",
+      value: 6400,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_explorers_tunic.png",
+    ),
+  ),
+  ADVANCED_EXPLORERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Advanced Explorer's Pants",
+      value: 6400,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_explorers_pants.png",
+    ),
+  ),
+  ADVANCED_EXPLORERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Advanced Explorer's Gloves",
+      value: 6400,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_explorers_gloves.png",
+    ),
+  ),
+  ADVANCED_EXPLORERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Advanced Explorer's Boots",
+      value: 6400,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_explorers_boots.png",
+    ),
+  ),
+  ADVANCED_EXPLORERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Advanced Explorer's Cloak",
+      value: 6400,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.ADVANCED,
+      iconAsset: "assets/icons/items/advanced_explorers_cloak.png",
+    ),
+  ),
+  MASTER_EXPLORERS_HAT(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Master Explorer's Hat",
+      value: 12800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_explorers_hat.png",
+    ),
+  ),
+  MASTER_EXPLORERS_TUNIC(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Master Explorer's Tunic",
+      value: 12800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_explorers_tunic.png",
+    ),
+  ),
+  MASTER_EXPLORERS_PANTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Master Explorer's Pants",
+      value: 12800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_explorers_pants.png",
+    ),
+  ),
+  MASTER_EXPLORERS_GLOVES(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Master Explorer's Gloves",
+      value: 12800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_explorers_gloves.png",
+    ),
+  ),
+  MASTER_EXPLORERS_BOOTS(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Master Explorer's Boots",
+      value: 12800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_explorers_boots.png",
+    ),
+  ),
+  MASTER_EXPLORERS_CLOAK(
+    SkillingGearDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Master Explorer's Cloak",
+      value: 12800,
+      skill: SkillId.EXPLORATION,
+      tier: SkillingGearTier.MASTER,
+      iconAsset: "assets/icons/items/master_explorers_cloak.png",
     ),
   ),
 
@@ -2924,6 +6211,24 @@ enum ItemId {
   Item build() => definition.toItem(this);
 
   String? get iconAsset => definition.iconAsset;
+
+  /// Ids that were renamed, keyed by the name a save written before the
+  /// rename still holds. A rename is only safe with its old name here —
+  /// every save decode goes through [byName], which falls back to this.
+  static const Map<String, ItemId> renamed = {
+    'FISHERMANS_BOOTS': BASIC_FISHERS_BOOTS,
+    'FISHERMANS_HAT': BASIC_FISHERS_HAT,
+    'FISHERMANS_TUNIC': BASIC_FISHERS_TUNIC,
+    'FISHERMANS_PANTS': BASIC_FISHERS_PANTS,
+    'FISHERMANS_GLOVES': BASIC_FISHERS_GLOVES,
+    'FISHERMANS_CLOAK': BASIC_FISHERS_CLOAK,
+  };
+
+  static final Map<String, ItemId> _byName = values.asNameMap();
+
+  /// The item a saved [name] refers to, following [renamed]; null when it
+  /// names nothing, so a retired id can be skipped rather than thrown on.
+  static ItemId? byName(String name) => _byName[name] ?? renamed[name];
 
   /// Icon lookup for [EnumImageProviderLookup], which keys on the id's Type
   /// and so hands back a `dynamic`.

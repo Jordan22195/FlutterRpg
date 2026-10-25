@@ -23,10 +23,9 @@ class ShopStockSlot {
       throw FormatException('Missing or invalid "count". Expected int.');
     }
 
-    final itemId = ItemId.values.firstWhere(
-      (i) => i.name == rawItemId,
-      orElse: () => throw FormatException('Invalid ItemId "$rawItemId".'),
-    );
+    final itemId =
+        ItemId.byName(rawItemId) ??
+        (throw FormatException('Invalid ItemId "$rawItemId".'));
 
     return ShopStockSlot(itemId: itemId, count: rawCount);
   }

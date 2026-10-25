@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/rarity.dart';
@@ -11,18 +10,19 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/inventory_service.dart';
 import 'package:rpg/services/shop_service.dart';
 
-// The Fisherman's set: six pieces of +2 fishing each. Half drop off the Wolf
-// Den's bosses, half rotate through the trading post at 1,000 coins.
+// The basic fisher's set: six pieces of +2 fishing each. The pants, gloves
+// and cloak rotate through the trading post at 1,000 coins; the Wolf Den's
+// drops are in wolf_den_bosses_test.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   const slots = {
-    ItemId.FISHERMANS_BOOTS: ArmorSlots.FEET,
-    ItemId.FISHERMANS_HAT: ArmorSlots.HEAD,
-    ItemId.FISHERMANS_TUNIC: ArmorSlots.CHEST,
-    ItemId.FISHERMANS_PANTS: ArmorSlots.LEGS,
-    ItemId.FISHERMANS_GLOVES: ArmorSlots.HANDS,
-    ItemId.FISHERMANS_CLOAK: ArmorSlots.BACK,
+    ItemId.BASIC_FISHERS_BOOTS: ArmorSlots.FEET,
+    ItemId.BASIC_FISHERS_HAT: ArmorSlots.HEAD,
+    ItemId.BASIC_FISHERS_TUNIC: ArmorSlots.CHEST,
+    ItemId.BASIC_FISHERS_PANTS: ArmorSlots.LEGS,
+    ItemId.BASIC_FISHERS_GLOVES: ArmorSlots.HANDS,
+    ItemId.BASIC_FISHERS_CLOAK: ArmorSlots.BACK,
   };
 
   test('every piece is +2 fishing and nothing else, each in its own slot', () {
@@ -35,37 +35,13 @@ void main() {
     }
   });
 
-  test('the boots, hat and tunic drop off the Wolf Den\'s bosses', () {
-    const bosses = {
-      EntityId.FOREST_WOLF_RARE: ItemId.FISHERMANS_BOOTS,
-      EntityId.FUNGAL_MONSTER_UNCOMMON: ItemId.FISHERMANS_HAT,
-      EntityId.NAGA: ItemId.FISHERMANS_TUNIC,
-    };
-    final den = DungeonId.WOLF_DEN.definition.entries;
-
-    for (final boss in bosses.entries) {
-      // a boss is its card's last member
-      expect(
-        den.map((card) => card.entities.last.entityId),
-        contains(boss.key),
-        reason: '${boss.key.name} is not a Wolf Den boss',
-      );
-      final def = boss.key.definition as EncounterEntityDefinition;
-      final rolls = def.bonusDrops.where(
-        (roll) => roll.entries.any((e) => e.id == boss.value),
-      );
-      expect(rolls, hasLength(1), reason: boss.key.name);
-      expect(rolls.single.chance, 0.1);
-    }
-  });
-
   test('the pants, gloves and cloak rotate through the trading post at 1k', () {
     final def = EntityId.TRADING_POST.definition as ShopEntityDefinition;
     final pool = def.shopStockPool.map((e) => e.itemId).toList();
     const sold = [
-      ItemId.FISHERMANS_PANTS,
-      ItemId.FISHERMANS_GLOVES,
-      ItemId.FISHERMANS_CLOAK,
+      ItemId.BASIC_FISHERS_PANTS,
+      ItemId.BASIC_FISHERS_GLOVES,
+      ItemId.BASIC_FISHERS_CLOAK,
     ];
     expect(pool, containsAll(sold));
     // more than the shelf holds, so a restock rotates what is on it

@@ -75,10 +75,17 @@ class DungeonScreen extends StatelessWidget {
                           : null,
                       // tapping a tile reads what it is and what it drops;
                       // a sealed floor's tiles are hidden and take no taps
-                      entityTileBuilder: (entity) => DiscoveryTile(
-                        entity: entity,
-                        onTap: () => _showEntityDetails(context, entity),
-                      ),
+                      // the floor's boss gets a tile of its own
+                      entityTileBuilder: (entity) =>
+                          DungeonScreen.isDungeonBoss(entity)
+                          ? BossTile(
+                              entity: entity,
+                              onTap: () => _showEntityDetails(context, entity),
+                            )
+                          : DiscoveryTile(
+                              entity: entity,
+                              onTap: () => _showEntityDetails(context, entity),
+                            ),
                     ),
                 ],
               ),
@@ -228,6 +235,11 @@ class DungeonScreen extends StatelessWidget {
     );
     controller.leaveSlot(token);
   }
+
+  /// Whether [entity] is the boss its floor builds to.
+  @visibleForTesting
+  static bool isDungeonBoss(EncounterEntity entity) =>
+      entity is CombatEntity && entity.definition.isDungeonBoss;
 
   void _showEntityDetails(BuildContext context, EncounterEntity entity) {
     showEntityInfoDialog(context, entity);

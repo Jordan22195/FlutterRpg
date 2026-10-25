@@ -46,9 +46,11 @@ void main() {
     test('goblin has a 5% bonus roll for the Goblin Queen key', () {
       final def = EntityId.GOBLIN.definition as CombatEntityDefinition;
 
-      // the key rides on a bonus roll, so it must not have displaced
-      // anything in the main table — coins still drop there
-      expect(def.itemDrops.flattened.map((d) => d.id), contains(ItemId.COINS));
+      // the key rides on a bonus roll, never competing in the main table
+      expect(
+        def.itemDrops.flattened.map((d) => d.id),
+        isNot(contains(ItemId.GOBLIN_QUEEN_KEY)),
+      );
 
       // exactly one bonus roll, 5%, yielding the key
       expect(def.bonusDrops, hasLength(1));
@@ -66,7 +68,7 @@ void main() {
       expect(def.hitpoints, greaterThan(100));
     });
 
-    test('every kill yields a guaranteed unique plus bulk coins', () {
+    test('every kill yields a guaranteed unique', () {
       final def = EntityId.GOBLIN_QUEEN.definition as CombatEntityDefinition;
       final rng = Random(7);
 
@@ -79,9 +81,8 @@ void main() {
         final ids = drops.map((s) => s.id.id).toSet();
         // guaranteed one of the uniques
         expect(ids.intersection(uniques), isNotEmpty);
-        // guaranteed bulk coin stack
-        final coinStack = drops.firstWhere((s) => s.id.id == ItemId.COINS);
-        expect(coinStack.count, 500);
+        // and nothing else: an entity drops no coins
+        expect(ids.difference(uniques), isEmpty);
       }
     });
   });

@@ -7,7 +7,9 @@ import '../controllers/buff_controller.dart';
 import '../controllers/equipment_controller.dart';
 import '../controllers/inventory_controller.dart';
 import '../data/equipment_data.dart';
+import '../data/gear_set.dart';
 import '../data/skill_data.dart';
+import '../services/equipment_service.dart';
 import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
 import '../widgets/equipment_picker.dart';
@@ -239,6 +241,8 @@ class _GearScreenState extends State<GearScreen> {
           _paperDoll(context, equipmentController),
           _weaponRow(context, equipmentController),
           _detailCard(context, equipmentController),
+          _sectionHeader(context, 'Gear sets'),
+          _gearSetsPanel(context, equipmentController),
           _sectionHeader(context, 'Tools'),
           _toolsRow(context, equipmentController),
           _sectionHeader(context, 'Potions'),
@@ -739,6 +743,234 @@ class _GearScreenState extends State<GearScreen> {
     );
   }
 
+  /// The saved outfits: one row each with a button to change into it and a
+  /// menu to rename, re-save or delete it, then a button to save what is
+  /// worn as a new one.
+  Widget _gearSetsPanel(
+    BuildContext context,
+    EquipmentController equipmentController,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    final sets = equipmentController.gearSets;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (sets.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                'Save what you are wearing to swap back into it in one tap',
+                style: TextStyle(fontSize: 12, color: scheme.outline),
+              ),
+            ),
+          for (var i = 0; i < sets.length; i++)
+            _gearSetRow(context, equipmentController, i, sets[i]),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const ValueKey('gear-set-save'),
+              onPressed: equipmentController.canSaveGearSet
+                  ? () => _saveGearSet(equipmentController)
+                  : null,
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(
+                equipmentController.canSaveGearSet
+                    ? 'Save current gear'
+                    : 'Set list full (${EquipmentService.maxGearSets})',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _gearSetRow(
+    BuildContext context,
+    EquipmentController equipmentController,
+    int index,
+    GearSet set,
+  ) {
+    final scheme = Theme.of(context).colorScheme;
+    final worn = equipmentController.isWearingGearSet(index);
+    final pieces =
+        set.armor.length + (set.includesTools ? set.tools.length : 0);
+    return Container(
+      key: ValueKey('gear-set-row-$index'),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.fromLTRB(12, 4, 4, 4),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(
+          color: worn ? scheme.primary : scheme.outline.withOpacity(0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  set.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  '$pieces ${pieces == 1 ? 'piece' : 'pieces'}'
+                  '${set.includesTools ? ' · with tools' : ''}',
+                  style: TextStyle(fontSize: 11, color: scheme.outline),
+                ),
+              ],
+            ),
+          ),
+          FilledButton.tonal(
+            key: ValueKey('gear-set-wear-$index'),
+            onPressed: worn ? null : () => _swapToGearSet(index),
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            child: Text(worn ? 'Worn' : 'Wear'),
+          ),
+          PopupMenuButton<String>(
+            key: ValueKey('gear-set-menu-$index'),
+            tooltip: 'Set options',
+            onSelected: (choice) {
+              switch (choice) {
+                case 'rename':
+                  _renameGearSet(equipmentController, index, set);
+                case 'overwrite':
+                  equipmentController.overwriteGearSet(
+                    index,
+                    includeTools: set.includesTools,
+                  );
+                case 'delete':
+                  _deleteGearSet(equipmentController, index, set);
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'rename', child: Text('Rename')),
+              PopupMenuItem(
+                value: 'overwrite',
+                child: Text('Save current gear here'),
+              ),
+              PopupMenuItem(value: 'delete', child: Text('Delete')),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _swapToGearSet(int index) {
+    final equipmentController = context.read<EquipmentController>();
+    final name = equipmentController.gearSets[index].name;
+    final skipped = equipmentController.swapToGearSet(index);
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          skipped.isEmpty
+              ? 'Wearing $name'
+              : 'Wearing $name — left out '
+                    '${skipped.map(_skipText).join(', ')}',
+        ),
+      ),
+    );
+  }
+
+  String _skipText(GearSetSkip skip) {
+    final label = skip.piece.label.isEmpty ? 'a piece' : skip.piece.label;
+    final needed = skip.requirement;
+    return switch (skip.reason) {
+      GearSetSkipReason.missing => '$label (no longer owned)',
+      GearSetSkipReason.locked when needed != null =>
+        '$label (needs ${_skillLabel(needed.skill)} ${needed.level})',
+      GearSetSkipReason.locked => '$label (level too low)',
+      GearSetSkipReason.wrongSlot => '$label (no longer fits)',
+    };
+  }
+
+  /// Asks for a name (and whether tools come along) and saves what is worn.
+  Future<void> _saveGearSet(EquipmentController equipmentController) async {
+    final result = await _gearSetNameDialog(
+      title: 'Save gear set',
+      initialName: equipmentController.defaultGearSetName(),
+      askIncludeTools: true,
+    );
+    if (result == null || !mounted) return;
+    equipmentController.saveGearSet(
+      name: result.name,
+      includeTools: result.includeTools,
+    );
+  }
+
+  Future<void> _renameGearSet(
+    EquipmentController equipmentController,
+    int index,
+    GearSet set,
+  ) async {
+    final result = await _gearSetNameDialog(
+      title: 'Rename gear set',
+      initialName: set.name,
+      askIncludeTools: false,
+    );
+    if (result == null || !mounted) return;
+    equipmentController.renameGearSet(index, result.name);
+  }
+
+  Future<void> _deleteGearSet(
+    EquipmentController equipmentController,
+    int index,
+    GearSet set,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Delete ${set.name}?'),
+        content: const Text('The gear itself stays where it is.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            key: const ValueKey('gear-set-delete-confirm'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && mounted) {
+      equipmentController.deleteGearSet(index);
+    }
+  }
+
+  Future<({String name, bool includeTools})?> _gearSetNameDialog({
+    required String title,
+    required String initialName,
+    required bool askIncludeTools,
+  }) {
+    return showDialog<({String name, bool includeTools})>(
+      context: context,
+      builder: (_) => _GearSetNameDialog(
+        title: title,
+        initialName: initialName,
+        askIncludeTools: askIncludeTools,
+      ),
+    );
+  }
+
   List<Widget> _detailStatChips(EquipmentItem item) {
     final chips = <Widget>[
       for (final entry in item.effectiveSkillBonus.entries)
@@ -766,6 +998,78 @@ class _GearScreenState extends State<GearScreen> {
       );
     }
     return chips;
+  }
+}
+
+/// Asks for a gear set's name and, when saving a new one, whether the
+/// gathering tools come along. Pops a record of both, or null on cancel.
+class _GearSetNameDialog extends StatefulWidget {
+  const _GearSetNameDialog({
+    required this.title,
+    required this.initialName,
+    required this.askIncludeTools,
+  });
+
+  final String title;
+  final String initialName;
+  final bool askIncludeTools;
+
+  @override
+  State<_GearSetNameDialog> createState() => _GearSetNameDialogState();
+}
+
+class _GearSetNameDialogState extends State<_GearSetNameDialog> {
+  late final TextEditingController _name = TextEditingController(
+    text: widget.initialName,
+  );
+  bool _includeTools = false;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  void _submit() =>
+      Navigator.pop(context, (name: _name.text, includeTools: _includeTools));
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            key: const ValueKey('gear-set-name-field'),
+            controller: _name,
+            autofocus: true,
+            maxLength: GearSet.maxNameLength,
+            decoration: const InputDecoration(labelText: 'Name'),
+            onSubmitted: (_) => _submit(),
+          ),
+          if (widget.askIncludeTools)
+            CheckboxListTile(
+              key: const ValueKey('gear-set-include-tools'),
+              contentPadding: EdgeInsets.zero,
+              value: _includeTools,
+              onChanged: (v) => setState(() => _includeTools = v ?? false),
+              title: const Text('Include gathering tools'),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          key: const ValueKey('gear-set-dialog-confirm'),
+          onPressed: _submit,
+          child: const Text('Save'),
+        ),
+      ],
+    );
   }
 }
 

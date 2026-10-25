@@ -1,4 +1,5 @@
 import '../catalogs/items/items.dart';
+import 'gear_set.dart';
 import 'skill_data.dart';
 
 enum ArmorSlots {
@@ -68,6 +69,9 @@ class EquipmentData {
 
   ItemId equipedFood = ItemId.NULL;
 
+  /// Outfits the player has saved to swap between, in the order saved.
+  List<GearSet> gearSets = [];
+
   Map<String, dynamic> toJson() {
     return {
       'armorEquipment': {
@@ -79,6 +83,7 @@ class EquipmentData {
           if (entry.value != null) entry.key.name: entry.value!.toJson(),
       },
       'equipedFood': equipedFood.name,
+      'gearSets': [for (final set in gearSets) set.toJson()],
     };
   }
 
@@ -95,7 +100,7 @@ class EquipmentData {
       }
     }
     if (rawValue is String) {
-      final itemId = ItemId.values.asNameMap()[rawValue];
+      final itemId = ItemId.byName(rawValue);
       if (itemId == null || itemId == ItemId.NULL) return null;
       final item = itemId.build();
       return item is EquipmentItem ? item : null;
@@ -132,7 +137,16 @@ class EquipmentData {
 
     final rawFood = json['equipedFood'];
     if (rawFood is String) {
-      data.equipedFood = ItemId.values.asNameMap()[rawFood] ?? ItemId.NULL;
+      data.equipedFood = ItemId.byName(rawFood) ?? ItemId.NULL;
+    }
+
+    // missing from saves written before gear sets existed
+    final rawSets = json['gearSets'];
+    if (rawSets is List) {
+      for (final entry in rawSets) {
+        if (entry is! Map) continue;
+        data.gearSets.add(GearSet.fromJson(Map<String, dynamic>.from(entry)));
+      }
     }
 
     return data;

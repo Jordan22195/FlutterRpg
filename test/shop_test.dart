@@ -87,7 +87,8 @@ void main() {
   test('buying deducts coins, grants the item, and depletes stock', () {
     final shop = shopDef(EntityId.TRADING_POST).toEntity(EntityId.TRADING_POST);
     final def = shopDef(EntityId.TRADING_POST);
-    final inventory = InventoryData(itemMap: {ItemId.COINS: 1000});
+    // well over any one price, so a purchase never spends the coins to zero
+    final inventory = InventoryData(itemMap: {ItemId.COINS: 100000});
 
     shopService.restockIfDue(
       shop,
@@ -101,7 +102,7 @@ void main() {
     final startCount = entry.count;
 
     expect(shopService.buyItem(shop, entry, def, inventory), isTrue);
-    expect(inventory.itemMap[ItemId.COINS], 1000 - price);
+    expect(inventory.itemMap[ItemId.COINS], 100000 - price);
     // the bought item landed in inventory (stackable) or equipment
     final gotStackable = (inventory.itemMap[entry.itemId] ?? 0) >= 1;
     final gotEquipment = inventory.equipment.any((e) => e.id == entry.itemId);

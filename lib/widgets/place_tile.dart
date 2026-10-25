@@ -37,6 +37,9 @@ class PlaceTile extends StatelessWidget {
     this.subtitleRow,
     this.spriteScale = 1,
     this.active = false,
+    this.outlineColor,
+    this.fillColor,
+    this.banner,
   });
 
   /// The sprite shown; usually the place's own entity id, or what is
@@ -88,6 +91,18 @@ class PlaceTile extends StatelessWidget {
   /// the accent and a thin bar along its foot fills with each action, so
   /// the thing being worked stands out from the grid it sits in.
   final bool active;
+
+  /// Rings the tile in this, 2px, in place of the plain border — for a tile
+  /// that has to read apart from the row it sits in, like a floor's boss.
+  /// [active] still wins: the thing being worked is always the accent.
+  final Color? outlineColor;
+
+  /// The tile's fill, in place of the plain surface.
+  final Color? fillColor;
+
+  /// Laid across the top edge of the tile, centred over the sprite frame,
+  /// e.g. a boss's ribbon.
+  final Widget? banner;
 
   static const double height = 120;
   static const double _frameWidth = 64;
@@ -158,11 +173,13 @@ class PlaceTile extends StatelessWidget {
 
     final muted = palette.textMuted;
     final tile = Material(
-      color: palette.surface,
+      color: fillColor ?? palette.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: active
             ? BorderSide(color: palette.accent, width: 2)
+            : outlineColor != null
+            ? BorderSide(color: outlineColor!, width: 2)
             : BorderSide(color: palette.border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -239,6 +256,13 @@ class PlaceTile extends StatelessWidget {
                   ],
                 ),
               ),
+              if (banner != null)
+                Positioned(
+                  top: 3,
+                  left: 0,
+                  right: 0,
+                  child: Center(child: banner!),
+                ),
               if (active)
                 const Positioned(
                   left: 18,

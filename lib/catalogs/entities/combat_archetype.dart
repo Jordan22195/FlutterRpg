@@ -135,8 +135,8 @@ const goblin = CombatArchetype(
 // Bear · roster tier 2 · forest
 const bear = CombatArchetype(
   iconAsset: 'assets/images/entities/bear.png',
-  fibLevel: 7,
-  combatType: CombatType.PLATE_DPS,
+  fibLevel: 6,
+  combatType: CombatType.LEATHER_TANK,
   attackInterval: 2.5,
 );
 // Mudlurc · roster tier 2 · swamp
@@ -149,7 +149,7 @@ const mudlurc = CombatArchetype(
 // Fungal Monster · roster tier 2 · swamp
 const fungalMonster = CombatArchetype(
   iconAsset: 'assets/images/entities/fungal_monster.png',
-  fibLevel: 7,
+  fibLevel: 8,
   combatType: CombatType.SHELL,
   attackInterval: 2.5,
 );

@@ -210,7 +210,7 @@ void main() {
     expect(find.text('Player'), findsOneWidget);
 
     // the tabs, opening on an empty loot list. there is no buffs tab
-    expect(find.text('Loot · 0'), findsOneWidget);
+    expect(find.text('Loot'), findsOneWidget);
     expect(find.text('Skills'), findsWidgets);
     expect(find.textContaining('Buffs'), findsNothing);
     expect(find.text('Info'), findsOneWidget);

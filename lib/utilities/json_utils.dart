@@ -69,6 +69,8 @@ class JsonUtils {
   }
 
   static ItemId parseItemId(String rawValue, {String fieldName = 'itemId'}) {
+    final renamed = ItemId.renamed[rawValue];
+    if (renamed != null) return renamed;
     return parseEnumByName(ItemId.values, rawValue, fieldName);
   }
 

@@ -388,6 +388,27 @@ class GameSessionFactory {
     // with no respawn pending; clear it so the ui isn't stuck spinning
     save.encounterData.respawning = false;
 
+    // the encounter's entity is the zone's own instance in play, but the two
+    // are saved apart and load as two objects. rejoin them, or the relaunch
+    // resume - which matches by instance - reads the zone's as a new
+    // encounter and clears the drops the session had gathered
+    final bound = save.actionTimingData.boundAction;
+    final fighting = save.encounterData.entity;
+    if (bound != null &&
+        bound.kind == BoundActionKind.ENCOUNTER &&
+        fighting != null) {
+      final zone = save.worldData.zones[bound.zoneId];
+      final placed = zone == null
+          ? null
+          : [
+              ...zone.permanentEntities,
+              ...zone.discoveredEntities,
+            ].whereType<EncounterEntity>().where((e) => e.id == fighting.id);
+      if (placed != null && placed.isNotEmpty) {
+        save.encounterData.entity = placed.first;
+      }
+    }
+
     // migration: hitpoints has a level-10 floor; saves created before the
     // floor existed get bumped up (and healed to the new minimum max hp)
     final hpSkill = save.playerData.skillData[SkillId.HITPOINTS];

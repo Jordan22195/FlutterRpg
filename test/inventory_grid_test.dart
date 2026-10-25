@@ -236,8 +236,8 @@ void main() {
       findsNWidgets(2),
     );
     expect(tileFor(ItemId.LOGS), findsNWidgets(2));
-    // the loot tab counts the piece alongside the stack
-    expect(find.text('Loot · 2'), findsOneWidget);
+    // the encounter's loot tab carries no count; the crafting one still does
+    expect(find.text('Loot'), findsOneWidget);
     expect(find.text('Crafted · 2'), findsOneWidget);
 
     session.dispose();

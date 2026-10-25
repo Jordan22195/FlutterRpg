@@ -10,6 +10,10 @@ import '../utilities/util.dart';
 import 'explore_card.dart';
 import 'place_tile.dart';
 import 'sprite_frame.dart';
+import '../catalogs/zones/map_node_type.dart';
+import '../theme/game_colors.dart';
+import '../theme/hearth_text.dart';
+import '../theme/hearth_theme.dart';
 
 /// Something to fight or gather, as a [PlaceTile]: its sprite on a combat
 /// or gathering frame, its name, and the level it is fought at beside how
@@ -22,9 +26,14 @@ class DiscoveryTile extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.active = false,
+    this.boss = false,
   });
 
   final EncounterEntity entity;
+
+  /// Drawn as the floor's boss: ringed and washed in [GameColors.bossColor]
+  /// under a ribbon that says so. See [BossTile].
+  final bool boss;
 
   /// See [PlaceTile.active].
   final bool active;
@@ -94,10 +103,81 @@ class DiscoveryTile extends StatelessWidget {
           'level $level',
         '${e.count} left',
         if (xp != null) '${(xp * e.count).round()} xp',
+        if (boss) 'boss',
       ].join(', '),
       onTap: onTap,
       onLongPress: onLongPress,
       active: active,
+      outlineColor: boss ? GameColors.bossColor : null,
+      fillColor: boss
+          ? Color.alphaBlend(
+              GameColors.bossColor.withValues(alpha: 0.12),
+              context.palette.surface,
+            )
+          : null,
+      banner: boss ? const BossRibbon() : null,
+    );
+  }
+}
+
+/// A dungeon floor's boss, as its own tile: the monster's [DiscoveryTile],
+/// ringed in the boss red and crowned with a "BOSS" ribbon, so the one
+/// fight a floor builds to stands apart from the queue in front of it.
+class BossTile extends StatelessWidget {
+  const BossTile({
+    super.key,
+    required this.entity,
+    this.onTap,
+    this.onLongPress,
+  });
+
+  final EncounterEntity entity;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+
+  @override
+  Widget build(BuildContext context) => DiscoveryTile(
+    entity: entity,
+    onTap: onTap,
+    onLongPress: onLongPress,
+    boss: true,
+  );
+}
+
+/// The "BOSS" pill across the top of a [BossTile].
+class BossRibbon extends StatelessWidget {
+  const BossRibbon({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: GameColors.bossColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // the map's boss lair mark, so a boss reads the same everywhere
+          Icon(
+            MapNodeType.BOSS_LAIR.glyph,
+            size: 10,
+            color: GameColors.onBossColor,
+          ),
+          const SizedBox(width: 2),
+          Text(
+            'BOSS',
+            style: HearthText.rowMeta.copyWith(
+              fontSize: 9,
+              height: 1.2,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: GameColors.onBossColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
