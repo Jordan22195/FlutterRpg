@@ -8,6 +8,7 @@ import 'gear_screen.dart';
 import 'inventory_screen.dart';
 import 'map_screen.dart';
 import 'queue_screen.dart';
+import 'settings_screen.dart';
 import 'skills_screen.dart';
 import '../catalogs/dungeons/dungeons.dart';
 import '../catalogs/entities/entities.dart';
@@ -37,7 +38,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int index = 0;
 
-  final _navKeys = List.generate(5, (_) => GlobalKey<NavigatorState>());
+  final _navKeys = List.generate(6, (_) => GlobalKey<NavigatorState>());
 
   // watches the map tab's stack so the shell knows which screen is on top
   late final TopRouteObserver _mapTabObserver = TopRouteObserver(
@@ -438,6 +439,7 @@ class _MainShellState extends State<MainShell> {
               _tabNavigator(key: _navKeys[2], root: const InventoryScreen()),
               _tabNavigator(key: _navKeys[3], root: const GearScreen()),
               _tabNavigator(key: _navKeys[4], root: const QueueScreen()),
+              _tabNavigator(key: _navKeys[5], root: const SettingsScreen()),
             ],
           ),
         ),
@@ -453,6 +455,7 @@ class _MainShellState extends State<MainShell> {
             HearthNavItem(icon: Icons.backpack_outlined, label: 'Inventory'),
             HearthNavItem(icon: Icons.shield_outlined, label: 'Gear'),
             HearthNavItem(icon: Icons.playlist_play, label: 'Queue'),
+            HearthNavItem(icon: Icons.settings_outlined, label: 'Settings'),
           ],
         ),
       ),

@@ -26,6 +26,7 @@ XCARCHIVE="build/ios/archive/Runner.xcarchive"
 DRY_RUN=0
 ALLOW_DIRTY=0
 SKIP_TESTS=0
+DEBUG_SETTINGS=1
 FORCED_BUILD=""
 
 die()  { printf '\n\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
@@ -41,6 +42,9 @@ usage: tools/release_ios.sh [options]
   --allow-dirty       Proceed even with uncommitted changes.
   --skip-tests        Skip `flutter analyze` and `flutter test`.
   --build-number N    Use N instead of incrementing pubspec's build number.
+  --no-debug-settings Leave the Debug section out of the Settings screen.
+                      It is built in by default for TestFlight testing; pass
+                      this for a build meant for the App Store.
   -h, --help          Show this message.
 
 One-time setup:
@@ -60,6 +64,7 @@ while [[ $# -gt 0 ]]; do
     --dry-run)      DRY_RUN=1; shift ;;
     --allow-dirty)  ALLOW_DIRTY=1; shift ;;
     --skip-tests)   SKIP_TESTS=1; shift ;;
+    --no-debug-settings) DEBUG_SETTINGS=0; shift ;;
     --build-number) FORCED_BUILD="${2:-}"; shift 2 ;;
     -h|--help)      usage; exit 0 ;;
     *)              usage >&2; die "unknown option: $1" ;;
@@ -198,8 +203,21 @@ else
   note "none present"
 fi
 
+# The Debug section of the Settings screen is compiled in or out here: the
+# same IPA serves TestFlight and the App Store, so the app cannot tell which
+# one it was installed from.
+BUILD_DEFINES=()
+if (( DEBUG_SETTINGS )); then
+  BUILD_DEFINES+=(--dart-define=DEBUG_SETTINGS=true)
+  note "debug settings  included (pass --no-debug-settings for an App Store build)"
+else
+  note "debug settings  left out"
+fi
+
 step "Building and archiving (flutter build ipa)"
-flutter build ipa --release --export-options-plist="$EXPORT_OPTIONS"
+# the +-guard keeps an empty array from tripping `set -u` on macOS's bash 3.2
+flutter build ipa --release --export-options-plist="$EXPORT_OPTIONS" \
+  ${BUILD_DEFINES[@]+"${BUILD_DEFINES[@]}"}
 
 IPA="$(find "$IPA_DIR" -maxdepth 1 -name '*.ipa' 2>/dev/null | head -1)"
 

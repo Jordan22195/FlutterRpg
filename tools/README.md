@@ -47,6 +47,14 @@ crypto dependency.** After archiving, the script asserts the key survived into
 the built app and aborts if it didn't, so a lost Info.plist entry surfaces here
 rather than as a surprise prompt.
 
+### Debug settings ship in TestFlight builds
+
+The Settings screen's Debug section (the max skill level cap) is compiled in
+with `--dart-define=DEBUG_SETTINGS=true` on every release build, so testers
+see it on TestFlight. The same IPA would go to the App Store, and the app has
+no way to tell which one installed it, so pass `--no-debug-settings` for a
+build meant for the App Store.
+
 ### Gates
 
 `flutter test` must pass; a failing suite aborts the release. `flutter analyze`

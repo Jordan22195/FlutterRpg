@@ -1,6 +1,20 @@
+import '../data/debug_settings.dart';
 import '../data/skill_data.dart';
 
 class SkillService {
+  /// Where the debug skill-level cap is read from; null means uncapped.
+  final DebugSettings? _debugSettings;
+
+  SkillService({DebugSettings? debugSettings}) : _debugSettings = debugSettings;
+
+  /// The highest level [skillState] can read at: the top of its table, or
+  /// the debug cap when that is lower.
+  int maxLevel(SkillData skillState) {
+    final top = skillState.xpTable.length - 1;
+    final cap = _debugSettings?.maxSkillLevel;
+    return cap == null ? top : cap.clamp(1, top);
+  }
+
   double percentProgressToLevelUp(SkillData skillState) {
     return progressAtXp(skillState.xp, skillState);
   }
@@ -11,8 +25,8 @@ class SkillService {
   double progressAtXp(double xp, SkillData skillState) {
     final curLevel = getLevelFromXp(xp, skillState);
 
-    // Maxed (level 99 if table is 99)
-    if (curLevel >= skillState.xpTable.length - 1) return 1.0;
+    // Maxed (level 99 if table is 99, or at the debug cap)
+    if (curLevel >= maxLevel(skillState)) return 1.0;
 
     final curLvlXp = skillState.xpTable[curLevel];
     final nextLvlXp = skillState.xpTable[curLevel + 1];
@@ -26,8 +40,8 @@ class SkillService {
   double nextLevelXp(SkillData skillState) {
     final curLevel = getLevel(skillState);
 
-    // Maxed (level 99 if table is 99)
-    if (curLevel >= skillState.xpTable.length - 1) return 0;
+    // Maxed (level 99 if table is 99, or at the debug cap)
+    if (curLevel >= maxLevel(skillState)) return 0;
 
     return skillState.xpTable[curLevel + 1];
   }
@@ -37,7 +51,7 @@ class SkillService {
     final nextLevel = (level + 1).clamp(1, skillState.xpTable.length - 1);
 
     // Already at max level
-    if (level >= skillState.xpTable.length - 1) return 0;
+    if (level >= maxLevel(skillState)) return 0;
 
     final nextXp = skillState.xpTable[nextLevel];
     final remaining = nextXp - skillState.xp;
@@ -66,13 +80,15 @@ class SkillService {
     setXp(skillState.xpTable[level.clamp(1, maxLevel)], skillState);
   }
 
+  /// The level [xp] reads at, held to [maxLevel].
   int getLevelFromXp(double xp, SkillData skillState) {
-    for (int level = 1; level < skillState.xpTable.length; level++) {
+    final cap = maxLevel(skillState);
+    for (int level = 1; level <= cap; level++) {
       if (xp < skillState.xpTable[level]) {
         return level - 1;
       }
     }
-    return skillState.xpTable.length - 1;
+    return cap;
   }
 
   void startXpTracking(SkillData skillState) {

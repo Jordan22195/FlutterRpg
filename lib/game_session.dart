@@ -52,10 +52,12 @@ import 'package:rpg/systems/exploration_system.dart';
 import 'package:rpg/systems/equipment_system.dart';
 
 import 'data/bound_action.dart';
+import 'data/debug_settings.dart';
 import 'data/dungeon_progress_data.dart';
 import 'data/inventory_data.dart';
 import 'data/ui_state.dart';
 import 'package:rpg/controllers/potion_controller.dart';
+import 'package:rpg/controllers/settings_controller.dart';
 
 class SaveGameData {
   final String slotId;
@@ -71,6 +73,7 @@ class SaveGameData {
   final DungeonProgressData dungeonProgress;
   final UiState uiState;
   final ActionTimingData actionTimingData;
+  final DebugSettings debugSettings;
 
   SaveGameData({
     required this.slotId,
@@ -86,10 +89,12 @@ class SaveGameData {
     DungeonProgressData? dungeonProgress,
     UiState? uiState,
     ActionTimingData? actionTimingData,
+    DebugSettings? debugSettings,
   }) : dungeonRun = dungeonRun ?? DungeonRun(),
        dungeonProgress = dungeonProgress ?? DungeonProgressData(),
        uiState = uiState ?? UiState(),
-       actionTimingData = actionTimingData ?? ActionTimingData();
+       actionTimingData = actionTimingData ?? ActionTimingData(),
+       debugSettings = debugSettings ?? DebugSettings();
 
   Map<String, dynamic> toJson() {
     return {
@@ -106,6 +111,7 @@ class SaveGameData {
       'dungeonProgress': dungeonProgress.toJson(),
       'uiState': uiState.toJson(),
       'actionTimingData': actionTimingData.toJson(),
+      'debugSettings': debugSettings.toJson(),
     };
   }
 
@@ -191,6 +197,13 @@ class SaveGameData {
               json['actionTimingData'] as Map<String, dynamic>,
             )
           : ActionTimingData(),
+      // optional: saves from before the settings screen have no debug
+      // settings; default to everything off
+      debugSettings: json['debugSettings'] is Map<String, dynamic>
+          ? DebugSettings.fromJson(
+              json['debugSettings'] as Map<String, dynamic>,
+            )
+          : DebugSettings(),
     );
   }
 }
@@ -226,9 +239,9 @@ class GameSessionFactory {
     );
   }
 
-  // builds a fresh save for first runs or when the stored save
-  // cannot be parsed.
-  SaveGameData newGame(GameCatalogBundle catalogs) {
+  // builds a fresh save for first runs, new save slots, or when the
+  // stored save cannot be parsed.
+  SaveGameData newGame(GameCatalogBundle catalogs, {String slotId = 'slot_1'}) {
     final zones = <ZoneId, Zone>{};
     for (final zoneId in ZoneId.values) {
       if (zoneId == ZoneId.NULL) continue;
@@ -251,7 +264,7 @@ class GameSessionFactory {
     hpSkill.xp = hpSkill.xpTable[10];
 
     return SaveGameData(
-      slotId: "slot_1",
+      slotId: slotId,
       contentPackId: catalogs.id,
       saveVersion: 1,
       contentPackVersion: catalogs.version,
@@ -430,7 +443,7 @@ class GameSessionFactory {
     final encounterService = EncounterService();
     final equipmentService = EquipmentService();
     final inventoryService = InventoryService();
-    final skillService = SkillService();
+    final skillService = SkillService(debugSettings: save.debugSettings);
     final weightedDropTableService = WeightedDropTableService();
     final explorationService = ExplorationService(
       inventoryService: inventoryService,
@@ -719,6 +732,11 @@ class GameSessionFactory {
     // only redraws when its own controller says so
     encounterController.onDungeonFloorChanged = dungeonController.refresh;
 
+    final settingsController = SettingsController(
+      debugSettings: save.debugSettings,
+      playerDataController: playerDataController,
+    );
+
     return GameSession(
       saveGameData: save,
       offlineProgressData: offlineProgressData,
@@ -736,6 +754,7 @@ class GameSessionFactory {
       actionQueueController: actionQueueController,
       shopController: shopController,
       dungeonController: dungeonController,
+      settingsController: settingsController,
       buffService: buffService,
       craftingService: craftingService,
       encounterService: encounterService,
@@ -784,6 +803,7 @@ class GameSession {
   ActionQueueController actionQueueController;
   ShopController shopController;
   DungeonController dungeonController;
+  SettingsController settingsController;
 
   // services
   BuffService buffService;
@@ -830,6 +850,7 @@ class GameSession {
     required this.actionQueueController,
     required this.shopController,
     required this.dungeonController,
+    required this.settingsController,
 
     // services
     required this.buffService,
@@ -942,5 +963,6 @@ class GameSession {
     worldController.dispose();
     shopController.dispose();
     dungeonController.dispose();
+    settingsController.dispose();
   }
 }
