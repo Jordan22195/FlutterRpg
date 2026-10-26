@@ -39,7 +39,7 @@ void main() {
     'gloves': (6, 1),
     'sword': (7, 2),
     'belt': (8, 1),
-    'legs': (9, 2),
+    'legs': (9, 3),
     'boots': (10, 1),
     'pauldrons': (11, 2),
     'shield': (12, 2),
@@ -175,16 +175,35 @@ void main() {
     }
   });
 
-  test('forging pays for the bars it eats', () {
+  test('forging pays for the bars it eats, more a bar further up', () {
     for (final metal in bases.keys) {
-      final perBar = forge(metal, 'dagger').xp;
-      for (final entry in pieces.entries) {
+      // the bars read off the recipe itself: what this is about is the
+      // rate, not how many bars a shape happens to cost
+      double perBar(String piece) {
+        final recipe = forge(metal, piece);
+        return recipe.xp / recipe.inputs.values.single;
+      }
+
+      // the tools that open the tier pay alike
+      expect(perBar('axe'), perBar('pickaxe'), reason: metal);
+      expect(perBar('sickle'), perBar('pickaxe'), reason: metal);
+
+      // and from there each shape pays at least what the one before it
+      // did, a bar, up to the greatsword at half again the pickaxe
+      final order = pieces.keys.toList();
+      for (var i = 1; i < order.length; i++) {
         expect(
-          forge(metal, entry.key).xp,
-          perBar * entry.value.$2,
-          reason: '$metal ${entry.key} is not paid by the bar',
+          perBar(order[i]),
+          greaterThanOrEqualTo(perBar(order[i - 1])),
+          reason: '$metal ${order[i]} pays less a bar than ${order[i - 1]}',
         );
       }
+      expect(perBar('greatsword'), greaterThan(perBar('pickaxe')));
+      expect(
+        perBar('greatsword') / perBar('pickaxe'),
+        closeTo(1.5, 0.02),
+        reason: metal,
+      );
     }
   });
 

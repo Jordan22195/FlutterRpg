@@ -48,7 +48,7 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.CHICKEN,
           weight: 1,
-          unlockLevel: 3,
+          unlockLevel: 2,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.COW,
@@ -58,7 +58,7 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.FIELD_RAT,
           weight: 1,
-          unlockLevel: 2,
+          unlockLevel: 1,
         ),
 
         WeightedDropTableEntry<EntityId>(

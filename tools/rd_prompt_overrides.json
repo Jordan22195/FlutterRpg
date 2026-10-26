@@ -808,5 +808,11 @@
   "assets/icons/items/master_explorers_pants.png": "a pair of khaki cargo trousers, an ornate masterwork piece with gold trim and embroidery",
   "assets/icons/items/master_explorers_gloves.png": "a pair of fingerless brown leather gloves, an ornate masterwork piece with gold trim and embroidery",
   "assets/icons/items/master_explorers_boots.png": "a pair of sturdy brown leather hiking boots, an ornate masterwork piece with gold trim and embroidery",
-  "assets/icons/items/master_explorers_cloak.png": "a hooded olive travelling cloak with a brass compass clasp, an ornate masterwork piece with gold trim and embroidery"
+  "assets/icons/items/master_explorers_cloak.png": "a hooded olive travelling cloak with a brass compass clasp, an ornate masterwork piece with gold trim and embroidery",
+  "__comment_sturgeon": "The sturgeon, the lake's second fish at level 70: a long grey-brown fish with bony ridges along its back, so it reads apart from the plain silver whitefish beside it.",
+  "assets/icons/items/sturgeon.png": "a long grey brown sturgeon with rows of bony ridges along its back and a pointed snout",
+  "assets/icons/items/cooked_sturgeon.png": "a thick golden brown roasted sturgeon steak",
+  "__comment_crayfish": "The crayfish, the creek's first catch at level 7: a small freshwater crustacean rather than a fish, so it reads apart from the bluegill and trout beside it.",
+  "assets/icons/items/crayfish.png": "a small brown red freshwater crayfish with two pincers and a curled tail",
+  "assets/icons/items/cooked_crayfish.png": "a bright red boiled crayfish"
 }

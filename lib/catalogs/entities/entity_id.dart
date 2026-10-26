@@ -244,12 +244,13 @@ enum EntityId {
       iconAsset: "assets/images/entities/creek.png",
 
       entityType: SkillId.FISHING,
-      defence: 10,
+      defence: 7,
       hitpoints: 5,
-      requiredLevel: 10,
+      requiredLevel: 7,
       itemDrops: [
-        ItemDropType(id: ItemId.BLUEGILL, weight: 1, unlockLevel: 10),
-        ItemDropType(id: ItemId.TROUT, weight: 0.5, unlockLevel: 15),
+        ItemDropType(id: ItemId.CRAYFISH, weight: 1, unlockLevel: 7),
+        ItemDropType(id: ItemId.BLUEGILL, weight: 0.5, unlockLevel: 10),
+        ItemDropType(id: ItemId.TROUT, weight: 0.25, unlockLevel: 15),
       ],
     ),
   ),
@@ -270,15 +271,15 @@ enum EntityId {
   ),
   DEEP_POND(
     FishingEntityDefinition(
-      name: "Deep Pond",
+      name: "Small Lake",
       iconAsset: "assets/images/entities/tranquil_pond.png",
 
       entityType: SkillId.FISHING,
-      defence: 50,
+      defence: 45,
       hitpoints: 15,
-      requiredLevel: 50,
+      requiredLevel: 45,
       itemDrops: [
-        ItemDropType(id: ItemId.CATFISH, weight: 1, unlockLevel: 50),
+        ItemDropType(id: ItemId.CATFISH, weight: 1, unlockLevel: 45),
         ItemDropType(id: ItemId.BASS, weight: 0.5, unlockLevel: 55),
       ],
     ),
@@ -294,6 +295,7 @@ enum EntityId {
       requiredLevel: 60,
       itemDrops: [
         ItemDropType(id: ItemId.WHITEFISH, weight: 1, unlockLevel: 60),
+        ItemDropType(id: ItemId.STURGEON, weight: 0.5, unlockLevel: 70),
       ],
     ),
   ),
@@ -2605,7 +2607,7 @@ enum EntityId {
       // The weakest thing in the game, so it pays the smallest purse rather
       // than nothing: an empty table is not rollable — roll() returns
       // `ObjectStack(id: 0 as T)` for one, which throws on the cast.
-      itemDrops: [],
+      itemDrops: [ItemDropType(id: ItemId.COINS, lowCount: 1, highCount: 5)],
     ),
   ),
   BIG_RED(

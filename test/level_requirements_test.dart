@@ -86,9 +86,9 @@ void main() {
   group('fishing spots', () {
     const spots = {
       EntityId.TRANQUIL_POND: 1,
-      EntityId.CREEK: 10,
+      EntityId.CREEK: 7,
       EntityId.RIVER: 20,
-      EntityId.DEEP_POND: 50,
+      EntityId.DEEP_POND: 45,
       EntityId.LAKE: 60,
       EntityId.OCEAN: 80,
     };
@@ -325,10 +325,10 @@ void main() {
 
     test('the zone card and the screen read the same gate', () {
       final session = buildSession();
-      // the rod in hand adds Fishing of its own, so stay well under 10
-      setLevel(session, SkillId.FISHING, 5);
+      // the rod in hand adds Fishing of its own, so stay well under 7
+      setLevel(session, SkillId.FISHING, 1);
 
-      expect(session.worldController.requiredLevelFor(EntityId.CREEK), 10);
+      expect(session.worldController.requiredLevelFor(EntityId.CREEK), 7);
       expect(
         session.worldController.meetsEntityRequirement(EntityId.CREEK),
         isFalse,

@@ -96,7 +96,7 @@ void main() {
 
   group('when a stack runs out', () {
     // bag: two foods above, one beside and one below the chicken (4):
-    // shark 35, beef 5, trout 5, chicken 4, minnow 1
+    // shark 610, beef 5, bluegill 5, chicken 4, minnow 1
     void stock(GameSession session, Map<ItemId, int> counts) {
       for (final entry in counts.entries) {
         session.inventoryService.setItemCount(
@@ -127,7 +127,7 @@ void main() {
       final session = buildSession();
       stock(session, {
         ItemId.COOKED_MINNOW: 1,
-        ItemId.COOKED_TROUT: 1,
+        ItemId.COOKED_BLUEGILL: 1,
         ItemId.COOKED_SHARK: 1,
         ItemId.COOKED_CHICKEN: 1,
         ItemId.COOKED_BEEF: 1,
@@ -135,7 +135,7 @@ void main() {
       expect(session.inventoryController.getFoodItems(), [
         ItemId.COOKED_SHARK,
         ItemId.COOKED_BEEF,
-        ItemId.COOKED_TROUT,
+        ItemId.COOKED_BLUEGILL,
         ItemId.COOKED_CHICKEN,
         ItemId.COOKED_MINNOW,
       ]);
@@ -162,15 +162,15 @@ void main() {
       final session = buildSession();
       stock(session, {
         ItemId.COOKED_BEEF: 1,
-        ItemId.COOKED_TROUT: 2,
+        ItemId.COOKED_BLUEGILL: 2,
         ItemId.COOKED_CHICKEN: 2,
       });
       session.saveGameData.playerData.equipmentData.equipedFood =
           ItemId.COOKED_BEEF;
 
       eatOne(session);
-      // beef and trout both heal 5; trout is listed after beef
-      expect(equipped(session), ItemId.COOKED_TROUT);
+      // beef and bluegill both heal 5; bluegill is listed after beef
+      expect(equipped(session), ItemId.COOKED_BLUEGILL);
       session.dispose();
     });
 

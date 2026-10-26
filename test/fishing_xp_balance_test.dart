@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
-import 'package:rpg/catalogs/items/items.dart';
-import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
@@ -91,22 +89,5 @@ void main() {
       );
     }
     session.dispose();
-  });
-
-  test('cooking a fish pays what catching it did', () {
-    final fish = <ItemId>{
-      for (final id in EntityId.values)
-        if (id.definition case final FishingEntityDefinition spot)
-          for (final drop in spot.itemDrops.flattened) drop.id,
-    };
-    expect(fish, isNotEmpty);
-    final cooks = RecipeCatalog().recipesForSkill(SkillId.COOKING);
-    for (final id in fish) {
-      final recipe = cooks.singleWhere(
-        (r) => r.inputs.keys.single == id,
-        orElse: () => fail('${id.name} has no cooking recipe'),
-      );
-      expect(recipe.xp, id.definition.xpValue, reason: recipe.id);
-    }
   });
 }

@@ -10,9 +10,11 @@ import 'package:rpg/services/weighted_drop_table_service.dart';
 /// brings in, the fire can take; the meats sit at the level of the creature
 /// that drops them.
 const List<CraftingRecipe> cookingRecipes = [
-  // A cook pays what the fish it cooks paid to catch - its xpValue - so
-  // cooking trains at the pace fishing does. Meat sits with the fish that
-  // open at its level.
+  // Each fish pays a little more than the one before it, paced so 1 to 99
+  // takes about thirty days of three-second cooks with no speed boost. The
+  // early fish pay more of their level's xp, so the first stretches stay
+  // short, and the crayfish at 7 and sturgeon at 70 split what were long
+  // waits on one fish. Meat sits with the fish that open at its level.
   // Cooking
   CraftingRecipe(
     id: 'cook_chicken',
@@ -43,7 +45,7 @@ const List<CraftingRecipe> cookingRecipes = [
     name: 'Cooked Meat',
     skill: SkillId.COOKING,
     levelRequirement: 1,
-    xp: 3,
+    xp: 2,
 
     inputs: {ItemId.MINNOW: 1},
     output: [
@@ -64,11 +66,23 @@ const List<CraftingRecipe> cookingRecipes = [
     ],
   ),
   CraftingRecipe(
+    id: "cook_crayfish",
+    name: "Cooked Crayfish",
+    skill: SkillId.COOKING,
+    levelRequirement: 7,
+    xp: 3.5,
+    inputs: {ItemId.CRAYFISH: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.COOKED_CRAYFISH, count: 1, weight: 1),
+      WeightedDropTableEntry(id: ItemId.BURNT_FOOD, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
     id: "cook_bluegill",
     name: "Cooked Bluegill",
     skill: SkillId.COOKING,
     levelRequirement: 10,
-    xp: 3,
+    xp: 4,
     inputs: {ItemId.BLUEGILL: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.COOKED_BLUEGILL, count: 1, weight: 1),
@@ -80,7 +94,7 @@ const List<CraftingRecipe> cookingRecipes = [
     name: "Cooked Trout",
     skill: SkillId.COOKING,
     levelRequirement: 15,
-    xp: 4,
+    xp: 5,
     inputs: {ItemId.TROUT: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.COOKED_TROUT, count: 1, weight: 1),
@@ -92,7 +106,7 @@ const List<CraftingRecipe> cookingRecipes = [
     name: "Cooked Pike",
     skill: SkillId.COOKING,
     levelRequirement: 20,
-    xp: 5,
+    xp: 5.5,
     inputs: {ItemId.PIKE: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.COOKED_PIKE, count: 1, weight: 1),
@@ -115,8 +129,8 @@ const List<CraftingRecipe> cookingRecipes = [
     id: "cook_catfish",
     name: "Cooked Catfish",
     skill: SkillId.COOKING,
-    levelRequirement: 50,
-    xp: 8,
+    levelRequirement: 45,
+    xp: 6.2,
     inputs: {ItemId.CATFISH: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.COOKED_CATFISH, count: 1, weight: 1),
@@ -128,7 +142,7 @@ const List<CraftingRecipe> cookingRecipes = [
     name: "Cooked Bass",
     skill: SkillId.COOKING,
     levelRequirement: 55,
-    xp: 8,
+    xp: 7.9,
     inputs: {ItemId.BASS: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.COOKED_BASS, count: 1, weight: 1),
@@ -140,10 +154,22 @@ const List<CraftingRecipe> cookingRecipes = [
     name: "Cooked Whitefish",
     skill: SkillId.COOKING,
     levelRequirement: 60,
-    xp: 10,
+    xp: 9.6,
     inputs: {ItemId.WHITEFISH: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.COOKED_WHITEFISH, count: 1, weight: 1),
+      WeightedDropTableEntry(id: ItemId.BURNT_FOOD, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: "cook_sturgeon",
+    name: "Cooked Sturgeon",
+    skill: SkillId.COOKING,
+    levelRequirement: 70,
+    xp: 11,
+    inputs: {ItemId.STURGEON: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.COOKED_STURGEON, count: 1, weight: 1),
       WeightedDropTableEntry(id: ItemId.BURNT_FOOD, count: 1, weight: 1),
     ],
   ),
@@ -152,7 +178,7 @@ const List<CraftingRecipe> cookingRecipes = [
     name: "Cooked Tuna",
     skill: SkillId.COOKING,
     levelRequirement: 80,
-    xp: 15,
+    xp: 12,
     inputs: {ItemId.TUNA: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.COOKED_TUNA, count: 1, weight: 1),
@@ -164,7 +190,7 @@ const List<CraftingRecipe> cookingRecipes = [
     name: "Cooked Swordfish",
     skill: SkillId.COOKING,
     levelRequirement: 86,
-    xp: 16,
+    xp: 15.4,
     inputs: {ItemId.SWORDFISH: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.COOKED_SWORDFISH, count: 1, weight: 1),
@@ -176,7 +202,7 @@ const List<CraftingRecipe> cookingRecipes = [
     name: "Cooked Shark",
     skill: SkillId.COOKING,
     levelRequirement: 93,
-    xp: 18,
+    xp: 20.6,
     inputs: {ItemId.SHARK: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.COOKED_SHARK, count: 1, weight: 1),

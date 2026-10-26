@@ -585,6 +585,14 @@ enum ItemId {
       xpValue: 3,
     ),
   ),
+  CRAYFISH(
+    ItemDefinition(
+      name: "Crayfish",
+      value: 2,
+      iconAsset: "assets/icons/items/crayfish.png",
+      xpValue: 3,
+    ),
+  ),
   BLUEGILL(
     ItemDefinition(
       name: "Bluegill",
@@ -639,6 +647,14 @@ enum ItemId {
       value: 25,
       iconAsset: "assets/icons/items/whitefish.png",
       xpValue: 10,
+    ),
+  ),
+  STURGEON(
+    ItemDefinition(
+      name: "Sturgeon",
+      value: 27,
+      iconAsset: "assets/icons/items/sturgeon.png",
+      xpValue: 12,
     ),
   ),
   TUNA(
@@ -704,11 +720,20 @@ enum ItemId {
       iconAsset: "assets/icons/items/cooked_carp.png",
     ),
   ),
+  COOKED_CRAYFISH(
+    FoodItemDefinition(
+      name: "Cooked Crayfish",
+      value: 5,
+      restoreAmount: 3,
+      xpValue: 25,
+      iconAsset: "assets/icons/items/cooked_crayfish.png",
+    ),
+  ),
   COOKED_BLUEGILL(
     FoodItemDefinition(
       name: "Cooked Bluegill",
       value: 6,
-      restoreAmount: 3,
+      restoreAmount: 5,
       xpValue: 30,
       iconAsset: "assets/icons/items/cooked_bluegill.png",
     ),
@@ -717,7 +742,7 @@ enum ItemId {
     FoodItemDefinition(
       name: "Cooked Trout",
       value: 10,
-      restoreAmount: 5,
+      restoreAmount: 8,
       xpValue: 50,
       iconAsset: "assets/icons/items/cooked_trout.png",
     ),
@@ -726,7 +751,7 @@ enum ItemId {
     FoodItemDefinition(
       name: "Cooked Pike",
       value: 14,
-      restoreAmount: 7,
+      restoreAmount: 13,
       xpValue: 70,
       iconAsset: "assets/icons/items/cooked_pike.png",
     ),
@@ -735,7 +760,7 @@ enum ItemId {
     FoodItemDefinition(
       name: "Cooked Salmon",
       value: 20,
-      restoreAmount: 12,
+      restoreAmount: 21,
       xpValue: 100,
       iconAsset: "assets/icons/items/cooked_salmon.png",
     ),
@@ -744,7 +769,7 @@ enum ItemId {
     FoodItemDefinition(
       name: "Cooked Catfish",
       value: 30,
-      restoreAmount: 15,
+      restoreAmount: 34,
       xpValue: 150,
       iconAsset: "assets/icons/items/cooked_catfish.png",
     ),
@@ -753,7 +778,7 @@ enum ItemId {
     FoodItemDefinition(
       name: "Cooked Bass",
       value: 40,
-      restoreAmount: 20,
+      restoreAmount: 55,
       xpValue: 200,
       iconAsset: "assets/icons/items/cooked_bass.png",
     ),
@@ -762,16 +787,25 @@ enum ItemId {
     FoodItemDefinition(
       name: "Cooked Whitefish",
       value: 50,
-      restoreAmount: 22,
+      restoreAmount: 89,
       xpValue: 250,
       iconAsset: "assets/icons/items/cooked_whitefish.png",
+    ),
+  ),
+  COOKED_STURGEON(
+    FoodItemDefinition(
+      name: "Cooked Sturgeon",
+      value: 55,
+      restoreAmount: 144,
+      xpValue: 275,
+      iconAsset: "assets/icons/items/cooked_sturgeon.png",
     ),
   ),
   COOKED_TUNA(
     FoodItemDefinition(
       name: "Cooked Tuna",
       value: 60,
-      restoreAmount: 25,
+      restoreAmount: 233,
       xpValue: 300,
       iconAsset: "assets/icons/items/cooked_tuna.png",
     ),
@@ -780,7 +814,7 @@ enum ItemId {
     FoodItemDefinition(
       name: "Cooked Swordfish",
       value: 100,
-      restoreAmount: 30,
+      restoreAmount: 377,
       xpValue: 500,
       iconAsset: "assets/icons/items/cooked_swordfish.png",
     ),
@@ -789,7 +823,7 @@ enum ItemId {
     FoodItemDefinition(
       name: "Cooked Shark",
       value: 200,
-      restoreAmount: 35,
+      restoreAmount: 610,
       xpValue: 1000,
       iconAsset: "assets/icons/items/cooked_shark.png",
     ),
@@ -5900,7 +5934,7 @@ enum ItemId {
   STONE_AXE(
     WeaponItemDefinition(
       name: "Stone Axe",
-      value: 10,
+      value: 1,
       weaponType: WeaponTypeId.AXE,
       fibLevel: 0,
       iconAsset: "assets/icons/items/stone_axe.png",
@@ -5975,7 +6009,7 @@ enum ItemId {
   STONE_PICKAXE(
     WeaponItemDefinition(
       name: "Stone Pickaxe",
-      value: 10,
+      value: 1,
       weaponType: WeaponTypeId.PICKAXE,
       fibLevel: 0,
       iconAsset: "assets/icons/items/stone_pickaxe.png",
@@ -6116,7 +6150,7 @@ enum ItemId {
   SIMPLE_FISHING_ROD(
     WeaponItemDefinition(
       name: "Simple Fishing Rod",
-      value: 5,
+      value: 1,
       weaponType: WeaponTypeId.FISHING_ROD,
       fibLevel: 0,
       iconAsset: "assets/icons/items/simple_fishing_rod.png",

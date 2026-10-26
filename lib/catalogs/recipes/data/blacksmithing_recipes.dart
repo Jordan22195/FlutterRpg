@@ -99,8 +99,10 @@ class _Tier {
 
   final double smeltXp;
 
-  /// What forging one bar's worth of a piece pays. A piece's award is this
-  /// times [_Piece.bars], so the heavy shapes pay for the bars they eat.
+  /// What one bar pays when forged into the tier's first shapes, the tools.
+  /// Each rung up pays a little more a bar (see [_xpPerBarAt]), and a
+  /// piece's award is that times [_Piece.bars], so the heavy shapes pay for
+  /// the bars they eat.
   final double xpPerBar;
 
   final List<int> rungs;
@@ -210,12 +212,23 @@ const _pieces = <_Piece>[
   _Piece(suffix: 'GLOVES', rung: 6, bars: 1),
   _Piece(suffix: 'SWORD', rung: 7, bars: 2),
   _Piece(suffix: 'BELT', rung: 8, bars: 1),
-  _Piece(suffix: 'LEGS', rung: 9, bars: 2),
+  _Piece(suffix: 'LEGS', rung: 9, bars: 3),
   _Piece(suffix: 'BOOTS', rung: 10, bars: 1),
   _Piece(suffix: 'PAULDRONS', rung: 11, bars: 2),
   _Piece(suffix: 'SHIELD', rung: 12, bars: 2),
   _Piece(suffix: 'GREATSWORD', rung: 13, bars: 3),
 ];
+
+/// How much more a bar pays forged into the top rung than into the bottom
+/// one: the greatsword pays half again what the pickaxe does, per bar.
+const _topRungXpBonus = 0.5;
+
+/// What one bar pays at [rung] of [tier]: the tier's rate on rung 1, rising
+/// in even steps to [_topRungXpBonus] over it on rung 13, so the later,
+/// harder shapes are worth more a bar than the tools that open the tier.
+double _xpPerBarAt(_Tier tier, int rung) =>
+    tier.xpPerBar *
+    (1 + _topRungXpBonus * (rung - 1) / (tier.rungs.length - 1));
 
 CraftingRecipe _smelt(_Tier tier) => CraftingRecipe(
   id: 'smelt_${tier.name}_bar',
@@ -234,7 +247,8 @@ CraftingRecipe _forge(_Tier tier, _Piece piece) {
     name: item.definition.name,
     skill: SkillId.BLACKSMITHING,
     levelRequirement: tier.baseLevel + tier.rungs[piece.rung - 1],
-    xp: tier.xpPerBar * piece.bars,
+    // kept to a tenth, so the recipe reads cleanly
+    xp: (_xpPerBarAt(tier, piece.rung) * piece.bars * 10).round() / 10,
     inputs: {tier.bar: piece.bars},
     output: [WeightedDropTableEntry(id: item, count: 1, weight: 1)],
   );
