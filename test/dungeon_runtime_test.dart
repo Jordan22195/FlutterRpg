@@ -132,7 +132,7 @@ void main() {
       session.dispose();
     });
 
-    test('a floor waits on the one above it unless it opts out', () {
+    test('a floor waits on the main floor above it unless it opts out', () {
       final session = buildSession();
       final dungeons = session.dungeonController;
       const id = DungeonId.DEV_TRANSIENT_DUNGEON;
@@ -140,15 +140,13 @@ void main() {
       expect(dungeons.lockReason(id, 0), isNull);
       // the ore floor sets requiresPrevious: false
       expect(dungeons.lockReason(id, 1), isNull);
-      expect(
-        dungeons.lockReason(id, 2),
-        'Complete Test Skippable Ore to unlock',
-      );
+      // and the floor below it walks past it to the main floor above
+      expect(dungeons.lockReason(id, 2), 'Complete Test Queue to unlock');
 
       session.dispose();
     });
 
-    test('clearing a floor unlocks the next one, permanently', () {
+    test('clearing a floor unlocks the next one for the run', () {
       final session = buildSession();
       final dungeons = session.dungeonController;
       makePlayerStrong(session);
@@ -156,15 +154,18 @@ void main() {
 
       expect(dungeons.lockReason(id, 2), isNotNull);
 
+      // the side floor opens nothing
       clearFloorOnce(session, id, 1);
-
       expect(progressOf(session).hasCleared(id, 1), isTrue);
+      expect(dungeons.lockReason(id, 2), isNotNull);
+
+      clearFloorOnce(session, id, 0);
       expect(dungeons.lockReason(id, 2), isNull);
 
       // and it survives the floor being reset out from under it
       dungeons.resetRunningFloor();
       expect(dungeons.lockReason(id, 2), isNull);
-      expect(dungeons.isCleared(id, 1), isTrue);
+      expect(dungeons.isCleared(id, 0), isTrue);
 
       session.dispose();
     });
@@ -658,8 +659,8 @@ void main() {
       makePlayerStrong(session);
       const id = DungeonId.DEV_TRANSIENT_DUNGEON;
 
-      clearFloorOnce(session, id, 1);
-      final fullCount = save.dungeonRun.slots[1].members.first.count;
+      clearFloorOnce(session, id, 0);
+      final fullCount = save.dungeonRun.slots[0].members.first.count;
       fightFor(session, 5);
 
       // what the shell does on death
@@ -667,11 +668,11 @@ void main() {
       dungeons.resetRunningFloor();
 
       expect(save.dungeonRun.runningSlot, -1);
-      expect(save.dungeonRun.slots[1].index, 0);
-      expect(save.dungeonRun.slots[1].members.first.count, fullCount);
-      // the unlock and the lifetime tally stand
-      expect(dungeons.isCleared(id, 1), isTrue);
-      expect(dungeons.lifetimeRuns(id, 1), greaterThan(0));
+      expect(save.dungeonRun.slots[0].index, 0);
+      expect(save.dungeonRun.slots[0].members.first.count, fullCount);
+      // the run's unlock and the lifetime tally stand: dying is not a reset
+      expect(dungeons.isCleared(id, 0), isTrue);
+      expect(dungeons.lifetimeRuns(id, 0), greaterThan(0));
       expect(dungeons.lockReason(id, 2), isNull);
 
       session.dispose();

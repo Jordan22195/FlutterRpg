@@ -15,12 +15,18 @@ import 'art_header.dart';
 /// collapsed and only grows to the picture once it has actually loaded.
 /// Which paths turned out to have art is remembered, so coming back to a
 /// zone opens straight onto its art.
+///
+/// A dungeon's floor list wears the same header over its own art, a little
+/// shorter, with the zone it is in as a [subtitle].
 class ZoneHeader extends StatefulWidget {
   const ZoneHeader({
     super.key,
     required this.name,
     required this.iconAsset,
     required this.zoneLevel,
+    this.subtitle,
+    this.expandedHeight = ArtHeader.expandedHeight,
+    this.backLabel = 'Back',
   });
 
   final String name;
@@ -28,6 +34,15 @@ class ZoneHeader extends StatefulWidget {
 
   /// The zone's Exploration difficulty; 0 shows no badge.
   final int zoneLevel;
+
+  /// See [ArtHeader.subtitle].
+  final String? subtitle;
+
+  /// The open header's height, safe area included.
+  final double expandedHeight;
+
+  /// See [ArtHeader.backLabel].
+  final String backLabel;
 
   /// Width / height of each art path that loaded, or null for a path with
   /// no file behind it. Only whether there is a ratio matters now that the
@@ -104,10 +119,12 @@ class _ZoneHeaderState extends State<ZoneHeader> {
         name: widget.name,
         iconAsset: hasArt ? widget.iconAsset : null,
         zoneLevel: widget.zoneLevel,
+        subtitle: widget.subtitle,
+        backLabel: widget.backLabel,
         minHeight: ArtHeader.collapsedHeight(topPadding),
         maxHeight: hasArt
             ? math.max(
-                ArtHeader.expandedHeight,
+                widget.expandedHeight,
                 ArtHeader.collapsedHeight(topPadding),
               )
             : ArtHeader.collapsedHeight(topPadding),
@@ -121,6 +138,8 @@ class _ZoneHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.name,
     required this.iconAsset,
     required this.zoneLevel,
+    required this.subtitle,
+    required this.backLabel,
     required this.minHeight,
     required this.maxHeight,
   });
@@ -128,6 +147,8 @@ class _ZoneHeaderDelegate extends SliverPersistentHeaderDelegate {
   final String name;
   final String? iconAsset;
   final int zoneLevel;
+  final String? subtitle;
+  final String backLabel;
   final double minHeight;
   final double maxHeight;
 
@@ -150,6 +171,8 @@ class _ZoneHeaderDelegate extends SliverPersistentHeaderDelegate {
       title: name,
       collapse: collapse,
       artAsset: iconAsset,
+      subtitle: subtitle,
+      backLabel: backLabel,
       trailing: zoneLevel > 0
           ? ArtHeaderChip(
               icon: Icon(
@@ -169,6 +192,8 @@ class _ZoneHeaderDelegate extends SliverPersistentHeaderDelegate {
       old.name != name ||
       old.iconAsset != iconAsset ||
       old.zoneLevel != zoneLevel ||
+      old.subtitle != subtitle ||
+      old.backLabel != backLabel ||
       old.minHeight != minHeight ||
       old.maxHeight != maxHeight;
 }

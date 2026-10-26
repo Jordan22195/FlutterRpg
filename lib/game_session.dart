@@ -510,6 +510,7 @@ class GameSessionFactory {
     final dungeonSystem = DungeonSystem(
       inventoryService: inventoryService,
       playerDataService: playerDataService,
+      dropTableService: weightedDropTableService,
     );
     // migration: a dungeon run carries the floors it was built with; any
     // the definition has changed since are rebuilt from it

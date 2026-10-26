@@ -1623,6 +1623,50 @@ void main() {
       tearDownSession(session);
     });
 
+    test('a dungeon loop walks the floors and banks a chest a lap', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      makePlayerStrong(session);
+      // fed, as the hand-off test is: ten minutes of these fights takes a
+      // good share of a 99 pool
+      save.inventoryData.itemMap[ItemId.COOKED_CHICKEN] = 500;
+      save.playerData.equipmentData.equipedFood = ItemId.COOKED_CHICKEN;
+      // and armoured: the boss at the end of every lap out-hits a bare 99
+      for (final piece in [
+        ItemId.DRAGON_HELMET,
+        ItemId.DRAGON_CHESTPLATE,
+        ItemId.DRAGON_LEGS,
+        ItemId.DRAGON_BOOTS,
+        ItemId.DRAGON_GLOVES,
+        ItemId.DRAGON_SHIELD,
+        ItemId.DRAGON_SWORD,
+      ]) {
+        session.equipmentService.equipItem(
+          piece.build() as EquipmentItem,
+          save.playerData.equipmentData,
+        );
+      }
+      // main path: the queue, the duplicate, the boss — the ore floor
+      // beside it is walked past
+      const id = DungeonId.DEV_TRANSIENT_DUNGEON;
+      session.dungeonController.setLoopDungeon(id, true);
+      enterFloor(session, id, 0);
+
+      settle(session, 600);
+
+      // lap after lap of the main floors, each one a chest to claim
+      final laps = save.dungeonProgress.runsFor(id, 3);
+      expect(laps, greaterThan(1));
+      expect(save.dungeonProgress.runsFor(id, 0), greaterThanOrEqualTo(laps));
+      expect(save.dungeonProgress.runsFor(id, 2), greaterThanOrEqualTo(laps));
+      expect(save.dungeonProgress.runsFor(id, 1), 0);
+      expect(save.dungeonProgress.chestsWaiting(id), laps);
+      // and the loop is still going, somewhere in its next lap
+      expect(save.actionTimingData.running, isTrue);
+      expect([0, 2, 3], contains(save.dungeonRun.runningSlot));
+      tearDownSession(session);
+    });
+
     test('a floor never walks on to the next one on its own', () {
       final session = buildSession();
       final save = session.saveGameData;

@@ -6,6 +6,7 @@ import 'package:rpg/widgets/entity_info_dialog.dart';
 import 'package:rpg/widgets/eat_food_button.dart';
 import 'package:rpg/widgets/equipment_picker.dart';
 import 'package:provider/provider.dart';
+import '../catalogs/dungeons/dungeons.dart';
 import '../catalogs/entities/entities.dart';
 import '../controllers/action_timing_controller.dart';
 import '../controllers/dungeon_controller.dart';
@@ -13,11 +14,14 @@ import '../controllers/encounter_controller.dart';
 import '../controllers/equipment_controller.dart';
 import '../controllers/player_data_controller.dart';
 import '../controllers/world_controller.dart';
+import '../data/entity_queue.dart';
 import '../data/skill_category.dart';
+import '../theme/game_colors.dart';
 import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
 import '../widgets/action_dock.dart';
 import '../widgets/art_header.dart';
+import '../widgets/dungeon_floor_track.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/sprite_frame.dart';
@@ -34,6 +38,31 @@ import '../widgets/fading_number.dart';
 import '../widgets/skill_ring_row.dart';
 import '../data/ObjectStack.dart';
 import '../data/item_drop_type.dart';
+
+/// The dungeon floor a combat screen is fighting through: which floor of
+/// which dungeon, its live queue, and how many of each member it starts
+/// with.
+class DungeonFloorView {
+  final DungeonId id;
+  final int index;
+  final EntityQueue floor;
+  final List<int> fullCounts;
+
+  /// Loop dungeon rather than Loop floor.
+  final bool loopsDungeon;
+
+  const DungeonFloorView({
+    required this.id,
+    required this.index,
+    required this.floor,
+    required this.fullCounts,
+    required this.loopsDungeon,
+  });
+
+  /// How many of the member being fought the floor started with.
+  int get currentFullCount =>
+      floor.index < fullCounts.length ? fullCounts[floor.index] : 0;
+}
 
 /// Snapshot of everything the shared combat layout renders for one frame.
 /// World encounters and dungeon runs each build one from their own
@@ -76,6 +105,11 @@ class CombatViewState {
   /// Entities still queued behind the one on screen, in queue order. Empty
   /// for a world encounter, which has no queue behind it.
   final List<EncounterEntity> queueRemaining;
+
+  /// The dungeon floor being fought through; null for a world encounter.
+  /// With one, the screen is the floor's: its name heads the screen, its
+  /// track sits over the fight, and the entity's name moves onto the stage.
+  final DungeonFloorView? dungeonFloor;
 
   final ItemId foodItemId;
   final int foodItemCount;
@@ -120,6 +154,7 @@ class CombatViewState {
     required this.playerActionProgress,
     required this.playerActionInterval,
     this.queueRemaining = const [],
+    this.dungeonFloor,
     this.requiredLevel = 0,
     this.locked = false,
     this.missingTool,
@@ -610,6 +645,9 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       );
     }
 
+    final dungeon = view.dungeonFloor;
+    if (dungeon != null) return _buildFloorStage(context, view, dungeon);
+
     return StagePanel(
       tint: tint,
       sprite: sprite,
@@ -644,6 +682,117 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     );
   }
 
+  /// A dungeon floor's stage: shorter, since the floor's track above it
+  /// carries the queue. The member's name and level sit in its corner — the
+  /// header is the floor's — with how many of it are left, or a boss's gold
+  /// frame and "Boss".
+  Widget _buildFloorStage(
+    BuildContext context,
+    CombatViewState view,
+    DungeonFloorView dungeon,
+  ) {
+    final palette = context.palette;
+    final entity = view.entity;
+    final kind = entity is CombatEntity
+        ? SpriteKind.combat
+        : SpriteKind.gathering;
+    final tint = SpriteFrame.tintFor(context, kind);
+    final boss = DungeonFloorTrack.isBoss(entity);
+    final level = entity is CombatEntity ? entity.level : entity.defence;
+
+    Widget sprite = IconRenderer(size: boss ? 96 : 84, id: entity.id);
+    if (entity.count <= 0) {
+      sprite = ColorFiltered(
+        colorFilter: ColorFilter.mode(
+          palette.bg.withValues(alpha: 0.65),
+          BlendMode.srcATop,
+        ),
+        child: sprite,
+      );
+    }
+
+    return StagePanel(
+      height: 124,
+      tint: tint,
+      sprite: sprite,
+      isBoss: boss,
+      outline: rarityBorderColor(entity.id.definition.rarity),
+      onTap: portraitTap(context, entity),
+      heading: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (boss) ...[
+            Text(
+              'BOSS',
+              style: HearthText.sectionLabel.copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: GameColors.bossLabel,
+                height: 1,
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
+          Text(
+            entity.name,
+            style: HearthText.rowTitle.copyWith(
+              fontSize: 16,
+              height: 1.1,
+              color: palette.text,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Semantics(
+            label: 'Level $level',
+            excludeSemantics: true,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const IconRenderer(id: SkillId.ATTACK, size: 12),
+                const SizedBox(width: 4),
+                Text(
+                  '$level',
+                  style: HearthText.timer.copyWith(
+                    color: boss
+                        ? GameColors.bossLabel
+                        : GameColors.clearedColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      corner: boss
+          ? StageCountPill(
+              count: entity.count,
+              label: 'Boss',
+              color: GameColors.bossLabel,
+              borderColor: GameColors.bossFrameOuter,
+            )
+          : StageCountPill(
+              count: entity.count,
+              label: '${entity.count} of ${dungeon.currentFullCount} left',
+              borderColor: tint.border,
+            ),
+    );
+  }
+
+  /// The floor's header chip: whether clearing it runs it again or runs on
+  /// into the next floor.
+  Widget _loopChip(BuildContext context, DungeonFloorView dungeon) {
+    final mode = dungeon.loopsDungeon ? 'Dungeon' : 'Floor';
+    return ArtHeaderChip(
+      icon: Icon(
+        dungeon.loopsDungeon ? Icons.repeat_on_rounded : Icons.repeat_rounded,
+        size: 14,
+        color: context.palette.textMuted,
+      ),
+      label: mode,
+      semanticsLabel: 'Loop mode: ${mode.toLowerCase()}',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final view = resolveView(context);
@@ -671,28 +820,47 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     final zone = context.watch<WorldController>().viewedZoneDefinition();
     final topPadding = MediaQuery.paddingOf(context).top;
     final level = entity is CombatEntity ? entity.level : entity.defence;
+    final dungeon = view.dungeonFloor;
+    final dungeonDef = dungeon?.id.definition;
 
-    // the top is left open: the zone's art strip runs up behind the status
-    // bar, as on the zone screen this one opens from
+    // the top is left open: the art strip runs up behind the status bar, as
+    // on the screen this one opens from
     return SafeArea(
       top: false,
       child: Column(
         children: [
           SizedBox(
             height: ArtHeader.collapsedHeight(topPadding),
-            child: ArtHeader(
-              title: view.title,
-              subtitle: zone.name,
-              collapse: 1,
-              artAsset: zone.iconAsset.isEmpty ? null : zone.iconAsset,
-              backLabel: 'Back to ${zone.name}',
-              trailing: entityId == EntityId.NULL
-                  ? null
-                  : ArtHeaderChip(
-                      label: 'Lv $level',
-                      semanticsLabel: 'Level $level',
-                    ),
-            ),
+            // a dungeon floor's screen is the floor's: its name and place in
+            // the dungeon head it, and the member fought moves to the stage
+            child: dungeon != null && dungeonDef != null
+                ? ArtHeader(
+                    title: dungeon.floor.name,
+                    subtitle:
+                        '${dungeonDef.name} · Floor ${dungeon.index + 1} '
+                        'of ${dungeonDef.entries.length}',
+                    collapse: 1,
+                    artAsset: dungeonDef.iconAsset.isNotEmpty
+                        ? dungeonDef.iconAsset
+                        : zone.iconAsset.isEmpty
+                        ? null
+                        : zone.iconAsset,
+                    backLabel: 'Back to ${dungeonDef.name} floors',
+                    trailing: _loopChip(context, dungeon),
+                  )
+                : ArtHeader(
+                    title: view.title,
+                    subtitle: zone.name,
+                    collapse: 1,
+                    artAsset: zone.iconAsset.isEmpty ? null : zone.iconAsset,
+                    backLabel: 'Back to ${zone.name}',
+                    trailing: entityId == EntityId.NULL
+                        ? null
+                        : ArtHeaderChip(
+                            label: 'Lv $level',
+                            semanticsLabel: 'Level $level',
+                          ),
+                  ),
           ),
           // scrollable middle so short screens don't overflow; the header
           // above and the dock below stay pinned
@@ -703,6 +871,15 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               children: [
                 if (aboveFight != null) aboveFight,
+                if (dungeon != null) ...[
+                  DungeonFloorTrack(
+                    floor: dungeon.floor,
+                    fullCounts: dungeon.fullCounts,
+                    onMemberTap: (member) =>
+                        showEntityInfoDialog(context, member),
+                  ),
+                  const SizedBox(height: 12),
+                ],
 
                 // the entity, with whatever is queued behind it. the damage
                 // the player deals reports on the entity's hp bar below, and
@@ -855,6 +1032,7 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
       equipmentDrops: controller.equipmentDrops(),
       // a dungeon card's queue; empty for a zone entity
       queueRemaining: controller.queueRemaining(),
+      dungeonFloor: _dungeonFloor(context, controller),
       foodItemId: controller.getEquipedFoodItemId(),
       foodItemCount: controller.getEquipedFoodItemCount(),
       // herbalism level gate: locked herbs stay visible but can't be picked
@@ -865,6 +1043,29 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
       // both gated on this screen being the one the actions fire on
       playerActionProgress: controller.playerActionProgress,
       playerActionInterval: controller.playerActionInterval,
+    );
+  }
+
+  /// The dungeon floor on screen, or null for a world encounter.
+  DungeonFloorView? _dungeonFloor(
+    BuildContext context,
+    EncounterController controller,
+  ) {
+    // the loop mode lives on the dungeon's progress, which the encounter
+    // controller never hears change
+    final dungeons = context.watch<DungeonController>();
+    final inView = controller.floorInView();
+    if (inView == null || !inView.id.isReal) return null;
+    return DungeonFloorView(
+      id: inView.id,
+      index: inView.index,
+      floor: inView.floor,
+      fullCounts: DungeonFloorTrack.fullCountsFor(
+        inView.id,
+        inView.index,
+        inView.floor,
+      ),
+      loopsDungeon: dungeons.loopsDungeon(inView.id),
     );
   }
 

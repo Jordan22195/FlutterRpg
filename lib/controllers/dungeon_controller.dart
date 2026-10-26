@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../catalogs/dungeons/dungeons.dart';
 import '../catalogs/items/items.dart';
 import '../controllers/encounter_controller.dart';
+import '../data/ObjectStack.dart';
 import '../data/dungeon_progress_data.dart';
 import '../data/dungeon_run.dart';
 import '../data/entity_queue.dart';
@@ -19,10 +20,11 @@ import '../systems/dungeon_system.dart';
 /// which runs it as an ordinary encounter — the dungeon's only additions are
 /// the queue behind the floor and the gating in front of it.
 ///
-/// Nothing here is a "run" you can be inside: opening the screen enters
-/// nothing, and backing out leaves nothing. The only live state is which
-/// floor the action loop is firing into, and starting any other action
-/// resets that floor.
+/// Opening the screen enters nothing, and backing out leaves nothing. A
+/// dungeon's run is the floors cleared since it was last reset — what opens
+/// the floors below — and clearing every main floor once a run earns its
+/// chest. Starting any other action resets the floor that was running, not
+/// the run.
 class DungeonController extends ChangeNotifier {
   final DungeonRun _run;
   final DungeonProgressData _progress;
@@ -89,8 +91,7 @@ class DungeonController extends ChangeNotifier {
     );
   }
 
-  /// Whether floor [index] of [id] has ever been cleared — the permanent
-  /// unlock, not something this run did.
+  /// Whether floor [index] of [id] has been cleared this run — the unlock.
   bool isCleared(DungeonId id, int index) => _progress.hasCleared(id, index);
 
   /// How many times floor [index] of [id] has ever been cleared.
@@ -101,6 +102,21 @@ class DungeonController extends ChangeNotifier {
   int sessionRuns(DungeonId id, int index) {
     if (!_run.active || _run.dungeonId != id) return 0;
     return _run.sessionRuns[index] ?? 0;
+  }
+
+  /// The floor [id]'s list is about, which it draws open: the one the loop
+  /// is in, else the first never cleared, else the last. -1 for a dungeon
+  /// with no floors.
+  int currentFloor(DungeonId id) {
+    final count = slotsFor(id).length;
+    if (count == 0) return -1;
+    if (_run.active && _run.dungeonId == id && _run.runningSlot >= 0) {
+      return _run.runningSlot;
+    }
+    for (int i = 0; i < count; i++) {
+      if (!_progress.hasCleared(id, i)) return i;
+    }
+    return count - 1;
   }
 
   /// Why floor [index] of [id] can't be started, or null when it can.
@@ -145,6 +161,53 @@ class DungeonController extends ChangeNotifier {
   /// confirm, so an irreversible charge is never silent.
   bool willSpendKey(DungeonId id, int index) {
     return showsKeyNote(id, index) && !keyPaid(id) && keyCount(id) > 0;
+  }
+
+  // ---- run: loop mode, reset, chest ----
+
+  /// Whether [id] is set to Loop dungeon rather than Loop floor.
+  bool loopsDungeon(DungeonId id) => _progress.loopsDungeon(id);
+
+  /// Switches [id] between Loop floor and Loop dungeon. Takes effect the
+  /// next time a floor clears, running or not.
+  void setLoopDungeon(DungeonId id, bool on) {
+    _progress.setLoopDungeon(id, on);
+    notifyListeners();
+  }
+
+  /// Sends [id] back to its first floor: stops a floor of it that is
+  /// running, relocks every floor below the first, and lets the chest be
+  /// earned again. The paid key and chests waiting to be claimed stay.
+  void resetDungeon(DungeonId id) {
+    if (!id.isReal) return;
+    _encounterController.stopDungeonFloor(id);
+    _dungeonSystem.resetDungeon(_progress, _run, id);
+    _previewSlots.remove(id);
+    notifyListeners();
+  }
+
+  /// Main floors of [id], and how many of them are cleared this run.
+  int mainFloorCount(DungeonId id) =>
+      id.isReal ? id.definition.mainFloors.length : 0;
+  int mainFloorsCleared(DungeonId id) =>
+      _dungeonSystem.mainFloorsCleared(_progress, id);
+
+  /// Whether this run's chest has been earned — claimed or not.
+  bool chestEarned(DungeonId id) => _progress.chestEarnedThisRun(id);
+
+  /// Chests of [id] earned and not yet claimed.
+  int chestsWaiting(DungeonId id) => _progress.chestsWaiting(id);
+
+  /// Opens every chest of [id] waiting to be claimed, into the bag. Returns
+  /// what came out, merged by item.
+  List<ObjectStack<ItemId>> claimChests(DungeonId id) {
+    final loot = _dungeonSystem.openChests(
+      progress: _progress,
+      id: id,
+      playerInventory: _inventoryState,
+    );
+    notifyListeners();
+    return loot;
   }
 
   /// Re-reads everything the floor cards show. The key count comes from the

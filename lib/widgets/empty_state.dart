@@ -26,7 +26,7 @@ class EmptyState extends StatelessWidget {
     );
 
     return CustomPaint(
-      painter: _DashedBorderPainter(color: palette.borderStrong, radius: 16),
+      painter: DashedBorderPainter(color: palette.borderStrong, radius: 16),
       child: SizedBox(
         height: height,
         width: double.infinity,
@@ -49,8 +49,10 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-class _DashedBorderPainter extends CustomPainter {
-  const _DashedBorderPainter({required this.color, required this.radius});
+/// A 1px dashed rounded outline: the empty state's, and a sealed dungeon
+/// floor's.
+class DashedBorderPainter extends CustomPainter {
+  const DashedBorderPainter({required this.color, required this.radius});
 
   final Color color;
   final double radius;
@@ -80,6 +82,6 @@ class _DashedBorderPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DashedBorderPainter old) =>
+  bool shouldRepaint(DashedBorderPainter old) =>
       old.color != color || old.radius != radius;
 }

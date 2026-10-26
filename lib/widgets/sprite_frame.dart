@@ -30,7 +30,8 @@ enum SpriteKind {
 /// The rounded, tinted frame a sprite sits in on list rows, recipe cards
 /// and the status row. The tint says what kind of thing it is; an entity
 /// rarer than common is outlined in its rarity colour instead of the
-/// tint's border, as it was before.
+/// tint's border, as it was before. A boss ([isBoss]) wears a gold frame
+/// whatever its rarity.
 class SpriteFrame extends StatelessWidget {
   const SpriteFrame({
     super.key,
@@ -42,6 +43,7 @@ class SpriteFrame extends StatelessWidget {
     this.depleted = false,
     this.onTap,
     this.fill,
+    this.isBoss = false,
   });
 
   final Enum id;
@@ -59,6 +61,13 @@ class SpriteFrame extends StatelessWidget {
   /// Overrides the tint's fill, e.g. to sit the sprite flush on the card
   /// behind it. The tint's border still says what kind of thing it is.
   final Color? fill;
+
+  /// A dungeon boss: the frame ignores rarity and is gold — a 2px
+  /// [GameColors.bossFrame] border with a 2px dark line inside it and a
+  /// 1px edge outside it. Same size, radius and fill as any other frame.
+  final bool isBoss;
+
+  static const double _bossBorder = 2;
 
   /// The frame fill and border for [kind] in the current theme.
   static SpriteTint tintFor(BuildContext context, SpriteKind kind) {
@@ -105,20 +114,47 @@ class SpriteFrame extends StatelessWidget {
       );
     }
 
-    final frame = Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: fill ?? tint.fill,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(
-          color: rarity ?? tint.border,
-          width: rarity != null ? 2 : 1,
-        ),
-      ),
-      alignment: Alignment.center,
-      child: sprite,
-    );
+    final frame = isBoss
+        ? Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: fill ?? tint.fill,
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(
+                color: GameColors.bossFrame,
+                width: _bossBorder,
+              ),
+              boxShadow: const [
+                BoxShadow(color: GameColors.bossFrameOuter, spreadRadius: 1),
+              ],
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(radius - _bossBorder),
+                border: Border.all(
+                  color: GameColors.bossFrameInner,
+                  width: _bossBorder,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: sprite,
+            ),
+          )
+        : Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: fill ?? tint.fill,
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(
+                color: rarity ?? tint.border,
+                width: rarity != null ? 2 : 1,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: sprite,
+          );
 
     if (onTap == null) return frame;
     return GestureDetector(

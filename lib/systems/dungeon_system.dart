@@ -6,12 +6,17 @@ import '../data/entity_queue.dart';
 import '../data/inventory_data.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
+import '../data/item_drop_type.dart';
+import '../data/ObjectStack.dart';
 import '../services/inventory_service.dart';
 import '../services/player_data_service.dart';
+import '../services/weighted_drop_table_service.dart';
+import '../catalogs/items/items.dart';
 
 /// Content and gating for dungeons: building a dungeon's floors from a
-/// definition, deciding which floors are open, paying the entry key, and
-/// resetting a floor that has been walked away from.
+/// definition, deciding which floors are open, paying the entry key,
+/// resetting a floor that has been walked away from or a whole run, where a
+/// cleared floor's loop goes next, and the full-clear chest.
 ///
 /// Deliberately does NOT fight anything. A floor's encounter runs through
 /// EncounterController/EncounterSystem like any other encounter — this
@@ -19,12 +24,15 @@ import '../services/player_data_service.dart';
 class DungeonSystem {
   final InventoryService _inventoryService;
   final PlayerDataService _playerDataService;
+  final WeightedDropTableService _dropTableService;
 
   DungeonSystem({
     required InventoryService inventoryService,
     required PlayerDataService playerDataService,
+    required WeightedDropTableService dropTableService,
   }) : _inventoryService = inventoryService,
-       _playerDataService = playerDataService;
+       _playerDataService = playerDataService,
+       _dropTableService = dropTableService;
 
   DungeonDefinition? definitionFor(DungeonId id) => id.definition;
 
@@ -118,16 +126,147 @@ class DungeonSystem {
     run.sessionRuns.remove(index);
   }
 
-  /// Books one clear of floor [index]: the permanent unlock, the lifetime
-  /// count the floor card shows, and the lap count for this stretch.
+  /// Books one clear of floor [index]: this run's unlock, the lifetime
+  /// count the floor card shows, and the lap count for this stretch — and,
+  /// the first time this run every main floor stands cleared, the chest.
   void recordFloorCleared(
     DungeonProgressData progress,
     DungeonRun run,
     int index,
   ) {
-    if (!run.dungeonId.isReal || index < 0) return;
-    progress.recordRun(run.dungeonId, index);
+    final id = run.dungeonId;
+    if (!id.isReal || index < 0) return;
+    progress.recordRun(id, index);
     run.sessionRuns[index] = (run.sessionRuns[index] ?? 0) + 1;
+    if (fullyCleared(progress, id)) progress.earnChest(id);
+  }
+
+  /// Every main floor of [id] cleared this run. Floors beside the path
+  /// don't count.
+  bool fullyCleared(DungeonProgressData progress, DungeonId id) {
+    if (!id.isReal) return false;
+    final main = id.definition.mainFloors;
+    return main.isNotEmpty && main.every((i) => progress.hasCleared(id, i));
+  }
+
+  /// Main floors of [id] cleared this run — the chest's "1 / 3".
+  int mainFloorsCleared(DungeonProgressData progress, DungeonId id) {
+    if (!id.isReal) return 0;
+    return id.definition.mainFloors
+        .where((i) => progress.hasCleared(id, i))
+        .length;
+  }
+
+  /// Where the loop goes once floor [index] of the running dungeon has
+  /// just been cleared (and booked). Loop floor, and any floor beside the
+  /// path, goes round the same floor again. Loop dungeon runs on into the
+  /// next main floor; off the last one the run resets — the chest it just
+  /// earned stays waiting — and comes back round to the first.
+  int nextFloorAfterClear(
+    DungeonProgressData progress,
+    DungeonRun run,
+    int index,
+  ) {
+    final id = run.dungeonId;
+    if (!id.isReal || !progress.loopsDungeon(id)) return index;
+    final def = id.definition;
+    if (!def.isMainFloor(index)) return index;
+    final next = def.nextMainFloor(index);
+    if (next != null) return next;
+    progress.resetRun(id);
+    return def.mainFloors.first;
+  }
+
+  /// Back to the first floor: this run's clears and its chest go, and every
+  /// floor of a run in this dungeon is rebuilt fresh. The caller stops a
+  /// floor that was running first. The paid key and chests still waiting to
+  /// be claimed are kept.
+  void resetDungeon(
+    DungeonProgressData progress,
+    DungeonRun run,
+    DungeonId id,
+  ) {
+    if (!id.isReal) return;
+    progress.resetRun(id);
+    if (!run.active || run.dungeonId != id) return;
+    run.slots = buildSlots(id.definition);
+    run.runningSlot = -1;
+    run.sessionRuns = {};
+  }
+
+  // ---- chest ----
+
+  /// What one of [def]'s chests rolls: its own table when it has one,
+  /// otherwise a stand-in — a guaranteed purse of coins that grows with the
+  /// floors, and a one-in-four pick from the floors' bosses' own drops.
+  List<DropRoll> chestRollsFor(DungeonDefinition def) {
+    if (def.chestRolls.isNotEmpty) return def.chestRolls;
+    final floors = def.mainFloors.length;
+    final bossTables = <ItemDropType>[];
+    for (final entry in def.entries) {
+      if (entry.entities.isEmpty) continue;
+      final bossDef = entry.entities.last.entityId.definition;
+      if (bossDef is! CombatEntityDefinition || !bossDef.isDungeonBoss) {
+        continue;
+      }
+      if (bossDef.itemDrops.isNotEmpty) {
+        bossTables.add(NestedDrop(bossDef.itemDrops));
+      }
+      for (final roll in bossDef.bonusDrops) {
+        bossTables.addAll(roll.entries);
+      }
+    }
+    return [
+      DropRoll(
+        entries: [
+          ItemDropType(
+            id: ItemId.COINS,
+            lowCount: 50 * floors,
+            highCount: 100 * floors,
+          ),
+        ],
+      ),
+      if (bossTables.isNotEmpty) DropRoll(chance: 0.25, entries: bossTables),
+    ];
+  }
+
+  /// Opens every chest of [id] waiting to be claimed, paying what they roll
+  /// into [playerInventory]. Returns what came out, merged by item; empty
+  /// when nothing was waiting.
+  List<ObjectStack<ItemId>> openChests({
+    required DungeonProgressData progress,
+    required DungeonId id,
+    required InventoryData playerInventory,
+  }) {
+    if (!id.isReal) return const [];
+    final count = progress.takeChests(id);
+    if (count <= 0) return const [];
+
+    final rolled = _dropTableService.rollBonusMulitpleTimes(
+      count,
+      chestRollsFor(id.definition),
+    );
+    final totals = <ItemId, int>{};
+    for (final drop in rolled) {
+      final item = drop.id.id;
+      if (drop.count <= 0 || item == ItemId.NULL) continue;
+      final built = item.build();
+      if (built is EquipmentItem) {
+        // equipment arrives at the quality its line names, as a kill's does
+        built.quality = drop.id.rarity;
+        built.count = drop.count;
+        _inventoryService.addEquipment(playerInventory, built);
+      } else {
+        _inventoryService.addItems(playerInventory, [
+          ObjectStack<ItemId>(id: item, count: drop.count),
+        ]);
+      }
+      totals[item] = (totals[item] ?? 0) + drop.count;
+    }
+    return [
+      for (final entry in totals.entries)
+        ObjectStack<ItemId>(id: entry.key, count: entry.value),
+    ];
   }
 
   /// Prepares floor [index] to be fought and hands back the member to start
@@ -191,10 +330,14 @@ class DungeonSystem {
       }
     }
 
-    final entry = def.entries[index];
-    if (!entry.requiresPrevious || index == 0) return null;
-    if (progress.hasCleared(dungeonId, index - 1)) return null;
-    return 'Complete ${def.entries[index - 1].name} to unlock';
+    // a chained floor waits on the main floor above it, walking past any
+    // floor beside the path in between
+    if (!def.isMainFloor(index)) return null;
+    final previous = def.previousMainFloor(index);
+    if (previous == null || progress.hasCleared(dungeonId, previous)) {
+      return null;
+    }
+    return 'Complete ${def.entries[previous].name} to unlock';
   }
 
   /// Pays the entry key the first time floor 0 is started, and only that

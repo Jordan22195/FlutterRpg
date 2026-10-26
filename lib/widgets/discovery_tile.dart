@@ -8,6 +8,7 @@ import '../data/level_standing.dart';
 import '../data/skill_data.dart';
 import '../utilities/util.dart';
 import 'explore_card.dart';
+import 'icon_renderer.dart';
 import 'place_tile.dart';
 import 'sprite_frame.dart';
 import '../catalogs/zones/map_node_type.dart';
@@ -32,7 +33,7 @@ class DiscoveryTile extends StatelessWidget {
   final EncounterEntity entity;
 
   /// Drawn as the floor's boss: ringed and washed in [GameColors.bossColor]
-  /// under a ribbon that says so. See [BossTile].
+  /// under a ribbon that says so.
   final bool boss;
 
   /// See [PlaceTile.active].
@@ -120,31 +121,120 @@ class DiscoveryTile extends StatelessWidget {
   }
 }
 
-/// A dungeon floor's boss, as its own tile: the monster's [DiscoveryTile],
-/// ringed in the boss red and crowned with a "BOSS" ribbon, so the one
-/// fight a floor builds to stands apart from the queue in front of it.
-class BossTile extends StatelessWidget {
-  const BossTile({
-    super.key,
-    required this.entity,
-    this.onTap,
-    this.onLongPress,
-  });
+/// A dungeon floor's boss, as a full-width row under the floor's grid: the
+/// monster in a gold boss frame, a gold "BOSS" label over its name, and the
+/// level it is fought at, on a faint boss-red wash — so the one fight a
+/// floor builds to stands apart from the queue in front of it.
+class BossRow extends StatelessWidget {
+  const BossRow({super.key, required this.entity, this.onTap});
 
   final EncounterEntity entity;
+
+  /// E.g. the boss's details popup.
   final VoidCallback? onTap;
-  final VoidCallback? onLongPress;
+
+  static const double height = 72;
 
   @override
-  Widget build(BuildContext context) => DiscoveryTile(
-    entity: entity,
-    onTap: onTap,
-    onLongPress: onLongPress,
-    boss: true,
-  );
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final colors = context.gameColors;
+    final e = entity;
+    final level = context.watch<WorldController>().entityLevel(e);
+    final standing = LevelStanding.of(
+      level,
+      context.watch<PlayerDataController>().getCombatLevel(),
+    );
+    final radius = BorderRadius.circular(14);
+
+    return Semantics(
+      button: onTap != null,
+      label: '${e.name}, boss, level $level',
+      // the label replaces what the row's children would say, so the tap
+      // has to be handed back to it here
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Material(
+        color: Color.alphaBlend(
+          GameColors.bossColor.withValues(alpha: 0.12),
+          palette.surface,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: const BorderSide(color: GameColors.bossTileBorder),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: radius,
+          child: SizedBox(
+            height: height,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 14, 0),
+              child: Row(
+                children: [
+                  SpriteFrame(
+                    id: e.id,
+                    kind: SpriteKind.combat,
+                    size: 56,
+                    spriteSize: 46,
+                    radius: 10,
+                    depleted: e.count <= 0,
+                    isBoss: true,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'BOSS',
+                          style: HearthText.rowMeta.copyWith(
+                            fontSize: 11,
+                            height: 1.0,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.1,
+                            color: GameColors.bossLabel,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          e.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: HearthText.rowTitle.copyWith(
+                            fontSize: 16,
+                            color: palette.text,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconRenderer(id: SkillId.ATTACK, size: 14),
+                  const SizedBox(width: 5),
+                  Text(
+                    '$level',
+                    style: HearthText.statusStat.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: switch (standing) {
+                        LevelStanding.hard => colors.levelHard,
+                        LevelStanding.even => colors.levelEven,
+                        LevelStanding.easy => colors.levelEasy,
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-/// The "BOSS" pill across the top of a [BossTile].
+/// The red "BOSS" pill across the top of a [DiscoveryTile] drawn as a boss.
 class BossRibbon extends StatelessWidget {
   const BossRibbon({super.key});
 

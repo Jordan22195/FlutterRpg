@@ -280,6 +280,11 @@ class EncounterController extends ChangeNotifier {
   /// is read instead.
   ({DungeonId id, int index, EntityQueue preview})? _viewedFloor;
 
+  /// Stands for the screen [_viewedFloor] was opened for. Separate from the
+  /// view itself, which a dungeon loop moves on to the next floor while the
+  /// same screen stays up.
+  Object? _viewedFloorToken;
+
   /// The player has gone to look at a place in a zone — a firepit, a tree,
   /// a shop — while a floor may still be running. Looking costs nothing: the
   /// floor keeps looping, and only starting another action leaves it. But
@@ -304,20 +309,21 @@ class EncounterController extends ChangeNotifier {
   /// Opens floor [index] of [id] on the encounter screen without starting
   /// it. Returns a token for [closeDungeonFloor].
   Object viewDungeonFloor(DungeonId id, int index, EntityQueue preview) {
-    final view = (id: id, index: index, preview: preview);
-    _viewedFloor = view;
+    _viewedFloor = (id: id, index: index, preview: preview);
+    final token = _viewedFloorToken = Object();
     _viewingZoneEntity = false;
     final entity = preview.displayed;
     if (entity != null) _playerState.currentEntityViewId = entity.id;
     notifyListeners();
-    return view;
+    return token;
   }
 
   /// Closes the floor opened by [viewDungeonFloor] — the screen it was
   /// opened for has gone. A later view is left alone.
   void closeDungeonFloor(Object token) {
-    if (!identical(_viewedFloor, token)) return;
+    if (!identical(_viewedFloorToken, token)) return;
     _viewedFloor = null;
+    _viewedFloorToken = null;
     notifyListeners();
   }
 
@@ -371,9 +377,10 @@ class EncounterController extends ChangeNotifier {
   /// conditions check, which would otherwise see the spent member and stop.
   ///
   /// Next is the floor's next member, or — once the floor is spent — the
-  /// same floor again: clearing books the lap and the permanent unlock, then
-  /// refills and carries straight on. You always loop the floor you are in,
-  /// and only starting another action gets you out of it.
+  /// floor the dungeon's loop mode picks: clearing books the lap, the run's
+  /// unlock and any chest, then Loop floor refills the same floor and Loop
+  /// dungeon runs on into the next one (back round to the first off the
+  /// last). Only starting another action gets you out of it.
   ///
   /// That decision lives here rather than on the shell because this is the
   /// path that also runs with the app closed, where no widget is listening
@@ -397,9 +404,16 @@ class EncounterController extends ChangeNotifier {
 
     _dungeonSystem.recordFloorCleared(_dungeonProgress, _dungeonRun, index);
 
+    final nextIndex = _dungeonSystem.nextFloorAfterClear(
+      _dungeonProgress,
+      _dungeonRun,
+      index,
+    );
+    if (nextIndex != index) _moveRunningFloor(index, nextIndex);
+
     // a lap of the same floor is the same haul carrying on, so the
     // encounter panel's drop log stands across it
-    final member = _dungeonSystem.openSlot(_dungeonRun, index);
+    final member = _dungeonSystem.openSlot(_dungeonRun, nextIndex);
     onDungeonFloorChanged?.call();
     if (member != null) return _handOffTo(member);
 
@@ -407,6 +421,24 @@ class EncounterController extends ChangeNotifier {
     // started and loop at no cost, so the loop stops instead
     _actionTimingController.stop();
     return false;
+  }
+
+  /// Hands the loop from floor [from] on to floor [to] — a dungeon loop
+  /// moving down. The floor left behind goes back to the top, and a player
+  /// watching it on the encounter screen is carried along to the new one,
+  /// so the screen never shows the floor just left as one waiting to start.
+  void _moveRunningFloor(int from, int to) {
+    _dungeonSystem.resetSlot(_dungeonRun, from);
+    _dungeonRun.runningSlot = to;
+    _dungeonRun.sessionRuns.remove(to);
+    final view = _viewedFloor;
+    final slot = _dungeonService.slotAt(_dungeonRun, to);
+    if (view != null &&
+        view.id == _dungeonRun.dungeonId &&
+        view.index == from &&
+        slot != null) {
+      _viewedFloor = (id: view.id, index: to, preview: slot);
+    }
   }
 
   /// Points the running loop at [entity] and reports whether it can keep
@@ -487,12 +519,47 @@ class EncounterController extends ChangeNotifier {
     onDungeonFloorChanged?.call();
   }
 
+  /// Stops the running floor of [id], if one is, and walks away from it —
+  /// what Reset does before it sends the dungeon back to its first floor.
+  /// A floor in another dungeon is left running.
+  void stopDungeonFloor(DungeonId id) {
+    if (!_dungeonRun.active ||
+        _dungeonRun.dungeonId != id ||
+        _dungeonRun.runningSlot < 0) {
+      return;
+    }
+    _actionTimingController.stop();
+    releaseDungeonFloor();
+    notifyListeners();
+  }
+
   /// The dungeon whose floor the loop is in, or NULL when no floor runs —
   /// what lights a dungeon entrance's tile in its zone.
   DungeonId get runningDungeonId =>
       _dungeonRun.active && _dungeonRun.runningSlot >= 0
       ? _dungeonRun.dungeonId
       : DungeonId.NULL;
+
+  /// The dungeon floor the encounter screen is showing: the one entered but
+  /// not yet started, else the running floor while its screen is in view.
+  /// Null for an ordinary world encounter. Resolves the same way
+  /// [_resolveViewedEntity] does, so the floor and the entity on screen
+  /// always agree.
+  ({DungeonId id, int index, EntityQueue floor})? floorInView() {
+    final view = _viewedFloor;
+    final idle = _idleFloor;
+    if (view != null && idle != null) {
+      return (id: view.id, index: view.index, floor: idle);
+    }
+    if (_viewingZoneEntity) return null;
+    final running = _dungeonService.runningSlot(_dungeonRun);
+    if (running == null) return null;
+    return (
+      id: _dungeonRun.dungeonId,
+      index: _dungeonRun.runningSlot,
+      floor: running,
+    );
+  }
 
   /// The members still queued behind the one on screen, in queue order.
   /// Empty for an ordinary world encounter.

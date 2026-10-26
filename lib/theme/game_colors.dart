@@ -116,6 +116,34 @@ class GameColors extends ThemeExtension<GameColors> {
   static const Color bossColor = Color(0xFFB3261E);
   static const Color onBossColor = Color(0xFFFFFFFF);
 
+  /// A boss's gold sprite frame: the 2px border, the 2px dark line just
+  /// inside it and the 1px edge just outside it.
+  static const Color bossFrame = Color(0xFFD9A441);
+  static const Color bossFrameInner = Color(0xFF1A120C);
+  static const Color bossFrameOuter = Color(0xFF5A3A14);
+
+  /// The "BOSS" label over a boss's name.
+  static const Color bossLabel = Color(0xFFE3B341);
+
+  /// A boss tile's 1px border: the plain tile's weight with a hint of
+  /// warmth.
+  static const Color bossTileBorder = Color(0xFF6A3328);
+
+  /// A dungeon floor cleared at least once: its rail node, its rail, its
+  /// "Cleared" pill and its segment of the progress bar. [clearedFill] is
+  /// the node's wash.
+  static const Color clearedColor = Color(0xFF7FC08A);
+  static const Color clearedFill = Color(0xFF1F3A27);
+
+  /// A dungeon's full-clear chest: its glyph and count ([chestColor]), its
+  /// card ([chestFill], [chestBorder]) and the box the glyph sits in
+  /// ([chestBoxFill], [chestBoxBorder]).
+  static const Color chestColor = Color(0xFFE8C766);
+  static const Color chestFill = Color(0xFF1E1C12);
+  static const Color chestBorder = Color(0xFF4A3F24);
+  static const Color chestBoxFill = Color(0xFF2A2416);
+  static const Color chestBoxBorder = Color(0xFF6B5A2E);
+
   final SpriteTint combatTint;
 
   /// Crafting stations (anvil) and crafting inputs.

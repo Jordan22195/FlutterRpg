@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
-import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/main.dart';
@@ -18,8 +17,12 @@ import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/widgets/art_header.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/discovery_tile.dart';
-import 'package:rpg/widgets/entity_queue_card.dart';
+import 'package:rpg/widgets/dungeon_floor_card.dart';
+import 'package:rpg/widgets/dungeon_floor_track.dart';
 import 'package:rpg/widgets/fill_bar.dart';
+import 'package:rpg/widgets/item_stack_tile.dart';
+import 'package:rpg/widgets/sprite_frame.dart';
+import 'package:rpg/theme/game_colors.dart';
 
 // Fixed pumps (the app has periodic timers that never settle).
 Future<void> settle(WidgetTester tester) async {
@@ -44,17 +47,29 @@ void makeStrong(GameSession session) {
       .getStatTotals(session.saveGameData.playerData)[SkillId.HITPOINTS]!;
 }
 
-// the floor list is a lazy ListView taller than the test surface
+// the floor list is taller than the test surface
 Future<void> scrollList(WidgetTester tester, double dy) async {
-  // the page's own list, not a floor's sideways row of tiles
-  await tester.drag(
-    find
-        .byWidgetPredicate(
-          (w) => w is ListView && w.scrollDirection == Axis.vertical,
-        )
-        .last,
-    Offset(0, dy),
-  );
+  await tester.drag(find.byType(CustomScrollView).last, Offset(0, dy));
+  await settle(tester);
+}
+
+// a floor's card, found by its name
+Finder floorCard(String name) =>
+    find.ancestor(of: find.text(name), matching: find.byType(DungeonFloorCard));
+
+// a floor other than the current one is a row until it is tapped open
+Future<void> openFloor(WidgetTester tester, String name) async {
+  await tester.ensureVisible(find.text(name));
+  await settle(tester);
+  await tester.tap(find.text(name));
+  await settle(tester);
+}
+
+// the open floor's big button is what enters it
+Future<void> tapFloorButton(WidgetTester tester, String label) async {
+  await tester.ensureVisible(find.text(label));
+  await settle(tester);
+  await tester.tap(find.text(label));
   await settle(tester);
 }
 
@@ -86,24 +101,82 @@ Future<void> openLair(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('a floor\'s boss gets the boss tile, and only the boss', (
+  testWidgets('a dungeon with art opens on it', (tester) async {
+    final art = DungeonId.WOLF_DEN.iconAsset;
+    // the art is real io, so it loads outside the fake clock — and before
+    // the screen mounts, so the header finds it ready
+    await tester.pumpWidget(const SizedBox());
+    await tester.runAsync(
+      () =>
+          precacheImage(AssetImage(art), tester.element(find.byType(SizedBox))),
+    );
+
+    await openDungeonFromSave(tester, DungeonId.WOLF_DEN);
+
+    final header = find.byType(ArtHeader);
+    expect(tester.widget<ArtHeader>(header).artAsset, art);
+    expect(tester.getSize(header).height, DungeonScreen.headerHeight);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('a floor\'s boss gets the boss row, and only the boss', (
     tester,
   ) async {
     await openDungeonFromSave(tester, DungeonId.WOLF_DEN);
 
-    final card = find.ancestor(
-      of: find.text('Cave Entrance'),
-      matching: find.byType(EntityQueueCard),
-    );
-    final bosses = find.descendant(of: card, matching: find.byType(BossTile));
+    // nothing cleared yet, so the first floor is the open one
+    final card = floorCard('Cave Entrance');
+    expect(tester.widget<DungeonFloorCard>(card).expanded, isTrue);
+    final bosses = find.descendant(of: card, matching: find.byType(BossRow));
     expect(bosses, findsOneWidget);
-    expect(tester.widget<BossTile>(bosses).entity.id, EntityId.CAVE_BEAR);
+    expect(tester.widget<BossRow>(bosses).entity.id, EntityId.CAVE_BEAR);
     expect(
       find.descendant(of: bosses, matching: find.text('BOSS')),
       findsOneWidget,
     );
+    // marked by a gold frame and a gold label, not the red pill
+    expect(
+      find.descendant(of: bosses, matching: find.byType(BossRibbon)),
+      findsNothing,
+    );
+    final frame = find.descendant(
+      of: bosses,
+      matching: find.byType(SpriteFrame),
+    );
+    expect(tester.widget<SpriteFrame>(frame).isBoss, isTrue);
+    final gold =
+        tester
+                .widget<Container>(
+                  find
+                      .descendant(of: frame, matching: find.byType(Container))
+                      .first,
+                )
+                .decoration!
+            as BoxDecoration;
+    expect((gold.border! as Border).top.color, GameColors.bossFrame);
+    expect((gold.border! as Border).top.width, 2);
+    expect(
+      tester
+          .widget<Text>(
+            find.descendant(of: bosses, matching: find.text('BOSS')),
+          )
+          .style!
+          .color,
+      GameColors.bossLabel,
+    );
+    expect(
+      tester.getSemantics(bosses),
+      containsSemantics(
+        label:
+            'Cave Bear, boss, level ${(EntityId.CAVE_BEAR.build() as CombatEntity).level}',
+        isButton: true,
+        hasTapAction: true,
+      ),
+    );
 
-    // the queue in front of it draws as ordinary tiles
+    // the queue in front of it draws as ordinary tiles in the grid
     final tiles = tester
         .widgetList<DiscoveryTile>(
           find.descendant(of: card, matching: find.byType(DiscoveryTile)),
@@ -112,9 +185,134 @@ void main() {
     expect(tiles.map((t) => t.entity.id), [
       EntityId.GOBLIN_UNCOMMON,
       EntityId.GOBLIN_RARE,
-      EntityId.CAVE_BEAR,
     ]);
-    expect(tiles.map((t) => t.boss), [false, false, true]);
+    expect(tiles.map((t) => t.boss), [false, false]);
+    expect(find.text('FLOOR 1 · 2 + BOSS'), findsOneWidget);
+    expect(find.text('Fight Floor 1'), findsOneWidget);
+
+    // the floors behind it are rows until they are opened
+    final second = floorCard('Deep Lair');
+    expect(tester.widget<DungeonFloorCard>(second).expanded, isFalse);
+    expect(
+      find.descendant(of: second, matching: find.byType(DiscoveryTile)),
+      findsNothing,
+    );
+    await openFloor(tester, 'Deep Lair');
+    expect(tester.widget<DungeonFloorCard>(second).expanded, isTrue);
+    expect(
+      find.descendant(of: second, matching: find.byType(DiscoveryTile)),
+      findsWidgets,
+    );
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('the loop selector switches the dungeon\'s loop mode', (
+    tester,
+  ) async {
+    await openDungeonFromSave(tester, DungeonId.SPIDER_DEN);
+    final session = sessionOf(tester, at: find.byType(DungeonScreen));
+    final progress = session.saveGameData.dungeonProgress;
+
+    expect(find.text('Loop floor'), findsOneWidget);
+    expect(find.text('Reset'), findsOneWidget);
+    expect(progress.loopsDungeon(DungeonId.SPIDER_DEN), isFalse);
+
+    await tester.tap(find.text('Loop dungeon'));
+    await settle(tester);
+    expect(progress.loopsDungeon(DungeonId.SPIDER_DEN), isTrue);
+
+    await tester.tap(find.text('Loop floor'));
+    await settle(tester);
+    expect(progress.loopsDungeon(DungeonId.SPIDER_DEN), isFalse);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('reset asks first, then relocks the floors below the first', (
+    tester,
+  ) async {
+    const id = DungeonId.SPIDER_DEN;
+    await openDungeonFromSave(tester, id);
+    final session = sessionOf(tester, at: find.byType(DungeonScreen));
+    final progress = session.saveGameData.dungeonProgress;
+
+    // nothing to lose yet: no question asked
+    await tester.tap(find.text('Reset'));
+    await settle(tester);
+    expect(find.text('Reset to Floor 1?'), findsNothing);
+
+    progress.recordRun(id, 0);
+    session.dungeonController.refresh();
+    await settle(tester);
+    expect(find.text('Floor 2 of 2'), findsOneWidget);
+
+    // cancelling keeps the run
+    await tester.tap(find.text('Reset'));
+    await settle(tester);
+    expect(find.text('Reset to Floor 1?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await settle(tester);
+    expect(progress.hasCleared(id, 0), isTrue);
+
+    await tester.tap(find.text('Reset'));
+    await settle(tester);
+    await tester.tap(find.widgetWithText(FilledButton, 'Reset'));
+    await settle(tester);
+    expect(progress.hasCleared(id, 0), isFalse);
+    expect(progress.runsFor(id, 0), 1);
+    expect(find.text('Floor 1 of 2'), findsOneWidget);
+    expect(find.text('Complete Webbed Thicket to unlock'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('the chest card counts the run and claims what waits', (
+    tester,
+  ) async {
+    const id = DungeonId.SPIDER_DEN;
+    await openDungeonFromSave(tester, id);
+    final session = sessionOf(tester, at: find.byType(DungeonScreen));
+    final progress = session.saveGameData.dungeonProgress;
+
+    await tester.ensureVisible(find.text('Spider Den Chest'));
+    await settle(tester);
+    expect(find.text('0 / 2'), findsOneWidget);
+    expect(find.text('Clear all 2 floors in one run'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'^Claim ')), findsNothing);
+
+    progress.recordRun(id, 0);
+    session.dungeonController.refresh();
+    await settle(tester);
+    expect(find.text('1 / 2'), findsOneWidget);
+
+    // two runs' chests waiting
+    progress.earnChest(id);
+    progress.resetRun(id);
+    progress.earnChest(id);
+    session.dungeonController.refresh();
+    await settle(tester);
+    expect(find.text('×2'), findsOneWidget);
+
+    await tapFloorButton(tester, 'Claim 2 chests');
+    expect(find.text('2 Spider Den Chests'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byWidgetPredicate((w) => w is ItemStackTile),
+      ),
+      findsWidgets,
+    );
+    expect(progress.chestsWaiting(id), 0);
+    await tester.tap(find.text('Close'));
+    await settle(tester);
+
+    // this run's chest is taken: another needs a reset
+    expect(find.textContaining(RegExp(r'^Claim ')), findsNothing);
+    expect(find.text('Claimed · Reset to earn it again'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
@@ -135,9 +333,11 @@ void main() {
     expect(find.text('Enter (uses key)'), findsNothing);
     expect(find.text('Boss rewards'), findsNothing);
 
-    // first floor at the top, gated by the key
+    // first floor at the top, gated by the key: its pill and the badge over
+    // its blurred grid both say so
     expect(find.text('Warren Entrance'), findsOneWidget);
-    expect(find.text('Requires Goblin Queen Key'), findsOneWidget);
+    expect(find.text('Requires Goblin Queen Key'), findsNWidgets(2));
+    expect(find.text('Floor 1 of 3'), findsOneWidget);
 
     await scrollList(tester, -400);
     expect(find.text('Complete Warren Entrance to unlock'), findsOneWidget);
@@ -162,16 +362,14 @@ void main() {
     // no key yet: the floor says so and can't be started
     expect(find.text('No key'), findsOneWidget);
 
-    // and its row is blurred, with the lock and the reason over the blur
-    final firstFloor = find.ancestor(
-      of: find.text('Warren Entrance'),
-      matching: find.byType(EntityQueueCard),
-    );
+    // and its grid is blurred, with the lock and the reason over the blur
+    final firstFloor = floorCard('Warren Entrance');
     Finder inFloor(Finder f) => find.descendant(of: firstFloor, matching: f);
     expect(inFloor(find.byType(ImageFiltered)), findsOneWidget);
-    expect(inFloor(find.byIcon(Icons.lock)), findsOneWidget);
+    expect(inFloor(find.byIcon(Icons.lock)), findsWidgets);
+    expect(inFloor(find.text('Fight Floor 1')), findsNothing);
     final reason = tester.getCenter(
-      inFloor(find.text('Requires Goblin Queen Key')),
+      inFloor(find.text('Requires Goblin Queen Key')).last,
     );
     final blur = tester.getRect(inFloor(find.byType(ImageFiltered)));
     expect(blur.contains(reason), isTrue);
@@ -190,6 +388,8 @@ void main() {
     // open now, so nothing is hidden, and a tile opens its details
     expect(inFloor(find.byType(ImageFiltered)), findsNothing);
     expect(inFloor(find.byIcon(Icons.lock)), findsNothing);
+    await tester.ensureVisible(inFloor(find.byType(DiscoveryTile)).first);
+    await settle(tester);
     await tester.tap(inFloor(find.byType(DiscoveryTile)).first);
     await settle(tester);
     expect(find.text('Close'), findsOneWidget);
@@ -197,8 +397,7 @@ void main() {
     await settle(tester);
 
     // cancelling the confirm leaves the key in the bag
-    await tester.tap(find.text('Warren Entrance'));
-    await settle(tester);
+    await tapFloorButton(tester, 'Fight Floor 1');
     expect(find.text('Spend 1 Goblin Queen Key?'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await settle(tester);
@@ -213,8 +412,7 @@ void main() {
     expect(session.saveGameData.dungeonRun.runningSlot, -1);
 
     // accepting charges it, and the card says so afterwards
-    await tester.tap(find.text('Warren Entrance'));
-    await settle(tester);
+    await tapFloorButton(tester, 'Fight Floor 1');
     await tester.tap(find.widgetWithText(FilledButton, 'Spend key'));
     await settle(tester);
 
@@ -266,7 +464,16 @@ void main() {
     await settle(tester);
 
     expect(progress.runsFor(id, 0), 1);
+    // the cleared floor folds to a row and the next one opens
+    expect(
+      tester.widget<DungeonFloorCard>(floorCard('Deep Warren')).expanded,
+      isTrue,
+    );
+    expect(find.text('Floor 2 of 3'), findsOneWidget);
+    expect(find.text('Cleared'), findsOneWidget);
+
     // the lap count went with the reset; the lifetime tally stands
+    await openFloor(tester, 'Warren Entrance');
     expect(find.text('1 run'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
@@ -282,53 +489,33 @@ void main() {
     await openLair(tester);
     await scrollList(tester, -400);
 
-    // the boss floor is locked: its tiles are blurred and take no taps
-    final bossCard = find.ancestor(
-      of: find.text("Queen's Chamber"),
-      matching: find.byType(EntityQueueCard),
-    );
-    // the floor's creatures are discovery tiles in one sideways row
-    final tiles = find.descendant(
-      of: bossCard,
-      matching: find.byType(DiscoveryTile),
-    );
-    expect(tiles, findsWidgets);
-    final row = tester.widget<ListView>(
-      find.descendant(of: bossCard, matching: find.byType(ListView)),
-    );
-    expect(row.scrollDirection, Axis.horizontal);
+    // the boss floor is locked: a dashed row until it is opened
+    expect(find.text('Complete Deep Warren to unlock'), findsOneWidget);
+    final bossCard = floorCard("Queen's Chamber");
+    expect(tester.widget<DungeonFloorCard>(bossCard).expanded, isFalse);
+    await openFloor(tester, "Queen's Chamber");
 
-    final bossTile = find
-        .ancestor(of: find.text('Goblin Queen'), matching: tiles)
-        .first;
+    // open, its creatures are there but blurred, and offer no way in
+    expect(
+      find.descendant(of: bossCard, matching: find.byType(DiscoveryTile)),
+      findsWidgets,
+    );
+    final bossTile = find.descendant(
+      of: bossCard,
+      matching: find.byType(BossRow),
+    );
+    expect(tester.widget<BossRow>(bossTile).entity.id, EntityId.GOBLIN_QUEEN);
+    expect(
+      find.ancestor(of: bossTile, matching: find.byType(ImageFiltered)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: bossCard, matching: find.textContaining('Floor 3')),
+      findsNothing,
+    );
     await tester.ensureVisible(bossTile);
     await settle(tester);
 
-    // the queen keeps her rarity outline on the new tile, as on the old one
-    final frame =
-        tester
-                .widget<Container>(
-                  find
-                      .descendant(
-                        of: bossTile,
-                        matching: find.byWidgetPredicate(
-                          (w) =>
-                              w is Container &&
-                              w.constraints?.maxWidth == 64 &&
-                              w.constraints?.maxHeight == 56,
-                        ),
-                      )
-                      .first,
-                )
-                .decoration!
-            as BoxDecoration;
-    final side = (frame.border! as Border).top;
-    expect(side.width, 2);
-    expect(
-      side.color,
-      rarityBorderColor(EntityId.GOBLIN_QUEEN.definition.rarity),
-    );
-    expect(side.color, isNotNull);
     // the blur takes the tap, so nothing opens
     await tester.tap(bossTile, warnIfMissed: false);
     await settle(tester);
@@ -390,29 +577,24 @@ void main() {
     makeStrong(session);
 
     final floor = session.dungeonController.slotsFor(DungeonId.SPIDER_DEN)[0];
-    final card = find.ancestor(
-      of: find.text(floor.name),
-      matching: find.byType(EntityQueueCard),
-    );
-    // the card offers to enter, not to play
+    final card = floorCard(floor.name);
+    // the card offers to fight the floor; tapping it enters, nothing more
     expect(
-      find.descendant(of: card, matching: find.byIcon(Icons.login)),
+      find.descendant(of: card, matching: find.text('Fight Floor 1')),
       findsOneWidget,
     );
-    expect(
-      find.descendant(of: card, matching: find.byIcon(Icons.play_arrow)),
-      findsNothing,
-    );
 
-    await tester.tap(find.text(floor.name));
-    await settle(tester);
+    await tapFloorButton(tester, 'Fight Floor 1');
 
-    // on the floor's screen, facing its first member, and nothing running
+    // on the floor's screen, facing its first member, and nothing running.
+    // the header is the floor's; the member's name stands on the stage
+    // under the floor's track
     expect(find.byType(EncounterScreen), findsOneWidget);
-    expect(
-      tester.widget<ArtHeader>(find.byType(ArtHeader)).title,
-      floor.displayed!.name,
-    );
+    final header = tester.widget<ArtHeader>(find.byType(ArtHeader));
+    expect(header.title, floor.name);
+    expect(header.subtitle, 'Spider Den · Floor 1 of 2');
+    expect(find.byType(DungeonFloorTrack), findsOneWidget);
+    expect(find.text(floor.displayed!.name), findsOneWidget);
     expect(session.saveGameData.dungeonRun.runningSlot, -1);
     expect(session.actionTimingController.isRunning, isFalse);
     Finder buttonIcon(IconData icon) => find.descendant(
@@ -455,21 +637,14 @@ void main() {
 
     // the running floor's card alone carries the bar, ringed in the accent
     final floor = session.dungeonController.slotsFor(DungeonId.SPIDER_DEN)[0];
-    final card = find.ancestor(
-      of: find.text(floor.name),
-      matching: find.byType(EntityQueueCard),
-    );
+    final card = floorCard(floor.name);
     expect(bar, findsOneWidget);
     expect(find.descendant(of: card, matching: bar), findsOneWidget);
-    expect(tester.widget<EntityQueueCard>(card).active, isTrue);
-    final shape =
-        tester
-                .widget<Card>(
-                  find.descendant(of: card, matching: find.byType(Card)),
-                )
-                .shape!
-            as RoundedRectangleBorder;
-    expect(shape.side.width, 2);
+    expect(tester.widget<DungeonFloorCard>(card).active, isTrue);
+    expect(
+      find.descendant(of: card, matching: find.textContaining('Fighting · ')),
+      findsOneWidget,
+    );
 
     // the bar fills with the action in hand
     await tester.pump(const Duration(milliseconds: 300));
@@ -485,7 +660,7 @@ void main() {
     session.actionTimingController.stop();
     await settle(tester);
     expect(bar, findsNothing);
-    expect(tester.widget<EntityQueueCard>(card).active, isFalse);
+    expect(tester.widget<DungeonFloorCard>(card).active, isFalse);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
@@ -513,10 +688,7 @@ void main() {
 
     // the card draws the refilled floor, every member back at full count
     final live = session.saveGameData.dungeonRun.slots[0];
-    final card = find.ancestor(
-      of: find.text(live.name),
-      matching: find.byType(EntityQueueCard),
-    );
+    final card = floorCard(live.name);
     final shown = tester
         .widgetList<DiscoveryTile>(
           find.descendant(of: card, matching: find.byType(DiscoveryTile)),

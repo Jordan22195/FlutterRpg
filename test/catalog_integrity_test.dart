@@ -43,7 +43,6 @@ const knownMissingArt = <String>{
   'assets/images/dungeons/goblin_queen_lair.png',
   'assets/images/dungeons/grainery.png',
   'assets/images/dungeons/spider_den.png',
-  'assets/images/dungeons/wolf_den.png',
   'assets/images/zones/darkwood_forest.png',
   'assets/images/zones/foothills.png',
   'assets/images/zones/mine.png',

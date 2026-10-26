@@ -57,6 +57,7 @@ class _MainShellState extends State<MainShell> {
   // is on top, the shell's app bar steps aside
   static const _artHeaderRoutes = {
     EntityScreenRouterService.exploreRouteName,
+    EntityScreenRouterService.dungeonRouteName,
     EntityScreenRouterService.encounterRouteName,
     EntityScreenRouterService.craftingRouteName,
     EntityScreenRouterService.firepitRouteName,
