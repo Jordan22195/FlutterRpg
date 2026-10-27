@@ -209,6 +209,9 @@ class _XpRingRow extends StatefulWidget {
   final int order;
 
   static const double ringSize = 44;
+
+  /// Held before the first row moves, so the dialog has landed first.
+  static const int leadInMs = 500;
   static const int staggerMs = 250;
   static const int appearMs = 250;
   static const int popStartMs = 350;
@@ -257,7 +260,7 @@ class _XpRingRowState extends State<_XpRingRow>
     // a sliver of a level fills briskly; each level crossed adds a beat,
     // capped so a long absence doesn't hold the dialog hostage
     final fillMs = (700 + 500 * (_endPos - _startPos)).clamp(700, 3000).round();
-    final delay = widget.order * _XpRingRow.staggerMs;
+    final delay = _XpRingRow.leadInMs + widget.order * _XpRingRow.staggerMs;
     final fillStart = delay + _XpRingRow.fillStartMs;
     final total = fillStart + fillMs + _XpRingRow.badgeMs;
 

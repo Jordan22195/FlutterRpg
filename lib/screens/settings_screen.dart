@@ -8,10 +8,13 @@ import 'package:rpg/data/save_slot_index.dart';
 /*
 settings screen contents:
 -header with title
--saves section: every save slot (tap to switch), new save, reset the
- current save (confirms first)
+-saves section: every save slot (tap to switch, tag chip beside the name,
+ 3-dot menu to change the tag), new save, reset the current save
+ (confirms first)
 -debug section, debug builds only: max skill level cap
 */
+
+enum _SlotAction { changeTag }
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -82,12 +85,68 @@ class SettingsScreen extends StatelessWidget {
         active ? Icons.radio_button_checked : Icons.radio_button_unchecked,
         color: active ? Theme.of(context).colorScheme.primary : null,
       ),
-      title: Text(slot.name),
+      title: Row(
+        children: [
+          Flexible(child: Text(slot.name, overflow: TextOverflow.ellipsis)),
+          if (slot.tag.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            _tagChip(context, slot),
+          ],
+        ],
+      ),
       subtitle: Text('Total level ${slot.totalLevel} · $played'),
+      trailing: PopupMenuButton<_SlotAction>(
+        key: ValueKey('settings-save-menu-${slot.id}'),
+        enabled: !saves.busy,
+        tooltip: 'Save options',
+        onSelected: (action) {
+          if (action == _SlotAction.changeTag) {
+            _editTag(context, saves, slot);
+          }
+        },
+        itemBuilder: (_) => const [
+          PopupMenuItem(
+            key: ValueKey('settings-save-change-tag'),
+            value: _SlotAction.changeTag,
+            child: Text('Change tag'),
+          ),
+        ],
+      ),
       selected: active,
       enabled: !saves.busy,
       onTap: active ? null : () => saves.switchTo(slot.id),
     );
+  }
+
+  Widget _tagChip(BuildContext context, SaveSlotInfo slot) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      key: ValueKey('settings-save-tag-${slot.id}'),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: scheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        slot.tag,
+        style: Theme.of(
+          context,
+        ).textTheme.labelSmall?.copyWith(color: scheme.onSecondaryContainer),
+      ),
+    );
+  }
+
+  Future<void> _editTag(
+    BuildContext context,
+    SaveSlotController saves,
+    SaveSlotInfo slot,
+  ) async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => _TagDialog(slot: slot),
+    );
+    // null is a cancel; an empty string is a deliberate clear
+    if (result != null) saves.setTag(slot.id, result);
   }
 
   Widget _sectionHeader(BuildContext context, String title) {
@@ -196,6 +255,55 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Asks for a save's tag. Owns its text controller so it outlives the
+/// dialog's closing animation.
+class _TagDialog extends StatefulWidget {
+  const _TagDialog({required this.slot});
+
+  final SaveSlotInfo slot;
+
+  @override
+  State<_TagDialog> createState() => _TagDialogState();
+}
+
+class _TagDialogState extends State<_TagDialog> {
+  late final TextEditingController _field = TextEditingController(
+    text: widget.slot.tag,
+  );
+
+  @override
+  void dispose() {
+    _field.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Tag for ${widget.slot.name}'),
+      content: TextField(
+        key: const ValueKey('settings-tag-field'),
+        controller: _field,
+        autofocus: true,
+        maxLength: SaveSlotInfo.maxTagLength,
+        decoration: const InputDecoration(hintText: 'e.g. Ironman'),
+        onSubmitted: (v) => Navigator.of(context).pop(v),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          key: const ValueKey('settings-tag-save'),
+          onPressed: () => Navigator.of(context).pop(_field.text),
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }

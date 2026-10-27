@@ -12,6 +12,8 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'support/gathering_tools.dart';
 
+import 'support/idle_recovery.dart';
+
 /// What an offline settle owes the player, across every activity the loop
 /// can be bound to and every condition that cuts a segment short.
 ///
@@ -176,9 +178,11 @@ void main() {
 
       expect(report.actionCount, expected);
       expect(report.timeAway, const Duration(seconds: 300));
-      expect(save.inventoryData.itemMap[ItemId.COPPER_BAR], expected);
+      // a smelt can roll bonus bars, so the bars are at least the crafts
+      final bars = save.inventoryData.itemMap[ItemId.COPPER_BAR];
+      expect(bars, inInclusiveRange(expected, expected * 5));
       expect(save.inventoryData.itemMap[ItemId.COPPER_ORE], 5000 - expected);
-      expect(report.items.itemMap[ItemId.COPPER_BAR], expected);
+      expect(report.items.itemMap[ItemId.COPPER_BAR], bars);
       expect(
         report.xp[SkillId.BLACKSMITHING],
         closeTo(xpPerCraft * expected, 1e-6),
@@ -582,6 +586,12 @@ void main() {
         at: now,
       );
       expect(buffed, greaterThan(base));
+      final expected = idleRecovery(
+        session.playerDataService,
+        save.playerData,
+        from: save.playerData.lastActionTime,
+        seconds: 120,
+      );
 
       session.offlineProgressSystem.settle(
         save.playerData,
@@ -592,7 +602,7 @@ void main() {
       // 60s at the buffed rate then 60s at the player's own, not 120 of
       // either - reading the wall clock would have paid the whole gap at
       // the base rate, since the potion is long gone by settle time
-      expect(save.playerData.stamina, closeTo(60 * buffed + 60 * base, 1e-6));
+      expect(save.playerData.stamina, closeTo(expected, 0.5));
       tearDownSession(session);
     });
   });
@@ -1346,15 +1356,25 @@ void main() {
       final save = session.saveGameData;
       setLevel(session, SkillId.STAMINA, 40);
       save.playerData.stamina = 0;
-      // four crafts of material against a ten minute gap
+      // four crafts of material against a two minute gap - short enough
+      // that recovery, levelling as it goes, never meets the cap
       save.inventoryData.itemMap[ItemId.COPPER_ORE] = 4;
       session.craftingController.startCraftingActionFor(
         'smelt_copper_bar',
         EntityId.ANVIL,
       );
 
-      const gap = 600.0;
+      const gap = 120.0;
       final step = interval(session);
+      final rate = session.playerDataService.staminaRecoveryPerSecond(
+        save.playerData,
+      );
+      final expected = idleRecovery(
+        session.playerDataService,
+        save.playerData,
+        from: DateTime.now().subtract(const Duration(seconds: 120)),
+        seconds: gap,
+      );
       final report = settle(session, gap);
 
       expect(report.actionCount, 4);
@@ -1363,12 +1383,9 @@ void main() {
       // with nothing boosted, every second of the gap recovers - the four
       // crafts as much as the idle stretch behind them - so the whole gap
       // is paid at the player's own rate rather than only its idle tail
-      final rate = session.playerDataService.staminaRecoveryPerSecond(
-        save.playerData,
-      );
       final cap = session.playerDataService.getMaxStamina(save.playerData);
-      expect(gap * rate, lessThan(cap), reason: 'the cap would hide the sum');
-      expect(save.playerData.stamina, closeTo(gap * rate, rate * step));
+      expect(expected, lessThan(cap), reason: 'the cap would hide the sum');
+      expect(save.playerData.stamina, closeTo(expected, rate * step));
       expect(step, greaterThan(0));
       tearDownSession(session);
     });

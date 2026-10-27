@@ -86,6 +86,19 @@ class SaveSlotController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sets [slotId]'s tag; blank clears it. Only the index changes, so it is
+  /// safe on any slot, running or not.
+  Future<void> setTag(String slotId, String tag) async {
+    final info = _index.slot(slotId);
+    if (info == null) return;
+    final cleaned = tag.trim();
+    info.tag = cleaned.length > SaveSlotInfo.maxTagLength
+        ? cleaned.substring(0, SaveSlotInfo.maxTagLength)
+        : cleaned;
+    notifyListeners();
+    await _files.saveIndex(_index);
+  }
+
   /// Leaves the running save and boots [slotId]'s.
   Future<void> switchTo(String slotId) async {
     if (_busy || slotId == _index.activeSlotId) return;

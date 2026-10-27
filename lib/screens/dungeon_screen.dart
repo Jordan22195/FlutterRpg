@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../catalogs/dungeons/dungeons.dart';
 import '../catalogs/entities/entities.dart';
+import '../catalogs/items/items.dart';
 import '../catalogs/zones/zone_id.dart';
 import '../controllers/action_timing_controller.dart';
 import '../controllers/dungeon_controller.dart';
@@ -306,39 +307,16 @@ class _DungeonScreenState extends State<DungeonScreen> {
     if (mounted) setState(_opened.clear);
   }
 
-  /// Opens every waiting chest and shows what came out.
+  /// Shows the chest dialog, where waiting chests are opened one or all.
   Future<void> _claimChests(
     BuildContext context,
     DungeonController controller,
   ) async {
-    final count = controller.chestsWaiting(dungeonId);
-    final loot = controller.claimChests(dungeonId);
-    if (count <= 0 || !context.mounted) return;
+    if (controller.chestsWaiting(dungeonId) <= 0) return;
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          count == 1
-              ? '${dungeonId.definition.name} Chest'
-              : '$count ${dungeonId.definition.name} Chests',
-        ),
-        content: loot.isEmpty
-            ? const Text('Empty this time.')
-            : Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final stack in loot)
-                    ItemStackTile(size: 48, id: stack.id, count: stack.count),
-                ],
-              ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+      builder: (ctx) =>
+          _ChestDialog(dungeonId: dungeonId, controller: controller),
     );
   }
 
@@ -629,5 +607,148 @@ class _DungeonScreenState extends State<DungeonScreen> {
       ),
     );
     controller.leaveSlot(token);
+  }
+}
+
+/// Opens a dungeon's waiting chests one at a time or all at once, popping
+/// each haul's loot in as it comes out.
+class _ChestDialog extends StatefulWidget {
+  const _ChestDialog({required this.dungeonId, required this.controller});
+
+  final DungeonId dungeonId;
+  final DungeonController controller;
+
+  @override
+  State<_ChestDialog> createState() => _ChestDialogState();
+}
+
+class _ChestDialogState extends State<_ChestDialog> {
+  /// Loot from this sitting, merged by item, in the order it first showed.
+  final Map<ItemId, int> _loot = {};
+
+  /// Items that arrived in the latest open — they pop in; the rest stay put.
+  Set<ItemId> _fresh = {};
+  int _opens = 0;
+  bool _openedAny = false;
+
+  int get _waiting => widget.controller.chestsWaiting(widget.dungeonId);
+
+  void _open({int? max}) {
+    final loot = widget.controller.claimChests(widget.dungeonId, max: max);
+    setState(() {
+      _openedAny = true;
+      _opens++;
+      _fresh = {for (final s in loot) s.id};
+      for (final s in loot) {
+        _loot[s.id] = (_loot[s.id] ?? 0) + s.count;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final waiting = _waiting;
+    final name = widget.dungeonId.definition.name;
+    return AlertDialog(
+      title: Text(waiting > 1 ? '$name Chests' : '$name Chest'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            waiting == 0
+                ? 'All opened.'
+                : waiting == 1
+                ? '1 chest waiting'
+                : '$waiting chests waiting',
+          ),
+          if (_openedAny) ...[
+            const SizedBox(height: 12),
+            if (_loot.isEmpty)
+              const Text('Empty this time.')
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final entry in _loot.entries)
+                    _LootPop(
+                      // a new key per open replays the pop for fresh items
+                      key: ValueKey(
+                        '${entry.key.name}:${_fresh.contains(entry.key) ? _opens : 0}',
+                      ),
+                      animate: _fresh.contains(entry.key),
+                      delay: Duration(
+                        milliseconds:
+                            80 *
+                            _fresh.toList().indexOf(entry.key).clamp(0, 12),
+                      ),
+                      child: ItemStackTile(
+                        size: 48,
+                        id: entry.key,
+                        count: entry.value,
+                      ),
+                    ),
+                ],
+              ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Close'),
+        ),
+        if (waiting > 1)
+          TextButton(
+            onPressed: () => _open(),
+            child: Text('Open all ($waiting)'),
+          ),
+        if (waiting > 0)
+          FilledButton(
+            onPressed: () => _open(max: 1),
+            child: const Text('Open 1'),
+          ),
+      ],
+    );
+  }
+}
+
+/// Scales and fades [child] in after [delay], with a little overshoot.
+class _LootPop extends StatelessWidget {
+  const _LootPop({
+    super.key,
+    required this.child,
+    required this.animate,
+    required this.delay,
+  });
+
+  final Widget child;
+  final bool animate;
+  final Duration delay;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!animate) return child;
+    const base = Duration(milliseconds: 380);
+    final total = base + delay;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: total,
+      builder: (context, t, child) {
+        final local =
+            ((t * total.inMilliseconds - delay.inMilliseconds) /
+                    base.inMilliseconds)
+                .clamp(0.0, 1.0);
+        return Opacity(
+          opacity: Curves.easeOut.transform(local),
+          child: Transform.scale(
+            scale: Curves.easeOutBack.transform(local),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
   }
 }

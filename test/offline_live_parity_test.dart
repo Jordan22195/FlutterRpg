@@ -170,7 +170,8 @@ void main() {
               isTrue,
             );
           },
-          band: 0.0,
+          // a smelt rolls for bonus bars
+          band: 0.05,
           seconds: 600,
           fireSlack: 0.2,
           clump: 1,
@@ -520,7 +521,7 @@ void main() {
     double actionBand = 0.01,
     double clump = 1,
   }) {
-    final live = runLive(setup, seconds, payFrameXp: false);
+    final live = runLive(setup, seconds);
     final offline = runOffline(setup, seconds);
     expectParity(
       live,
@@ -661,7 +662,8 @@ void main() {
         baseline(s);
         activities.firstWhere((a) => a.name == 'smelting').bind(s);
         s.saveGameData.inventoryData.itemMap[ItemId.COPPER_ORE] = 90;
-      }, band: 0);
+        // a smelt rolls for bonus bars
+      }, band: 0.05);
     });
 
     test('a boosted bench that runs out stops and recovers the rest', () {
@@ -670,7 +672,7 @@ void main() {
         activities.firstWhere((a) => a.name == 'smelting').bind(s);
         s.saveGameData.inventoryData.itemMap[ItemId.COPPER_ORE] = 90;
         boosts[1].apply(s);
-      }, band: 0);
+      }, band: 0.05);
     });
 
     test('an enchanter that runs out of dust stops at the same item', () {
@@ -724,7 +726,7 @@ void main() {
     }
 
     test('both sides die, at about the same time', () {
-      final live = runLive(doomed, 600, payFrameXp: false);
+      final live = runLive(doomed, 600);
       final offline = runOffline(doomed, 600);
       final context = '\nLIVE $live\nOFFLINE $offline';
       expect(live.died, isTrue, reason: context);
@@ -751,7 +753,7 @@ void main() {
         save.playerData.equipmentData.equipedFood = ItemId.COOKED_CHICKEN;
       }
 
-      final live = runLive(fedBriefly, 600, payFrameXp: false);
+      final live = runLive(fedBriefly, 600);
       final offline = runOffline(fedBriefly, 600);
       final context = '\nLIVE $live\nOFFLINE $offline';
       expect(live.died, isTrue, reason: context);
@@ -787,7 +789,7 @@ void main() {
           activities.firstWhere((a) => a.name == activity.name).bind(s);
         }
 
-        final live = runLive(setup, 3600, fps: 10, payFrameXp: false);
+        final live = runLive(setup, 3600, fps: 10);
         final offline = runOffline(setup, 3600);
         final probe = buildPlaySession();
         final liveLevel = levelOf(live.xp, activity.skill, probe);
@@ -886,7 +888,8 @@ void main() {
       final session = buildPlaySession();
       setup(session);
       final save = session.saveGameData;
-      final before = save.inventoryData.itemMap[ItemId.COPPER_BAR] ?? 0;
+      // counted in ore, a craft each: the bars a smelt pays are rolled
+      final before = save.inventoryData.itemMap[ItemId.COPPER_ORE] ?? 0;
       for (var i = 0; i < 125; i++) {
         final now = DateTime.now();
         save.playerData.lastActionTime = now.subtract(
@@ -898,13 +901,13 @@ void main() {
           now: now,
         );
       }
-      final bars =
-          (save.inventoryData.itemMap[ItemId.COPPER_BAR] ?? 0) - before;
+      final crafts =
+          before - (save.inventoryData.itemMap[ItemId.COPPER_ORE] ?? 0);
       session.actionTimingController.stop();
       session.dispose();
 
-      expect(live.items[ItemId.COPPER_BAR], closeTo(250 / 2.4, 1));
-      expect(bars, closeTo(live.items[ItemId.COPPER_BAR]!, 2));
+      expect(-live.items[ItemId.COPPER_ORE]!, closeTo(250 / 2.4, 1));
+      expect(crafts, closeTo(-live.items[ItemId.COPPER_ORE]!, 2));
     });
 
     test('a boost bar left full but unlocked drains, it does not hold', () {
@@ -917,9 +920,10 @@ void main() {
         s.saveGameData.actionTimingData.percentOfMaxBoost = 1.0;
       }
 
-      final live = runLive(setup, 600, payFrameXp: false);
+      final live = runLive(setup, 600);
       final offline = runOffline(setup, 600);
-      expectParity(live, offline, seconds: 600, band: 0);
+      // a smelt rolls for bonus bars
+      expectParity(live, offline, seconds: 600, band: 0.05);
     });
   });
 
@@ -928,9 +932,9 @@ void main() {
   group('the xp the frame loop pays by the second', () {
     // the live loop pays the boost skill and stamina for every second spent
     // boosted, and recovery for every second spent refilling - none of it
-    // tied to an action. a settle pays none of it. these pin the size of
-    // that gap so a change to it is a decision, not an accident
-    test('a settle pays none of it', () {
+    // tied to an action. a settle pays the same off the stamina bar, segment
+    // by segment, so the summary can show the core skills moving
+    test('a settle pays it too', () {
       void setup(GameSession s) {
         baseline(s);
         activities.first.bind(s);
@@ -940,11 +944,14 @@ void main() {
       final live = runLive(setup, 600);
       final offline = runOffline(setup, 600);
       final context = '\nLIVE $live\nOFFLINE $offline';
-      expect(live.frameXp[SkillId.SPEED], greaterThan(0), reason: context);
-      expect(live.frameXp[SkillId.STAMINA], greaterThan(0), reason: context);
-      expect(live.frameXp[SkillId.RECOVERY], greaterThan(0), reason: context);
       for (final id in [SkillId.SPEED, SkillId.STAMINA, SkillId.RECOVERY]) {
-        expect(offline.xp[id] ?? 0, 0, reason: '${id.name}$context');
+        final l = live.frameXp[id] ?? 0;
+        expect(l, greaterThan(0), reason: '${id.name}$context');
+        expect(
+          offline.frameXp[id] ?? 0,
+          closeTo(l, l * 0.1 + 5),
+          reason: '${id.name}$context',
+        );
       }
     });
   });

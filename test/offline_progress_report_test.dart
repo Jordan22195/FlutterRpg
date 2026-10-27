@@ -144,9 +144,16 @@ void main() {
       final report = session.actionTimingController.pendingOfflineReport;
       expect(report, isNotNull);
       // crafting settles the whole count a fire is handed, so the report
-      // carries every bar the gap was worth
+      // carries every bar the gap was worth, bonus bars and all
       final crafts = actionsIn(session, longGap);
-      expect(report!.items.itemMap[ItemId.COPPER_BAR], crafts);
+      expect(
+        report!.items.itemMap[ItemId.COPPER_BAR],
+        save.inventoryData.itemMap[ItemId.COPPER_BAR],
+      );
+      expect(
+        report.items.itemMap[ItemId.COPPER_BAR],
+        inInclusiveRange(crafts, crafts * 5),
+      );
       final each = RecipeCatalog().recipeById('smelt_copper_bar').xp.toDouble();
       expect(report.xp[SkillId.BLACKSMITHING], each * crafts);
 

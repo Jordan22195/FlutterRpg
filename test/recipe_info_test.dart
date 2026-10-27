@@ -131,14 +131,17 @@ void main() {
   });
 
   group('recipes without a quality roll', () {
-    test('a bar reports no quality and no odds worth showing', () {
+    test('a bar reports no quality, but odds on its bonus bars', () {
       setLevel(SkillId.BLACKSMITHING, 20);
       final details = detailsFor('smelt_copper_bar');
 
       expect(details.rollsQuality, isFalse);
-      expect(details.outcomes.single.itemId, ItemId.COPPER_BAR);
-      // one certain outcome is not a table
-      expect(details.hasOdds, isFalse);
+      expect(details.outcomes, hasLength(Rarity.values.length));
+      expect(
+        details.outcomes.every((o) => o.itemId == ItemId.COPPER_BAR),
+        isTrue,
+      );
+      expect(details.hasOdds, isTrue);
     });
 
     test('cooking reports a burn chance that falls as the level rises', () {
@@ -248,13 +251,17 @@ void main() {
       }
     });
 
-    testWidgets('a bar recipe shows no odds table at all', (tester) async {
+    testWidgets('a bar recipe shows the bonus bars it can roll', (
+      tester,
+    ) async {
       setLevel(SkillId.BLACKSMITHING, 20);
       await pumpBody(tester, 'smelt_copper_bar');
 
-      expect(find.text('Copper Bar'), findsWidgets);
       expect(find.text('QUALITY'), findsNothing);
-      expect(find.text('OUTCOME'), findsNothing);
+      expect(find.text('OUTCOME'), findsOneWidget);
+      for (var bars = 1; bars <= 5; bars++) {
+        expect(find.text('${bars}x Copper Bar'), findsOneWidget);
+      }
     });
 
     testWidgets('a cooking recipe shows the burnt-food row', (tester) async {

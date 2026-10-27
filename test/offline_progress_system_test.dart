@@ -22,6 +22,8 @@ import 'package:rpg/systems/offline_progress_system.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/systems/potion_system.dart';
 
+import 'support/idle_recovery.dart';
+
 // A settle replays the gap rather than paying it out in one lump: segment by
 // segment, each one running to the next moment the state changes under it -
 // a buff burning out, a locked boost running dry, a level-up. These cover
@@ -258,6 +260,27 @@ void main() {
       expect(fired, isNotEmpty);
     });
 
+    test('a locked boost trains its stance and stamina, into the report', () {
+      final player = newPlayer();
+      setLevel(player, SkillId.SPEED, 20);
+      setLevel(player, SkillId.STAMINA, 99); // far more than the gap can burn
+      player.stamina = playerDataService.getMaxStamina(player);
+
+      final (state, _) = recordingState();
+      state.boostLocked = true;
+      state.percentOfMaxBoost = 1.0;
+      state.maxBoostMultiplier = timingService.maxSpeedBoostForStat(
+        playerDataService.getStatTotals(player)[SkillId.SPEED] ?? 1,
+      );
+      final multiplier = timingService.getCurrentSpeedMultiplier(state);
+
+      system.settle(player, state, now: goOffline(player, 10));
+
+      final xp = offlineProgressData.pending!.xp;
+      expect(xp[SkillId.STAMINA], closeTo(10, 1e-3));
+      expect(xp[SkillId.SPEED], closeTo(10 * multiplier, 1e-3));
+    });
+
     test('a boosted gap fires more actions than an idle one', () {
       final player = newPlayer();
       setLevel(player, SkillId.SPEED, 20);
@@ -328,6 +351,27 @@ void main() {
 
       // 10s of recovery on top of the 5 it started with
       expect(player.stamina, closeTo(5 + 10 * perSecond, 1e-6));
+    });
+
+    test('recovery trains on the stamina restored, into the report', () {
+      final player = newPlayer();
+      setLevel(player, SkillId.RECOVERY, 20);
+      player.stamina = 5;
+      final restored = playerDataService.getMaxStamina(player) - 5;
+      final xpBefore = player.skillData[SkillId.RECOVERY]!.xp;
+      final (state, _) = recordingState();
+
+      // an hour fills the bar long before it ends: only what went in pays
+      system.settle(player, state, now: goOffline(player, 3600));
+
+      expect(
+        player.skillData[SkillId.RECOVERY]!.xp - xpBefore,
+        closeTo(restored, 1e-6),
+      );
+      expect(
+        offlineProgressData.pending!.xp[SkillId.RECOVERY],
+        closeTo(restored, 1e-6),
+      );
     });
 
     test('caps recovered stamina at the maximum', () {
@@ -494,22 +538,29 @@ void main() {
       );
       buffService.addBuff(potion, player.buffData);
 
-      // the two rates the gap should be paid at, read off the service at each
-      // end of it: buffed while the potion is up, the player's own after it
-      // lapses. The per-stat rate is a balance number — what is under test is
-      // that the segment is paid at the rate that applied *during* it.
+      // the gap stepped through at the rate that held at each instant:
+      // buffed while the potion is up, the player's own after it lapses,
+      // and faster as recovery levels on the way. The per-stat rate is a
+      // balance number — what is under test is that the segment is paid at
+      // the rate that applied *during* it.
+      final expected = idleRecovery(
+        playerDataService,
+        player,
+        from: player.lastActionTime,
+        seconds: 60,
+      );
       final buffed = playerDataService.staminaRecoveryPerSecond(
         player,
         at: player.lastActionTime,
       );
       final base = playerDataService.staminaRecoveryPerSecond(player, at: now);
+      expect(buffed, greaterThan(base));
 
       system.settle(player, state, now: now);
 
-      // 30s buffed then 30s unbuffed. reading the wall clock instead would
-      // have paid the whole gap at the base rate - the buff is long expired
-      // by the time the settle runs
-      expect(player.stamina, closeTo(30 * buffed + 30 * base, 1e-6));
+      // reading the wall clock instead would have paid the whole gap at the
+      // base rate - the buff is long expired by the time the settle runs
+      expect(player.stamina, closeTo(expected, 0.5));
     });
   });
 

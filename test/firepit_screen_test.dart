@@ -21,6 +21,7 @@ import 'package:rpg/widgets/countdown_timer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/recipe_card.dart';
+import 'package:rpg/widgets/recipe_picker_sheet.dart';
 import 'package:rpg/widgets/skill_ring_row.dart';
 
 // Renders the real FirepitScreen through the provider tree, so what the
@@ -137,11 +138,17 @@ void main() {
     return gate.ignoring;
   }
 
+  /// The pit's two recipe cards, in either form.
+  final recipeCards = find.byWidgetPredicate(
+    (w) => w is RecipeCard || w is RecipePickerCard,
+  );
+
+  bool isMarked(Widget w) =>
+      w is RecipeCard ? w.selected : (w as RecipePickerCard).selected;
+
   /// Which card carries the mark, firemaking first.
-  List<bool> marks(WidgetTester tester) => tester
-      .widgetList<RecipeCard>(find.byType(RecipeCard))
-      .map((c) => c.selected)
-      .toList();
+  List<bool> marks(WidgetTester tester) =>
+      tester.widgetList(recipeCards).map(isMarked).toList();
 
   bool buttonEnabled(WidgetTester tester) => tester
       .widget<MomentumPrimaryButton>(find.byType(MomentumPrimaryButton))
@@ -150,13 +157,13 @@ void main() {
   /// Opens the fire card's picker and takes row [row] (catalog order:
   /// 0 = cookfire, 1 = campfire).
   Future<void> pickFire(WidgetTester tester, int row) async {
-    await tester.tap(find.byType(RecipeCard).first);
+    await tester.tap(recipeCards.first);
     await settle(tester);
     await tester.tap(
       find
           .descendant(
-            of: find.byType(AlertDialog),
-            matching: find.byType(RecipeCard),
+            of: find.byType(RecipePickerSheet),
+            matching: find.byType(RecipePickerCard),
           )
           .at(row),
     );
@@ -171,7 +178,7 @@ void main() {
   Future<void> chooseCooking(WidgetTester tester) async {
     await tester.tap(cookingCard);
     await settle(tester);
-    await tester.tap(find.text('Close'));
+    await tester.tap(find.byIcon(Icons.close).hitTestable());
     await settle(tester);
     await tester.pump(const Duration(milliseconds: 400));
   }
@@ -183,12 +190,12 @@ void main() {
 
     expect(find.text('Firepit'), findsOneWidget);
     // both recipes are always on screen, each named
-    expect(find.byType(RecipeCard), findsNWidgets(2));
+    expect(recipeCards, findsNWidgets(2));
     expect(find.text('FIREMAKING'), findsOneWidget);
     expect(find.text('COOKING'), findsOneWidget);
     expect(
       tester.getTopLeft(cookingCard).dy,
-      greaterThan(tester.getTopLeft(find.byType(RecipeCard).first).dy),
+      greaterThan(tester.getTopLeft(recipeCards.first).dy),
     );
 
     // no cookfire picked, so cooking is locked and says what opens it
@@ -207,7 +214,7 @@ void main() {
     // a locked card takes no taps: no picker, and the mark stays put
     await tester.tap(cookingCard, warnIfMissed: false);
     await settle(tester);
-    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(RecipePickerSheet), findsNothing);
     expect(marks(tester), [true, false]);
 
     session.dispose();
@@ -254,7 +261,10 @@ void main() {
     await settle(tester);
 
     // the first tick lights a cookfire
-    expect(find.text('Cookfire'), findsOneWidget);
+    expect(
+      find.text('Cookfire'),
+      findsNWidgets(2),
+    ); // the hero label and the card
     final fire = session.craftingController.activeFire()!;
     final firstBurnsUntil = fire.expirationTime;
 
@@ -390,10 +400,12 @@ void main() {
     await settle(tester);
 
     // the pit is lit, and the running cook keeps the highlight
-    expect(find.text('Cookfire'), findsOneWidget);
+    expect(
+      find.text('Cookfire'),
+      findsNWidgets(2),
+    ); // the hero label and the card
     expect(find.byType(CountdownTimer), findsWidgets);
-    final cards = tester.widgetList<RecipeCard>(find.byType(RecipeCard));
-    expect(cards.map((c) => c.selected), [false, true]);
+    expect(tester.widgetList(recipeCards).map(isMarked), [false, true]);
     expect(find.text('Cook'), findsOneWidget);
 
     session.actionTimingController.stop();
@@ -407,8 +419,11 @@ void main() {
       selections: {SkillId.FIREMAKING: 'basic_campfire'},
     );
 
-    expect(find.text('Campfire'), findsOneWidget);
-    expect(find.byType(RecipeCard), findsNWidgets(2));
+    expect(
+      find.text('Campfire'),
+      findsNWidgets(2),
+    ); // the hero label and the card
+    expect(recipeCards, findsNWidgets(2));
     expect(cookingLocked(tester), isTrue);
     expect(find.byIcon(Icons.water_drop_outlined), findsOneWidget);
 
@@ -433,7 +448,7 @@ void main() {
     expect(find.text('Firepit'), findsOneWidget);
     expect(find.byType(CountdownTimer), findsNothing);
     // the cookfire is still the pick, so the cook could light it again
-    expect(find.byType(RecipeCard), findsNWidgets(2));
+    expect(recipeCards, findsNWidgets(2));
     expect(cookingLocked(tester), isFalse);
 
     session.dispose();
@@ -467,7 +482,7 @@ void main() {
     session.buffController.refresh();
     await settle(tester);
 
-    expect(find.byType(RecipeCard), findsNWidgets(2));
+    expect(recipeCards, findsNWidgets(2));
     expect(ringsAt().dx, coldRings.dx);
     expect(ringsSize(), coldRingsSize);
 
@@ -486,11 +501,11 @@ void main() {
     // recipe cards carry no name, so they are addressed by catalog order:
     // 0 = cookfire, 1 = campfire.
     Future<void> pickFire(int index) async {
-      await tester.tap(find.byType(RecipeCard).first);
+      await tester.tap(recipeCards.first);
       await settle(tester);
       final inPicker = find.descendant(
-        of: find.byType(AlertDialog),
-        matching: find.byType(RecipeCard),
+        of: find.byType(RecipePickerSheet),
+        matching: find.byType(RecipePickerCard),
       );
       await tester.tap(inPicker.at(index));
       await settle(tester);
@@ -611,11 +626,11 @@ void main() {
     expect(chipIn(hero, SkillId.HITPOINTS), findsOneWidget);
 
     // every fire in the picker says what it burns for
-    await tester.tap(find.byType(RecipeCard).first);
+    await tester.tap(recipeCards.first);
     await settle(tester);
     final rows = find.descendant(
-      of: find.byType(AlertDialog),
-      matching: find.byType(RecipeCard),
+      of: find.byType(RecipePickerSheet),
+      matching: find.byType(RecipePickerCard),
     );
     expect(rows, findsWidgets);
     for (var i = 0; i < rows.evaluate().length; i++) {

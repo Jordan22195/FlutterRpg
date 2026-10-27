@@ -198,13 +198,14 @@ class DungeonController extends ChangeNotifier {
   /// Chests of [id] earned and not yet claimed.
   int chestsWaiting(DungeonId id) => _progress.chestsWaiting(id);
 
-  /// Opens every chest of [id] waiting to be claimed, into the bag. Returns
-  /// what came out, merged by item.
-  List<ObjectStack<ItemId>> claimChests(DungeonId id) {
+  /// Opens up to [max] chests of [id] waiting to be claimed (all when null),
+  /// into the bag. Returns what came out, merged by item.
+  List<ObjectStack<ItemId>> claimChests(DungeonId id, {int? max}) {
     final loot = _dungeonSystem.openChests(
       progress: _progress,
       id: id,
       playerInventory: _inventoryState,
+      max: max,
     );
     notifyListeners();
     return loot;

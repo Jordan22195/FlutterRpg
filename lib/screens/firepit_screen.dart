@@ -20,7 +20,7 @@ import '../widgets/list_row.dart';
 import '../widgets/sprite_frame.dart';
 import '../widgets/stage_panel.dart';
 import '../widgets/travel_row.dart';
-import '../widgets/picker_list.dart';
+import '../widgets/recipe_picker_sheet.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/recipe_card.dart';
 import '../widgets/skill_ring_row.dart';
@@ -82,43 +82,14 @@ class _FirepitScreenState extends State<FirepitScreen>
     SkillId skill,
   ) {
     final recipes = controller.availableRecipesFor(skill);
-    // each skill keeps its own selection at a station offering several
-    final selectedId = controller.selectedRecipeIdFor(skill);
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: Text(
-            skill == SkillId.FIREMAKING ? 'Select Fire' : 'Select Recipe',
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: PickerList(
-              itemCount: recipes.length,
-              // opens on the recipe already selected rather than at the top
-              selectedIndex: recipes.indexWhere((r) => r.id == selectedId),
-              itemBuilder: (context, i) {
-                final r = recipes[i];
-                return RecipeCard(
-                  recipeId: r.id,
-                  lockWhenUnderLevel: true,
-                  selected: r.id == selectedId,
-                  onTap: () {
-                    controller.selectRecipe(r.id);
-                    setState(() => _activeSection = skill);
-                    Navigator.of(ctx).pop();
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
+    showRecipePickerSheet(
+      context,
+      title: controller.stationEntityId.definition.name,
+      skill: skill,
+      recipes: recipes,
+      onSelected: (r) {
+        controller.selectRecipe(r.id);
+        setState(() => _activeSection = skill);
       },
     );
   }
@@ -264,9 +235,10 @@ class _FirepitScreenState extends State<FirepitScreen>
                         ignoring: !cookingUnlocked,
                         child: Opacity(
                           opacity: cookingUnlocked ? 1 : 0.45,
-                          child: RecipeCard(
+                          child: _PitRecipeCard(
                             key: const ValueKey('firepit-cooking-card'),
                             recipeId: cookRecipeId,
+                            skill: SkillId.COOKING,
                             selected: activeSection == SkillId.COOKING,
                             onTap: () {
                               setState(() => _activeSection = SkillId.COOKING);
@@ -433,6 +405,37 @@ class _FireHero extends StatelessWidget {
   }
 }
 
+/// One of the pit's two recipe cards: the picker's card once a recipe is
+/// chosen, the plain prompt card while the slot is empty.
+class _PitRecipeCard extends StatelessWidget {
+  const _PitRecipeCard({
+    super.key,
+    required this.recipeId,
+    required this.skill,
+    required this.onTap,
+    required this.selected,
+  });
+
+  final String recipeId;
+  final SkillId skill;
+  final VoidCallback onTap;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    if (recipeId.isEmpty) {
+      return RecipeCard(recipeId: recipeId, onTap: onTap, selected: selected);
+    }
+    return RecipePickerCard(
+      recipe: context.watch<CraftingController>().getRecipe(recipeId),
+      skill: skill,
+      locked: false,
+      selected: selected,
+      onTap: onTap,
+    );
+  }
+}
+
 /// The firemaking recipe card, with a warning when picking it would replace
 /// a different fire that is still burning.
 class _FireRecipeCard extends StatelessWidget {
@@ -462,7 +465,12 @@ class _FireRecipeCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RecipeCard(recipeId: recipeId, onTap: onTap, selected: selected),
+        _PitRecipeCard(
+          recipeId: recipeId,
+          skill: SkillId.FIREMAKING,
+          onTap: onTap,
+          selected: selected,
+        ),
         if (replaces)
           const _CardHint(
             icon: Icons.swap_horiz,

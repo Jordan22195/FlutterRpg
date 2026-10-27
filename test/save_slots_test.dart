@@ -200,4 +200,54 @@ void main() {
     expect(untouched.playerData.skillData[SkillId.ATTACK]!.xp, otherAttack.xp);
     expect(find.byType(SettingsScreen), findsNothing);
   });
+
+  testWidgets('a save is tagged from its 3-dot menu, and the tag sticks', (
+    tester,
+  ) async {
+    final store = MemorySaveStore();
+    final files = FileManagerService(store: store);
+    await bootApp(tester, files);
+
+    await openSettings(tester);
+    // untagged saves draw no chip
+    expect(
+      find.byKey(const ValueKey('settings-save-tag-slot_1')),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('settings-save-menu-slot_1')));
+    await settle(tester);
+    await tester.tap(find.byKey(const ValueKey('settings-save-change-tag')));
+    await settle(tester);
+    await tester.enterText(
+      find.byKey(const ValueKey('settings-tag-field')),
+      '  Ironman  ',
+    );
+    await tester.tap(find.byKey(const ValueKey('settings-tag-save')));
+    await settle(tester);
+
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('settings-save-tag-slot_1')),
+        matching: find.text('Ironman'),
+      ),
+      findsOneWidget,
+    );
+
+    // it is in the index on disk, trimmed, so a relaunch keeps it
+    final reloaded = await FileManagerService(store: store).loadIndex();
+    expect(reloaded.slot('slot_1')!.tag, 'Ironman');
+
+    // a blank tag clears it
+    await slotController(tester).setTag('slot_1', '   ');
+    await settle(tester);
+    expect(
+      find.byKey(const ValueKey('settings-save-tag-slot_1')),
+      findsNothing,
+    );
+    expect(
+      (await FileManagerService(store: store).loadIndex()).slot('slot_1')!.tag,
+      isEmpty,
+    );
+  });
 }

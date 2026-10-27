@@ -90,7 +90,17 @@ class DungeonProgressData {
   }
 
   /// Takes every waiting chest of [id] and returns how many there were.
-  int takeChests(DungeonId id) => chests.remove(id) ?? 0;
+  /// Takes up to [max] of [id]'s waiting chests (all of them when null).
+  int takeChests(DungeonId id, {int? max}) {
+    final waiting = chests[id] ?? 0;
+    final taken = max == null ? waiting : max.clamp(0, waiting);
+    if (taken >= waiting) {
+      chests.remove(id);
+    } else {
+      chests[id] = waiting - taken;
+    }
+    return taken;
+  }
 
   bool loopsDungeon(DungeonId id) => loopDungeon.contains(id);
 

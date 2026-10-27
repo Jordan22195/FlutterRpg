@@ -90,13 +90,18 @@ void main() {
 
       final result = craft(session, 'smelt_copper_bar', craftCount: 50);
 
-      // 50 ore in, 50 bars out, and 50 crafts' worth of xp
+      // 50 ore in, 50 crafts' worth of bars out - more when a smelt rolls
+      // bonus bars - and 50 crafts' worth of xp
       final each = xpPerCraft('smelt_copper_bar');
+      final bars = save.inventoryData.itemMap[ItemId.COPPER_BAR];
       expect(save.inventoryData.itemMap[ItemId.COPPER_ORE], 150);
-      expect(save.inventoryData.itemMap[ItemId.COPPER_BAR], 50);
+      expect(bars, inInclusiveRange(50, 250));
       expect(xpFor(session, SkillId.BLACKSMITHING), xpBefore + each * 50);
       expect(result.xp[SkillId.BLACKSMITHING], each * 50);
-      expect(result.items.fold<int>(0, (sum, stack) => sum + stack.count), 50);
+      expect(
+        result.items.fold<int>(0, (sum, stack) => sum + stack.count),
+        bars,
+      );
     });
 
     test('stops at the materials on hand rather than crafting on credit', () {
@@ -109,7 +114,10 @@ void main() {
 
       final each = xpPerCraft('smelt_copper_bar');
       expect(save.inventoryData.itemMap[ItemId.COPPER_ORE], isNull);
-      expect(save.inventoryData.itemMap[ItemId.COPPER_BAR], 3);
+      expect(
+        save.inventoryData.itemMap[ItemId.COPPER_BAR],
+        inInclusiveRange(3, 15),
+      );
       expect(xpFor(session, SkillId.BLACKSMITHING), xpBefore + each * 3);
       expect(result.xp[SkillId.BLACKSMITHING], each * 3);
     });
@@ -239,12 +247,18 @@ void main() {
       );
 
       expect(save.inventoryData.itemMap[ItemId.COPPER_ORE], 200 - crafts);
-      expect(save.inventoryData.itemMap[ItemId.COPPER_BAR], crafts);
+      expect(
+        save.inventoryData.itemMap[ItemId.COPPER_BAR],
+        inInclusiveRange(crafts, crafts * 5),
+      );
 
       final report = session.actionTimingController.pendingOfflineReport;
       expect(report, isNotNull);
       expect(report!.actionCount, crafts);
-      expect(report.items.itemMap[ItemId.COPPER_BAR], crafts);
+      expect(
+        report.items.itemMap[ItemId.COPPER_BAR],
+        save.inventoryData.itemMap[ItemId.COPPER_BAR],
+      );
       expect(
         report.xp[SkillId.BLACKSMITHING],
         xpPerCraft('smelt_copper_bar') * crafts,
@@ -654,7 +668,10 @@ void main() {
       final result = craft(session, 'smelt_copper_bar', craftCount: 50);
 
       expect(result.actionsPerformed, 50);
-      expect(session.saveGameData.inventoryData.itemMap[ItemId.COPPER_BAR], 50);
+      expect(
+        session.saveGameData.inventoryData.itemMap[ItemId.COPPER_BAR],
+        inInclusiveRange(50, 250),
+      );
       session.dispose();
     });
 

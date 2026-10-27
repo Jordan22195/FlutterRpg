@@ -6,7 +6,7 @@ import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/main.dart';
 import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/widgets/primary_button.dart';
-import 'package:rpg/widgets/recipe_card.dart';
+import 'package:rpg/widgets/recipe_picker_sheet.dart';
 import 'package:rpg/widgets/skill_grid_tile.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/game_session.dart';
@@ -81,15 +81,15 @@ void main() {
     await settle(tester);
     await tester.tap(find.text('Select a recipe'));
     await settle(tester);
-    expect(find.text('Select Recipe'), findsOneWidget);
-    final dialogCards = find.descendant(
-      of: find.byType(AlertDialog),
-      matching: find.byType(RecipeCard),
+    expect(find.bySemanticsLabel('Close'), findsOneWidget);
+    final sheetCards = find.descendant(
+      of: find.byType(RecipePickerSheet),
+      matching: find.bySemanticsLabel(RegExp(r', level \d+, ')),
     );
-    expect(dialogCards, findsWidgets);
-    await tester.tap(dialogCards.first);
+    expect(sheetCards, findsWidgets);
+    await tester.tap(sheetCards.first);
     await settle(tester);
-    expect(find.text('Select Recipe'), findsNothing);
+    expect(find.byType(RecipePickerSheet), findsNothing);
     // the picked recipe replaced the empty slot, and brought its session
     // panel with it
     expect(find.text('Select a recipe'), findsNothing);

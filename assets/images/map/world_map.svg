@@ -1,0 +1,193 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 760" width="800" height="760">
+  <defs>
+    <radialGradient id="land" cx="45%" cy="45%" r="75%">
+      <stop offset="0" stop-color="#d3c699"/>
+      <stop offset="0.65" stop-color="#bfae7d"/>
+      <stop offset="1" stop-color="#9a8a5e"/>
+    </radialGradient>
+    <radialGradient id="sea" cx="50%" cy="50%" r="75%">
+      <stop offset="0" stop-color="#4a6e7a"/>
+      <stop offset="1" stop-color="#24404b"/>
+    </radialGradient>
+    <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="22"/>
+    </filter>
+    <filter id="biome" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="22" result="d"/>
+      <feColorMatrix in="d" type="matrix" values="0 0 0 0 0.18  0 0 0 0 0.13  0 0 0 0 0.05  0 0 0 0.55 0" result="a"/>
+      <feGaussianBlur in="a" stdDeviation="3" result="b"/>
+      <feOffset in="b" dx="1" dy="3" result="c"/>
+      <feMerge><feMergeNode in="c"/><feMergeNode in="d"/></feMerge>
+    </filter>
+    <filter id="lift" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="2" stdDeviation="1.6" flood-color="#2a2010" flood-opacity="0.45"/>
+    </filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="5"/></filter>
+    <filter id="blur2"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="paper">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3"/>
+      <feColorMatrix values="0 0 0 0 0.25  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.16 0"/>
+    </filter>
+    <clipPath id="landclip"><path d="M70 110 C110 50 200 40 290 55 C340 62 380 40 440 55 C520 70 560 50 640 90 C710 125 740 190 735 260 C732 310 755 340 750 400 C745 470 760 520 720 580 C690 625 640 600 600 640 C570 670 600 715 540 725 C470 735 400 700 330 720 C260 735 190 715 130 690 C70 660 50 600 55 530 C60 470 35 420 50 350 C60 290 40 200 70 110 Z"/></clipPath>
+    <pattern id="tree" width="22" height="22" patternUnits="userSpaceOnUse">
+      <path d="M11 3 L16 13 H6 Z M11 9 L18 20 H4 Z" fill="#3f6b3a" opacity="0.55"/>
+    </pattern>
+    <pattern id="darktree" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M10 2 L15 12 H5 Z M10 8 L17 19 H3 Z" fill="#1f3a2a" opacity="0.75"/>
+    </pattern>
+    <pattern id="reeds" width="16" height="14" patternUnits="userSpaceOnUse">
+      <path d="M3 12 V5 M6 12 V3 M9 12 V6 M12 12 V4" stroke="#4d6b3a" stroke-width="1.2" opacity="0.7"/>
+    </pattern>
+    <pattern id="grass" width="26" height="20" patternUnits="userSpaceOnUse">
+      <path d="M4 14 l2 -6 l2 6 M16 8 l2 -5 l2 5" stroke="#7f9a4c" stroke-width="1.2" fill="none" opacity="0.6"/>
+    </pattern>
+    <g id="pine"><path d="M0 -9 L5 1 H-5 Z M0 -4 L6 6 H-6 Z" fill="#4a7340" stroke="#2f4f2c" stroke-width="0.6"/></g>
+    <g id="hill"><path d="M-14 4 Q-6 -10 0 -10 Q7 -10 14 4 Z" fill="#b2a173" stroke="#7d6f48" stroke-width="1"/><path d="M-6 3 Q-2 -4 2 -6" stroke="#d6c99b" stroke-width="1.2" fill="none"/></g>
+  </defs>
+
+  <!-- sea: deep gradient, swell lines -->
+  <rect width="800" height="760" fill="url(#sea)"/>
+  <g stroke="#a9c8cf" stroke-width="0.8" opacity="0.12" stroke-dasharray="6 6">
+    <path d="M0 190H800M0 380H800M0 570H800M200 0V760M400 0V760M600 0V760"/>
+  </g>
+  <g fill="none" stroke="#8fb0ba" stroke-width="1.1" opacity="0.28" stroke-linecap="round">
+    <path d="M10 60 q20 -8 40 0 t40 0 t40 0"/><path d="M640 710 q20 -8 40 0 t40 0 t40 0"/>
+    <path d="M14 700 q20 -8 40 0 t40 0"/><path d="M690 30 q20 -8 40 0 t40 0"/>
+    <path d="M770 200 q-8 20 0 40 t0 40"/><path d="M20 250 q-8 20 0 40 t0 40"/>
+    <path d="M300 748 q20 -8 40 0 t40 0"/><path d="M520 14 q20 -8 40 0 t40 0"/>
+  </g>
+  <!-- a couple of islets -->
+  <g fill="#b9a97a" stroke="#6e6140" stroke-width="1.5">
+    <ellipse cx="765" cy="640" rx="16" ry="9"/><ellipse cx="30" cy="150" rx="11" ry="7"/><ellipse cx="610" cy="745" rx="14" ry="6"/>
+  </g>
+  <!-- ship -->
+  <g transform="translate(700 700)" stroke="#2a2118" stroke-width="1">
+    <path d="M-12 0 H12 L8 7 H-8 Z" fill="#7a4a2b"/><path d="M0 0 V-18" /><path d="M0 -17 L10 -4 H0 Z" fill="#efe6c8"/><path d="M0 -15 L-8 -4 H0 Z" fill="#e1d6b2"/>
+  </g>
+
+  <!-- land: soft shadow on the water, pale shallows, then the landmass -->
+  <path d="M70 110 C110 50 200 40 290 55 C340 62 380 40 440 55 C520 70 560 50 640 90 C710 125 740 190 735 260 C732 310 755 340 750 400 C745 470 760 520 720 580 C690 625 640 600 600 640 C570 670 600 715 540 725 C470 735 400 700 330 720 C260 735 190 715 130 690 C70 660 50 600 55 530 C60 470 35 420 50 350 C60 290 40 200 70 110 Z" fill="#0f1f26" opacity="0.45" filter="url(#blur2)" transform="translate(4 8)"/>
+  <path d="M70 110 C110 50 200 40 290 55 C340 62 380 40 440 55 C520 70 560 50 640 90 C710 125 740 190 735 260 C732 310 755 340 750 400 C745 470 760 520 720 580 C690 625 640 600 600 640 C570 670 600 715 540 725 C470 735 400 700 330 720 C260 735 190 715 130 690 C70 660 50 600 55 530 C60 470 35 420 50 350 C60 290 40 200 70 110 Z" fill="none" stroke="#9cc0c0" stroke-width="16" opacity="0.35" stroke-linejoin="round"/>
+  <path d="M70 110 C110 50 200 40 290 55 C340 62 380 40 440 55 C520 70 560 50 640 90 C710 125 740 190 735 260 C732 310 755 340 750 400 C745 470 760 520 720 580 C690 625 640 600 600 640 C570 670 600 715 540 725 C470 735 400 700 330 720 C260 735 190 715 130 690 C70 660 50 600 55 530 C60 470 35 420 50 350 C60 290 40 200 70 110 Z" fill="none" stroke="#b8d6d2" stroke-width="7" opacity="0.4" stroke-linejoin="round"/>
+  <path d="M70 110 C110 50 200 40 290 55 C340 62 380 40 440 55 C520 70 560 50 640 90 C710 125 740 190 735 260 C732 310 755 340 750 400 C745 470 760 520 720 580 C690 625 640 600 600 640 C570 670 600 715 540 725 C470 735 400 700 330 720 C260 735 190 715 130 690 C70 660 50 600 55 530 C60 470 35 420 50 350 C60 290 40 200 70 110 Z" fill="url(#land)" stroke="#6e6140" stroke-width="3" stroke-linejoin="round"/>
+
+  <g clip-path="url(#landclip)">
+    <!-- inner coast darkening gives the land some roundness -->
+    <path d="M70 110 C110 50 200 40 290 55 C340 62 380 40 440 55 C520 70 560 50 640 90 C710 125 740 190 735 260 C732 310 755 340 750 400 C745 470 760 520 720 580 C690 625 640 600 600 640 C570 670 600 715 540 725 C470 735 400 700 330 720 C260 735 190 715 130 690 C70 660 50 600 55 530 C60 470 35 420 50 350 C60 290 40 200 70 110 Z" fill="none" stroke="#7d6c44" stroke-width="30" opacity="0.28" filter="url(#soft)"/>
+    <!-- faint contour rings -->
+    <g fill="none" stroke="#a89867" stroke-width="1" opacity="0.28" filter="url(#rough)">
+      <ellipse cx="560" cy="170" rx="150" ry="90"/><ellipse cx="560" cy="170" rx="110" ry="62"/>
+      <ellipse cx="330" cy="660" rx="150" ry="55"/><ellipse cx="640" cy="640" rx="90" ry="35"/>
+    </g>
+    <!-- dry grass specks in the open ground -->
+    <g stroke="#8f8056" stroke-width="1" opacity="0.5" fill="none">
+      <path d="M300 130 l2 -5 l2 5 M360 180 l2 -5 l2 5 M340 330 l2 -5 l2 5 M520 290 l2 -5 l2 5 M690 220 l2 -5 l2 5 M300 400 l2 -5 l2 5 M300 520 l2 -5 l2 5 M520 560 l2 -5 l2 5 M560 600 l2 -5 l2 5 M260 690 l2 -5 l2 5"/>
+    </g>
+  </g>
+
+  <!-- river from the swamp to the northern sea -->
+  <g fill="none" stroke-linecap="round" clip-path="url(#landclip)">
+    <path d="M440 360 C470 310 440 270 455 220 C470 160 440 110 455 50" stroke="#3f6b7a" stroke-width="9"/>
+    <path d="M440 360 C470 310 440 270 455 220 C470 160 440 110 455 50" stroke="#6f9ca8" stroke-width="5"/>
+  </g>
+  <path d="M446 52 q9 -4 18 0 l4 -12 h-26 z" fill="#6f9ca8" opacity="0.8" clip-path="url(#landclip)"/>
+  <!-- small lake -->
+  <ellipse cx="575" cy="580" rx="30" ry="14" fill="#6f9ca8" stroke="#3f6b7a" stroke-width="2"/>
+
+  <!-- biomes -->
+  <g clip-path="url(#landclip)"><g filter="url(#biome)">
+    <ellipse cx="205" cy="140" rx="135" ry="85" fill="#a6b963" opacity="0.85"/>
+    <ellipse cx="205" cy="140" rx="135" ry="85" fill="url(#grass)"/>
+    <ellipse cx="150" cy="300" rx="115" ry="80" fill="#6f8f4a" opacity="0.8"/>
+    <ellipse cx="150" cy="300" rx="115" ry="80" fill="url(#tree)"/>
+    <path d="M270 285 C290 205 360 195 385 255 C400 300 330 325 270 285 Z" fill="#7a6a52" opacity="0.85"/>
+    <ellipse cx="150" cy="625" rx="120" ry="80" fill="#3a5a3c" opacity="0.9"/>
+    <ellipse cx="150" cy="625" rx="120" ry="80" fill="url(#darktree)"/>
+    <ellipse cx="435" cy="400" rx="105" ry="68" fill="#6d7d4c" opacity="0.88"/>
+    <ellipse cx="435" cy="400" rx="105" ry="68" fill="url(#reeds)"/>
+    <ellipse cx="390" cy="575" rx="95" ry="65" fill="#6f7f55" opacity="0.75"/>
+    <ellipse cx="390" cy="575" rx="95" ry="65" fill="url(#tree)" opacity="0.8"/>
+    <ellipse cx="520" cy="200" rx="70" ry="48" fill="#6f8f4a" opacity="0.8"/>
+    <ellipse cx="520" cy="200" rx="70" ry="48" fill="url(#tree)"/>
+    <ellipse cx="620" cy="320" rx="60" ry="40" fill="#8b8068" opacity="0.7"/>
+  </g></g>
+  <g fill="#52707a" opacity="0.85">
+    <ellipse cx="400" cy="372" rx="26" ry="9"/><ellipse cx="470" cy="425" rx="30" ry="10"/><ellipse cx="415" cy="432" rx="18" ry="7"/>
+  </g>
+  <ellipse cx="120" cy="170" rx="22" ry="12" fill="#5b8794" stroke="#3f5f6b" stroke-width="1.5"/>
+
+  <!-- roads sit above the biomes so every route is readable -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#5e4b2a" stroke-width="8" opacity="0.6"><path d="M200 140 C190 200 170 250 150 300 C170 370 210 410 230 460"/><path d="M230 460 C200 520 170 570 150 620"/><path d="M230 460 C300 500 350 530 390 570"/><path d="M230 460 C330 440 390 420 430 400"/><path d="M430 400 C500 430 570 460 620 480"/><path d="M200 140 C250 190 290 220 320 250"/><path d="M320 250 C370 330 410 370 430 400"/></g>
+    <g stroke="#e8d9a6" stroke-width="2.5" stroke-dasharray="2 7"><path d="M200 140 C190 200 170 250 150 300 C170 370 210 410 230 460"/><path d="M230 460 C200 520 170 570 150 620"/><path d="M230 460 C300 500 350 530 390 570"/><path d="M230 460 C330 440 390 420 430 400"/><path d="M430 400 C500 430 570 460 620 480"/><path d="M200 140 C250 190 290 220 320 250"/><path d="M320 250 C370 330 410 370 430 400"/></g>
+  </g>
+
+  <!-- scattered trees and hills across the open land -->
+  <g filter="url(#lift)">
+    <use href="#pine" x="300" y="130"/><use href="#pine" x="318" y="142"/><use href="#pine" x="292" y="150"/>
+    <use href="#pine" x="350" y="440"/><use href="#pine" x="332" y="452"/>
+    <use href="#pine" x="300" y="520"/><use href="#pine" x="316" y="534"/><use href="#pine" x="285" y="540"/>
+    <use href="#pine" x="690" y="230"/><use href="#pine" x="706" y="242"/>
+    <use href="#hill" x="360" y="170"/><use href="#hill" x="385" y="182"/>
+    <use href="#hill" x="520" y="300"/><use href="#hill" x="545" y="288"/>
+    <use href="#hill" x="300" y="680"/><use href="#hill" x="520" y="650"/><use href="#hill" x="650" y="580"/>
+    <use href="#hill" x="680" y="150"/>
+  </g>
+
+  <!-- south haven -->
+  <g transform="translate(230 460)" stroke="#4a3b24" stroke-width="1.2" filter="url(#lift)">
+    <circle r="66" fill="#d8c48a" opacity="0.6" stroke="#8a7646" stroke-dasharray="3 4"/>
+    <rect x="-40" y="-26" width="16" height="14" fill="#a2573f"/><path d="M-42 -26 l10 -9 l10 9 z" fill="#6b3a2b"/>
+    <rect x="22" y="-30" width="18" height="16" fill="#b8693f"/><path d="M20 -30 l11 -10 l11 10 z" fill="#6b3a2b"/>
+    <rect x="-46" y="14" width="18" height="14" fill="#a2573f"/><path d="M-48 14 l11 -9 l11 9 z" fill="#6b3a2b"/>
+    <rect x="30" y="16" width="16" height="14" fill="#b8693f"/><path d="M28 16 l10 -9 l10 9 z" fill="#6b3a2b"/>
+    <rect x="-9" y="-6" width="18" height="12" rx="2" fill="#cdb67f" stroke="#8a7646"/><circle cy="0" r="3.5" fill="#6f9ca8" stroke="#3f5f6b"/>
+    <rect x="-8" y="-48" width="16" height="12" fill="#9a4f3a"/><path d="M-10 -48 l10 -9 l10 9 z" fill="#6b3a2b"/>
+  </g>
+
+  <!-- goblin warren -->
+  <path filter="url(#lift)" d="M290 262 l22 -34 l22 34 z M322 270 l18 -26 l18 26 z" fill="#5d4f3d" stroke="#3b3126" stroke-width="1.2"/>
+  <path d="M305 262 v-8 a6 6 0 0 1 12 0 v8 z" fill="#241d15"/>
+
+  <!-- mountains, kept inside the coast -->
+  <g stroke="#4d4636" stroke-width="1.5" stroke-linejoin="round" filter="url(#lift)">
+    <path d="M520 400 l40 -72 l40 72 z" fill="#8b8068"/>
+    <path d="M590 410 l50 -92 l50 92 z" fill="#8b8068"/>
+    <path d="M660 395 l28 -52 l28 52 z" fill="#8b8068"/>
+    <g fill="#e6e2d4" stroke="none">
+      <path d="M560 328 l-13 24 l13 -7 l11 8 z"/><path d="M640 318 l-16 30 l16 -8 l14 10 z"/><path d="M688 343 l-9 16 l9 -5 l8 6 z"/>
+    </g>
+    <g fill="#6f6650" stroke="none" opacity="0.5">
+      <path d="M560 328 l40 72 h-40 z"/><path d="M640 318 l50 92 h-50 z"/><path d="M688 343 l28 52 h-28 z"/>
+    </g>
+    <path d="M540 520 l36 -58 l36 58 z" fill="#9d9378"/>
+    <path d="M600 530 l42 -70 l42 70 z" fill="#9d9378"/>
+    <path d="M662 520 l30 -50 l30 50 z" fill="#9d9378"/>
+  </g>
+
+  <!-- forest mine -->
+  <g transform="translate(445 600)" filter="url(#lift)">
+    <path d="M-28 12 l28 -42 l28 42 z" fill="#7d7260" stroke="#4d4636" stroke-width="1.5"/>
+    <path d="M-9 12 v-14 a9 9 0 0 1 18 0 v14 z" fill="#2a241a"/>
+    <path d="M-20 12 h40" stroke="#4d4636" stroke-width="1.5"/>
+  </g>
+
+  <!-- compass rose, moved clear of the darkwood -->
+  <g transform="translate(720 90)" stroke="#2c241a" stroke-width="1.2">
+    <circle r="32" fill="#e2d4a2" opacity="0.8"/>
+    <circle r="26" fill="none" stroke-dasharray="2 3"/>
+    <path d="M0 -36 L7 0 L0 36 L-7 0 Z" fill="#7a2f2a"/>
+    <path d="M-36 0 L0 -7 L36 0 L0 7 Z" fill="#3b3126"/>
+    <path d="M0 -36 L7 0 L-7 0 Z" fill="#a43d34"/>
+    <text y="-42" text-anchor="middle" font-family="serif" font-size="14" font-weight="bold" fill="#efe4b8" stroke="#1d2e35" stroke-width="2.5" paint-order="stroke">N</text>
+  </g>
+
+  <!-- paper grain and framing -->
+  <rect width="800" height="760" filter="url(#paper)" opacity="0.5"/>
+  <rect x="5" y="5" width="790" height="750" fill="none" stroke="#14232a" stroke-width="10" opacity="0.55"/>
+  <rect x="14" y="14" width="772" height="732" fill="none" stroke="#d8c99a" stroke-width="1.2" opacity="0.45"/>
+  <path d="M14 14v10M54 14v6M94 14v10M134 14v6M174 14v10M214 14v6M254 14v10M294 14v6M334 14v10M374 14v6M414 14v10M454 14v6M494 14v10M534 14v6M574 14v10M614 14v6M654 14v10M694 14v6M734 14v10M774 14v10" stroke="#d8c99a" stroke-width="1" opacity="0.4"/>
+  <path d="M14 746v-10M54 746v-6M94 746v-10M134 746v-6M174 746v-10M214 746v-6M254 746v-10M294 746v-6M334 746v-10M374 746v-6M414 746v-10M454 746v-6M494 746v-10M534 746v-6M574 746v-10M614 746v-6M654 746v-10M694 746v-6M734 746v-10M774 746v-10" stroke="#d8c99a" stroke-width="1" opacity="0.4"/>
+</svg>

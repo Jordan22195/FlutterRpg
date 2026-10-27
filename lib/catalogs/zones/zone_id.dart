@@ -227,7 +227,7 @@ enum ZoneId {
       explorationLevel: 25,
       xpPerExplore: 12,
 
-      permanentEntities: [EntityId.FIREPIT],
+      permanentEntities: [EntityId.FIREPIT, EntityId.DEEP_POND],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MUDLURC,

@@ -30,8 +30,13 @@ class DevShopEntityDefinition extends ShopEntityDefinition {
   /// exclusions `catalog_integrity_test` asks of every shop.
   @override
   List<ShopStockEntry> get shopStockPool => [
+    // the god ring leads the shelf
+    const ShopStockEntry(itemId: ItemId.GOD_RING, count: _equipmentCount),
     for (final id in ItemId.values)
-      if (id != ItemId.NULL && id != ItemId.NULL_BUFF && id != ItemId.COINS)
+      if (id != ItemId.NULL &&
+          id != ItemId.NULL_BUFF &&
+          id != ItemId.COINS &&
+          id != ItemId.GOD_RING)
         ShopStockEntry(
           itemId: id,
           count: id.definition is EquipmentItemDefinition

@@ -121,12 +121,23 @@ class CraftingSystem {
 
     final outputTable = adjustDropTable(r.id, playerState, at: at);
 
+    // a bonus-output recipe rolls the quality ladder first: each craft is
+    // worth one output roll per tier step, so a legendary smelt pays five
+    // bars. live that is one roll's stack scaled; a batch rolls the output
+    // table once per craft's worth
+    final multiplier = r.rollsBonusOutput
+        ? _bonusOutputUnits(r, playerState, crafts, offline: offline, at: at)
+        : (offline ? crafts : 1);
+
     // one stack per distinct output. a live craft still rolls its own stack
     // size rather than taking the table's mean, so nothing about normal
     // play changes.
     final rolled = offline
-        ? _weightedDropTableService.rollMulitpleTimes(crafts, outputTable)
-        : [_weightedDropTableService.roll(outputTable)];
+        ? _weightedDropTableService.rollMulitpleTimes(multiplier, outputTable)
+        : [
+            for (final stack in [_weightedDropTableService.roll(outputTable)])
+              stack..count = stack.count * multiplier,
+          ];
 
     for (final craftedItemObjectStack in rolled) {
       if (craftedItemObjectStack.count <= 0) continue;
@@ -334,6 +345,29 @@ class CraftingSystem {
     }
   }
 
+  /// How many crafts' worth of output [crafts] bonus-output crafts pay:
+  /// each one rolls [qualityEntries] and is worth its tier's step on the
+  /// ladder plus one - common 1 up to legendary 5.
+  int _bonusOutputUnits(
+    CraftingRecipe recipe,
+    PlayerData playerState,
+    int crafts, {
+    required bool offline,
+    DateTime? at,
+  }) {
+    final skillLevel =
+        _playerDataService.getStatTotals(playerState, at: at)[recipe.skill] ??
+        1;
+    final entries = qualityEntries(skillLevel, recipe.levelRequirement);
+    final tiers = offline
+        ? _weightedDropTableService.rollMulitpleTimes(crafts, entries)
+        : [_weightedDropTableService.roll(entries)];
+    return tiers.fold(0, (sum, t) => sum + t.count * bonusOutputFor(t.id));
+  }
+
+  /// The crafts' worth of output one bonus-output craft at [tier] pays.
+  static int bonusOutputFor(Rarity tier) => tier.index + 1;
+
   /// Rolls the quality tier for a crafted piece of equipment. Common is
   /// always the most likely outcome; levels above the recipe requirement
   /// shift weight toward the higher tiers.
@@ -418,6 +452,8 @@ class CraftingSystem {
       materials: materials,
       outcomes: rollsQuality
           ? _qualityOutcomes(skillLevel, recipe.levelRequirement)
+          : recipe.rollsBonusOutput
+          ? _bonusOutcomes(recipe, skillLevel)
           : _outputOutcomes(recipe, playerState, at: at),
       rollsQuality: rollsQuality,
     );
@@ -439,6 +475,29 @@ class CraftingSystem {
           label: quality.label.isEmpty ? 'Common' : quality.label,
           quality: quality,
           chance: chances[quality] ?? 0,
+        ),
+    ];
+  }
+
+  /// The quality ladder read as output: one row per tier, labelled with
+  /// what it pays and coloured like the tier it rolled.
+  List<RecipeOutcomeChance> _bonusOutcomes(
+    CraftingRecipe recipe,
+    int skillLevel,
+  ) {
+    final chances = WeightedDropTableService.chances(
+      qualityEntries(skillLevel, recipe.levelRequirement),
+    );
+    final perCraft = recipe.output.first.count;
+    final itemId = recipe.output.first.id;
+    return [
+      for (final tier in Rarity.values)
+        RecipeOutcomeChance(
+          label:
+              '${bonusOutputFor(tier) * perCraft}x ${itemId.definition.name}',
+          itemId: itemId,
+          quality: tier,
+          chance: chances[tier] ?? 0,
         ),
     ];
   }

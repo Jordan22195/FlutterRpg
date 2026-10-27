@@ -12,6 +12,7 @@ class CraftingRecipe {
     required this.inputs,
     required this.output,
     required this.xp,
+    this.rollsBonusOutput = false,
   });
 
   final double xp;
@@ -25,4 +26,9 @@ class CraftingRecipe {
 
   /// Output stack per craft, e.g. ObjectStack(id: Items.COPPER_BAR, count: 1)
   final List<WeightedDropTableEntry<ItemId>> output;
+
+  /// Rolls the crafting quality table like equipment does, but pays the tier
+  /// out as extra output instead of a rarity: common makes one craft's
+  /// worth, legendary five. For outputs with no rarity of their own - bars.
+  final bool rollsBonusOutput;
 }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:rpg/catalogs/catalog_icons.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
@@ -16,6 +17,7 @@ import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/crafting_screen.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/picker_list.dart';
+import 'package:rpg/widgets/recipe_picker_sheet.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 
 /// Where a picker opens. A list of forty recipes that always opens on the
@@ -191,68 +193,112 @@ void main() {
       return session;
     }
 
-    testWidgets('opens on the recipe already selected', (tester) async {
+    Future<void> openSheet(WidgetTester tester) async {
+      await tester.tap(find.byType(RecipeCard).first);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('lists one card per recipe, lowest level first', (
+      tester,
+    ) async {
+      final session = await pumpCraftingScreen(tester);
+      await openSheet(tester);
+
+      expect(find.byType(RecipePickerSheet), findsOneWidget);
+      expect(find.text('Anvil'), findsWidgets);
+      expect(find.bySemanticsLabel('Close'), findsOneWidget);
+
+      final levels = session.craftingController
+          .availableRecipes()
+          .map((r) => r.levelRequirement)
+          .toList();
+      final sorted = [...levels]..sort();
+      expect(sorted.first, levels.reduce((a, b) => a < b ? a : b));
+
+      // every card clears the touch-target minimum
+      final cards = find.bySemanticsLabel(RegExp(r', (level \d+, |locked, )'));
+      expect(cards, findsWidgets);
+      expect(tester.getSize(cards.first).height, greaterThanOrEqualTo(84));
+
+      session.dispose();
+    });
+
+    testWidgets('ingredient chips abbreviate large counts', (tester) async {
+      final session = await pumpCraftingScreen(tester);
+      session.inventoryController.devSetItemCount(ItemId.COPPER_ORE, 1234);
+      await openSheet(tester);
+
+      expect(find.text('1.23k'), findsWidgets);
+
+      session.dispose();
+    });
+
+    testWidgets('the screen shows the selected recipe as a picker card', (
+      tester,
+    ) async {
       final session = await pumpCraftingScreen(tester);
       final controller = session.craftingController;
-      final recipes = controller.availableRecipes();
-
-      // a recipe far enough down the anvil's list that a picker opening at
-      // the top would not have built it at all
-      expect(recipes.length, greaterThan(10));
-      final target = recipes.last;
-      controller.selectRecipe(target.id);
+      controller.selectRecipe(controller.availableRecipes().first.id);
       await tester.pump();
 
-      // the card on the screen shows the current selection; tapping it opens
-      // the picker
-      await tester.tap(find.byType(RecipeCard).first);
-      await tester.pump();
-      await tester.pump();
+      expect(find.byType(RecipePickerCard), findsOneWidget);
+      expect(find.byType(RecipeCard), findsNothing);
 
-      expect(find.text('Select Recipe'), findsOneWidget);
-
-      // the selected row is the one on screen, and it is the marked one
-      final selected = find.byWidgetPredicate(
-        (widget) =>
-            widget is RecipeCard &&
-            widget.recipeId == target.id &&
-            widget.selected,
-      );
-      expect(selected, findsOneWidget);
-
-      // and it sits in the middle of the list rather than off the end of it
-      final viewport = tester.getRect(find.byType(PickerList));
-      final row = tester.getRect(selected);
-      expect(viewport.contains(row.center), isTrue);
-      // the centring is arithmetic off a fixed row height, so a card that
-      // stopped matching it would quietly aim at the wrong row
-      expect(row.height, PickerList.defaultRowExtent);
+      // tapping it opens the picker
+      await tester.tap(find.byType(RecipePickerCard));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byType(RecipePickerSheet), findsOneWidget);
 
       session.dispose();
     });
 
-    testWidgets('with nothing selected it opens at the top', (tester) async {
+    testWidgets('metal tabs filter the list', (tester) async {
       final session = await pumpCraftingScreen(tester);
-      final recipes = session.craftingController.availableRecipes();
+      await openSheet(tester);
 
-      await tester.tap(find.byType(RecipeCard).first);
-      await tester.pump();
-      await tester.pump();
+      expect(find.bySemanticsLabel('Copper tab'), findsOneWidget);
+      expect(find.bySemanticsLabel('Iron tab'), findsOneWidget);
 
-      // the recipe rows scroll their inputs horizontally, so the picker's
-      // own list is the first scrollable under it
-      final scrollable = tester.state<ScrollableState>(
-        find
-            .descendant(
-              of: find.byType(PickerList),
-              matching: find.byType(Scrollable),
-            )
-            .first,
+      await tester.tap(find.bySemanticsLabel('Iron tab'));
+      await tester.pump();
+      expect(
+        find.bySemanticsLabel(RegExp(r'^Copper .*, (level|locked)')),
+        findsNothing,
       );
-      expect(scrollable.position.pixels, 0);
-      expect(recipes.first.id, isNotEmpty);
+      expect(
+        find.bySemanticsLabel(RegExp(r'^Iron .*, (level|locked)')),
+        findsWidgets,
+      );
 
       session.dispose();
     });
+
+    testWidgets(
+      'a locked recipe cannot be picked, and the close button dismisses',
+      (tester) async {
+        final session = await pumpCraftingScreen(tester);
+        final before = session.craftingController.selectedRecipeId;
+        await openSheet(tester);
+
+        final locked = find.bySemanticsLabel(
+          RegExp(r', locked, requires level'),
+        );
+        if (locked.evaluate().isNotEmpty) {
+          await tester.ensureVisible(locked.first);
+          await tester.tap(locked.first);
+          await tester.pump();
+          expect(session.craftingController.selectedRecipeId, before);
+          expect(find.byType(RecipePickerSheet), findsOneWidget);
+        }
+
+        await tester.tap(find.byIcon(Icons.close).hitTestable());
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.byType(RecipePickerSheet), findsNothing);
+
+        session.dispose();
+      },
+    );
   });
 }

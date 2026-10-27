@@ -298,7 +298,22 @@ void main() {
     expect(find.text('×2'), findsOneWidget);
 
     await tapFloorButton(tester, 'Claim 2 chests');
-    expect(find.text('2 Spider Den Chests'), findsOneWidget);
+    // the dialog waits for a choice; nothing is opened yet
+    expect(find.text('Spider Den Chests'), findsOneWidget);
+    expect(find.text('Open 1'), findsOneWidget);
+    expect(progress.chestsWaiting(id), 2);
+
+    await tester.tap(find.text('Open 1'));
+    await tester.pump();
+    expect(progress.chestsWaiting(id), 1);
+    expect(find.text('1 chest waiting'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+
+    await tester.tap(find.text('Open 1'));
+    await tester.pump(const Duration(seconds: 1));
+    expect(progress.chestsWaiting(id), 0);
+    expect(find.text('All opened.'), findsOneWidget);
+    expect(find.text('Open 1'), findsNothing);
     expect(
       find.descendant(
         of: find.byType(AlertDialog),
@@ -306,6 +321,19 @@ void main() {
       ),
       findsWidgets,
     );
+    await tester.tap(find.text('Close'));
+    await settle(tester);
+
+    // open all in one go
+    progress.resetRun(id);
+    progress.earnChest(id);
+    progress.resetRun(id);
+    progress.earnChest(id);
+    session.dungeonController.refresh();
+    await settle(tester);
+    await tapFloorButton(tester, 'Claim 2 chests');
+    await tester.tap(find.text('Open all (2)'));
+    await tester.pump(const Duration(seconds: 1));
     expect(progress.chestsWaiting(id), 0);
     await tester.tap(find.text('Close'));
     await settle(tester);

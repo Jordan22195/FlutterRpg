@@ -71,6 +71,13 @@ class OfflineProgressService {
   /// Explore has its own result type: it settles a whole batch in one fire
   /// rather than one action at a time, and what it turns up is as much
   /// entities as loot.
+  /// Xp the settle paid outside any action - the core skills, trained off
+  /// the stamina bar.
+  void recordXp(OfflineProgressData data, Map<SkillId, double> xp) {
+    if (!data.processing) return;
+    _recordXp(data, xp);
+  }
+
   void recordExplore(OfflineProgressData data, ExploreResult result) {
     if (!data.processing) return;
     _recordActions(data, result.actionsPerformed);

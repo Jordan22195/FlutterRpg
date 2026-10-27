@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/inventory_data.dart';
+import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/inventory_service.dart';
 import 'package:rpg/services/shop_service.dart';
 
@@ -21,17 +22,31 @@ void main() {
 
   /// Every id the dev shop is expected to carry: the catalog less the two
   /// sentinels, which are not items anyone can hold, and coins, which are
-  /// what is being spent.
-  final sellable = ItemId.values
-      .where(
-        (id) =>
-            id != ItemId.NULL && id != ItemId.NULL_BUFF && id != ItemId.COINS,
-      )
-      .toList();
+  /// what is being spent. The god ring leads the shelf.
+  final sellable = [
+    ItemId.GOD_RING,
+    ...ItemId.values.where(
+      (id) =>
+          id != ItemId.NULL &&
+          id != ItemId.NULL_BUFF &&
+          id != ItemId.COINS &&
+          id != ItemId.GOD_RING,
+    ),
+  ];
 
   test('the pool is the item catalog, not a hand-written list', () {
     expect(def, isA<DevShopEntityDefinition>());
     expect(def.shopStockPool.map((e) => e.itemId).toList(), sellable);
+  });
+
+  test('the god ring tops the shelf for 1 coin and adds 1000 to every stat', () {
+    expect(def.shopStockPool.first.itemId, ItemId.GOD_RING);
+    expect(shopService.buyPrice(ItemId.GOD_RING, def), 1);
+    final ring = ItemId.GOD_RING.build() as EquipmentItem;
+    final stats = ring.effectiveSkillBonus;
+    for (final skill in SkillId.values) {
+      expect(stats[skill], skill == SkillId.NULL ? isNull : 1000);
+    }
   });
 
   test('a restock puts the whole catalog on the shelf, in catalog order', () {

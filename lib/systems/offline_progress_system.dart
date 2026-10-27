@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import '../controllers/action_timing_controller.dart';
 import '../data/offline_progress_data.dart';
 import '../data/player_data.dart';
+import '../data/skill_category.dart';
 import '../data/skill_data.dart';
 import '../services/buff_service.dart';
 import '../services/offline_progress_service.dart';
@@ -249,9 +252,12 @@ class OfflineProgressSystem {
       // ---- what the batch paid per action, for the next threshold
       final performed = performedThisSegment;
       if (performed > 0) {
+        // the core skills train by the second off the stamina bar, not per
+        // action, so they have no per-action rate to cut a segment on
         xpPerAction = {
           for (final entry in _offlineProgressData.report.xp.entries)
-            entry.key: (entry.value - (xpBefore[entry.key] ?? 0)) / performed,
+            if (!kSkillsByCategory[SkillCategory.core]!.contains(entry.key))
+              entry.key: (entry.value - (xpBefore[entry.key] ?? 0)) / performed,
         };
       }
       probing = false;
@@ -274,10 +280,7 @@ class OfflineProgressSystem {
     if (remaining > 0) {
       // the loop stopped, so the rest of the gap is idle at whatever the
       // player's stats are by its end
-      _playerDataService.changeStamina(
-        remaining * _playerDataService.staminaRecoveryPerSecond(playerState),
-        playerState,
-      );
+      _recover(playerState, remaining);
     }
 
     playerState.lastActionTime = at;
@@ -416,6 +419,47 @@ class OfflineProgressSystem {
     return soonest;
   }
 
+  /// [seconds] idle, recovering stamina. Recovery trains on what was
+  /// actually restored, so a bar that fills part way stops paying, the way
+  /// the live frame stops once it is full. Paid a recovery level at a time:
+  /// each one it earns refills the rest of the stretch faster, as it would
+  /// have live.
+  void _recover(PlayerData playerState, double seconds, {DateTime? at}) {
+    final recovery = playerState.skillData[SkillId.RECOVERY];
+    var left = seconds;
+    while (left > 0) {
+      final rate = _playerDataService.staminaRecoveryPerSecond(
+        playerState,
+        at: at,
+      );
+      final room =
+          _playerDataService.getMaxStamina(playerState, at: at) -
+          playerState.stamina;
+      if (rate <= 0 || room <= 0) {
+        // still settles a bar left over a max that has since dropped - a
+        // stamina potion that ran out under it
+        _playerDataService.changeStamina(0, playerState, at: at);
+        return;
+      }
+      // xp is the stamina restored, so a level is that much refilling away
+      final toLevel = recovery == null
+          ? 0.0
+          : _skillService.xpToLevelUp(recovery);
+      var restore = min(rate * left, room);
+      if (toLevel > 0 && toLevel < restore) restore = toLevel;
+      _playerDataService.changeStamina(restore, playerState, at: at);
+      _awardXp(playerState, {SkillId.RECOVERY: restore});
+      left -= restore / rate;
+    }
+  }
+
+  /// Xp the replay pays itself rather than through a bound action: onto the
+  /// player, and into the report so the summary shows it.
+  void _awardXp(PlayerData playerState, Map<SkillId, double> xp) {
+    _playerDataService.applyXp(playerState, xp);
+    _offlineProgressService.recordXp(_offlineProgressData, xp);
+  }
+
   /// The stamina one segment moves, on the same rules the frame loop runs
   /// on: a held boost drains, anything else recovers. A speed boost is
   /// charged for [seconds], a strength one for the [actions] fired in them.
@@ -428,19 +472,26 @@ class OfflineProgressSystem {
   ) {
     final at = playerState.lastActionTime;
     if (!timingState.boostLocked) {
-      _playerDataService.changeStamina(
-        seconds *
-            _playerDataService.staminaRecoveryPerSecond(playerState, at: at),
-        playerState,
-        at: at,
-      );
+      _recover(playerState, seconds, at: at);
       return;
+    }
+
+    // the stance's skill and stamina train for every second boosted, as
+    // they do live
+    final multiplier = _actionTimingService.getCurrentSpeedMultiplier(
+      timingState,
+    );
+    if (multiplier > 1 && seconds > 0) {
+      _awardXp(playerState, {
+        _playerDataService.getBoostSkill(playerState): multiplier * seconds,
+        SkillId.STAMINA: seconds,
+      });
     }
 
     // a speed boost is charged for the stretch, a strength one for the
     // actions fired in it
     final drain = _actionTimingService.boostDrain(
-      _actionTimingService.getCurrentSpeedMultiplier(timingState),
+      multiplier,
       speedStance: timingState.boostingSpeed,
     );
     final spent = timingState.boostingSpeed ? drain * seconds : drain * actions;

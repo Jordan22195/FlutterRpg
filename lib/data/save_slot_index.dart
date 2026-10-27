@@ -5,6 +5,13 @@ class SaveSlotInfo {
   String name;
   DateTime createdAt;
 
+  /// The player's own short label for this save ("Ironman", "Alt"), shown
+  /// beside its name. Empty when the save has none.
+  String tag;
+
+  /// Longest tag the player can set, so it stays a label and not a title.
+  static const int maxTagLength = 16;
+
   /// When this slot's save was last written, or null if it never has been.
   DateTime? lastPlayed;
 
@@ -14,6 +21,7 @@ class SaveSlotInfo {
   SaveSlotInfo({
     required this.id,
     required this.name,
+    this.tag = '',
     DateTime? createdAt,
     this.lastPlayed,
     this.totalLevel = 0,
@@ -23,6 +31,7 @@ class SaveSlotInfo {
     return {
       'id': id,
       'name': name,
+      if (tag.isNotEmpty) 'tag': tag,
       'createdAt': createdAt.toIso8601String(),
       if (lastPlayed != null) 'lastPlayed': lastPlayed!.toIso8601String(),
       'totalLevel': totalLevel,
@@ -42,6 +51,7 @@ class SaveSlotInfo {
     return SaveSlotInfo(
       id: rawId,
       name: rawName is String && rawName.isNotEmpty ? rawName : rawId,
+      tag: json['tag'] is String ? json['tag'] as String : '',
       createdAt: rawCreated is String ? DateTime.tryParse(rawCreated) : null,
       lastPlayed: rawLastPlayed is String
           ? DateTime.tryParse(rawLastPlayed)

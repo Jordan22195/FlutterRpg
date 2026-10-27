@@ -230,16 +230,17 @@ class DungeonSystem {
     ];
   }
 
-  /// Opens every chest of [id] waiting to be claimed, paying what they roll
-  /// into [playerInventory]. Returns what came out, merged by item; empty
-  /// when nothing was waiting.
+  /// Opens up to [max] chests of [id] waiting to be claimed (all of them
+  /// when null), paying what they roll into [playerInventory]. Returns what
+  /// came out, merged by item; empty when nothing was waiting.
   List<ObjectStack<ItemId>> openChests({
     required DungeonProgressData progress,
     required DungeonId id,
     required InventoryData playerInventory,
+    int? max,
   }) {
     if (!id.isReal) return const [];
-    final count = progress.takeChests(id);
+    final count = progress.takeChests(id, max: max);
     if (count <= 0) return const [];
 
     final rolled = _dropTableService.rollBonusMulitpleTimes(

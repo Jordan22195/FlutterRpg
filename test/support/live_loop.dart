@@ -6,6 +6,7 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/data/buff_data.dart';
 import 'package:rpg/data/offline_progress_data.dart';
+import 'package:rpg/data/skill_category.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'gathering_tools.dart';
@@ -37,8 +38,8 @@ class PlayOutcome {
   /// The share of [xp] the live frame loop pays by the second rather than by
   /// the action - the boost skill and stamina while boosted, recovery while
   /// it has something to restore, and the idle heartbeat's recovery once the
-  /// loop has stopped. Always empty for an offline settle, which pays none of
-  /// it; [actionXp] is what the two sides are compared on.
+  /// loop has stopped. An offline settle pays the same off the stamina bar
+  /// segment by segment; [actionXp] is what is left of [xp] without it.
   final Map<SkillId, double> frameXp;
 
   /// Net change in the bag, per item.
@@ -363,7 +364,13 @@ PlayOutcome runOffline(PlaySetup setup, double seconds) {
   final outcome = PlayOutcome(
     actions: report.actionCount,
     xp: _xpDelta(session, before),
-    frameXp: const {},
+    // the settle pays the core skills off the stamina bar, as the frame
+    // loop does - the same share, measured the same way
+    frameXp: {
+      for (final e in report.xp.entries)
+        if (kSkillsByCategory[SkillCategory.core]!.contains(e.key))
+          e.key: e.value,
+    },
     items: _itemDelta(session, before),
     stamina: player.stamina,
     maxStamina: pds.getMaxStamina(player, at: now),

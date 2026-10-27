@@ -79,6 +79,10 @@ class EquipmentItemDefinition extends ItemDefinition {
 
   int get skillLevelRequirement => materialId.parameters.skillLevelRequirement;
 
+  /// Stats a piece carries as written, at every rarity, in place of the
+  /// budget split. For dev items only — nothing in the real catalog sets it.
+  final Map<SkillId, int>? fixedStats;
+
   const EquipmentItemDefinition({
     required super.name,
     required super.value,
@@ -89,6 +93,7 @@ class EquipmentItemDefinition extends ItemDefinition {
     super.description,
     super.iconAsset,
     super.quality,
+    this.fixedStats,
   }) : _armorSlot = armorSlot,
        _fibLevel = fibLevel,
        _statWeights = statWeights;
@@ -138,7 +143,8 @@ class EquipmentItemDefinition extends ItemDefinition {
   }
 
   /// The stats a piece of this definition at [rarity] actually has.
-  Map<SkillId, int> statsAt(Rarity rarity) => _statsFor(budgetAt(rarity));
+  Map<SkillId, int> statsAt(Rarity rarity) =>
+      fixedStats != null ? {...fixedStats!} : _statsFor(budgetAt(rarity));
 
   /// Splitting [budget] by the weights — the one place the split happens,
   /// so [budgetAt]'s floor is measured against the same numbers the player
@@ -216,6 +222,7 @@ class EquipmentItemDefinition extends ItemDefinition {
       materialId: materialId ?? this.materialId,
       fibLevel: fibLevel ?? _fibLevel,
       statWeights: statWeights ?? _statWeights,
+      fixedStats: fixedStats,
     );
   }
 

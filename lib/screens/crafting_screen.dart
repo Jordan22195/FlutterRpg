@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/widgets/crafting_info_panel.dart';
-import 'package:rpg/widgets/picker_list.dart';
+import 'package:rpg/widgets/recipe_picker_sheet.dart';
 import 'package:rpg/widgets/recipe_card.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/skill_ring_row.dart';
@@ -43,41 +43,12 @@ class _CraftingScreenState extends State<CraftingScreen>
     CraftingController controller,
     List<CraftingRecipe> recipes,
   ) {
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Select Recipe'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: PickerList(
-              itemCount: recipes.length,
-              // opens on the recipe already selected rather than at the top
-              selectedIndex: recipes.indexWhere(
-                (r) => r.id == controller.selectedRecipeId,
-              ),
-              itemBuilder: (context, i) {
-                final r = recipes[i];
-                return RecipeCard(
-                  recipeId: r.id,
-                  lockWhenUnderLevel: true,
-                  selected: r.id == controller.selectedRecipeId,
-                  onTap: () {
-                    controller.selectRecipe(r.id);
-                    Navigator.of(ctx).pop();
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
+    showRecipePickerSheet(
+      context,
+      title: controller.stationEntityId.definition.name,
+      skill: controller.getCraftingEntitySkillId(),
+      recipes: recipes,
+      onSelected: (r) => controller.selectRecipe(r.id),
     );
   }
 
@@ -131,12 +102,23 @@ class _CraftingScreenState extends State<CraftingScreen>
                 ),
                 const SizedBox(height: 12),
 
-                // selectable recipe card
-                RecipeCard(
-                  recipeId: selectedRecipeId,
-                  onTap: () =>
-                      _showRecipePicker(context, controller, recipeList),
-                ),
+                // the selected recipe, drawn as the picker draws it; an empty
+                // slot keeps the plain prompt card. a selection is never
+                // locked, so the card always opens the picker
+                if (selectedRecipeId.isEmpty)
+                  RecipeCard(
+                    recipeId: selectedRecipeId,
+                    onTap: () =>
+                        _showRecipePicker(context, controller, recipeList),
+                  )
+                else
+                  RecipePickerCard(
+                    recipe: controller.getRecipe(selectedRecipeId),
+                    skill: skillId,
+                    locked: false,
+                    onTap: () =>
+                        _showRecipePicker(context, controller, recipeList),
+                  ),
                 const SizedBox(height: 16),
 
                 // the station has no target and no health, so the action

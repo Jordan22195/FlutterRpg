@@ -36,6 +36,7 @@ final List<CraftingRecipe> blacksmithingRecipes = [
     xp: 4,
     inputs: {ItemId.GOLD_ORE: 1},
     output: [WeightedDropTableEntry(id: ItemId.GOLD_BAR, count: 1, weight: 1)],
+    rollsBonusOutput: true,
   ),
 ];
 
@@ -203,9 +204,9 @@ const _tiers = <_Tier>[
 /// before herbalism.
 const _pieces = <_Piece>[
   _Piece(suffix: 'PICKAXE', rung: 1, bars: 1),
-  _Piece(suffix: 'AXE', rung: 1, bars: 1),
-  _Piece(suffix: 'SICKLE', rung: 1, bars: 1),
-  _Piece(suffix: 'DAGGER', rung: 2, bars: 1),
+  _Piece(suffix: 'DAGGER', rung: 1, bars: 1),
+  _Piece(suffix: 'AXE', rung: 2, bars: 1),
+  _Piece(suffix: 'SICKLE', rung: 3, bars: 1),
   _Piece(suffix: 'HELMET', rung: 3, bars: 1),
   _Piece(suffix: 'BRACERS', rung: 4, bars: 1),
   _Piece(suffix: 'CHESTPLATE', rung: 5, bars: 3),
@@ -238,6 +239,8 @@ CraftingRecipe _smelt(_Tier tier) => CraftingRecipe(
   xp: tier.smeltXp,
   inputs: tier.smeltInputs,
   output: [WeightedDropTableEntry(id: tier.bar, count: 1, weight: 1)],
+  // a bar has no rarity, so a good smelt pays out in bars instead
+  rollsBonusOutput: true,
 );
 
 CraftingRecipe _forge(_Tier tier, _Piece piece) {
