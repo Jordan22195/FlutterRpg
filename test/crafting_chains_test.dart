@@ -183,9 +183,9 @@ void main() {
       });
     });
 
-    test('a tier gates its three tools together', () {
-      // pickaxe, axe and sickle are one rung: no reason mining should open
-      // before herbalism within a tier
+    test('a tier opens its three tools in order', () {
+      // pickaxe, axe and sickle climb a rung each: mining opens first, then
+      // woodcutting, then herbalism
       for (final tools in [
         ['forge_copper_pickaxe', 'forge_copper_axe', 'forge_copper_sickle'],
         ['forge_iron_pickaxe', 'forge_iron_axe', 'forge_iron_sickle'],
@@ -194,12 +194,13 @@ void main() {
       ]) {
         final levels = tools
             .map((id) => recipes.recipeById(id).levelRequirement)
-            .toSet();
+            .toList();
         expect(
           levels,
-          hasLength(1),
-          reason: '$tools should share one level, got $levels',
+          orderedEquals([...levels]..sort()),
+          reason: '$tools should open in order, got $levels',
         );
+        expect(levels.toSet(), hasLength(3), reason: '$tools share a level');
       }
     });
   });

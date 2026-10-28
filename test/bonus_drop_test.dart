@@ -102,7 +102,7 @@ void main() {
       );
 
       final rng = Random(9);
-      for (var i = 0; i < 6000; i++) {
+      for (var i = 0; i < 14000; i++) {
         session.encounterSystem.executePlayerAction(
           playerState: save.playerData,
           encounter: save.encounterData,

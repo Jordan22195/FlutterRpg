@@ -11,8 +11,8 @@ import 'package:rpg/services/equipment_service.dart';
 ///
 /// The split is what makes leather a choice rather than a downgrade. A metal
 /// piece puts its whole rung into defence; a leather piece at the same rung
-/// puts half there and half into attack, so leather has to sit a rung higher
-/// to match plate — and buys the attack on top.
+/// splits that same budget exactly between the two, so it matches plate on
+/// total stats — and buys the attack by giving up some of the defence.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -33,14 +33,14 @@ void main() {
   // legs and shoulders are the major pieces and sit one rung above the rest,
   // the same spread the metal ladder has.
   const pieces = <String, (ArmorSlots, int)>{
-    'COIF': (ArmorSlots.HEAD, 1),
-    'SPAULDERS': (ArmorSlots.SHOULDER, 2),
-    'CHEST': (ArmorSlots.CHEST, 2),
-    'BELT': (ArmorSlots.WAIST, 1),
-    'BRACERS': (ArmorSlots.WRIST, 1),
-    'PANTS': (ArmorSlots.LEGS, 2),
-    'BOOTS': (ArmorSlots.FEET, 1),
-    'GLOVES': (ArmorSlots.HANDS, 1),
+    'COIF': (ArmorSlots.HEAD, 0),
+    'SPAULDERS': (ArmorSlots.SHOULDER, 1),
+    'CHEST': (ArmorSlots.CHEST, 1),
+    'BELT': (ArmorSlots.WAIST, 0),
+    'BRACERS': (ArmorSlots.WRIST, 0),
+    'PANTS': (ArmorSlots.LEGS, 1),
+    'BOOTS': (ArmorSlots.FEET, 0),
+    'GLOVES': (ArmorSlots.HANDS, 0),
   };
 
   ItemId idFor(int tier, String piece) {
@@ -95,9 +95,10 @@ void main() {
     }
   });
 
-  test('a hide asks for the level the plate a rung below it asks for', () {
-    // leather at rung n defends like plate at rung n-1, so it is gated like
-    // it too — the two ladders stay one step apart at every tier they share
+  test('a hide sits on the rung of the plate it is gated like', () {
+    // a hide splits its rung exactly, so it adds up to the plate of the same
+    // rung and is gated like it — the two ladders stay level at every tier
+    // they share
     const plateBelow = {
       'LIGHT_LEATHER': EquipmentMaterialId.COPPER,
       'MEDIUM_LEATHER': EquipmentMaterialId.IRON,
@@ -111,8 +112,8 @@ void main() {
       final hide = EquipmentMaterialId.values.byName(entry.key);
       expect(
         hide.parameters.fibLevel,
-        entry.value.parameters.fibLevel + 1,
-        reason: '${entry.key} is not a rung above ${entry.value.name}',
+        entry.value.parameters.fibLevel,
+        reason: '${entry.key} is not on the rung of ${entry.value.name}',
       );
       expect(
         hide.parameters.skillLevelRequirement,
@@ -140,12 +141,15 @@ void main() {
           SkillId.ATTACK: 1,
           SkillId.DEFENCE: 1,
         }, reason: '${tiers[tier]}_$piece is not a hybrid');
-        // an even split at rung 0 gives {1, 1} at common AND at uncommon,
-        // because weightedShare floors each share at 1 — so the ladder has
-        // to start at rung 1 or rarity stops meaning anything
+        // the split is exact, so the budget is the total and a rarity roll
+        // always pays out its floor, even on the bottom rung
+        int total(Rarity r) =>
+            def.statsAt(r).values.fold(0, (sum, stat) => sum + stat);
         expect(
-          def.fibLevel,
-          greaterThanOrEqualTo(1),
+          total(Rarity.UNCOMMON),
+          greaterThanOrEqualTo(
+            total(Rarity.COMMON) + Rarity.UNCOMMON.minStatBonus,
+          ),
           reason: '${tiers[tier]}_$piece would not gain from a rarity roll',
         );
       }
@@ -230,24 +234,24 @@ void main() {
   });
 
   test('the common pieces read straight off the fib ladder', () {
-    // rung -> fib: 1 -> 2, 2 -> 3, 3 -> 5, 4 -> 8, 5 -> 13
+    // rung -> fib: 0 -> 1, 1 -> 2, 2 -> 3, 3 -> 5, 4 -> 8
     Map<SkillId, int> common(ItemId id) =>
         (id.build() as EquipmentItem).effectiveSkillBonus;
 
-    // light leather: a minor piece at rung 1, a major one at rung 2
+    // light leather: a minor piece at rung 0, a major one at rung 1
     expect(common(ItemId.LIGHT_LEATHER_BOOTS), {
+      SkillId.ATTACK: 1,
+      SkillId.DEFENCE: 0,
+    });
+    expect(common(ItemId.LIGHT_LETHER_CHEST), {
       SkillId.ATTACK: 1,
       SkillId.DEFENCE: 1,
     });
-    expect(common(ItemId.LIGHT_LETHER_CHEST), {
-      SkillId.ATTACK: 2,
-      SkillId.DEFENCE: 1,
-    });
-    // medium leather, a rung up: 3 and 5
-    expect(common(idFor(1, 'BOOTS')), {SkillId.ATTACK: 2, SkillId.DEFENCE: 1});
-    expect(common(idFor(1, 'CHEST')), {SkillId.ATTACK: 3, SkillId.DEFENCE: 2});
-    // heavy leather's chest at rung 4 is an even 8
-    expect(common(idFor(2, 'CHEST')), {SkillId.ATTACK: 4, SkillId.DEFENCE: 4});
+    // medium leather, a rung up: 2 and 3
+    expect(common(idFor(1, 'BOOTS')), {SkillId.ATTACK: 1, SkillId.DEFENCE: 1});
+    expect(common(idFor(1, 'CHEST')), {SkillId.ATTACK: 2, SkillId.DEFENCE: 1});
+    // heavy leather's chest at rung 3 is 5
+    expect(common(idFor(2, 'CHEST')), {SkillId.ATTACK: 3, SkillId.DEFENCE: 2});
   });
 
   test('the exact split favours attack only on a tie', () {

@@ -376,7 +376,7 @@ class EncounterService {
   /// run of that script draws these exact curves, so change the two together.
   /// test/combat_curve_test.dart pins the two to the same numbers.
   static const double hitChanceExponent = 4.0;
-  static const double hitChanceAtParity = 0.9;
+  static const double hitChanceAtParity = 0.7;
 
   /// Both stats are read against this footing before their ratio is taken, so
   /// small absolute stats are not violently swingy: at attack 1 a one-point

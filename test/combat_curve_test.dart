@@ -83,17 +83,17 @@ void main() {
   group('chanceToHit', () {
     test('matches the tuning tool', () {
       const cases = [
-        [1, 1, 0.9000000000],
-        [10, 10, 0.9000000000],
-        [10, 50, 0.0770542717],
-        [50, 10, 0.9989703535],
-        [50, 50, 0.9000000000],
-        [75, 40, 0.9877243128],
-        [100, 100, 0.9000000000],
-        [120, 60, 0.9912274354],
-        [200, 200, 0.9000000000],
-        [200, 50, 0.9993286879],
-        [37, 113, 0.1468795796],
+        [1, 1, 0.7000000000],
+        [10, 10, 0.7000000000],
+        [10, 50, 0.0211862882],
+        [50, 10, 0.9960401557],
+        [50, 50, 0.7000000000],
+        [75, 40, 0.9542553410],
+        [100, 100, 0.7000000000],
+        [120, 60, 0.9669903347],
+        [200, 200, 0.7000000000],
+        [200, 50, 0.9974156102],
+        [37, 113, 0.0427287676],
       ];
       for (final c in cases) {
         expect(
@@ -104,7 +104,7 @@ void main() {
       }
     });
 
-    test('90% at parity at every level', () {
+    test('70% at parity at every level', () {
       for (final level in [1, 5, 20, 60, 99, 250]) {
         expect(
           service.chanceToHit(level, level),
@@ -150,8 +150,8 @@ void main() {
   test('gathering rolls through the same curve', () {
     // Nodes pass their gathering skill as the attack and the node's
     // difficulty as the defence -- no separate curve.
-    expect(service.chanceToHit(10, 10), closeTo(0.9, 1e-12));
+    expect(service.chanceToHit(10, 10), closeTo(0.7, 1e-12));
     // workable, not hopeless -- the bare ratio would make this 0.09%
-    expect(service.chanceToHit(1, 10), closeTo(0.36, 0.01));
+    expect(service.chanceToHit(1, 10), closeTo(0.13, 0.01));
   });
 }

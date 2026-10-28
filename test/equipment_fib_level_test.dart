@@ -42,6 +42,8 @@ void main() {
     test('every weight is positive, so no stat is dead', () {
       for (final entry in equipment()) {
         final def = entry.value;
+        // a damage weapon deals its rung rather than carrying stats
+        if (def is WeaponItemDefinition && def.usesDamage) continue;
         expect(
           def.statWeights,
           isNotEmpty,
@@ -88,6 +90,8 @@ void main() {
       // be worth exactly what a common one is
       for (final entry in equipment()) {
         final def = entry.value;
+        // damage weapons carry no stats, and dev items state theirs outright
+        if (def.statWeights.isEmpty || def.fixedStats != null) continue;
         var previous = 0;
         for (final rarity in Rarity.values) {
           final total = totalAt(def, rarity);
@@ -104,6 +108,8 @@ void main() {
     test('the minimum each tier owes over common is paid on every piece', () {
       for (final entry in equipment()) {
         final def = entry.value;
+        // damage weapons carry no stats, and dev items state theirs outright
+        if (def.statWeights.isEmpty || def.fixedStats != null) continue;
         final common = totalAt(def, Rarity.COMMON);
         for (final rarity in Rarity.values) {
           expect(
@@ -208,25 +214,28 @@ void main() {
       );
     }
 
+    // a weapon is a damage dealer, not a stat stick: the spine shows in the
+    // rung it is made from, and in what a swing deals
     const weapons = {
-      ItemId.COPPER_DAGGER: 1,
-      ItemId.IRON_DAGGER: 2,
-      ItemId.STEEL_DAGGER: 3,
-      ItemId.MITHRIL_DAGGER: 5,
-      ItemId.PITCHFORK: 3,
+      ItemId.COPPER_DAGGER: 0,
+      ItemId.IRON_DAGGER: 1,
+      ItemId.STEEL_DAGGER: 2,
+      ItemId.MITHRIL_DAGGER: 3,
     };
+    double? previousDamage;
     for (final entry in weapons.entries) {
-      final piece = entry.key.build() as EquipmentItem;
-      expect(
-        piece.effectiveSkillBonus[SkillId.ATTACK],
-        entry.value,
-        reason: entry.key.name,
-      );
+      final def = entry.key.definition as WeaponItemDefinition;
+      expect(def.materialRung, entry.value, reason: entry.key.name);
+      final damage = def.damageAt(Rarity.COMMON);
+      if (previousDamage != null) {
+        expect(damage, greaterThan(previousDamage), reason: entry.key.name);
+      }
+      previousDamage = damage;
     }
 
     expect(
-      (ItemId.MITHRIL_PICKAXE.build() as EquipmentItem)
-          .effectiveSkillBonus[SkillId.MINING],
+      (ItemId.MITHRIL_SICKLE.build() as EquipmentItem)
+          .effectiveSkillBonus[SkillId.HERBALISM],
       8,
     );
   });

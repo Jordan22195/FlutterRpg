@@ -10,10 +10,24 @@ class ShopStockEntry {
   final ItemId itemId;
   final int count;
 
-  const ShopStockEntry({required this.itemId, required this.count});
+  /// What one unit costs, in coins, in place of the item's value plus the
+  /// shop's markup. Null for the usual pricing; 0 gives it away. Read off the
+  /// pool by item rather than carried on the [ShopStockSlot], so a shelf saved
+  /// before an override was set still sells at the new price.
+  final int? priceOverride;
 
-  ShopStockEntry copyWith({ItemId? itemId, int? count}) =>
-      ShopStockEntry(itemId: itemId ?? this.itemId, count: count ?? this.count);
+  const ShopStockEntry({
+    required this.itemId,
+    required this.count,
+    this.priceOverride,
+  });
+
+  ShopStockEntry copyWith({ItemId? itemId, int? count, int? priceOverride}) =>
+      ShopStockEntry(
+        itemId: itemId ?? this.itemId,
+        count: count ?? this.count,
+        priceOverride: priceOverride ?? this.priceOverride,
+      );
 
   /// A fresh mutable shelf slot for this pool entry.
   ShopStockSlot toSlot() => ShopStockSlot(itemId: itemId, count: count);

@@ -199,13 +199,14 @@ const _tiers = <_Tier>[
 
 /// Every shape a tier is forged into, in the order it opens.
 ///
-/// The three gathering tools share rung 1 deliberately: pickaxe, axe and
-/// sickle are one step, and there is no reason a tier should open mining
-/// before herbalism.
+/// The four gathering tools sit in the first three rungs: pickaxe, axe, rod
+/// and sickle are one step apart at most, and there is no reason a tier should
+/// open mining long before herbalism or fishing.
 const _pieces = <_Piece>[
   _Piece(suffix: 'PICKAXE', rung: 1, bars: 1),
   _Piece(suffix: 'DAGGER', rung: 1, bars: 1),
   _Piece(suffix: 'AXE', rung: 2, bars: 1),
+  _Piece(suffix: 'FISHING_ROD', rung: 2, bars: 1),
   _Piece(suffix: 'SICKLE', rung: 3, bars: 1),
   _Piece(suffix: 'HELMET', rung: 3, bars: 1),
   _Piece(suffix: 'BRACERS', rung: 4, bars: 1),

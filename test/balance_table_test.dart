@@ -104,6 +104,9 @@ void main() {
       damage: damage,
       attack: attack,
       defense: defence,
+      // a strength stance swings harder through the multiplier, of which the
+      // shape takes its affinity
+      multiplier: session.playerDataService.strengthDamageMultiplier(player),
     );
     final seconds =
         session.actionTimingController
@@ -235,7 +238,9 @@ void main() {
           final greatsword = strongFull['GREATSWORD']!;
           expect(
             greatsword / dagger,
-            inInclusiveRange(0.9, 1.1),
+            // the strength stance multiplies the whole swing, so a greatsword
+            // at its best runs ahead of a dagger at its best by about a third
+            inInclusiveRange(0.9, 1.4),
             reason: 'dagger $dagger vs greatsword $greatsword',
           );
         });

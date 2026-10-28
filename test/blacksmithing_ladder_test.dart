@@ -30,9 +30,10 @@ void main() {
   // shape -> (rung, bars). The rung is the design's "base level + x".
   const pieces = <String, (int, int)>{
     'pickaxe': (1, 1),
-    'axe': (1, 1),
-    'sickle': (1, 1),
-    'dagger': (2, 1),
+    'dagger': (1, 1),
+    'axe': (2, 1),
+    'fishing_rod': (2, 1),
+    'sickle': (3, 1),
     'helmet': (3, 1),
     'bracers': (4, 1),
     'chestplate': (5, 3),
@@ -184,9 +185,8 @@ void main() {
         return recipe.xp / recipe.inputs.values.single;
       }
 
-      // the tools that open the tier pay alike
-      expect(perBar('axe'), perBar('pickaxe'), reason: metal);
-      expect(perBar('sickle'), perBar('pickaxe'), reason: metal);
+      // the shapes that open the tier pay alike
+      expect(perBar('dagger'), perBar('pickaxe'), reason: metal);
 
       // and from there each shape pays at least what the one before it
       // did, a bar, up to the greatsword at half again the pickaxe

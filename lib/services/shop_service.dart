@@ -31,8 +31,14 @@ class ShopService {
   ShopService({required InventoryService inventoryService})
     : _inventoryService = inventoryService;
 
-  /// Buy price for one unit: the item's value plus the shop's markup.
+  /// Buy price for one unit: the stock entry's price override when it has
+  /// one, else the item's value plus the shop's markup.
   int buyPrice(ItemId itemId, ShopEntityDefinition def) {
+    for (final entry in def.shopStockPool) {
+      if (entry.itemId == itemId && entry.priceOverride != null) {
+        return entry.priceOverride!;
+      }
+    }
     final value = itemId.build().value;
     return (value * def.priceMarkup).ceil();
   }

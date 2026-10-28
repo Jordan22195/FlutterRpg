@@ -6156,6 +6156,69 @@ enum ItemId {
       iconAsset: "assets/icons/items/simple_fishing_rod.png",
     ),
   ),
+  COPPER_FISHING_ROD(
+    WeaponItemDefinition(
+      name: "Copper Fishing Rod",
+      value: 10,
+      materialId: EquipmentMaterialId.COPPER,
+      weaponType: WeaponTypeId.FISHING_ROD,
+      iconAsset: "assets/icons/items/simple_fishing_rod.png",
+    ),
+  ),
+  IRON_FISHING_ROD(
+    WeaponItemDefinition(
+      name: "Iron Fishing Rod",
+      value: 25,
+      materialId: EquipmentMaterialId.IRON,
+      weaponType: WeaponTypeId.FISHING_ROD,
+      iconAsset: "assets/icons/items/simple_fishing_rod.png",
+    ),
+  ),
+  STEEL_FISHING_ROD(
+    WeaponItemDefinition(
+      name: "Steel Fishing Rod",
+      value: 60,
+      materialId: EquipmentMaterialId.STEEL,
+      weaponType: WeaponTypeId.FISHING_ROD,
+      iconAsset: "assets/icons/items/simple_fishing_rod.png",
+    ),
+  ),
+  MITHRIL_FISHING_ROD(
+    WeaponItemDefinition(
+      name: "Mithril Fishing Rod",
+      value: 150,
+      materialId: EquipmentMaterialId.MITHRIL,
+      weaponType: WeaponTypeId.FISHING_ROD,
+      iconAsset: "assets/icons/items/simple_fishing_rod.png",
+    ),
+  ),
+  ADAMANT_FISHING_ROD(
+    WeaponItemDefinition(
+      name: "Adamant Fishing Rod",
+      value: 300,
+      materialId: EquipmentMaterialId.ADAMANT,
+      weaponType: WeaponTypeId.FISHING_ROD,
+      iconAsset: "assets/icons/items/simple_fishing_rod.png",
+    ),
+  ),
+  RUNE_FISHING_ROD(
+    WeaponItemDefinition(
+      name: "Rune Fishing Rod",
+      value: 600,
+      materialId: EquipmentMaterialId.RUNE,
+      weaponType: WeaponTypeId.FISHING_ROD,
+      iconAsset: "assets/icons/items/simple_fishing_rod.png",
+    ),
+  ),
+  DRAGON_FISHING_ROD(
+    WeaponItemDefinition(
+      name: "Dragon Fishing Rod",
+      value: 1200,
+      materialId: EquipmentMaterialId.DRAGON,
+      weaponType: WeaponTypeId.FISHING_ROD,
+      iconAsset: "assets/icons/items/simple_fishing_rod.png",
+    ),
+  ),
 
   // ── WEAPONS & TOOLS · ODDITIES ──────────────────────────────────
   // tier ascending

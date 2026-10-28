@@ -218,8 +218,10 @@ enum EntityId {
 
   // ── FISHING ─────────────────────────────────────────────────────
   // FishingEntityDefinition, by Fishing level. Each spot is gated at its
-  // first fish's level, its defence matches that gate (as an herb's does),
-  // and its other fish spread from there toward the next spot's level
+  // first fish's level, its defence climbs past that gate (2 at the pond to
+  // 176 at the ocean, so a fresh level lands about 60% of casts at the pond
+  // and 11% at the ocean), and its other fish spread from there toward the
+  // next spot's level
   // A spot's hitpoints are a catch's worth of damage - each further pool's
   // worth of overkill rolls the table again - and climb with the spot: 5 at
   // the pond and creek, up by 5 a spot to the ocean's 25
@@ -229,7 +231,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/tranquil_pond.png",
 
       entityType: SkillId.FISHING,
-      defence: 1,
+      defence: 2,
       hitpoints: 5,
       requiredLevel: 1,
       itemDrops: [
@@ -244,7 +246,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/creek.png",
 
       entityType: SkillId.FISHING,
-      defence: 7,
+      defence: 10,
       hitpoints: 5,
       requiredLevel: 7,
       itemDrops: [
@@ -260,7 +262,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/river.png",
 
       entityType: SkillId.FISHING,
-      defence: 20,
+      defence: 31,
       hitpoints: 10,
       requiredLevel: 20,
       itemDrops: [
@@ -275,7 +277,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/tranquil_pond.png",
 
       entityType: SkillId.FISHING,
-      defence: 45,
+      defence: 78,
       hitpoints: 15,
       requiredLevel: 45,
       itemDrops: [
@@ -290,7 +292,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/lake.png",
 
       entityType: SkillId.FISHING,
-      defence: 60,
+      defence: 115,
       hitpoints: 20,
       requiredLevel: 60,
       itemDrops: [
@@ -305,7 +307,7 @@ enum EntityId {
       iconAsset: "assets/images/entities/ocean.png",
 
       entityType: SkillId.FISHING,
-      defence: 80,
+      defence: 176,
       hitpoints: 25,
       requiredLevel: 80,
       itemDrops: [
@@ -2751,10 +2753,15 @@ enum EntityId {
     ShopEntityDefinition(
       name: "Farmer John",
       iconAsset: "assets/images/entities/farmer_john.png",
-      stockSlots: 12,
+      stockSlots: 13,
       restockInterval: Duration(minutes: 30),
       shopStockPool: [
         ShopStockEntry(itemId: ItemId.COOKED_MINNOW, count: 200),
+        ShopStockEntry(
+          itemId: ItemId.COOKED_CHICKEN,
+          count: 5,
+          priceOverride: 0,
+        ),
         ShopStockEntry(itemId: ItemId.LOGS, count: 1000),
         ShopStockEntry(itemId: ItemId.CHICKEN_MEAT, count: 1000),
         ShopStockEntry(itemId: ItemId.FEATHER, count: 20),

@@ -7,7 +7,6 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
-import 'package:rpg/utilities/util.dart';
 
 /// A rare pitchfork is the ordinary pitchfork at [Rarity.RARE], not an item
 /// of its own.
@@ -30,19 +29,17 @@ void main() {
   }
 
   test('a rare pitchfork is 1.4x the ordinary one', () {
-    final def = ItemId.PITCHFORK.definition as EquipmentItemDefinition;
+    final def = ItemId.PITCHFORK.definition as WeaponItemDefinition;
     final rare = ItemId.PITCHFORK.build() as EquipmentItem;
     rare.quality = Rarity.RARE;
 
+    // a pitchfork is a damage weapon: the rarity scales what a swing deals
+    // and there are no stats for it to scale
+    expect(def.statWeights, isEmpty);
     expect(
-      (ItemId.PITCHFORK.build() as EquipmentItem).effectiveSkillBonus[SkillId
-          .ATTACK],
-      Util.fib(def.fibLevel),
+      def.damageAt(Rarity.RARE) / def.damageAt(Rarity.COMMON),
+      closeTo(1.4, 1e-9),
     );
-    // rung 2 is 3 attack. 3 * 1.4 rounds to 4, which is short of the +2
-    // the rare tier owes at minimum, so the floor carries it to 5
-    expect(rare.effectiveSkillBonus[SkillId.ATTACK], 5);
-    expect(rare.effectiveSkillBonus[SkillId.ATTACK], def.budgetAt(Rarity.RARE));
     expect(rare.displayName, 'Rare Pitchfork');
   });
 
@@ -85,12 +82,6 @@ void main() {
 
     expect(pitchforks, isNotEmpty, reason: 'the rare drop never landed');
     expect(pitchforks.map((p) => p.quality), everyElement(Rarity.RARE));
-    expect(
-      pitchforks.first.effectiveSkillBonus[SkillId.ATTACK],
-      (ItemId.PITCHFORK.definition as EquipmentItemDefinition).budgetAt(
-        Rarity.RARE,
-      ),
-    );
     // an instance in the equipment list, never a count on the item map
     expect(save.inventoryData.itemMap[ItemId.PITCHFORK], isNull);
 

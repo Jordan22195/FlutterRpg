@@ -65,15 +65,15 @@ def make_max_hit(args):
 
 def calc_hit_chance(attack: float, defense: float, k_hit: float,
                     footing: float = 0.0) -> float:
-    """90% at parity, asymptotic to 100%.
+    """70% at parity, asymptotic to 100%.
 
     Both stats are read against ``footing`` before their ratio is taken. Adding
-    the same value to both sides leaves parity at 90% exactly, but compresses
+    the same value to both sides leaves parity at 70% exactly, but compresses
     the small-integer region, where a bare ratio is violent: at attack 1 one
     extra point is worth up to 16x the hit chance at footing 0, and ~1.5x at
     footing 8.
     """
-    return 1.0 / (1.0 + ((defense + footing) / (attack + footing)) ** k_hit / 9.0)
+    return 1.0 / (1.0 + ((defense + footing) / (attack + footing)) ** k_hit / (7.0 / 3.0))
 
 
 # Categorical series colors, assigned in fixed order (never cycled).

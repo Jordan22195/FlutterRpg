@@ -112,6 +112,31 @@ void main() {
     expect(entry.count, startCount - 1);
   });
 
+  test('a price override replaces value plus markup, and 0 is free', () {
+    final def = shopDef(EntityId.FARMER);
+    final shop = def.toEntity(EntityId.FARMER);
+    // no coins at all: a free item must still sell
+    final inventory = InventoryData(itemMap: {});
+
+    // the farmer's pool fits his shelf, so a restock shelves all of it
+    shopService.restockIfDue(shop, def, now: DateTime(2026, 1, 1));
+    final chicken = shop.stock.singleWhere(
+      (s) => s.itemId == ItemId.COOKED_CHICKEN,
+    );
+    expect(chicken.count, 5);
+    expect(shopService.buyPrice(ItemId.COOKED_CHICKEN, def), 0);
+
+    expect(shopService.buyItem(shop, chicken, def, inventory), isTrue);
+    expect(inventory.itemMap[ItemId.COOKED_CHICKEN], 1);
+    expect(chicken.count, 4);
+
+    // an entry without an override still pays value plus markup
+    expect(
+      shopService.buyPrice(ItemId.LOGS, def),
+      (ItemId.LOGS.build().value * def.priceMarkup).ceil(),
+    );
+  });
+
   test('a bought-out slot stays on the shelf at zero, and sells no more', () {
     final shop = shopDef(EntityId.TRADING_POST).toEntity(EntityId.TRADING_POST);
     final def = shopDef(EntityId.TRADING_POST);

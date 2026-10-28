@@ -273,6 +273,8 @@ void main() {
       for (final id in EntityId.values) {
         final def = id.definition;
         if (def is! EncounterEntityDefinition) continue;
+        // the weakest thing in the game pays the smallest purse
+        if (id == EntityId.FIELD_RAT) continue;
         final ids = [
           ...def.itemDrops.flattened.map((e) => e.id),
           for (final roll in def.bonusDrops)
@@ -529,6 +531,10 @@ void main() {
       // the rare scarecrow. Its name predates the _RARE suffix convention,
       // so it reads as a base entity here rather than as a variant
       EntityId.ROTWOOD_SCARECROW_1,
+
+      // the Wolf Den's old last boss, swapped out for the grotto's fungal
+      // monster when the den was reworked
+      EntityId.NAGA,
 
       // tier 4. The wraith and the banshee were the darkwood's, and came
       // out of it when its roster was re-cut; the rest have never been
@@ -971,6 +977,13 @@ const frozenItemIds = <String>{
   'STEEL_SICKLE',
   'MITHRIL_SICKLE',
   'SIMPLE_FISHING_ROD',
+  'COPPER_FISHING_ROD',
+  'IRON_FISHING_ROD',
+  'STEEL_FISHING_ROD',
+  'MITHRIL_FISHING_ROD',
+  'ADAMANT_FISHING_ROD',
+  'RUNE_FISHING_ROD',
+  'DRAGON_FISHING_ROD',
   'PITCHFORK',
   'GOBLIN_CROWN',
   'GOBLIN_SCEPTER',

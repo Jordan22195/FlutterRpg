@@ -141,13 +141,13 @@ taken. A bare ratio of small integers is violent — at attack 1 a single extra
 point is worth up to **16x** the hit chance, which is what made early combat feel
 like a coin that flipped on one stat point. The footing compresses that end
 without moving parity (adding the same value to both sides leaves the ratio at 1
-when attack == defence, so 90% still holds at every level) and barely touches the
+when attack == defence, so 70% still holds at every level) and barely touches the
 late game. `--footing 0` plots the un-smoothed curve for comparison.
 
 The hit-chance curve covers **gathering too** — mining, woodcutting, fishing and
 herbalism all roll their skill against a node's defence through the same
 `chanceToHit`, and the footing is what keeps early nodes workable: skill 1
-against a defence 10 rock is 36%, where the bare ratio gives 0.09%. Plot with
+against a defence 10 rock is 13%, where the bare ratio gives 0.09%. Plot with
 `--defenses` set to node defences to check a skill's early game.
 
 `--k-max-hit`, `--n-max-hit`, `--k-hit-chance` set the formula; `--defenses` and
