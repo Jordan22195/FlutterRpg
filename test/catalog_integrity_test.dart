@@ -33,6 +33,9 @@ const knownMissingArt = <String>{
   'assets/icons/items/crayfish.png',
   'assets/icons/items/cooked_crayfish.png',
 
+  // the wood shield, the Rotwood Scarecrow's rare drop, added before its art
+  'assets/icons/items/wood_shield.png',
+
   // Scene art: zone headers and dungeon splashes. These are the last of the
   // backlog because they are the one kind the generator will not draw —
   // assets/images/{zones,dungeons}/** has no style picked, so
@@ -954,6 +957,7 @@ const frozenItemIds = <String>{
   'IRON_GLOVES',
   'STEEL_GLOVES',
   'MITHRIL_GLOVES',
+  'WOOD_SHIELD',
   'COPPER_SHIELD',
   'IRON_SHIELD',
   'STEEL_SHIELD',

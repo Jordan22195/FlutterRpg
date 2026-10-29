@@ -677,13 +677,13 @@ void main() {
         find.descendant(of: find.byKey(ValueKey(id)), matching: f);
 
     // the tree says what it wants, under a lock, and dims
-    expect(within(EntityId.TREE, find.text('Needs an axe')), findsOneWidget);
+    expect(within(EntityId.TREE, find.text('No Axe Equipped')), findsOneWidget);
     expect(within(EntityId.TREE, find.byIcon(Icons.lock_outline)), findsOne);
     expect(within(EntityId.TREE, find.byType(Opacity)), findsWidgets);
 
     // the pond, its level met, asks for a rod
     expect(
-      within(EntityId.TRANQUIL_POND, find.text('Needs a fishing rod')),
+      within(EntityId.TRANQUIL_POND, find.text('No Fishing Rod Equipped')),
       findsOneWidget,
     );
 
@@ -692,6 +692,61 @@ void main() {
       within(EntityId.CHICKEN, find.byIcon(Icons.lock_outline)),
       findsNothing,
     );
+
+    session.dispose();
+  });
+
+  testWidgets('a locked discovery still shows how many are standing', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester, tools: false);
+    final tree = session.worldController
+        .viewedZoneEntities()
+        .whereType<EncounterEntity>()
+        .firstWhere((e) => e.id == EntityId.TREE);
+
+    final pill = tester.widget<CountPill>(
+      find.descendant(
+        of: find.byKey(const ValueKey(EntityId.TREE)),
+        matching: find.byType(CountPill),
+      ),
+    );
+    expect(pill.count, tree.count);
+
+    session.dispose();
+  });
+
+  testWidgets('a find flashes the tile it turned up, then fades', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester);
+    final world = session.worldController;
+
+    double flashAlpha(EntityId id) {
+      final box = tester.widget<DecoratedBox>(
+        find.descendant(
+          of: find.byKey(ValueKey('find-flash-${id.name}')),
+          matching: find.byKey(const ValueKey('find-flash')),
+        ),
+      );
+      return ((box.decoration as BoxDecoration).color ?? Colors.transparent).a;
+    }
+
+    expect(flashAlpha(EntityId.TREE), 0);
+
+    world.lastFoundEntityIds = {EntityId.TREE};
+    world.lastFoundAt = DateTime.now();
+    world.exploreFindSequence++;
+    world.refresh();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 150));
+
+    // the tile found is lit; its neighbour is not
+    expect(flashAlpha(EntityId.TREE), greaterThan(0));
+    expect(flashAlpha(EntityId.CHICKEN), 0);
+
+    await tester.pump(const Duration(seconds: 1));
+    expect(flashAlpha(EntityId.TREE), 0);
 
     session.dispose();
   });

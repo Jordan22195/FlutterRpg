@@ -450,12 +450,15 @@ void main() {
       final session = buildSession();
       final node = nodeWith(session, EntityId.GOLD_VEIN);
 
-      // a minute against a gold vein at level 1, even with a stone pickaxe
-      // in hand: nowhere near a kill
+      // ten minutes against a gold vein at level 1, even with a stone pickaxe
+      // in hand: nowhere near a kill. long enough to wear whole hitpoints
+      // off it - a batch applies its chip damage in whole points, and a
+      // level 1 swing at defence 20 lands so rarely that a minute's worth
+      // rounds down to none
       final first = settleFight(
         session,
-        count: 20,
-        span: const Duration(seconds: 60),
+        count: 200,
+        span: const Duration(minutes: 10),
       );
 
       expect(first.entitiesDefeated, isEmpty);
@@ -464,7 +467,7 @@ void main() {
 
       // and the next stretch picks the same one up where it was left
       final carried = node.hitpoints;
-      settleFight(session, count: 20, span: const Duration(seconds: 60));
+      settleFight(session, count: 200, span: const Duration(minutes: 10));
       expect(node.hitpoints, lessThan(carried));
 
       session.dispose();

@@ -374,28 +374,40 @@ class RecipePickerCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: _Sheet.iconFill,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _Sheet.iconBorder),
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                _maybeGrey(IconRenderer(size: 36, id: outputId)),
-                // a fire's or food's stats, top-left as on every item tile,
-                // so a fire in the picker still says what it burns for
-                if (StatChips.hasAny(outputId))
-                  Positioned(
-                    left: 3,
-                    top: 3,
-                    child: StatChips(id: outputId, tileSize: 52),
-                  ),
-              ],
+          // opaque, and open even while the recipe is locked: the icon reads
+          // the item, where the rest of the card picks the recipe
+          Semantics(
+            button: true,
+            label: '$name, details',
+            excludeSemantics: true,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => showItemInfoDialog(context, outputId),
+              child: Container(
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _Sheet.iconFill,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _Sheet.iconBorder),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    _maybeGrey(IconRenderer(size: 36, id: outputId)),
+                    // a fire's or food's stats, top-left as on every item
+                    // tile, so a fire in the picker still says what it burns
+                    // for
+                    if (StatChips.hasAny(outputId))
+                      Positioned(
+                        left: 3,
+                        top: 3,
+                        child: StatChips(id: outputId, tileSize: 52),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -593,37 +605,42 @@ class _IngredientChip extends StatelessWidget {
       fontWeight: FontWeight.w700,
     );
     return Semantics(
+      button: true,
       label: '${id.definition.name}: have $have, need $needed',
       excludeSemantics: true,
-      child: Container(
-        height: 26,
-        padding: const EdgeInsets.only(left: 4, right: 8),
-        decoration: BoxDecoration(
-          color: _Sheet.chipFill,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: short ? _Sheet.chipShortBorder : _Sheet.border,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => showItemInfoDialog(context, id),
+        child: Container(
+          height: 26,
+          padding: const EdgeInsets.only(left: 4, right: 8),
+          decoration: BoxDecoration(
+            color: _Sheet.chipFill,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: short ? _Sheet.chipShortBorder : _Sheet.border,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: 20,
-              height: 20,
-              child: Center(child: IconRenderer(size: 18, id: id)),
-            ),
-            const SizedBox(width: 5),
-            Text(
-              Util.formatShortCount(have),
-              style: base.copyWith(color: short ? _Sheet.short : _Sheet.have),
-            ),
-            const SizedBox(width: 5),
-            Text(
-              '/ ${Util.formatShortCount(needed)}',
-              style: base.copyWith(color: _Sheet.needed),
-            ),
-          ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: Center(child: IconRenderer(size: 18, id: id)),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                Util.formatShortCount(have),
+                style: base.copyWith(color: short ? _Sheet.short : _Sheet.have),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                '/ ${Util.formatShortCount(needed)}',
+                style: base.copyWith(color: _Sheet.needed),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -159,6 +159,35 @@ void main() {
     });
   });
 
+  group('a fresh enemy starts a fresh swing timer', () {
+    CombatSegmentOutcome walk({double cycle = 0, double seconds = 60}) =>
+        service.resolveIncomingDamage(
+          hitpoints: 100000,
+          maxHp: 100000,
+          eatThreshold: 0.75,
+          foodCount: 0,
+          restoreAmount: 0,
+          enemyAttack: 1,
+          playerDefence: 1,
+          attackInterval: 2.0,
+          seconds: seconds,
+          cycle: cycle,
+          rng: Random(7),
+        );
+
+    test('an enemy that dies before its first swing never lands one', () {
+      // a 1.5s life against a 2s interval: unbroken, the window would still
+      // fit thirty swings
+      expect(walk().swings, 30);
+      expect(walk(cycle: 1.5).swings, 0);
+    });
+
+    test('each life swings floor(life / interval) times', () {
+      // 5s lives swing twice each; twelve of them fill the minute
+      expect(walk(cycle: 5).swings, 24);
+    });
+  });
+
   test('ten million swings resolve in well under a second', () {
     final watch = Stopwatch()..start();
     final outcome = service.resolveIncomingDamage(

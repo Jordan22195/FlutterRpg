@@ -325,6 +325,18 @@ class CraftingController extends ChangeNotifier {
     );
   }
 
+  /// Crafts an hour of [recipeId] at the rate the bench is working at, boost
+  /// included, the way the fight screens quote theirs. 0 with no interval.
+  double craftsPerHour(String recipeId) {
+    final skill = _craftingSystem
+        .buildRecipeDetails(_playerState, _inventoryState, recipeId)
+        .skill;
+    final seconds =
+        _actionTimingController.boostedActionDurationFor(skill).inMicroseconds /
+        1e6;
+    return seconds <= 0 ? 0 : 3600 / seconds;
+  }
+
   int getMaxNumberCraftsForRecipe(String recipeId) {
     return _craftingSystem.craftableCount(recipeId, _inventoryState);
   }

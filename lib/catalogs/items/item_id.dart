@@ -5661,6 +5661,18 @@ enum ItemId {
 
   // ── ARMOUR · SHIELD ─────────────────────────────────────────────
   // tier ascending
+  // Below the metal ladder: a rung under copper, dropped by the Rotwood
+  // Scarecrow rather than smithed. Defence only, like the metal shields.
+  WOOD_SHIELD(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.OFFHAND,
+      name: "Wood Shield",
+      value: 8,
+      fibLevel: 1,
+      statWeights: {SkillId.DEFENCE: 1},
+      iconAsset: "assets/icons/items/wood_shield.png",
+    ),
+  ),
   COPPER_SHIELD(
     EquipmentItemDefinition(
       armorSlot: ArmorSlots.OFFHAND,

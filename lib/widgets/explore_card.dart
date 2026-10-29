@@ -9,6 +9,18 @@ String toolNoun(SkillId skill) => switch (skill) {
   _ => 'a tool',
 };
 
+/// The tool a gathering skill is worked with, as a tile names it when none is
+/// equipped ("No Axe Equipped").
+String toolName(SkillId skill) => switch (skill) {
+  SkillId.WOODCUTTING => 'Axe',
+  SkillId.MINING => 'Pickaxe',
+  SkillId.FISHING => 'Fishing Rod',
+  _ => 'Tool',
+};
+
+/// What a tile says under its name when the tool for [skill] isn't equipped.
+String noToolEquipped(SkillId skill) => 'No ${toolName(skill)} Equipped';
+
 /// Human label for a skill on explore cards ("Combat", "Woodcutting").
 String skillDisplayName(Enum skill) {
   if (skill == SkillId.ATTACK) return "Combat";

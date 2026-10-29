@@ -289,6 +289,30 @@ void main() {
       expect(find.text('Damage per second'), findsNothing);
     });
 
+    testWidgets('a fight and a node quote their hourly clear rate and xp', (
+      tester,
+    ) async {
+      setLevel(SkillId.ATTACK, 40);
+      await pumpInfo(tester, EntityId.GOBLIN);
+
+      final details = detailsFor(EntityId.GOBLIN);
+      expect(details.killsPerHour, greaterThan(0));
+      expect(
+        details.killsPerHour,
+        closeTo(
+          3600 / (details.actionsToKill * details.playerActionInterval),
+          1e-9,
+        ),
+      );
+      expect(
+        details.clearXpPerHour,
+        closeTo(details.killsPerHour * details.xpPerUnit, 1e-9),
+      );
+      expect(find.text('Kills / hour'), findsOneWidget);
+      expect(find.text('Xp / hour'), findsOneWidget);
+      expect(find.text(details.killsPerHour.toStringAsFixed(0)), findsWidgets);
+    });
+
     testWidgets('a fight\'s debug section names its combat type', (
       tester,
     ) async {

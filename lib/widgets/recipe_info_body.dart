@@ -34,7 +34,10 @@ class RecipeInfoBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _Header(details: details),
-        _Stats(details: details),
+        _Stats(
+          details: details,
+          craftsPerHour: crafting.craftsPerHour(recipeId),
+        ),
         _Materials(details: details),
         if (details.hasOdds) _Odds(details: details),
       ],
@@ -97,9 +100,10 @@ class _Header extends StatelessWidget {
 }
 
 class _Stats extends StatelessWidget {
-  const _Stats({required this.details});
+  const _Stats({required this.details, required this.craftsPerHour});
 
   final RecipeDetails details;
+  final double craftsPerHour;
 
   @override
   Widget build(BuildContext context) {
@@ -109,6 +113,15 @@ class _Stats extends StatelessWidget {
         InfoStatRow(
           label: 'Xp per craft',
           value: formatDecimal(details.recipe.xp),
+        ),
+        // at the bench's rate as it stands, boost included
+        InfoStatRow(
+          label: 'Crafts per hour',
+          value: craftsPerHour.toStringAsFixed(0),
+        ),
+        InfoStatRow(
+          label: 'Xp per hour',
+          value: (craftsPerHour * details.recipe.xp).toStringAsFixed(0),
         ),
         InfoStatRow(
           label: 'Level required',

@@ -18,6 +18,7 @@ import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/firepit_screen.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/countdown_timer.dart';
+import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/recipe_card.dart';
@@ -219,6 +220,38 @@ void main() {
 
     session.dispose();
   });
+
+  testWidgets(
+    'a picker row\'s icon opens the item details without picking it',
+    (tester) async {
+      final session = await pumpFirepit(tester);
+
+      await tester.tap(recipeCards.first);
+      await settle(tester);
+      final sheet = find.byType(RecipePickerSheet);
+      expect(sheet, findsOneWidget);
+
+      await tester.tap(
+        find
+            .descendant(
+              of: find.descendant(
+                of: sheet,
+                matching: find.byType(RecipePickerCard),
+              ),
+              matching: find.byWidgetPredicate((w) => w is IconRenderer),
+            )
+            .first,
+      );
+      await settle(tester);
+
+      // the details are up over the picker, which is still open: the row was
+      // read, not chosen
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(sheet, findsOneWidget);
+
+      session.dispose();
+    },
+  );
 
   testWidgets('picking a cookfire unlocks cooking; the button still builds '
       'the fire', (tester) async {

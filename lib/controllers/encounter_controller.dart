@@ -128,6 +128,13 @@ class EncounterController extends ChangeNotifier {
     actionSequence++;
     _recordOfflineResult();
 
+    // the enemy that just died takes its half-wound swing with it; whatever
+    // stands up next starts from the top of its interval
+    if (latestActionResult.enemyDied ||
+        latestActionResult.entitiesDefeated.isNotEmpty) {
+      _lastEntityAttackAt = null;
+    }
+
     // fishing spots never deplete, so they are barred from dungeon cards
     // and there is no queue to advance here
 

@@ -6,6 +6,7 @@ import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/enchanting_controller.dart';
+import 'package:rpg/data/equipment_data.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
@@ -765,6 +766,85 @@ void main() {
       expect(live.items[ItemId.COOKED_CHICKEN], inInclusiveRange(-5, -1));
       expect(offline.items[ItemId.COOKED_CHICKEN], inInclusiveRange(-5, -1));
     });
+  });
+
+  group('enemies that die in one hit, on short and long swing timers', () {
+    // an enemy's swing timer starts over with each one that stands up, so a
+    // swing only lands when an enemy outlives its interval. a one-hit kill
+    // rarely does, which is why both ends of the timer range are worth
+    // running: the shortest the catalog has, and the longest
+    const timers = <({EntityId id, double interval})>[
+      (id: EntityId.GIANT_BAT, interval: 1.0),
+      (id: EntityId.ROTWOOD_SCARECROW, interval: 2.5),
+    ];
+
+    PlaySetup oneHit(EntityId id) => (s) {
+      baseline(s);
+      // out-damages the pool in a single swing
+      for (final skill in [
+        SkillId.ATTACK,
+        SkillId.STRENGTH,
+        SkillId.SPEED,
+        SkillId.DEFENCE,
+        SkillId.HITPOINTS,
+      ]) {
+        setLevel(s, skill, 99);
+      }
+      final save = s.saveGameData;
+      save.playerData.equipmentData.armorEquipment[ArmorSlots.WEAPON_1H] =
+          EquipmentItem(id: ItemId.DRAGON_SWORD);
+      // fed, so a bat that does get a swing in costs food rather than the run
+      save.inventoryData.itemMap[ItemId.COOKED_SHARK] = 5000;
+      save.playerData.equipmentData.equipedFood = ItemId.COOKED_SHARK;
+      save.playerData.hitpoints = s.playerDataService.maxHitpoints(
+        save.playerData,
+      );
+      bindNode(s, id);
+    };
+
+    for (final timer in timers) {
+      test('${timer.id.name}, swinging every ${timer.interval}s: live and '
+          'offline agree', () {
+        final setup = oneHit(timer.id);
+
+        // it is the fight it claims to be
+        final probe = buildPlaySession();
+        setup(probe);
+        final enemy = probe.saveGameData.encounterData.entity as CombatEntity;
+        final details = probe.worldController.entityDetails(enemy);
+        probe.dispose();
+        expect(enemy.attackInterval, timer.interval);
+        expect(
+          details.playerMaxHit,
+          greaterThanOrEqualTo(enemy.maxHitPoints),
+          reason: 'one hit must be enough',
+        );
+
+        final live = runLive(setup, 600);
+        final offline = runOffline(setup, 600);
+        final context = '\nLIVE $live\nOFFLINE $offline';
+
+        // a long run of kills, not a fight that stalls or ends in a death
+        expect(live.actions, greaterThan(100), reason: context);
+        expect(live.died, isFalse, reason: context);
+        expect(offline.died, isFalse, reason: context);
+
+        expectParity(live, offline, seconds: 600, band: 0.35, clump: 8);
+
+        // what the enemy's swings cost, in food: the parity above compares
+        // it among the items, this names it. a timer that carried its
+        // wind-up over each death would eat far more than one that starts
+        // over, on whichever side forgot to reset
+        final liveEaten = -(live.items[ItemId.COOKED_SHARK] ?? 0);
+        final offlineEaten = -(offline.items[ItemId.COOKED_SHARK] ?? 0);
+        expectClose(
+          'food eaten$context',
+          offlineEaten,
+          liveEaten,
+          tolerance: banded(liveEaten, 0.5, 8),
+        );
+      });
+    }
   });
 
   group('a window long enough to level in', () {

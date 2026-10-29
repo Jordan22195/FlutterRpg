@@ -152,6 +152,10 @@ class EncounterSystem {
           entity: e,
           stats: stats,
           seconds: window,
+          // how long one enemy lasts: its swing timer starts over with each
+          cycle:
+              swing.actionsForHits(swing.hitsToRemove(e.maxHitPoints)) *
+              playerInterval,
           result: result,
         );
       }
@@ -406,6 +410,7 @@ class EncounterSystem {
     required CombatEntity entity,
     required Map<SkillId, int> stats,
     required double seconds,
+    double cycle = 0,
     required EncounterActionResult result,
   }) {
     final maxHp = maxHitpointsFrom(stats);
@@ -424,6 +429,7 @@ class EncounterSystem {
       playerDefence: defence,
       attackInterval: entity.attackInterval,
       seconds: seconds,
+      cycle: cycle,
     );
 
     if (outcome.foodEaten > 0) {

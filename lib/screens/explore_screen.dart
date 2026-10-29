@@ -30,6 +30,7 @@ import '../widgets/sprite_frame.dart';
 import '../widgets/travel_row.dart';
 import '../widgets/entity_info_dialog.dart';
 import '../widgets/discovery_tile.dart';
+import '../widgets/find_flash.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/skill_ring_row.dart';
 import '../widgets/zone_header.dart';
@@ -203,7 +204,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
         id: e.id,
         name: e.name,
         subtitle: needsRod
-            ? 'Needs ${toolNoun(SkillId.FISHING)}'
+            ? noToolEquipped(SkillId.FISHING)
             : 'Fishing · Lv $required',
         // the skill's sprite and the level the spot asks for, coloured
         // against the player's fishing; a missing rod keeps its words
@@ -322,12 +323,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
           group: _resourceGroupKey(e),
           slot: slot(e.id),
           level: worldController.entityLevel(e),
-          build: () => DiscoveryTile(
-            key: ValueKey(e.id),
-            entity: e,
-            active: _isActive(worldController, e),
-            onTap: () => worldController.navigateToEntity(e.id, context),
-            onLongPress: () => showEntityInfoDialog(context, e),
+          build: () => FindFlash(
+            key: ValueKey('find-flash-${e.id.name}'),
+            sequence: worldController.exploreFindSequence,
+            hit: worldController.lastFoundEntityIds.contains(e.id),
+            foundAt: worldController.lastFoundAt,
+            child: DiscoveryTile(
+              key: ValueKey(e.id),
+              entity: e,
+              active: _isActive(worldController, e),
+              onTap: () => worldController.navigateToEntity(e.id, context),
+              onLongPress: () => showEntityInfoDialog(context, e),
+            ),
           ),
         ),
     ];

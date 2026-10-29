@@ -286,6 +286,7 @@ class EncounterService {
     required int playerDefence,
     required double attackInterval,
     required double seconds,
+    double cycle = 0,
     Random? rng,
   }) {
     CombatSegmentOutcome none(double elapsed) => CombatSegmentOutcome(
@@ -301,7 +302,15 @@ class EncounterService {
       return none(seconds <= 0 ? 0 : seconds);
     }
 
-    final swingCount = (seconds / attackInterval).floor();
+    // a fresh enemy starts a fresh swing timer, so with a [cycle] (how long
+    // one enemy lives) every cycle swings floor(cycle / interval) times and
+    // the wind-up left over at its death is thrown away. without one the
+    // window is one unbroken stretch of swinging.
+    final perCycle = cycle > 0 ? (cycle / attackInterval).floor() : 0;
+    final swingCount = cycle > 0
+        ? (seconds / cycle).floor() * perCycle +
+              ((seconds % cycle) / attackInterval).floor()
+        : (seconds / attackInterval).floor();
     if (swingCount <= 0) return none(seconds);
 
     // the two numbers the whole fight runs on: how often a swing lands, and
@@ -363,7 +372,12 @@ class EncounterService {
 
     return CombatSegmentOutcome(
       swings: resolved,
-      elapsed: died ? resolved * attackInterval : seconds,
+      elapsed: !died
+          ? seconds
+          : cycle > 0 && perCycle > 0
+          ? ((resolved - 1) ~/ perCycle) * cycle +
+                ((resolved - 1) % perCycle + 1) * attackInterval
+          : resolved * attackInterval,
       hitpoints: hp,
       foodEaten: eaten,
       blocks: blocks,

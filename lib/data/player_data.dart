@@ -227,6 +227,12 @@ class PlayerData {
       'stamina': stamina,
       'autoEatRule': autoEatRule.toJson(),
       'autoDrinkPotions': [for (final id in autoDrinkPotions) id.name],
+      // the stance and the skill it lends its boost to travel together: a
+      // strength stance on a rock boosts mining, which the stance alone
+      // cannot say. without them a relaunch drops back to fast while the
+      // saved action timing still says it is boosting strength
+      'stance': stance.name,
+      'skillBoost': skillBoost.name,
       'lastActionTime': lastActionTime.toIso8601String(),
     };
   }
@@ -331,6 +337,16 @@ class PlayerData {
                 )
               : AutoEatRule.standard
           ..autoDrinkPotions = _readAutoDrinkPotions(json['autoDrinkPotions']);
+
+    // a save from before the stance was kept comes back in fast, as it
+    // always did. both halves or neither: a stance with no skill to boost
+    // (or the reverse) is a half-written save, not a stance
+    final stance = Stance.values.asNameMap()[json['stance']];
+    final skillBoost = SkillId.values.asNameMap()[json['skillBoost']];
+    if (stance != null && skillBoost != null) {
+      data.stance = stance;
+      data.skillBoost = skillBoost;
+    }
 
     // a save from before the map could show you a place you aren't standing
     // in, or one naming a zone the catalog has since retired, comes back

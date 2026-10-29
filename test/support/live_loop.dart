@@ -220,12 +220,19 @@ PlayOutcome runLive(
     }
 
     final counter = _ActionCounter();
+    // set when an action killed the enemy: the next one stands up with its
+    // swing timer at the top, as EncounterController does
+    var enemyDied = false;
     var wrapped = timing.onFire;
     void wrap() {
       final inner = timing.onFire;
       timing.onFire = (count, {offline = false, at, span}) {
         counter.live += count;
-        return inner(count, offline: offline, at: at, span: span);
+        inner(count, offline: offline, at: at, span: span);
+        final result = session.encounterController.latestActionResult;
+        if (result.enemyDied || result.entitiesDefeated.isNotEmpty) {
+          enemyDied = true;
+        }
       };
       wrapped = timing.onFire;
     }
@@ -275,6 +282,10 @@ PlayOutcome runLive(
         }
 
         // the enemy's swing, on the simulated clock - see the file header
+        if (enemyDied) {
+          swinging = false;
+          enemyDied = false;
+        }
         final entity = save.encounterData.entity;
         if (timing.running &&
             entity is CombatEntity &&

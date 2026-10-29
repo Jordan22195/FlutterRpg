@@ -274,6 +274,9 @@ class _RollTable extends StatelessWidget {
         row('Max take', '${details.entityMaxHit}'),
         row('DPS', formatDecimal(details.playerDamagePerSecond)),
         row('Actions to kill', toKill),
+        // at the action rate as it stands, boost and stance included
+        row('Kills / hour', details.killsPerHour.toStringAsFixed(0)),
+        row('Xp / hour', details.clearXpPerHour.toStringAsFixed(0)),
       ];
     }
 
@@ -290,6 +293,8 @@ class _RollTable extends StatelessWidget {
           'Actions to clear',
           actionsToKill.isFinite ? '~${actionsToKill.ceil()}' : 'never',
         ),
+        row('Cleared / hour', details.killsPerHour.toStringAsFixed(0)),
+        row('Xp / hour', details.clearXpPerHour.toStringAsFixed(0)),
       ],
     ];
   }

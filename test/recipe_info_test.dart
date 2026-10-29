@@ -240,6 +240,8 @@ void main() {
       expect(find.text('Copper Dagger'), findsOneWidget);
       expect(find.text('Xp per craft'), findsOneWidget);
       expect(find.text('3.0'), findsOneWidget);
+      expect(find.text('Crafts per hour'), findsOneWidget);
+      expect(find.text('Xp per hour'), findsOneWidget);
       expect(find.text('Your level'), findsOneWidget);
       // materials: held / required
       expect(find.text('3 / 1'), findsOneWidget);

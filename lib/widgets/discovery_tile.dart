@@ -10,6 +10,7 @@ import '../utilities/util.dart';
 import 'explore_card.dart';
 import 'icon_renderer.dart';
 import 'place_tile.dart';
+import 'progress_bars.dart';
 import 'sprite_frame.dart';
 import '../catalogs/zones/map_node_type.dart';
 import '../theme/game_colors.dart';
@@ -63,7 +64,7 @@ class DiscoveryTile extends StatelessWidget {
     final requires = underLevel
         ? '${skillDisplayName(e.entityType)} '
               '${worldController.requiredLevelFor(e.id)}'
-        : 'Needs ${toolNoun(missingTool ?? e.entityType)}';
+        : noToolEquipped(missingTool ?? e.entityType);
 
     return PlaceTile(
       id: e.id,
@@ -90,6 +91,16 @@ class DiscoveryTile extends StatelessWidget {
             ),
       kind: e is CombatEntity ? SpriteKind.combat : SpriteKind.gathering,
       locked: locked,
+      // a shut tile's line is taken by what it waits on, so how many are
+      // standing rides the sprite's corner instead
+      corner: locked
+          ? CountPill(
+              count: e.count,
+              borderColor: context.palette.borderStrong,
+              height: 18,
+              fontSize: 12,
+            )
+          : null,
       // a creature's art has a margin of its own; sit closer
       spriteScale: 1.25,
       // a used-up node reads like a locked one, without the lock

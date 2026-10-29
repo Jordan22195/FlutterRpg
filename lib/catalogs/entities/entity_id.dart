@@ -628,6 +628,7 @@ enum EntityId {
         // be an independent 5% layered on top, and moving it inline is what
         // takes the other three drops from a third each down to 2/7
         ItemDropType(id: ItemId.PITCHFORK, weight: .5),
+        ItemDropType(id: ItemId.WOOD_SHIELD, weight: .3),
       ],
     ),
   ),

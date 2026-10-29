@@ -6,6 +6,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/auto_eat_rule.dart';
 import 'package:rpg/data/bound_action.dart';
+import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/catalogs/items/items.dart';
@@ -36,6 +37,39 @@ void main() {
         vsync: const TestVSync(),
       );
     }
+
+    test('a strong stance survives a relaunch with the skill it boosts', () {
+      final factory = GameSessionFactory();
+      final catalogs = factory.catalog1();
+      final save = factory.newGame(catalogs);
+      save.playerData.stance = Stance.strong;
+      save.playerData.skillBoost = SkillId.MINING;
+
+      final restored = reload(save, catalogs).saveGameData.playerData;
+
+      expect(restored.stance, Stance.strong);
+      expect(restored.skillBoost, SkillId.MINING);
+    });
+
+    test('a save from before the stance was kept loads in fast', () {
+      final factory = GameSessionFactory();
+      final catalogs = factory.catalog1();
+      final save = factory.newGame(catalogs);
+
+      final restored = reload(
+        save,
+        catalogs,
+        tamper: (json) {
+          final player = json['playerData'] as Map<String, dynamic>;
+          player.remove('stance');
+          player.remove('skillBoost');
+          return json;
+        },
+      ).saveGameData.playerData;
+
+      expect(restored.stance, Stance.fast);
+      expect(restored.skillBoost, SkillId.SPEED);
+    });
 
     test('SaveGameData survives a JSON round trip', () {
       final factory = GameSessionFactory();

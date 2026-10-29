@@ -91,6 +91,18 @@ class WorldController extends ChangeNotifier {
     return _explorationService.getZoneEntities(viewedZoneId, _worldState);
   }
 
+  // ---- explore find flash ----
+
+  /// Counts the live explores that turned something up, so a tile can tell
+  /// a new find from a rebuild. Offline settles never bump it: the player
+  /// wasn't watching.
+  int exploreFindSequence = 0;
+
+  /// What the latest find turned up, and when. A tile built just after the
+  /// find (a discovery's first appearance) flashes off the time.
+  Set<EntityId> lastFoundEntityIds = const {};
+  DateTime? lastFoundAt;
+
   // ---- explore session finds ----
 
   // whether the explore finds on screen still belong to the player's
@@ -619,6 +631,11 @@ class WorldController extends ChangeNotifier {
     );
     // a no-op unless the timing system is settling time away
     _offlineProgressService.recordExplore(_offlineProgressData, result);
+    if (!offline && result.entities.isNotEmpty) {
+      lastFoundEntityIds = {for (final s in result.entities) s.id};
+      lastFoundAt = DateTime.now();
+      exploreFindSequence++;
+    }
     notifyListeners();
   }
 

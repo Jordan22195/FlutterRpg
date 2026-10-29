@@ -183,6 +183,17 @@ class EntityDetails {
     return entity.maxHitPoints / playerAverageDamage;
   }
 
+  /// Whole counts cleared in an hour at the player's own action rate: how
+  /// many kills, or nodes worked out. 0 when nothing can be cleared.
+  double get killsPerHour {
+    final toKill = actionsToKill;
+    if (!usesDamage || !toKill.isFinite || playerActionInterval <= 0) return 0;
+    return 3600 / (toKill * playerActionInterval);
+  }
+
+  /// [killsPerHour] at [xpPerUnit] a count: the xp an hour of clearing pays.
+  double get clearXpPerHour => killsPerHour * xpPerUnit;
+
   /// The player's chance to turn aside an incoming swing. A blocked hit
   /// deals no damage and awards defence xp instead.
   double get blockChance => 1.0 - entityHitChance;
