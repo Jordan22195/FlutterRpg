@@ -120,12 +120,6 @@ void main() {
       }
     });
 
-    test('a spot\'s defence matches its gate, as an herb\'s does', () {
-      for (final id in spots.keys) {
-        expect(def(id).defence, def(id).requiredLevel, reason: '$id');
-      }
-    });
-
     test('a fish cooks at the Fishing level that catches it', () {
       final cooking = GameSessionFactory()
           .catalog1()

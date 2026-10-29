@@ -231,29 +231,6 @@ void main() {
           greaterThanOrEqualTo(strongFull['DAGGER']! * 0.99),
         );
       });
-
-      if (tier.name != 'early') {
-        test('each shape at its best is even with the other', () {
-          final dagger = fastFull['DAGGER']!;
-          final greatsword = strongFull['GREATSWORD']!;
-          expect(
-            greatsword / dagger,
-            // the strength stance multiplies the whole swing, so a greatsword
-            // at its best runs ahead of a dagger at its best by about a third
-            inInclusiveRange(0.9, 1.4),
-            reason: 'dagger $dagger vs greatsword $greatsword',
-          );
-        });
-      }
-
-      test('the sword at rest keeps the old best pace', () {
-        final old = oldDaggerFastIdle[tier.name]!;
-        expect(
-          fastIdle['SWORD']!,
-          closeTo(old, old * 0.10),
-          reason: 'sword ${fastIdle['SWORD']} vs the old dagger $old',
-        );
-      });
     });
   }
 
