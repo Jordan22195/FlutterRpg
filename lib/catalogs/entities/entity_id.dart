@@ -2842,6 +2842,35 @@ enum EntityId {
       // defaults: 25% markup, 6 hour restock, 10 stock slots
     ),
   ),
+  MINING_SHOP(
+    ShopEntityDefinition(
+      name: "Mining Shop",
+      iconAsset: "assets/images/entities/trading_post.png",
+      // the whole pool fits on the shelf, so a restock never hides an item
+      stockSlots: 19,
+      shopStockPool: [
+        ShopStockEntry(itemId: ItemId.COPPER_ORE, count: 200),
+        ShopStockEntry(itemId: ItemId.IRON_ORE, count: 200),
+        ShopStockEntry(itemId: ItemId.COAL, count: 200),
+        ShopStockEntry(itemId: ItemId.BASIC_MINERS_HAT, count: 1),
+        ShopStockEntry(itemId: ItemId.BASIC_MINERS_TUNIC, count: 1),
+        ShopStockEntry(itemId: ItemId.BASIC_MINERS_PANTS, count: 1),
+        ShopStockEntry(itemId: ItemId.BASIC_MINERS_GLOVES, count: 1),
+        ShopStockEntry(itemId: ItemId.BASIC_MINERS_BOOTS, count: 1),
+        ShopStockEntry(itemId: ItemId.BASIC_MINERS_CLOAK, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_MINERS_HAT, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_MINERS_TUNIC, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_MINERS_PANTS, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_MINERS_GLOVES, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_MINERS_BOOTS, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_MINERS_CLOAK, count: 1),
+        ShopStockEntry(itemId: ItemId.COPPER_PICKAXE, count: 1),
+        ShopStockEntry(itemId: ItemId.IRON_PICKAXE, count: 1),
+        ShopStockEntry(itemId: ItemId.STEEL_PICKAXE, count: 1),
+        ShopStockEntry(itemId: ItemId.MITHRIL_PICKAXE, count: 1),
+      ],
+    ),
+  ),
   WANDERING_MERCHANT(
     ShopEntityDefinition(
       name: "Wandering Merchant",

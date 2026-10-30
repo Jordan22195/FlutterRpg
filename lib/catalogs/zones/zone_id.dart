@@ -147,6 +147,7 @@ enum ZoneId {
         EntityId.ANVIL,
         EntityId.FIREPIT,
         EntityId.TRADING_POST,
+        EntityId.MINING_SHOP,
         EntityId.ALCHEMY_STATION,
       ],
       discoverableEntities: [],

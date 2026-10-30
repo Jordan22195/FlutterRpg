@@ -33,6 +33,42 @@ void main() {
     },
   );
 
+  test(
+    'South Haven mining shop shelves the whole mining pool every restock',
+    () {
+      expect(
+        ZoneId.SOUTH_HAVEN.definition.permanentEntities,
+        contains(EntityId.MINING_SHOP),
+      );
+
+      final def = shopDef(EntityId.MINING_SHOP);
+      final shop = def.toEntity(EntityId.MINING_SHOP);
+      shopService.restockIfDue(
+        shop,
+        def,
+        now: DateTime(2026, 1, 1),
+        rng: Random(1),
+      );
+
+      final counts = {for (final s in shop.stock) s.itemId: s.count};
+      expect(counts.length, 19);
+      for (final ore in [ItemId.COPPER_ORE, ItemId.IRON_ORE, ItemId.COAL]) {
+        expect(counts[ore], 200);
+      }
+      expect(
+        counts.keys,
+        containsAll([
+          ItemId.BASIC_MINERS_HAT,
+          ItemId.NOVICE_MINERS_CLOAK,
+          ItemId.COPPER_PICKAXE,
+          ItemId.IRON_PICKAXE,
+          ItemId.STEEL_PICKAXE,
+          ItemId.MITHRIL_PICKAXE,
+        ]),
+      );
+    },
+  );
+
   test('restock fills 10 distinct items and buy price beats sell price', () {
     final shop = shopDef(EntityId.TRADING_POST).toEntity(EntityId.TRADING_POST);
     final def = shopDef(EntityId.TRADING_POST);
