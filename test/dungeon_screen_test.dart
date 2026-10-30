@@ -19,6 +19,9 @@ import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/discovery_tile.dart';
 import 'package:rpg/widgets/dungeon_floor_card.dart';
 import 'package:rpg/widgets/dungeon_floor_track.dart';
+import 'package:rpg/widgets/eat_food_button.dart';
+import 'package:rpg/widgets/stance_button.dart';
+import 'package:rpg/data/player_data.dart';
 import 'package:rpg/widgets/fill_bar.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/sprite_frame.dart';
@@ -188,7 +191,7 @@ void main() {
     ]);
     expect(tiles.map((t) => t.boss), [false, false]);
     expect(find.text('FLOOR 1 · 2 + BOSS'), findsOneWidget);
-    expect(find.text('Fight Floor 1'), findsOneWidget);
+    expect(find.text('Enter Floor 1'), findsOneWidget);
 
     // the floors behind it are rows until they are opened
     final second = floorCard('Deep Lair');
@@ -395,7 +398,7 @@ void main() {
     Finder inFloor(Finder f) => find.descendant(of: firstFloor, matching: f);
     expect(inFloor(find.byType(ImageFiltered)), findsOneWidget);
     expect(inFloor(find.byIcon(Icons.lock)), findsWidgets);
-    expect(inFloor(find.text('Fight Floor 1')), findsNothing);
+    expect(inFloor(find.text('Enter Floor 1')), findsNothing);
     final reason = tester.getCenter(
       inFloor(find.text('Requires Goblin Queen Key')).last,
     );
@@ -425,7 +428,7 @@ void main() {
     await settle(tester);
 
     // cancelling the confirm leaves the key in the bag
-    await tapFloorButton(tester, 'Fight Floor 1');
+    await tapFloorButton(tester, 'Enter Floor 1');
     expect(find.text('Spend 1 Goblin Queen Key?'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await settle(tester);
@@ -440,7 +443,7 @@ void main() {
     expect(session.saveGameData.dungeonRun.runningSlot, -1);
 
     // accepting charges it, and the card says so afterwards
-    await tapFloorButton(tester, 'Fight Floor 1');
+    await tapFloorButton(tester, 'Enter Floor 1');
     await tester.tap(find.widgetWithText(FilledButton, 'Spend key'));
     await settle(tester);
 
@@ -608,11 +611,11 @@ void main() {
     final card = floorCard(floor.name);
     // the card offers to fight the floor; tapping it enters, nothing more
     expect(
-      find.descendant(of: card, matching: find.text('Fight Floor 1')),
+      find.descendant(of: card, matching: find.text('Enter Floor 1')),
       findsOneWidget,
     );
 
-    await tapFloorButton(tester, 'Fight Floor 1');
+    await tapFloorButton(tester, 'Enter Floor 1');
 
     // on the floor's screen, facing its first member, and nothing running.
     // the header is the floor's; the member's name stands on the stage
@@ -646,6 +649,85 @@ void main() {
     await settle(tester);
     expect(identical(session.saveGameData.dungeonRun.slots[0], live), isTrue);
     expect(session.saveGameData.dungeonRun.runningSlot, 0);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('the dungeon dock runs the selected floor without entering '
+      'it', (tester) async {
+    await openDungeonFromSave(tester, DungeonId.SPIDER_DEN);
+    final session = sessionOf(tester, at: find.byType(DungeonScreen));
+    makeStrong(session);
+
+    // the combat screen's dock: style switch, Stop, play and Eat
+    expect(tester.widget<StanceButton>(find.byType(StanceButton)).stances, [
+      Stance.offensive,
+      Stance.defensive,
+      Stance.fast,
+    ]);
+    expect(find.byType(StopPrimaryButton), findsOneWidget);
+    expect(find.byType(EatFoodButton), findsOneWidget);
+
+    // play starts the floor in hand, right here on the list
+    await tester.tap(find.byType(MomentumPrimaryButton));
+    await settle(tester);
+    expect(find.byType(DungeonScreen), findsOneWidget);
+    expect(find.byType(EncounterScreen), findsNothing);
+    expect(session.saveGameData.dungeonRun.runningSlot, 0);
+    expect(session.actionTimingController.isRunning, isTrue);
+
+    // a second press carries on with it rather than sending it to the top
+    final live = session.saveGameData.dungeonRun.slots[0];
+    final fought = live.index;
+    await tester.tap(find.byType(MomentumPrimaryButton));
+    await settle(tester);
+    expect(identical(session.saveGameData.dungeonRun.slots[0], live), isTrue);
+    expect(live.index, greaterThanOrEqualTo(fought));
+    expect(session.saveGameData.dungeonRun.runningSlot, 0);
+
+    // and a pause resumes in place
+    session.actionTimingController.stop();
+    await settle(tester);
+    await tester.tap(find.byType(MomentumPrimaryButton));
+    await settle(tester);
+    expect(session.actionTimingController.isRunning, isTrue);
+    expect(identical(session.saveGameData.dungeonRun.slots[0], live), isTrue);
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('tapping an open floor selects it for the dock; a sealed one '
+      'only opens', (tester) async {
+    await openDungeonFromSave(tester, DungeonId.DEV_TRANSIENT_DUNGEON);
+
+    List<Stance> dockStances() =>
+        tester.widget<StanceButton>(find.byType(StanceButton)).stances;
+    bool expanded(String name) =>
+        tester.widget<DungeonFloorCard>(floorCard(name)).expanded;
+
+    // the first floor fights, so the dock offers combat styles and food
+    expect(expanded('Test Queue'), isTrue);
+    expect(dockStances(), [Stance.offensive, Stance.defensive, Stance.fast]);
+    expect(find.byType(EatFoodButton), findsOneWidget);
+
+    // the side ore floor is open without clearing anything: a tap picks it,
+    // and the dock turns to mining's styles with nothing to eat
+    await openFloor(tester, 'Test Skippable Ore');
+    expect(expanded('Test Skippable Ore'), isTrue);
+    expect(expanded('Test Queue'), isFalse);
+    expect(dockStances(), [Stance.strong, Stance.fast]);
+    expect(find.byType(EatFoodButton), findsNothing);
+
+    // a sealed floor opens to look at but is never picked
+    await openFloor(tester, 'Test Duplicate');
+    expect(expanded('Test Duplicate'), isTrue);
+    expect(dockStances(), [Stance.strong, Stance.fast]);
+
+    await openFloor(tester, 'Test Queue');
+    expect(expanded('Test Queue'), isTrue);
+    expect(dockStances(), [Stance.offensive, Stance.defensive, Stance.fast]);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();

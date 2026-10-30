@@ -7,19 +7,29 @@ import '../catalogs/items/items.dart';
 import '../catalogs/zones/zone_id.dart';
 import '../controllers/action_timing_controller.dart';
 import '../controllers/dungeon_controller.dart';
+import '../controllers/encounter_controller.dart';
+import '../controllers/equipment_controller.dart';
+import '../controllers/world_controller.dart';
 import '../data/entity_queue.dart';
+import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../services/entity_screen_router_service.dart';
 import '../theme/game_colors.dart';
 import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
+import '../widgets/action_dock.dart';
 import '../widgets/discovery_tile.dart';
 import '../widgets/dungeon_floor_card.dart';
+import '../widgets/eat_food_button.dart';
 import '../widgets/entity_info_dialog.dart';
+import '../widgets/equipment_picker.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/icon_renderer.dart';
 import '../widgets/item_stack_tile.dart';
+import '../widgets/primary_button.dart';
 import '../widgets/segmented_tabs.dart';
+import '../widgets/stance_button.dart';
+import '../widgets/travel_row.dart';
 import '../widgets/zone_header.dart';
 import 'encounter_screen.dart';
 
@@ -29,7 +39,11 @@ import 'encounter_screen.dart';
 /// and a button that enters it: the ordinary encounter screen against its
 /// queue, not yet fighting. Its action button starts the floor, which then
 /// loops until something else takes the action. Every other floor is a
-/// single row that opens on a tap.
+/// single row: tapping an open one selects it, a sealed one just opens.
+///
+/// The dock at the foot is the combat screen's — style switch, Stop, play
+/// and Eat — so a floor can be run without entering it. Play starts the
+/// selected floor, or carries on with it when it is the one running.
 ///
 /// There is no lobby and no leaving. Opening the list costs nothing and
 /// backing out costs nothing — the floor you started keeps swinging while
@@ -58,6 +72,10 @@ class DungeonScreen extends StatefulWidget {
 class _DungeonScreenState extends State<DungeonScreen> {
   /// Floors other than the current one the player has opened.
   final Set<int> _opened = {};
+
+  /// The floor the player tapped to run next, or null to follow the
+  /// dungeon's own floor in hand — the running one, else the next to clear.
+  int? _selected;
 
   static const double _floorGap = 16;
   static const double _railWidth = 28;
@@ -95,69 +113,182 @@ class _DungeonScreenState extends State<DungeonScreen> {
         ? controller.runningSlot
         : -1;
     final zoneName = _zoneNameOf(dungeonId);
+    // a pick that a reset has since sealed falls back to the floor in hand
+    final selected =
+        _selected != null &&
+            _selected! < slots.length &&
+            controller.startable(dungeonId, _selected!)
+        ? _selected!
+        : current;
 
     // IMPORTANT: no Scaffold here — MainShell owns the Scaffold + BottomNav.
     // the top is left open: the art runs up behind the status bar, and the
     // header keeps its own rows clear of the inset
     return SafeArea(
       top: false,
-      child: CustomScrollView(
-        slivers: [
-          ZoneHeader(
-            name: def.name,
-            iconAsset: def.iconAsset,
-            zoneLevel: 0,
-            subtitle: [?zoneName, 'Dungeon'].join(' · '),
-            expandedHeight: DungeonScreen.headerHeight,
-            // nothing is left behind by walking out, so this is an ordinary
-            // pop: the floor keeps running while the player looks around
-            backLabel: zoneName == null ? 'Back' : 'Back to $zoneName',
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (slots.isNotEmpty) ...[
-                    _progress(context, controller, slots, current),
-                    const SizedBox(height: 12),
-                    _runControls(context, controller),
-                    const SizedBox(height: 16),
-                  ],
-                  for (int i = 0; i < slots.length; i++) ...[
-                    if (i > 0) const SizedBox(height: _floorGap),
-                    _floor(
-                      context,
-                      controller,
-                      slots,
-                      i,
-                      current: current,
-                      activeFloor: activeFloor,
-                    ),
-                  ],
-                  if (slots.isNotEmpty) ...[
-                    const SizedBox(height: _floorGap),
-                    _railed(
-                      node: const ChestRailNode(),
-                      nodeTop: _chestNodeTop,
-                      child: DungeonChestCard(
-                        title: '${def.name} Chest',
-                        floorsCleared: controller.mainFloorsCleared(dungeonId),
-                        floorCount: controller.mainFloorCount(dungeonId),
-                        waiting: controller.chestsWaiting(dungeonId),
-                        earned: controller.chestEarned(dungeonId),
-                        onClaim: () => _claimChests(context, controller),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+      child: Column(
+        children: [
+          Expanded(
+            child: _list(
+              context,
+              controller,
+              slots,
+              def,
+              zoneName,
+              selected: selected,
+              activeFloor: activeFloor,
             ),
           ),
+          if (selected >= 0 && selected < slots.length)
+            _dock(context, controller, slots[selected], selected),
         ],
       ),
     );
+  }
+
+  /// The header, progress, run controls, floors and chest, scrolling over
+  /// the dock.
+  Widget _list(
+    BuildContext context,
+    DungeonController controller,
+    List<EntityQueue> slots,
+    DungeonDefinition def,
+    String? zoneName, {
+    required int selected,
+    required int activeFloor,
+  }) {
+    return CustomScrollView(
+      slivers: [
+        ZoneHeader(
+          name: def.name,
+          iconAsset: def.iconAsset,
+          zoneLevel: 0,
+          subtitle: [?zoneName, 'Dungeon'].join(' · '),
+          expandedHeight: DungeonScreen.headerHeight,
+          // nothing is left behind by walking out, so this is an ordinary
+          // pop: the floor keeps running while the player looks around
+          backLabel: zoneName == null ? 'Back' : 'Back to $zoneName',
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (slots.isNotEmpty) ...[
+                  _progress(
+                    context,
+                    controller,
+                    slots,
+                    controller.currentFloor(dungeonId),
+                  ),
+                  const SizedBox(height: 12),
+                  _runControls(context, controller),
+                  const SizedBox(height: 16),
+                ],
+                for (int i = 0; i < slots.length; i++) ...[
+                  if (i > 0) const SizedBox(height: _floorGap),
+                  _floor(
+                    context,
+                    controller,
+                    slots,
+                    i,
+                    current: selected,
+                    activeFloor: activeFloor,
+                  ),
+                ],
+                if (slots.isNotEmpty) ...[
+                  const SizedBox(height: _floorGap),
+                  _railed(
+                    node: const ChestRailNode(),
+                    nodeTop: _chestNodeTop,
+                    child: DungeonChestCard(
+                      title: '${def.name} Chest',
+                      floorsCleared: controller.mainFloorsCleared(dungeonId),
+                      floorCount: controller.mainFloorCount(dungeonId),
+                      waiting: controller.chestsWaiting(dungeonId),
+                      earned: controller.chestEarned(dungeonId),
+                      onClaim: () => _claimChests(context, controller),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The combat screen's dock, aimed at floor [index]: the style switch for
+  /// what the floor holds, Stop, play, and Eat while it fights back.
+  Widget _dock(
+    BuildContext context,
+    DungeonController controller,
+    EntityQueue floor,
+    int index,
+  ) {
+    final members = floor.members;
+    final lead = floor.displayed ?? (members.isEmpty ? null : members.first);
+    final stances = lead == null ? const <Stance>[] : stancesForEntity(lead);
+    final fights = members.any((m) => m is CombatEntity);
+
+    return ActionDock(
+      banner: context.watch<WorldController>().isViewingCurrentZone
+          ? null
+          : const TravelRow(),
+      topRow: stances.length > 1 ? StanceButton(stances: stances) : null,
+      buttons: ActionButtonRow(
+        // the dock pads the row
+        padding: EdgeInsets.zero,
+        actionButton: ActionOrTravelButton(
+          enabled: controller.startable(dungeonId, index),
+          label: 'Floor ${index + 1}',
+          isActive: () =>
+              controller.isRunningFloor(dungeonId, index) &&
+              context.read<ActionTimingController>().isRunning,
+          startActionFunction: () => _playFloor(context, controller, index),
+        ),
+        trailing: [
+          // nothing gathered fights back, so there is nothing to eat through
+          if (fights)
+            // the food count moves with every bite, and the encounter
+            // notifies every action — only the button listens for it
+            Builder(
+              builder: (context) {
+                final encounter = context.watch<EncounterController>();
+                return EatFoodButton(
+                  foodItemId: encounter.getEquipedFoodItemId(),
+                  foodItemCount: encounter.getEquipedFoodItemCount(),
+                  onEat: encounter.eatSingleEquipedFood,
+                  onPickFood: () => FoodPicker.build(
+                    context,
+                    (id) =>
+                        context.read<EquipmentController>().setEquipedFood(id),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Runs floor [index] from the dock, asking before a key is spent.
+  Future<void> _playFloor(
+    BuildContext context,
+    DungeonController controller,
+    int index,
+  ) async {
+    if (controller.willSpendKey(dungeonId, index) &&
+        !await _confirmKey(context, controller, dungeonId)) {
+      return;
+    }
+    if (controller.playFloor(dungeonId, index) && mounted) {
+      // once running, the list follows the run — a dungeon loop moving on
+      // to the next floor takes the selection with it
+      setState(() => _selected = null);
+    }
   }
 
   /// "Floor 2 of 3" over one segment per floor: cleared floors full in the
@@ -442,15 +573,19 @@ class _DungeonScreenState extends State<DungeonScreen> {
             ),
       action: controller.startable(dungeonId, i)
           ? FloorActionButton(
-              label: '${fights ? 'Fight' : 'Enter'} Floor ${i + 1}',
+              label: 'Enter Floor ${i + 1}',
               icon: fights
                   ? const IconRenderer(id: SkillId.ATTACK, size: 20)
                   : Icon(Icons.login, size: 20, color: palette.onAccent),
               onPressed: () => _openSlot(context, controller, i),
             )
           : null,
+      // an open floor's tap picks it for the dock's play button; a sealed
+      // one has nothing to run, so its tap only opens it to look
       onToggle: isCurrent
           ? null
+          : lockReason == null
+          ? () => setState(() => _selected = i)
           : () => setState(() {
               if (!_opened.remove(i)) _opened.add(i);
             }),
@@ -566,31 +701,9 @@ class _DungeonScreenState extends State<DungeonScreen> {
   ) async {
     final navigator = Navigator.of(context);
 
-    // spending the key is irreversible, so it is never charged on a stray
-    // tap — even though it only ever happens once
-    if (controller.willSpendKey(dungeonId, i)) {
-      final keyName = controller.keyItemId(dungeonId).definition.name;
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text('Spend 1 $keyName?'),
-          content: const Text(
-            'Entering costs the key, once. After that this dungeon stays '
-            'open for good.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Spend key'),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true) return;
+    if (controller.willSpendKey(dungeonId, i) &&
+        !await _confirmKey(context, controller, dungeonId)) {
+      return;
     }
 
     // entering opens the floor without starting it: the fight begins on
@@ -608,6 +721,37 @@ class _DungeonScreenState extends State<DungeonScreen> {
     );
     controller.leaveSlot(token);
   }
+}
+
+/// Asks before [id]'s key is spent — irreversible, so it is never charged
+/// on a stray tap, even though it only ever happens once.
+Future<bool> _confirmKey(
+  BuildContext context,
+  DungeonController controller,
+  DungeonId id,
+) async {
+  final keyName = controller.keyItemId(id).definition.name;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text('Spend 1 $keyName?'),
+      content: const Text(
+        'Entering costs the key, once. After that this dungeon stays '
+        'open for good.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          child: const Text('Spend key'),
+        ),
+      ],
+    ),
+  );
+  return confirmed == true;
 }
 
 /// Opens a dungeon's waiting chests one at a time or all at once, popping

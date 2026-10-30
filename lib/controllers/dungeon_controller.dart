@@ -258,6 +258,25 @@ class DungeonController extends ChangeNotifier {
     return startSlot(floor.id, floor.index);
   }
 
+  /// Whether floor [index] of [id] is the one the loop is bound to — firing
+  /// or paused.
+  bool isRunningFloor(DungeonId id, int index) =>
+      _run.active && _run.dungeonId == id && _run.runningSlot == index;
+
+  /// The dungeon screen's play button: carries on with floor [index] when it
+  /// is already the running one — resuming it if paused, never sending it
+  /// back to the top — and starts it fresh otherwise. The button fires on
+  /// every press, so a running floor must survive being pressed again.
+  bool playFloor(DungeonId id, int index) {
+    if (isRunningFloor(id, index)) {
+      final member = _dungeonService.runningEntity(_run);
+      if (member != null) {
+        return _encounterController.startEncounterActionFor(member);
+      }
+    }
+    return startSlot(id, index);
+  }
+
   /// Starts floor [index] of [id]: pays the key if this is the first ever
   /// start of a keyed dungeon's first floor, refills a spent floor, and
   /// hands the queue to the encounter loop. Returns false when the floor is
