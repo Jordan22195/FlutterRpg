@@ -36,6 +36,17 @@ class Entity {
     return {'id': id.name};
   }
 
+  /// [Entity.fromJson] for a save that may predate a rename: null when the
+  /// id names nothing the catalog still defines, so the caller can drop
+  /// that one entity rather than the whole load.
+  static Entity? tryFromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    if (rawId is String && EntityId.values.asNameMap()[rawId] == null) {
+      return null;
+    }
+    return Entity.fromJson(json);
+  }
+
   /// Rebuilds an entity from the definition its id names, then overlays the
   /// runtime state the save carries.
   ///

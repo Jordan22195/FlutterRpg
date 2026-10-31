@@ -220,11 +220,16 @@ void main() {
           greaterThanOrEqualTo(1),
           reason: 'EntityId.${id.name} has a level below 1',
         );
+        // a boss stands on ten times its level's hitpoints; with that
+        // taken back out it sits on the curve like any other
+        final hitpoints = def.isDungeonBoss
+            ? def.hitpoints ~/ CombatEntityDefinition.bossHitpointsMultiplier
+            : def.hitpoints;
         expect(
           CombatType.levelOf(
             attack: def.attack,
             defence: def.defence,
-            hitpoints: def.hitpoints,
+            hitpoints: hitpoints,
           ),
           def.level,
           reason:

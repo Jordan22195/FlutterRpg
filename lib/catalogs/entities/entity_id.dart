@@ -530,15 +530,31 @@ enum EntityId {
       ],
     ),
   ),
-  COW_UNCOMMON(
+  COW_BOSS(
     CombatEntityDefinition(
       cow,
-      name: "Cow",
+      name: "Bo",
       isDungeonBoss: true,
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(id: ItemId.COW_MEAT, weight: 1),
-        ItemDropType(id: ItemId.COW_HIDE, weight: 1),
+        ItemDropType(
+          id: ItemId.COW_MEAT,
+          weight: 1,
+          lowCount: 20,
+          highCount: 50,
+        ),
+        ItemDropType(
+          id: ItemId.COOKED_BEEF,
+          weight: 1,
+          lowCount: 20,
+          highCount: 50,
+        ),
+        ItemDropType(
+          id: ItemId.COW_HIDE,
+          weight: 1,
+          lowCount: 20,
+          highCount: 50,
+        ),
         ItemDropType(id: ItemId.MOOD_RING, rarity: Rarity.COMMON, weight: .5),
         ItemDropType(id: ItemId.MOOD_RING, rarity: Rarity.UNCOMMON, weight: .2),
       ],
@@ -632,16 +648,39 @@ enum EntityId {
       ],
     ),
   ),
-  ROTWOOD_SCARECROW_UNCOMMON(
+  ROTWOOD_SCARECROW_BOSS(
     CombatEntityDefinition(
       scarecrow,
-      name: "Rotwood Scarecrow",
+      name: "Brainless",
       isDungeonBoss: true,
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(id: ItemId.LOGS, weight: 1, lowCount: 1, highCount: 6),
-        ItemDropType(id: ItemId.IRON_ORE, weight: 1, lowCount: 1, highCount: 4),
+        ItemDropType(id: ItemId.LOGS, weight: 1, lowCount: 20, highCount: 50),
+        ItemDropType(
+          id: ItemId.IRON_ORE,
+          weight: 1,
+          lowCount: 20,
+          highCount: 50,
+        ),
+        ItemDropType(
+          id: ItemId.COPPER_BAR,
+          weight: 1,
+          lowCount: 20,
+          highCount: 50,
+        ),
+        ItemDropType(
+          id: ItemId.COPPER_BAR,
+          weight: 1,
+          lowCount: 20,
+          highCount: 50,
+        ),
         ItemDropType(id: ItemId.PITCHFORK, weight: .8),
+        ItemDropType(id: ItemId.WOOD_SHIELD, weight: .3),
+        ItemDropType(
+          id: ItemId.WOOD_SHIELD,
+          rarity: Rarity.UNCOMMON,
+          weight: .3,
+        ),
         ItemDropType(id: ItemId.PITCHFORK, rarity: Rarity.UNCOMMON, weight: .5),
       ],
     ),
@@ -809,7 +848,10 @@ enum EntityId {
         ItemDropType(id: ItemId.WOLF_CLAW, weight: 1),
         ItemDropType(id: ItemId.WOLF_PELT, weight: 1),
       ],
-      bonusDrops: [DropRoll(chance: 0.1, entries: basicSkillingBodyDropTable)],
+      bonusDrops: [
+        DropRoll(chance: 0.1, entries: basicSkillingBodyDropTable),
+        DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable),
+      ],
     ),
   ),
   // Giant Bat · roster tier 2 · mine
@@ -914,9 +956,8 @@ enum EntityId {
       name: "Goblin",
       itemDrops: [
         NestedDrop(cookedFishDropTable, weight: 2),
-        NestedDrop(ironToolsDropTable, weight: 1),
-        NestedDrop(ironMinorArmorDropTable, weight: 1),
         NestedDrop(mediumLeatherMinorArmorDropTable, weight: 1),
+        ...goblinSupplyDrops,
       ],
       // 5% chance, on top of the main drop, to yield the key that opens
       // the Goblin Queen's Lair landmark dungeon
@@ -935,13 +976,12 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
       itemDrops: [
         NestedDrop(cookedFishDropTable, weight: 2),
-        NestedDrop(ironToolsDropTable, weight: 1, rarity: Rarity.UNCOMMON),
-        NestedDrop(ironMinorArmorDropTable, weight: 1, rarity: Rarity.UNCOMMON),
         NestedDrop(
           mediumLeatherMinorArmorDropTable,
           weight: 1,
           rarity: Rarity.UNCOMMON,
         ),
+        ...goblinSupplyDrops,
       ],
     ),
   ),
@@ -952,13 +992,12 @@ enum EntityId {
       rarity: Rarity.RARE,
       itemDrops: [
         NestedDrop(cookedFishDropTable, weight: 2),
-        NestedDrop(ironToolsDropTable, weight: 1, rarity: Rarity.RARE),
-        NestedDrop(ironMinorArmorDropTable, weight: 1, rarity: Rarity.RARE),
         NestedDrop(
           mediumLeatherMinorArmorDropTable,
           weight: 1,
           rarity: Rarity.RARE,
         ),
+        ...goblinSupplyDrops,
       ],
     ),
   ),
@@ -969,13 +1008,12 @@ enum EntityId {
       rarity: Rarity.EPIC,
       itemDrops: [
         NestedDrop(cookedFishDropTable, weight: 2),
-        NestedDrop(ironToolsDropTable, weight: 1, rarity: Rarity.EPIC),
-        NestedDrop(ironMinorArmorDropTable, weight: 1, rarity: Rarity.EPIC),
         NestedDrop(
           mediumLeatherMinorArmorDropTable,
           weight: 1,
           rarity: Rarity.EPIC,
         ),
+        ...goblinSupplyDrops,
       ],
     ),
   ),
@@ -986,17 +1024,12 @@ enum EntityId {
       rarity: Rarity.LEGENDARY,
       itemDrops: [
         NestedDrop(cookedFishDropTable, weight: 2),
-        NestedDrop(ironToolsDropTable, weight: 1, rarity: Rarity.LEGENDARY),
-        NestedDrop(
-          ironMinorArmorDropTable,
-          weight: 1,
-          rarity: Rarity.LEGENDARY,
-        ),
         NestedDrop(
           mediumLeatherMinorArmorDropTable,
           weight: 1,
           rarity: Rarity.LEGENDARY,
         ),
+        ...goblinSupplyDrops,
       ],
     ),
   ),
@@ -1067,7 +1100,10 @@ enum EntityId {
         ItemDropType(id: ItemId.BEAR_HIDE, weight: 1),
         ItemDropType(id: ItemId.BEAR_RUMP, weight: 1),
       ],
-      bonusDrops: [DropRoll(chance: 0.1, entries: basicSkillingHeadDropTable)],
+      bonusDrops: [
+        DropRoll(chance: 0.1, entries: basicSkillingHeadDropTable),
+        DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable),
+      ],
     ),
   ),
   // Mudlurc · roster tier 2 · swamp
@@ -1214,6 +1250,7 @@ enum EntityId {
       bonusDrops: [
         DropRoll(entries: herbDropTable, chance: 0.25),
         DropRoll(chance: 0.1, entries: basicSkillingLegDropTable),
+        DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable),
       ],
     ),
   ),
@@ -2627,13 +2664,28 @@ enum EntityId {
           lowCount: 25,
           highCount: 50,
         ),
-        ItemDropType(id: ItemId.CHICKEN_CHARM),
+        ItemDropType(
+          id: ItemId.CHICKEN_MEAT,
+          weight: 1,
+          lowCount: 25,
+          highCount: 50,
+        ),
+        ItemDropType(
+          id: ItemId.COOKED_CHICKEN,
+          weight: 1,
+          lowCount: 25,
+          highCount: 50,
+        ),
+        ItemDropType(
+          id: ItemId.CHICKEN_CHARM,
+          rarity: Rarity.COMMON,
+          weight: .5,
+        ),
         ItemDropType(
           id: ItemId.CHICKEN_CHARM,
           rarity: Rarity.UNCOMMON,
-          weight: .5,
+          weight: .2,
         ),
-        ItemDropType(id: ItemId.CHICKEN_CHARM, rarity: Rarity.RARE, weight: .2),
       ],
     ),
   ),

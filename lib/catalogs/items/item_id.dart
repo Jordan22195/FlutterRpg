@@ -5532,6 +5532,70 @@ enum ItemId {
       iconAsset: "assets/icons/items/medium_leather_gloves.png",
     ),
   ),
+  // ── ARMOUR · WOLF DEN SET ──────────────────────────────────────
+  // Medium leather's stats at every slot, plus speed on top: +1 on the
+  // minor slots (helm, cloak, gloves, boots), +2 on the major ones (chest,
+  // legs). The minors drop off the den's bosses, the majors from its chest.
+  WOLF_DEN_HELM(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Wolf Den Helm",
+      value: 200,
+      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      bonusStats: {SkillId.SPEED: 1},
+      iconAsset: "assets/icons/items/medium_leather_coif.png",
+    ),
+  ),
+  WOLF_DEN_CLOAK(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Wolf Den Cloak",
+      value: 200,
+      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      bonusStats: {SkillId.SPEED: 1},
+      iconAsset: "assets/icons/items/wool_cloak.png",
+    ),
+  ),
+  WOLF_DEN_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Wolf Den Gloves",
+      value: 200,
+      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      bonusStats: {SkillId.SPEED: 1},
+      iconAsset: "assets/icons/items/medium_leather_gloves.png",
+    ),
+  ),
+  WOLF_DEN_BOOTS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Wolf Den Boots",
+      value: 200,
+      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      bonusStats: {SkillId.SPEED: 1},
+      iconAsset: "assets/icons/items/medium_leather_boots.png",
+    ),
+  ),
+  WOLF_DEN_CHESTGUARD(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Wolf Den Chestguard",
+      value: 600,
+      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      bonusStats: {SkillId.SPEED: 2},
+      iconAsset: "assets/icons/items/medium_leather_chest.png",
+    ),
+  ),
+  WOLF_DEN_LEGGUARDS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Wolf Den Legguards",
+      value: 400,
+      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      bonusStats: {SkillId.SPEED: 2},
+      iconAsset: "assets/icons/items/medium_leather_pants.png",
+    ),
+  ),
   HEAVY_LEATHER_GLOVES(
     EquipmentItemDefinition(
       armorSlot: ArmorSlots.HANDS,

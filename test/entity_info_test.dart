@@ -618,7 +618,8 @@ void main() {
         await pumpInfo(tester, EntityId.GOBLIN_LEGENDARY);
 
         // the goblin queen stamps LEGENDARY on the gear it drops
-        final dagger = ironToolsDropTable.first.id.definition.name;
+        final dagger =
+            mediumLeatherMinorArmorDropTable.first.id.definition.name;
         final border = frameFor(tester, 'Legendary $dagger').border as Border;
         expect(border.top.color, rarityBorderColor(Rarity.LEGENDARY));
         // a coloured tier is drawn thicker, so it reads across a list
@@ -676,7 +677,7 @@ void main() {
 
         // the frame is the tile's own business - what this row owes it is
         // the right quality to draw
-        final dagger = ironToolsDropTable.first.id;
+        final dagger = mediumLeatherMinorArmorDropTable.first.id;
         final tile = tester.widget<ItemStackTile<ItemId>>(
           find.byWidgetPredicate(
             (w) => w is ItemStackTile<ItemId> && w.id == dagger,

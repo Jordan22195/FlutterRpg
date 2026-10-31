@@ -378,7 +378,10 @@ void main() {
         );
       }
 
-      final gear = save.inventoryData.equipment;
+      // the goblin's daggers are written at their own fixed qualities
+      final gear = save.inventoryData.equipment
+          .where((piece) => piece.id != ItemId.IRON_DAGGER)
+          .toList();
       expect(gear, isNotEmpty, reason: 'the gear nests never landed');
       expect(
         gear.map((piece) => piece.quality),
@@ -500,9 +503,8 @@ void main() {
       // is invisible to the player
       final reachable =
           cookedFishDropTable.length +
-          ironToolsDropTable.length +
-          ironMinorArmorDropTable.length +
-          mediumLeatherMinorArmorDropTable.length;
+          mediumLeatherMinorArmorDropTable.length +
+          goblinSupplyDrops.map((d) => (d.id, d.rarity)).toSet().length;
       expect(
         main,
         hasLength(reachable),
@@ -515,13 +517,16 @@ void main() {
 
       double chanceFor(ItemId id) =>
           main.singleWhere((d) => d.itemId == id).chance;
+      // fish 2 + leather 1 + the supply lines' own weights
+      final total =
+          3 + goblinSupplyDrops.fold<double>(0, (sum, d) => sum + d.weight);
       expect(
         chanceFor(cookedFishDropTable.first.id),
-        closeTo(2 / 5 / cookedFishDropTable.length, 1e-9),
+        closeTo(2 / total / cookedFishDropTable.length, 1e-9),
       );
       expect(
-        chanceFor(ironToolsDropTable.first.id),
-        closeTo(1 / 5 / ironToolsDropTable.length, 1e-9),
+        chanceFor(mediumLeatherMinorArmorDropTable.first.id),
+        closeTo(1 / total / mediumLeatherMinorArmorDropTable.length, 1e-9),
       );
 
       // the reference's placeholder id never reaches a row
@@ -538,7 +543,9 @@ void main() {
 
       expect(
         details.drops
-            .singleWhere((d) => d.itemId == ironToolsDropTable.first.id)
+            .singleWhere(
+              (d) => d.itemId == mediumLeatherMinorArmorDropTable.first.id,
+            )
             .rarity,
         Rarity.LEGENDARY,
       );

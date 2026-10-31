@@ -81,7 +81,11 @@ void main() {
 
       test('a tenth of kills, one of every skill\'s basic ${b.slot.name}', () {
         final gear = def.bonusDrops
-            .where((r) => !base.bonusDrops.any((o) => o.entries == r.entries))
+            .where(
+              (r) =>
+                  r.entries != wolfDenMinorArmorDropTable &&
+                  !base.bonusDrops.any((o) => o.entries == r.entries),
+            )
             .toList();
         expect(gear, hasLength(1));
         expect(gear.single.chance, 0.1);

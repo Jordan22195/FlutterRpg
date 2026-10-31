@@ -3,11 +3,17 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'package:rpg/systems/exploration_system.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('explore finds hit both inventories and clear on activity swap', () {
+    // item finds are off in the game; this keeps the code they run on
+    // honest in the meantime
+    ExplorationSystem.itemFindsEnabled = true;
+    addTearDown(() => ExplorationSystem.itemFindsEnabled = false);
+
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     final save = factory.newGame(catalogs);
@@ -80,5 +86,31 @@ void main() {
     world.stopExplore();
     world.startExplore();
     expect(world.viewedZoneItems().length, resumed.length);
+  });
+
+  test('with item finds off, exploring turns up no items', () {
+    // the game's default: exploring finds entities only
+    expect(ExplorationSystem.itemFindsEnabled, isFalse);
+
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final save = factory.newGame(catalogs);
+    final session = factory.create(
+      save: save,
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+    final world = session.worldController;
+    save.playerData.currentZoneId = ZoneId.FOREST_MINE;
+    final skill = save.playerData.skillData[SkillId.EXPLORATION]!;
+    skill.xp = skill.xpTable.last;
+
+    world.startExplore();
+    for (var i = 0; i < 300; i++) {
+      world.doExplore(1);
+    }
+
+    expect(world.viewedZoneItems(), isEmpty);
+    expect(save.inventoryData.itemMap, isEmpty);
   });
 }

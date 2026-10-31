@@ -36,6 +36,11 @@ class EncounterActionResult {
   /// only when that is more than one.
   bool maxHit = false;
 
+  /// The top of the swing's damage range — what a max hit deals. A hit is
+  /// rolled evenly from 1 up to this, so half of one more than it is the
+  /// average hit. Zero for an action that rolls no range.
+  int maxRoll = 0;
+
   /// How many actions this result accounts for. A batch settling time away
   /// reports what it actually did, which is not always the count it was
   /// handed: materials run out, a fire goes out, a node is stripped.

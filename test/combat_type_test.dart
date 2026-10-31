@@ -159,8 +159,20 @@ void main() {
       expect(def.combatType, CombatType.LEATHER_TANK);
       expect(def.attack, def.combatType.attackAt(def.level));
       expect(def.defence, def.combatType.defenceAt(def.level));
-      expect(def.hitpoints, def.combatType.hitpointsAt(def.level));
+      // the queen is a dungeon boss: her level's hitpoints, times ten
+      expect(def.isDungeonBoss, isTrue);
+      expect(
+        def.hitpoints,
+        def.combatType.hitpointsAt(def.level) *
+            CombatEntityDefinition.bossHitpointsMultiplier,
+      );
       expect(levelOfType(def.combatType, def.level), def.level);
+    });
+
+    test('a regular\'s hitpoints are its level\'s alone', () {
+      final def = EntityId.GOBLIN.definition as CombatEntityDefinition;
+      expect(def.isDungeonBoss, isFalse);
+      expect(def.hitpoints, def.combatType.hitpointsAt(def.level));
     });
 
     test('the runtime entity carries the derived stats', () {

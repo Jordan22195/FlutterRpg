@@ -129,6 +129,29 @@ class GameColors extends ThemeExtension<GameColors> {
   /// warmth.
   static const Color bossTileBorder = Color(0xFF6A3328);
 
+  /// The hit you deal, by how it rolled: [hitMiss] for nothing, [hitLow]
+  /// below the average hit, [hitHigh] at or above it, and [hitMax], drawn
+  /// bigger and heavier, for the top of the range.
+  static const Color hitMiss = Color(0xFF5AA8F0);
+  static const Color hitLow = Color(0xFFE9C23A);
+  static const Color hitHigh = Color(0xFFE5533D);
+  static const Color hitMax = Color(0xFFA3171B);
+
+  /// A boss fight's arena, and the floor summary that takes its place: the
+  /// warm dark ground, the crimson glow the boss stands in, and the
+  /// tiles laid on it. [bossBarBorder] edges the arena's hp bar and the
+  /// tile a record was beaten on; [bossBarTrack] is the bar's empty run;
+  /// [bossMuted] is the ground's quiet text.
+  static const Color bossArenaFill = Color(0xFF1C130E);
+  static const Color bossGlow = Color(0xFFC4473A);
+  static const Color bossTileFill = Color(0xFF22180F);
+  static const Color bossTileEdge = Color(0xFF3A2E22);
+  static const Color bossBarBorder = Color(0xFF7A5A22);
+  static const Color bossBarTrack = Color(0xFF2A1712);
+  static const Color bossName = Color(0xFFF6E3B4);
+  static const Color bossMuted = Color(0xFFC9BDA6);
+  static const Color bossFaint = Color(0xFFA8907A);
+
   /// A dungeon floor cleared at least once: its rail node, its rail, its
   /// "Cleared" pill and its segment of the progress bar. [clearedFill] is
   /// the node's wash.

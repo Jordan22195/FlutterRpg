@@ -51,10 +51,11 @@ void main() {
   }
 
   test('full counts come from the floor entry, member by member', () {
-    expect(
-      DungeonFloorTrack.fullCountsFor(DungeonId.SPIDER_DEN, 1, lair()),
-      [15, 6, 1],
-    );
+    expect(DungeonFloorTrack.fullCountsFor(DungeonId.SPIDER_DEN, 1, lair()), [
+      15,
+      6,
+      1,
+    ]);
   });
 
   testWidgets('counts kills toward the boss, not the boss itself', (

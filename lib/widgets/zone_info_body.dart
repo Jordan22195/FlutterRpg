@@ -6,6 +6,7 @@ import '../controllers/world_controller.dart';
 import '../data/skill_category.dart';
 import '../data/skill_data.dart';
 import '../data/zone_details.dart';
+import '../systems/exploration_system.dart';
 
 /// What a zone holds and what it takes to find it: the zone's difficulty,
 /// how many things an explore currently turns up, and every discovery in
@@ -35,7 +36,7 @@ class ZoneInfoBody extends StatelessWidget {
             showXp: true,
           ),
         ],
-        if (details.items.isNotEmpty) ...[
+        if (ExplorationSystem.itemFindsEnabled && details.items.isNotEmpty) ...[
           const SizedBox(height: 12),
           _DiscoveryCard(
             label: 'Finds',

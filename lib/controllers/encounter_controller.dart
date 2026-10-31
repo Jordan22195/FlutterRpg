@@ -19,6 +19,7 @@ import '../catalogs/dungeons/dungeons.dart';
 import '../data/dungeon_run.dart';
 import '../data/entity_queue.dart';
 import '../data/encounter_data.dart';
+import '../data/floor_clear_summary.dart';
 import '../services/dungeon_service.dart';
 import '../services/encounter_service.dart';
 import '../data/dungeon_progress_data.dart';
@@ -73,6 +74,41 @@ class EncounterController extends ChangeNotifier {
   // watches this to drop back to the map screen and announce the death;
   // a sequence (rather than a flag) so repeat deaths always register
   int deathSequence = 0;
+
+  /// How long the loop stands still on a cleared floor's summary before the
+  /// next floor starts on its own. Zero runs straight on, as laps settled
+  /// with the app closed always do.
+  Duration floorIntermission = const Duration(seconds: 6);
+
+  /// How long the cleared floor stays on screen as it fell before the
+  /// summary takes over, so the killing blow gets a moment to land.
+  Duration summaryDelay = const Duration(milliseconds: 500);
+
+  /// The floor just cleared, while the loop pauses on it before the next.
+  FloorClearSummary? _intermission;
+  FloorClearSummary? get intermission => _intermission;
+
+  /// Whether the pause has got past [summaryDelay], so the summary shows.
+  bool _summaryShowing = false;
+  bool get summaryShowing => _intermission != null && _summaryShowing;
+  Timer? _summaryTimer;
+
+  void _clearIntermission() {
+    _intermission = null;
+    _summaryShowing = false;
+    _summaryTimer?.cancel();
+    _summaryTimer = null;
+  }
+
+  @override
+  void dispose() {
+    _summaryTimer?.cancel();
+    super.dispose();
+  }
+
+  /// The last frame the running floor's lap clock was moved on at; null
+  /// while the loop isn't running a floor.
+  DateTime? _lastLapFrameAt;
 
   EncounterController({
     required PlayerData playerData,
@@ -151,6 +187,7 @@ class EncounterController extends ChangeNotifier {
     DateTime? at,
     Duration? span,
   }) {
+    finishIntermission();
     latestActionResult = _encounterSystem.executeHerbalismAction(
       playerState: _playerState,
       encounter: _encounterState,
@@ -162,8 +199,9 @@ class EncounterController extends ChangeNotifier {
     );
     actionSequence++;
     _recordOfflineResult();
+    _recordLapAction(offline: offline);
 
-    if (_advanceDungeonQueue()) {
+    if (_advanceDungeonQueue(offline: offline)) {
       notifyListeners();
       return;
     }
@@ -223,6 +261,10 @@ class EncounterController extends ChangeNotifier {
     DateTime? at,
     Duration? span,
   }) {
+    // an action can only fire into a paused floor from outside the live
+    // loop — a settle, a test driving it by hand. the pause is over then:
+    // run on first, or the spent floor would book its clear a second time
+    finishIntermission();
     latestActionResult = _encounterSystem.executePlayerAction(
       playerState: _playerState,
       encounter: _encounterState,
@@ -236,6 +278,7 @@ class EncounterController extends ChangeNotifier {
     );
     actionSequence++;
     _recordOfflineResult();
+    _recordLapAction(offline: offline);
 
     // the fight killed the player while they were away. this sits above the
     // queue advance for the same reason the shell checks death first: a
@@ -256,7 +299,7 @@ class EncounterController extends ChangeNotifier {
 
     // a dungeon card is a queue: a spent member hands off to the next one
     // before the conditions below get a chance to stop the loop
-    if (_advanceDungeonQueue()) {
+    if (_advanceDungeonQueue(offline: offline)) {
       notifyListeners();
       return;
     }
@@ -368,8 +411,21 @@ class EncounterController extends ChangeNotifier {
     _dungeonRun.runningSlot = index;
     _playerState.currentEntityViewId = entity.id;
     _viewingZoneEntity = false;
+    _clearIntermission();
 
     return startEncounterActionFor(entity);
+  }
+
+  /// Adds this tick's drops to the running floor's lap. A lap any of whose
+  /// actions settled with the app closed was not watched, and sets no best.
+  void _recordLapAction({required bool offline}) {
+    final running = _dungeonService.runningEntity(_dungeonRun);
+    if (running == null || !identical(_encounterState.entity, running)) return;
+    if (offline) _dungeonRun.lapWatched = false;
+    _dungeonRun.addLapLoot(
+      latestActionResult.items,
+      boss: running is CombatEntity && running.definition.isDungeonBoss,
+    );
   }
 
   /// Adds this tick's result to the offline progress report. A no-op unless
@@ -392,7 +448,7 @@ class EncounterController extends ChangeNotifier {
   /// That decision lives here rather than on the shell because this is the
   /// path that also runs with the app closed, where no widget is listening
   /// and no route is mounted.
-  bool _advanceDungeonQueue() {
+  bool _advanceDungeonQueue({bool offline = false}) {
     final slot = _dungeonService.runningSlot(_dungeonRun);
     final current = slot?.current;
     if (current == null) return false;
@@ -409,25 +465,141 @@ class EncounterController extends ChangeNotifier {
       return _handOffTo(next);
     }
 
-    _dungeonSystem.recordFloorCleared(_dungeonProgress, _dungeonRun, index);
+    final summary = _bookClear(index, current);
 
+    // played live, the loop stands still on the floor's summary for a
+    // moment before running on. the spent floor stays as it is until then:
+    // where the loop goes next is the loop mode's call, and it can still be
+    // changed from the summary
+    if (!offline &&
+        floorIntermission > Duration.zero &&
+        _actionTimingController.isTicking) {
+      _intermission = summary;
+      _summaryShowing = summaryDelay <= Duration.zero;
+      if (!_summaryShowing) {
+        _summaryTimer = Timer(summaryDelay, () {
+          _summaryTimer = null;
+          if (_intermission == null) return;
+          _summaryShowing = true;
+          notifyListeners();
+        });
+      }
+      _actionTimingController.hold(summaryDelay + floorIntermission);
+      onDungeonFloorChanged?.call();
+      return true;
+    }
+
+    return _runOnAfterClear(index, watched: !offline);
+  }
+
+  /// Books the clear of floor [index], whose last member was [last]: the
+  /// lap count, the unlock, any chest, and — for a lap watched from its
+  /// start — its time and damage against the floor's bests. Returns the
+  /// summary the pause before the next floor shows.
+  FloorClearSummary _bookClear(int index, EncounterEntity last) {
+    final id = _dungeonRun.dungeonId;
+    final watched = _dungeonRun.lapWatched;
+    final bestTimeBefore = _dungeonProgress.bestTime(id, index);
+    final leastDamageBefore = _dungeonProgress.leastDamageTaken(id, index);
+
+    _dungeonSystem.recordFloorCleared(_dungeonProgress, _dungeonRun, index);
+    if (watched) {
+      _dungeonProgress.recordLap(
+        id,
+        index,
+        _dungeonRun.lapTime,
+        _dungeonRun.lapDamageTaken,
+      );
+    }
+
+    final entries = id.isReal ? id.definition.entries : const <DungeonEntry>[];
+    final floorEntry = index < entries.length ? entries[index] : null;
+    return FloorClearSummary(
+      dungeonId: id,
+      floorIndex: index,
+      floorName: floorEntry?.name ?? '',
+      lastMemberId: last.id,
+      lastMemberName: last.name,
+      defeated:
+          floorEntry?.entities.fold<int>(0, (sum, ref) => sum + ref.count) ?? 0,
+      time: watched ? _dungeonRun.lapTime : null,
+      damageTaken: watched ? _dungeonRun.lapDamageTaken : null,
+      bestTimeBefore: bestTimeBefore,
+      leastDamageBefore: leastDamageBefore,
+      clears: _dungeonProgress.runsFor(id, index),
+      sessionClears: _dungeonRun.sessionRuns[index] ?? 0,
+      boss: last is CombatEntity && last.definition.isDungeonBoss,
+      loot: List.of(_dungeonRun.lapLoot),
+      bossLoot: List.of(_dungeonRun.lapBossLoot),
+      endsAt: DateTime.now().add(summaryDelay + floorIntermission),
+    );
+  }
+
+  /// Carries the loop on from cleared floor [index] into whatever the loop
+  /// mode picks: Loop floor refills the same floor, Loop dungeon runs on
+  /// into the next one (back round to the first off the last).
+  bool _runOnAfterClear(int index, {required bool watched}) {
+    final nextIndex = _openNextFloor(index);
+    _dungeonRun.beginLap(watched: watched);
+
+    // a lap of the same floor is the same haul carrying on, so the
+    // encounter panel's drop log stands across it
+    final member = _dungeonService.runningEntity(_dungeonRun);
+    onDungeonFloorChanged?.call();
+    if (member != null && nextIndex >= 0) return _handOffTo(member);
+
+    // a floor that refilled to nothing would clear again the instant it
+    // started and loop at no cost, so the loop stops instead
+    _actionTimingController.stop();
+    return false;
+  }
+
+  /// Moves the run off cleared floor [index] onto the floor the loop mode
+  /// picks, refilled. Returns its index, or -1 when it holds nothing.
+  int _openNextFloor(int index) {
     final nextIndex = _dungeonSystem.nextFloorAfterClear(
       _dungeonProgress,
       _dungeonRun,
       index,
     );
     if (nextIndex != index) _moveRunningFloor(index, nextIndex);
+    return _dungeonSystem.openSlot(_dungeonRun, nextIndex) == null
+        ? -1
+        : nextIndex;
+  }
 
-    // a lap of the same floor is the same haul carrying on, so the
-    // encounter panel's drop log stands across it
-    final member = _dungeonSystem.openSlot(_dungeonRun, nextIndex);
-    onDungeonFloorChanged?.call();
-    if (member != null) return _handOffTo(member);
+  /// Ends the pause on a cleared floor now and runs on into the next — the
+  /// summary's Go now, and what the pause running out does on its own.
+  void finishIntermission() {
+    final summary = _intermission;
+    if (summary == null) return;
+    _clearIntermission();
+    _actionTimingController.releaseHold();
+    if (_dungeonRun.runningSlot == summary.floorIndex) {
+      _runOnAfterClear(summary.floorIndex, watched: true);
+    }
+    notifyListeners();
+  }
 
-    // a floor that refilled to nothing would clear again the instant it
-    // started and loop at no cost, so the loop stops instead
+  /// Ends the pause on a cleared floor and stops the loop there — the
+  /// summary's Cancel. The run still moves on to the floor the loop mode
+  /// picks, refilled, so the play button starts that one.
+  void cancelIntermission() {
+    final summary = _intermission;
+    if (summary == null) return;
+    _clearIntermission();
     _actionTimingController.stop();
-    return false;
+    if (_dungeonRun.runningSlot == summary.floorIndex) {
+      _openNextFloor(summary.floorIndex);
+      _dungeonRun.beginLap(watched: false);
+      final member = _dungeonService.runningEntity(_dungeonRun);
+      if (member != null) {
+        _encounterService.setEncounterEntity(_encounterState, member);
+        if (!_viewingZoneEntity) _playerState.currentEntityViewId = member.id;
+      }
+      onDungeonFloorChanged?.call();
+    }
+    notifyListeners();
   }
 
   /// Hands the loop from floor [from] on to floor [to] — a dungeon loop
@@ -521,6 +693,10 @@ class EncounterController extends ChangeNotifier {
   void releaseDungeonFloor() {
     final index = _dungeonRun.runningSlot;
     if (index < 0) return;
+    if (_intermission != null) {
+      _clearIntermission();
+      _actionTimingController.releaseHold();
+    }
     _dungeonSystem.resetSlot(_dungeonRun, index);
     _dungeonService.clearRunningSlot(_dungeonRun);
     onDungeonFloorChanged?.call();
@@ -690,7 +866,9 @@ class EncounterController extends ChangeNotifier {
   // GameSessionFactory). drives combat entity attacks on their own
   // attack interval while the player's combat action is running
   void onActionTimingFrame() {
-    if (!_actionTimingController.isRunningAction(doEncounterAction)) {
+    _tickLapClock();
+    if (!_actionTimingController.isRunningAction(doEncounterAction) ||
+        _actionTimingController.isHeld) {
       _lastEntityAttackAt = null;
       return;
     }
@@ -716,6 +894,9 @@ class EncounterController extends ChangeNotifier {
       encounter: _encounterState,
     );
     entityAttackSequence++;
+    if (identical(entity, _dungeonService.runningEntity(_dungeonRun))) {
+      _dungeonRun.lapDamageTaken += latestEntityDamage;
+    }
 
     // a swing that takes the player to zero kills, before any food can be
     // reached for. checking this ahead of the eat is what makes a big max
@@ -739,6 +920,27 @@ class EncounterController extends ChangeNotifier {
     );
 
     notifyListeners();
+  }
+
+  /// Moves the running floor's lap clock on by the time since the last
+  /// frame, while the loop is running it and not paused. Frames further
+  /// apart than a second are a gap — the app away — not fighting time.
+  void _tickLapClock() {
+    final running =
+        _dungeonRun.runningSlot >= 0 &&
+        _actionTimingController.runningAction?.kind ==
+            BoundActionKind.DUNGEON_SLOT &&
+        !_actionTimingController.isHeld;
+    if (!running) {
+      _lastLapFrameAt = null;
+      return;
+    }
+    final now = DateTime.now();
+    final last = _lastLapFrameAt;
+    _lastLapFrameAt = now;
+    if (last == null) return;
+    final dt = now.difference(last);
+    if (dt <= const Duration(seconds: 1)) _dungeonRun.lapTime += dt;
   }
 
   // how far the combat entity is through its attack windup, 0..1. sampled

@@ -18,11 +18,16 @@ void main() {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     final save = withGatheringTools(factory.newGame(catalogs));
-    return factory.create(
+    final session = factory.create(
       save: save,
       catalogs: catalogs,
       vsync: const TestVSync(),
     );
+    // these are about where the loop goes, not the pause a live clear
+    // takes on its summary (dungeon_floor_clear_test.dart), so a clear
+    // runs straight on, as it does with the app closed
+    session.encounterController.floorIntermission = Duration.zero;
+    return session;
   }
 
   // strong and fed, so floors clear and keep looping deterministically
@@ -185,6 +190,29 @@ void main() {
 
       expect(dungeons.isCleared(dev, 1), isFalse);
       expect(dungeons.chestsWaiting(dev), 1);
+      session.dispose();
+    });
+
+    test('a chest reports each piece at the rarity it rolled', () {
+      final session = buildSession();
+      final dungeons = session.dungeonController;
+      final progress = progressOf(session);
+      const grainery = DungeonId.GRAINERY;
+      // the grainery's weapons are written at uncommon
+      for (var i = 0; i < 40; i++) {
+        progress.earnChest(grainery);
+        progress.resetRun(grainery);
+        progress.earnChest(grainery);
+        progress.resetRun(grainery);
+      }
+      final loot = dungeons.claimChests(grainery);
+
+      final weapons = loot.where(
+        (l) => l.id.definition is EquipmentItemDefinition,
+      );
+      expect(weapons, isNotEmpty);
+      expect(weapons.map((l) => l.rarity), everyElement(Rarity.UNCOMMON));
+      expect(loot.firstWhere((l) => l.id == ItemId.LOGS).rarity, Rarity.COMMON);
       session.dispose();
     });
 

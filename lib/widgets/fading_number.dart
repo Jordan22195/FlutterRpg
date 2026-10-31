@@ -15,7 +15,12 @@ class FadingNumber extends StatefulWidget {
     this.onFinished,
     this.autoplay = true,
     this.child,
+    this.rise = 0,
   });
+
+  /// How far the number drifts up as it fades, in logical pixels. Zero
+  /// fades it in place.
+  final double rise;
 
   final int number;
 
@@ -119,9 +124,18 @@ class FadingNumberState extends State<FadingNumber>
     final baseStyle = widget.style ?? DefaultTextStyle.of(context).style;
     final effectiveStyle = baseStyle.copyWith(color: widget.color);
 
-    return FadeTransition(
+    final faded = FadeTransition(
       opacity: _opacity,
       child: widget.child ?? Text('${widget.number}', style: effectiveStyle),
+    );
+    if (widget.rise == 0) return faded;
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(0, -widget.rise * _controller.value),
+        child: child,
+      ),
+      child: faded,
     );
   }
 }

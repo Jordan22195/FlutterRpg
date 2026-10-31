@@ -444,4 +444,53 @@ void main() {
     session.actionTimingController.stop();
     await tester.pump(const Duration(seconds: 1));
   });
+
+  testWidgets('hits land clear of the hp bars: dealt beside the creature, '
+      'taken under the player\'s label', (tester) async {
+    final (:session, chicken: _) = await openChickenFight(tester);
+    // feedback belongs to a fight that is running
+    session.encounterController.startEncounterAction();
+    await settle(tester);
+
+    final hit = find.byKey(const ValueKey('hit-number'));
+    final taken = find.byKey(const ValueKey('damage-taken'));
+    // the hit you deal stands on the stage, beside the creature
+    expect(
+      find.descendant(of: find.byType(StagePanel), matching: hit),
+      findsOneWidget,
+    );
+    expect(taken, findsOneWidget);
+
+    // coloured by how the last swing rolled against its range
+    final result = session.encounterController.latestActionResult;
+    final shown = tester.widget<Text>(
+      find.descendant(of: hit, matching: find.byType(Text)),
+    );
+    expect(shown.style!.color, switch (HitTier.of(
+      result.damageDone,
+      maxRoll: result.maxRoll,
+      maxHit: result.maxHit,
+    )) {
+      HitTier.miss => GameColors.hitMiss,
+      HitTier.low => GameColors.hitLow,
+      HitTier.high => GameColors.hitHigh,
+      HitTier.max => GameColors.hitMax,
+    });
+
+    // and neither sits on a bar: the hit is above both, the damage taken
+    // is left of where every bar starts
+    final bars = tester
+        .widgetList<FillBar>(find.byType(FillBar))
+        .where((bar) => bar.height == 22)
+        .map((bar) => tester.getRect(find.byWidget(bar)))
+        .toList();
+    expect(bars, hasLength(2));
+    for (final bar in bars) {
+      expect(tester.getRect(hit).overlaps(bar), isFalse);
+      expect(tester.getRect(taken).right, lessThanOrEqualTo(bar.left));
+    }
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
 }

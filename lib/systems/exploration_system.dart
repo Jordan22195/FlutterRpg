@@ -30,6 +30,12 @@ class ExplorationSystem {
        _dropTableService = dropTableService,
        _inventoryService = inventoryService;
 
+  /// Whether exploring rolls a zone's item table at all. Off for now: an
+  /// explore turns up entities only, and the explore screen hides its Loot
+  /// tab and the zone's Finds table to match. The item roll is kept, and
+  /// its tests switch this on to keep it honest.
+  static bool itemFindsEnabled = false;
+
   /// The player's Exploration level including gear and buffs, matching the
   /// convention every other level gate in the game uses.
   int explorationLevel(PlayerData playerState, {DateTime? at}) {
@@ -69,10 +75,9 @@ class ExplorationSystem {
       playerState,
       level,
     );
-    final itemEntries = _explorationService.getZoneItemDropTableEntries(
-      playerState,
-      level,
-    );
+    final itemEntries = itemFindsEnabled
+        ? _explorationService.getZoneItemDropTableEntries(playerState, level)
+        : const <WeightedDropTableEntry<ItemId>>[];
 
     // a zone with nothing left to find (town zones, or everything still
     // locked) yields nothing rather than rolling an empty table

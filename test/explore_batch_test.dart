@@ -9,6 +9,7 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/exploration_service.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
+import 'package:rpg/systems/exploration_system.dart';
 
 // batching exists so hours of offline progress can be settled in one call
 // instead of looping the explore action thousands of times. the contract it
@@ -335,6 +336,11 @@ void main() {
     });
 
     test('credits item finds to both the player and the zone tally', () {
+      // item finds are off in the game; this keeps the code they run on
+      // honest in the meantime
+      ExplorationSystem.itemFindsEnabled = true;
+      addTearDown(() => ExplorationSystem.itemFindsEnabled = false);
+
       // the mine is where the item table lives: the meadow's is a lone NULL
       // filler, and a zone with nothing to find is the case below. Which
       // zone holds what is tuning, so the gate is read off the catalog

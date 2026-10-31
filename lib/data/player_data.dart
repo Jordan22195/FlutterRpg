@@ -317,11 +317,10 @@ class PlayerData {
               orElse: () =>
                   throw FormatException('Invalid ZoneId "\$rawZoneId".'),
             ),
-            currentEntityViewId: EntityId.values.firstWhere(
-              (e) => e.name == rawEntityId,
-              orElse: () =>
-                  throw FormatException('Invalid EntityId "\$rawEntityId".'),
-            ),
+            // an entity renamed or retired since the save just isn't on
+            // screen any more
+            currentEntityViewId:
+                EntityId.values.asNameMap()[rawEntityId] ?? EntityId.NULL,
             buffData: BuffData.fromJson(Map<String, dynamic>.from(rawBuffData)),
             skillData: skillData,
             equipmentData: EquipmentData.fromJson(

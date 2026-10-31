@@ -21,6 +21,9 @@ import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
 import '../widgets/action_dock.dart';
 import '../widgets/art_header.dart';
+import '../widgets/boss_arena.dart';
+import '../widgets/floor_clear_panel.dart';
+import '../data/floor_clear_summary.dart';
 import '../widgets/dungeon_floor_track.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/fill_bar.dart';
@@ -39,6 +42,32 @@ import '../widgets/skill_ring_row.dart';
 import '../data/ObjectStack.dart';
 import '../data/item_drop_type.dart';
 
+/// How a hit the player deals rolled, which is what colours its number.
+enum HitTier {
+  /// Nothing landed.
+  miss,
+
+  /// Below the average hit.
+  low,
+
+  /// At or above the average hit.
+  high,
+
+  /// The top of the range.
+  max;
+
+  /// Classifies [damage] against a swing whose range tops out at [maxRoll]:
+  /// hits roll evenly from 1 to [maxRoll], so the average is halfway along.
+  /// [maxHit] is the roll's own word that it hit the top. With no range to
+  /// read ([maxRoll] zero), any hit counts as high.
+  static HitTier of(int damage, {required int maxRoll, bool maxHit = false}) {
+    if (damage <= 0) return HitTier.miss;
+    if (maxHit || (maxRoll > 0 && damage >= maxRoll)) return HitTier.max;
+    if (maxRoll <= 0) return HitTier.high;
+    return damage * 2 >= maxRoll + 1 ? HitTier.high : HitTier.low;
+  }
+}
+
 /// The dungeon floor a combat screen is fighting through: which floor of
 /// which dungeon, its live queue, and how many of each member it starts
 /// with.
@@ -51,13 +80,24 @@ class DungeonFloorView {
   /// Loop dungeon rather than Loop floor.
   final bool loopsDungeon;
 
+  /// The floor just cleared, while the loop pauses on its summary before
+  /// the next one. Null the rest of the time.
+  final FloorClearSummary? cleared;
+
+  /// Where the loop runs on to after this floor, and that floor's name.
+  final int nextIndex;
+  final String nextName;
+
   const DungeonFloorView({
     required this.id,
     required this.index,
     required this.floor,
     required this.fullCounts,
     required this.loopsDungeon,
-  });
+    this.cleared,
+    int? nextIndex,
+    this.nextName = '',
+  }) : nextIndex = nextIndex ?? index;
 
   /// How many of the member being fought the floor started with.
   int get currentFullCount =>
@@ -87,6 +127,10 @@ class CombatViewState {
   /// catch table, and whether its damage was the top of its range.
   final int playerCatches;
   final bool playerMaxHit;
+
+  /// The top of the player's swing range, for reading their last hit as low
+  /// or high against its average. Zero when the action rolls no range.
+  final int playerMaxRoll;
 
   /// The fish the last cast brought up, for the catch chip's icon. Null on
   /// a miss.
@@ -145,6 +189,7 @@ class CombatViewState {
     required this.entityAttackSequence,
     this.playerCatches = 0,
     this.playerMaxHit = false,
+    this.playerMaxRoll = 0,
     this.playerCatchItem,
     required this.showActionFeedback,
     required this.drops,
@@ -228,8 +273,67 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     return skillRingColor(entity.entityType);
   }
 
-  /// Damage dealt or taken, flashed over an hp bar: hp-coloured for a hit,
-  /// muted for a miss.
+  /// The player's hit on the target, floated up beside its sprite on the
+  /// stage, clear of every bar. Its colour says how it rolled — blue for a
+  /// miss, yellow below the average hit, red at or above it — and a max hit
+  /// comes up bigger and heavier, in dark red.
+  Widget buildHitNumber(BuildContext context, CombatViewState view) {
+    final palette = context.palette;
+    final damage = view.playerDamage;
+    final tier = HitTier.of(
+      damage,
+      maxRoll: view.playerMaxRoll,
+      maxHit: view.playerMaxHit,
+    );
+    final isMax = tier == HitTier.max;
+    return FadingNumber(
+      key: const ValueKey('hit-number'),
+      number: damage,
+      trigger: view.actionSequence,
+      autoplay: false,
+      rise: isMax ? 24 : 18,
+      color: switch (tier) {
+        HitTier.miss => GameColors.hitMiss,
+        HitTier.low => GameColors.hitLow,
+        HitTier.high => GameColors.hitHigh,
+        HitTier.max => GameColors.hitMax,
+      },
+      style: HearthText.title.copyWith(
+        fontSize: 26,
+        height: 1,
+        shadows: [
+          Shadow(offset: const Offset(0, 2), color: palette.titleShadow),
+          Shadow(blurRadius: 6, color: palette.titleShadow),
+        ],
+      ),
+      // a max hit is set in the heavy body face, which holds its shape at
+      // size where the pixel face smears
+      child: isMax ? _maxHitNumber(context, damage) : null,
+    );
+  }
+
+  Widget _maxHitNumber(BuildContext context, int damage) {
+    return Text(
+      '$damage',
+      style: TextStyle(
+        fontFamily: HearthText.body,
+        fontSize: 32,
+        fontWeight: FontWeight.w800,
+        height: 1.1,
+        color: GameColors.hitMax,
+        fontFeatures: const [FontFeature.tabularFigures()],
+        shadows: [
+          Shadow(
+            offset: const Offset(0, 2),
+            color: context.palette.titleShadow,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// What an action did, flashed in the band of a row with no bar — an
+  /// herb picked. Hp-coloured for a hit, muted for a miss.
   Widget buildDamageNumber(BuildContext context, int damage, int sequence) {
     return FadingNumber(
       number: damage,
@@ -240,6 +344,30 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         fontSize: 14,
         fontWeight: FontWeight.w800,
         shadows: [Shadow(blurRadius: 4, color: context.palette.titleShadow)],
+      ),
+    );
+  }
+
+  /// Damage the player took, flashed under their row's label — beside the
+  /// hp bar it came off rather than over it. Hp-coloured for a hit, muted
+  /// for a miss.
+  Widget buildDamageTaken(BuildContext context, int damage, int sequence) {
+    final palette = context.palette;
+    final color = damage > 0 ? context.gameColors.hp : palette.textMuted;
+    return FadingNumber(
+      key: const ValueKey('damage-taken'),
+      number: damage,
+      trigger: sequence,
+      autoplay: false,
+      child: Text(
+        damage > 0 ? '−$damage' : '0',
+        style: HearthText.statusStat.copyWith(
+          fontSize: 14,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          color: color,
+          shadows: [Shadow(blurRadius: 4, color: palette.titleShadow)],
+        ),
       ),
     );
   }
@@ -374,14 +502,17 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// this so they stay identical. Pass a null [hp] for entities without
   /// hitpoints; the bar collapses and the stats stay right-aligned.
   ///
-  /// [damageSlot] flashes over the right end of the bar: the damage the
-  /// other side dealt this action.
+  /// [damageSlot] stands in the bar's band on a row with no bar: what a
+  /// cast caught, or an herb picked. [labelHit] flashes under the row's
+  /// label: the damage the other side dealt this action, beside the bar
+  /// rather than over it.
   Widget buildStatusRow(
     BuildContext context, {
     required String label,
     int? hp,
     int? maxHp,
     Widget? damageSlot,
+    Widget? labelHit,
     Color? barColor,
     Widget? timer,
     required List<Widget> stats,
@@ -396,53 +527,49 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       padding: const EdgeInsets.only(bottom: _rowGap),
       child: Row(
         children: [
-          buildRowLabel(context, label),
+          if (labelHit == null)
+            buildRowLabel(context, label)
+          else
+            SizedBox(
+              width: kEncounterRowLabelWidth,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  buildRowLabel(context, label),
+                  IgnorePointer(child: labelHit),
+                ],
+              ),
+            ),
           const SizedBox(width: _labelGap),
           if (hp != null)
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      TweenAnimationBuilder<double>(
-                        tween: Tween<double>(end: hpPercent),
-                        duration: const Duration(milliseconds: 100),
-                        builder: (context, animatedValue, child) {
-                          return FillBar(
-                            value: animatedValue,
-                            height: _hpBarHeight,
-                            borderRadius: 7,
-                            backgroundColor: palette.track,
-                            foregroundColor: barColor ?? colors.hp,
-                            // the counter rides in the bar, so the bar can
-                            // be as wide as the row allows
-                            child: Text(
-                              '$hp / $maxHp',
-                              style: HearthText.ringNumber.copyWith(
-                                color: colors.onHp,
-                                shadows: [
-                                  Shadow(
-                                    blurRadius: 3,
-                                    color: palette.titleShadow,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      if (damageSlot != null)
-                        Positioned(
-                          right: 6,
-                          top: 0,
-                          bottom: 0,
-                          child: IgnorePointer(
-                            child: Center(child: damageSlot),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(end: hpPercent),
+                    duration: const Duration(milliseconds: 100),
+                    builder: (context, animatedValue, child) {
+                      return FillBar(
+                        value: animatedValue,
+                        height: _hpBarHeight,
+                        borderRadius: 7,
+                        backgroundColor: palette.track,
+                        foregroundColor: barColor ?? colors.hp,
+                        // the counter rides in the bar, so the bar can
+                        // be as wide as the row allows
+                        child: Text(
+                          '$hp / $maxHp',
+                          style: HearthText.ringNumber.copyWith(
+                            color: colors.onHp,
+                            shadows: [
+                              Shadow(blurRadius: 3, color: palette.titleShadow),
+                            ],
                           ),
                         ),
-                    ],
+                      );
+                    },
                   ),
                   if (timer != null) ...[
                     const SizedBox(height: _timerGap),
@@ -452,8 +579,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
               ),
             )
           else if (damageSlot != null)
-            // no bar to ride over, so the slot keeps the bar's band and the
-            // same right-hand spot the damage number takes over a bar
+            // no bar, so the slot keeps the bar's band, at its right end
             Expanded(
               child: SizedBox(
                 height: _hpBarHeight,
@@ -498,8 +624,8 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         progress: view.playerActionProgress,
         interval: view.playerActionInterval,
       ),
-      // damage taken from the entity's attacks, flashed over the bar
-      damageSlot: buildDamageNumber(
+      // damage taken from the entity's attacks, under the row's label
+      labelHit: buildDamageTaken(
         context,
         view.entityDamage,
         view.entityAttackSequence,
@@ -625,7 +751,13 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// to the fight it is about to join, and the tail of the queue climbs away
   /// from it. Tiles open their details, which is how a boss's drops are
   /// read before you reach it.
-  Widget buildPortrait(BuildContext context, CombatViewState view) {
+  ///
+  /// [hit] is the player's last hit, floated beside the sprite.
+  Widget buildPortrait(
+    BuildContext context,
+    CombatViewState view, {
+    Widget? hit,
+  }) {
     final entity = view.entity;
     final kind = entity is CombatEntity
         ? SpriteKind.combat
@@ -646,11 +778,14 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     }
 
     final dungeon = view.dungeonFloor;
-    if (dungeon != null) return _buildFloorStage(context, view, dungeon);
+    if (dungeon != null) {
+      return _buildFloorStage(context, view, dungeon, hit: hit);
+    }
 
     return StagePanel(
       tint: tint,
       sprite: sprite,
+      hit: hit,
       // a creature rarer than common is outlined in its rarity, as its tile
       // was on the zone that led here
       outline: rarityBorderColor(entity.id.definition.rarity),
@@ -689,8 +824,9 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   Widget _buildFloorStage(
     BuildContext context,
     CombatViewState view,
-    DungeonFloorView dungeon,
-  ) {
+    DungeonFloorView dungeon, {
+    Widget? hit,
+  }) {
     final palette = context.palette;
     final entity = view.entity;
     final kind = entity is CombatEntity
@@ -715,6 +851,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       height: 124,
       tint: tint,
       sprite: sprite,
+      hit: hit,
       isBoss: boss,
       outline: rarityBorderColor(entity.id.definition.rarity),
       onTap: portraitTap(context, entity),
@@ -793,6 +930,189 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     );
   }
 
+  /// A dungeon floor's one-line progress, in the track's place when the
+  /// floor has come down to its boss or been cleared: a check, how far it
+  /// has got, a rule running to [label] at the right.
+  Widget _floorLine(
+    BuildContext context, {
+    required String progress,
+    required String label,
+    required Color labelColor,
+    required Gradient rule,
+  }) {
+    final palette = context.palette;
+    final style = HearthText.timer.copyWith(
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+      color: palette.textMuted,
+    );
+    return Semantics(
+      container: true,
+      label: 'Floor progress: $progress, ${label.toLowerCase()}',
+      excludeSemantics: true,
+      child: SizedBox(
+        height: 28,
+        child: Row(
+          children: [
+            Container(
+              width: 16,
+              height: 16,
+              decoration: const BoxDecoration(
+                color: GameColors.clearedColor,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Icon(Icons.check_rounded, size: 11, color: palette.bg),
+            ),
+            const SizedBox(width: 8),
+            // the rule gives way first, then the count, so the label at the
+            // right always reads in full
+            Flexible(
+              child: Text(
+                progress,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Container(
+                height: 2,
+                decoration: BoxDecoration(gradient: rule),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: style.copyWith(color: labelColor, letterSpacing: 1.2),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// A floor's boss fight: the members before it folded into one line, the
+  /// boss alone in its arena with its hp along the arena's foot, the
+  /// player's row as a card under it, and the same tabs any fight has.
+  List<Widget> _bossFightContent(
+    BuildContext context,
+    CombatViewState view,
+    DungeonFloorView dungeon,
+    List<SkillId> trainedSkills,
+  ) {
+    final boss = view.entity as CombatEntity;
+    final palette = context.palette;
+    final before = dungeon.floor.members.length - 1;
+    return [
+      _floorLine(
+        context,
+        progress: 'All $before cleared',
+        label: 'FINAL ENCOUNTER',
+        labelColor: GameColors.bossLabel,
+        rule: const LinearGradient(
+          colors: [GameColors.clearedColor, GameColors.bossFrame],
+        ),
+      ),
+      const SizedBox(height: 8),
+      BossArena(
+        boss: boss,
+        floorNumber: dungeon.index + 1,
+        onTap: portraitTap(context, boss),
+        damageSlot: view.showActionFeedback
+            ? buildHitNumber(context, view)
+            : null,
+        actionProgress: view.entityActionProgress,
+      ),
+      const SizedBox(height: 12),
+      Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+        decoration: BoxDecoration(
+          color: palette.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: palette.border),
+        ),
+        child: buildPlayerStatusRow(context, view, boss.entityType),
+      ),
+      const SizedBox(height: 12),
+      buildInfoPanel(context, view, trainedSkills),
+    ];
+  }
+
+  /// Loot, active buffs and (per screen) trained skills or the entity's
+  /// details, sharing one slot switched by tab.
+  Widget buildInfoPanel(
+    BuildContext context,
+    CombatViewState view,
+    List<SkillId> trainedSkills,
+  ) {
+    final entity = view.entity;
+    final isCombatEntity = entity is CombatEntity;
+    return EncounterInfoPanel(
+      // gathering draws its rings above the panel, so the tab would only
+      // repeat them; it gets the entity's details in that slot instead of
+      // reaching them by popup. the placeholder entity a screen falls back to
+      // has no details to build, so it gets neither
+      skills: isCombatEntity ? trainedSkills : null,
+      infoEntity: entity.id == EntityId.NULL ? null : entity,
+      drops: view.drops,
+      equipment: view.equipmentDrops,
+      lootLabel: isCombatEntity ? 'Loot' : 'Gathered',
+      emptyLootLabel: isCombatEntity
+          ? 'No loot this session'
+          : 'Nothing gathered this session',
+    );
+  }
+
+  /// A cleared floor's summary, in the boss arena's place while the loop
+  /// pauses before the next floor.
+  List<Widget> _floorClearContent(
+    BuildContext context,
+    DungeonFloorView dungeon,
+    FloorClearSummary cleared,
+  ) {
+    return [
+      _floorLine(
+        context,
+        progress: '${cleared.defeated} / ${cleared.defeated} defeated',
+        label: 'FLOOR COMPLETE',
+        labelColor: GameColors.clearedColor,
+        rule: const LinearGradient(
+          colors: [GameColors.clearedColor, GameColors.clearedColor],
+        ),
+      ),
+      const SizedBox(height: 8),
+      FloorClearPanel(summary: cleared),
+    ];
+  }
+
+  /// The dock while the loop pauses on a cleared floor: the countdown to
+  /// the next floor and which one it is, then Cancel and Go now.
+  Widget _floorClearDock(
+    BuildContext context,
+    DungeonFloorView dungeon,
+    FloorClearSummary cleared,
+  ) {
+    final encounter = context.read<EncounterController>();
+    final dungeons = context.read<DungeonController>();
+    return ActionDock(
+      topRow: FloorCountdownRow(
+        endsAt: cleared.endsAt,
+        total: encounter.floorIntermission,
+        nextFloorNumber: dungeon.nextIndex + 1,
+        nextFloorName: dungeon.nextName,
+        repeats: dungeon.nextIndex == dungeon.index,
+        loopsDungeon: dungeon.loopsDungeon,
+        onLoopDungeonChanged: (on) => dungeons.setLoopDungeon(dungeon.id, on),
+      ),
+      buttons: FloorClearButtons(
+        onCancel: encounter.cancelIntermission,
+        onGoNow: encounter.finishIntermission,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final view = resolveView(context);
@@ -822,6 +1142,17 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
     final level = entity is CombatEntity ? entity.level : entity.defence;
     final dungeon = view.dungeonFloor;
     final dungeonDef = dungeon?.id.definition;
+    // a floor's boss gets the screen to itself, and a floor just cleared
+    // shows its summary in the boss's place until the loop runs on
+    final cleared = dungeon?.cleared;
+    // anything with a bar to read takes its hits on the stage. fishing and
+    // herbalism show no bar, so theirs stay on the row
+    final hitOnStage =
+        skillType != SkillId.FISHING && skillType != SkillId.HERBALISM;
+    final bossFight =
+        dungeon != null &&
+        entity is CombatEntity &&
+        DungeonFloorTrack.isBoss(entity);
 
     // the top is left open: the art strip runs up behind the status bar, as
     // on the screen this one opens from
@@ -871,115 +1202,118 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               children: [
                 if (aboveFight != null) aboveFight,
-                if (dungeon != null) ...[
-                  DungeonFloorTrack(
-                    floor: dungeon.floor,
-                    fullCounts: dungeon.fullCounts,
-                    onMemberTap: (member) =>
-                        showEntityInfoDialog(context, member),
-                  ),
-                  const SizedBox(height: 12),
-                ],
+                if (cleared != null)
+                  ..._floorClearContent(context, dungeon!, cleared)
+                else if (bossFight)
+                  ..._bossFightContent(context, view, dungeon, trainedSkills)
+                else ...[
+                  if (dungeon != null) ...[
+                    DungeonFloorTrack(
+                      floor: dungeon.floor,
+                      fullCounts: dungeon.fullCounts,
+                      onMemberTap: (member) =>
+                          showEntityInfoDialog(context, member),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
 
-                // the entity, with whatever is queued behind it. the damage
-                // the player deals reports on the entity's hp bar below, and
-                // the damage coming back on the player's, so the stage
-                // carries nothing but the entity
-                buildPortrait(context, view),
-                const SizedBox(height: 16),
-
-                buildEntityStatusRow(
-                  context,
-                  entity,
-                  view.requiredLevel,
-                  // damage the player dealt this action, mirroring the
-                  // entity's damage on the player's row below
-                  // a fishing spot has no bar, so its cast reports what it
-                  // caught instead
-                  damageSlot: !view.showActionFeedback
-                      ? null
-                      : skillType == SkillId.FISHING
-                      ? buildCatchChip(
-                          context,
-                          entity,
-                          view.playerCatchItem,
-                          view.playerCatches,
-                          view.playerMaxHit,
-                          view.actionSequence,
-                        )
-                      : buildDamageNumber(
-                          context,
-                          view.playerDamage,
-                          view.actionSequence,
-                        ),
-                  actionProgress: view.entityActionProgress,
-                ),
-                // combat needs the player's own hp and stats in view;
-                // nothing gathered fights back, so that strip gives way to
-                // the rings for the skills the activity trains
-                if (isCombatEntity)
-                  buildPlayerStatusRow(context, view, skillType)
-                else
-                  buildGatheringStatusRow(
+                  // the entity, with whatever is queued behind it. the damage
+                  // the player deals floats up beside it, and the damage
+                  // coming back shows under the player's label, so neither
+                  // covers a bar
+                  buildPortrait(
                     context,
                     view,
-                    skillType,
-                    trainedSkills,
+                    hit: view.showActionFeedback && hitOnStage
+                        ? buildHitNumber(context, view)
+                        : null,
                   ),
+                  const SizedBox(height: 16),
 
-                if (view.locked)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text(
-                      // the level reads first; with it met, the missing tool
-                      view.missingTool != null &&
-                              view.requiredLevel <=
-                                  (view.playerStats[skillType] ?? 0)
-                          ? "Needs ${toolNoun(view.missingTool!)} — equip "
-                                "one in Gear"
-                          : "Requires ${skillDisplayName(skillType)} level "
-                                "${view.requiredLevel}",
-                      textAlign: TextAlign.center,
-                      style: HearthText.rowMeta.copyWith(
-                        color: context.gameColors.hp,
+                  buildEntityStatusRow(
+                    context,
+                    entity,
+                    view.requiredLevel,
+                    // a row with no bar keeps what the action did in the
+                    // bar's band: what a cast caught, or the herb picked. a
+                    // row with a bar has its hit on the stage instead
+                    damageSlot: !view.showActionFeedback || hitOnStage
+                        ? null
+                        : skillType == SkillId.FISHING
+                        ? buildCatchChip(
+                            context,
+                            entity,
+                            view.playerCatchItem,
+                            view.playerCatches,
+                            view.playerMaxHit,
+                            view.actionSequence,
+                          )
+                        : buildDamageNumber(
+                            context,
+                            view.playerDamage,
+                            view.actionSequence,
+                          ),
+                    actionProgress: view.entityActionProgress,
+                  ),
+                  // combat needs the player's own hp and stats in view;
+                  // nothing gathered fights back, so that strip gives way to
+                  // the rings for the skills the activity trains
+                  if (isCombatEntity)
+                    buildPlayerStatusRow(context, view, skillType)
+                  else
+                    buildGatheringStatusRow(
+                      context,
+                      view,
+                      skillType,
+                      trainedSkills,
+                    ),
+
+                  if (view.locked)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        // the level reads first; with it met, the missing tool
+                        view.missingTool != null &&
+                                view.requiredLevel <=
+                                    (view.playerStats[skillType] ?? 0)
+                            ? "Needs ${toolNoun(view.missingTool!)} — equip "
+                                  "one in Gear"
+                            : "Requires ${skillDisplayName(skillType)} level "
+                                  "${view.requiredLevel}",
+                        textAlign: TextAlign.center,
+                        style: HearthText.rowMeta.copyWith(
+                          color: context.gameColors.hp,
+                        ),
                       ),
                     ),
-                  ),
-                const SizedBox(height: 6),
+                  const SizedBox(height: 6),
 
-                // loot, active buffs and (per screen) trained skills or the
-                // entity's details share one slot, switched by tab
-                EncounterInfoPanel(
-                  // gathering draws its rings above the panel, so the tab
-                  // would only repeat them; it gets the entity's details in
-                  // that slot instead of reaching them by popup. the
-                  // placeholder entity a screen falls back to has no details
-                  // to build, so it gets neither
-                  skills: isCombatEntity ? trainedSkills : null,
-                  infoEntity: entityId == EntityId.NULL ? null : entity,
-                  drops: view.drops,
-                  equipment: view.equipmentDrops,
-                  lootLabel: isCombatEntity ? 'Loot' : 'Gathered',
-                  emptyLootLabel: isCombatEntity
-                      ? 'No loot this session'
-                      : 'Nothing gathered this session',
-                ),
+                  // loot, active buffs and (per screen) trained skills or the
+                  // entity's details share one slot, switched by tab
+                  buildInfoPanel(context, view, trainedSkills),
+                ],
               ],
             ),
           ),
 
           // the style switch rides in the dock with the buttons, so it stays
           // reachable mid-action. an entity with a single stance offers no
-          // choice, so the row is left out entirely
-          ActionDock(
-            // a fight a zone away is walked to first: the road rides above
-            // the style switch, which can be set before arriving
-            banner: context.watch<WorldController>().isViewingCurrentZone
-                ? null
-                : const TravelRow(),
-            topRow: stances.length > 1 ? StanceButton(stances: stances) : null,
-            buttons: buildActionBar(context, view),
-          ),
+          // choice, so the row is left out entirely. while the loop pauses on
+          // a cleared floor, the dock counts down to the next one instead
+          if (cleared != null)
+            _floorClearDock(context, dungeon!, cleared)
+          else
+            ActionDock(
+              // a fight a zone away is walked to first: the road rides above
+              // the style switch, which can be set before arriving
+              banner: context.watch<WorldController>().isViewingCurrentZone
+                  ? null
+                  : const TravelRow(),
+              topRow: stances.length > 1
+                  ? StanceButton(stances: stances)
+                  : null,
+              buttons: buildActionBar(context, view),
+            ),
         ],
       ),
     );
@@ -1019,6 +1353,7 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
       playerDamage: controller.latestActionResult.damageDone,
       playerCatches: controller.latestActionResult.catches,
       playerMaxHit: controller.latestActionResult.maxHit,
+      playerMaxRoll: controller.latestActionResult.maxRoll,
       playerCatchItem: controller.latestActionResult.items
           .map((stack) => stack.id)
           .whereType<ItemId>()
@@ -1056,6 +1391,9 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
     final dungeons = context.watch<DungeonController>();
     final inView = controller.floorInView();
     if (inView == null || !inView.id.isReal) return null;
+    final cleared = controller.summaryShowing ? controller.intermission : null;
+    final next = dungeons.nextFloorAfter(inView.id, inView.index);
+    final entries = inView.id.definition.entries;
     return DungeonFloorView(
       id: inView.id,
       index: inView.index,
@@ -1066,6 +1404,16 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
         inView.floor,
       ),
       loopsDungeon: dungeons.loopsDungeon(inView.id),
+      // the pause belongs to the floor it cleared, which is still the one
+      // in view until the loop runs on
+      cleared:
+          cleared != null &&
+              cleared.dungeonId == inView.id &&
+              cleared.floorIndex == inView.index
+          ? cleared
+          : null,
+      nextIndex: next,
+      nextName: next < entries.length ? entries[next].name : '',
     );
   }
 

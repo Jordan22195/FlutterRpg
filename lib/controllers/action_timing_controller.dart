@@ -96,6 +96,11 @@ class ActionTimingData {
   /// [ActionTimingService.stop], so it always describes the bound action.
   BoundAction? boundAction;
 
+  /// While set and still ahead, the loop stands still: bound and running,
+  /// boost kept, but no progress and nothing fired. The pause between
+  /// dungeon floors. Not serialized: a save never comes back mid-pause.
+  DateTime? holdUntil;
+
   Map<String, dynamic> toJson() {
     return {
       'maxInterval': maxInterval.inMicroseconds,
@@ -410,6 +415,30 @@ class ActionTimingController extends ChangeNotifier {
   /// True while the primary button is held down and boosting the speed.
   bool get isButtonHeld => _actionTimingState.buttonHeld;
 
+  /// Holds the loop for [duration]: it stays bound and running, but makes
+  /// no progress until the hold runs out or [releaseHold] ends it.
+  /// [onHoldExpired] is called when it runs out on its own.
+  void hold(Duration duration) {
+    _actionTimingState.holdUntil = DateTime.now().add(duration);
+    notifyListeners();
+  }
+
+  /// Ends a hold early, without calling [onHoldExpired].
+  void releaseHold() {
+    if (_actionTimingState.holdUntil == null) return;
+    _actionTimingState.holdUntil = null;
+    notifyListeners();
+  }
+
+  /// Whether the loop is running but held still.
+  bool get isHeld =>
+      _actionTimingState.running && _actionTimingState.holdUntil != null;
+
+  /// Called on the first frame after a hold runs out, before that frame
+  /// moves the loop on. Wired to the encounter controller, whose dungeon
+  /// floors are what pause.
+  VoidCallback? onHoldExpired;
+
   void start() {
     // time spent with the loop stopped is not time spent away: the player
     // was on another screen, not backgrounded mid-action. without this, the
@@ -441,11 +470,31 @@ class ActionTimingController extends ChangeNotifier {
     _actionTimingService.setPrimaryButtonHeld(false, _actionTimingState);
   }
 
+  /// Whether this frame is swallowed by a hold. A held frame moves nothing,
+  /// and is stamped as a live frame so the pause is never mistaken for time
+  /// away. The frame a hold runs out on ends it and goes on as normal.
+  bool _holdFrame(Duration elapsed) {
+    final until = _actionTimingState.holdUntil;
+    if (until == null) return false;
+    if (DateTime.now().isBefore(until)) {
+      _actionTimingState.lastElapsed = elapsed;
+      _playerState.lastActionTime = DateTime.now();
+      return true;
+    }
+    _actionTimingState.holdUntil = null;
+    onHoldExpired?.call();
+    return false;
+  }
+
   // increase speed percent based on acceleration values
   // icriment action progress based on time elapsed and current action interval
   // if action progress is 100% fire the action
   // drain stamina and apply xp based on speed mulitplier
   void _onTick(Duration elapsed) {
+    if (_holdFrame(elapsed)) {
+      notifyListeners();
+      return;
+    }
     // a frame that arrives long after the last one is not a frame at all -
     // it is the app coming back, and the gap behind it is settled rather
     // than run
@@ -891,6 +940,7 @@ class ActionTimingService {
     actionTimingState.activityCount = null;
     actionTimingState.actionSkill = null;
     actionTimingState.boundAction = null;
+    actionTimingState.holdUntil = null;
     actionTimingState.intervalOverride = null;
     actionTimingState.maxInterval = defaultMaxInterval;
   }

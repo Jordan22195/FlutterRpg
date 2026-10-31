@@ -157,6 +157,18 @@ class EncounterService {
       rng: rng,
     );
     encounterState.lastPlayerDamage = rolled;
+    res.maxRoll = damage == null
+        ? computeMaxHit(
+            attack: playerOffenseSkillStat,
+            defense: encounterDefence,
+          )
+        : weaponMaxHit(
+            damage: damage,
+            attack: playerOffenseSkillStat,
+            defense: encounterDefence,
+            multiplier: multiplier,
+          );
+    res.maxHit = rolled > 0 && rolled >= res.maxRoll;
 
     if (!overflow || rolled < entity.hitpoints) {
       entity.hitpoints -= rolled;

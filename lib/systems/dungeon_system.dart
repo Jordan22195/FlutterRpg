@@ -8,6 +8,7 @@ import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../data/item_drop_type.dart';
 import '../data/ObjectStack.dart';
+import '../data/chest_loot.dart';
 import '../services/inventory_service.dart';
 import '../services/player_data_service.dart';
 import '../services/weighted_drop_table_service.dart';
@@ -168,13 +169,25 @@ class DungeonSystem {
     int index,
   ) {
     final id = run.dungeonId;
+    final next = previewNextFloor(progress, id, index);
+    // coming back round off the last main floor starts the run over
+    if (id.isReal &&
+        progress.loopsDungeon(id) &&
+        id.definition.isMainFloor(index) &&
+        id.definition.nextMainFloor(index) == null) {
+      progress.resetRun(id);
+    }
+    return next;
+  }
+
+  /// Where [nextFloorAfterClear] would send the loop off floor [index] of
+  /// [id], without touching anything — what the pause before the next floor
+  /// announces.
+  int previewNextFloor(DungeonProgressData progress, DungeonId id, int index) {
     if (!id.isReal || !progress.loopsDungeon(id)) return index;
     final def = id.definition;
     if (!def.isMainFloor(index)) return index;
-    final next = def.nextMainFloor(index);
-    if (next != null) return next;
-    progress.resetRun(id);
-    return def.mainFloors.first;
+    return def.nextMainFloor(index) ?? def.mainFloors.first;
   }
 
   /// Back to the first floor: this run's clears and its chest go, and every
@@ -232,8 +245,8 @@ class DungeonSystem {
 
   /// Opens up to [max] chests of [id] waiting to be claimed (all of them
   /// when null), paying what they roll into [playerInventory]. Returns what
-  /// came out, merged by item; empty when nothing was waiting.
-  List<ObjectStack<ItemId>> openChests({
+  /// came out, merged by item and rarity; empty when nothing was waiting.
+  List<ChestLoot> openChests({
     required DungeonProgressData progress,
     required DungeonId id,
     required InventoryData playerInventory,
@@ -247,11 +260,14 @@ class DungeonSystem {
       count,
       chestRollsFor(id.definition),
     );
-    final totals = <ItemId, int>{};
+    final totals = <(ItemId, Rarity), int>{};
     for (final drop in rolled) {
       final item = drop.id.id;
       if (drop.count <= 0 || item == ItemId.NULL) continue;
       final built = item.build();
+      final rarity = built is EquipmentItem
+          ? drop.id.rarity
+          : item.definition.quality;
       if (built is EquipmentItem) {
         // equipment arrives at the quality its line names, as a kill's does
         built.quality = drop.id.rarity;
@@ -262,11 +278,11 @@ class DungeonSystem {
           ObjectStack<ItemId>(id: item, count: drop.count),
         ]);
       }
-      totals[item] = (totals[item] ?? 0) + drop.count;
+      totals[(item, rarity)] = (totals[(item, rarity)] ?? 0) + drop.count;
     }
     return [
       for (final entry in totals.entries)
-        ObjectStack<ItemId>(id: entry.key, count: entry.value),
+        ChestLoot(id: entry.key.$1, rarity: entry.key.$2, count: entry.value),
     ];
   }
 

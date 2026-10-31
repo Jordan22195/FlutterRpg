@@ -1,3 +1,4 @@
+import 'ObjectStack.dart';
 import 'entity_queue.dart';
 import '../catalogs/dungeons/dungeons.dart';
 
@@ -27,6 +28,50 @@ class DungeonRun {
   /// a floor when it is started fresh or reset; serialized, because a floor
   /// that keeps looping with the app closed is still the floor you started.
   Map<int, int> sessionRuns;
+
+  // ---- the lap being fought, as watched live. none of it is serialized:
+  // a lap a relaunch comes back into was not watched from its start, so it
+  // has no time or damage to stand against a best ----
+
+  /// Whether every action of the current lap so far fired live, from its
+  /// first. Only a watched lap's time and damage are worth recording.
+  bool lapWatched = false;
+
+  /// Time the loop has spent running on the current lap — stops and pauses
+  /// don't count, so a lap reads as fighting time, not wall clock.
+  Duration lapTime = Duration.zero;
+
+  /// Damage the player has taken on the current lap.
+  int lapDamageTaken = 0;
+
+  /// What the current lap has dropped, merged by item: [lapLoot] from the
+  /// floor's ordinary members, [lapBossLoot] from its boss.
+  List<ObjectStack> lapLoot = [];
+  List<ObjectStack> lapBossLoot = [];
+
+  /// Starts a fresh lap. [watched] is false for a lap that begins with the
+  /// app closed.
+  void beginLap({required bool watched}) {
+    lapWatched = watched;
+    lapTime = Duration.zero;
+    lapDamageTaken = 0;
+    lapLoot = [];
+    lapBossLoot = [];
+  }
+
+  /// Adds [items] to the current lap's loot — the boss's, when [boss].
+  void addLapLoot(List<ObjectStack> items, {bool boss = false}) {
+    final into = boss ? lapBossLoot : lapLoot;
+    for (final item in items) {
+      if (item.count <= 0) continue;
+      final existing = into.where((s) => s.id == item.id).firstOrNull;
+      if (existing != null) {
+        existing.count += item.count;
+      } else {
+        into.add(ObjectStack(id: item.id, count: item.count));
+      }
+    }
+  }
 
   DungeonRun({
     this.active = false,

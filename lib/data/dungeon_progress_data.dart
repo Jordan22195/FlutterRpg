@@ -34,6 +34,14 @@ class DungeonProgressData {
   /// and the last comes back round to the first. The rest loop one floor.
   final Set<DungeonId> loopDungeon;
 
+  /// Fastest watched lap of each floor, in milliseconds, per dungeon. Only
+  /// laps fought live from their start are timed, so a lap settled offline
+  /// never sets one.
+  final Map<DungeonId, Map<int, int>> bestTimes;
+
+  /// Least damage taken on a watched lap of each floor, per dungeon.
+  final Map<DungeonId, Map<int, int>> leastDamage;
+
   DungeonProgressData({
     Map<DungeonId, Map<int, int>>? runs,
     Map<DungeonId, Set<int>>? cleared,
@@ -41,7 +49,11 @@ class DungeonProgressData {
     Map<DungeonId, int>? chests,
     Set<DungeonId>? chestEarned,
     Set<DungeonId>? loopDungeon,
+    Map<DungeonId, Map<int, int>>? bestTimes,
+    Map<DungeonId, Map<int, int>>? leastDamage,
   }) : runs = runs ?? {},
+       bestTimes = bestTimes ?? {},
+       leastDamage = leastDamage ?? {},
        cleared = cleared ?? {},
        keysPaid = keysPaid ?? {},
        chests = chests ?? {},
@@ -68,6 +80,26 @@ class DungeonProgressData {
   void resetRun(DungeonId id) {
     cleared.remove(id);
     chestEarned.remove(id);
+  }
+
+  /// The fastest watched lap of [floor], or null before one has been timed.
+  Duration? bestTime(DungeonId id, int floor) {
+    final ms = bestTimes[id]?[floor];
+    return ms == null ? null : Duration(milliseconds: ms);
+  }
+
+  /// The least damage taken on a watched lap of [floor], or null before one.
+  int? leastDamageTaken(DungeonId id, int floor) => leastDamage[id]?[floor];
+
+  /// Books a watched lap of [floor]: keeps [time] and [damage] where they
+  /// beat the bests on record.
+  void recordLap(DungeonId id, int floor, Duration time, int damage) {
+    if (!id.isReal || floor < 0) return;
+    final ms = time.inMilliseconds;
+    final times = bestTimes.putIfAbsent(id, () => {});
+    if (ms < (times[floor] ?? ms + 1)) times[floor] = ms;
+    final damages = leastDamage.putIfAbsent(id, () => {});
+    if (damage < (damages[floor] ?? damage + 1)) damages[floor] = damage;
   }
 
   bool keyPaid(DungeonId id) => keysPaid.contains(id);
@@ -131,7 +163,46 @@ class DungeonProgressData {
       },
       'chestEarned': _names(chestEarned),
       'loopDungeon': _names(loopDungeon),
+      'bestTimes': _floorMapJson(bestTimes),
+      'leastDamage': _floorMapJson(leastDamage),
     };
+  }
+
+  static Map<String, dynamic> _floorMapJson(
+    Map<DungeonId, Map<int, int>> map,
+  ) => {
+    for (final entry in map.entries)
+      if (entry.key.isReal && entry.value.isNotEmpty)
+        entry.key.name: {
+          for (final floor in entry.value.entries)
+            floor.key.toString(): floor.value,
+        },
+  };
+
+  /// A per-floor record read back tolerantly: an entry that doesn't parse,
+  /// or is negative, is dropped.
+  static Map<DungeonId, Map<int, int>> _floorMapFromJson(
+    Object? raw,
+    Map<String, DungeonId> byName,
+  ) {
+    final out = <DungeonId, Map<int, int>>{};
+    if (raw is! Map) return out;
+    for (final entry in raw.entries) {
+      final id = byName[entry.key];
+      final rawFloors = entry.value;
+      if (id == null || !id.isReal || rawFloors is! Map) continue;
+      final byFloor = <int, int>{};
+      for (final floor in rawFloors.entries) {
+        final index = int.tryParse('${floor.key}');
+        final value = floor.value;
+        if (index == null || index < 0 || value is! int || value < 0) {
+          continue;
+        }
+        byFloor[index] = value;
+      }
+      if (byFloor.isNotEmpty) out[id] = byFloor;
+    }
+    return out;
   }
 
   static List<String> _names(Set<DungeonId> ids) => [
@@ -212,6 +283,8 @@ class DungeonProgressData {
       chests: chests,
       chestEarned: _idSet(json['chestEarned'], byName),
       loopDungeon: _idSet(json['loopDungeon'], byName),
+      bestTimes: _floorMapFromJson(json['bestTimes'], byName),
+      leastDamage: _floorMapFromJson(json['leastDamage'], byName),
     );
   }
 }

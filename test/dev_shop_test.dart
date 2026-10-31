@@ -39,15 +39,18 @@ void main() {
     expect(def.shopStockPool.map((e) => e.itemId).toList(), sellable);
   });
 
-  test('the god ring tops the shelf for 1 coin and adds 1000 to every stat', () {
-    expect(def.shopStockPool.first.itemId, ItemId.GOD_RING);
-    expect(shopService.buyPrice(ItemId.GOD_RING, def), 1);
-    final ring = ItemId.GOD_RING.build() as EquipmentItem;
-    final stats = ring.effectiveSkillBonus;
-    for (final skill in SkillId.values) {
-      expect(stats[skill], skill == SkillId.NULL ? isNull : 1000);
-    }
-  });
+  test(
+    'the god ring tops the shelf for 1 coin and adds 1000 to every stat',
+    () {
+      expect(def.shopStockPool.first.itemId, ItemId.GOD_RING);
+      expect(shopService.buyPrice(ItemId.GOD_RING, def), 1);
+      final ring = ItemId.GOD_RING.build() as EquipmentItem;
+      final stats = ring.effectiveSkillBonus;
+      for (final skill in SkillId.values) {
+        expect(stats[skill], skill == SkillId.NULL ? isNull : 1000);
+      }
+    },
+  );
 
   test('a restock puts the whole catalog on the shelf, in catalog order', () {
     final shop = def.toEntity(EntityId.DEV_SHOP) as ShopEntity;

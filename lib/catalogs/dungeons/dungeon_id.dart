@@ -1,10 +1,14 @@
 import 'package:flutter/widgets.dart';
+import 'package:rpg/catalogs/drop_tables.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/catalogs/entities/entity_id.dart';
 import 'package:rpg/catalogs/dungeons/dungeon_type.dart';
+import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/zones/map_node_type.dart';
 import 'package:rpg/catalogs/dungeons/definition/dungeon_entry.dart';
 import 'package:rpg/catalogs/dungeons/definition/dungeon_definition.dart';
+import 'package:rpg/data/item_drop_type.dart';
+import 'package:rpg/services/weighted_drop_table_service.dart';
 
 // ignore_for_file: constant_identifier_names
 
@@ -90,6 +94,27 @@ enum DungeonId {
       name: "Grainery",
       iconAsset: "assets/images/dungeons/grainery.png",
       type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.LOGS, lowCount: 20, highCount: 50),
+            ItemDropType(id: ItemId.COPPER_BAR, lowCount: 20, highCount: 50),
+
+            ItemDropType(id: ItemId.IRON_ORE, lowCount: 20, highCount: 50),
+            ItemDropType(id: ItemId.COPPER_ORE, lowCount: 20, highCount: 50),
+
+            ItemDropType(
+              id: ItemId.COOKED_CHICKEN,
+              lowCount: 20,
+              highCount: 50,
+            ),
+            ItemDropType(id: ItemId.COOKED_BEEF, lowCount: 20, highCount: 50),
+            ItemDropType(id: ItemId.COPPER_SWORD, rarity: Rarity.UNCOMMON),
+            ItemDropType(id: ItemId.COPPER_DAGGER, rarity: Rarity.UNCOMMON),
+            ItemDropType(id: ItemId.COPPER_GREATSWORD, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+      ],
       entries: [
         DungeonEntry(
           name: "Feed Room",
@@ -103,15 +128,18 @@ enum DungeonId {
         DungeonEntry(
           name: "Stalls",
           entities: [
+            DungeonEntityRef(EntityId.FIELD_RAT, count: 12),
             DungeonEntityRef(EntityId.COW, count: 10),
-            DungeonEntityRef(EntityId.COW_UNCOMMON, count: 1),
+            DungeonEntityRef(EntityId.COW_BOSS, count: 1),
           ],
         ),
         DungeonEntry(
           name: "Cellar",
           entities: [
-            DungeonEntityRef(EntityId.ROTWOOD_SCARECROW, count: 10),
-            DungeonEntityRef(EntityId.ROTWOOD_SCARECROW_UNCOMMON, count: 1),
+            DungeonEntityRef(EntityId.FIELD_RAT, count: 12),
+            DungeonEntityRef(EntityId.ROTWOOD_SCARECROW, count: 8),
+            DungeonEntityRef(EntityId.CHICKEN, count: 5),
+            DungeonEntityRef(EntityId.ROTWOOD_SCARECROW_BOSS, count: 1),
           ],
         ),
       ],
@@ -122,6 +150,56 @@ enum DungeonId {
       name: "Wolf Den",
       iconAsset: "assets/images/dungeons/wolf_den.png",
       type: DungeonType.ZONE,
+      // a bulk haul of everything the forest gives, a roll apiece, and the
+      // set's chest and legs on a rare chance
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.LOGS, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.OAK_LOGS, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.CRAYFISH, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.BLUEGILL, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.TROUT, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.COOKED_CARP, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.COOKED_MINNOW, lowCount: 20, highCount: 80),
+            ItemDropType(
+              id: ItemId.COOKED_BLUEGILL,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.IRON_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.IRON_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.GUAM_LEAF, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.MARRENTILL, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.TARROMIN, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.BEAR_CLAW, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.WOLF_CLAW, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.WOLF_PELT, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.BEAR_HIDE, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(chance: 0.1, entries: wolfDenMajorArmorDropTable),
+      ],
       entries: [
         DungeonEntry(
           name: "Cave Entrance",

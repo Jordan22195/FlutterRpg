@@ -59,7 +59,8 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
   /// legendary is four rungs higher, so an epic chicken and a common
   /// scarecrow can land on the same number and mean the same thing.
   ///
-  /// Recoverable from the three stats via [CombatType.levelOf].
+  /// Recoverable from the three stats via [CombatType.levelOf] — for a
+  /// regular; a boss's hitpoints are multiplied past what its level gives.
   int get level => Util.fib(fibLevel + rarity.index);
 
   int get attack => combatType.attackAt(level);
@@ -67,8 +68,17 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
   @override
   int get defence => combatType.defenceAt(level);
 
+  /// How many times a regular's hitpoints a dungeon boss stands on: the
+  /// fight that ends a floor is meant to be one, not one more swing.
+  static const int bossHitpointsMultiplier = 10;
+
+  /// A boss has [bossHitpointsMultiplier] times what its level gives. Its
+  /// attack and defence stay its level's, so the fight is longer, not
+  /// harder to land a hit in.
   @override
-  int get hitpoints => combatType.hitpointsAt(level);
+  int get hitpoints =>
+      combatType.hitpointsAt(level) *
+      (isDungeonBoss ? bossHitpointsMultiplier : 1);
 
   @override
   CombatEntity toEntity(EntityId id) => CombatEntity(id: id);

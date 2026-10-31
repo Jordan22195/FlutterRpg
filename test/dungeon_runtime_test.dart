@@ -17,11 +17,16 @@ void main() {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
     final save = withGatheringTools(factory.newGame(catalogs));
-    return factory.create(
+    final session = factory.create(
       save: save,
       catalogs: catalogs,
       vsync: const TestVSync(),
     );
+    // these are about where the loop goes, not the pause a live clear
+    // takes on its summary (dungeon_floor_clear_test.dart), so a clear
+    // runs straight on, as it does with the app closed
+    session.encounterController.floorIntermission = Duration.zero;
+    return session;
   }
 
   // crank combat skills so the player reliably kills and survives, making

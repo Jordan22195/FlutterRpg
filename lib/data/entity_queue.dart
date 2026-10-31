@@ -55,7 +55,9 @@ class EntityQueue {
     if (rawMembers is List) {
       for (final raw in rawMembers) {
         if (raw is! Map<String, dynamic>) continue;
-        final entity = Entity.fromJson(raw);
+        // a member renamed or retired since the save is dropped, as if its
+        // count were zero
+        final entity = Entity.tryFromJson(raw);
         if (entity is EncounterEntity) members.add(entity);
       }
     }

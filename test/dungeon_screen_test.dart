@@ -15,6 +15,10 @@ import 'package:rpg/screens/encounter_screen.dart';
 import 'package:rpg/screens/map_screen.dart';
 import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/widgets/art_header.dart';
+import 'package:rpg/widgets/boss_arena.dart';
+import 'package:rpg/widgets/chest_loot_dialog.dart';
+import 'package:rpg/widgets/encounter_info_panel.dart';
+import 'package:rpg/widgets/floor_clear_panel.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/discovery_tile.dart';
 import 'package:rpg/widgets/dungeon_floor_card.dart';
@@ -302,29 +306,41 @@ void main() {
 
     await tapFloorButton(tester, 'Claim 2 chests');
     // the dialog waits for a choice; nothing is opened yet
-    expect(find.text('Spider Den Chests'), findsOneWidget);
-    expect(find.text('Open 1'), findsOneWidget);
+    expect(find.text('2 unopened'), findsOneWidget);
+    expect(find.text('Open 1 chest'), findsOneWidget);
     expect(progress.chestsWaiting(id), 2);
 
-    await tester.tap(find.text('Open 1'));
+    await tester.tap(find.text('Open 1 chest'));
     await tester.pump();
     expect(progress.chestsWaiting(id), 1);
-    expect(find.text('1 chest waiting'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 1));
-
-    await tester.tap(find.text('Open 1'));
-    await tester.pump(const Duration(seconds: 1));
-    expect(progress.chestsWaiting(id), 0);
-    expect(find.text('All opened.'), findsOneWidget);
-    expect(find.text('Open 1'), findsNothing);
+    expect(find.text('Opening 1 chest'), findsOneWidget);
+    await tester.pump(ChestLootDialog.openingTime + const Duration(seconds: 1));
+    expect(find.text('1 CHEST OPENED'), findsOneWidget);
+    // each item names its rarity, and its count has run up to the total
+    expect(
+      find.textContaining(RegExp(r'^(COMMON|UNCOMMON|RARE|EPIC|LEGENDARY)$')),
+      findsWidgets,
+    );
+    await tester.pump(const Duration(seconds: 4));
+    expect(find.textContaining(RegExp(r'^×\d')), findsWidgets);
     expect(
       find.descendant(
-        of: find.byType(AlertDialog),
+        of: find.byType(Dialog),
         matching: find.byWidgetPredicate((w) => w is ItemStackTile),
       ),
       findsWidgets,
     );
-    await tester.tap(find.text('Close'));
+
+    // Skip jumps the animation to the results
+    await tester.tap(find.text('Open more'));
+    await tester.pump();
+    await tester.tap(find.text('Open 1 chest'));
+    await tester.pump();
+    await tester.tap(find.text('Skip'));
+    await tester.pump(const Duration(seconds: 1));
+    expect(progress.chestsWaiting(id), 0);
+    expect(find.text('Open more'), findsNothing);
+    await tester.tap(find.text('Done'));
     await settle(tester);
 
     // open all in one go
@@ -335,10 +351,15 @@ void main() {
     session.dungeonController.refresh();
     await settle(tester);
     await tapFloorButton(tester, 'Claim 2 chests');
-    await tester.tap(find.text('Open all (2)'));
-    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(find.text('Open all'));
+    await tester.pump();
+    expect(find.text('Open 2 chests'), findsOneWidget);
+    await tester.tap(find.text('Open 2 chests'));
+    await tester.pump();
+    await tester.pump(ChestLootDialog.openingTime + const Duration(seconds: 1));
     expect(progress.chestsWaiting(id), 0);
-    await tester.tap(find.text('Close'));
+    expect(find.text('2 CHESTS OPENED'), findsOneWidget);
+    await tester.tap(find.text('Done'));
     await settle(tester);
 
     // this run's chest is taken: another needs a reset
@@ -794,6 +815,9 @@ void main() {
       ticks++;
     }
     expect(progress.runsFor(id, 0), 1);
+    // played live, the cleared floor waits on its summary, and refills as
+    // the pause ends
+    session.encounterController.finishIntermission();
     await tester.pump();
 
     // the card draws the refilled floor, every member back at full count
@@ -875,6 +899,99 @@ void main() {
 
     session.actionTimingController.stop();
     await settle(tester);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('a floor\'s boss fight gets the arena; its clear, the '
+      'summary and the countdown', (tester) async {
+    await openDungeonFromSave(tester, DungeonId.WOLF_DEN);
+    final session = sessionOf(tester, at: find.byType(DungeonScreen));
+    makeStrong(session);
+    final encounter = session.encounterController;
+    // long enough that the wall clock never ends it under the test
+    encounter.floorIntermission = const Duration(minutes: 5);
+
+    await tapFloorButton(tester, 'Enter Floor 1');
+    // the mockups' phone, so the whole fight is on screen
+    tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.tap(find.byType(MomentumPrimaryButton));
+    await settle(tester);
+
+    // fight the members in front of the boss
+    final floor = session.saveGameData.dungeonRun.slots[0];
+    var ticks = 0;
+    while (!DungeonFloorTrack.isBoss(floor.current!) && ticks < 40000) {
+      encounter.doEncounterAction(1);
+      ticks++;
+    }
+    await settle(tester);
+
+    // the boss has the screen: the track folds into one line over its arena
+    expect(find.byType(DungeonFloorTrack), findsNothing);
+    expect(find.text('FINAL ENCOUNTER'), findsOneWidget);
+    expect(
+      find.text('All ${floor.members.length - 1} cleared'),
+      findsOneWidget,
+    );
+    expect(find.byType(BossArena), findsOneWidget);
+    expect(find.text('BOSS · FLOOR 1'), findsOneWidget);
+    expect(find.text('Cave Bear'), findsOneWidget);
+    // the hit you deal floats beside the boss, not on its bar
+    expect(
+      find.descendant(
+        of: find.byType(BossArena),
+        matching: find.byKey(const ValueKey('hit-number')),
+      ),
+      findsOneWidget,
+    );
+    // and the tabs any fight has, under the player's row
+    final panel = find.byType(EncounterInfoPanel);
+    expect(panel, findsOneWidget);
+    for (final tab in ['Loot', 'Skills', 'Info']) {
+      expect(
+        find.descendant(of: panel, matching: find.text(tab)),
+        findsOneWidget,
+        reason: tab,
+      );
+    }
+    expect(find.byType(MomentumPrimaryButton), findsOneWidget);
+
+    ticks = 0;
+    while (encounter.intermission == null && ticks < 40000) {
+      encounter.doEncounterAction(1);
+      ticks++;
+    }
+    await settle(tester);
+
+    // cleared: the summary takes the arena's place, and the dock counts down
+    expect(find.byType(BossArena), findsNothing);
+    expect(find.byType(FloorClearPanel), findsOneWidget);
+    expect(find.text('FLOOR COMPLETE'), findsOneWidget);
+    expect(find.text('FLOOR 1 CLEARED'), findsOneWidget);
+    expect(find.text('Cave Bear defeated'), findsOneWidget);
+    expect(find.text('CLEARS'), findsOneWidget);
+    expect(find.byType(FloorCountdownRow), findsOneWidget);
+    expect(find.textContaining('Floor 1 again in'), findsOneWidget);
+    expect(find.byType(MomentumPrimaryButton), findsNothing);
+
+    // Next turns the loop on to the next floor, from right here
+    await tester.tap(find.text('Next'));
+    await settle(tester);
+    expect(session.dungeonController.loopsDungeon(DungeonId.WOLF_DEN), isTrue);
+    expect(find.textContaining('Floor 2 starts in'), findsOneWidget);
+
+    await tester.tap(find.text('Go now'));
+    await settle(tester);
+
+    expect(encounter.intermission, isNull);
+    expect(find.byType(FloorClearPanel), findsNothing);
+    expect(session.saveGameData.dungeonRun.runningSlot, 1);
+    expect(session.actionTimingController.isRunning, isTrue);
+    expect(find.byType(DungeonFloorTrack), findsOneWidget);
+
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
   });

@@ -733,6 +733,11 @@ class GameSessionFactory {
     // only redraws when its own controller says so
     encounterController.onDungeonFloorChanged = dungeonController.refresh;
 
+    // the pause on a cleared floor runs out inside the loop's own frame, so
+    // the next floor starts on the frame that would have moved it on
+    actionTimingController.onHoldExpired =
+        encounterController.finishIntermission;
+
     final settingsController = SettingsController(
       debugSettings: save.debugSettings,
       playerDataController: playerDataController,

@@ -49,17 +49,19 @@ class EncounterData {
       if (rawEntity is! Map<String, dynamic>) {
         throw FormatException('Invalid "entity". Expected object.');
       }
-      final parsed = Entity.fromJson(rawEntity);
-      if (parsed is! EncounterEntity) {
+      final parsed = Entity.tryFromJson(rawEntity);
+      // a fight against an entity renamed or retired since the save is no
+      // fight at all: the encounter comes back empty
+      if (parsed != null && parsed is! EncounterEntity) {
         throw FormatException('Entity is not an EncounterEntity.');
       }
-      entity = parsed;
+      entity = parsed as EncounterEntity?;
     }
 
     final data = EncounterData();
     data.itemDrops = InventoryData.fromJson(rawDrops);
     data.lastPlayerDamage = rawDamage;
-    data.isActive = rawActive;
+    data.isActive = rawActive && (rawEntity == null || entity != null);
     data.respawning = rawRespawning;
     data.entity = entity;
 

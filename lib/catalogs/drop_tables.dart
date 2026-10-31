@@ -110,6 +110,36 @@ const List<ItemDropType> mediumLeatherMinorArmorDropTable = [
   ItemDropType(id: ItemId.MEDIUM_LEATHER_BOOTS, weight: 1),
 ];
 
+/// What a goblin carries besides its leather and its lunch, the same at
+/// every rarity: a little iron bar, oak and guam leaf as the steady lines,
+/// the low gems rarely, and iron daggers rarer still — mostly plain, now and
+/// then a better one. The quality is fixed here, not the variant's.
+const List<ItemDropType> goblinSupplyDrops = [
+  ItemDropType(id: ItemId.IRON_BAR, lowCount: 1, highCount: 2, weight: 1),
+  ItemDropType(id: ItemId.OAK_LOGS, lowCount: 1, highCount: 3, weight: 1),
+  ItemDropType(id: ItemId.GUAM_LEAF, lowCount: 1, highCount: 2, weight: 1),
+  ItemDropType(id: ItemId.TOPAZ, weight: 0.3),
+  ItemDropType(id: ItemId.SAPPHIRE, weight: 0.1),
+  ItemDropType(id: ItemId.IRON_DAGGER, rarity: Rarity.COMMON, weight: 0.3),
+  ItemDropType(id: ItemId.IRON_DAGGER, rarity: Rarity.UNCOMMON, weight: 0.15),
+  ItemDropType(id: ItemId.IRON_DAGGER, rarity: Rarity.RARE, weight: 0.05),
+];
+
+/// The Wolf Den set's minor slots, evenly: a den boss rolls one of these on
+/// a rare chance. The majors are the den chest's.
+const List<ItemDropType> wolfDenMinorArmorDropTable = [
+  ItemDropType(id: ItemId.WOLF_DEN_HELM, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_CLOAK, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_GLOVES, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_BOOTS, weight: 1),
+];
+
+/// The Wolf Den set's major slots, evenly: the den chest's rare pick.
+const List<ItemDropType> wolfDenMajorArmorDropTable = [
+  ItemDropType(id: ItemId.WOLF_DEN_CHESTGUARD, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_LEGGUARDS, weight: 1),
+];
+
 const List<ItemDropType> ironMajorArmorDropTable = [
   ItemDropType(id: ItemId.IRON_CHESTPLATE, weight: 1),
   ItemDropType(id: ItemId.IRON_LEGS, weight: 1),

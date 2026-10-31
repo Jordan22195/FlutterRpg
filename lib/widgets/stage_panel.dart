@@ -20,7 +20,12 @@ class StagePanel extends StatelessWidget {
     this.outline,
     this.heading,
     this.isBoss = false,
+    this.hit,
   });
+
+  /// The last hit on the subject, floated up beside the sprite — clear of
+  /// every bar, where the eye already is.
+  final Widget? hit;
 
   final SpriteTint tint;
 
@@ -82,12 +87,19 @@ class StagePanel extends StatelessWidget {
                   : const Alignment(0.3, 0.4),
               child: sprite,
             ),
-            if (heading != null)
-              Positioned(left: 14, top: 12, child: heading!),
+            if (heading != null) Positioned(left: 14, top: 12, child: heading!),
             if (leading != null)
               Positioned(left: 10, top: 10, bottom: 10, child: leading!),
             if (corner != null)
               Positioned(right: 12, bottom: 12, child: corner!),
+            if (hit != null)
+              Align(
+                // up and to the right of the sprite, wherever it stands
+                alignment: heading == null
+                    ? const Alignment(0.55, -0.35)
+                    : const Alignment(0.85, -0.3),
+                child: IgnorePointer(child: hit!),
+              ),
           ],
         ),
       ),

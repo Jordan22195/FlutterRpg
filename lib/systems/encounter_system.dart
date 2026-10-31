@@ -243,6 +243,8 @@ class EncounterSystem {
       rng: rng,
     );
     result.damageDone = r.damageDone;
+    result.maxRoll = r.maxRoll;
+    result.maxHit = r.maxHit;
     result.enemyDied = r.enemyDied;
     result.kills = r.kills;
 

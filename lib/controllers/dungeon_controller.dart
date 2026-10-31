@@ -4,6 +4,7 @@ import '../catalogs/dungeons/dungeons.dart';
 import '../catalogs/items/items.dart';
 import '../controllers/encounter_controller.dart';
 import '../data/ObjectStack.dart';
+import '../data/chest_loot.dart';
 import '../data/dungeon_progress_data.dart';
 import '../data/dungeon_run.dart';
 import '../data/entity_queue.dart';
@@ -165,6 +166,11 @@ class DungeonController extends ChangeNotifier {
 
   // ---- run: loop mode, reset, chest ----
 
+  /// The floor the loop runs on into once floor [index] of [id] clears —
+  /// the same one under Loop floor.
+  int nextFloorAfter(DungeonId id, int index) =>
+      _dungeonSystem.previewNextFloor(_progress, id, index);
+
   /// Whether [id] is set to Loop dungeon rather than Loop floor.
   bool loopsDungeon(DungeonId id) => _progress.loopsDungeon(id);
 
@@ -199,8 +205,8 @@ class DungeonController extends ChangeNotifier {
   int chestsWaiting(DungeonId id) => _progress.chestsWaiting(id);
 
   /// Opens up to [max] chests of [id] waiting to be claimed (all when null),
-  /// into the bag. Returns what came out, merged by item.
-  List<ObjectStack<ItemId>> claimChests(DungeonId id, {int? max}) {
+  /// into the bag. Returns what came out, merged by item and rarity.
+  List<ChestLoot> claimChests(DungeonId id, {int? max}) {
     final loot = _dungeonSystem.openChests(
       progress: _progress,
       id: id,
@@ -295,6 +301,9 @@ class DungeonController extends ChangeNotifier {
       _dungeonSystem.beginRun(_run, id);
     }
     _run.sessionRuns.remove(index);
+    // a fresh start is a lap watched from its first swing, so it can set a
+    // best; a relaunch resumes one that wasn't
+    _run.beginLap(watched: true);
 
     return _start(id, index);
   }

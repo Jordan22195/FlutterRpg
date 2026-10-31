@@ -16,6 +16,7 @@ import '../controllers/action_timing_controller.dart';
 import '../data/level_standing.dart';
 import '../controllers/player_data_controller.dart';
 import '../data/zone_details.dart';
+import '../systems/exploration_system.dart';
 import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
 import '../widgets/action_dock.dart';
@@ -69,7 +70,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
     return SegmentedTabs<_ExploreTab>(
       segments: [
         const TabSegment(value: _ExploreTab.entities, label: 'Entities'),
-        TabSegment(value: _ExploreTab.loot, label: 'Loot · $lootCount'),
+        if (ExplorationSystem.itemFindsEnabled)
+          TabSegment(value: _ExploreTab.loot, label: 'Loot · $lootCount'),
         const TabSegment(value: _ExploreTab.info, label: 'Info'),
       ],
       selected: _tab,

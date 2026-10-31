@@ -60,8 +60,7 @@ class DungeonFloorTrack extends StatelessWidget {
 
   /// The members the kill bar counts: everything but a closing boss, which
   /// the bar builds to rather than counts.
-  int get _counted =>
-      floor.members.isNotEmpty && isBoss(floor.members.last)
+  int get _counted => floor.members.isNotEmpty && isBoss(floor.members.last)
       ? floor.members.length - 1
       : floor.members.length;
 

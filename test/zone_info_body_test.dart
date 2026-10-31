@@ -10,6 +10,7 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/data/zone_details.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
+import 'package:rpg/systems/exploration_system.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/zone_info_body.dart';
 
@@ -175,6 +176,11 @@ void main() {
   // do. The meadow has no item table at all, so this is read off a zone the
   // catalog actually gives one to.
   group('the finds table', () {
+    // item finds are off in the game; this keeps the table honest in the
+    // meantime
+    setUp(() => ExplorationSystem.itemFindsEnabled = true);
+    tearDown(() => ExplorationSystem.itemFindsEnabled = false);
+
     /// A zone whose item table holds something other than the NULL filler,
     /// and the lowest level that opens one of its finds.
     (ZoneId, WeightedDropTableEntry<ItemId>)? zoneWithItemFinds() {
