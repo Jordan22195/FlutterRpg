@@ -6,6 +6,7 @@ import 'package:rpg/data/skill_data.dart';
 import '../catalogs/items/items.dart';
 import '../widgets/food_card.dart';
 import 'icon_renderer.dart';
+import 'equipment_info_dialog.dart';
 import 'item_stack_tile.dart';
 import 'stat_chip.dart';
 
@@ -382,8 +383,8 @@ class _PickerCard extends StatelessWidget {
                   size: 52,
                   id: item.id,
                   count: isEquipped ? 1 : item.count,
-                  showInfoDialogOnTap: false,
                   borderColor: qualityColor,
+                  onTap: () => showEquipmentInfoDialog(context, item),
                 ),
                 const SizedBox(width: 11),
                 Expanded(
@@ -541,6 +542,31 @@ List<Widget> equipmentComparisonChips(
         key: const ValueKey('stat-chip-damage'),
         icon: Icon(Icons.gavel, size: iconSize, color: Colors.grey),
         value: formatDamage(mine),
+        fontSize: fontSize,
+        deltaText: (!showDeltas || diff == null || diff.abs() < 0.05)
+            ? null
+            : (diff > 0 ? '+${formatDamage(diff)}' : '−${formatDamage(-diff)}'),
+        deltaColor: (diff ?? 0) > 0 ? statGainColor : statLossColor,
+      ),
+    );
+  }
+
+  // damage per second at the swing's own pace: what the damage and the
+  // speed above add up to, so a slow heavy weapon and a quick light one can
+  // be read against each other. more is the gain
+  if (swinging is WeaponItem && swinging.definition.usesDamage) {
+    final mine = swinging.damagePerSecond;
+    final baselineItem = baseline;
+    final theirs =
+        baselineItem is WeaponItem && baselineItem.definition.usesDamage
+        ? baselineItem.damagePerSecond
+        : null;
+    final diff = theirs == null ? null : mine - theirs;
+    chips.add(
+      StatChip(
+        key: const ValueKey('stat-chip-dps'),
+        icon: Icon(Icons.bolt, size: iconSize, color: Colors.grey),
+        value: '${formatDamage(mine)} dps',
         fontSize: fontSize,
         deltaText: (!showDeltas || diff == null || diff.abs() < 0.05)
             ? null

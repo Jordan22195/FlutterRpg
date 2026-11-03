@@ -82,7 +82,14 @@ class ShopService {
         shop.stock.add(entry.toSlot());
       }
     } else {
-      for (int i = 0; i < slots; i++) {
+      // what the shop always carries goes up first, and the draw fills the
+      // slots that are left
+      final always = candidates.where((e) => e.alwaysStocked).toList();
+      candidates.removeWhere((e) => e.alwaysStocked);
+      for (final entry in always.take(slots)) {
+        shop.stock.add(entry.toSlot());
+      }
+      for (int i = shop.stock.length; i < slots; i++) {
         final pick = candidates.removeAt(random.nextInt(candidates.length));
         shop.stock.add(pick.toSlot());
       }

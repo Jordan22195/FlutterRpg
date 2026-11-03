@@ -21,6 +21,14 @@ class WeaponItem extends EquipmentItem {
   /// the quality it rolled.
   double get damage => definition.damageAt(quality);
 
+  /// [damage] over the swing's length: the damage it deals a second, before the
+  /// attack multiplier. 0 for a
+  /// piece that does not swing at a pool.
+  double get damagePerSecond {
+    final seconds = actionInterval.inMicroseconds / 1e6;
+    return seconds <= 0 ? 0 : damage / seconds;
+  }
+
   /// Parses an equipment instance. The class is decided by the definition,
   /// so a weapon comes back as a [WeaponItem] whether or not the save said
   /// so; an id that is not equipment at all is a malformed save.

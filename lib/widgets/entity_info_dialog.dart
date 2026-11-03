@@ -241,6 +241,9 @@ class _RollTable extends StatelessWidget {
       return [
         row('Bonus yield chance', formatPercent(details.playerHitChance)),
         row('Expected yield', formatDecimal(details.expectedYield)),
+        // at the pick rate as it stands, boost and stance included
+        row('Picks / hour', details.picksPerHour.toStringAsFixed(0)),
+        row('Herbs / hour', details.herbsPerHour.toStringAsFixed(0)),
       ];
     }
 
@@ -395,6 +398,20 @@ class _DropTable extends StatelessWidget {
       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
     );
 
+    // the same item can be listed twice at one quality (a main drop and a
+    // bonus roll, say), so a repeat takes a count on the end of its key
+    final seen = <String>{};
+    String keyFor(EntityDropChance drop) {
+      final base =
+          'drop-${drop.itemId.name}-${drop.rarity.name}'
+          '${drop.locked ? '-locked' : ''}';
+      var key = base;
+      for (var n = 2; !seen.add(key); n++) {
+        key = '$base-$n';
+      }
+      return key;
+    }
+
     return InfoSection(
       title: 'Drop table',
       children: [
@@ -402,10 +419,7 @@ class _DropTable extends StatelessWidget {
           Padding(
             // the quality is in it because a table can list one item at
             // several, and a key has to be unique among its rows
-            key: ValueKey(
-              'drop-${drop.itemId.name}-${drop.rarity.name}'
-              '${drop.locked ? '-locked' : ''}',
-            ),
+            key: ValueKey(keyFor(drop)),
             padding: const EdgeInsets.symmetric(vertical: 3),
             child: Opacity(
               // a fish past the player's level: in the table, but dimmed, with
@@ -430,15 +444,8 @@ class _DropTable extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // the quality prefix, the way EquipmentItem.displayName
-                        // writes it: a table can list the same item at two
-                        // qualities, which reads as a duplicate row without it
-                        Text(
-                          drop.rarity.label.isEmpty
-                              ? drop.name
-                              : '${drop.rarity.label} ${drop.name}',
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        // the name alone: the tile's border says the quality
+                        Text(drop.name, overflow: TextOverflow.ellipsis),
                         // a layered roll lands on top of the main drop, so
                         // its odds are independent of the rows above
                         if (drop.bonus) Text('bonus roll', style: subtleStyle),

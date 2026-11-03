@@ -10,18 +10,23 @@ import 'package:rpg/data/skill_data.dart';
 /// +2, +3, +5, +8 and +13 to its skill a common piece — and the level in
 /// that skill it takes to wear.
 enum SkillingGearTier {
-  BASIC(fibLevel: 1, skillLevelRequirement: 1),
-  NOVICE(fibLevel: 2, skillLevelRequirement: 20),
-  APPRENTICE(fibLevel: 3, skillLevelRequirement: 40),
-  ADVANCED(fibLevel: 4, skillLevelRequirement: 60),
-  MASTER(fibLevel: 5, skillLevelRequirement: 80);
+  BASIC(fibLevel: 1, skillLevelRequirement: 1, rarity: Rarity.COMMON),
+  NOVICE(fibLevel: 2, skillLevelRequirement: 20, rarity: Rarity.UNCOMMON),
+  APPRENTICE(fibLevel: 3, skillLevelRequirement: 40, rarity: Rarity.RARE),
+  ADVANCED(fibLevel: 4, skillLevelRequirement: 60, rarity: Rarity.EPIC),
+  MASTER(fibLevel: 5, skillLevelRequirement: 80, rarity: Rarity.LEGENDARY);
 
   final int fibLevel;
   final int skillLevelRequirement;
 
+  /// The tier's colour: it frames the piece and does nothing to its stats,
+  /// which the rung alone sets.
+  final Rarity rarity;
+
   const SkillingGearTier({
     required this.fibLevel,
     required this.skillLevelRequirement,
+    required this.rarity,
   });
 }
 
@@ -47,6 +52,12 @@ class SkillingGearDefinition extends EquipmentItemDefinition {
   /// The tier's rung whatever the slot: a hat is worth what a tunic is.
   @override
   int get fibLevel => tier.fibLevel;
+
+  @override
+  Rarity? get fixedRarity => tier.rarity;
+
+  @override
+  bool get rarityScalesStats => false;
 
   @override
   Map<SkillId, int> get statWeights => {skill: 1};

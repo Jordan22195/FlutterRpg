@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'equipment_info_dialog.dart';
+import 'scouting_result_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
@@ -85,9 +86,16 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   /// [quality] if this tile was handed one, else whatever the item declares
   /// for itself.
   Rarity get _effectiveQuality {
+    final currentId = id;
+    if (currentId is ItemId) {
+      final def = currentId.definition;
+      // a piece whose tier is its rarity wears it however the tile was told
+      if (def is EquipmentItemDefinition && def.fixedRarity != null) {
+        return def.fixedRarity!;
+      }
+    }
     final rolled = quality;
     if (rolled != null) return rolled;
-    final currentId = id;
     return currentId is ItemId ? currentId.definition.quality : Rarity.COMMON;
   }
 
@@ -140,6 +148,16 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     final currentId = id;
     if (currentId is! ItemId) return;
     final itemDef = currentId.definition;
+    // wearable: the equipment dialog, with the piece's stats at the tier
+    // this tile was handed, set against what is worn
+    if (itemDef is EquipmentItemDefinition) {
+      final piece = currentId.build();
+      if (piece is EquipmentItem) {
+        piece.quality = _effectiveQuality;
+        showEquipmentInfoDialog(context, piece);
+        return;
+      }
+    }
     final inventoryController = context.read<InventoryController>();
     final buffController = context.read<BuffController>();
     final devCountController = TextEditingController(
@@ -152,7 +170,8 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
       context: context,
       builder: (dialogContext) => ListenableBuilder(
         listenable: Listenable.merge([inventoryController, buffController]),
-        builder: (context, _) => _buildInfoDialog(
+        builder: (_, _) => _buildInfoDialog(
+          context,
           dialogContext,
           currentId,
           itemDef,
@@ -165,6 +184,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
   }
 
   Widget _buildInfoDialog(
+    BuildContext screenContext,
     BuildContext dialogContext,
     ItemId currentId,
     ItemDefinition itemDef,
@@ -184,6 +204,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     final activeBuff = inventoryController.isDrinkable(currentId)
         ? buffController.getGlobalBuff(currentId)
         : null;
+    final canUse = inventoryController.isUsable(currentId) && held > 0;
     return AlertDialog(
       title: Text(itemDef.name),
       content: SingleChildScrollView(
@@ -302,6 +323,17 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
         // stays open on a drink, and holding it drinks the stack down —
         // drinkPotion is a no-op once the last one is gone, which is what
         // RepeatPressButton's repeat relies on
+        if (canUse)
+          TextButton(
+            key: const ValueKey('item-use-button'),
+            onPressed: () => _useItem(
+              screenContext,
+              dialogContext,
+              inventoryController,
+              currentId,
+            ),
+            child: const Text('Use'),
+          ),
         if (canDrink)
           RepeatPressButton(
             label: 'Drink',
@@ -313,6 +345,26 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  /// Uses one [itemId] and shows what it did, over the bag rather than the
+  /// item dialog, which closes: a map is spent, and the dialog's count with it.
+  void _useItem(
+    BuildContext screen,
+    BuildContext dialogContext,
+    InventoryController inventoryController,
+    ItemId itemId,
+  ) {
+    final result = inventoryController.useItem(itemId);
+    final zone = ScoutingMaps.zoneFor(itemId);
+    // the item dialog is on its own route; the screen that opened it is
+    // what stays underneath to show the next one
+    Navigator.of(dialogContext).pop();
+    if (result != null) {
+      showScoutingResultDialog(screen, result);
+    } else if (zone != null) {
+      showNothingToScoutDialog(screen, zone);
+    }
   }
 
   ImageProvider? _resolveImage() {

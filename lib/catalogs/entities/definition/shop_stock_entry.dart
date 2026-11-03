@@ -16,18 +16,29 @@ class ShopStockEntry {
   /// before an override was set still sells at the new price.
   final int? priceOverride;
 
+  /// On the shelf at every restock, ahead of the random draw, rather than
+  /// one of the pool the draw picks from. It still takes one of the shop's
+  /// stock slots.
+  final bool alwaysStocked;
+
   const ShopStockEntry({
     required this.itemId,
     required this.count,
     this.priceOverride,
+    this.alwaysStocked = false,
   });
 
-  ShopStockEntry copyWith({ItemId? itemId, int? count, int? priceOverride}) =>
-      ShopStockEntry(
-        itemId: itemId ?? this.itemId,
-        count: count ?? this.count,
-        priceOverride: priceOverride ?? this.priceOverride,
-      );
+  ShopStockEntry copyWith({
+    ItemId? itemId,
+    int? count,
+    int? priceOverride,
+    bool? alwaysStocked,
+  }) => ShopStockEntry(
+    itemId: itemId ?? this.itemId,
+    count: count ?? this.count,
+    priceOverride: priceOverride ?? this.priceOverride,
+    alwaysStocked: alwaysStocked ?? this.alwaysStocked,
+  );
 
   /// A fresh mutable shelf slot for this pool entry.
   ShopStockSlot toSlot() => ShopStockSlot(itemId: itemId, count: count);

@@ -174,7 +174,8 @@ void main() {
       final hat =
           restored.playerData.equipmentData.armorEquipment[ArmorSlots.HEAD];
       expect(hat?.id, ItemId.BASIC_FISHERS_HAT);
-      expect(hat?.quality, Rarity.RARE);
+      // the tier is the piece's rarity, whatever it had been rolled at
+      expect(hat?.quality, Rarity.COMMON);
       expect(
         restored.inventoryData.equipment.map((e) => e.id),
         contains(ItemId.BASIC_FISHERS_CLOAK),

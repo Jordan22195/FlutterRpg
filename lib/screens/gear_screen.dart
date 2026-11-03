@@ -11,6 +11,7 @@ import '../data/gear_set.dart';
 import '../data/skill_data.dart';
 import '../services/equipment_service.dart';
 import '../theme/hearth_text.dart';
+import '../widgets/equipment_info_dialog.dart';
 import '../theme/hearth_theme.dart';
 import '../widgets/equipment_picker.dart';
 import '../widgets/icon_renderer.dart';
@@ -692,6 +693,9 @@ class _GearScreenState extends State<GearScreen> {
               count: 1,
               showInfoDialogOnTap: false,
               borderColor: qualityColor,
+              onTap: item == null
+                  ? null
+                  : () => showEquipmentInfoDialog(context, item!),
             ),
             const SizedBox(width: 10),
             Expanded(

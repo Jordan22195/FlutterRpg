@@ -155,14 +155,16 @@ void main() {
       expect(dungeons.mainFloorsCleared(den), 1);
 
       clearFloorOnce(session, den, 1);
+      expect(dungeons.chestsWaiting(den), 0);
+      clearFloorOnce(session, den, 2);
       expect(dungeons.chestsWaiting(den), 1);
       expect(dungeons.chestEarned(den), isTrue);
 
       // Loop floor laps the boss floor; a second clear earns nothing more
       final progress = progressOf(session);
-      final laps = progress.runsFor(den, 1);
-      fightPast(session, () => progress.runsFor(den, 1) == laps);
-      expect(progress.runsFor(den, 1), laps + 1);
+      final laps = progress.runsFor(den, 2);
+      fightPast(session, () => progress.runsFor(den, 2) == laps);
+      expect(progress.runsFor(den, 2), laps + 1);
       expect(dungeons.chestsWaiting(den), 1);
 
       // a reset lets it be earned again, and the one waiting stays
@@ -172,6 +174,7 @@ void main() {
 
       clearFloorOnce(session, den, 0);
       clearFloorOnce(session, den, 1);
+      clearFloorOnce(session, den, 2);
       expect(dungeons.chestsWaiting(den), 2);
       session.dispose();
     });

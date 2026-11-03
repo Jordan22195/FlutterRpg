@@ -620,7 +620,7 @@ void main() {
         // the goblin queen stamps LEGENDARY on the gear it drops
         final dagger =
             mediumLeatherMinorArmorDropTable.first.id.definition.name;
-        final border = frameFor(tester, 'Legendary $dagger').border as Border;
+        final border = frameFor(tester, dagger).border as Border;
         expect(border.top.color, rarityBorderColor(Rarity.LEGENDARY));
         // a coloured tier is drawn thicker, so it reads across a list
         expect(border.top.width, 2);

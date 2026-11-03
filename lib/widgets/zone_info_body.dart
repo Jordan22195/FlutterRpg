@@ -23,10 +23,11 @@ class ZoneInfoBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final worldController = context.watch<WorldController>();
     final details = worldController.zoneDetails(zoneId);
+    final exploresPerHour = worldController.exploresPerHour();
 
     return Column(
       children: [
-        _SummaryCard(details: details),
+        _SummaryCard(details: details, exploresPerHour: exploresPerHour),
         if (details.entities.isNotEmpty) ...[
           const SizedBox(height: 12),
           _DiscoveryCard(
@@ -65,9 +66,12 @@ class ZoneInfoBody extends StatelessWidget {
 
 /// The zone's gates and the player's standing in it.
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.details});
+  const _SummaryCard({required this.details, required this.exploresPerHour});
 
   final ZoneDetails details;
+
+  /// At the explore rate as it stands, boost included.
+  final double exploresPerHour;
 
   @override
   Widget build(BuildContext context) {
@@ -127,6 +131,24 @@ class _SummaryCard extends StatelessWidget {
                 'Exploration xp',
                 '${_trim(zone.xpPerExplore)} per explore',
               ),
+            if (details.hasDiscoveries) ...[
+              _statRow(
+                context,
+                'Explores per hour',
+                exploresPerHour.toStringAsFixed(0),
+              ),
+              _statRow(
+                context,
+                'Finds per hour',
+                (details.findsPerExplore * exploresPerHour).toStringAsFixed(0),
+              ),
+              if (zone.xpPerExplore > 0)
+                _statRow(
+                  context,
+                  'Xp per hour',
+                  (zone.xpPerExplore * exploresPerHour).toStringAsFixed(0),
+                ),
+            ],
             if (details.lockedCount > 0)
               _statRow(
                 context,

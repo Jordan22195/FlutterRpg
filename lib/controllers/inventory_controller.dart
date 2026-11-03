@@ -6,6 +6,10 @@ import 'package:rpg/data/inventory_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/data/buff_data.dart';
 import 'package:rpg/services/inventory_service.dart';
+import 'package:rpg/data/player_data.dart';
+import 'package:rpg/data/scouting_result.dart';
+import 'package:rpg/data/world_data.dart';
+import 'package:rpg/systems/exploration_system.dart';
 import 'package:rpg/systems/potion_system.dart';
 
 class InventoryController extends ChangeNotifier {
@@ -14,16 +18,30 @@ class InventoryController extends ChangeNotifier {
 
   final InventoryService _inventoryService;
   final PotionSystem _potionSystem;
+  final ExplorationSystem _explorationSystem;
+  final PlayerData _playerState;
+  final WorldData _worldState;
+
+  /// Called after a scouting map has added entities to a zone, so whatever
+  /// shows the world follows. Wired in GameSessionFactory, since the world
+  /// controller is built after this one.
+  VoidCallback? onZoneScouted;
 
   InventoryController({
     required InventoryData inventoryData,
     required BuffData buffState,
     required InventoryService inventoryService,
     required PotionSystem potionSystem,
+    required ExplorationSystem explorationSystem,
+    required PlayerData playerState,
+    required WorldData worldState,
   }) : _inventoryData = inventoryData,
        _buffState = buffState,
        _inventoryService = inventoryService,
-       _potionSystem = potionSystem;
+       _potionSystem = potionSystem,
+       _explorationSystem = explorationSystem,
+       _playerState = playerState,
+       _worldState = worldState;
 
   // inventory data is mutated by other domains (encounter drops, crafting,
   // equipment). those controllers are wired to call this in GameSessionFactory
@@ -83,6 +101,26 @@ class InventoryController extends ChangeNotifier {
     final drank = _potionSystem.drink(id, _inventoryData, _buffState);
     if (drank) notifyListeners();
     return drank;
+  }
+
+  /// Whether [id] is something the player can use from the bag: a scouting
+  /// map, in principle, whether or not they are holding one.
+  bool isUsable(ItemId id) => ScoutingMaps.isMap(id);
+
+  /// Uses one [id] from the bag. For a scouting map that discovers its
+  /// zone's entities and returns what turned up; null when [id] is not a map,
+  /// there is none left, or its zone has nothing to find (the map is kept).
+  ScoutingResult? useItem(ItemId id) {
+    final result = _explorationSystem.useScoutingMap(
+      id: id,
+      playerState: _playerState,
+      worldState: _worldState,
+      inventory: _inventoryData,
+    );
+    if (result == null) return null;
+    notifyListeners();
+    onZoneScouted?.call();
+    return result;
   }
 
   List<ItemId> getFoodItems() {

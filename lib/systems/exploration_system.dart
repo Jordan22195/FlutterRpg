@@ -2,6 +2,7 @@ import '../catalogs/items/items.dart';
 import '../catalogs/zones/zones.dart';
 import '../data/action_result.dart';
 import '../data/inventory_data.dart';
+import '../data/scouting_result.dart';
 import '../data/player_data.dart';
 import '../data/skill_data.dart';
 import '../data/world_data.dart';
@@ -190,6 +191,61 @@ class ExplorationSystem {
     }
 
     return result;
+  }
+
+  /// Uses one scouting map [id] from [inventory]: rolls
+  /// [ScoutingMapItemDefinition.discoveries] finds in the map's zone from
+  /// the entities the player's Exploration level has unlocked there, and adds
+  /// them to the zone as exploring would. Pays no xp.
+  ///
+  /// Null, and the map kept, when [id] is not a map, the player has none, or
+  /// the zone has nothing unlocked to find.
+  ScoutingResult? useScoutingMap({
+    required ItemId id,
+    required PlayerData playerState,
+    required WorldData worldState,
+    required InventoryData inventory,
+  }) {
+    final zoneId = ScoutingMaps.zoneFor(id);
+    if (zoneId == null) return null;
+    if (_inventoryService.getItemCount(inventory, id) <= 0) return null;
+
+    final result = scoutZone(
+      zoneId: zoneId,
+      playerState: playerState,
+      worldState: worldState,
+    );
+    if (result != null) _inventoryService.removeItems(inventory, id, 1);
+    return result;
+  }
+
+  /// Rolls [ScoutingMapItemDefinition.discoveries] finds in [zoneId] from the
+  /// entities the player's Exploration level has unlocked there and adds them
+  /// to the zone. Null, with the zone untouched, when none is unlocked.
+  ScoutingResult? scoutZone({
+    required ZoneId zoneId,
+    required PlayerData playerState,
+    required WorldData worldState,
+  }) {
+    final entries = WeightedDropTableService.availableAt(
+      zoneId.definition.discoverableEntities,
+      explorationLevel(playerState),
+    );
+    if (entries.isEmpty) return null;
+
+    final found = _dropTableService.rollMulitpleTimes(
+      ScoutingMapItemDefinition.discoveries,
+      entries,
+    );
+    for (final entity in found) {
+      _explorationService.addEntityToZone(
+        entity.id,
+        entity.count,
+        zoneId,
+        worldState,
+      );
+    }
+    return ScoutingResult(zone: zoneId, entities: found);
   }
 
   /// Everything the zone detail screen shows for [zoneId]: the zone's own

@@ -109,7 +109,7 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.IRON,
           weight: .5,
-          unlockLevel: 9,
+          unlockLevel: 20,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GOBLIN_CAMP,
@@ -179,6 +179,12 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.COAL_VEIN,
           weight: 1,
+          unlockLevel: 40,
+        ),
+        // the mine's bats roost in the dark canopy too
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GIANT_BAT,
+          weight: 1.5,
           unlockLevel: 20,
         ),
         // the spiders that spill out of the den
@@ -206,6 +212,13 @@ enum ZoneId {
           weight: 1,
           unlockLevel: 24,
         ),
+        // the dead forest's deepest haunt; gated well past the skeleton and
+        // zombie it lurks behind
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.WRAITH,
+          weight: 0.5,
+          unlockLevel: 30,
+        ),
       ],
       discoverableItems: [
         WeightedDropTableEntry(
@@ -232,6 +245,11 @@ enum ZoneId {
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MUDLURC,
+          weight: 1.5,
+          unlockLevel: 25,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SLIME,
           weight: 1.5,
           unlockLevel: 25,
         ),
@@ -272,12 +290,12 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.COPPER,
           weight: 2,
-          unlockLevel: 15,
+          unlockLevel: 1,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.IRON,
           weight: 2,
-          unlockLevel: 15,
+          unlockLevel: 20,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GIANT_SPIDER,
@@ -287,13 +305,13 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.COAL_VEIN,
           weight: .8,
-          unlockLevel: 16,
+          unlockLevel: 40,
         ),
         // gold sits with the other veins, deeper in than coal
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GOLD_VEIN,
           weight: .5,
-          unlockLevel: 17,
+          unlockLevel: 25,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GEM_VEIN,
@@ -343,7 +361,7 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.COPPER,
           weight: 1,
-          unlockLevel: 31,
+          unlockLevel: 1,
         ),
       ],
     ),
@@ -379,7 +397,7 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MITHRIL_VEIN,
           weight: 1,
-          unlockLevel: 35,
+          unlockLevel: 60,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.TROLL,

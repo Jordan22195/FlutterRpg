@@ -72,7 +72,8 @@ class EquipmentItem extends Item {
   /// Rolled by crafting, drops and shop stock; falls back to whatever the
   /// definition declares for a piece that was never rolled.
   @override
-  Rarity get quality => _quality ?? definition.quality;
+  Rarity get quality =>
+      definition.fixedRarity ?? _quality ?? definition.quality;
   set quality(Rarity value) => _quality = value;
 
   /// The stats this piece actually carries: its rung's budget split by the
@@ -89,11 +90,12 @@ class EquipmentItem extends Item {
     return result;
   }
 
-  /// "Epic Bronze Helmet of the Boar"
+  /// "Bronze Helmet of the Boar". The quality is not in the name: it is the
+  /// colour of the border drawn around the piece, and its own line in the
+  /// info dialog.
   String get displayName {
-    final prefix = quality.label.isEmpty ? '' : '${quality.label} ';
     final suffix = enchantName.isEmpty ? '' : ' of the $enchantName';
-    return '$prefix$name$suffix';
+    return '$name$suffix';
   }
 
   /// Identity for stacking: items that are the same in every way (base

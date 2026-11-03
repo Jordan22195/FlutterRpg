@@ -554,6 +554,9 @@ class GameSessionFactory {
       buffState: save.playerData.buffData,
       inventoryService: inventoryService,
       potionSystem: potionSystem,
+      explorationSystem: explorationSystem,
+      playerState: save.playerData,
+      worldState: save.worldData,
     );
     final potionController = PotionController(
       playerState: save.playerData,
@@ -684,6 +687,7 @@ class GameSessionFactory {
     dungeonController.addListener(inventoryController.refresh);
     // explore finds land in the player inventory as well as the zone list
     worldController.addListener(inventoryController.refresh);
+    inventoryController.onZoneScouted = worldController.refresh;
 
     // encounter actions mutate world data (entity counts, removals);
     // forward so world listeners (explore screen) rebuild

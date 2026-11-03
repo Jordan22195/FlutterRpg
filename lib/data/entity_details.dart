@@ -152,6 +152,14 @@ class EntityDetails {
   /// of casting pays.
   double get playerXpPerHour => playerCatchesPerHour * xpPerCatch;
 
+  /// Picks an hour at the player's own rate: a pick always lands, so this
+  /// is just the action rate. 0 with no interval to divide by.
+  double get picksPerHour =>
+      playerActionInterval <= 0 ? 0 : 3600 / playerActionInterval;
+
+  /// [picksPerHour] at [expectedYield] a pick: the herbs an hour yields.
+  double get herbsPerHour => picksPerHour * expectedYield;
+
   /// The most fish one cast can land: a pool's worth of damage is a catch,
   /// and each further pool's worth of overkill rolls the table again — see
   /// [EncounterService.catchesFor].

@@ -25,6 +25,36 @@ import 'package:rpg/data/equipment_data.dart';
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
 const knownMissingArt = <String>{
+  // the skeleton, redrawn as armored (prompt in rd_prompt_overrides.json)
+  'assets/images/entities/skeleton.png',
+
+  // grave drops off the dark forest's skeletons and zombies, before their art
+  'assets/icons/items/rotten_flesh.png',
+  'assets/icons/items/grave_moss.png',
+  'assets/icons/items/recovery_potion.png',
+  'assets/icons/items/tattered_hood.png',
+  'assets/icons/items/tattered_cloak.png',
+  'assets/icons/items/tattered_wraps.png',
+  'assets/icons/items/tattered_shoes.png',
+  'assets/icons/items/bat_wing.png',
+  'assets/icons/items/bat_fang.png',
+  'assets/icons/items/speed_potion.png',
+  'assets/icons/items/attack_potion.png',
+  'assets/icons/items/strength_potion.png',
+  'assets/icons/items/slime_ooze.png',
+  'assets/icons/items/slime_core.png',
+  'assets/icons/items/fishing_potion.png',
+  'assets/icons/items/defence_potion.png',
+  'assets/icons/items/stamina_potion.png',
+  'assets/icons/items/maple_logs.png',
+  'assets/icons/items/red_cap_mushroom.png',
+  'assets/icons/items/redcap_ring.png',
+  'assets/icons/items/black_dagger.png',
+  'assets/icons/items/black_sword.png',
+  'assets/icons/items/black_greatsword.png',
+  'assets/icons/items/webbed_cloak.png',
+  'assets/icons/items/venomfang_ring.png',
+
   // the sturgeon, the lake's level 70 fish, added before its art
   'assets/icons/items/sturgeon.png',
   'assets/icons/items/cooked_sturgeon.png',
@@ -533,8 +563,6 @@ void main() {
     const knownUnplaced = <EntityId>{
       // tier 1-2 spares, written before the zones were re-cut around them
       EntityId.GIANT_RAT,
-      EntityId.GIANT_BAT,
-      EntityId.SLIME,
       EntityId.KOBOLD,
       // the rare scarecrow. Its name predates the _RARE suffix convention,
       // so it reads as a base entity here rather than as a variant
@@ -544,10 +572,9 @@ void main() {
       // monster when the den was reworked
       EntityId.NAGA,
 
-      // tier 4. The wraith and the banshee were the darkwood's, and came
-      // out of it when its roster was re-cut; the rest have never been
-      // placed. darkwood_forest_test holds what the zone kept.
-      EntityId.WRAITH,
+      // tier 4. The banshee was the darkwood's, and came out of it when its
+      // roster was re-cut (the wraith has since come back); the rest have
+      // never been placed. darkwood_forest_test holds what the zone kept.
       EntityId.BANSHEE,
       EntityId.MINOTAUR,
       EntityId.BASILISK,
@@ -800,10 +827,12 @@ void main() {
       // was retired once a drop could carry a quality of its own, so a rare
       // pitchfork is the ordinary one at Rarity.RARE.
       for (final id in ItemId.values) {
-        if (id.definition is! EquipmentItemDefinition) continue;
+        final def = id.definition;
+        if (def is! EquipmentItemDefinition) continue;
         expect(
           id.build().quality,
-          id.definition.quality,
+          // a piece whose tier is its rarity (skilling gear) wears that
+          def.fixedRarity ?? def.quality,
           reason: '${id.name} did not take its definition\'s quality',
         );
       }

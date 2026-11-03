@@ -125,13 +125,24 @@ const List<ItemDropType> goblinSupplyDrops = [
   ItemDropType(id: ItemId.IRON_DAGGER, rarity: Rarity.RARE, weight: 0.05),
 ];
 
-/// The Wolf Den set's minor slots, evenly: a den boss rolls one of these on
-/// a rare chance. The majors are the den chest's.
+/// The Wolf Den set's minor slots, evenly, at uncommon: a den boss rolls one
+/// of these on a rare chance. The majors are the den chest's.
 const List<ItemDropType> wolfDenMinorArmorDropTable = [
-  ItemDropType(id: ItemId.WOLF_DEN_HELM, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_CLOAK, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_GLOVES, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_BOOTS, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_HELM, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_CLOAK, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_GLOVES, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_BOOTS, rarity: Rarity.UNCOMMON, weight: 1),
+];
+
+/// The whole Wolf Den set at rare, evenly: a long shot from the den's end
+/// chest, over and above its common majors.
+const List<ItemDropType> wolfDenRareSetDropTable = [
+  ItemDropType(id: ItemId.WOLF_DEN_HELM, rarity: Rarity.RARE, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_CLOAK, rarity: Rarity.RARE, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_GLOVES, rarity: Rarity.RARE, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_BOOTS, rarity: Rarity.RARE, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_CHESTGUARD, rarity: Rarity.RARE, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_LEGGUARDS, rarity: Rarity.RARE, weight: 1),
 ];
 
 /// The Wolf Den set's major slots, evenly: the den chest's rare pick.
@@ -190,6 +201,29 @@ const List<ItemDropType> spiderDropTable = [
   ItemDropType(id: ItemId.VENOM, lowCount: 1, highCount: 2),
 ];
 
+/// The dark forest's dead leave the same two scraps behind, a skeleton as
+/// much as a zombie: rotten flesh most of the time, grave moss now and then.
+const List<ItemDropType> graveScrapDropTable = [
+  ItemDropType(id: ItemId.ROTTEN_FLESH, lowCount: 1, highCount: 2, weight: 1),
+  ItemDropType(id: ItemId.GRAVE_MOSS, lowCount: 1, highCount: 2, weight: 0.6),
+];
+
+/// What a zombie wears: pure-attack rags, one slot each.
+const List<ItemDropType> tatteredClothDropTable = [
+  ItemDropType(id: ItemId.TATTERED_HOOD, weight: 1),
+  ItemDropType(id: ItemId.TATTERED_CLOAK, weight: 1),
+  ItemDropType(id: ItemId.TATTERED_WRAPS, weight: 1),
+  ItemDropType(id: ItemId.TATTERED_SHOES, weight: 1),
+];
+
+/// The same rags at uncommon: what a wraith wears, a cut above a zombie's.
+const List<ItemDropType> tatteredClothUncommonDropTable = [
+  ItemDropType(id: ItemId.TATTERED_HOOD, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(id: ItemId.TATTERED_CLOAK, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(id: ItemId.TATTERED_WRAPS, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(id: ItemId.TATTERED_SHOES, rarity: Rarity.UNCOMMON, weight: 1),
+];
+
 /// The same table with every line stamped at [rarity].
 ///
 /// Superseded by [NestedDrop]'s rarity override, which does this without
@@ -230,49 +264,3 @@ List<ItemDropType> getScaledDropTable(
   }
   return outTable;
 }
-
-/// One of every skill's basic hat, evenly: a Wolf Den boss rolls it on top of
-/// its own drops, so a run can turn up any skill's piece for that slot.
-const List<ItemDropType> basicSkillingHeadDropTable = [
-  ItemDropType(id: ItemId.BASIC_FISHERS_HAT),
-  ItemDropType(id: ItemId.BASIC_MINERS_HAT),
-  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_HAT),
-  ItemDropType(id: ItemId.BASIC_HERBALISTS_HAT),
-  ItemDropType(id: ItemId.BASIC_FIREMAKERS_HAT),
-  ItemDropType(id: ItemId.BASIC_COOKS_HAT),
-  ItemDropType(id: ItemId.BASIC_BLACKSMITHS_HAT),
-  ItemDropType(id: ItemId.BASIC_ENCHANTERS_HAT),
-  ItemDropType(id: ItemId.BASIC_JEWELERS_HAT),
-  ItemDropType(id: ItemId.BASIC_ALCHEMISTS_HAT),
-  ItemDropType(id: ItemId.BASIC_EXPLORERS_HAT),
-];
-
-/// One of every skill's basic tunic, evenly. See [basicSkillingHeadDropTable].
-const List<ItemDropType> basicSkillingBodyDropTable = [
-  ItemDropType(id: ItemId.BASIC_FISHERS_TUNIC),
-  ItemDropType(id: ItemId.BASIC_MINERS_TUNIC),
-  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_TUNIC),
-  ItemDropType(id: ItemId.BASIC_HERBALISTS_TUNIC),
-  ItemDropType(id: ItemId.BASIC_FIREMAKERS_TUNIC),
-  ItemDropType(id: ItemId.BASIC_COOKS_TUNIC),
-  ItemDropType(id: ItemId.BASIC_BLACKSMITHS_TUNIC),
-  ItemDropType(id: ItemId.BASIC_ENCHANTERS_TUNIC),
-  ItemDropType(id: ItemId.BASIC_JEWELERS_TUNIC),
-  ItemDropType(id: ItemId.BASIC_ALCHEMISTS_TUNIC),
-  ItemDropType(id: ItemId.BASIC_EXPLORERS_TUNIC),
-];
-
-/// One of every skill's basic pants, evenly. See [basicSkillingHeadDropTable].
-const List<ItemDropType> basicSkillingLegDropTable = [
-  ItemDropType(id: ItemId.BASIC_FISHERS_PANTS),
-  ItemDropType(id: ItemId.BASIC_MINERS_PANTS),
-  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_PANTS),
-  ItemDropType(id: ItemId.BASIC_HERBALISTS_PANTS),
-  ItemDropType(id: ItemId.BASIC_FIREMAKERS_PANTS),
-  ItemDropType(id: ItemId.BASIC_COOKS_PANTS),
-  ItemDropType(id: ItemId.BASIC_BLACKSMITHS_PANTS),
-  ItemDropType(id: ItemId.BASIC_ENCHANTERS_PANTS),
-  ItemDropType(id: ItemId.BASIC_JEWELERS_PANTS),
-  ItemDropType(id: ItemId.BASIC_ALCHEMISTS_PANTS),
-  ItemDropType(id: ItemId.BASIC_EXPLORERS_PANTS),
-];

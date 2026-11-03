@@ -144,8 +144,29 @@ void main() {
   });
 
   group('the alchemy recipes', () {
+    // the minor tier is the guam-leaf recipes; the tiers above brew off
+    // a herb of their own
+    List<CraftingRecipe> minorRecipes() => RecipeCatalog()
+        .recipesForSkill(SkillId.ALCHEMY)
+        .where((r) => r.inputs.containsKey(ItemId.GUAM_LEAF))
+        .toList();
+
+    test('the recovery potion is harralander and grave moss', () {
+      final recipe = RecipeCatalog()
+          .recipesForSkill(SkillId.ALCHEMY)
+          .singleWhere((r) => r.output.single.id == ItemId.RECOVERY_POTION);
+      expect(recipe.inputs, {ItemId.HARRALANDER: 1, ItemId.GRAVE_MOSS: 1});
+      final potion = ItemId.RECOVERY_POTION.definition as BuffItemDefinition;
+      expect(potion.skillBonus.keys, [SkillId.RECOVERY]);
+      expect(
+        potion.skillBonus[SkillId.RECOVERY],
+        greaterThan(minorBonus),
+        reason: 'the second tier must beat the minor one',
+      );
+    });
+
     test('seven recipes by level tier, xp climbing with level', () {
-      final recipes = RecipeCatalog().recipesForSkill(SkillId.ALCHEMY);
+      final recipes = minorRecipes();
       expect(recipes.length, 7);
       expect(recipes.map((r) => r.levelRequirement).toList()..sort(), [
         1,
@@ -195,8 +216,8 @@ void main() {
       session.dispose();
     });
 
-    test('every alchemy recipe is one guam leaf plus one reagent', () {
-      final recipes = RecipeCatalog().recipesForSkill(SkillId.ALCHEMY);
+    test('every minor recipe is one guam leaf plus one reagent', () {
+      final recipes = minorRecipes();
       for (final recipe in recipes) {
         expect(recipe.inputs.length, 2, reason: recipe.id);
         expect(recipe.inputs[ItemId.GUAM_LEAF], 1, reason: recipe.id);

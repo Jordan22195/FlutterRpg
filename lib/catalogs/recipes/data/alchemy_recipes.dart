@@ -62,7 +62,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     skill: SkillId.ALCHEMY,
     levelRequirement: 5,
     xp: 30,
-    inputs: {ItemId.GUAM_LEAF: 1, ItemId.SCALE: 1},
+    inputs: {ItemId.GUAM_LEAF: 1, ItemId.RAT_TAIL: 1},
     output: [
       WeightedDropTableEntry(
         id: ItemId.MINOR_STAMINA_POTION,
@@ -114,6 +114,85 @@ const List<CraftingRecipe> alchemyRecipes = [
         count: 1,
         weight: 1,
       ),
+    ],
+  ),
+  // The first tier above minor: harralander in place of guam leaf, with the
+  // reagent that has no other use.
+  CraftingRecipe(
+    id: 'alch_recovery_potion',
+    name: 'Recovery Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 15,
+    xp: 80,
+    inputs: {ItemId.HARRALANDER: 1, ItemId.GRAVE_MOSS: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.RECOVERY_POTION, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_speed_potion',
+    name: 'Speed Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 15,
+    xp: 70,
+    inputs: {ItemId.HARRALANDER: 1, ItemId.BAT_WING: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.SPEED_POTION, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_attack_potion',
+    name: 'Attack Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 20,
+    xp: 100,
+    inputs: {ItemId.HARRALANDER: 1, ItemId.FANG: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.ATTACK_POTION, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_strength_potion',
+    name: 'Strength Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 20,
+    xp: 110,
+    inputs: {ItemId.HARRALANDER: 1, ItemId.BAT_FANG: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STRENGTH_POTION, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_fishing_potion',
+    name: 'Fishing Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 15,
+    xp: 75,
+    inputs: {ItemId.HARRALANDER: 1, ItemId.CRAYFISH: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.FISHING_POTION, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_defence_potion',
+    name: 'Defence Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 15,
+    xp: 85,
+    inputs: {ItemId.HARRALANDER: 1, ItemId.IRON_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.DEFENCE_POTION, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_stamina_potion',
+    name: 'Stamina Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 15,
+    xp: 90,
+    inputs: {ItemId.HARRALANDER: 1, ItemId.SLIME_OOZE: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.STAMINA_POTION, count: 1, weight: 1),
     ],
   ),
 ];

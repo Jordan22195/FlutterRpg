@@ -611,6 +611,18 @@ class WorldController extends ChangeNotifier {
     return _actionTimingController.idleActionDurationFor(SkillId.EXPLORATION);
   }
 
+  /// Explores an hour at the rate the explore action is working at, boost
+  /// included, the way the bench and fight screens quote theirs. 0 with no
+  /// interval.
+  double exploresPerHour() {
+    final seconds =
+        _actionTimingController
+            .boostedActionDurationFor(SkillId.EXPLORATION)
+            .inMicroseconds /
+        1e6;
+    return seconds <= 0 ? 0 : 3600 / seconds;
+  }
+
   // function bound to action button in startExplore.
   // This executes periodically. [count] is how many explores the tick is
   // settling at once - one during normal play, and however many the player

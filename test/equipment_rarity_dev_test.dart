@@ -155,7 +155,13 @@ void main() {
       // the stack moved wholesale, and the open dialog now describes it
       expect(inventory.equipment.single.quality, Rarity.EPIC);
       expect(inventory.equipment.single.count, 2);
-      expect(find.text('Epic Chicken Charm'), findsOneWidget);
+      expect(find.text('Chicken Charm'), findsOneWidget);
+      expect(
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Epic'))
+            .selected,
+        isTrue,
+      );
 
       session.dispose();
     });

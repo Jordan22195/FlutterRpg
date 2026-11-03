@@ -9,6 +9,7 @@ import 'package:rpg/controllers/shop_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/services/shop_service.dart';
 import 'package:rpg/widgets/countdown_timer.dart';
+import 'package:rpg/widgets/equipment_info_dialog.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/repeat_press_button.dart';
 
@@ -274,8 +275,8 @@ class _ShopScreenState extends State<ShopScreen> {
                         size: 48,
                         count: item.count,
                         id: item.id,
-                        showInfoDialogOnTap: false,
                         quality: item.quality,
+                        onTap: () => showEquipmentInfoDialog(context, item),
                       ),
                       name: item.name,
                       buttonLabel: "Sell ${item.value}c",

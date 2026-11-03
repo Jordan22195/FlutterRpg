@@ -1,3 +1,4 @@
+import 'package:rpg/catalogs/items/definition/equipment_item_definition.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
@@ -260,6 +261,34 @@ extension WeightedDrops on List<ItemDropType> {
       }
     }
     return out;
+  }
+
+  /// This table as a monster variant at [rarity] drops it, when the table
+  /// was written for the common one: the same lines at the same odds, but
+  /// each piece of equipment [Rarity.index] rungs further up its quality
+  /// ladder and every other stack [Rarity.dropCountMultiplier] times the
+  /// size. Equipment keeps its count — a better dagger is the upgrade, not
+  /// more daggers.
+  ///
+  /// References are flattened first, so a quality a [NestedDrop] stamps
+  /// on is the one that gets raised.
+  List<ItemDropType> scaledTo(Rarity rarity) {
+    if (rarity == Rarity.COMMON) return this;
+    final multiplier = rarity.dropCountMultiplier;
+    return [
+      for (final drop in flattened)
+        if (drop.id.definition is EquipmentItemDefinition)
+          drop.copyWith(rarity: drop.rarity.raisedBy(rarity.index))
+        else
+          drop.copyWith(
+            lowCount: drop.lowCount * multiplier,
+            // a fixed count stays fixed: 0 or anything not above lowCount
+            // means "exactly lowCount", which the line above already scaled
+            highCount: drop.highCount > drop.lowCount
+                ? drop.highCount * multiplier
+                : 0,
+          ),
+    ];
   }
 
   List<WeightedDropTableEntry<ItemDropType>> get weighted => [

@@ -17,6 +17,7 @@ import '../theme/game_colors.dart';
 import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
 import '../widgets/action_dock.dart';
+import '../widgets/chest_info_dialog.dart';
 import '../widgets/chest_loot_dialog.dart';
 import '../widgets/discovery_tile.dart';
 import '../widgets/dungeon_floor_card.dart';
@@ -209,6 +210,11 @@ class _DungeonScreenState extends State<DungeonScreen> {
                       waiting: controller.chestsWaiting(dungeonId),
                       earned: controller.chestEarned(dungeonId),
                       onClaim: () => _claimChests(context, controller),
+                      onInfo: () => showChestInfoDialog(
+                        context,
+                        title: '${def.name} Chest',
+                        rolls: controller.chestRolls(dungeonId),
+                      ),
                     ),
                   ),
                 ],
@@ -559,8 +565,8 @@ class _DungeonScreenState extends State<DungeonScreen> {
               fill: palette.raised,
             )
           : null,
-      // tapping a tile reads what it is and what it drops; a sealed floor's
-      // tiles are hidden and take no taps
+      // tapping a tile reads what it is and what it drops, sealed floor or
+      // not
       tiles: [
         for (final entity in queue)
           DiscoveryTile(

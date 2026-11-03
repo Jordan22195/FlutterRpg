@@ -111,6 +111,13 @@ enum ItemId {
       iconAsset: "assets/icons/items/willow_logs.png",
     ),
   ),
+  MAPLE_LOGS(
+    ItemDefinition(
+      name: "Maple Logs",
+      value: 25,
+      iconAsset: "assets/icons/items/maple_logs.png",
+    ),
+  ),
 
   // ── ORES ────────────────────────────────────────────────────────
   // value ascending
@@ -401,6 +408,13 @@ enum ItemId {
   // What a herb is brewed *with*, alchemy level ascending. A herb sets
   // what a potion is; the reagent it is paired with sets which stat the
   // potion moves. Iron ore doubles as one and stays in ORES.
+  RAT_TAIL(
+    ItemDefinition(
+      name: "Rat Tail",
+      value: 1,
+      iconAsset: "assets/icons/items/rat_tail.png",
+    ),
+  ),
   FEATHER(
     ItemDefinition(
       name: "Feather",
@@ -455,6 +469,62 @@ enum ItemId {
       name: "Venom",
       value: 10,
       iconAsset: "assets/icons/items/venom.png",
+    ),
+  ),
+  ROTTEN_FLESH(
+    ItemDefinition(
+      name: "Rotten Flesh",
+      value: 3,
+      description: "Past saving. Dropped by the dark forest's dead.",
+      iconAsset: "assets/icons/items/rotten_flesh.png",
+    ),
+  ),
+  GRAVE_MOSS(
+    ItemDefinition(
+      name: "Grave Moss",
+      value: 6,
+      description: "Pale moss that only grows where something was buried.",
+      iconAsset: "assets/icons/items/grave_moss.png",
+    ),
+  ),
+  BAT_WING(
+    ItemDefinition(
+      name: "Bat Wing",
+      value: 5,
+      description: "A leathery wing, still twitching.",
+      iconAsset: "assets/icons/items/bat_wing.png",
+    ),
+  ),
+  BAT_FANG(
+    ItemDefinition(
+      name: "Bat Fang",
+      value: 7,
+      description: "A needle-thin fang from a mine bat.",
+      iconAsset: "assets/icons/items/bat_fang.png",
+    ),
+  ),
+  SLIME_OOZE(
+    ItemDefinition(
+      name: "Slime Ooze",
+      value: 4,
+      description: "Thick, cold and faintly sweet. It clings to everything.",
+      iconAsset: "assets/icons/items/slime_ooze.png",
+    ),
+  ),
+  SLIME_CORE(
+    ItemDefinition(
+      name: "Slime Core",
+      value: 60,
+      description: "The dense heart of a slime. Nobody is sure what it is for.",
+      iconAsset: "assets/icons/items/slime_core.png",
+    ),
+  ),
+  RED_CAP_MUSHROOM(
+    ItemDefinition(
+      name: "Red Cap Mushroom",
+      value: 8,
+      description: "Bright, spotted and best left uneaten.",
+      iconAsset: "assets/icons/items/red_cap_mushroom.png",
     ),
   ),
 
@@ -514,6 +584,78 @@ enum ItemId {
       skillBonus: {SkillId.RECOVERY: 5},
       duration: Duration(minutes: 3),
       iconAsset: "assets/icons/items/minor_recovery_potion.png",
+    ),
+  ),
+  RECOVERY_POTION(
+    BuffItemDefinition(
+      name: "Recovery Potion",
+      value: 90,
+      description:
+          "Harralander steeped in grave moss. Gets the wind back fast.",
+      skillBonus: {SkillId.RECOVERY: 10},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/recovery_potion.png",
+    ),
+  ),
+  SPEED_POTION(
+    BuffItemDefinition(
+      name: "Speed Potion",
+      value: 80,
+      description:
+          "Harralander ground with a bat wing. Acts a good deal faster.",
+      skillBonus: {SkillId.SPEED: 10},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/speed_potion.png",
+    ),
+  ),
+  ATTACK_POTION(
+    BuffItemDefinition(
+      name: "Attack Potion",
+      value: 110,
+      description: "Harralander and a fang. Lands far more often.",
+      skillBonus: {SkillId.ATTACK: 10},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/attack_potion.png",
+    ),
+  ),
+  STRENGTH_POTION(
+    BuffItemDefinition(
+      name: "Strength Potion",
+      value: 120,
+      description: "Harralander and a bat fang. Hits much harder.",
+      skillBonus: {SkillId.STRENGTH: 10},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/strength_potion.png",
+    ),
+  ),
+  FISHING_POTION(
+    BuffItemDefinition(
+      name: "Fishing Potion",
+      value: 90,
+      description: "Harralander and crayfish. The water gives up its best.",
+      skillBonus: {SkillId.FISHING: 10},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/fishing_potion.png",
+    ),
+  ),
+  DEFENCE_POTION(
+    BuffItemDefinition(
+      name: "Defence Potion",
+      value: 100,
+      description: "Harralander and iron bar. Blows glance off.",
+      skillBonus: {SkillId.DEFENCE: 10},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/defence_potion.png",
+    ),
+  ),
+  STAMINA_POTION(
+    BuffItemDefinition(
+      name: "Stamina Potion",
+      value: 95,
+      description: "Harralander and slime ooze. Holds out far longer.",
+      skillBonus: {SkillId.STAMINA: 10},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/stamina_potion.png",
     ),
   ),
   MINOR_ATTACK_POTION(
@@ -5533,7 +5675,7 @@ enum ItemId {
     ),
   ),
   // ── ARMOUR · WOLF DEN SET ──────────────────────────────────────
-  // Medium leather's stats at every slot, plus speed on top: +1 on the
+  // Heavy leather's stats at every slot, plus speed on top: +1 on the
   // minor slots (helm, cloak, gloves, boots), +2 on the major ones (chest,
   // legs). The minors drop off the den's bosses, the majors from its chest.
   WOLF_DEN_HELM(
@@ -5541,9 +5683,9 @@ enum ItemId {
       armorSlot: ArmorSlots.HEAD,
       name: "Wolf Den Helm",
       value: 200,
-      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      materialId: EquipmentMaterialId.HEAVY_LEATHER,
       bonusStats: {SkillId.SPEED: 1},
-      iconAsset: "assets/icons/items/medium_leather_coif.png",
+      iconAsset: "assets/icons/items/heavy_leather_coif.png",
     ),
   ),
   WOLF_DEN_CLOAK(
@@ -5551,7 +5693,7 @@ enum ItemId {
       armorSlot: ArmorSlots.BACK,
       name: "Wolf Den Cloak",
       value: 200,
-      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      materialId: EquipmentMaterialId.HEAVY_LEATHER,
       bonusStats: {SkillId.SPEED: 1},
       iconAsset: "assets/icons/items/wool_cloak.png",
     ),
@@ -5561,9 +5703,9 @@ enum ItemId {
       armorSlot: ArmorSlots.HANDS,
       name: "Wolf Den Gloves",
       value: 200,
-      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      materialId: EquipmentMaterialId.HEAVY_LEATHER,
       bonusStats: {SkillId.SPEED: 1},
-      iconAsset: "assets/icons/items/medium_leather_gloves.png",
+      iconAsset: "assets/icons/items/heavy_leather_gloves.png",
     ),
   ),
   WOLF_DEN_BOOTS(
@@ -5571,9 +5713,9 @@ enum ItemId {
       armorSlot: ArmorSlots.FEET,
       name: "Wolf Den Boots",
       value: 200,
-      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      materialId: EquipmentMaterialId.HEAVY_LEATHER,
       bonusStats: {SkillId.SPEED: 1},
-      iconAsset: "assets/icons/items/medium_leather_boots.png",
+      iconAsset: "assets/icons/items/heavy_leather_boots.png",
     ),
   ),
   WOLF_DEN_CHESTGUARD(
@@ -5581,9 +5723,9 @@ enum ItemId {
       armorSlot: ArmorSlots.CHEST,
       name: "Wolf Den Chestguard",
       value: 600,
-      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      materialId: EquipmentMaterialId.HEAVY_LEATHER,
       bonusStats: {SkillId.SPEED: 2},
-      iconAsset: "assets/icons/items/medium_leather_chest.png",
+      iconAsset: "assets/icons/items/heavy_leather_chest.png",
     ),
   ),
   WOLF_DEN_LEGGUARDS(
@@ -5591,9 +5733,9 @@ enum ItemId {
       armorSlot: ArmorSlots.LEGS,
       name: "Wolf Den Legguards",
       value: 400,
-      materialId: EquipmentMaterialId.MEDIUM_LEATHER,
+      materialId: EquipmentMaterialId.HEAVY_LEATHER,
       bonusStats: {SkillId.SPEED: 2},
-      iconAsset: "assets/icons/items/medium_leather_pants.png",
+      iconAsset: "assets/icons/items/heavy_leather_pants.png",
     ),
   ),
   HEAVY_LEATHER_GLOVES(
@@ -5838,6 +5980,16 @@ enum ItemId {
       iconAsset: "assets/icons/items/mithril_greatsword.png",
     ),
   ),
+  BLACK_GREATSWORD(
+    WeaponItemDefinition(
+      name: "Black Greatsword",
+      value: 240,
+      materialId: EquipmentMaterialId.MITHRIL,
+      weaponType: WeaponTypeId.GREATSWORD,
+      description: "Mithril's equal, blackened and cold to hold.",
+      iconAsset: "assets/icons/items/black_greatsword.png",
+    ),
+  ),
   ADAMANT_GREATSWORD(
     WeaponItemDefinition(
       name: "Adamant Greatsword",
@@ -5901,6 +6053,16 @@ enum ItemId {
       materialId: EquipmentMaterialId.MITHRIL,
       weaponType: WeaponTypeId.SWORD,
       iconAsset: "assets/icons/items/mithril_sword.png",
+    ),
+  ),
+  BLACK_SWORD(
+    WeaponItemDefinition(
+      name: "Black Sword",
+      value: 160,
+      materialId: EquipmentMaterialId.MITHRIL,
+      weaponType: WeaponTypeId.SWORD,
+      description: "Mithril's equal, blackened and cold to hold.",
+      iconAsset: "assets/icons/items/black_sword.png",
     ),
   ),
   ADAMANT_SWORD(
@@ -5975,6 +6137,16 @@ enum ItemId {
       materialId: EquipmentMaterialId.MITHRIL,
       weaponType: WeaponTypeId.DAGGER,
       iconAsset: "assets/icons/items/mithril_dagger.png",
+    ),
+  ),
+  BLACK_DAGGER(
+    WeaponItemDefinition(
+      name: "Black Dagger",
+      value: 150,
+      materialId: EquipmentMaterialId.MITHRIL,
+      weaponType: WeaponTypeId.DAGGER,
+      description: "Mithril's equal, blackened and cold to hold.",
+      iconAsset: "assets/icons/items/black_dagger.png",
     ),
   ),
   ADAMANT_DAGGER(
@@ -6312,6 +6484,17 @@ enum ItemId {
       iconAsset: "assets/icons/items/chicken_charm.png",
     ),
   ),
+  REDCAP_RING(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Redcap Ring",
+      value: 150,
+      fibLevel: 2,
+      statWeights: {SkillId.RECOVERY: 1},
+      description: "A band of hardened fungus, warm to the touch.",
+      iconAsset: "assets/icons/items/redcap_ring.png",
+    ),
+  ),
   MOOD_RING(
     EquipmentItemDefinition(
       armorSlot: ArmorSlots.FINGER,
@@ -6420,6 +6603,105 @@ enum ItemId {
       fibLevel: 5,
       statWeights: {SkillId.ATTACK: 8, SkillId.DEFENCE: 4},
       iconAsset: "assets/icons/items/spider_silk_necklace.png",
+    ),
+  ),
+  WEBBED_CLOAK(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Webbed Cloak",
+      value: 100,
+      fibLevel: 4,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      description: "Layer on layer of spider webbing, light and tough.",
+      iconAsset: "assets/icons/items/webbed_cloak.png",
+    ),
+  ),
+  VENOMFANG_RING(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Venomfang Ring",
+      value: 100,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1, SkillId.STRENGTH: 1},
+      description: "A spider's fang set in silk-wound bone.",
+      iconAsset: "assets/icons/items/venomfang_ring.png",
+    ),
+  ),
+
+  // ── ARMOUR · TATTERED CLOTH ────────────────────────────────────
+  // Grave-rags off the dark forest's zombies: pure attack, and a low rung
+  // whatever the slot — a rare drop worth wearing early, not a set to chase.
+  TATTERED_HOOD(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Tattered Hood",
+      value: 20,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1},
+      iconAsset: "assets/icons/items/tattered_hood.png",
+    ),
+  ),
+  TATTERED_CLOAK(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Tattered Cloak",
+      value: 20,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1},
+      iconAsset: "assets/icons/items/tattered_cloak.png",
+    ),
+  ),
+  TATTERED_WRAPS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Tattered Wraps",
+      value: 20,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1},
+      iconAsset: "assets/icons/items/tattered_wraps.png",
+    ),
+  ),
+  TATTERED_SHOES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Tattered Shoes",
+      value: 20,
+      fibLevel: 2,
+      statWeights: {SkillId.ATTACK: 1},
+      iconAsset: "assets/icons/items/tattered_shoes.png",
+    ),
+  ),
+
+  // ── SCOUTING MAPS ───────────────────────────────────────────────
+  // by zone; which zone each reveals is [ScoutingMaps.zoneFor]
+  SCOUTING_MAP_SOUTHWOOD_FOREST(
+    ScoutingMapItemDefinition(
+      name: "Scouting Map of Southwood Forest",
+      value: 400,
+      description:
+          "A hand-drawn survey of Southwood Forest. Using it uncovers "
+          "${ScoutingMapItemDefinition.discoveries} discoveries there at once.",
+      iconAsset: "assets/icons/items/scouting_map.png",
+    ),
+  ),
+  SCOUTING_MAP_DARKWOOD_FOREST(
+    ScoutingMapItemDefinition(
+      name: "Scouting Map of Darkwood Forest",
+      value: 600,
+      description:
+          "A hand-drawn survey of Darkwood Forest. Using it uncovers "
+          "${ScoutingMapItemDefinition.discoveries} discoveries there at once.",
+      iconAsset: "assets/icons/items/scouting_map.png",
+    ),
+  ),
+  SCOUTING_MAP_FOREST_MINE(
+    ScoutingMapItemDefinition(
+      name: "Scouting Map of Forest Mine",
+      value: 800,
+      description:
+          "A hand-drawn survey of Forest Mine. Using it uncovers "
+          "${ScoutingMapItemDefinition.discoveries} discoveries there at once.",
+      iconAsset: "assets/icons/items/scouting_map.png",
     ),
   ),
 

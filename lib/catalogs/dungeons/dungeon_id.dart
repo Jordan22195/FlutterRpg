@@ -68,12 +68,70 @@ enum DungeonId {
       name: "Spider Den",
       iconAsset: "assets/images/dungeons/spider_den.png",
       type: DungeonType.ZONE,
+      // a bulk haul of everything the darkwood gives, a roll apiece, and the
+      // bosses' pieces at rare on a long shot, the necklace at epic on a
+      // longer one
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.WILLOW_LOGS, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.COAL, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.PIKE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.SALMON, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.HARRALANDER, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.GRAVE_MOSS, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.SILK, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.VENOM, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.BAT_WING, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.BAT_FANG, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.ROTTEN_FLESH, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.WEBBED_CLOAK, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.VENOMFANG_RING, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.03,
+          entries: [
+            ItemDropType(id: ItemId.SPIDER_SILK_NECKLACE, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
       entries: [
         DungeonEntry(
           name: "Webbed Thicket",
           entities: [
-            DungeonEntityRef(EntityId.GIANT_SPIDER, count: 10),
+            DungeonEntityRef(EntityId.GIANT_SPIDER_UNCOMMON, count: 12),
+            DungeonEntityRef(EntityId.GIANT_BAT_UNCOMMON, count: 6),
+            DungeonEntityRef(EntityId.THICKET_WEAVER, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "Cocoon Hollow",
+          entities: [
             DungeonEntityRef(EntityId.GIANT_SPIDER_UNCOMMON, count: 10),
+            DungeonEntityRef(EntityId.SKELETON_UNCOMMON, count: 8),
             DungeonEntityRef(EntityId.THICKET_ZOMBIE, count: 1),
           ],
         ),
@@ -151,7 +209,8 @@ enum DungeonId {
       iconAsset: "assets/images/dungeons/wolf_den.png",
       type: DungeonType.ZONE,
       // a bulk haul of everything the forest gives, a roll apiece, and the
-      // set's chest and legs on a rare chance
+      // set's chest and legs on a rare chance, and now and then a rare
+      // piece of any slot
       chestRolls: [
         DropRoll(
           entries: [
@@ -199,6 +258,7 @@ enum DungeonId {
           ],
         ),
         DropRoll(chance: 0.1, entries: wolfDenMajorArmorDropTable),
+        DropRoll(chance: 0.05, entries: wolfDenRareSetDropTable),
       ],
       entries: [
         DungeonEntry(
@@ -222,8 +282,8 @@ enum DungeonId {
         DungeonEntry(
           name: "Sunken Grotto",
           entities: [
-            DungeonEntityRef(EntityId.GIANT_BAT_UNCOMMON, count: 5),
-            DungeonEntityRef(EntityId.SLIME_UNCOMMON, count: 10),
+            DungeonEntityRef(EntityId.GIANT_BAT, count: 5),
+            DungeonEntityRef(EntityId.SLIME, count: 10),
             DungeonEntityRef(EntityId.GROTTO_FUNGAL_MONSTER, count: 1),
           ],
         ),

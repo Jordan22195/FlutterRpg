@@ -149,10 +149,20 @@ class EquipmentItemDefinition extends ItemDefinition {
     return budget;
   }
 
+  /// A rarity this piece always wears, whatever it was rolled at, or null
+  /// for the usual: the rolled quality (or the definition's) stands.
+  Rarity? get fixedRarity => null;
+
+  /// Whether [Rarity.statMultiplier] reaches this piece's stats. Off, its
+  /// rarity is the colour of its border and nothing else.
+  bool get rarityScalesStats => true;
+
   /// The stats a piece of this definition at [rarity] actually has.
   Map<SkillId, int> statsAt(Rarity rarity) {
     if (fixedStats != null) return {...fixedStats!};
-    final stats = _statsFor(budgetAt(rarity));
+    final stats = _statsFor(
+      budgetAt(rarityScalesStats ? rarity : Rarity.COMMON),
+    );
     for (final bonus in (bonusStats ?? const <SkillId, int>{}).entries) {
       stats[bonus.key] = (stats[bonus.key] ?? 0) + bonus.value;
     }

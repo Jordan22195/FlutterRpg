@@ -18,6 +18,9 @@ import 'package:rpg/utilities/util.dart';
 /// variants share — art, tier, how it fights — lives on the shared
 /// [CombatArchetype]; what makes a variant its own thing (name, rarity,
 /// drops) is written here.
+///
+/// Drops default to the common variant's, scaled to this one's rarity (see
+/// [itemDrops]), so a variant only writes the loot that sets it apart.
 class CombatEntityDefinition extends EncounterEntityDefinition {
   /// The monster this is a variant of.
   final CombatArchetype archetype;
@@ -27,22 +30,91 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
   /// never also a regular somewhere. The dungeon screen draws its tile apart.
   final bool isDungeonBoss;
 
+  /// The main table as written here, or null to inherit the common
+  /// variant's. Written, it replaces the inherited table outright.
+  final List<ItemDropType>? ownItemDrops;
+
+  /// Lines added to the main table, on top of whichever [itemDrops]
+  /// resolves to — inherited or written. Never scaled: they are written at
+  /// the counts and qualities this variant drops them at.
+  final List<ItemDropType> extraItemDrops;
+
+  /// The bonus rolls as written here, or null to inherit the common
+  /// variant's. `const []` turns the inherited ones off.
+  final List<DropRoll>? ownBonusDrops;
+
+  /// Bonus rolls added to whichever [bonusDrops] resolves to.
+  final List<DropRoll> extraBonusDrops;
+
   const CombatEntityDefinition(
     this.archetype, {
     required super.name,
     super.rarity,
-    required super.itemDrops,
-    super.bonusDrops,
+    List<ItemDropType>? itemDrops,
+    this.extraItemDrops = const [],
+    List<DropRoll>? bonusDrops,
+    this.extraBonusDrops = const [],
     this.isDungeonBoss = false,
     // art comes from the archetype, and the combat stats are derived from
     // level and type by the getters below; the fields the parent stores
-    // for all of them are never read.
-  }) : super(
+    // for all of them are never read. Nor are the drop lists it stores:
+    // the getters below resolve them against the common variant.
+  }) : ownItemDrops = itemDrops,
+       ownBonusDrops = bonusDrops,
+       super(
          iconAsset: '',
          entityType: SkillId.ATTACK,
          defence: 0,
          hitpoints: 0,
+         itemDrops: const [],
        );
+
+  /// The regular COMMON variant of [archetype] — the one whose drops every
+  /// other variant inherits by default. Null for an archetype with no
+  /// common regular (some monsters start at uncommon), and for any common,
+  /// which is the rung the scaling starts from. A boss is
+  /// never the base, even a common one: its table is bulk loot written for
+  /// the end of a floor.
+  CombatEntityDefinition? get base =>
+      rarity == Rarity.COMMON ? null : _commonByArchetype[archetype];
+
+  static final Map<CombatArchetype, CombatEntityDefinition> _commonByArchetype =
+      {
+        for (final id in EntityId.values.reversed)
+          if (id.definition case final CombatEntityDefinition def
+              when def.rarity == Rarity.COMMON && !def.isDungeonBoss)
+            def.archetype: def,
+      };
+
+  /// Resolved tables, built once per definition: rolled on every kill, and
+  /// scaling a table flattens it.
+  static final Expando<List<ItemDropType>> _itemDropsCache = Expando();
+  static final Expando<List<DropRoll>> _bonusDropsCache = Expando();
+
+  /// The main table: [ownItemDrops] if written, otherwise the common
+  /// variant's scaled to this rarity ([WeightedDrops.scaledTo] — more of
+  /// each stack, equipment a rung up per rarity step), then
+  /// [extraItemDrops] on top.
+  @override
+  List<ItemDropType> get itemDrops => _itemDropsCache[this] ??= [
+    ...ownItemDrops ?? base?.itemDrops.scaledTo(rarity) ?? const [],
+    ...extraItemDrops,
+  ];
+
+  /// The bonus rolls, resolved the way [itemDrops] is: each inherited roll
+  /// keeps its chance and has its entries scaled.
+  @override
+  List<DropRoll> get bonusDrops => _bonusDropsCache[this] ??= [
+    ...ownBonusDrops ??
+        [
+          for (final roll in base?.bonusDrops ?? const <DropRoll>[])
+            DropRoll(
+              chance: roll.chance,
+              entries: roll.entries.scaledTo(rarity),
+            ),
+        ],
+    ...extraBonusDrops,
+  ];
 
   @override
   String get iconAsset => archetype.iconAsset;
@@ -97,7 +169,9 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
     int? defence,
     int? hitpoints,
     List<ItemDropType>? itemDrops,
+    List<ItemDropType>? extraItemDrops,
     List<DropRoll>? bonusDrops,
+    List<DropRoll>? extraBonusDrops,
     bool? isDungeonBoss,
   }) {
     assert(
@@ -109,8 +183,12 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
       archetype ?? this.archetype,
       name: name ?? this.name,
       rarity: rarity ?? this.rarity,
-      itemDrops: itemDrops ?? this.itemDrops,
-      bonusDrops: bonusDrops ?? this.bonusDrops,
+      // the written tables, not the resolved ones, so a copy at another
+      // rarity re-scales what it inherits rather than freezing this one's
+      itemDrops: itemDrops ?? ownItemDrops,
+      extraItemDrops: extraItemDrops ?? this.extraItemDrops,
+      bonusDrops: bonusDrops ?? ownBonusDrops,
+      extraBonusDrops: extraBonusDrops ?? this.extraBonusDrops,
       isDungeonBoss: isDungeonBoss ?? this.isDungeonBoss,
     );
   }

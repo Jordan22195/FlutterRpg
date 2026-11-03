@@ -30,9 +30,9 @@ enum FloorStanding {
 /// a card holding the floor's creatures as a 3-column grid of [tiles], its
 /// [boss] as a wide row beneath them and an [action] button at the foot.
 ///
-/// A [lockReason] blurs the grid and the boss past reading, with the lock
-/// and the reason laid over them, and shuts them to taps: what a sealed
-/// floor holds stays hidden until it opens.
+/// A [lockReason] puts the lock and the reason above the grid and the boss,
+/// which stay readable and tappable: what a sealed floor holds is never
+/// hidden.
 class DungeonFloorCard extends StatelessWidget {
   const DungeonFloorCard({
     super.key,
@@ -192,21 +192,14 @@ class DungeonFloorCard extends StatelessWidget {
       ],
     );
     if (locked) {
-      // sealed: blurred past reading and shut to taps, as an undiscovered
-      // tile is, with why it is shut laid over it
-      contents = Stack(
+      // sealed: what it holds is plain to read and tap, with why it is shut
+      // laid above it
+      contents = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          IgnorePointer(
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
-              child: contents,
-            ),
-          ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Center(child: _LockBadge(reason: lockReason!)),
-            ),
-          ),
+          Center(child: _LockBadge(reason: lockReason!)),
+          const SizedBox(height: PlaceGrid.gap),
+          contents,
         ],
       );
     }
@@ -554,6 +547,7 @@ class DungeonChestCard extends StatelessWidget {
     required this.waiting,
     required this.earned,
     required this.onClaim,
+    this.onInfo,
   });
 
   /// E.g. "Wolf Den Chest".
@@ -571,6 +565,9 @@ class DungeonChestCard extends StatelessWidget {
   final bool earned;
 
   final VoidCallback onClaim;
+
+  /// Tapping the chest icon: what the chest can hold.
+  final VoidCallback? onInfo;
 
   /// The collapsed height, which centres the rail node on the card.
   static const double height = 88;
@@ -602,18 +599,23 @@ class DungeonChestCard extends StatelessWidget {
               height: height - 2,
               child: Row(
                 children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: GameColors.chestBoxFill,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: GameColors.chestBoxBorder),
-                    ),
-                    alignment: Alignment.center,
-                    child: const CustomPaint(
-                      size: Size.square(34),
-                      painter: _ChestGlyph(color: GameColors.chestColor),
+                  InkWell(
+                    key: const ValueKey('chest-info-button'),
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: onInfo,
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: GameColors.chestBoxFill,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: GameColors.chestBoxBorder),
+                      ),
+                      alignment: Alignment.center,
+                      child: const CustomPaint(
+                        size: Size.square(34),
+                        painter: _ChestGlyph(color: GameColors.chestColor),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),

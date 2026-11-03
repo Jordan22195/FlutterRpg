@@ -23,13 +23,18 @@
 /// (`rarityBorderColor` in `widgets/item_stack_tile.dart`), so the catalog
 /// stays free of Flutter painting.
 enum Rarity {
-  COMMON('', 1.0, 0),
-  UNCOMMON('Uncommon', 1.2, 1),
-  RARE('Rare', 1.4, 2),
-  EPIC('Epic', 1.6, 3),
-  LEGENDARY('Legendary', 1.8, 4);
+  COMMON('', 1.0, 0, 1),
+  UNCOMMON('Uncommon', 1.2, 1, 2),
+  RARE('Rare', 1.4, 2, 3),
+  EPIC('Epic', 1.6, 3, 5),
+  LEGENDARY('Legendary', 1.8, 4, 8);
 
-  const Rarity(this.label, this.statMultiplier, this.minStatBonus);
+  const Rarity(
+    this.label,
+    this.statMultiplier,
+    this.minStatBonus,
+    this.dropCountMultiplier,
+  );
 
   /// Display name; empty for common, which is not worth saying.
   final String label;
@@ -43,4 +48,14 @@ enum Rarity {
   /// back to where it started; this is the floor that keeps an uncommon
   /// strictly better than the common it was rolled against.
   final int minStatBonus;
+
+  /// How many times its common's stacks a monster variant at this rarity
+  /// drops when it inherits the common's table
+  /// (`CombatEntityDefinition.itemDrops`). It walks the same Fibonacci
+  /// ladder the variant's level does, so loot keeps pace with the fight.
+  final int dropCountMultiplier;
+
+  /// This rarity [steps] rungs further up, stopping at legendary.
+  Rarity raisedBy(int steps) =>
+      Rarity.values[(index + steps).clamp(0, Rarity.values.length - 1)];
 }

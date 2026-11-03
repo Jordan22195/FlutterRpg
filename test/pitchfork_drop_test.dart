@@ -40,7 +40,8 @@ void main() {
       def.damageAt(Rarity.RARE) / def.damageAt(Rarity.COMMON),
       closeTo(1.4, 1e-9),
     );
-    expect(rare.displayName, 'Rare Pitchfork');
+    // the tier is the border's colour, not part of the name
+    expect(rare.displayName, 'Pitchfork');
   });
 
   test('the rare scarecrow drops it as a RARE instance, not a count', () {

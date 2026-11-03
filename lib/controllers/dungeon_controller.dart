@@ -12,6 +12,7 @@ import '../data/inventory_data.dart';
 import '../data/player_data.dart';
 import '../services/dungeon_service.dart';
 import '../services/inventory_service.dart';
+import '../services/weighted_drop_table_service.dart';
 import '../systems/dungeon_system.dart';
 
 /// The dungeon screen's controller: which floors a dungeon has, which are
@@ -200,6 +201,10 @@ class DungeonController extends ChangeNotifier {
 
   /// Whether this run's chest has been earned — claimed or not.
   bool chestEarned(DungeonId id) => _progress.chestEarnedThisRun(id);
+
+  /// What one of [id]'s chests can roll, for the chest's info dialog.
+  List<DropRoll> chestRolls(DungeonId id) =>
+      _dungeonSystem.chestRollsFor(id.definition);
 
   /// Chests of [id] earned and not yet claimed.
   int chestsWaiting(DungeonId id) => _progress.chestsWaiting(id);

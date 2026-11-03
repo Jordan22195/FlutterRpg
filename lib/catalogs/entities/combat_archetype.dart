@@ -112,14 +112,14 @@ const wolf = CombatArchetype(
 // Giant Bat · roster tier 2 · mine
 const giantBat = CombatArchetype(
   iconAsset: 'assets/images/entities/giant_bat.png',
-  fibLevel: 6,
+  fibLevel: 7,
   combatType: CombatType.GLASS_CANNON,
   attackInterval: 1.0,
 );
 // Slime · roster tier 2 · mine
 const slime = CombatArchetype(
   iconAsset: 'assets/images/entities/slime.png',
-  fibLevel: 6,
+  fibLevel: 7,
   combatType: CombatType.ROCK_CRAB,
   attackInterval: 2.5,
 );

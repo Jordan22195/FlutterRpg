@@ -155,9 +155,21 @@ class ExplorationService {
     int entityCount,
     PlayerData playerState,
     WorldData worldState,
-  ) {
-    final zoneId = playerState.currentZoneId;
+  ) => addEntityToZone(
+    entityId,
+    entityCount,
+    playerState.currentZoneId,
+    worldState,
+  );
 
+  /// [addEntityToCurrentZone] for any zone: scouting discovers somewhere
+  /// the player is not standing.
+  void addEntityToZone(
+    EntityId entityId,
+    int entityCount,
+    ZoneId zoneId,
+    WorldData worldState,
+  ) {
     // create the zone entry if it does not exist
     if (!worldState.zones.containsKey(zoneId)) {
       return;

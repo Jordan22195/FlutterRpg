@@ -466,8 +466,11 @@ enum EntityId {
   // Rarity — differing only in name, rarity and drop table.
   //
   // Ordered by tier, and within a tier by the zone the monster belongs
-  // to. An empty drop table is a stub: the roster gave levels, not loot,
-  // and nothing drops coins, so a variant with no loot yet drops nothing.
+  // to. A variant that writes no drops inherits its common's, scaled to
+  // its rarity (see CombatEntityDefinition.itemDrops); one that writes
+  // itemDrops or bonusDrops replaces that table, and extraItemDrops /
+  // extraBonusDrops add to it. A common with an empty table is a stub:
+  // the roster gave levels, not loot.
 
   //
   // Tier 3 - Level 3
@@ -484,36 +487,16 @@ enum EntityId {
     ),
   ),
   CHICKEN_UNCOMMON(
-    CombatEntityDefinition(
-      chicken,
-      name: "Chicken",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(chicken, name: "Chicken", rarity: Rarity.UNCOMMON),
   ),
   CHICKEN_RARE(
-    CombatEntityDefinition(
-      chicken,
-      name: "Chicken",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(chicken, name: "Chicken", rarity: Rarity.RARE),
   ),
   CHICKEN_EPIC(
-    CombatEntityDefinition(
-      chicken,
-      name: "Chicken",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(chicken, name: "Chicken", rarity: Rarity.EPIC),
   ),
   CHICKEN_LEGENDARY(
-    CombatEntityDefinition(
-      chicken,
-      name: "Chicken",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(chicken, name: "Chicken", rarity: Rarity.LEGENDARY),
   ),
 
   //
@@ -560,29 +543,10 @@ enum EntityId {
       ],
     ),
   ),
-  COW_RARE(
-    CombatEntityDefinition(
-      cow,
-      name: "Cow",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  COW_EPIC(
-    CombatEntityDefinition(
-      cow,
-      name: "Cow",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  COW_RARE(CombatEntityDefinition(cow, name: "Cow", rarity: Rarity.RARE)),
+  COW_EPIC(CombatEntityDefinition(cow, name: "Cow", rarity: Rarity.EPIC)),
   COW_LEGENDARY(
-    CombatEntityDefinition(
-      cow,
-      name: "Cow",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(cow, name: "Cow", rarity: Rarity.LEGENDARY),
   ),
 
   //
@@ -601,31 +565,19 @@ enum EntityId {
       giantRat,
       name: "Giant Rat",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   GIANT_RAT_RARE(
-    CombatEntityDefinition(
-      giantRat,
-      name: "Giant Rat",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(giantRat, name: "Giant Rat", rarity: Rarity.RARE),
   ),
   GIANT_RAT_EPIC(
-    CombatEntityDefinition(
-      giantRat,
-      name: "Giant Rat",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(giantRat, name: "Giant Rat", rarity: Rarity.EPIC),
   ),
   GIANT_RAT_LEGENDARY(
     CombatEntityDefinition(
       giantRat,
       name: "Giant Rat",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
 
@@ -709,7 +661,6 @@ enum EntityId {
       scarecrow,
       name: "Rotwood Scarecrow",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   ROTWOOD_SCARECROW_LEGENDARY(
@@ -717,7 +668,6 @@ enum EntityId {
       scarecrow,
       name: "Rotwood Scarecrow",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
 
@@ -745,27 +695,33 @@ enum EntityId {
     ),
   ),
   GIANT_SPIDER_RARE(
+    CombatEntityDefinition(spider, name: "Giant Spider", rarity: Rarity.RARE),
+  ),
+  // the Spider Den's Webbed Thicket boss: a rare giant spider, with the
+  // regulars' drops in bulk
+  THICKET_WEAVER(
     CombatEntityDefinition(
       spider,
-      name: "Giant Spider",
+      name: "Thicket Weaver",
+      isDungeonBoss: true,
       rarity: Rarity.RARE,
-      itemDrops: [],
+      itemDrops: [NestedDrop(spiderDropTable, countMultiplier: 3)],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.25,
+          entries: [ItemDropType(id: ItemId.WEBBED_CLOAK)],
+        ),
+      ],
     ),
   ),
   GIANT_SPIDER_EPIC(
-    CombatEntityDefinition(
-      spider,
-      name: "Giant Spider",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(spider, name: "Giant Spider", rarity: Rarity.EPIC),
   ),
   GIANT_SPIDER_LEGENDARY(
     CombatEntityDefinition(
       spider,
       name: "Giant Spider",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Forest Wolf · roster tier 2 · forest
@@ -821,23 +777,13 @@ enum EntityId {
     ),
   ),
   FOREST_WOLF_EPIC(
-    CombatEntityDefinition(
-      wolf,
-      name: "Forest Wolf",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(wolf, name: "Forest Wolf", rarity: Rarity.EPIC),
   ),
   FOREST_WOLF_LEGENDARY(
-    CombatEntityDefinition(
-      wolf,
-      name: "Forest Wolf",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(wolf, name: "Forest Wolf", rarity: Rarity.LEGENDARY),
   ),
-  // the Wolf Den's Deep Lair boss: a forest wolf's drops, and a tenth of kills
-  // one of the basic skilling tunics
+  // the Wolf Den's Deep Lair boss: a forest wolf's drops, and the den set's minor
+  // slots on a rare chance
   DEN_ALPHA_WOLF(
     CombatEntityDefinition(
       wolf,
@@ -848,10 +794,7 @@ enum EntityId {
         ItemDropType(id: ItemId.WOLF_CLAW, weight: 1),
         ItemDropType(id: ItemId.WOLF_PELT, weight: 1),
       ],
-      bonusDrops: [
-        DropRoll(chance: 0.1, entries: basicSkillingBodyDropTable),
-        DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable),
-      ],
+      bonusDrops: [DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable)],
     ),
   ),
   // Giant Bat · roster tier 2 · mine
@@ -860,9 +803,8 @@ enum EntityId {
       giantBat,
       name: "Giant Bat",
       itemDrops: [
-        // TODO
-        // BATWINGS
-        // LEATHER
+        ItemDropType(id: ItemId.BAT_WING, lowCount: 1, highCount: 2, weight: 1),
+        ItemDropType(id: ItemId.BAT_FANG, weight: 0.6),
       ],
     ),
   ),
@@ -871,31 +813,19 @@ enum EntityId {
       giantBat,
       name: "Giant Bat",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   GIANT_BAT_RARE(
-    CombatEntityDefinition(
-      giantBat,
-      name: "Giant Bat",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(giantBat, name: "Giant Bat", rarity: Rarity.RARE),
   ),
   GIANT_BAT_EPIC(
-    CombatEntityDefinition(
-      giantBat,
-      name: "Giant Bat",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(giantBat, name: "Giant Bat", rarity: Rarity.EPIC),
   ),
   GIANT_BAT_LEGENDARY(
     CombatEntityDefinition(
       giantBat,
       name: "Giant Bat",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Slime · roster tier 2 · mine
@@ -904,41 +834,24 @@ enum EntityId {
       slime,
       name: "Slime",
       itemDrops: [
-        // TODO OOZE FOR ALCH
+        ItemDropType(
+          id: ItemId.SLIME_OOZE,
+          lowCount: 1,
+          highCount: 3,
+          weight: 1,
+        ),
+        // rare, and for nothing yet
+        ItemDropType(id: ItemId.SLIME_CORE, weight: 0.05),
       ],
     ),
   ),
   SLIME_UNCOMMON(
-    CombatEntityDefinition(
-      slime,
-      name: "Slime",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(slime, name: "Slime", rarity: Rarity.UNCOMMON),
   ),
-  SLIME_RARE(
-    CombatEntityDefinition(
-      slime,
-      name: "Slime",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  SLIME_EPIC(
-    CombatEntityDefinition(
-      slime,
-      name: "Slime",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  SLIME_RARE(CombatEntityDefinition(slime, name: "Slime", rarity: Rarity.RARE)),
+  SLIME_EPIC(CombatEntityDefinition(slime, name: "Slime", rarity: Rarity.EPIC)),
   SLIME_LEGENDARY(
-    CombatEntityDefinition(
-      slime,
-      name: "Slime",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(slime, name: "Slime", rarity: Rarity.LEGENDARY),
   ),
 
   //
@@ -983,6 +896,8 @@ enum EntityId {
         ),
         ...goblinSupplyDrops,
       ],
+      // written in full, so the common's bonus rolls stay its own
+      bonusDrops: const [],
     ),
   ),
   GOBLIN_RARE(
@@ -999,6 +914,8 @@ enum EntityId {
         ),
         ...goblinSupplyDrops,
       ],
+      // written in full, so the common's bonus rolls stay its own
+      bonusDrops: const [],
     ),
   ),
   GOBLIN_EPIC(
@@ -1015,6 +932,8 @@ enum EntityId {
         ),
         ...goblinSupplyDrops,
       ],
+      // written in full, so the common's bonus rolls stay its own
+      bonusDrops: const [],
     ),
   ),
   GOBLIN_LEGENDARY(
@@ -1031,6 +950,8 @@ enum EntityId {
         ),
         ...goblinSupplyDrops,
       ],
+      // written in full, so the common's bonus rolls stay its own
+      bonusDrops: const [],
     ),
   ),
   // Bear · roster tier 2 · forest
@@ -1055,35 +976,35 @@ enum EntityId {
       bear,
       name: "Bear",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.BEAR_CLAW,
+          lowCount: 2,
+          highCount: 5,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.BEAR_HIDE,
+          lowCount: 2,
+          highCount: 5,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.BEAR_RUMP,
+          lowCount: 2,
+          highCount: 3,
+          weight: 1,
+        ),
+      ],
     ),
   ),
-  BEAR_RARE(
-    CombatEntityDefinition(
-      bear,
-      name: "Bear",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  BEAR_EPIC(
-    CombatEntityDefinition(
-      bear,
-      name: "Bear",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  BEAR_RARE(CombatEntityDefinition(bear, name: "Bear", rarity: Rarity.RARE)),
+  BEAR_EPIC(CombatEntityDefinition(bear, name: "Bear", rarity: Rarity.EPIC)),
   BEAR_LEGENDARY(
-    CombatEntityDefinition(
-      bear,
-      name: "Bear",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(bear, name: "Bear", rarity: Rarity.LEGENDARY),
   ),
-  // the Wolf Den's Cave Entrance boss: a bear's drops, and a tenth of kills one
-  // of the basic skilling hats
+  // the Wolf Den's Cave Entrance boss: a bear's drops, and the den set's minor slots
+  // on a rare chance
   CAVE_BEAR(
     CombatEntityDefinition(
       bear,
@@ -1100,10 +1021,7 @@ enum EntityId {
         ItemDropType(id: ItemId.BEAR_HIDE, weight: 1),
         ItemDropType(id: ItemId.BEAR_RUMP, weight: 1),
       ],
-      bonusDrops: [
-        DropRoll(chance: 0.1, entries: basicSkillingHeadDropTable),
-        DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable),
-      ],
+      bonusDrops: [DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable)],
     ),
   ),
   // Mudlurc · roster tier 2 · swamp
@@ -1167,28 +1085,13 @@ enum EntityId {
     ),
   ),
   MUDLURC_RARE(
-    CombatEntityDefinition(
-      mudlurc,
-      name: "Mudlurc",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(mudlurc, name: "Mudlurc", rarity: Rarity.RARE),
   ),
   MUDLURC_EPIC(
-    CombatEntityDefinition(
-      mudlurc,
-      name: "Mudlurc",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(mudlurc, name: "Mudlurc", rarity: Rarity.EPIC),
   ),
   MUDLURC_LEGENDARY(
-    CombatEntityDefinition(
-      mudlurc,
-      name: "Mudlurc",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(mudlurc, name: "Mudlurc", rarity: Rarity.LEGENDARY),
   ),
   // Fungal Monster · roster tier 2 · swamp
   FUNGAL_MONSTER(
@@ -1220,7 +1123,6 @@ enum EntityId {
       fungalMonster,
       name: "Fungal Monster",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   FUNGAL_MONSTER_EPIC(
@@ -1228,7 +1130,6 @@ enum EntityId {
       fungalMonster,
       name: "Fungal Monster",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   FUNGAL_MONSTER_LEGENDARY(
@@ -1236,20 +1137,25 @@ enum EntityId {
       fungalMonster,
       name: "Fungal Monster",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
-  // the Wolf Den's Sunken Grotto boss: a fungal monster's drops, and a tenth of
-  // kills one of the basic skilling pants
+  // the Wolf Den's Sunken Grotto boss: a fungal monster's drops, and the den set's
+  // minor slots on a rare chance
   GROTTO_FUNGAL_MONSTER(
     CombatEntityDefinition(
       fungalMonster,
       name: "Grotto Fungal Monster",
       isDungeonBoss: true,
-      itemDrops: [],
+      // a bulk haul: one stack of the grotto's growth per kill
+      itemDrops: [
+        ItemDropType(id: ItemId.GUAM_LEAF, lowCount: 50, highCount: 150),
+        ItemDropType(id: ItemId.HARRALANDER, lowCount: 50, highCount: 150),
+        ItemDropType(id: ItemId.RED_CAP_MUSHROOM, lowCount: 50, highCount: 150),
+        ItemDropType(id: ItemId.OAK_LOGS, lowCount: 50, highCount: 150),
+        ItemDropType(id: ItemId.MAPLE_LOGS, lowCount: 50, highCount: 150),
+      ],
       bonusDrops: [
-        DropRoll(entries: herbDropTable, chance: 0.25),
-        DropRoll(chance: 0.1, entries: basicSkillingLegDropTable),
+        DropRoll(chance: 0.1, entries: [ItemDropType(id: ItemId.REDCAP_RING)]),
         DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable),
       ],
     ),
@@ -1266,36 +1172,16 @@ enum EntityId {
     ),
   ),
   KOBOLD_UNCOMMON(
-    CombatEntityDefinition(
-      kobold,
-      name: "Kobold",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(kobold, name: "Kobold", rarity: Rarity.UNCOMMON),
   ),
   KOBOLD_RARE(
-    CombatEntityDefinition(
-      kobold,
-      name: "Kobold",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(kobold, name: "Kobold", rarity: Rarity.RARE),
   ),
   KOBOLD_EPIC(
-    CombatEntityDefinition(
-      kobold,
-      name: "Kobold",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(kobold, name: "Kobold", rarity: Rarity.EPIC),
   ),
   KOBOLD_LEGENDARY(
-    CombatEntityDefinition(
-      kobold,
-      name: "Kobold",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(kobold, name: "Kobold", rarity: Rarity.LEGENDARY),
   ),
 
   //
@@ -1306,7 +1192,17 @@ enum EntityId {
     CombatEntityDefinition(
       skeleton,
       name: "Skeleton",
-      itemDrops: [NestedDrop(steelMajorArmorDropTable)],
+      itemDrops: [
+        NestedDrop(graveScrapDropTable, weight: 3),
+        NestedDrop(steelMinorArmorDropTable, weight: 1),
+        NestedDrop(steelToolsDropTable, weight: 0.6),
+        NestedDrop(steelMajorArmorDropTable, weight: 0.4),
+        ItemDropType(
+          id: ItemId.STEEL_SHIELD,
+          weight: 0.2,
+          rarity: Rarity.UNCOMMON,
+        ),
+      ],
     ),
   ),
   SKELETON_UNCOMMON(
@@ -1314,31 +1210,37 @@ enum EntityId {
       skeleton,
       name: "Skeleton",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
+      itemDrops: [
+        NestedDrop(graveScrapDropTable, weight: 3, countMultiplier: 2),
+        NestedDrop(
+          steelMinorArmorDropTable,
+          weight: 1,
+          rarity: Rarity.UNCOMMON,
+        ),
+        NestedDrop(
+          steelMajorArmorDropTable,
+          weight: 0.4,
+          rarity: Rarity.UNCOMMON,
+        ),
+        ItemDropType(
+          id: ItemId.STEEL_SHIELD,
+          weight: 0.4,
+          rarity: Rarity.UNCOMMON,
+        ),
+      ],
     ),
   ),
   SKELETON_RARE(
-    CombatEntityDefinition(
-      skeleton,
-      name: "Skeleton",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(skeleton, name: "Skeleton", rarity: Rarity.RARE),
   ),
   SKELETON_EPIC(
-    CombatEntityDefinition(
-      skeleton,
-      name: "Skeleton",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(skeleton, name: "Skeleton", rarity: Rarity.EPIC),
   ),
   SKELETON_LEGENDARY(
     CombatEntityDefinition(
       skeleton,
       name: "Skeleton",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Zombie · roster tier 3 · dark forest
@@ -1346,61 +1248,39 @@ enum EntityId {
     CombatEntityDefinition(
       zombie,
       name: "Zombie",
-      itemDrops: [
-        NestedDrop(steelMinorArmorDropTable),
-        NestedDrop(herbDropTable),
-        NestedDrop(steelToolsDropTable),
-      ],
+      itemDrops: [NestedDrop(graveScrapDropTable)],
+      bonusDrops: [DropRoll(entries: tatteredClothDropTable, chance: 0.04)],
     ),
   ),
   ZOMBIE_UNCOMMON(
-    CombatEntityDefinition(
-      zombie,
-      name: "Zombie",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [
-        NestedDrop(mithrilWeaponsDropTable),
-        NestedDrop(herbDropTable),
-      ],
-    ),
+    CombatEntityDefinition(zombie, name: "Zombie", rarity: Rarity.UNCOMMON),
   ),
-  // the Spider Den's Webbed Thicket boss: an uncommon zombie, drops and all,
-  // kept apart from the regulars the Broodmother's Lair fields
+  // the Spider Den's Cocoon Hollow boss: an uncommon zombie, drops and all
+  // (inherited from the common), kept apart from the regulars the
+  // Broodmother's Lair fields
   THICKET_ZOMBIE(
     CombatEntityDefinition(
       zombie,
-      name: "Thicket Zombie",
+      name: "Cocooned Zombie",
       isDungeonBoss: true,
       rarity: Rarity.UNCOMMON,
-      itemDrops: [
-        NestedDrop(mithrilWeaponsDropTable),
-        NestedDrop(herbDropTable),
+      // on top of the zombie's own rolls
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.25,
+          entries: [ItemDropType(id: ItemId.VENOMFANG_RING)],
+        ),
       ],
     ),
   ),
   ZOMBIE_RARE(
-    CombatEntityDefinition(
-      zombie,
-      name: "Zombie",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(zombie, name: "Zombie", rarity: Rarity.RARE),
   ),
   ZOMBIE_EPIC(
-    CombatEntityDefinition(
-      zombie,
-      name: "Zombie",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(zombie, name: "Zombie", rarity: Rarity.EPIC),
   ),
   ZOMBIE_LEGENDARY(
-    CombatEntityDefinition(
-      zombie,
-      name: "Zombie",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(zombie, name: "Zombie", rarity: Rarity.LEGENDARY),
   ),
   // Harpy · roster tier 3 · foothills
   HARPY(
@@ -1414,36 +1294,12 @@ enum EntityId {
     ),
   ),
   HARPY_UNCOMMON(
-    CombatEntityDefinition(
-      harpy,
-      name: "Harpy",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(harpy, name: "Harpy", rarity: Rarity.UNCOMMON),
   ),
-  HARPY_RARE(
-    CombatEntityDefinition(
-      harpy,
-      name: "Harpy",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  HARPY_EPIC(
-    CombatEntityDefinition(
-      harpy,
-      name: "Harpy",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  HARPY_RARE(CombatEntityDefinition(harpy, name: "Harpy", rarity: Rarity.RARE)),
+  HARPY_EPIC(CombatEntityDefinition(harpy, name: "Harpy", rarity: Rarity.EPIC)),
   HARPY_LEGENDARY(
-    CombatEntityDefinition(
-      harpy,
-      name: "Harpy",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(harpy, name: "Harpy", rarity: Rarity.LEGENDARY),
   ),
   // Naga · roster tier 3 · coast
   NAGA(
@@ -1461,36 +1317,12 @@ enum EntityId {
     ),
   ),
   NAGA_UNCOMMON(
-    CombatEntityDefinition(
-      naga,
-      name: "Naga",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(naga, name: "Naga", rarity: Rarity.UNCOMMON),
   ),
-  NAGA_RARE(
-    CombatEntityDefinition(
-      naga,
-      name: "Naga",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  NAGA_EPIC(
-    CombatEntityDefinition(
-      naga,
-      name: "Naga",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  NAGA_RARE(CombatEntityDefinition(naga, name: "Naga", rarity: Rarity.RARE)),
+  NAGA_EPIC(CombatEntityDefinition(naga, name: "Naga", rarity: Rarity.EPIC)),
   NAGA_LEGENDARY(
-    CombatEntityDefinition(
-      naga,
-      name: "Naga",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(naga, name: "Naga", rarity: Rarity.LEGENDARY),
   ),
 
   //
@@ -1512,7 +1344,6 @@ enum EntityId {
       giantScorpion,
       name: "Giant Scorpion",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   GIANT_SCORPION_RARE(
@@ -1520,7 +1351,6 @@ enum EntityId {
       giantScorpion,
       name: "Giant Scorpion",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   GIANT_SCORPION_EPIC(
@@ -1528,7 +1358,6 @@ enum EntityId {
       giantScorpion,
       name: "Giant Scorpion",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   GIANT_SCORPION_LEGENDARY(
@@ -1536,7 +1365,6 @@ enum EntityId {
       giantScorpion,
       name: "Giant Scorpion",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Imp · roster tier 3 · foothills
@@ -1555,36 +1383,12 @@ enum EntityId {
     ),
   ),
   IMP_UNCOMMON(
-    CombatEntityDefinition(
-      imp,
-      name: "Imp",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(imp, name: "Imp", rarity: Rarity.UNCOMMON),
   ),
-  IMP_RARE(
-    CombatEntityDefinition(
-      imp,
-      name: "Imp",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  IMP_EPIC(
-    CombatEntityDefinition(
-      imp,
-      name: "Imp",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  IMP_RARE(CombatEntityDefinition(imp, name: "Imp", rarity: Rarity.RARE)),
+  IMP_EPIC(CombatEntityDefinition(imp, name: "Imp", rarity: Rarity.EPIC)),
   IMP_LEGENDARY(
-    CombatEntityDefinition(
-      imp,
-      name: "Imp",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(imp, name: "Imp", rarity: Rarity.LEGENDARY),
   ),
   // Orc · roster tier 3 · foothills
   ORC(
@@ -1598,36 +1402,12 @@ enum EntityId {
     ),
   ),
   ORC_UNCOMMON(
-    CombatEntityDefinition(
-      orc,
-      name: "Orc",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(orc, name: "Orc", rarity: Rarity.UNCOMMON),
   ),
-  ORC_RARE(
-    CombatEntityDefinition(
-      orc,
-      name: "Orc",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  ORC_EPIC(
-    CombatEntityDefinition(
-      orc,
-      name: "Orc",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  ORC_RARE(CombatEntityDefinition(orc, name: "Orc", rarity: Rarity.RARE)),
+  ORC_EPIC(CombatEntityDefinition(orc, name: "Orc", rarity: Rarity.EPIC)),
   ORC_LEGENDARY(
-    CombatEntityDefinition(
-      orc,
-      name: "Orc",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(orc, name: "Orc", rarity: Rarity.LEGENDARY),
   ),
 
   //
@@ -1638,40 +1418,33 @@ enum EntityId {
     CombatEntityDefinition(
       wraith,
       name: "Wraith",
-      itemDrops: [ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1)],
+      itemDrops: [
+        ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1),
+        ItemDropType(
+          id: ItemId.GRAVE_MOSS,
+          lowCount: 1,
+          highCount: 3,
+          weight: 2,
+        ),
+        ItemDropType(id: ItemId.BLACK_GREATSWORD, weight: 0.2),
+      ],
+      // it wears the same rags a zombie does, better cut and far more often
+      bonusDrops: [
+        DropRoll(entries: tatteredClothUncommonDropTable, chance: 0.15),
+      ],
     ),
   ),
   WRAITH_UNCOMMON(
-    CombatEntityDefinition(
-      wraith,
-      name: "Wraith",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(wraith, name: "Wraith", rarity: Rarity.UNCOMMON),
   ),
   WRAITH_RARE(
-    CombatEntityDefinition(
-      wraith,
-      name: "Wraith",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(wraith, name: "Wraith", rarity: Rarity.RARE),
   ),
   WRAITH_EPIC(
-    CombatEntityDefinition(
-      wraith,
-      name: "Wraith",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(wraith, name: "Wraith", rarity: Rarity.EPIC),
   ),
   WRAITH_LEGENDARY(
-    CombatEntityDefinition(
-      wraith,
-      name: "Wraith",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(wraith, name: "Wraith", rarity: Rarity.LEGENDARY),
   ),
   // Banshee · roster tier 4 · dark forest
   BANSHEE(
@@ -1682,36 +1455,16 @@ enum EntityId {
     ),
   ),
   BANSHEE_UNCOMMON(
-    CombatEntityDefinition(
-      banshee,
-      name: "Banshee",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(banshee, name: "Banshee", rarity: Rarity.UNCOMMON),
   ),
   BANSHEE_RARE(
-    CombatEntityDefinition(
-      banshee,
-      name: "Banshee",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(banshee, name: "Banshee", rarity: Rarity.RARE),
   ),
   BANSHEE_EPIC(
-    CombatEntityDefinition(
-      banshee,
-      name: "Banshee",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(banshee, name: "Banshee", rarity: Rarity.EPIC),
   ),
   BANSHEE_LEGENDARY(
-    CombatEntityDefinition(
-      banshee,
-      name: "Banshee",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(banshee, name: "Banshee", rarity: Rarity.LEGENDARY),
   ),
   // Troll · roster tier 4 · foothills
   TROLL(
@@ -1729,103 +1482,47 @@ enum EntityId {
     ),
   ),
   TROLL_UNCOMMON(
-    CombatEntityDefinition(
-      troll,
-      name: "Troll",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(troll, name: "Troll", rarity: Rarity.UNCOMMON),
   ),
-  TROLL_RARE(
-    CombatEntityDefinition(
-      troll,
-      name: "Troll",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  TROLL_EPIC(
-    CombatEntityDefinition(
-      troll,
-      name: "Troll",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  TROLL_RARE(CombatEntityDefinition(troll, name: "Troll", rarity: Rarity.RARE)),
+  TROLL_EPIC(CombatEntityDefinition(troll, name: "Troll", rarity: Rarity.EPIC)),
   TROLL_LEGENDARY(
-    CombatEntityDefinition(
-      troll,
-      name: "Troll",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(troll, name: "Troll", rarity: Rarity.LEGENDARY),
   ),
   // Minotaur · roster tier 4 · mine
   MINOTAUR(CombatEntityDefinition(minotaur, name: "Minotaur", itemDrops: [])),
   MINOTAUR_UNCOMMON(
-    CombatEntityDefinition(
-      minotaur,
-      name: "Minotaur",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(minotaur, name: "Minotaur", rarity: Rarity.UNCOMMON),
   ),
   MINOTAUR_RARE(
-    CombatEntityDefinition(
-      minotaur,
-      name: "Minotaur",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(minotaur, name: "Minotaur", rarity: Rarity.RARE),
   ),
   MINOTAUR_EPIC(
-    CombatEntityDefinition(
-      minotaur,
-      name: "Minotaur",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(minotaur, name: "Minotaur", rarity: Rarity.EPIC),
   ),
   MINOTAUR_LEGENDARY(
     CombatEntityDefinition(
       minotaur,
       name: "Minotaur",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Basilisk · roster tier 4 · mine
   BASILISK(CombatEntityDefinition(basilisk, name: "Basilisk", itemDrops: [])),
   BASILISK_UNCOMMON(
-    CombatEntityDefinition(
-      basilisk,
-      name: "Basilisk",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(basilisk, name: "Basilisk", rarity: Rarity.UNCOMMON),
   ),
   BASILISK_RARE(
-    CombatEntityDefinition(
-      basilisk,
-      name: "Basilisk",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(basilisk, name: "Basilisk", rarity: Rarity.RARE),
   ),
   BASILISK_EPIC(
-    CombatEntityDefinition(
-      basilisk,
-      name: "Basilisk",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(basilisk, name: "Basilisk", rarity: Rarity.EPIC),
   ),
   BASILISK_LEGENDARY(
     CombatEntityDefinition(
       basilisk,
       name: "Basilisk",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Dark Wizard · roster tier 4 · crypt
@@ -1837,7 +1534,6 @@ enum EntityId {
       darkWizard,
       name: "Dark Wizard",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   DARK_WIZARD_RARE(
@@ -1845,7 +1541,6 @@ enum EntityId {
       darkWizard,
       name: "Dark Wizard",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   DARK_WIZARD_EPIC(
@@ -1853,7 +1548,6 @@ enum EntityId {
       darkWizard,
       name: "Dark Wizard",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   DARK_WIZARD_LEGENDARY(
@@ -1861,41 +1555,24 @@ enum EntityId {
       darkWizard,
       name: "Dark Wizard",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Gargoyle · roster tier 4 · crypt
   GARGOYLE(CombatEntityDefinition(gargoyle, name: "Gargoyle", itemDrops: [])),
   GARGOYLE_UNCOMMON(
-    CombatEntityDefinition(
-      gargoyle,
-      name: "Gargoyle",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(gargoyle, name: "Gargoyle", rarity: Rarity.UNCOMMON),
   ),
   GARGOYLE_RARE(
-    CombatEntityDefinition(
-      gargoyle,
-      name: "Gargoyle",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(gargoyle, name: "Gargoyle", rarity: Rarity.RARE),
   ),
   GARGOYLE_EPIC(
-    CombatEntityDefinition(
-      gargoyle,
-      name: "Gargoyle",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(gargoyle, name: "Gargoyle", rarity: Rarity.EPIC),
   ),
   GARGOYLE_LEGENDARY(
     CombatEntityDefinition(
       gargoyle,
       name: "Gargoyle",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
 
@@ -1917,31 +1594,19 @@ enum EntityId {
       mossGolem,
       name: "Moss Golem",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   MOSS_GOLEM_RARE(
-    CombatEntityDefinition(
-      mossGolem,
-      name: "Moss Golem",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(mossGolem, name: "Moss Golem", rarity: Rarity.RARE),
   ),
   MOSS_GOLEM_EPIC(
-    CombatEntityDefinition(
-      mossGolem,
-      name: "Moss Golem",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(mossGolem, name: "Moss Golem", rarity: Rarity.EPIC),
   ),
   MOSS_GOLEM_LEGENDARY(
     CombatEntityDefinition(
       mossGolem,
       name: "Moss Golem",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Hill Giant · roster tier 5 · foothills
@@ -1960,31 +1625,19 @@ enum EntityId {
       hillGiant,
       name: "Hill Giant",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   HILL_GIANT_RARE(
-    CombatEntityDefinition(
-      hillGiant,
-      name: "Hill Giant",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(hillGiant, name: "Hill Giant", rarity: Rarity.RARE),
   ),
   HILL_GIANT_EPIC(
-    CombatEntityDefinition(
-      hillGiant,
-      name: "Hill Giant",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(hillGiant, name: "Hill Giant", rarity: Rarity.EPIC),
   ),
   HILL_GIANT_LEGENDARY(
     CombatEntityDefinition(
       hillGiant,
       name: "Hill Giant",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Earth Elemental · roster tier 5 · mine
@@ -2000,7 +1653,6 @@ enum EntityId {
       earthElemental,
       name: "Earth Elemental",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   EARTH_ELEMENTAL_RARE(
@@ -2008,7 +1660,6 @@ enum EntityId {
       earthElemental,
       name: "Earth Elemental",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   EARTH_ELEMENTAL_EPIC(
@@ -2016,7 +1667,6 @@ enum EntityId {
       earthElemental,
       name: "Earth Elemental",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   EARTH_ELEMENTAL_LEGENDARY(
@@ -2024,42 +1674,17 @@ enum EntityId {
       earthElemental,
       name: "Earth Elemental",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Ogre · roster tier 5 · mountains
   OGRE(CombatEntityDefinition(ogre, name: "Ogre", itemDrops: [])),
   OGRE_UNCOMMON(
-    CombatEntityDefinition(
-      ogre,
-      name: "Ogre",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(ogre, name: "Ogre", rarity: Rarity.UNCOMMON),
   ),
-  OGRE_RARE(
-    CombatEntityDefinition(
-      ogre,
-      name: "Ogre",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  OGRE_EPIC(
-    CombatEntityDefinition(
-      ogre,
-      name: "Ogre",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  OGRE_RARE(CombatEntityDefinition(ogre, name: "Ogre", rarity: Rarity.RARE)),
+  OGRE_EPIC(CombatEntityDefinition(ogre, name: "Ogre", rarity: Rarity.EPIC)),
   OGRE_LEGENDARY(
-    CombatEntityDefinition(
-      ogre,
-      name: "Ogre",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(ogre, name: "Ogre", rarity: Rarity.LEGENDARY),
   ),
   // Stone Golem · roster tier 5 · mountains
   STONE_GOLEM(
@@ -2070,7 +1695,6 @@ enum EntityId {
       stoneGolem,
       name: "Stone Golem",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   STONE_GOLEM_RARE(
@@ -2078,7 +1702,6 @@ enum EntityId {
       stoneGolem,
       name: "Stone Golem",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   STONE_GOLEM_EPIC(
@@ -2086,7 +1709,6 @@ enum EntityId {
       stoneGolem,
       name: "Stone Golem",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   STONE_GOLEM_LEGENDARY(
@@ -2094,42 +1716,21 @@ enum EntityId {
       stoneGolem,
       name: "Stone Golem",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Griffin · roster tier 5 · frozen peaks
   GRIFFIN(CombatEntityDefinition(griffin, name: "Griffin", itemDrops: [])),
   GRIFFIN_UNCOMMON(
-    CombatEntityDefinition(
-      griffin,
-      name: "Griffin",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(griffin, name: "Griffin", rarity: Rarity.UNCOMMON),
   ),
   GRIFFIN_RARE(
-    CombatEntityDefinition(
-      griffin,
-      name: "Griffin",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(griffin, name: "Griffin", rarity: Rarity.RARE),
   ),
   GRIFFIN_EPIC(
-    CombatEntityDefinition(
-      griffin,
-      name: "Griffin",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(griffin, name: "Griffin", rarity: Rarity.EPIC),
   ),
   GRIFFIN_LEGENDARY(
-    CombatEntityDefinition(
-      griffin,
-      name: "Griffin",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(griffin, name: "Griffin", rarity: Rarity.LEGENDARY),
   ),
   // Fire Elemental · roster tier 5 · volcanic
   FIRE_ELEMENTAL(
@@ -2144,7 +1745,6 @@ enum EntityId {
       fireElemental,
       name: "Fire Elemental",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   FIRE_ELEMENTAL_RARE(
@@ -2152,7 +1752,6 @@ enum EntityId {
       fireElemental,
       name: "Fire Elemental",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   FIRE_ELEMENTAL_EPIC(
@@ -2160,7 +1759,6 @@ enum EntityId {
       fireElemental,
       name: "Fire Elemental",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   FIRE_ELEMENTAL_LEGENDARY(
@@ -2168,7 +1766,6 @@ enum EntityId {
       fireElemental,
       name: "Fire Elemental",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Water Elemental · roster tier 5 · coast
@@ -2184,7 +1781,6 @@ enum EntityId {
       waterElemental,
       name: "Water Elemental",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   WATER_ELEMENTAL_RARE(
@@ -2192,7 +1788,6 @@ enum EntityId {
       waterElemental,
       name: "Water Elemental",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   WATER_ELEMENTAL_EPIC(
@@ -2200,7 +1795,6 @@ enum EntityId {
       waterElemental,
       name: "Water Elemental",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   WATER_ELEMENTAL_LEGENDARY(
@@ -2208,7 +1802,6 @@ enum EntityId {
       waterElemental,
       name: "Water Elemental",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
 
@@ -2218,36 +1811,12 @@ enum EntityId {
   // Yeti · roster tier 6 · frozen peaks
   YETI(CombatEntityDefinition(yeti, name: "Yeti", itemDrops: [])),
   YETI_UNCOMMON(
-    CombatEntityDefinition(
-      yeti,
-      name: "Yeti",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(yeti, name: "Yeti", rarity: Rarity.UNCOMMON),
   ),
-  YETI_RARE(
-    CombatEntityDefinition(
-      yeti,
-      name: "Yeti",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  YETI_EPIC(
-    CombatEntityDefinition(
-      yeti,
-      name: "Yeti",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  YETI_RARE(CombatEntityDefinition(yeti, name: "Yeti", rarity: Rarity.RARE)),
+  YETI_EPIC(CombatEntityDefinition(yeti, name: "Yeti", rarity: Rarity.EPIC)),
   YETI_LEGENDARY(
-    CombatEntityDefinition(
-      yeti,
-      name: "Yeti",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(yeti, name: "Yeti", rarity: Rarity.LEGENDARY),
   ),
   // Iron Golem · roster tier 6 · volcanic
   IRON_GOLEM(
@@ -2258,31 +1827,19 @@ enum EntityId {
       ironGolem,
       name: "Iron Golem",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   IRON_GOLEM_RARE(
-    CombatEntityDefinition(
-      ironGolem,
-      name: "Iron Golem",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(ironGolem, name: "Iron Golem", rarity: Rarity.RARE),
   ),
   IRON_GOLEM_EPIC(
-    CombatEntityDefinition(
-      ironGolem,
-      name: "Iron Golem",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(ironGolem, name: "Iron Golem", rarity: Rarity.EPIC),
   ),
   IRON_GOLEM_LEGENDARY(
     CombatEntityDefinition(
       ironGolem,
       name: "Iron Golem",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Steel Golem · roster tier 6 · mine
@@ -2294,7 +1851,6 @@ enum EntityId {
       steelGolem,
       name: "Steel Golem",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   STEEL_GOLEM_RARE(
@@ -2302,7 +1858,6 @@ enum EntityId {
       steelGolem,
       name: "Steel Golem",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   STEEL_GOLEM_EPIC(
@@ -2310,7 +1865,6 @@ enum EntityId {
       steelGolem,
       name: "Steel Golem",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   STEEL_GOLEM_LEGENDARY(
@@ -2318,42 +1872,17 @@ enum EntityId {
       steelGolem,
       name: "Steel Golem",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Lich · roster tier 6 · crypt
   LICH(CombatEntityDefinition(lich, name: "Lich", itemDrops: [])),
   LICH_UNCOMMON(
-    CombatEntityDefinition(
-      lich,
-      name: "Lich",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(lich, name: "Lich", rarity: Rarity.UNCOMMON),
   ),
-  LICH_RARE(
-    CombatEntityDefinition(
-      lich,
-      name: "Lich",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  LICH_EPIC(
-    CombatEntityDefinition(
-      lich,
-      name: "Lich",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  LICH_RARE(CombatEntityDefinition(lich, name: "Lich", rarity: Rarity.RARE)),
+  LICH_EPIC(CombatEntityDefinition(lich, name: "Lich", rarity: Rarity.EPIC)),
   LICH_LEGENDARY(
-    CombatEntityDefinition(
-      lich,
-      name: "Lich",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(lich, name: "Lich", rarity: Rarity.LEGENDARY),
   ),
   // Cloud Giant · roster tier 6 · mountains
   CLOUD_GIANT(
@@ -2364,7 +1893,6 @@ enum EntityId {
       cloudGiant,
       name: "Cloud Giant",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   CLOUD_GIANT_RARE(
@@ -2372,7 +1900,6 @@ enum EntityId {
       cloudGiant,
       name: "Cloud Giant",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   CLOUD_GIANT_EPIC(
@@ -2380,7 +1907,6 @@ enum EntityId {
       cloudGiant,
       name: "Cloud Giant",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   CLOUD_GIANT_LEGENDARY(
@@ -2388,110 +1914,41 @@ enum EntityId {
       cloudGiant,
       name: "Cloud Giant",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Roc · roster tier 6 · frozen peaks
   ROC(CombatEntityDefinition(roc, name: "Roc", itemDrops: [])),
   ROC_UNCOMMON(
-    CombatEntityDefinition(
-      roc,
-      name: "Roc",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(roc, name: "Roc", rarity: Rarity.UNCOMMON),
   ),
-  ROC_RARE(
-    CombatEntityDefinition(
-      roc,
-      name: "Roc",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  ROC_EPIC(
-    CombatEntityDefinition(
-      roc,
-      name: "Roc",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  ROC_RARE(CombatEntityDefinition(roc, name: "Roc", rarity: Rarity.RARE)),
+  ROC_EPIC(CombatEntityDefinition(roc, name: "Roc", rarity: Rarity.EPIC)),
   ROC_LEGENDARY(
-    CombatEntityDefinition(
-      roc,
-      name: "Roc",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(roc, name: "Roc", rarity: Rarity.LEGENDARY),
   ),
   // Wyvern · roster tier 6 · volcanic
   WYVERN(CombatEntityDefinition(wyvern, name: "Wyvern", itemDrops: [])),
   WYVERN_UNCOMMON(
-    CombatEntityDefinition(
-      wyvern,
-      name: "Wyvern",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(wyvern, name: "Wyvern", rarity: Rarity.UNCOMMON),
   ),
   WYVERN_RARE(
-    CombatEntityDefinition(
-      wyvern,
-      name: "Wyvern",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(wyvern, name: "Wyvern", rarity: Rarity.RARE),
   ),
   WYVERN_EPIC(
-    CombatEntityDefinition(
-      wyvern,
-      name: "Wyvern",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(wyvern, name: "Wyvern", rarity: Rarity.EPIC),
   ),
   WYVERN_LEGENDARY(
-    CombatEntityDefinition(
-      wyvern,
-      name: "Wyvern",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(wyvern, name: "Wyvern", rarity: Rarity.LEGENDARY),
   ),
   // Drake · roster tier 6 · volcanic
   DRAKE(CombatEntityDefinition(drake, name: "Drake", itemDrops: [])),
   DRAKE_UNCOMMON(
-    CombatEntityDefinition(
-      drake,
-      name: "Drake",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(drake, name: "Drake", rarity: Rarity.UNCOMMON),
   ),
-  DRAKE_RARE(
-    CombatEntityDefinition(
-      drake,
-      name: "Drake",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
-  ),
-  DRAKE_EPIC(
-    CombatEntityDefinition(
-      drake,
-      name: "Drake",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
-  ),
+  DRAKE_RARE(CombatEntityDefinition(drake, name: "Drake", rarity: Rarity.RARE)),
+  DRAKE_EPIC(CombatEntityDefinition(drake, name: "Drake", rarity: Rarity.EPIC)),
   DRAKE_LEGENDARY(
-    CombatEntityDefinition(
-      drake,
-      name: "Drake",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(drake, name: "Drake", rarity: Rarity.LEGENDARY),
   ),
 
   //
@@ -2500,70 +1957,30 @@ enum EntityId {
   // Kraken · roster tier 7 · deep water dungeon
   KRAKEN(CombatEntityDefinition(kraken, name: "Kraken", itemDrops: [])),
   KRAKEN_UNCOMMON(
-    CombatEntityDefinition(
-      kraken,
-      name: "Kraken",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(kraken, name: "Kraken", rarity: Rarity.UNCOMMON),
   ),
   KRAKEN_RARE(
-    CombatEntityDefinition(
-      kraken,
-      name: "Kraken",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(kraken, name: "Kraken", rarity: Rarity.RARE),
   ),
   KRAKEN_EPIC(
-    CombatEntityDefinition(
-      kraken,
-      name: "Kraken",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(kraken, name: "Kraken", rarity: Rarity.EPIC),
   ),
   KRAKEN_LEGENDARY(
-    CombatEntityDefinition(
-      kraken,
-      name: "Kraken",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(kraken, name: "Kraken", rarity: Rarity.LEGENDARY),
   ),
   // Dragon · roster tier 7 · dragon's lair
   DRAGON(CombatEntityDefinition(dragon, name: "Dragon", itemDrops: [])),
   DRAGON_UNCOMMON(
-    CombatEntityDefinition(
-      dragon,
-      name: "Dragon",
-      rarity: Rarity.UNCOMMON,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(dragon, name: "Dragon", rarity: Rarity.UNCOMMON),
   ),
   DRAGON_RARE(
-    CombatEntityDefinition(
-      dragon,
-      name: "Dragon",
-      rarity: Rarity.RARE,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(dragon, name: "Dragon", rarity: Rarity.RARE),
   ),
   DRAGON_EPIC(
-    CombatEntityDefinition(
-      dragon,
-      name: "Dragon",
-      rarity: Rarity.EPIC,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(dragon, name: "Dragon", rarity: Rarity.EPIC),
   ),
   DRAGON_LEGENDARY(
-    CombatEntityDefinition(
-      dragon,
-      name: "Dragon",
-      rarity: Rarity.LEGENDARY,
-      itemDrops: [],
-    ),
+    CombatEntityDefinition(dragon, name: "Dragon", rarity: Rarity.LEGENDARY),
   ),
   // Lesser Demon · roster tier 7 · underworld
   LESSER_DEMON(
@@ -2574,7 +1991,6 @@ enum EntityId {
       lesserDemon,
       name: "Lesser Demon",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   LESSER_DEMON_RARE(
@@ -2582,7 +1998,6 @@ enum EntityId {
       lesserDemon,
       name: "Lesser Demon",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   LESSER_DEMON_EPIC(
@@ -2590,7 +2005,6 @@ enum EntityId {
       lesserDemon,
       name: "Lesser Demon",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   LESSER_DEMON_LEGENDARY(
@@ -2598,7 +2012,6 @@ enum EntityId {
       lesserDemon,
       name: "Lesser Demon",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
   // Greater Demon · roster tier 7 · underworld
@@ -2610,7 +2023,6 @@ enum EntityId {
       greaterDemon,
       name: "Greater Demon",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [],
     ),
   ),
   GREATER_DEMON_RARE(
@@ -2618,7 +2030,6 @@ enum EntityId {
       greaterDemon,
       name: "Greater Demon",
       rarity: Rarity.RARE,
-      itemDrops: [],
     ),
   ),
   GREATER_DEMON_EPIC(
@@ -2626,7 +2037,6 @@ enum EntityId {
       greaterDemon,
       name: "Greater Demon",
       rarity: Rarity.EPIC,
-      itemDrops: [],
     ),
   ),
   GREATER_DEMON_LEGENDARY(
@@ -2634,7 +2044,6 @@ enum EntityId {
       greaterDemon,
       name: "Greater Demon",
       rarity: Rarity.LEGENDARY,
-      itemDrops: [],
     ),
   ),
 
@@ -2647,7 +2056,10 @@ enum EntityId {
       // The weakest thing in the game, so it pays the smallest purse rather
       // than nothing: an empty table is not rollable — roll() returns
       // `ObjectStack(id: 0 as T)` for one, which throws on the cast.
-      itemDrops: [ItemDropType(id: ItemId.COINS, lowCount: 1, highCount: 5)],
+      itemDrops: [
+        ItemDropType(id: ItemId.COINS, lowCount: 1, highCount: 5),
+        ItemDropType(id: ItemId.RAT_TAIL),
+      ],
     ),
   ),
   BIG_RED(
@@ -2837,6 +2249,22 @@ enum EntityId {
       iconAsset: "assets/images/entities/trading_post.png",
       rarity: Rarity.UNCOMMON,
       shopStockPool: [
+        // the scouting maps, always on the shelf ahead of the rotating draw
+        ShopStockEntry(
+          itemId: ItemId.SCOUTING_MAP_SOUTHWOOD_FOREST,
+          count: 5,
+          alwaysStocked: true,
+        ),
+        ShopStockEntry(
+          itemId: ItemId.SCOUTING_MAP_DARKWOOD_FOREST,
+          count: 5,
+          alwaysStocked: true,
+        ),
+        ShopStockEntry(
+          itemId: ItemId.SCOUTING_MAP_FOREST_MINE,
+          count: 5,
+          alwaysStocked: true,
+        ),
         // the full iron set, one entry per slot, the basic fisher's pants, the
         // medium leather body pieces (the goblins drop its extremities), and
         // every skill's basic gloves, boots and cloak: far more than

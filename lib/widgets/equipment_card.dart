@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
+import 'package:rpg/widgets/equipment_info_dialog.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 
 /// Card for a unique equipment instance: shows its (quality/enchant
@@ -49,8 +50,8 @@ class EquipmentCard extends StatelessWidget {
                   size: 52,
                   id: item.id,
                   count: item.count,
-                  showInfoDialogOnTap: false,
                   borderColor: qualityColor,
+                  onTap: () => showEquipmentInfoDialog(context, item),
                 ),
                 const SizedBox(width: 8),
 

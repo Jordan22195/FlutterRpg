@@ -19,6 +19,7 @@ import 'package:rpg/widgets/boss_arena.dart';
 import 'package:rpg/widgets/chest_loot_dialog.dart';
 import 'package:rpg/widgets/encounter_info_panel.dart';
 import 'package:rpg/widgets/floor_clear_panel.dart';
+import 'package:rpg/widgets/place_tile.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/discovery_tile.dart';
 import 'package:rpg/widgets/dungeon_floor_card.dart';
@@ -254,7 +255,7 @@ void main() {
     progress.recordRun(id, 0);
     session.dungeonController.refresh();
     await settle(tester);
-    expect(find.text('Floor 2 of 2'), findsOneWidget);
+    expect(find.text('Floor 2 of 3'), findsOneWidget);
 
     // cancelling keeps the run
     await tester.tap(find.text('Reset'));
@@ -270,7 +271,7 @@ void main() {
     await settle(tester);
     expect(progress.hasCleared(id, 0), isFalse);
     expect(progress.runsFor(id, 0), 1);
-    expect(find.text('Floor 1 of 2'), findsOneWidget);
+    expect(find.text('Floor 1 of 3'), findsOneWidget);
     expect(find.text('Complete Webbed Thicket to unlock'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
@@ -287,14 +288,14 @@ void main() {
 
     await tester.ensureVisible(find.text('Spider Den Chest'));
     await settle(tester);
-    expect(find.text('0 / 2'), findsOneWidget);
-    expect(find.text('Clear all 2 floors in one run'), findsOneWidget);
+    expect(find.text('0 / 3'), findsOneWidget);
+    expect(find.text('Clear all 3 floors in one run'), findsOneWidget);
     expect(find.textContaining(RegExp(r'^Claim ')), findsNothing);
 
     progress.recordRun(id, 0);
     session.dungeonController.refresh();
     await settle(tester);
-    expect(find.text('1 / 2'), findsOneWidget);
+    expect(find.text('1 / 3'), findsOneWidget);
 
     // two runs' chests waiting
     progress.earnChest(id);
@@ -414,17 +415,17 @@ void main() {
     // no key yet: the floor says so and can't be started
     expect(find.text('No key'), findsOneWidget);
 
-    // and its grid is blurred, with the lock and the reason over the blur
+    // and its grid is plain to read, with the lock and the reason above it
     final firstFloor = floorCard('Warren Entrance');
     Finder inFloor(Finder f) => find.descendant(of: firstFloor, matching: f);
-    expect(inFloor(find.byType(ImageFiltered)), findsOneWidget);
+    expect(inFloor(find.byType(ImageFiltered)), findsNothing);
     expect(inFloor(find.byIcon(Icons.lock)), findsWidgets);
     expect(inFloor(find.text('Enter Floor 1')), findsNothing);
     final reason = tester.getCenter(
       inFloor(find.text('Requires Goblin Queen Key')).last,
     );
-    final blur = tester.getRect(inFloor(find.byType(ImageFiltered)));
-    expect(blur.contains(reason), isTrue);
+    final grid = tester.getRect(inFloor(find.byType(PlaceGrid)));
+    expect(reason.dy, lessThan(grid.top));
 
     session.inventoryService.setItemCount(
       session.saveGameData.inventoryData,
@@ -532,7 +533,7 @@ void main() {
     await tester.pump();
   });
 
-  testWidgets('a locked floor keeps its entities hidden', (tester) async {
+  testWidgets('a locked floor still shows its entities', (tester) async {
     await tester.pumpWidget(
       MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
     );
@@ -547,7 +548,7 @@ void main() {
     expect(tester.widget<DungeonFloorCard>(bossCard).expanded, isFalse);
     await openFloor(tester, "Queen's Chamber");
 
-    // open, its creatures are there but blurred, and offer no way in
+    // open, its creatures are there, unblurred, with the reason above them
     expect(
       find.descendant(of: bossCard, matching: find.byType(DiscoveryTile)),
       findsWidgets,
@@ -559,19 +560,22 @@ void main() {
     expect(tester.widget<BossRow>(bossTile).entity.id, EntityId.GOBLIN_QUEEN);
     expect(
       find.ancestor(of: bossTile, matching: find.byType(ImageFiltered)),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
-      find.descendant(of: bossCard, matching: find.textContaining('Floor 3')),
-      findsNothing,
+      find.descendant(
+        of: bossCard,
+        matching: find.text('Complete Deep Warren to unlock'),
+      ),
+      findsWidgets,
     );
     await tester.ensureVisible(bossTile);
     await settle(tester);
 
-    // the blur takes the tap, so nothing opens
-    await tester.tap(bossTile, warnIfMissed: false);
+    // and tapping one reads it
+    await tester.tap(bossTile);
     await settle(tester);
-    expect(find.text('Close'), findsNothing);
+    expect(find.text('Close'), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
@@ -644,7 +648,7 @@ void main() {
     expect(find.byType(EncounterScreen), findsOneWidget);
     final header = tester.widget<ArtHeader>(find.byType(ArtHeader));
     expect(header.title, floor.name);
-    expect(header.subtitle, 'Spider Den · Floor 1 of 2');
+    expect(header.subtitle, 'Spider Den · Floor 1 of 3');
     expect(find.byType(DungeonFloorTrack), findsOneWidget);
     expect(find.text(floor.displayed!.name), findsOneWidget);
     expect(session.saveGameData.dungeonRun.runningSlot, -1);
