@@ -10,6 +10,7 @@ import '../services/offline_progress_service.dart';
 import '../services/player_data_service.dart';
 import '../services/skill_service.dart';
 import '../data/inventory_data.dart';
+import 'fire_tending_system.dart';
 import 'potion_system.dart';
 
 /// Settles the time the app spent backgrounded while an action was running.
@@ -39,6 +40,11 @@ class OfflineProgressSystem {
   final OfflineProgressService _offlineProgressService;
   final PotionSystem _potionSystem;
 
+  // throws the auto-tend reagents and keeps the zone's fire fed at the
+  // instants a segment owes them. optional, so a settle built without fires
+  // in mind settles exactly as it always did
+  final FireTendingSystem? _fireTendingSystem;
+
   // the bag the settle drinks auto-drink potions out of
   final InventoryData _inventoryData;
 
@@ -57,7 +63,9 @@ class OfflineProgressSystem {
     required OfflineProgressData offlineProgressData,
     required PotionSystem potionSystem,
     required InventoryData inventoryData,
-  }) : _actionTimingService = actionTimingService,
+    FireTendingSystem? fireTendingSystem,
+  }) : _fireTendingSystem = fireTendingSystem,
+       _actionTimingService = actionTimingService,
        _actionTimingSystem = actionTimingSystem,
        _playerDataService = playerDataService,
        _skillService = skillService,
@@ -156,6 +164,13 @@ class OfflineProgressSystem {
         ),
       );
 
+      // ---- and the fire's armed reagents, the same way
+      _fireTendingSystem?.autoTend(
+        playerState,
+        _inventoryData,
+        at: playerState.lastActionTime,
+      );
+
       // ---- read the state this segment runs at
       _refreshTiming(playerState, timingState);
       final intervalSeconds =
@@ -238,6 +253,14 @@ class OfflineProgressSystem {
         Duration(microseconds: (spanUsed * 1e6).round()),
       );
       remaining -= spanUsed;
+
+      // ---- a fire this segment was cut on is fed before the sweep below
+      // can take it, so its reagents outlive the lay of logs that ran out
+      _fireTendingSystem?.autoTend(
+        playerState,
+        _inventoryData,
+        at: playerState.lastActionTime,
+      );
 
       // ---- expire what this segment outlived, at the moment it did
       _buffService.checkBuffExpriations(

@@ -27,6 +27,16 @@ class BuffItem extends Item {
 
   Map<SkillId, int> get skillBonus => Map.unmodifiable(definition.skillBonus);
 
+  /// The stats this buff is lending at [at]. A plain buff lends its
+  /// definition's bonus for as long as it lasts; a fire lends whatever
+  /// reagents are burning on it (see FireItem).
+  Map<SkillId, int> bonusAt(DateTime at) =>
+      expirationTime.isAfter(at) ? skillBonus : const {};
+
+  /// Every instant at which [bonusAt] can change - what an offline settle
+  /// cuts its segments on.
+  Iterable<DateTime> get changeTimes => [expirationTime];
+
   /// The whole burn this instance is worth: the definition's duration times
   /// however many applications went into it. Derived rather than stored, so
   /// retuning a fire's burn time reaches one already alight.

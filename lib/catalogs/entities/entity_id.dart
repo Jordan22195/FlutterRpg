@@ -96,6 +96,14 @@ enum EntityId {
       defence: 1,
       hitpoints: 5,
       itemDrops: [ItemDropType(id: ItemId.LOGS, weight: 1)],
+      // fire reagents and the odd bird's nest, besides the logs
+      bonusDrops: [
+        DropRoll(chance: treeReagentChance, entries: treeReagentDropTable),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.SMALL_BIRDS_NEST)],
+        ),
+      ],
     ),
   ),
   OAK_TREE(
@@ -107,6 +115,14 @@ enum EntityId {
       defence: 10,
       hitpoints: 15,
       itemDrops: [ItemDropType(id: ItemId.OAK_LOGS, weight: 1)],
+      // fire reagents and the odd bird's nest, besides the logs
+      bonusDrops: [
+        DropRoll(chance: treeReagentChance, entries: oakReagentDropTable),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.SMALL_BIRDS_NEST)],
+        ),
+      ],
     ),
   ),
   // Tier 3 woodcutting, sat at the same level as the coal vein so the two
@@ -120,6 +136,55 @@ enum EntityId {
       defence: 20,
       hitpoints: 25,
       itemDrops: [ItemDropType(id: ItemId.WILLOW_LOGS, weight: 1)],
+      // fire reagents and the odd bird's nest, besides the logs
+      bonusDrops: [
+        DropRoll(chance: treeReagentChance, entries: willowReagentDropTable),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.WOVEN_BIRDS_NEST)],
+        ),
+      ],
+    ),
+  ),
+  // Willow's side-grade, the same tier. Grows in Blackmire Swamp.
+  BOG_TREE(
+    EncounterEntityDefinition(
+      name: "Bog Tree",
+      iconAsset: "assets/images/entities/bog_tree.png",
+
+      entityType: SkillId.WOODCUTTING,
+      defence: 20,
+      hitpoints: 25,
+      itemDrops: [ItemDropType(id: ItemId.BOG_LOGS, weight: 1)],
+      // fire reagents and the odd bird's nest, besides the logs
+      bonusDrops: [
+        DropRoll(chance: treeReagentChance, entries: willowReagentDropTable),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.WOVEN_BIRDS_NEST)],
+        ),
+      ],
+    ),
+  ),
+  // Willow's step up: the first tree to give maple logs. Grows by
+  // Maplewater Lake.
+  MAPLE_TREE(
+    EncounterEntityDefinition(
+      name: "Maple Tree",
+      iconAsset: "assets/images/entities/maple_tree.png",
+
+      entityType: SkillId.WOODCUTTING,
+      defence: 30,
+      hitpoints: 35,
+      itemDrops: [ItemDropType(id: ItemId.MAPLE_LOGS, weight: 1)],
+      // fire reagents and the odd bird's nest, besides the logs
+      bonusDrops: [
+        DropRoll(chance: treeReagentChance, entries: willowReagentDropTable),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.WOVEN_BIRDS_NEST)],
+        ),
+      ],
     ),
   ),
 
@@ -271,6 +336,24 @@ enum EntityId {
       ],
     ),
   ),
+  // the swamp's River: the same level and numbers, but the catch is half
+  // eels and half alchemy reagents
+  MURKY_MARSH(
+    FishingEntityDefinition(
+      name: "Murky Marsh",
+      iconAsset: "assets/images/entities/murky_marsh.png",
+
+      entityType: SkillId.FISHING,
+      defence: 31,
+      hitpoints: 10,
+      requiredLevel: 20,
+      itemDrops: [
+        ItemDropType(id: ItemId.BOG_EEL, weight: 1, unlockLevel: 20),
+        ItemDropType(id: ItemId.LEECH, weight: 0.6, unlockLevel: 20),
+        ItemDropType(id: ItemId.MARSH_FROG, weight: 0.4, unlockLevel: 25),
+      ],
+    ),
+  ),
   DEEP_POND(
     FishingEntityDefinition(
       name: "Small Lake",
@@ -354,6 +437,16 @@ enum EntityId {
       requiredLevel: 20,
       defence: 20,
       itemDrops: [ItemDropType(id: ItemId.HARRALANDER, weight: 1)],
+    ),
+  ),
+  // the swamp's fungal herb, the base of the super potions
+  MIRECAP(
+    HerbEntityDefinition(
+      name: "Mirecap",
+      iconAsset: "assets/images/entities/mirecap.png",
+      requiredLevel: 25,
+      defence: 25,
+      itemDrops: [ItemDropType(id: ItemId.MIRECAP, weight: 1)],
     ),
   ),
   RANARR(
@@ -853,6 +946,65 @@ enum EntityId {
   SLIME_LEGENDARY(
     CombatEntityDefinition(slime, name: "Slime", rarity: Rarity.LEGENDARY),
   ),
+  // Carrion Crow · swamp. Quick and fragile; picks the bog's dead clean.
+  CARRION_CROW(
+    CombatEntityDefinition(
+      carrionCrow,
+      name: "Carrion Crow",
+      itemDrops: [
+        ItemDropType(id: ItemId.FEATHER, lowCount: 1, highCount: 3, weight: 1),
+        ItemDropType(id: ItemId.CROW_QUILL, weight: 0.5),
+      ],
+    ),
+  ),
+  CARRION_CROW_UNCOMMON(
+    CombatEntityDefinition(
+      carrionCrow,
+      name: "Carrion Crow",
+      rarity: Rarity.UNCOMMON,
+    ),
+  ),
+  CARRION_CROW_RARE(
+    CombatEntityDefinition(
+      carrionCrow,
+      name: "Carrion Crow",
+      rarity: Rarity.RARE,
+    ),
+  ),
+  // the Drowned Fen's Reedbank boss: an uncommon crow at level 55, the
+  // flock's quills in bulk, and the bracers on a quarter of kills
+  MURDER_KING(
+    CombatEntityDefinition(
+      carrionCrow,
+      name: "Murder King",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(id: ItemId.FEATHER, lowCount: 20, highCount: 40),
+        ItemDropType(id: ItemId.CROW_QUILL, lowCount: 5, highCount: 13),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.25,
+          entries: [ItemDropType(id: ItemId.CROWQUILL_BRACERS)],
+        ),
+      ],
+    ),
+  ),
+  CARRION_CROW_EPIC(
+    CombatEntityDefinition(
+      carrionCrow,
+      name: "Carrion Crow",
+      rarity: Rarity.EPIC,
+    ),
+  ),
+  CARRION_CROW_LEGENDARY(
+    CombatEntityDefinition(
+      carrionCrow,
+      name: "Carrion Crow",
+      rarity: Rarity.LEGENDARY,
+    ),
+  ),
 
   //
   // Tier 8 - Level 34
@@ -1031,9 +1183,11 @@ enum EntityId {
       name: "Mudlurc",
       itemDrops: [
         ItemDropType(id: ItemId.SALMON, weight: 1),
-        ItemDropType(id: ItemId.PIKE, weight: 1),
-        ItemDropType(id: ItemId.TROUT, weight: 1),
+        ItemDropType(id: ItemId.STEEL_BAR, weight: 1),
         ItemDropType(id: ItemId.SCALE, lowCount: 1, highCount: 3, weight: 3),
+        // the uncommon mudlurc's dagger, now that only the Drowned Fen
+        // fields that variant
+        ItemDropType(id: ItemId.FISHBONE_DAGGER, weight: 0.1),
         ItemDropType(id: ItemId.MEDIUM_LEATHER_BELT, weight: 1),
         ItemDropType(id: ItemId.MEDIUM_LEATHER_BOOTS, weight: 1),
         ItemDropType(id: ItemId.MEDIUM_LEATHER_BRACERS, weight: 1),
@@ -1098,9 +1252,13 @@ enum EntityId {
     CombatEntityDefinition(
       fungalMonster,
       name: "Fungal Monster",
-      itemDrops: [],
-      // it grows in the same wet ground the herbs do
-      bonusDrops: [DropRoll(entries: herbDropTable, chance: 0.25)],
+      itemDrops: [
+        ItemDropType(id: ItemId.MIRECAP, weight: 1),
+        ItemDropType(id: ItemId.BOG_LOGS, weight: 1),
+        ItemDropType(id: ItemId.COAL, weight: 1),
+        ItemDropType(id: ItemId.MINOR_STRENGTH_POTION, weight: 1),
+        ItemDropType(id: ItemId.MINOR_STAMINA_POTION, weight: 1),
+      ],
     ),
   ),
   FUNGAL_MONSTER_UNCOMMON(
@@ -1159,6 +1317,120 @@ enum EntityId {
         DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable),
       ],
     ),
+  ),
+  // Ooze · swamp. The slime grown old in the bog: the same ooze in bulk,
+  // and the core it was named for, often enough to brew with.
+  OOZE(
+    CombatEntityDefinition(
+      ooze,
+      name: "Ooze",
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.SLIME_OOZE,
+          lowCount: 2,
+          highCount: 4,
+          weight: 1,
+        ),
+        ItemDropType(id: ItemId.SLIME_CORE, weight: 0.3),
+      ],
+    ),
+  ),
+  OOZE_UNCOMMON(
+    CombatEntityDefinition(ooze, name: "Ooze", rarity: Rarity.UNCOMMON),
+  ),
+  // the Drowned Fen's Ooze Pits boss: an ooze at level 55, its cores in
+  // bulk, and the belt on a quarter of kills
+  PRIMORDIAL_OOZE(
+    CombatEntityDefinition(
+      ooze,
+      name: "Primordial Ooze",
+      isDungeonBoss: true,
+      itemDrops: [
+        ItemDropType(id: ItemId.SLIME_OOZE, lowCount: 20, highCount: 40),
+        ItemDropType(id: ItemId.SLIME_CORE, lowCount: 3, highCount: 8),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.25,
+          entries: [ItemDropType(id: ItemId.OOZE_SLICK_BELT)],
+        ),
+      ],
+    ),
+  ),
+  OOZE_RARE(CombatEntityDefinition(ooze, name: "Ooze", rarity: Rarity.RARE)),
+  OOZE_EPIC(CombatEntityDefinition(ooze, name: "Ooze", rarity: Rarity.EPIC)),
+  OOZE_LEGENDARY(
+    CombatEntityDefinition(ooze, name: "Ooze", rarity: Rarity.LEGENDARY),
+  ),
+  // Murkjaw · swamp. The bog's rare ambusher, and the only thing that
+  // drops its fang - the super attack potion's reagent.
+  MURKJAW(
+    CombatEntityDefinition(
+      murkjaw,
+      name: "Murkjaw",
+      itemDrops: [
+        ItemDropType(id: ItemId.MURKJAW_HIDE, weight: 1),
+        ItemDropType(id: ItemId.MURKJAW_FANG, weight: 0.5),
+        ItemDropType(id: ItemId.SCALE, lowCount: 1, highCount: 3, weight: 1),
+      ],
+    ),
+  ),
+  MURKJAW_UNCOMMON(
+    CombatEntityDefinition(murkjaw, name: "Murkjaw", rarity: Rarity.UNCOMMON),
+  ),
+  MURKJAW_RARE(
+    CombatEntityDefinition(murkjaw, name: "Murkjaw", rarity: Rarity.RARE),
+  ),
+  // the Drowned Fen's last boss: an uncommon murkjaw at level 89, the hide and
+  // fang in bulk, and the pauldrons at every quality the way the
+  // Broodmother drops her necklace
+  MURKJAW_MATRIARCH(
+    CombatEntityDefinition(
+      murkjaw,
+      name: "Murkjaw Matriarch",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.MURKJAW_HIDE,
+          lowCount: 3,
+          highCount: 8,
+          weight: 0.5,
+        ),
+        ItemDropType(
+          id: ItemId.MURKJAW_FANG,
+          lowCount: 2,
+          highCount: 5,
+          weight: 0.5,
+        ),
+        ItemDropType(
+          id: ItemId.MURKJAW_PAULDRONS,
+          rarity: Rarity.COMMON,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.MURKJAW_PAULDRONS,
+          rarity: Rarity.UNCOMMON,
+          weight: .8,
+        ),
+        ItemDropType(
+          id: ItemId.MURKJAW_PAULDRONS,
+          rarity: Rarity.RARE,
+          weight: .6,
+        ),
+        ItemDropType(
+          id: ItemId.MURKJAW_PAULDRONS,
+          rarity: Rarity.EPIC,
+          weight: .5,
+        ),
+      ],
+    ),
+  ),
+  MURKJAW_EPIC(
+    CombatEntityDefinition(murkjaw, name: "Murkjaw", rarity: Rarity.EPIC),
+  ),
+  MURKJAW_LEGENDARY(
+    CombatEntityDefinition(murkjaw, name: "Murkjaw", rarity: Rarity.LEGENDARY),
   ),
   // Kobold · roster tier 2 · mine
   KOBOLD(
@@ -1584,7 +1856,42 @@ enum EntityId {
     CombatEntityDefinition(
       mossGolem,
       name: "Moss Golem",
-      itemDrops: [],
+      itemDrops: [
+        // the mid-tier potions
+        ItemDropType(id: ItemId.ATTACK_POTION, weight: 1),
+        ItemDropType(id: ItemId.STRENGTH_POTION, weight: 1),
+        ItemDropType(id: ItemId.DEFENCE_POTION, weight: 1),
+        ItemDropType(id: ItemId.STAMINA_POTION, weight: 1),
+        ItemDropType(id: ItemId.SPEED_POTION, weight: 1),
+        NestedDrop(herbDropTable, weight: 3),
+        ItemDropType(id: ItemId.OAK_LOGS, lowCount: 2, highCount: 5, weight: 1),
+        ItemDropType(
+          id: ItemId.WILLOW_LOGS,
+          lowCount: 2,
+          highCount: 5,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.MAPLE_LOGS,
+          lowCount: 2,
+          highCount: 4,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.STEEL_BAR,
+          lowCount: 1,
+          highCount: 3,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.MITHRIL_BAR,
+          lowCount: 1,
+          highCount: 2,
+          weight: 1,
+        ),
+        NestedDrop(mithrilArmorDropTable, weight: 1),
+        NestedDrop(mithrilWeaponsDropTable, weight: 1),
+      ],
       // the stone it is grown over carries gems
       bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.3)],
     ),
@@ -2267,8 +2574,9 @@ enum EntityId {
         ),
         // the full iron set, one entry per slot, the basic fisher's pants, the
         // medium leather body pieces (the goblins drop its extremities), and
-        // every skill's basic gloves, boots and cloak: far more than
-        // stockSlots, so a restock shelves a rotating ten of them
+        // every skill's basic gloves, boots and cloak but the woodcutter's,
+        // which come out of bird's nests: far more than stockSlots, so a
+        // restock shelves a rotating ten of them
         ShopStockEntry(itemId: ItemId.IRON_HELMET, count: 1),
         ShopStockEntry(itemId: ItemId.IRON_CHESTPLATE, count: 1),
         ShopStockEntry(itemId: ItemId.IRON_LEGS, count: 1),
@@ -2287,7 +2595,6 @@ enum EntityId {
         ShopStockEntry(itemId: ItemId.MEDIUM_LEATHER_PANTS, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_FISHERS_GLOVES, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_MINERS_GLOVES, count: 1),
-        ShopStockEntry(itemId: ItemId.BASIC_WOODCUTTERS_GLOVES, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_HERBALISTS_GLOVES, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_FIREMAKERS_GLOVES, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_COOKS_GLOVES, count: 1),
@@ -2298,7 +2605,6 @@ enum EntityId {
         ShopStockEntry(itemId: ItemId.BASIC_EXPLORERS_GLOVES, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_FISHERS_BOOTS, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_MINERS_BOOTS, count: 1),
-        ShopStockEntry(itemId: ItemId.BASIC_WOODCUTTERS_BOOTS, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_HERBALISTS_BOOTS, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_FIREMAKERS_BOOTS, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_COOKS_BOOTS, count: 1),
@@ -2309,7 +2615,6 @@ enum EntityId {
         ShopStockEntry(itemId: ItemId.BASIC_EXPLORERS_BOOTS, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_FISHERS_CLOAK, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_MINERS_CLOAK, count: 1),
-        ShopStockEntry(itemId: ItemId.BASIC_WOODCUTTERS_CLOAK, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_HERBALISTS_CLOAK, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_FIREMAKERS_CLOAK, count: 1),
         ShopStockEntry(itemId: ItemId.BASIC_COOKS_CLOAK, count: 1),
@@ -2402,6 +2707,14 @@ enum EntityId {
       iconAsset: "assets/images/entities/wolf_den.png",
       rarity: Rarity.RARE,
       dungeonId: DungeonId.WOLF_DEN,
+    ),
+  ),
+  DROWNED_FEN_ENTRANCE(
+    DungeonEntityDefinition(
+      name: "Drowned Fen",
+      iconAsset: "assets/images/entities/drowned_fen.png",
+      rarity: Rarity.RARE,
+      dungeonId: DungeonId.DROWNED_FEN,
     ),
   ),
   GOBLIN_CAMP(

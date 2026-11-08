@@ -83,11 +83,21 @@ void main() {
         for (final r in catalog.recipesForSkill(SkillId.COOKING))
           ...r.inputs.keys,
       };
+      // the marsh also turns up alchemy reagents - a leech, a frog - which
+      // are brewed rather than cooked
+      final brewed = {
+        for (final r in catalog.recipesForSkill(SkillId.ALCHEMY))
+          ...r.inputs.keys,
+      };
       for (final id in EntityId.values) {
         final def = id.definition;
         if (def is! FishingEntityDefinition) continue;
         for (final fish in def.itemDrops) {
-          expect(cooked, contains(fish.id), reason: '${fish.id.name} at $id');
+          expect(
+            cooked.contains(fish.id) || brewed.contains(fish.id),
+            isTrue,
+            reason: '${fish.id.name} at $id is neither cooked nor brewed',
+          );
         }
       }
     });

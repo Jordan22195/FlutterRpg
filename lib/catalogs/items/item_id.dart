@@ -87,6 +87,15 @@ enum ItemId {
       iconAsset: "assets/icons/items/bear_hide.png",
     ),
   ),
+  // the Murkjaw's hide: tough, scaled and held for a crafting use to come
+  MURKJAW_HIDE(
+    ItemDefinition(
+      name: "Murkjaw Hide",
+      value: 30,
+      description: "Thick, scaled and still smelling of the bog.",
+      iconAsset: "assets/icons/items/murkjaw_hide.png",
+    ),
+  ),
 
   // ── LOGS ────────────────────────────────────────────────────────
   // tier ascending
@@ -109,6 +118,15 @@ enum ItemId {
       name: "Willow Logs",
       value: 12,
       iconAsset: "assets/icons/items/willow_logs.png",
+    ),
+  ),
+  // the swamp's side-grade to willow: the same tier, wetter wood
+  BOG_LOGS(
+    ItemDefinition(
+      name: "Bog Logs",
+      value: 12,
+      description: "Dark, damp wood that smoulders more than it burns.",
+      iconAsset: "assets/icons/items/bog_logs.png",
     ),
   ),
   MAPLE_LOGS(
@@ -323,6 +341,17 @@ enum ItemId {
       xpValue: 18,
     ),
   ),
+  // the swamp's fungal herb, the base of the third potion tier
+  MIRECAP(
+    ItemDefinition(
+      name: "Mirecap",
+      value: 8,
+      description:
+          "A pale, spongy cap that only grows where the ground is wet.",
+      iconAsset: "assets/icons/items/mirecap.png",
+      xpValue: 21,
+    ),
+  ),
   RANARR_WEED(
     ItemDefinition(
       name: "Ranarr Weed",
@@ -515,7 +544,7 @@ enum ItemId {
     ItemDefinition(
       name: "Slime Core",
       value: 60,
-      description: "The dense heart of a slime. Nobody is sure what it is for.",
+      description: "The dense heart of a slime. Alchemists prize it.",
       iconAsset: "assets/icons/items/slime_core.png",
     ),
   ),
@@ -525,6 +554,138 @@ enum ItemId {
       value: 8,
       description: "Bright, spotted and best left uneaten.",
       iconAsset: "assets/icons/items/red_cap_mushroom.png",
+    ),
+  ),
+  // the swamp's reagents: three from the marsh, one off its crows, and the
+  // Murkjaw's fang, which nothing else drops
+  LEECH(
+    ItemDefinition(
+      name: "Leech",
+      value: 10,
+      description: "Fat and still wriggling. Draws out what ails you.",
+      iconAsset: "assets/icons/items/leech.png",
+    ),
+  ),
+  CROW_QUILL(
+    ItemDefinition(
+      name: "Crow Quill",
+      value: 10,
+      description: "A long black flight feather, stiff as a nib.",
+      iconAsset: "assets/icons/items/crow_quill.png",
+    ),
+  ),
+  MARSH_FROG(
+    ItemDefinition(
+      name: "Marsh Frog",
+      value: 14,
+      description: "All leg and no sense. Kicks like a mule.",
+      iconAsset: "assets/icons/items/marsh_frog.png",
+    ),
+  ),
+  MURKJAW_FANG(
+    ItemDefinition(
+      name: "Murkjaw Fang",
+      value: 40,
+      description: "A yellowed, hooked tooth from something that waits.",
+      iconAsset: "assets/icons/items/murkjaw_fang.png",
+    ),
+  ),
+
+  // ── FIRE REAGENTS ───────────────────────────────────────────────
+  // FireReagentDefinition, firemaking level ascending. Woodcutting's side
+  // drops: three off the tree, four off the oak, and all seven off every
+  // tree above them. Thrown on a lit campfire or bonfire, each buffs its
+  // stat by the fire's power.
+  DRY_TWIGS(
+    FireReagentDefinition(
+      name: "Dry Twigs",
+      value: 2,
+      stat: SkillId.STAMINA,
+      levelRequirement: 5,
+      description: "Snaps clean and catches fast. Keeps you going.",
+      iconAsset: "assets/icons/items/dry_twigs.png",
+    ),
+  ),
+  TREE_BARK(
+    FireReagentDefinition(
+      name: "Tree Bark",
+      value: 2,
+      stat: SkillId.DEFENCE,
+      levelRequirement: 5,
+      description: "A curl of rough bark that burns slow and steady.",
+      iconAsset: "assets/icons/items/tree_bark.png",
+    ),
+  ),
+  PINE_RESIN(
+    FireReagentDefinition(
+      name: "Pine Resin",
+      value: 2,
+      stat: SkillId.RECOVERY,
+      levelRequirement: 8,
+      description: "Sticky and fragrant. The smoke clears the head.",
+      iconAsset: "assets/icons/items/pine_resin.png",
+    ),
+  ),
+  ACORN(
+    FireReagentDefinition(
+      name: "Acorn",
+      value: 2,
+      stat: SkillId.STRENGTH,
+      levelRequirement: 8,
+      description: "Pops in the heat with a crack like a knuckle.",
+      iconAsset: "assets/icons/items/acorn.png",
+    ),
+  ),
+  OAK_GALL(
+    FireReagentDefinition(
+      name: "Oak Gall",
+      value: 2,
+      stat: SkillId.ATTACK,
+      levelRequirement: 8,
+      description:
+          "A hard little knot from an oak twig. Burns bitter and sharp.",
+      iconAsset: "assets/icons/items/oak_gall.png",
+    ),
+  ),
+  DRY_LEAVES(
+    FireReagentDefinition(
+      name: "Dry Leaves",
+      value: 2,
+      stat: SkillId.SPEED,
+      levelRequirement: 13,
+      description: "A crisp handful that flares up in a rush.",
+      iconAsset: "assets/icons/items/dry_leaves.png",
+    ),
+  ),
+  OAK_SAP(
+    FireReagentDefinition(
+      name: "Oak Sap",
+      value: 2,
+      stat: SkillId.HITPOINTS,
+      levelRequirement: 13,
+      description: "Thick, dark sap that hisses and warms the blood.",
+      iconAsset: "assets/icons/items/oak_sap.png",
+    ),
+  ),
+
+  // ── BIRD'S NESTS ────────────────────────────────────────────────
+  // Woodcutting's treasure chests, tree tier ascending. Opened from the
+  // bag; what is inside is in birds_nests.dart. The Sturdy, Gilded and
+  // Enchanted nests wait on the maple, yew and magic trees.
+  SMALL_BIRDS_NEST(
+    ItemDefinition(
+      name: "Small Bird's Nest",
+      value: 20,
+      description: "Knocked loose from a low branch. Something glints inside.",
+      iconAsset: "assets/icons/items/small_birds_nest.png",
+    ),
+  ),
+  WOVEN_BIRDS_NEST(
+    ItemDefinition(
+      name: "Woven Bird's Nest",
+      value: 60,
+      description: "Tightly woven and heavier than it looks.",
+      iconAsset: "assets/icons/items/woven_birds_nest.png",
     ),
   ),
 
@@ -570,7 +731,7 @@ enum ItemId {
     BuffItemDefinition(
       name: "Minor Stamina Potion",
       value: 25,
-      description: "Guam and a ground scale. Holds a little more wind.",
+      description: "Guam and a rat tail. Holds a little more wind.",
       skillBonus: {SkillId.STAMINA: 5},
       duration: Duration(minutes: 3),
       iconAsset: "assets/icons/items/minor_stamina_potion.png",
@@ -679,6 +840,79 @@ enum ItemId {
     ),
   ),
 
+  // The super tier: one mirecap and a swamp reagent for +13, the next rung
+  // of the Fibonacci ladder past the minor (+5) and the standard (+10).
+  SUPER_RECOVERY_POTION(
+    BuffItemDefinition(
+      name: "Super Recovery Potion",
+      value: 150,
+      description: "Mirecap and a leech. The wind comes back at once.",
+      skillBonus: {SkillId.RECOVERY: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/super_recovery_potion.png",
+    ),
+  ),
+  SUPER_FISHING_POTION(
+    BuffItemDefinition(
+      name: "Super Fishing Potion",
+      value: 150,
+      description: "Mirecap and bog eel. Fish all but jump in.",
+      skillBonus: {SkillId.FISHING: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/super_fishing_potion.png",
+    ),
+  ),
+  SUPER_STAMINA_POTION(
+    BuffItemDefinition(
+      name: "Super Stamina Potion",
+      value: 160,
+      description: "Mirecap and a slime core. Hardly tires at all.",
+      skillBonus: {SkillId.STAMINA: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/super_stamina_potion.png",
+    ),
+  ),
+  SUPER_DEFENCE_POTION(
+    BuffItemDefinition(
+      name: "Super Defence Potion",
+      value: 160,
+      description: "Mirecap and ground scale. Skin like a mudlurc's.",
+      skillBonus: {SkillId.DEFENCE: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/super_defence_potion.png",
+    ),
+  ),
+  SUPER_SPEED_POTION(
+    BuffItemDefinition(
+      name: "Super Speed Potion",
+      value: 150,
+      description: "Mirecap and a crow quill. Moves before it thinks.",
+      skillBonus: {SkillId.SPEED: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/super_speed_potion.png",
+    ),
+  ),
+  SUPER_STRENGTH_POTION(
+    BuffItemDefinition(
+      name: "Super Strength Potion",
+      value: 190,
+      description: "Mirecap and a marsh frog. Hits like a falling tree.",
+      skillBonus: {SkillId.STRENGTH: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/super_strength_potion.png",
+    ),
+  ),
+  SUPER_ATTACK_POTION(
+    BuffItemDefinition(
+      name: "Super Attack Potion",
+      value: 200,
+      description: "Mirecap and a murkjaw fang. Never misses its mark.",
+      skillBonus: {SkillId.ATTACK: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/super_attack_potion.png",
+    ),
+  ),
+
   // ── RAW FOOD · MEAT ─────────────────────────────────────────────
   // level ascending
   CHICKEN_MEAT(
@@ -756,6 +990,15 @@ enum ItemId {
       name: "Pike",
       value: 7,
       iconAsset: "assets/icons/items/pike.png",
+      xpValue: 5,
+    ),
+  ),
+  // the marsh's catch, the River's level-20 equivalent
+  BOG_EEL(
+    ItemDefinition(
+      name: "Bog Eel",
+      value: 7,
+      iconAsset: "assets/icons/items/bog_eel.png",
       xpValue: 5,
     ),
   ),
@@ -896,6 +1139,15 @@ enum ItemId {
       restoreAmount: 13,
       xpValue: 70,
       iconAsset: "assets/icons/items/cooked_pike.png",
+    ),
+  ),
+  COOKED_BOG_EEL(
+    FoodItemDefinition(
+      name: "Cooked Bog Eel",
+      value: 14,
+      restoreAmount: 13,
+      xpValue: 70,
+      iconAsset: "assets/icons/items/cooked_bog_eel.png",
     ),
   ),
   COOKED_SALMON(
@@ -1184,16 +1436,22 @@ enum ItemId {
   ),
 
   // ── FIRES ───────────────────────────────────────────────────────
-  // log tier, then fire tier
+  // log tier, then fire tier. Every number is a Fibonacci rung.
+  //
+  // A cookfire cooks and carries its own cooking + hitpoints bonus. A
+  // campfire or bonfire carries nothing of its own: its wood sets its
+  // power, and each fire reagent thrown on it gives that much to the
+  // reagent's stat (see FireReagentDefinition). A bonfire is a rung
+  // stronger and longer than the campfire of the same wood, but a reagent
+  // burns 3 minutes on it rather than 5.
   COOKFIRE(
     FireItemDefinition(
       name: "Cookfire",
       value: 4,
-      // a cookfire is a meal and a warm seat: cooking, and hitpoints on the
-      // same rung
       skillBonus: {SkillId.COOKING: 3, SkillId.HITPOINTS: 3},
       duration: Duration(minutes: 3),
       canCook: true,
+      description: "Cooks food. +3 cooking and hitpoints while it burns.",
       iconAsset: "assets/images/entities/cookfire.png",
     ),
   ),
@@ -1201,8 +1459,11 @@ enum ItemId {
     FireItemDefinition(
       name: "Campfire",
       value: 5,
-      skillBonus: {SkillId.STAMINA: 5, SkillId.RECOVERY: 5},
+      skillBonus: {},
       duration: Duration(minutes: 5),
+      power: 5,
+      reagentBurn: Duration(minutes: 5),
+      description: "Each reagent thrown on gives +5 to its stat for 5 minutes.",
       iconAsset: "assets/images/entities/campfire.png",
     ),
   ),
@@ -1210,8 +1471,11 @@ enum ItemId {
     FireItemDefinition(
       name: "Bonfire",
       value: 18,
-      skillBonus: {SkillId.SPEED: 5, SkillId.STRENGTH: 5},
-      duration: Duration(minutes: 10),
+      skillBonus: {},
+      duration: Duration(minutes: 8),
+      power: 8,
+      reagentBurn: Duration(minutes: 3),
+      description: "Each reagent thrown on gives +8 to its stat for 3 minutes.",
       iconAsset: "assets/images/entities/bonfire.png",
     ),
   ),
@@ -1219,12 +1483,10 @@ enum ItemId {
     FireItemDefinition(
       name: "Oak Cookfire",
       value: 10,
-      // 5, not 6: the three cookfires run 3 / 5 / 8 so the fire ladder
-      // carries the same Fibonacci step as the gear tiers. hitpoints ride
-      // the same rung
       skillBonus: {SkillId.COOKING: 5, SkillId.HITPOINTS: 5},
       duration: Duration(minutes: 5),
       canCook: true,
+      description: "Cooks food. +5 cooking and hitpoints while it burns.",
       iconAsset: "assets/images/entities/oak_cookfire.png",
     ),
   ),
@@ -1232,8 +1494,11 @@ enum ItemId {
     FireItemDefinition(
       name: "Oak Campfire",
       value: 12,
-      skillBonus: {SkillId.STAMINA: 8, SkillId.RECOVERY: 8},
+      skillBonus: {},
       duration: Duration(minutes: 8),
+      power: 8,
+      reagentBurn: Duration(minutes: 5),
+      description: "Each reagent thrown on gives +8 to its stat for 5 minutes.",
       iconAsset: "assets/images/entities/oak_campfire.png",
     ),
   ),
@@ -1241,14 +1506,16 @@ enum ItemId {
     FireItemDefinition(
       name: "Oak Bonfire",
       value: 40,
-      skillBonus: {SkillId.SPEED: 8, SkillId.STRENGTH: 8},
-      duration: Duration(minutes: 15),
+      skillBonus: {},
+      duration: Duration(minutes: 13),
+      power: 13,
+      reagentBurn: Duration(minutes: 3),
+      description:
+          "Each reagent thrown on gives +13 to its stat for 3 minutes.",
       iconAsset: "assets/images/entities/oak_bonfire.png",
     ),
   ),
-  // Tier 3 fires, burnt from the willow logs that grow in Darkwood. Stats
-  // take the next Fibonacci rung (cooking 3/5/8, the rest 1/3/8) and the
-  // burn times follow their own ladder (3/5/8, 5/8/13, 10/15/25 minutes).
+  // Tier 3, burnt from the willow logs that grow in Darkwood.
   WILLOW_COOKFIRE(
     FireItemDefinition(
       name: "Willow Cookfire",
@@ -1256,6 +1523,7 @@ enum ItemId {
       skillBonus: {SkillId.COOKING: 8, SkillId.HITPOINTS: 8},
       duration: Duration(minutes: 8),
       canCook: true,
+      description: "Cooks food. +8 cooking and hitpoints while it burns.",
       iconAsset: "assets/images/entities/willow_cookfire.png",
     ),
   ),
@@ -1263,8 +1531,12 @@ enum ItemId {
     FireItemDefinition(
       name: "Willow Campfire",
       value: 26,
-      skillBonus: {SkillId.STAMINA: 13, SkillId.RECOVERY: 13},
+      skillBonus: {},
       duration: Duration(minutes: 13),
+      power: 13,
+      reagentBurn: Duration(minutes: 5),
+      description:
+          "Each reagent thrown on gives +13 to its stat for 5 minutes.",
       iconAsset: "assets/images/entities/willow_campfire.png",
     ),
   ),
@@ -1272,9 +1544,51 @@ enum ItemId {
     FireItemDefinition(
       name: "Willow Bonfire",
       value: 85,
-      skillBonus: {SkillId.SPEED: 13, SkillId.STRENGTH: 13},
-      duration: Duration(minutes: 25),
+      skillBonus: {},
+      duration: Duration(minutes: 21),
+      power: 21,
+      reagentBurn: Duration(minutes: 3),
+      description:
+          "Each reagent thrown on gives +21 to its stat for 3 minutes.",
       iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  // Bog, willow's side-grade from Blackmire Swamp: the same tier, one rung
+  // weaker and one rung longer. Wet wood smoulders.
+  BOG_COOKFIRE(
+    FireItemDefinition(
+      name: "Bog Cookfire",
+      value: 22,
+      skillBonus: {SkillId.COOKING: 5, SkillId.HITPOINTS: 5},
+      duration: Duration(minutes: 13),
+      canCook: true,
+      description: "Cooks food. +5 cooking and hitpoints while it burns.",
+      iconAsset: "assets/images/entities/bog_cookfire.png",
+    ),
+  ),
+  BOG_CAMPFIRE(
+    FireItemDefinition(
+      name: "Bog Campfire",
+      value: 26,
+      skillBonus: {},
+      duration: Duration(minutes: 21),
+      power: 8,
+      reagentBurn: Duration(minutes: 5),
+      description: "Each reagent thrown on gives +8 to its stat for 5 minutes.",
+      iconAsset: "assets/images/entities/bog_campfire.png",
+    ),
+  ),
+  BOG_BONFIRE(
+    FireItemDefinition(
+      name: "Bog Bonfire",
+      value: 85,
+      skillBonus: {},
+      duration: Duration(minutes: 34),
+      power: 13,
+      reagentBurn: Duration(minutes: 3),
+      description:
+          "Each reagent thrown on gives +13 to its stat for 3 minutes.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
     ),
   ),
 
@@ -6625,6 +6939,43 @@ enum ItemId {
       statWeights: {SkillId.ATTACK: 1, SkillId.STRENGTH: 1},
       description: "A spider's fang set in silk-wound bone.",
       iconAsset: "assets/icons/items/venomfang_ring.png",
+    ),
+  ),
+
+  // Drowned Fen: Spider Den's three pieces at the same strength - two
+  // trim pieces at fib 4 off the first two bosses, an epic major at fib 5
+  // off the last - on the slots Spider Den leaves empty.
+  CROWQUILL_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Crowquill Bracers",
+      value: 100,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 1, SkillId.STRENGTH: 1},
+      description: "Black quills bound edge-on along the forearm.",
+      iconAsset: "assets/icons/items/crowquill_bracers.png",
+    ),
+  ),
+  OOZE_SLICK_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Ooze-Slick Belt",
+      value: 100,
+      fibLevel: 4,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.STRENGTH: 1},
+      description: "Hardened slime, cinched tight. Blows slide off it.",
+      iconAsset: "assets/icons/items/ooze_slick_belt.png",
+    ),
+  ),
+  MURKJAW_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Murkjaw Pauldrons",
+      value: 120,
+      fibLevel: 5,
+      statWeights: {SkillId.STRENGTH: 8, SkillId.DEFENCE: 4},
+      description: "The Matriarch's scaled shoulders, still heavy with bog.",
+      iconAsset: "assets/icons/items/murkjaw_pauldrons.png",
     ),
   ),
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'equipment_info_dialog.dart';
 import 'scouting_result_dialog.dart';
+import 'chest_loot_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
@@ -205,6 +206,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
         ? buffController.getGlobalBuff(currentId)
         : null;
     final canUse = inventoryController.isUsable(currentId) && held > 0;
+    final canOpen = inventoryController.isOpenable(currentId) && held > 0;
     return AlertDialog(
       title: Text(itemDef.name),
       content: SingleChildScrollView(
@@ -333,6 +335,24 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
               currentId,
             ),
             child: const Text('Use'),
+          ),
+        // a bird's nest opens like a dungeon chest: one or all, then the haul
+        if (canOpen)
+          TextButton(
+            key: const ValueKey('item-open-button'),
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              showDialog<void>(
+                context: screenContext,
+                builder: (_) => ChestLootDialog(
+                  title: itemDef.name,
+                  remaining: () => inventoryController.getItemCount(currentId),
+                  open: ({int? max}) =>
+                      inventoryController.openNests(currentId, max: max),
+                ),
+              );
+            },
+            child: const Text('Open'),
           ),
         if (canDrink)
           RepeatPressButton(
@@ -508,6 +528,7 @@ class StatChips extends StatelessWidget {
   static bool hasAny(Enum? id) =>
       id != null &&
       (HealBadge.amountFor(id) != null ||
+          FirePowerBadge.powerFor(id) != null ||
           (BuffBadge.bonusFor(id)?.isNotEmpty ?? false));
 
   @override
@@ -516,6 +537,9 @@ class StatChips extends StatelessWidget {
     if (currentId == null) return const SizedBox.shrink();
     if (HealBadge.amountFor(currentId) case final heal?) {
       return HealBadge(amount: heal, tileSize: tileSize);
+    }
+    if (FirePowerBadge.powerFor(currentId) case final power?) {
+      return FirePowerBadge(power: power, tileSize: tileSize);
     }
     final bonus = BuffBadge.bonusFor(currentId);
     if (bonus == null || bonus.isEmpty) return const SizedBox.shrink();
@@ -528,6 +552,43 @@ class StatChips extends StatelessWidget {
           BuffBadge(skill: stat.key, amount: stat.value, tileSize: tileSize),
         ],
       ],
+    );
+  }
+}
+
+/// What a tended fire gives per reagent: a flame and the amount. A campfire
+/// or bonfire has no stats of its own - its reagents pick them - so this is
+/// the one number it can wear.
+class FirePowerBadge extends StatelessWidget {
+  const FirePowerBadge({
+    super.key,
+    required this.power,
+    required this.tileSize,
+  });
+
+  /// The bonus each reagent gives on [id]; null for anything that is not a
+  /// fire reagents can be thrown on.
+  static int? powerFor(Enum id) {
+    if (id is! ItemId) return null;
+    final def = id.definition;
+    return def is FireItemDefinition && def.tendable ? def.power : null;
+  }
+
+  final int power;
+  final double tileSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final fontSize = _StatChip.fontSizeFor(tileSize);
+    return _StatChip(
+      label: 'Each reagent +$power',
+      amount: power,
+      tileSize: tileSize,
+      icon: Icon(
+        Icons.local_fire_department,
+        size: fontSize,
+        color: context.gameColors.firemaking,
+      ),
     );
   }
 }

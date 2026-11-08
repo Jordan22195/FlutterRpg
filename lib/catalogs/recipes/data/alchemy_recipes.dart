@@ -195,4 +195,110 @@ const List<CraftingRecipe> alchemyRecipes = [
       WeightedDropTableEntry(id: ItemId.STAMINA_POTION, count: 1, weight: 1),
     ],
   ),
+  // the super tier: Blackmire Swamp's mirecap, and a swamp reagent each
+  CraftingRecipe(
+    id: 'alch_super_recovery_potion',
+    name: 'Super Recovery Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 25,
+    xp: 130,
+    inputs: {ItemId.MIRECAP: 1, ItemId.LEECH: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.SUPER_RECOVERY_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_super_fishing_potion',
+    name: 'Super Fishing Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 25,
+    xp: 120,
+    inputs: {ItemId.MIRECAP: 1, ItemId.BOG_EEL: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.SUPER_FISHING_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_super_stamina_potion',
+    name: 'Super Stamina Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 25,
+    xp: 140,
+    inputs: {ItemId.MIRECAP: 1, ItemId.SLIME_CORE: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.SUPER_STAMINA_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_super_defence_potion',
+    name: 'Super Defence Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 25,
+    xp: 135,
+    inputs: {ItemId.MIRECAP: 1, ItemId.SCALE: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.SUPER_DEFENCE_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_super_speed_potion',
+    name: 'Super Speed Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 25,
+    xp: 125,
+    inputs: {ItemId.MIRECAP: 1, ItemId.CROW_QUILL: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.SUPER_SPEED_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_super_strength_potion',
+    name: 'Super Strength Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 30,
+    xp: 160,
+    inputs: {ItemId.MIRECAP: 1, ItemId.MARSH_FROG: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.SUPER_STRENGTH_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_super_attack_potion',
+    name: 'Super Attack Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 30,
+    xp: 170,
+    inputs: {ItemId.MIRECAP: 1, ItemId.MURKJAW_FANG: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.SUPER_ATTACK_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
 ];

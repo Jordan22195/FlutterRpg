@@ -9,6 +9,7 @@ export 'definition/buff_item_definition.dart';
 export 'definition/equipment_item_definition.dart';
 export 'definition/equipment_material.dart';
 export 'definition/fire_item_definition.dart';
+export 'definition/fire_reagent_definition.dart';
 export 'definition/food_item_definition.dart';
 export 'definition/item_definition.dart';
 export 'definition/scouting_map_item_definition.dart';

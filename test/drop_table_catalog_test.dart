@@ -34,6 +34,7 @@ const expectedHerbs = <ItemId>[
   ItemId.MARRENTILL,
   ItemId.TARROMIN,
   ItemId.HARRALANDER,
+  ItemId.MIRECAP,
   ItemId.RANARR_WEED,
   ItemId.TOADFLAX,
   ItemId.IRIT_LEAF,

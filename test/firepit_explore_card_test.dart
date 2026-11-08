@@ -184,13 +184,25 @@ void main() {
       session.dispose();
     });
 
-    testWidgets('a campfire: stamina and recovery', (tester) async {
+    testWidgets('a campfire: what each reagent thrown on gives', (
+      tester,
+    ) async {
       final session = await pumpExplore(
         tester,
         lightRecipeId: 'basic_campfire',
       );
-      expect(chipFor(SkillId.STAMINA), findsOneWidget);
-      expect(chipFor(SkillId.RECOVERY), findsOneWidget);
+      // a campfire has no stats of its own; its reagents pick them
+      final power = find.descendant(
+        of: stats,
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is FirePowerBadge &&
+              w.power ==
+                  (ItemId.BASIC_CAMPFIRE.definition as FireItemDefinition)
+                      .power,
+        ),
+      );
+      expect(power, findsOneWidget);
       session.dispose();
     });
 

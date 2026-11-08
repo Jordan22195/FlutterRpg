@@ -157,6 +157,7 @@ enum ZoneId {
     ZoneDefinition(
       name: "Darkwood Forest",
       iconAsset: 'assets/images/zones/darkwood_forest.png',
+      palette: ZonePalette.darkwood,
       explorationLevel: 20,
       xpPerExplore: 10,
 
@@ -231,18 +232,31 @@ enum ZoneId {
       ],
     ),
   ),
-  // The wet ground east of the town. Its roster is the tier 2 pair the
-  // archetypes were written for, climbing to a moss golem the zone gates
-  // well past its own front door.
+  // The wet ground east of the town: mudlurcs, slimes and crows at the
+  // front door, oozes and fungal monsters further in, the rare Murkjaw
+  // past that, and a moss golem the zone gates well past its own door.
+  // Each monster here has its own art. The swamp is also the source of the
+  // super potions: mirecap, the marsh's reagents, and the Murkjaw's fang.
   SWAMP(
     ZoneDefinition(
       name: "Blackmire Swamp",
       iconAsset: 'assets/images/zones/swamp.png',
+      palette: ZonePalette.swamp,
       explorationLevel: 25,
       xpPerExplore: 12,
 
-      permanentEntities: [EntityId.FIREPIT, EntityId.DEEP_POND],
+      permanentEntities: [
+        EntityId.FIREPIT,
+        EntityId.DROWNED_FEN_ENTRANCE,
+        EntityId.MURKY_MARSH,
+      ],
       discoverableEntities: [
+        // willow's side-grade, for woodcutting
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.BOG_TREE,
+          weight: 1.5,
+          unlockLevel: 25,
+        ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MUDLURC,
           weight: 1.5,
@@ -254,24 +268,92 @@ enum ZoneId {
           unlockLevel: 25,
         ),
         WeightedDropTableEntry<EntityId>(
+          id: EntityId.CARRION_CROW,
+          weight: 1.5,
+          unlockLevel: 25,
+        ),
+        // the super potions' herb, the next rung past darkwood's harralander
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MIRECAP,
+          weight: .6,
+          count: 3,
+          unlockLevel: 25,
+        ),
+        WeightedDropTableEntry<EntityId>(
           id: EntityId.FUNGAL_MONSTER,
           weight: 1.5,
           unlockLevel: 26,
         ),
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.MUDLURC_WARRIOR,
-          weight: .5,
+          id: EntityId.OOZE,
+          weight: 1,
           unlockLevel: 27,
         ),
+        // the reason to come: the only source of the murkjaw fang
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.GIANT_SCORPION,
-          weight: 1,
+          id: EntityId.MURKJAW,
+          weight: .3,
           unlockLevel: 28,
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MOSS_GOLEM,
           weight: .3,
           unlockLevel: 29,
+        ),
+      ],
+    ),
+  ),
+  // The still water past the swamp's far edge: a small lake ringed by
+  // maples, and the ranarr that grows in their shade.
+  MAPLEWATER_LAKE(
+    ZoneDefinition(
+      name: "Maplewater Lake",
+      iconAsset: 'assets/images/zones/maplewater_lake.png',
+      explorationLevel: 30,
+      xpPerExplore: 13,
+
+      permanentEntities: [EntityId.FIREPIT, EntityId.DEEP_POND],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MAPLE_TREE,
+          weight: 1.5,
+          unlockLevel: 30,
+        ),
+        // the lower trees, rarer finds than the maples they grow among
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TREE,
+          weight: .4,
+          unlockLevel: 30,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.OAK_TREE,
+          weight: .4,
+          unlockLevel: 30,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.WILLOW_TREE,
+          weight: .4,
+          unlockLevel: 30,
+        ),
+        // the low herbs, uncommon this far from the farms
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GUAM,
+          weight: .8,
+          count: 3,
+          unlockLevel: 30,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.HARRALANDER,
+          weight: .8,
+          count: 3,
+          unlockLevel: 30,
+        ),
+        // the fourth herb tier
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.RANARR,
+          weight: .6,
+          count: 3,
+          unlockLevel: 30,
         ),
       ],
     ),

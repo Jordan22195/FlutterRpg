@@ -108,29 +108,82 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     gatherTintBorder: Color(0xFF2E4233),
   );
 
-  /// Southwood Forest: accent is the sunlight on the path in the forest art.
+  /// Southwood Forest: the art's deep blue-greens in the shade, the
+  /// sunlight on the path as the accent.
   static const forest = ZonePalette(
-    bg: Color(0xFF0F130E),
-    surface: Color(0xFF182016),
-    surfaceSunken: Color(0xFF141B12),
-    raised: Color(0xFF26311F),
-    track: Color(0xFF222B1C),
-    border: Color(0xFF232D1F),
-    borderStrong: Color(0xFF33412C),
-    borderOverArt: Color(0xFF3A4A32),
-    divider: Color(0xFF1F281B),
-    text: Color(0xFFECEFDD),
-    textMuted: Color(0xFFA8B39A),
-    // derived like the meadow's: ~38% of the way from textMuted to text
-    textSubtitle: Color(0xFFC2CAB3),
-    textNavInactive: Color(0xFF98A38A),
-    chevron: Color(0xFF7F8A72),
+    bg: Color(0xFF0B130F),
+    surface: Color(0xFF13211A),
+    surfaceSunken: Color(0xFF0F1A14),
+    raised: Color(0xFF1F3427),
+    track: Color(0xFF1A2B21),
+    border: Color(0xFF1C2E23),
+    borderStrong: Color(0xFF2A4333),
+    borderOverArt: Color(0xFF3A5340),
+    divider: Color(0xFF182A20),
+    text: Color(0xFFEBF0DC),
+    textMuted: Color(0xFFA3B59B),
+    // ~38% of the way from textMuted to text
+    textSubtitle: Color(0xFFC1CCB3),
+    textNavInactive: Color(0xFF93A58B),
+    chevron: Color(0xFF7A8D74),
     accent: Color(0xFFD6DE5C),
     onAccent: Color(0xFF1A1E06),
     accentLip: Color(0xFF959C33),
-    titleShadow: Color(0xFF070906),
-    gatherTintFill: Color(0xFF15231B),
-    gatherTintBorder: Color(0xFF2A4033),
+    titleShadow: Color(0xFF050A07),
+    gatherTintFill: Color(0xFF12261C),
+    gatherTintBorder: Color(0xFF284637),
+  );
+
+  /// Blackmire Swamp: the misty teal-greens of the water and moss, the
+  /// glowing orange mushrooms as the accent.
+  static const swamp = ZonePalette(
+    bg: Color(0xFF0A1514),
+    surface: Color(0xFF122321),
+    surfaceSunken: Color(0xFF0E1B1A),
+    raised: Color(0xFF1E3733),
+    track: Color(0xFF1A2E2B),
+    border: Color(0xFF1C312D),
+    borderStrong: Color(0xFF2B4A44),
+    borderOverArt: Color(0xFF3C5F57),
+    divider: Color(0xFF172A27),
+    text: Color(0xFFE4F2EC),
+    textMuted: Color(0xFF9BB9AE),
+    // ~38% of the way from textMuted to text
+    textSubtitle: Color(0xFFBBD4CA),
+    textNavInactive: Color(0xFF8BA99E),
+    chevron: Color(0xFF739388),
+    accent: Color(0xFFF0A24A),
+    onAccent: Color(0xFF2A1604),
+    accentLip: Color(0xFFA9692A),
+    titleShadow: Color(0xFF050B0A),
+    gatherTintFill: Color(0xFF11282A),
+    gatherTintBorder: Color(0xFF2A4D4C),
+  );
+
+  /// Darkwood Forest: the art's midnight blues and cold teals, the moon
+  /// glowing through the canopy as the accent.
+  static const darkwood = ZonePalette(
+    bg: Color(0xFF060D14),
+    surface: Color(0xFF0D1A24),
+    surfaceSunken: Color(0xFF09141C),
+    raised: Color(0xFF16293A),
+    track: Color(0xFF122231),
+    border: Color(0xFF14283A),
+    borderStrong: Color(0xFF1F3B4F),
+    borderOverArt: Color(0xFF2C5163),
+    divider: Color(0xFF102130),
+    text: Color(0xFFE0EEF0),
+    textMuted: Color(0xFF93AFB8),
+    // ~38% of the way from textMuted to text
+    textSubtitle: Color(0xFFB4CCD2),
+    textNavInactive: Color(0xFF82A0AA),
+    chevron: Color(0xFF6A8994),
+    accent: Color(0xFF9DE6CF),
+    onAccent: Color(0xFF062119),
+    accentLip: Color(0xFF4F9A85),
+    titleShadow: Color(0xFF020609),
+    gatherTintFill: Color(0xFF0C2229),
+    gatherTintBorder: Color(0xFF1F4A52),
   );
 
   @override

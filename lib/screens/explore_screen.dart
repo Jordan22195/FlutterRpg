@@ -23,7 +23,6 @@ import '../widgets/action_dock.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/countdown_timer.dart';
 import '../widgets/item_stack_tile.dart';
-import '../widgets/list_row.dart';
 import '../widgets/place_tile.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/segmented_tabs.dart';
@@ -76,21 +75,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
       ],
       selected: _tab,
       onChanged: (tab) => setState(() => _tab = tab),
-    );
-  }
-
-  /// Labels the two halves of the entities tab: the zone's permanent
-  /// places, and the resource nodes exploring has turned up. [above] is the
-  /// room over the label; 8 always sits under it. The body is inset 16, so
-  /// the label's 4 puts it 20 from the screen's edge.
-  Widget _sectionHeader(
-    BuildContext context,
-    String label, {
-    required double above,
-  }) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(4, above, 4, 8),
-      child: Align(alignment: Alignment.centerLeft, child: SectionLabel(label)),
     );
   }
 
@@ -369,36 +353,20 @@ class _ExploreScreenState extends State<ExploreScreen> {
       _ExploreTab.entities =>
         structures.isEmpty && resources.isEmpty && undiscovered.isEmpty
             ? _emptyBody(context, 'Nothing here yet')
-            : Column(
-                children: [
-                  if (structures.isNotEmpty || unfoundPlaces.isNotEmpty) ...[
-                    // 16 under the tabs, with their own 4 and the body's 4
-                    _sectionHeader(context, 'Places', above: 8),
-                    PlaceGrid(
-                      tiles: [
-                        for (final e in structures)
-                          _buildPlaceTile(worldController, e),
-                        for (final d in unfoundPlaces)
-                          _UndiscoveredCard(
-                            key: ValueKey('undiscovered-${d.name}'),
-                            discovery: d,
-                          ),
-                      ],
-                    ),
+            : Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: PlaceGrid(
+                  tiles: [
+                    for (final e in structures)
+                      _buildPlaceTile(worldController, e),
+                    for (final d in unfoundPlaces)
+                      _UndiscoveredCard(
+                        key: ValueKey('undiscovered-${d.name}'),
+                        discovery: d,
+                      ),
+                    for (final entry in discoveries) entry.build(),
                   ],
-                  if (discoveries.isNotEmpty) ...[
-                    _sectionHeader(
-                      context,
-                      'Discoveries',
-                      above: structures.isEmpty && unfoundPlaces.isEmpty
-                          ? 8
-                          : 24,
-                    ),
-                    PlaceGrid(
-                      tiles: [for (final entry in discoveries) entry.build()],
-                    ),
-                  ],
-                ],
+                ),
               ),
 
       // items turned up by exploring, kept per-zone

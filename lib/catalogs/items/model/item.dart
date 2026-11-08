@@ -60,6 +60,9 @@ class Item {
     if (item is ZoneBuffItem) {
       item.readZoneStateFromJson(json);
     }
+    if (item is FireItem) {
+      item.readFireStateFromJson(json);
+    }
 
     return item;
   }

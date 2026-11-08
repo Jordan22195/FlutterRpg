@@ -47,6 +47,8 @@ import 'package:rpg/services/exploration_service.dart';
 import 'package:rpg/systems/crafting_system.dart';
 import 'package:rpg/systems/firemaking_system.dart';
 import 'package:rpg/systems/potion_system.dart';
+import 'package:rpg/systems/fire_tending_system.dart';
+import 'package:rpg/systems/birds_nest_system.dart';
 import 'package:rpg/systems/encounter_system.dart';
 import 'package:rpg/systems/exploration_system.dart';
 import 'package:rpg/systems/equipment_system.dart';
@@ -57,6 +59,7 @@ import 'data/dungeon_progress_data.dart';
 import 'data/inventory_data.dart';
 import 'data/ui_state.dart';
 import 'package:rpg/controllers/potion_controller.dart';
+import 'package:rpg/controllers/fire_controller.dart';
 import 'package:rpg/controllers/settings_controller.dart';
 
 class SaveGameData {
@@ -466,6 +469,16 @@ class GameSessionFactory {
 
     // systems
     final firemakingSystem = FiremakingSystem(buffService: buffService);
+    final fireTendingSystem = FireTendingSystem(
+      buffService: buffService,
+      inventoryService: inventoryService,
+      playerDataService: playerDataService,
+      firemakingSystem: firemakingSystem,
+    );
+    final birdsNestSystem = BirdsNestSystem(
+      inventoryService: inventoryService,
+      dropTableService: weightedDropTableService,
+    );
     final potionSystem = PotionSystem(
       buffService: buffService,
       inventoryService: inventoryService,
@@ -531,6 +544,7 @@ class GameSessionFactory {
       offlineProgressData: offlineProgressData,
       potionSystem: potionSystem,
       inventoryData: save.inventoryData,
+      fireTendingSystem: fireTendingSystem,
     );
 
     //controllers
@@ -557,6 +571,7 @@ class GameSessionFactory {
       explorationSystem: explorationSystem,
       playerState: save.playerData,
       worldState: save.worldData,
+      birdsNestSystem: birdsNestSystem,
     );
     final potionController = PotionController(
       playerState: save.playerData,
@@ -564,6 +579,14 @@ class GameSessionFactory {
       actionTimingState: save.actionTimingData,
       potionSystem: potionSystem,
       buffService: buffService,
+      inventoryService: inventoryService,
+    );
+    final fireController = FireController(
+      playerState: save.playerData,
+      inventoryData: save.inventoryData,
+      actionTimingState: save.actionTimingData,
+      firemakingSystem: firemakingSystem,
+      fireTendingSystem: fireTendingSystem,
       inventoryService: inventoryService,
     );
     final encounterController = EncounterController(
@@ -595,6 +618,8 @@ class GameSessionFactory {
       // the tick drinking a potion changes the bag, and the potions screen
       // and inventory both have to follow it
       onAutoDrink: potionController.refresh,
+      fireTendingSystem: fireTendingSystem,
+      onAutoTend: fireController.refresh,
     );
     final craftingController = CraftingController(
       actionTimingController: actionTimingController,
@@ -712,6 +737,12 @@ class GameSessionFactory {
     // never the other way round: the buff controller is already told about
     // every inventory change, and listening back would loop
     potionController.addListener(inventoryController.refresh);
+    // tending spends reagents and moves the stats, the same fan-out as a
+    // potion; the tick's spending lands here through onAutoTend
+    fireController.addListener(inventoryController.refresh);
+    fireController.addListener(playerDataController.refresh);
+    // lighting or feeding a fire changes what can be tended
+    craftingController.addListener(fireController.refresh);
     enchantingController.addListener(playerDataController.refresh);
     dungeonController.addListener(playerDataController.refresh);
     equipmentController.addListener(playerDataController.refresh);
@@ -755,6 +786,7 @@ class GameSessionFactory {
       actionTimingController: actionTimingController,
       inventoryController: inventoryController,
       potionController: potionController,
+      fireController: fireController,
       encounterController: encounterController,
       buffController: buffController,
       craftingController: craftingController,
@@ -778,6 +810,8 @@ class GameSessionFactory {
       craftingSystem: craftingSystem,
       firemakingSystem: firemakingSystem,
       potionSystem: potionSystem,
+      fireTendingSystem: fireTendingSystem,
+      birdsNestSystem: birdsNestSystem,
       encounterSystem: encounterSystem,
       explorationSystem: explorationSystem,
       equipmentSystem: equipmentSystem,
@@ -804,6 +838,7 @@ class GameSession {
   ActionTimingController actionTimingController;
   InventoryController inventoryController;
   PotionController potionController;
+  FireController fireController;
   EncounterController encounterController;
   BuffController buffController;
   CraftingController craftingController;
@@ -831,6 +866,8 @@ class GameSession {
   CraftingSystem craftingSystem;
   FiremakingSystem firemakingSystem;
   PotionSystem potionSystem;
+  FireTendingSystem fireTendingSystem;
+  BirdsNestSystem birdsNestSystem;
   EncounterSystem encounterSystem;
   ExplorationSystem explorationSystem;
   EquipmentSystem equipmentSystem;
@@ -851,6 +888,7 @@ class GameSession {
     required this.actionTimingController,
     required this.inventoryController,
     required this.potionController,
+    required this.fireController,
     required this.encounterController,
     required this.buffController,
     required this.craftingController,
@@ -878,6 +916,8 @@ class GameSession {
     required this.craftingSystem,
     required this.firemakingSystem,
     required this.potionSystem,
+    required this.fireTendingSystem,
+    required this.birdsNestSystem,
     required this.encounterSystem,
     required this.explorationSystem,
     required this.equipmentSystem,

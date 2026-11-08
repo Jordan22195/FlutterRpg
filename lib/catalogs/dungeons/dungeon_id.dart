@@ -290,6 +290,102 @@ enum DungeonId {
       ],
     ),
   ),
+  // Blackmire Swamp's dungeon: its mobs run L34-55 and its bosses
+  // 55 / 55 / 89, twenty-five fights a card. Its
+  // gear is the Spider Den's three pieces at the same strength, on the
+  // wrist, waist and shoulder instead.
+  DROWNED_FEN(
+    DungeonDefinition(
+      name: "Drowned Fen",
+      iconAsset: "assets/images/dungeons/drowned_fen.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.BOG_LOGS, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.WILLOW_LOGS, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.BOG_EEL, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.CATFISH, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.MIRECAP, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.LEECH, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.MARSH_FROG, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.SLIME_OOZE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.SLIME_CORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.SCALE, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.CROW_QUILL, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.FEATHER, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.MURKJAW_HIDE, lowCount: 20, highCount: 80),
+          ],
+        ),
+        // the zone's rare reagent, kept to a handful
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.MURKJAW_FANG, lowCount: 5, highCount: 13),
+          ],
+        ),
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.CROWQUILL_BRACERS, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.OOZE_SLICK_BELT, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.03,
+          entries: [
+            ItemDropType(id: ItemId.MURKJAW_PAULDRONS, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "Reedbank",
+          entities: [
+            DungeonEntityRef(EntityId.CARRION_CROW, count: 16),
+            DungeonEntityRef(EntityId.MUDLURC, count: 8),
+            DungeonEntityRef(EntityId.MURDER_KING, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "Ooze Pits",
+          entities: [
+            DungeonEntityRef(EntityId.SLIME, count: 14),
+            DungeonEntityRef(EntityId.OOZE, count: 10),
+            DungeonEntityRef(EntityId.PRIMORDIAL_OOZE, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "Murkjaw Nest",
+          entities: [
+            DungeonEntityRef(EntityId.MURKJAW, count: 12),
+            DungeonEntityRef(EntityId.FUNGAL_MONSTER, count: 6),
+            // the uncommon mudlurc, out of the swamp's discoveries since it
+            // shares the common's art
+            DungeonEntityRef(EntityId.MUDLURC_WARRIOR, count: 6),
+            DungeonEntityRef(EntityId.MURKJAW_MATRIARCH, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
   // ── TRANSIENT · a discovered entrance, consumed on completion ───
   GOBLIN_CAMP(
     DungeonDefinition(

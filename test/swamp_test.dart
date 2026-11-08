@@ -6,8 +6,8 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
-/// Blackmire Swamp is the wet ground east of South Haven, and the home the
-/// mudlurc and fungal monster archetypes were written for.
+/// Blackmire Swamp is the wet ground east of South Haven: mudlurcs, crows,
+/// oozes and the rare Murkjaw, the mirecap herb and the marsh's reagents.
 ///
 /// Its roster spans four tiers, so most of it is gated behind the zone's own
 /// front door by exploration level rather than by a second zone. These
@@ -67,12 +67,14 @@ void main() {
       );
     });
 
-    test('holds the roster the archetypes were written for', () {
+    test('holds its roster, and nothing it outgrew', () {
       for (final id in [
         EntityId.MUDLURC,
+        EntityId.SLIME,
+        EntityId.CARRION_CROW,
         EntityId.FUNGAL_MONSTER,
-        EntityId.MUDLURC_WARRIOR,
-        EntityId.GIANT_SCORPION,
+        EntityId.OOZE,
+        EntityId.MURKJAW,
         EntityId.MOSS_GOLEM,
       ]) {
         expect(
@@ -81,16 +83,24 @@ void main() {
           reason: '${id.name} should live in the swamp',
         );
       }
+      // the uncommon mudlurc shared the common's art, and the scorpion was
+      // a level-55 desert animal in a bog
+      for (final id in [EntityId.MUDLURC_WARRIOR, EntityId.GIANT_SCORPION]) {
+        expect(entryFor(ZoneId.SWAMP, id), isNull, reason: id.name);
+      }
+    });
+
+    test('no two of its discoveries share a picture', () {
+      final byArt = <String, List<String>>{};
+      for (final e in ZoneId.SWAMP.definition.discoverableEntities) {
+        byArt.putIfAbsent(e.id.iconAsset, () => []).add(e.id.name);
+      }
+      final shared = byArt.values.where((ids) => ids.length > 1);
+      expect(shared, isEmpty, reason: 'discoveries drawn alike: $shared');
     });
 
     test('the harder the monster, the later it is found', () {
-      // the roster spans mudlurcs to a moss golem, so the zone gates itself
-      // rather than needing a second zone to hold the top of its own range
-      final ladder = [
-        EntityId.MUDLURC,
-        EntityId.GIANT_SCORPION,
-        EntityId.MOSS_GOLEM,
-      ];
+      final ladder = [EntityId.MUDLURC, EntityId.OOZE, EntityId.MOSS_GOLEM];
       for (var i = 1; i < ladder.length; i++) {
         expect(
           levelOf(ladder[i]),
@@ -105,10 +115,74 @@ void main() {
       }
     });
 
+    test('the murkjaw is rare, and the only monster with its fang', () {
+      final murkjaw = entryFor(ZoneId.SWAMP, EntityId.MURKJAW)!;
+      for (final e in ZoneId.SWAMP.definition.discoverableEntities) {
+        if (e.id == EntityId.MURKJAW) continue;
+        if (e.id.definition is! CombatEntityDefinition) continue;
+        expect(murkjaw.weight, lessThanOrEqualTo(e.weight), reason: e.id.name);
+      }
+
+      bool drops(EntityId id, ItemId item) {
+        final def = id.definition as EncounterEntityDefinition;
+        return {
+          ...def.itemDrops.flattened.map((d) => d.id),
+          for (final roll in def.bonusDrops)
+            ...roll.entries.flattened.map((d) => d.id),
+        }.contains(item);
+      }
+
+      final fangDroppers = [
+        for (final id in EntityId.values)
+          if (id.definition is EncounterEntityDefinition &&
+              drops(id, ItemId.MURKJAW_FANG))
+            id,
+      ];
+      expect(
+        fangDroppers.every(
+          (id) =>
+              (id.definition as CombatEntityDefinition).iconAsset ==
+              EntityId.MURKJAW.iconAsset,
+        ),
+        isTrue,
+        reason: 'only murkjaws drop the fang: $fangDroppers',
+      );
+    });
+
+    test('gathers herbs, wood and marsh reagents', () {
+      expect(entryFor(ZoneId.SWAMP, EntityId.MIRECAP), isNotNull);
+      expect(entryFor(ZoneId.SWAMP, EntityId.BOG_TREE), isNotNull);
+      expect(
+        ZoneId.SWAMP.definition.permanentEntities,
+        containsAll([EntityId.MURKY_MARSH, EntityId.DROWNED_FEN_ENTRANCE]),
+      );
+
+      // the marsh is the River's equivalent: the same level and numbers
+      final marsh = EntityId.MURKY_MARSH.definition as FishingEntityDefinition;
+      final river = EntityId.RIVER.definition as FishingEntityDefinition;
+      expect(marsh.requiredLevel, river.requiredLevel);
+      expect(marsh.defence, river.defence);
+      expect(marsh.hitpoints, river.hitpoints);
+      expect(
+        marsh.itemDrops.flattened.map((d) => d.id),
+        containsAll([ItemId.BOG_EEL, ItemId.LEECH, ItemId.MARSH_FROG]),
+      );
+
+      // and the bog tree is willow's side-grade
+      final bog = EntityId.BOG_TREE.definition as EncounterEntityDefinition;
+      final willow =
+          EntityId.WILLOW_TREE.definition as EncounterEntityDefinition;
+      expect(bog.defence, willow.defence);
+      expect(bog.hitpoints, willow.hitpoints);
+    });
+
     test('its monsters drop something other than coins', () {
-      // the roster shipped with coin stubs; the ones placed in a zone are
-      // the ones worth fighting for a reason
-      for (final id in [EntityId.FUNGAL_MONSTER, EntityId.GIANT_SCORPION]) {
+      for (final id in [
+        EntityId.FUNGAL_MONSTER,
+        EntityId.CARRION_CROW,
+        EntityId.OOZE,
+        EntityId.MURKJAW,
+      ]) {
         final def = id.definition as EncounterEntityDefinition;
         final loot = {
           ...def.itemDrops.flattened.map((d) => d.id),

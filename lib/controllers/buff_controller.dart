@@ -7,6 +7,7 @@ import '../services/buff_service.dart';
 import '../systems/offline_progress_system.dart';
 import 'action_timing_controller.dart';
 import '../data/inventory_data.dart';
+import '../systems/fire_tending_system.dart';
 import '../systems/potion_system.dart';
 
 class BuffController extends ChangeNotifier {
@@ -22,6 +23,13 @@ class BuffController extends ChangeNotifier {
   /// inventory controller already notifies this one on a drink, and
   /// listening back would loop.
   final VoidCallback? _onAutoDrink;
+
+  /// Throws auto-tend reagents and keeps the zone's fire fed. Optional, so a
+  /// controller built without fires in mind ticks as it always did.
+  final FireTendingSystem? _fireTendingSystem;
+
+  /// Fired after the tick spent logs or reagents on a fire.
+  final VoidCallback? _onAutoTend;
   late final Timer _timer;
 
   BuffController({
@@ -32,7 +40,11 @@ class BuffController extends ChangeNotifier {
     required PotionSystem potionSystem,
     required InventoryData inventoryData,
     VoidCallback? onAutoDrink,
-  }) : _playerState = playerState,
+    FireTendingSystem? fireTendingSystem,
+    VoidCallback? onAutoTend,
+  }) : _fireTendingSystem = fireTendingSystem,
+       _onAutoTend = onAutoTend,
+       _playerState = playerState,
        _actionTimingState = actionTimingState,
        _buffService = buffService,
        _offlineProgressSystem = offlineProgressSystem,
@@ -58,6 +70,20 @@ class BuffController extends ChangeNotifier {
       _playerState,
       _actionTimingState,
     )) {
+      // a fire on its last second is fed before the sweep can take it,
+      // and its armed reagents go back on - only while an action runs, the
+      // same rule as auto-drink below
+      if (_actionTimingState.running) {
+        final spent =
+            _fireTendingSystem?.autoTend(
+              _playerState,
+              _inventoryData,
+              feedWithin: const Duration(seconds: 1),
+            ) ??
+            false;
+        if (spent) _onAutoTend?.call();
+      }
+
       _buffService.checkBuffExpriations(_playerState.buffData);
       // a burnt-out fire simply stops being a buff; its firepit renders bare
       // again on the next build

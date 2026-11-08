@@ -55,6 +55,13 @@ class ZoneTravelGraph {
         stamina: 25,
         time: Duration(milliseconds: 12500),
       ),
+      ZoneId.MAPLEWATER_LAKE: TravelEdge(
+        stamina: 20,
+        time: Duration(seconds: 10),
+      ),
+    },
+    ZoneId.MAPLEWATER_LAKE: {
+      ZoneId.SWAMP: TravelEdge(stamina: 20, time: Duration(seconds: 10)),
     },
     ZoneId.FOOTHILLS: {
       ZoneId.SWAMP: TravelEdge(

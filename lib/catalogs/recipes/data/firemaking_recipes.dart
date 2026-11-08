@@ -3,9 +3,10 @@ import 'package:rpg/catalogs/recipes/crafting_recipe.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
-/// Firemaking. Fire types across the log tiers: cookfires are cheap
-/// and open cooking, campfires and bonfires cost more logs for a bigger
-/// combat buff.
+/// Firemaking. Fire types across the log tiers: cookfires are cheap and
+/// open cooking; campfires and bonfires cost more logs and burn reagents for
+/// their buffs (see FireReagentDefinition). Burning logs is the grind: these
+/// recipes are where Firemaking's xp comes from.
 const List<CraftingRecipe> firemakingRecipes = [
   // Firemaking. three fire types across two log tiers: cookfires are cheap
   // and open cooking, campfires and bonfires cost more logs for a bigger
@@ -114,6 +115,44 @@ const List<CraftingRecipe> firemakingRecipes = [
     inputs: {ItemId.WILLOW_LOGS: 15},
     output: [
       WeightedDropTableEntry(id: ItemId.WILLOW_BONFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  // Bog (willow's side-grade). The same levels and log counts as willow:
+  // the difference is in the fire, not what it costs to lay.
+  CraftingRecipe(
+    id: 'bog_cookfire',
+    name: 'Bog Cookfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 40,
+    xp: 135,
+    inputs: {ItemId.BOG_LOGS: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.BOG_COOKFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'bog_campfire',
+    name: 'Bog Campfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 45,
+    xp: 330,
+    inputs: {ItemId.BOG_LOGS: 5},
+    output: [
+      WeightedDropTableEntry(id: ItemId.BOG_CAMPFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'bog_bonfire',
+    name: 'Bog Bonfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 55,
+    xp: 1020,
+    inputs: {ItemId.BOG_LOGS: 15},
+    output: [
+      WeightedDropTableEntry(id: ItemId.BOG_BONFIRE, count: 1, weight: 1),
     ],
   ),
 ];

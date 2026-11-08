@@ -188,6 +188,15 @@ class PlayerData {
   /// the live tick and an offline settle read the same set.
   Set<ItemId> autoDrinkPotions = {};
 
+  /// Fire reagents re-thrown on the zone's fire whenever their buff lapses
+  /// while an action runs - auto-drink's counterpart for fires. Read by the
+  /// live tick and an offline settle alike.
+  Set<ItemId> autoTendReagents = {};
+
+  /// Lays another batch of the burning fire's logs on before it goes out,
+  /// while an action runs, so its reagent buffs don't end with it.
+  bool keepFireFed = false;
+
   DateTime lastActionTime = DateTime.now();
 
   // mutable stats
@@ -227,6 +236,8 @@ class PlayerData {
       'stamina': stamina,
       'autoEatRule': autoEatRule.toJson(),
       'autoDrinkPotions': [for (final id in autoDrinkPotions) id.name],
+      'autoTendReagents': [for (final id in autoTendReagents) id.name],
+      'keepFireFed': keepFireFed,
       // the stance and the skill it lends its boost to travel together: a
       // strength stance on a rock boosts mining, which the stance alone
       // cannot say. without them a relaunch drops back to fast while the
@@ -335,7 +346,10 @@ class PlayerData {
                   json['autoEatRule'] as Map<String, dynamic>,
                 )
               : AutoEatRule.standard
-          ..autoDrinkPotions = _readAutoDrinkPotions(json['autoDrinkPotions']);
+          ..autoDrinkPotions = _readAutoDrinkPotions(json['autoDrinkPotions'])
+          // both absent from a save older than tended fires: off
+          ..autoTendReagents = _readAutoDrinkPotions(json['autoTendReagents'])
+          ..keepFireFed = json['keepFireFed'] == true;
 
     // a save from before the stance was kept comes back in fast, as it
     // always did. both halves or neither: a stance with no skill to boost

@@ -103,6 +103,7 @@ class DiscoveryTile extends StatelessWidget {
           : null,
       // a creature's art has a margin of its own; sit closer
       spriteScale: 1.25,
+      transparentFrame: true,
       // a used-up node reads like a locked one, without the lock
       dimmed: e.count <= 0,
       semanticsLabel: [

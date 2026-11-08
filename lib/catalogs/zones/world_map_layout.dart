@@ -81,6 +81,7 @@ const List<MapNode> kWorldMapNodes = [
   ZoneNode(ZoneId.DARKWOOD_FOREST, Offset(150, 620)),
   ZoneNode(ZoneId.FOREST_MINE, Offset(390, 570)),
   ZoneNode(ZoneId.SWAMP, Offset(430, 400)),
+  ZoneNode(ZoneId.MAPLEWATER_LAKE, Offset(520, 330)),
   ZoneNode(ZoneId.FOOTHILLS, Offset(620, 480)),
   ZoneNode(ZoneId.DEV_FOREST, Offset(520, 200)),
   ZoneNode(ZoneId.DEV_DUNGEON_TESTING, Offset(620, 320)),

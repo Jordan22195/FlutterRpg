@@ -14,6 +14,8 @@ import '../theme/hearth_text.dart';
 import '../widgets/action_dock.dart';
 import '../widgets/art_header.dart';
 import '../widgets/countdown_timer.dart';
+import '../widgets/fire_reagents.dart';
+import '../controllers/fire_controller.dart';
 import '../widgets/crafting_info_panel.dart';
 import '../widgets/item_stack_tile.dart';
 import '../widgets/list_row.dart';
@@ -300,6 +302,20 @@ class _FirepitScreenState extends State<FirepitScreen>
                   // the highlighted card owns the stats tab: the firepit
                   // keeps a separate selection per skill
                   recipeId: selectedId,
+                  // with a cookfire picked the pit is a kitchen and shows what
+                  // it cooked; otherwise it is tended, and the auto-tend
+                  // switches and Keep fire fed take that tab's place
+                  extraTab: cookingUnlocked
+                      ? null
+                      : CraftingExtraTab(
+                          label: 'Reagents',
+                          count: context
+                              .watch<FireController>()
+                              .activeBuffs()
+                              .length,
+                          replacesCrafted: true,
+                          child: const FireReagentsPanel(),
+                        ),
                 ),
               ],
             ),
@@ -377,8 +393,11 @@ class _FireHero extends StatelessWidget {
       tint: tint,
       height: 148,
       sprite: SpriteFrame.sprite(f?.id ?? EntityId.FIREPIT, size: 116),
-      // what the burning fire is giving, in the chips its tile wears
-      leading: f == null
+      // a tended fire's buffs are its reagents, along the foot of the stage
+      footer: f != null && f.tendable ? const FireReagentChipRow() : null,
+      footerRightInset: 96,
+      // what a cookfire is giving, in the chips its tile wears
+      leading: f == null || f.tendable
           ? null
           : Align(
               alignment: Alignment.topLeft,

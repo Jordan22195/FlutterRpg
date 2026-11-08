@@ -217,21 +217,22 @@ void main() {
         save.playerData.buffData.zoneBuffs[save.playerData.currentZoneId]!;
     expect(zoneBuffs.keys, containsAll([EntityId.FIREPIT, EntityId.ANVIL]));
 
-    final campfire = ItemId.BASIC_CAMPFIRE.build() as FireItem;
+    // a campfire gives nothing until it is tended: an acorn on each
+    final now = DateTime.now();
+    for (final fire in zoneBuffs.values.whereType<FireItem>()) {
+      fire.tend(SkillId.STRENGTH, now);
+    }
     final total = session.buffService.getBuffedStatTotal(
       save.playerData.buffData,
       save.playerData.currentZoneId,
     );
-    // which stats a campfire grants is a balance choice; the claim here is
-    // that two of them are worth double, whatever those stats are
-    expect(campfire.skillBonus, isNotEmpty);
-    for (final entry in campfire.skillBonus.entries) {
-      expect(
-        total[entry.key],
-        entry.value * 2,
-        reason: 'two campfires should double their ${entry.key.name} bonus',
-      );
-    }
+    final power =
+        (ItemId.BASIC_CAMPFIRE.definition as FireItemDefinition).power;
+    expect(
+      total[SkillId.STRENGTH],
+      power * 2,
+      reason: 'two tended campfires should double their strength bonus',
+    );
 
     session.dispose();
   });

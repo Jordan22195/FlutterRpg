@@ -25,46 +25,59 @@ import 'package:rpg/data/equipment_data.dart';
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
 const knownMissingArt = <String>{
+  // Maplewater Lake and its maple tree, before their art
+  'assets/images/zones/maplewater_lake.png',
+
+  // the scale, redrawn as an animal's (prompt in rd_prompt_overrides.json)
+
   // the skeleton, redrawn as armored (prompt in rd_prompt_overrides.json)
-  'assets/images/entities/skeleton.png',
 
   // grave drops off the dark forest's skeletons and zombies, before their art
-  'assets/icons/items/rotten_flesh.png',
-  'assets/icons/items/grave_moss.png',
-  'assets/icons/items/recovery_potion.png',
-  'assets/icons/items/tattered_hood.png',
-  'assets/icons/items/tattered_cloak.png',
-  'assets/icons/items/tattered_wraps.png',
-  'assets/icons/items/tattered_shoes.png',
-  'assets/icons/items/bat_wing.png',
-  'assets/icons/items/bat_fang.png',
-  'assets/icons/items/speed_potion.png',
-  'assets/icons/items/attack_potion.png',
-  'assets/icons/items/strength_potion.png',
-  'assets/icons/items/slime_ooze.png',
-  'assets/icons/items/slime_core.png',
-  'assets/icons/items/fishing_potion.png',
-  'assets/icons/items/defence_potion.png',
-  'assets/icons/items/stamina_potion.png',
-  'assets/icons/items/maple_logs.png',
-  'assets/icons/items/red_cap_mushroom.png',
-  'assets/icons/items/redcap_ring.png',
-  'assets/icons/items/black_dagger.png',
-  'assets/icons/items/black_sword.png',
-  'assets/icons/items/black_greatsword.png',
-  'assets/icons/items/webbed_cloak.png',
-  'assets/icons/items/venomfang_ring.png',
 
   // the sturgeon, the lake's level 70 fish, added before its art
-  'assets/icons/items/sturgeon.png',
-  'assets/icons/items/cooked_sturgeon.png',
 
   // the crayfish, the creek's level 7 catch, added before its art
-  'assets/icons/items/crayfish.png',
-  'assets/icons/items/cooked_crayfish.png',
 
   // the wood shield, the Rotwood Scarecrow's rare drop, added before its art
-  'assets/icons/items/wood_shield.png',
+
+  // Blackmire Swamp's content pass: its new monsters, gathering spots,
+  // reagents, super potions and the Drowned Fen's gear, before their art
+  'assets/images/entities/bog_tree.png',
+  'assets/images/entities/drowned_fen.png',
+  'assets/icons/items/bog_eel.png',
+  'assets/icons/items/cooked_bog_eel.png',
+  'assets/icons/items/bog_logs.png',
+  'assets/icons/items/mirecap.png',
+  'assets/icons/items/leech.png',
+  'assets/icons/items/crow_quill.png',
+  'assets/icons/items/marsh_frog.png',
+  'assets/icons/items/murkjaw_fang.png',
+  'assets/icons/items/murkjaw_hide.png',
+  'assets/icons/items/super_recovery_potion.png',
+  'assets/icons/items/super_fishing_potion.png',
+  'assets/icons/items/super_stamina_potion.png',
+  'assets/icons/items/super_defence_potion.png',
+  'assets/icons/items/super_speed_potion.png',
+  'assets/icons/items/super_strength_potion.png',
+  'assets/icons/items/super_attack_potion.png',
+  'assets/icons/items/crowquill_bracers.png',
+  'assets/icons/items/ooze_slick_belt.png',
+  'assets/icons/items/murkjaw_pauldrons.png',
+
+  // reagent fires: the woodcutting reagents, the bird's nests and the bog
+  // fires, before their art
+  'assets/icons/items/dry_twigs.png',
+  'assets/icons/items/tree_bark.png',
+  'assets/icons/items/pine_resin.png',
+  'assets/icons/items/acorn.png',
+  'assets/icons/items/oak_gall.png',
+  'assets/icons/items/dry_leaves.png',
+  'assets/icons/items/oak_sap.png',
+  'assets/icons/items/small_birds_nest.png',
+  'assets/icons/items/woven_birds_nest.png',
+  'assets/images/entities/bog_cookfire.png',
+  'assets/images/entities/bog_campfire.png',
+  'assets/images/entities/bog_bonfire.png',
 
   // Scene art: zone headers and dungeon splashes. These are the last of the
   // backlog because they are the one kind the generator will not draw —
@@ -76,11 +89,11 @@ const knownMissingArt = <String>{
   'assets/images/dungeons/goblin_queen_lair.png',
   'assets/images/dungeons/grainery.png',
   'assets/images/dungeons/spider_den.png',
+  'assets/images/dungeons/drowned_fen.png',
   'assets/images/zones/darkwood_forest.png',
   'assets/images/zones/foothills.png',
   'assets/images/zones/mine.png',
   'assets/images/zones/south_haven.png',
-  'assets/images/zones/swamp.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
@@ -571,6 +584,10 @@ void main() {
       // the Wolf Den's old last boss, swapped out for the grotto's fungal
       // monster when the den was reworked
       EntityId.NAGA,
+
+      // the swamp's old scorpion, taken out for the Murkjaw and kept for a
+      // drier zone to come
+      EntityId.GIANT_SCORPION,
 
       // tier 4. The banshee was the darkwood's, and came out of it when its
       // roster was re-cut (the wraith has since come back); the rest have

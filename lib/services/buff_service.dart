@@ -57,8 +57,7 @@ class BuffService {
       ...?buffState.zoneBuffs[currentZoneId]?.values,
     ];
     for (final buff in activeBuffs) {
-      if (buff.expirationTime.isBefore(now)) continue;
-      total = Util.addMap(total, buff.skillBonus);
+      total = Util.addMap(total, buff.bonusAt(now));
     }
 
     return total;
@@ -162,10 +161,12 @@ class BuffService {
       ...buffState.globalBuffs.values,
       ...?buffState.zoneBuffs[zoneId]?.values,
     ];
+    // a fire's reagents run out on their own clocks, and each of them
+    // moves the stats as much as the fire going out does
     for (final buff in buffs) {
-      if (!buff.expirationTime.isAfter(after)) continue;
-      if (next == null || buff.expirationTime.isBefore(next)) {
-        next = buff.expirationTime;
+      for (final time in buff.changeTimes) {
+        if (!time.isAfter(after)) continue;
+        if (next == null || time.isBefore(next)) next = time;
       }
     }
     return next;

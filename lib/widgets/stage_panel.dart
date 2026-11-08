@@ -21,7 +21,14 @@ class StagePanel extends StatelessWidget {
     this.heading,
     this.isBoss = false,
     this.hit,
+    this.footer,
+    this.footerRightInset = 0,
   });
+
+  /// Pinned along the bottom edge from the left, e.g. the reagent buffs
+  /// burning on a fire. [footerRightInset] keeps it clear of [corner].
+  final Widget? footer;
+  final double footerRightInset;
 
   /// The last hit on the subject, floated up beside the sprite — clear of
   /// every bar, where the eye already is.
@@ -90,6 +97,13 @@ class StagePanel extends StatelessWidget {
             if (heading != null) Positioned(left: 14, top: 12, child: heading!),
             if (leading != null)
               Positioned(left: 10, top: 10, bottom: 10, child: leading!),
+            if (footer != null)
+              Positioned(
+                left: 10,
+                right: 12 + footerRightInset,
+                bottom: 10,
+                child: footer!,
+              ),
             if (corner != null)
               Positioned(right: 12, bottom: 12, child: corner!),
             if (hit != null)

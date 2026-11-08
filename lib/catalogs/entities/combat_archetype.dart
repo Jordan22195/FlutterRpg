@@ -123,6 +123,13 @@ const slime = CombatArchetype(
   combatType: CombatType.ROCK_CRAB,
   attackInterval: 2.5,
 );
+// Carrion Crow · swamp
+const carrionCrow = CombatArchetype(
+  iconAsset: 'assets/images/entities/carrion_crow.png',
+  fibLevel: 7,
+  combatType: CombatType.GLASS_CANNON,
+  attackInterval: 1.0,
+);
 
 // ── Tier 8 · level 34 (uncommon 55, rare 89, epic 144, legendary 233) ──
 // Goblin · roster tier 2 · forest
@@ -151,6 +158,20 @@ const fungalMonster = CombatArchetype(
   iconAsset: 'assets/images/entities/fungal_monster.png',
   fibLevel: 8,
   combatType: CombatType.SHELL,
+  attackInterval: 2.5,
+);
+// Ooze · swamp. The slime a rung further on: slower still, and harder.
+const ooze = CombatArchetype(
+  iconAsset: 'assets/images/entities/ooze.png',
+  fibLevel: 8,
+  combatType: CombatType.ROCK_CRAB,
+  attackInterval: 2.5,
+);
+// Murkjaw · swamp. The bog's rare ambusher, a slow and tanky crocodilian.
+const murkjaw = CombatArchetype(
+  iconAsset: 'assets/images/entities/murkjaw.png',
+  fibLevel: 8,
+  combatType: CombatType.LEATHER_TANK,
   attackInterval: 2.5,
 );
 // Kobold · roster tier 2 · mine

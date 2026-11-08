@@ -237,26 +237,16 @@ void main() {
     session.dispose();
   });
 
-  testWidgets('places and discoveries list under their own headings', (
+  testWidgets('places and discoveries share one grid, places first', (
     tester,
   ) async {
     final session = await pumpExplore(tester);
 
-    final places = tester.getTopLeft(find.text('PLACES')).dy;
-    final discovered = tester.getTopLeft(find.text('DISCOVERIES')).dy;
+    expect(find.text('PLACES'), findsNothing);
+    expect(find.text('DISCOVERIES'), findsNothing);
     // permanent places first, then what exploring turned up
     expect(
-      places,
-      lessThan(
-        tester.getTopLeft(find.byKey(const ValueKey(EntityId.ANVIL))).dy,
-      ),
-    );
-    expect(
       tester.getTopLeft(find.byKey(const ValueKey(EntityId.ANVIL))).dy,
-      lessThan(discovered),
-    );
-    expect(
-      discovered,
       lessThan(
         tester.getTopLeft(find.byKey(const ValueKey(EntityId.CHICKEN))).dy,
       ),
@@ -466,12 +456,11 @@ void main() {
                 .decoration!
             as BoxDecoration;
 
-    // a fight sits in the combat tint, a node in the zone's gathering tint
-    expect(
-      frameOf(EntityId.CHICKEN).color,
-      GameColors.standard.combatTint.fill,
-    );
-    expect(frameOf(EntityId.TREE).color, ZonePalette.meadow.gatherTintFill);
+    // a discovery's sprite sits straight on the tile: no fill, no border
+    for (final id in [EntityId.CHICKEN, EntityId.TREE]) {
+      expect(frameOf(id).color, Colors.transparent);
+      expect((frameOf(id).border! as Border).top.color, Colors.transparent);
+    }
 
     // the same tile and columns as the places above them
     final width = (1000 - 2 * 16 - 2 * 10) / 3;
@@ -630,7 +619,7 @@ void main() {
     session.dispose();
   });
 
-  testWidgets('the sections sit where the layout puts them, with no chips', (
+  testWidgets('the grid sits straight under the tabs, with no chips', (
     tester,
   ) async {
     final session = await pumpExplore(tester);
@@ -638,15 +627,13 @@ void main() {
     final tabs = tester.getRect(
       find.byWidgetPredicate((w) => w is SegmentedTabs).first,
     );
-    final places = tester.getRect(find.text('PLACES'));
     final firstTile = tester.getRect(
       find.byKey(const ValueKey(EntityId.TRANQUIL_POND)),
     );
     final lastTile = tester.getRect(
       find.byKey(const ValueKey(EntityId.GRAINERY_ENTRANCE)),
     );
-    final discoveries = tester.getRect(find.text('DISCOVERIES'));
-    // the first tile in the grid, whichever discovery it is
+    // the first discovery follows the last place, 10 below it or beside it
     final firstCard = ZoneId.TUTORIAL_FARM.definition.discoverableEntities
         .map((e) => tester.getRect(find.byKey(ValueKey(e.id))))
         .reduce(
@@ -654,14 +641,12 @@ void main() {
               a.top < b.top || (a.top == b.top && a.left < b.left) ? a : b,
         );
 
-    expect(places.top - tabs.bottom, 16);
-    expect(firstTile.top - places.bottom, 8);
-    expect(discoveries.top - lastTile.bottom, 24);
-    expect(firstCard.top - discoveries.bottom, 8);
-    // 20 from the screen edge
-    expect(places.left, 20);
-
-    // the discoveries start straight under their label: no filter chips
+    expect(firstTile.top - tabs.bottom, greaterThan(0));
+    expect(
+      firstCard.top > lastTile.top ||
+          (firstCard.top == lastTile.top && firstCard.left > lastTile.left),
+      isTrue,
+    );
     expect(find.text('All'), findsNothing);
     expect(find.text('Combat'), findsNothing);
 
@@ -939,27 +924,27 @@ void main() {
     session.dispose();
   });
 
-  testWidgets('an unfound place waits under Places, not Discoveries', (
+  testWidgets('an unfound place sits in the one grid, among the places', (
     tester,
   ) async {
     final session = await pumpExplore(tester, zoneId: ZoneId.SOUTHWOOD_FOREST);
 
-    // the goblin camp is a dungeon: unfound, it is a blurred tile among
-    // the places, after the ones already standing
+    // places and discoveries share a grid with no section labels; the
+    // goblin camp is a dungeon: unfound, it is a blurred tile after the
+    // places already standing
+    expect(find.text('PLACES'), findsNothing);
+    expect(find.text('DISCOVERIES'), findsNothing);
     final camp = find.byKey(
       ValueKey('undiscovered-${EntityId.GOBLIN_CAMP.definition.name}'),
     );
     expect(camp, findsOneWidget);
-    final places = tester.getTopLeft(find.text('PLACES')).dy;
-    final discoveries = tester.getTopLeft(find.text('DISCOVERIES')).dy;
-    final campY = tester.getTopLeft(camp).dy;
-    expect(campY, greaterThan(places));
-    expect(campY, lessThan(discoveries));
+    final firepit = find.byKey(const ValueKey(EntityId.FIREPIT));
+    final firepitTop = tester.getTopLeft(firepit);
+    final campTop = tester.getTopLeft(camp);
     expect(
-      campY,
-      greaterThanOrEqualTo(
-        tester.getTopLeft(find.byKey(const ValueKey(EntityId.FIREPIT))).dy,
-      ),
+      campTop.dy > firepitTop.dy ||
+          (campTop.dy == firepitTop.dy && campTop.dx > firepitTop.dx),
+      isTrue,
     );
 
     // once found it is an ordinary place tile, listed once
@@ -968,9 +953,7 @@ void main() {
     session.worldController.notifyListeners();
     await settle(tester);
     expect(camp, findsNothing);
-    final found = find.byKey(const ValueKey(EntityId.GOBLIN_CAMP));
-    expect(found, findsOneWidget);
-    expect(tester.getTopLeft(found).dy, lessThan(discoveries));
+    expect(find.byKey(const ValueKey(EntityId.GOBLIN_CAMP)), findsOneWidget);
 
     session.dispose();
   });

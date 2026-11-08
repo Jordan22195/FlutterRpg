@@ -40,6 +40,7 @@ library;
 
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/item_drop_type.dart';
+import 'package:rpg/services/weighted_drop_table_service.dart';
 
 /// Every gem, weighted so a roll lands on the low tiers most of the time.
 /// The ladder is the one the Gem Vein entity already uses inline, which makes
@@ -63,6 +64,7 @@ const List<ItemDropType> herbDropTable = [
   ItemDropType(id: ItemId.MARRENTILL, weight: 0.8),
   ItemDropType(id: ItemId.TARROMIN, weight: 0.65),
   ItemDropType(id: ItemId.HARRALANDER, weight: 0.5),
+  ItemDropType(id: ItemId.MIRECAP, weight: 0.44),
   ItemDropType(id: ItemId.RANARR_WEED, weight: 0.38),
   ItemDropType(id: ItemId.TOADFLAX, weight: 0.3),
   ItemDropType(id: ItemId.IRIT_LEAF, weight: 0.22),
@@ -186,6 +188,18 @@ const List<ItemDropType> mithrilWeaponsDropTable = [
   ItemDropType(id: ItemId.MITHRIL_GREATSWORD, weight: 1),
 ];
 
+/// Every mithril armor piece, evenly.
+const List<ItemDropType> mithrilArmorDropTable = [
+  ItemDropType(id: ItemId.MITHRIL_HELMET, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_PAULDRONS, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_CHESTPLATE, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_BELT, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_BRACERS, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_LEGS, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_BOOTS, weight: 1),
+  ItemDropType(id: ItemId.MITHRIL_GLOVES, weight: 1),
+];
+
 const List<ItemDropType> heavyLeatherDropTable = [
   ItemDropType(id: ItemId.HEAVY_LEATHER_BELT, weight: 1),
   ItemDropType(id: ItemId.HEAVY_LEATHER_BRACERS, weight: 1),
@@ -264,3 +278,88 @@ List<ItemDropType> getScaledDropTable(
   }
   return outTable;
 }
+
+// ── WOODCUTTING · FIRE REAGENTS AND BIRD'S NESTS ────────────────────
+
+/// What a plain tree sheds besides its logs: the first three fire
+/// reagents, one at a time. Reagents are a near-certain side drop - the
+/// tree tier sets how many come with each log, not whether they come.
+const List<ItemDropType> treeReagentDropTable = [
+  ItemDropType(id: ItemId.DRY_TWIGS, weight: 1),
+  ItemDropType(id: ItemId.TREE_BARK, weight: 1),
+  ItemDropType(id: ItemId.PINE_RESIN, weight: 1),
+];
+
+/// What an oak sheds: the other four, two at a time, so the two trees
+/// between them hold every stat a fire can be tended for.
+const List<ItemDropType> oakReagentDropTable = [
+  ItemDropType(id: ItemId.ACORN, lowCount: 2, highCount: 2, weight: 1),
+  ItemDropType(id: ItemId.OAK_GALL, lowCount: 2, highCount: 2, weight: 1),
+  ItemDropType(id: ItemId.DRY_LEAVES, lowCount: 2, highCount: 2, weight: 1),
+  ItemDropType(id: ItemId.OAK_SAP, lowCount: 2, highCount: 2, weight: 1),
+];
+
+/// All seven, evenly, one at a time: what a bird's nest is lined with.
+const List<ItemDropType> fireReagentDropTable = [
+  ItemDropType(id: ItemId.DRY_TWIGS, weight: 1),
+  ItemDropType(id: ItemId.TREE_BARK, weight: 1),
+  ItemDropType(id: ItemId.PINE_RESIN, weight: 1),
+  ItemDropType(id: ItemId.ACORN, weight: 1),
+  ItemDropType(id: ItemId.OAK_GALL, weight: 1),
+  ItemDropType(id: ItemId.DRY_LEAVES, weight: 1),
+  ItemDropType(id: ItemId.OAK_SAP, weight: 1),
+];
+
+/// What the willow and its bog side-grade shed: all seven, three at a time.
+const List<ItemDropType> willowReagentDropTable = [
+  ItemDropType(id: ItemId.DRY_TWIGS, lowCount: 3, highCount: 3, weight: 1),
+  ItemDropType(id: ItemId.TREE_BARK, lowCount: 3, highCount: 3, weight: 1),
+  ItemDropType(id: ItemId.PINE_RESIN, lowCount: 3, highCount: 3, weight: 1),
+  ItemDropType(id: ItemId.ACORN, lowCount: 3, highCount: 3, weight: 1),
+  ItemDropType(id: ItemId.OAK_GALL, lowCount: 3, highCount: 3, weight: 1),
+  ItemDropType(id: ItemId.DRY_LEAVES, lowCount: 3, highCount: 3, weight: 1),
+  ItemDropType(id: ItemId.OAK_SAP, lowCount: 3, highCount: 3, weight: 1),
+];
+
+/// How often a log comes with its reagents: nearly always.
+const double treeReagentChance = 0.9;
+
+/// The basic Woodcutter's set, evenly: a small nest's long shot.
+const List<ItemDropType> basicWoodcuttersGearDropTable = [
+  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_HAT),
+  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_PANTS),
+  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_GLOVES),
+  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_BOOTS),
+  ItemDropType(id: ItemId.BASIC_WOODCUTTERS_CLOAK),
+];
+
+/// The novice Woodcutter's set, evenly: a woven nest's long shot.
+const List<ItemDropType> noviceWoodcuttersGearDropTable = [
+  ItemDropType(id: ItemId.NOVICE_WOODCUTTERS_HAT),
+  ItemDropType(id: ItemId.NOVICE_WOODCUTTERS_TUNIC),
+  ItemDropType(id: ItemId.NOVICE_WOODCUTTERS_PANTS),
+  ItemDropType(id: ItemId.NOVICE_WOODCUTTERS_GLOVES),
+  ItemDropType(id: ItemId.NOVICE_WOODCUTTERS_BOOTS),
+  ItemDropType(id: ItemId.NOVICE_WOODCUTTERS_CLOAK),
+];
+
+/// What opening one nest rolls: a lining of fire reagents (one roll per
+/// reagent, Fibonacci by nest tier), a long shot at a piece of the
+/// Woodcutter's set of the nest's tier, and a longer one at a gem. Nests are
+/// the only source of Woodcutter's gear.
+const Map<ItemId, List<DropRoll>> birdsNestRolls = {
+  ItemId.SMALL_BIRDS_NEST: [
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(chance: 0.13, entries: basicWoodcuttersGearDropTable),
+    DropRoll(chance: 0.01, entries: gemDropTable),
+  ],
+  ItemId.WOVEN_BIRDS_NEST: [
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(chance: 0.08, entries: noviceWoodcuttersGearDropTable),
+    DropRoll(chance: 0.02, entries: gemDropTable),
+  ],
+};

@@ -8,6 +8,9 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
+import 'package:rpg/controllers/fire_controller.dart';
+import 'package:rpg/widgets/fire_reagents.dart';
+import 'package:rpg/widgets/buff_toggle_card.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
@@ -100,6 +103,9 @@ void main() {
           ),
           ChangeNotifierProvider<BuffController>.value(
             value: session.buffController,
+          ),
+          ChangeNotifierProvider<FireController>.value(
+            value: session.fireController,
           ),
           ChangeNotifierProvider<ActionTimingController>.value(
             value: session.actionTimingController,
@@ -666,9 +672,16 @@ void main() {
       matching: find.byType(RecipePickerCard),
     );
     expect(rows, findsWidgets);
+    // a cookfire lists its stats; a campfire or bonfire its power per
+    // reagent, since its reagents pick the stats
     for (var i = 0; i < rows.evaluate().length; i++) {
       expect(
-        find.descendant(of: rows.at(i), matching: find.byType(BuffBadge)),
+        find.descendant(
+          of: rows.at(i),
+          matching: find.byWidgetPredicate(
+            (w) => w is BuffBadge || w is FirePowerBadge,
+          ),
+        ),
         findsWidgets,
         reason: 'picker row $i',
       );
@@ -680,6 +693,67 @@ void main() {
   testWidgets('a cold pit has nothing to wear', (tester) async {
     final session = await pumpFirepit(tester);
     expect(find.byKey(const ValueKey('fire-hero-stats')), findsNothing);
+    session.dispose();
+  });
+
+  testWidgets('a tended campfire wears its reagents along the stage', (
+    tester,
+  ) async {
+    final session = await pumpFirepit(tester, lightRecipeId: 'basic_campfire');
+    final save = session.saveGameData;
+    save.inventoryData.itemMap[ItemId.ACORN] = 3;
+
+    // nothing burning on it yet: only the + chip
+    expect(find.byKey(const ValueKey('fire-reagent-add')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('fire-reagent-chip-STRENGTH')),
+      findsNothing,
+    );
+
+    // + opens the reagent sheet; tapping the acorn throws it on
+    await tester.tap(find.byKey(const ValueKey('fire-reagent-add')));
+    await settle(tester);
+    await tester.tap(find.byKey(const ValueKey('tend-ACORN')));
+    await settle(tester);
+    Navigator.of(tester.element(find.byType(FirepitScreen))).pop();
+    await settle(tester);
+
+    expect(save.inventoryData.itemMap[ItemId.ACORN], 2);
+    final chip = find.byKey(const ValueKey('fire-reagent-chip-STRENGTH'));
+    expect(chip, findsOneWidget);
+
+    // a chip tapped throws another of the same on
+    await tester.tap(chip);
+    await settle(tester);
+    expect(save.inventoryData.itemMap[ItemId.ACORN], 1);
+
+    // not cooking, so the Reagents tab stands where Cooked would, open
+    expect(find.textContaining('Cooked'), findsNothing);
+    expect(find.byKey(const ValueKey('keep-fire-fed')), findsOneWidget);
+    // and it lays reagents out on the potion panel's cards
+    expect(
+      find.descendant(
+        of: find.byType(FireReagentsPanel),
+        matching: find.byType(BuffToggleCard),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey('auto-tend-ACORN')));
+    await settle(tester);
+    expect(save.playerData.autoTendReagents, contains(ItemId.ACORN));
+    session.dispose();
+  });
+
+  testWidgets('a picked cookfire shows what it cooked, not reagents', (
+    tester,
+  ) async {
+    final session = await pumpFirepit(
+      tester,
+      lightRecipeId: 'cookfire',
+      selections: {SkillId.FIREMAKING: 'cookfire'},
+    );
+    expect(find.textContaining('Cooked'), findsOneWidget);
+    expect(find.textContaining('Reagents'), findsNothing);
     session.dispose();
   });
 }

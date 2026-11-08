@@ -36,6 +36,7 @@ class PlaceTile extends StatelessWidget {
     this.semanticsLabel,
     this.subtitleRow,
     this.spriteScale = 1,
+    this.transparentFrame = false,
     this.active = false,
     this.outlineColor,
     this.fillColor,
@@ -79,6 +80,10 @@ class PlaceTile extends StatelessWidget {
   /// art carries a margin a place's does not, so discoveries sit closer.
   /// Clipped to the frame either way.
   final double spriteScale;
+
+  /// Leaves the sprite frame unfilled, so the art sits on the tile itself;
+  /// the border goes too.
+  final bool transparentFrame;
 
   /// Laid over the sprite frame's top-right corner, e.g. a fire's burn time.
   final Widget? corner;
@@ -134,10 +139,12 @@ class PlaceTile extends StatelessWidget {
       width: _frameWidth,
       height: _frameHeight,
       decoration: BoxDecoration(
-        color: tint.fill,
+        color: transparentFrame ? Colors.transparent : tint.fill,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: rarity ?? tint.border,
+          color: transparentFrame
+              ? Colors.transparent
+              : (rarity ?? tint.border),
           width: rarity != null ? 2 : 1,
         ),
       ),

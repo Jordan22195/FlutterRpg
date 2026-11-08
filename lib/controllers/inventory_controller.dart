@@ -10,6 +10,8 @@ import 'package:rpg/data/player_data.dart';
 import 'package:rpg/data/scouting_result.dart';
 import 'package:rpg/data/world_data.dart';
 import 'package:rpg/systems/exploration_system.dart';
+import 'package:rpg/data/chest_loot.dart';
+import 'package:rpg/systems/birds_nest_system.dart';
 import 'package:rpg/systems/potion_system.dart';
 
 class InventoryController extends ChangeNotifier {
@@ -21,6 +23,7 @@ class InventoryController extends ChangeNotifier {
   final ExplorationSystem _explorationSystem;
   final PlayerData _playerState;
   final WorldData _worldState;
+  final BirdsNestSystem? _birdsNestSystem;
 
   /// Called after a scouting map has added entities to a zone, so whatever
   /// shows the world follows. Wired in GameSessionFactory, since the world
@@ -35,7 +38,9 @@ class InventoryController extends ChangeNotifier {
     required ExplorationSystem explorationSystem,
     required PlayerData playerState,
     required WorldData worldState,
-  }) : _inventoryData = inventoryData,
+    BirdsNestSystem? birdsNestSystem,
+  }) : _birdsNestSystem = birdsNestSystem,
+       _inventoryData = inventoryData,
        _buffState = buffState,
        _inventoryService = inventoryService,
        _potionSystem = potionSystem,
@@ -106,6 +111,18 @@ class InventoryController extends ChangeNotifier {
   /// Whether [id] is something the player can use from the bag: a scouting
   /// map, in principle, whether or not they are holding one.
   bool isUsable(ItemId id) => ScoutingMaps.isMap(id);
+
+  /// Whether [id] is a bird's nest, opened from the bag like a chest.
+  bool isOpenable(ItemId id) =>
+      _birdsNestSystem != null && BirdsNestSystem.isNest(id);
+
+  /// Opens up to [max] of [id] (all held when null) and returns the haul.
+  List<ChestLoot> openNests(ItemId id, {int? max}) {
+    final loot =
+        _birdsNestSystem?.open(id, _inventoryData, max: max) ?? const [];
+    if (loot.isNotEmpty) notifyListeners();
+    return loot;
+  }
 
   /// Uses one [id] from the bag. For a scouting map that discovers its
   /// zone's entities and returns what turned up; null when [id] is not a map,
