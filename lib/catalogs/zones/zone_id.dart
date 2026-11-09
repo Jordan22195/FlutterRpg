@@ -448,48 +448,73 @@ enum ZoneId {
       ],
     ),
   ),
-  // The rising ground beyond the swamp, and the only place mithril is
-  // mined — the ore and the whole mithril gear tier had no source until
-  // this zone.
+  // Out of the forest and onto the plains: rolling grass, long sight lines
+  // and weather you can watch coming for an hour. A mid-level zone — its
+  // monsters stand at 55 and 89 and its dungeon's bosses at 144 — with no
+  // trees to cut. The only place mithril is mined and the first adamantite,
+  // and the source of the greater potions: bluestem and the prairie's
+  // reagents. The enum keeps its old FOOTHILLS name; it is the save format.
   FOOTHILLS(
     ZoneDefinition(
-      name: "Ashen Foothills",
-      iconAsset: 'assets/images/zones/foothills.png',
+      name: "Stormgrass Prairie",
+      iconAsset: 'assets/images/zones/stormgrass_prairie.png',
       explorationLevel: 35,
       xpPerExplore: 15,
 
-      permanentEntities: [EntityId.FIREPIT],
+      permanentEntities: [EntityId.FIREPIT, EntityId.TEMPEST_REACH_ENTRANCE],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.HARPY,
+          id: EntityId.RATTLESNAKE,
           weight: 1.5,
           unlockLevel: 35,
         ),
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.IMP,
-          weight: 1,
-          unlockLevel: 36,
-        ),
-        WeightedDropTableEntry<EntityId>(
           id: EntityId.ORC,
-          weight: 1,
-          unlockLevel: 37,
+          weight: 1.5,
+          unlockLevel: 35,
         ),
-        // tier 4 mining, the rung above the darkwood's coal
+        // the utility potions' grass
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SWEETGRASS,
+          weight: .6,
+          count: 3,
+          unlockLevel: 35,
+        ),
+        // tier 4 mining, the rung above the darkwood's coal. A vein opens
+        // at the level its ore smelts at, not inside the zone's range
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MITHRIL_VEIN,
           weight: 1,
           unlockLevel: 60,
         ),
+        // the greater potions' herb, the next rung past the swamp's mirecap
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.TROLL,
+          id: EntityId.BLUESTEM,
+          weight: .6,
+          count: 3,
+          unlockLevel: 36,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SABERTOOTH,
+          weight: 1,
+          unlockLevel: 37,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.CENTAUR,
+          weight: 1,
+          unlockLevel: 37,
+        ),
+        // the first magic thing in the game, well past the zone's door
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.DUST_DEVIL,
           weight: .6,
           unlockLevel: 38,
         ),
+        // tier 5 mining, and rare; opens where adamant smelts
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.HILL_GIANT,
+          id: EntityId.ADAMANTITE_VEIN,
           weight: .3,
-          unlockLevel: 39,
+          unlockLevel: 70,
         ),
       ],
     ),

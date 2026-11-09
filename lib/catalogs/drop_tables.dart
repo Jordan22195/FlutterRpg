@@ -178,6 +178,14 @@ const List<ItemDropType> steelMajorArmorDropTable = [
   ItemDropType(id: ItemId.STEEL_LEGS, weight: 1),
 ];
 
+/// What an orc raider carries off: the steel tools and the two heavy body
+/// pieces. Steel is a tier under the prairie, so this is kit worth selling
+/// or smelting rather than wearing.
+const List<ItemDropType> orcSteelDropTable = [
+  ...steelToolsDropTable,
+  ...steelMajorArmorDropTable,
+];
+
 const List<ItemDropType> mithrilWeaponsDropTable = [
   ItemDropType(id: ItemId.MITHRIL_AXE, weight: 1),
   ItemDropType(id: ItemId.MITHRIL_PICKAXE, weight: 1),

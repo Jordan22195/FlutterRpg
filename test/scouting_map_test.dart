@@ -43,6 +43,7 @@ void main() {
       EntityId.COAL_VEIN: ItemId.COAL,
       EntityId.GOLD_VEIN: ItemId.GOLD_ORE,
       EntityId.MITHRIL_VEIN: ItemId.MITHRIL_ORE,
+      EntityId.ADAMANTITE_VEIN: ItemId.ADAMANTITE_ORE,
     };
     for (final zone in ZoneId.values) {
       if (zone.name.startsWith('DEV')) continue;

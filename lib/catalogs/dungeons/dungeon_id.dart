@@ -386,6 +386,111 @@ enum DungeonId {
       ],
     ),
   ),
+  // Stormgrass Prairie's dungeon: its mobs run L55-89 and all three bosses
+  // stand at 144, twenty-five fights a card. It runs from the orcs' camp
+  // out through the predators' grass and into the storm itself, and its
+  // gear sits a rung past the Drowned Fen's.
+  TEMPEST_REACH(
+    DungeonDefinition(
+      name: "Tempest Reach",
+      iconAsset: "assets/images/dungeons/tempest_reach.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.MITHRIL_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.MITHRIL_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.SWEETGRASS, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.BLUESTEM, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.ORC_TUSK, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.SNAKESKIN, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.VENOM_GLAND, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.CENTAUR_HOOF, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.WIND_MOTE, lowCount: 20, highCount: 80),
+            ItemDropType(
+              id: ItemId.BOWSTRING_SINEW,
+              lowCount: 20,
+              highCount: 80,
+            ),
+            ItemDropType(
+              id: ItemId.SABERTOOTH_PELT,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        // the zone's rare reagent, kept to a handful
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.SABERTOOTH_FANG,
+              lowCount: 5,
+              highCount: 13,
+            ),
+          ],
+        ),
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.WARLORDS_CLEAVER, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.WARLORDS_WARHELM, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.ALPHAS_FANG, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.ALPHAS_MANTLE, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.03,
+          entries: [
+            ItemDropType(id: ItemId.STORMCALLERS_SCEPTER, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.GALEWRAP_GAUNTLETS, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "Raider's Camp",
+          entities: [
+            DungeonEntityRef(EntityId.ORC, count: 16),
+            DungeonEntityRef(EntityId.RATTLESNAKE, count: 8),
+            DungeonEntityRef(EntityId.ORC_WARLORD, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Matted Grass",
+          entities: [
+            DungeonEntityRef(EntityId.RATTLESNAKE, count: 10),
+            DungeonEntityRef(EntityId.SABERTOOTH, count: 14),
+            DungeonEntityRef(EntityId.SABERTOOTH_ALPHA, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Storm Front",
+          entities: [
+            DungeonEntityRef(EntityId.CENTAUR, count: 10),
+            // the uncommon orc: the warband at 89, out of the prairie's
+            // discoveries since it shares the common's art
+            DungeonEntityRef(EntityId.ORC_UNCOMMON, count: 7),
+            DungeonEntityRef(EntityId.DUST_DEVIL, count: 7),
+            DungeonEntityRef(EntityId.TEMPEST, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
   // ── TRANSIENT · a discovered entrance, consumed on completion ───
   GOBLIN_CAMP(
     DungeonDefinition(

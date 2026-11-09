@@ -368,6 +368,27 @@ enum ItemId {
       xpValue: 30,
     ),
   ),
+  // Stormgrass Prairie's two grasses. Sweetgrass brews the utility potions
+  // that speed gathering and crafting; bluestem is the base of the greater
+  // potions, the rung past the swamp's mirecap
+  SWEETGRASS(
+    ItemDefinition(
+      name: "Sweetgrass",
+      value: 10,
+      description: "A braid of pale grass that smells of hay and honey.",
+      iconAsset: "assets/icons/items/sweetgrass.png",
+      xpValue: 30,
+    ),
+  ),
+  BLUESTEM(
+    ItemDefinition(
+      name: "Bluestem",
+      value: 14,
+      description: "Tall prairie grass, its stems blue-green at the joint.",
+      iconAsset: "assets/icons/items/bluestem.png",
+      xpValue: 35,
+    ),
+  ),
   IRIT_LEAF(
     ItemDefinition(
       name: "Irit Leaf",
@@ -588,6 +609,73 @@ enum ItemId {
       value: 40,
       description: "A yellowed, hooked tooth from something that waits.",
       iconAsset: "assets/icons/items/murkjaw_fang.png",
+    ),
+  ),
+  // Stormgrass Prairie's reagents, one off each of its monsters: the
+  // greater potions' second halves
+  ORC_TUSK(
+    ItemDefinition(
+      name: "Orc Tusk",
+      value: 20,
+      description: "A chipped yellow tusk, filed to a point.",
+      iconAsset: "assets/icons/items/orc_tusk.png",
+    ),
+  ),
+  SNAKESKIN(
+    ItemDefinition(
+      name: "Snakeskin",
+      value: 18,
+      description: "A shed rattlesnake skin, dry and diamond-patterned.",
+      iconAsset: "assets/icons/items/snakeskin.png",
+    ),
+  ),
+  VENOM_GLAND(
+    ItemDefinition(
+      name: "Venom Gland",
+      value: 22,
+      description: "A rattlesnake's venom sac. Handle it by the edges.",
+      iconAsset: "assets/icons/items/venom_gland.png",
+    ),
+  ),
+  CENTAUR_HOOF(
+    ItemDefinition(
+      name: "Centaur Hoof",
+      value: 22,
+      description: "A worn hoof, still shod in iron.",
+      iconAsset: "assets/icons/items/centaur_hoof.png",
+    ),
+  ),
+  WIND_MOTE(
+    ItemDefinition(
+      name: "Wind Mote",
+      value: 30,
+      description: "A speck of grit that will not stop spinning.",
+      iconAsset: "assets/icons/items/wind_mote.png",
+    ),
+  ),
+  SABERTOOTH_FANG(
+    ItemDefinition(
+      name: "Sabertooth Fang",
+      value: 40,
+      description: "A curved fang as long as a dagger.",
+      iconAsset: "assets/icons/items/sabertooth_fang.png",
+    ),
+  ),
+  // held for leatherworking and fletching, which have no recipes yet
+  SABERTOOTH_PELT(
+    ItemDefinition(
+      name: "Sabertooth Pelt",
+      value: 30,
+      description: "A tawny pelt the color of dry grass.",
+      iconAsset: "assets/icons/items/sabertooth_pelt.png",
+    ),
+  ),
+  BOWSTRING_SINEW(
+    ItemDefinition(
+      name: "Bowstring Sinew",
+      value: 15,
+      description: "Twisted sinew off a centaur's bow, still taut.",
+      iconAsset: "assets/icons/items/bowstring_sinew.png",
     ),
   ),
 
@@ -910,6 +998,114 @@ enum ItemId {
       skillBonus: {SkillId.ATTACK: 13},
       duration: Duration(minutes: 3),
       iconAsset: "assets/icons/items/super_attack_potion.png",
+    ),
+  ),
+
+  // The utility tier: one sweetgrass and a reagent for +13 to a gathering
+  // or crafting skill, the super tier's strength on the skills the combat
+  // potions leave alone
+  PROSPECTORS_POTION(
+    BuffItemDefinition(
+      name: "Prospector's Potion",
+      value: 150,
+      description: "Sweetgrass and mithril ore. Finds the seam first time.",
+      skillBonus: {SkillId.MINING: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/prospectors_potion.png",
+    ),
+  ),
+  FORAGERS_POTION(
+    BuffItemDefinition(
+      name: "Forager's Potion",
+      value: 150,
+      description: "Sweetgrass and a wind mote. Spots every leaf.",
+      skillBonus: {SkillId.HERBALISM: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/foragers_potion.png",
+    ),
+  ),
+  SMITHS_POTION(
+    BuffItemDefinition(
+      name: "Smith's Potion",
+      value: 160,
+      description: "Sweetgrass and a mithril bar. A steady hammer hand.",
+      skillBonus: {SkillId.BLACKSMITHING: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/smiths_potion.png",
+    ),
+  ),
+  ALCHEMISTS_POTION(
+    BuffItemDefinition(
+      name: "Alchemist's Potion",
+      value: 160,
+      description: "Sweetgrass and a venom gland. Measures by eye.",
+      skillBonus: {SkillId.ALCHEMY: 13},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/alchemists_potion.png",
+    ),
+  ),
+
+  // The greater tier: one bluestem and a prairie reagent for +21, the
+  // Fibonacci rung past the super tier's +13. There is no greater fishing
+  // potion: the prairie has no water to give its reagent
+  GREATER_STRENGTH_POTION(
+    BuffItemDefinition(
+      name: "Greater Strength Potion",
+      value: 300,
+      description: "Bluestem and an orc tusk. Hits like a charging orc.",
+      skillBonus: {SkillId.STRENGTH: 21},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/greater_strength_potion.png",
+    ),
+  ),
+  GREATER_ATTACK_POTION(
+    BuffItemDefinition(
+      name: "Greater Attack Potion",
+      value: 320,
+      description: "Bluestem and a sabertooth fang. Strikes from the grass.",
+      skillBonus: {SkillId.ATTACK: 21},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/greater_attack_potion.png",
+    ),
+  ),
+  GREATER_DEFENCE_POTION(
+    BuffItemDefinition(
+      name: "Greater Defence Potion",
+      value: 260,
+      description: "Bluestem and snakeskin. Blows slide off like scales.",
+      skillBonus: {SkillId.DEFENCE: 21},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/greater_defence_potion.png",
+    ),
+  ),
+  GREATER_RECOVERY_POTION(
+    BuffItemDefinition(
+      name: "Greater Recovery Potion",
+      value: 240,
+      description: "Bluestem and a venom gland. What bites also heals.",
+      skillBonus: {SkillId.RECOVERY: 21},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/greater_recovery_potion.png",
+    ),
+  ),
+  GREATER_STAMINA_POTION(
+    BuffItemDefinition(
+      name: "Greater Stamina Potion",
+      value: 250,
+      description: "Bluestem and a centaur hoof. Runs all day.",
+      skillBonus: {SkillId.STAMINA: 21},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/greater_stamina_potion.png",
+    ),
+  ),
+  GREATER_SPEED_POTION(
+    BuffItemDefinition(
+      name: "Greater Speed Potion",
+      value: 240,
+      description: "Bluestem and a wind mote. Gone before the dust settles.",
+      skillBonus: {SkillId.SPEED: 21},
+      duration: Duration(minutes: 3),
+      iconAsset: "assets/icons/items/greater_speed_potion.png",
     ),
   ),
 
@@ -1263,6 +1459,16 @@ enum ItemId {
       value: 200,
       description: "Disenchanted from legendary equipment.",
       iconAsset: "assets/icons/items/soul_shard.png",
+    ),
+  ),
+  // Tempest's alone: never disenchanted, and it stands in for the two
+  // prisms of a grand enchant
+  STORM_SHARD(
+    ItemDefinition(
+      name: "Storm Shard",
+      value: 150,
+      description: "A sliver of lightning, caught and gone glassy.",
+      iconAsset: "assets/icons/items/storm_shard.png",
     ),
   ),
 
@@ -6976,6 +7182,74 @@ enum ItemId {
       statWeights: {SkillId.STRENGTH: 8, SkillId.DEFENCE: 4},
       description: "The Matriarch's scaled shoulders, still heavy with bog.",
       iconAsset: "assets/icons/items/murkjaw_pauldrons.png",
+    ),
+  ),
+  // Tempest Reach: a rung past the Drowned Fen. The first two bosses each
+  // drop a fib 5 armour trim and a weapon at rune damage; Tempest drops a
+  // fib 6 major and a weapon at dragon damage. A weapon's fibLevel is its
+  // material rung plus its shape's offset, so the sword and scepter sit one
+  // higher than the dagger to land on the same rung of damage.
+  WARLORDS_CLEAVER(
+    WeaponItemDefinition(
+      name: "Warlord's Cleaver",
+      value: 150,
+      weaponType: WeaponTypeId.SWORD,
+      fibLevel: 6,
+      description: "A notched slab of steel that has ended a lot of raids.",
+      iconAsset: "assets/icons/items/warlords_cleaver.png",
+    ),
+  ),
+  WARLORDS_WARHELM(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Warlord's Warhelm",
+      value: 130,
+      fibLevel: 5,
+      statWeights: {SkillId.STRENGTH: 2, SkillId.DEFENCE: 1},
+      description: "A horned iron helm, dented from the inside out.",
+      iconAsset: "assets/icons/items/warlords_warhelm.png",
+    ),
+  ),
+  ALPHAS_FANG(
+    WeaponItemDefinition(
+      name: "Alpha's Fang",
+      value: 150,
+      weaponType: WeaponTypeId.DAGGER,
+      fibLevel: 5,
+      description: "The Alpha's own fang, bound to a bone grip.",
+      iconAsset: "assets/icons/items/alphas_fang.png",
+    ),
+  ),
+  ALPHAS_MANTLE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Alpha's Mantle",
+      value: 130,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 2, SkillId.DEFENCE: 1},
+      description: "A sabertooth pelt worn the way it wore it.",
+      iconAsset: "assets/icons/items/alphas_mantle.png",
+    ),
+  ),
+  STORMCALLERS_SCEPTER(
+    WeaponItemDefinition(
+      name: "Stormcaller's Scepter",
+      value: 200,
+      weaponType: WeaponTypeId.SCEPTER,
+      fibLevel: 7,
+      description: "A rod of fused sand that hums before a strike.",
+      iconAsset: "assets/icons/items/stormcallers_scepter.png",
+    ),
+  ),
+  GALEWRAP_GAUNTLETS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Galewrap Gauntlets",
+      value: 180,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 8, SkillId.DEFENCE: 4},
+      description: "Strips of storm-cloth that never quite stop moving.",
+      iconAsset: "assets/icons/items/galewrap_gauntlets.png",
     ),
   ),
 

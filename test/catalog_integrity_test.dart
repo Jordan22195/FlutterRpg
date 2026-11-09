@@ -42,42 +42,9 @@ const knownMissingArt = <String>{
 
   // Blackmire Swamp's content pass: its new monsters, gathering spots,
   // reagents, super potions and the Drowned Fen's gear, before their art
-  'assets/images/entities/bog_tree.png',
-  'assets/images/entities/drowned_fen.png',
-  'assets/icons/items/bog_eel.png',
-  'assets/icons/items/cooked_bog_eel.png',
-  'assets/icons/items/bog_logs.png',
-  'assets/icons/items/mirecap.png',
-  'assets/icons/items/leech.png',
-  'assets/icons/items/crow_quill.png',
-  'assets/icons/items/marsh_frog.png',
-  'assets/icons/items/murkjaw_fang.png',
-  'assets/icons/items/murkjaw_hide.png',
-  'assets/icons/items/super_recovery_potion.png',
-  'assets/icons/items/super_fishing_potion.png',
-  'assets/icons/items/super_stamina_potion.png',
-  'assets/icons/items/super_defence_potion.png',
-  'assets/icons/items/super_speed_potion.png',
-  'assets/icons/items/super_strength_potion.png',
-  'assets/icons/items/super_attack_potion.png',
-  'assets/icons/items/crowquill_bracers.png',
-  'assets/icons/items/ooze_slick_belt.png',
-  'assets/icons/items/murkjaw_pauldrons.png',
 
   // reagent fires: the woodcutting reagents, the bird's nests and the bog
   // fires, before their art
-  'assets/icons/items/dry_twigs.png',
-  'assets/icons/items/tree_bark.png',
-  'assets/icons/items/pine_resin.png',
-  'assets/icons/items/acorn.png',
-  'assets/icons/items/oak_gall.png',
-  'assets/icons/items/dry_leaves.png',
-  'assets/icons/items/oak_sap.png',
-  'assets/icons/items/small_birds_nest.png',
-  'assets/icons/items/woven_birds_nest.png',
-  'assets/images/entities/bog_cookfire.png',
-  'assets/images/entities/bog_campfire.png',
-  'assets/images/entities/bog_bonfire.png',
 
   // Scene art: zone headers and dungeon splashes. These are the last of the
   // backlog because they are the one kind the generator will not draw —
@@ -90,8 +57,8 @@ const knownMissingArt = <String>{
   'assets/images/dungeons/grainery.png',
   'assets/images/dungeons/spider_den.png',
   'assets/images/dungeons/drowned_fen.png',
-  'assets/images/zones/darkwood_forest.png',
-  'assets/images/zones/foothills.png',
+  'assets/images/dungeons/tempest_reach.png',
+  'assets/images/zones/stormgrass_prairie.png',
   'assets/images/zones/mine.png',
   'assets/images/zones/south_haven.png',
 };
@@ -588,6 +555,13 @@ void main() {
       // the swamp's old scorpion, taken out for the Murkjaw and kept for a
       // drier zone to come
       EntityId.GIANT_SCORPION,
+
+      // the old Ashen Foothills roster, cut when the zone became Stormgrass
+      // Prairie, and waiting on another zone to take them
+      EntityId.HARPY,
+      EntityId.IMP,
+      EntityId.TROLL,
+      EntityId.HILL_GIANT,
 
       // tier 4. The banshee was the darkwood's, and came out of it when its
       // roster was re-cut (the wraith has since come back); the rest have

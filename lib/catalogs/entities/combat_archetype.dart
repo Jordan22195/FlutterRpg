@@ -197,7 +197,7 @@ const zombie = CombatArchetype(
   combatType: CombatType.ROCK_CRAB,
   attackInterval: 2.5,
 );
-// Harpy · roster tier 3 · foothills
+// Harpy · roster tier 3 · unplaced (out of the old foothills)
 const harpy = CombatArchetype(
   iconAsset: 'assets/images/entities/harpy.png',
   fibLevel: 8,
@@ -211,6 +211,22 @@ const naga = CombatArchetype(
   combatType: CombatType.LEATHER_DPS,
   attackInterval: 1.5,
 );
+// Orc · roster tier 3 · stormgrass prairie. One archetype for every orc:
+// the common is the prairie's level 55 raider and the uncommon its level
+// 89 warband
+const orc = CombatArchetype(
+  iconAsset: 'assets/images/entities/orc.png',
+  fibLevel: 8,
+  combatType: CombatType.PLATE_DPS,
+  attackInterval: 2.0,
+);
+// Rattlesnake · roster tier 3 · stormgrass prairie
+const rattlesnake = CombatArchetype(
+  iconAsset: 'assets/images/entities/rattlesnake.png',
+  fibLevel: 8,
+  combatType: CombatType.GLASS_CANNON,
+  attackInterval: 1.0,
+);
 
 // ── Tier 10 · level 89 (uncommon 144, rare 233, epic 377, legendary 610) ──
 // Giant Scorpion · roster tier 3 · swamp
@@ -220,19 +236,35 @@ const giantScorpion = CombatArchetype(
   combatType: CombatType.PLATE_DPS,
   attackInterval: 1.5,
 );
-// Imp · roster tier 3 · foothills
+// Imp · roster tier 3 · unplaced (out of the old foothills)
 const imp = CombatArchetype(
   iconAsset: 'assets/images/entities/imp.png',
   fibLevel: 9,
   combatType: CombatType.GLASS_CANNON,
   attackInterval: 1.0,
 );
-// Orc · roster tier 3 · foothills
-const orc = CombatArchetype(
-  iconAsset: 'assets/images/entities/orc.png',
+// Sabertooth · roster tier 3 · stormgrass prairie
+const sabertooth = CombatArchetype(
+  iconAsset: 'assets/images/entities/sabertooth.png',
   fibLevel: 9,
-  combatType: CombatType.PLATE_DPS,
-  attackInterval: 2.0,
+  combatType: CombatType.LEATHER_DPS,
+  attackInterval: 1.5,
+);
+// Centaur · roster tier 3 · stormgrass prairie
+const centaur = CombatArchetype(
+  iconAsset: 'assets/images/entities/centaur.png',
+  fibLevel: 9,
+  combatType: CombatType.BALANCE,
+  attackInterval: 1.5,
+);
+// Dust Devil · roster tier 3 · stormgrass prairie. The first magic thing
+// the player meets, so it fights like the casters do: all attack, little
+// to stand behind
+const dustDevil = CombatArchetype(
+  iconAsset: 'assets/images/entities/dust_devil.png',
+  fibLevel: 9,
+  combatType: CombatType.CLOTH_DPS,
+  attackInterval: 1.5,
 );
 
 // ── Tier 11 · level 144 (uncommon 233, rare 377, epic 610, legendary 987) ──
@@ -250,7 +282,7 @@ const banshee = CombatArchetype(
   combatType: CombatType.GLASS_CANNON,
   attackInterval: 1.5,
 );
-// Troll · roster tier 4 · foothills
+// Troll · roster tier 4 · unplaced (out of the old foothills)
 const troll = CombatArchetype(
   iconAsset: 'assets/images/entities/troll.png',
   fibLevel: 10,
@@ -294,7 +326,7 @@ const mossGolem = CombatArchetype(
   combatType: CombatType.PLATE_TANK,
   attackInterval: 3.0,
 );
-// Hill Giant · roster tier 5 · foothills
+// Hill Giant · roster tier 5 · unplaced (out of the old foothills)
 const hillGiant = CombatArchetype(
   iconAsset: 'assets/images/entities/hill_giant.png',
   fibLevel: 11,
@@ -478,4 +510,20 @@ const goblinQueen = CombatArchetype(
   fibLevel: 7,
   combatType: CombatType.LEATHER_TANK,
   attackInterval: 2.5,
+);
+// Tempest Reach's first boss. Uncommon, so fib(9)+1 lands it on 144. It
+// fights unlike its orcs — a wall to wear down rather than a brawler.
+const orcWarlord = CombatArchetype(
+  iconAsset: 'assets/images/entities/orc_warlord.png',
+  fibLevel: 9,
+  combatType: CombatType.PLATE_TANK,
+  attackInterval: 2.5,
+);
+// Tempest Reach's last boss: a dust devil grown into a storm. Uncommon, so
+// fib(9)+1 lands it on 144, and it swings faster than any dust devil.
+const tempest = CombatArchetype(
+  iconAsset: 'assets/images/entities/tempest.png',
+  fibLevel: 9,
+  combatType: CombatType.CLOTH_DPS,
+  attackInterval: 1.0,
 );

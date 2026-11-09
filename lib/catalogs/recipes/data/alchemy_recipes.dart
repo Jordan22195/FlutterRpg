@@ -301,4 +301,148 @@ const List<CraftingRecipe> alchemyRecipes = [
       ),
     ],
   ),
+
+  // The utility tier: Stormgrass Prairie's sweetgrass and a reagent, for
+  // the gathering and crafting skills the combat potions leave alone
+  CraftingRecipe(
+    id: 'alch_prospectors_potion',
+    name: "Prospector's Potion",
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 30,
+    xp: 150,
+    inputs: {ItemId.SWEETGRASS: 1, ItemId.MITHRIL_ORE: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.PROSPECTORS_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_foragers_potion',
+    name: "Forager's Potion",
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 30,
+    xp: 150,
+    inputs: {ItemId.SWEETGRASS: 1, ItemId.WIND_MOTE: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.FORAGERS_POTION, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_smiths_potion',
+    name: "Smith's Potion",
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 32,
+    xp: 160,
+    inputs: {ItemId.SWEETGRASS: 1, ItemId.MITHRIL_BAR: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.SMITHS_POTION, count: 1, weight: 1),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_alchemists_potion',
+    name: "Alchemist's Potion",
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 32,
+    xp: 160,
+    inputs: {ItemId.SWEETGRASS: 1, ItemId.VENOM_GLAND: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.ALCHEMISTS_POTION, count: 1, weight: 1),
+    ],
+  ),
+
+  // The greater tier: bluestem and a prairie reagent for +21. There is no
+  // greater fishing potion — the prairie has no water to give its reagent
+  CraftingRecipe(
+    id: 'alch_greater_recovery_potion',
+    name: 'Greater Recovery Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 35,
+    xp: 200,
+    inputs: {ItemId.BLUESTEM: 1, ItemId.VENOM_GLAND: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.GREATER_RECOVERY_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_greater_speed_potion',
+    name: 'Greater Speed Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 35,
+    xp: 200,
+    inputs: {ItemId.BLUESTEM: 1, ItemId.WIND_MOTE: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.GREATER_SPEED_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_greater_stamina_potion',
+    name: 'Greater Stamina Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 35,
+    xp: 210,
+    inputs: {ItemId.BLUESTEM: 1, ItemId.CENTAUR_HOOF: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.GREATER_STAMINA_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_greater_defence_potion',
+    name: 'Greater Defence Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 35,
+    xp: 215,
+    inputs: {ItemId.BLUESTEM: 1, ItemId.SNAKESKIN: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.GREATER_DEFENCE_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_greater_strength_potion',
+    name: 'Greater Strength Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 40,
+    xp: 240,
+    inputs: {ItemId.BLUESTEM: 1, ItemId.ORC_TUSK: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.GREATER_STRENGTH_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
+  CraftingRecipe(
+    id: 'alch_greater_attack_potion',
+    name: 'Greater Attack Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 40,
+    xp: 250,
+    inputs: {ItemId.BLUESTEM: 1, ItemId.SABERTOOTH_FANG: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.GREATER_ATTACK_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+  ),
 ];

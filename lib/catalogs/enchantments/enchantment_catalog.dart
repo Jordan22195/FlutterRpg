@@ -47,6 +47,16 @@ class EnchantmentCatalog {
       inputs: {ItemId.ENCHANTING_RUNE: 8, ItemId.ENCHANTING_PRISM: 2},
       xp: 160,
     ),
+    // the grand enchant again, with Tempest's storm shard standing in for
+    // the two prisms
+    EnchantRecipe(
+      id: 'storm_enchant',
+      name: 'Storm Enchant',
+      levelRequirement: 20,
+      statTotal: 9,
+      inputs: {ItemId.ENCHANTING_RUNE: 8, ItemId.STORM_SHARD: 1},
+      xp: 160,
+    ),
     EnchantRecipe(
       id: 'soul_enchant',
       name: 'Soulbound Enchant',

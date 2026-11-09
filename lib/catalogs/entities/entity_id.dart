@@ -267,7 +267,7 @@ enum EntityId {
   // node anywhere that yields MITHRIL_ORE — the ore and the whole mithril
   // gear tier existed as items with no way to obtain either. Mining has no
   // per-node level gate, so its difficulty is the defence a swing is rolled
-  // against, plus the Foothills' own exploration gate.
+  // against, plus Stormgrass Prairie's own exploration gate.
   MITHRIL_VEIN(
     EncounterEntityDefinition(
       name: "Mithril Vein",
@@ -278,6 +278,21 @@ enum EntityId {
       hitpoints: 40,
       itemDrops: [ItemDropType(id: ItemId.MITHRIL_ORE, weight: 1)],
       bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.15)],
+    ),
+  ),
+  // Tier 5 mining, the prairie's rare find past its mithril, and the first
+  // node anywhere that yields ADAMANTITE_ORE
+  ADAMANTITE_VEIN(
+    EncounterEntityDefinition(
+      name: "Adamantite Vein",
+      iconAsset: "assets/images/entities/adamantite_vein.png",
+      rarity: Rarity.RARE,
+
+      entityType: SkillId.MINING,
+      defence: 55,
+      hitpoints: 50,
+      itemDrops: [ItemDropType(id: ItemId.ADAMANTITE_ORE, weight: 1)],
+      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.2)],
     ),
   ),
 
@@ -465,6 +480,26 @@ enum EntityId {
       requiredLevel: 30,
       defence: 30,
       itemDrops: [ItemDropType(id: ItemId.TOADFLAX, weight: 1)],
+    ),
+  ),
+  // the prairie's grasses: sweetgrass for the utility potions, bluestem
+  // for the greater ones
+  SWEETGRASS(
+    HerbEntityDefinition(
+      name: "Sweetgrass",
+      iconAsset: "assets/images/entities/sweetgrass.png",
+      requiredLevel: 30,
+      defence: 30,
+      itemDrops: [ItemDropType(id: ItemId.SWEETGRASS, weight: 1)],
+    ),
+  ),
+  BLUESTEM(
+    HerbEntityDefinition(
+      name: "Bluestem",
+      iconAsset: "assets/images/entities/bluestem.png",
+      requiredLevel: 35,
+      defence: 35,
+      itemDrops: [ItemDropType(id: ItemId.BLUESTEM, weight: 1)],
     ),
   ),
   IRIT(
@@ -1662,15 +1697,20 @@ enum EntityId {
   IMP_LEGENDARY(
     CombatEntityDefinition(imp, name: "Imp", rarity: Rarity.LEGENDARY),
   ),
-  // Orc · roster tier 3 · foothills
+  // ── STORMGRASS PRAIRIE ──
+  // Orc · stormgrass prairie. The common is the level 55 raider and the
+  // uncommon the level 89 warband, one archetype between them. The tusk is
+  // the greater strength potion's reagent, and a tenth of kills carry off a
+  // piece of steel kit
   ORC(
     CombatEntityDefinition(
       orc,
       name: "Orc",
       itemDrops: [
         ItemDropType(id: ItemId.ANIMAL_PELT, weight: 1),
-        ItemDropType(id: ItemId.CLAW, weight: 1),
+        ItemDropType(id: ItemId.ORC_TUSK, weight: 0.5),
       ],
+      bonusDrops: [DropRoll(entries: orcSteelDropTable, chance: 0.1)],
     ),
   ),
   ORC_UNCOMMON(
@@ -1680,6 +1720,195 @@ enum EntityId {
   ORC_EPIC(CombatEntityDefinition(orc, name: "Orc", rarity: Rarity.EPIC)),
   ORC_LEGENDARY(
     CombatEntityDefinition(orc, name: "Orc", rarity: Rarity.LEGENDARY),
+  ),
+  // Rattlesnake · stormgrass prairie, level 55. Its skin and its venom are
+  // the greater defence and recovery potions' reagents
+  RATTLESNAKE(
+    CombatEntityDefinition(
+      rattlesnake,
+      name: "Rattlesnake",
+      itemDrops: [
+        ItemDropType(id: ItemId.SNAKESKIN, weight: 1),
+        ItemDropType(id: ItemId.VENOM_GLAND, weight: 1),
+      ],
+    ),
+  ),
+  RATTLESNAKE_UNCOMMON(
+    CombatEntityDefinition(
+      rattlesnake,
+      name: "Rattlesnake",
+      rarity: Rarity.UNCOMMON,
+    ),
+  ),
+  RATTLESNAKE_RARE(
+    CombatEntityDefinition(
+      rattlesnake,
+      name: "Rattlesnake",
+      rarity: Rarity.RARE,
+    ),
+  ),
+  RATTLESNAKE_EPIC(
+    CombatEntityDefinition(
+      rattlesnake,
+      name: "Rattlesnake",
+      rarity: Rarity.EPIC,
+    ),
+  ),
+  RATTLESNAKE_LEGENDARY(
+    CombatEntityDefinition(
+      rattlesnake,
+      name: "Rattlesnake",
+      rarity: Rarity.LEGENDARY,
+    ),
+  ),
+  // Sabertooth · stormgrass prairie, level 89. The fang is the greater
+  // attack potion's reagent; the pelt waits on leatherworking
+  SABERTOOTH(
+    CombatEntityDefinition(
+      sabertooth,
+      name: "Sabertooth",
+      itemDrops: [
+        ItemDropType(id: ItemId.SABERTOOTH_PELT, weight: 1),
+        ItemDropType(id: ItemId.SABERTOOTH_FANG, weight: 0.5),
+      ],
+    ),
+  ),
+  SABERTOOTH_UNCOMMON(
+    CombatEntityDefinition(
+      sabertooth,
+      name: "Sabertooth",
+      rarity: Rarity.UNCOMMON,
+    ),
+  ),
+  // Tempest Reach's second boss: an uncommon sabertooth at level 144, its
+  // fangs in bulk, and its fang and mantle at every quality the way the
+  // Matriarch drops her pauldrons
+  SABERTOOTH_ALPHA(
+    CombatEntityDefinition(
+      sabertooth,
+      name: "Sabertooth Alpha",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.SABERTOOTH_FANG,
+          lowCount: 3,
+          highCount: 5,
+          weight: 0.5,
+        ),
+        ItemDropType(id: ItemId.ALPHAS_FANG, rarity: Rarity.COMMON, weight: .5),
+        ItemDropType(
+          id: ItemId.ALPHAS_FANG,
+          rarity: Rarity.UNCOMMON,
+          weight: .4,
+        ),
+        ItemDropType(id: ItemId.ALPHAS_FANG, rarity: Rarity.RARE, weight: .3),
+        ItemDropType(id: ItemId.ALPHAS_FANG, rarity: Rarity.EPIC, weight: .25),
+        ItemDropType(
+          id: ItemId.ALPHAS_MANTLE,
+          rarity: Rarity.COMMON,
+          weight: .5,
+        ),
+        ItemDropType(
+          id: ItemId.ALPHAS_MANTLE,
+          rarity: Rarity.UNCOMMON,
+          weight: .4,
+        ),
+        ItemDropType(id: ItemId.ALPHAS_MANTLE, rarity: Rarity.RARE, weight: .3),
+        ItemDropType(
+          id: ItemId.ALPHAS_MANTLE,
+          rarity: Rarity.EPIC,
+          weight: .25,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(
+              id: ItemId.SABERTOOTH_PELT,
+              lowCount: 5,
+              highCount: 13,
+            ),
+          ],
+        ),
+      ],
+    ),
+  ),
+  SABERTOOTH_RARE(
+    CombatEntityDefinition(sabertooth, name: "Sabertooth", rarity: Rarity.RARE),
+  ),
+  SABERTOOTH_EPIC(
+    CombatEntityDefinition(sabertooth, name: "Sabertooth", rarity: Rarity.EPIC),
+  ),
+  SABERTOOTH_LEGENDARY(
+    CombatEntityDefinition(
+      sabertooth,
+      name: "Sabertooth",
+      rarity: Rarity.LEGENDARY,
+    ),
+  ),
+  // Centaur · stormgrass prairie, level 89. The hoof is the greater stamina
+  // potion's reagent; the sinew waits on fletching
+  CENTAUR(
+    CombatEntityDefinition(
+      centaur,
+      name: "Centaur",
+      itemDrops: [
+        ItemDropType(id: ItemId.BOWSTRING_SINEW, weight: 1),
+        ItemDropType(id: ItemId.CENTAUR_HOOF, weight: 1),
+      ],
+    ),
+  ),
+  CENTAUR_UNCOMMON(
+    CombatEntityDefinition(centaur, name: "Centaur", rarity: Rarity.UNCOMMON),
+  ),
+  CENTAUR_RARE(
+    CombatEntityDefinition(centaur, name: "Centaur", rarity: Rarity.RARE),
+  ),
+  CENTAUR_EPIC(
+    CombatEntityDefinition(centaur, name: "Centaur", rarity: Rarity.EPIC),
+  ),
+  CENTAUR_LEGENDARY(
+    CombatEntityDefinition(centaur, name: "Centaur", rarity: Rarity.LEGENDARY),
+  ),
+  // Dust Devil · stormgrass prairie, level 89, and the first magic thing in
+  // the game. The wind mote is the greater speed potion's reagent; the
+  // essence feeds enchanting
+  DUST_DEVIL(
+    CombatEntityDefinition(
+      dustDevil,
+      name: "Dust Devil",
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.ENCHANTING_ESSENCE,
+          lowCount: 1,
+          highCount: 3,
+          weight: 1,
+        ),
+        ItemDropType(id: ItemId.WIND_MOTE, weight: 0.5),
+      ],
+    ),
+  ),
+  DUST_DEVIL_UNCOMMON(
+    CombatEntityDefinition(
+      dustDevil,
+      name: "Dust Devil",
+      rarity: Rarity.UNCOMMON,
+    ),
+  ),
+  DUST_DEVIL_RARE(
+    CombatEntityDefinition(dustDevil, name: "Dust Devil", rarity: Rarity.RARE),
+  ),
+  DUST_DEVIL_EPIC(
+    CombatEntityDefinition(dustDevil, name: "Dust Devil", rarity: Rarity.EPIC),
+  ),
+  DUST_DEVIL_LEGENDARY(
+    CombatEntityDefinition(
+      dustDevil,
+      name: "Dust Devil",
+      rarity: Rarity.LEGENDARY,
+    ),
   ),
 
   //
@@ -2518,6 +2747,135 @@ enum EntityId {
       ],
     ),
   ),
+  // Tempest Reach's first boss, at level 144: the orcs' tusks in bulk, its
+  // cleaver and warhelm at every quality, and a bundle of mithril bars on a
+  // tenth of kills
+  ORC_WARLORD(
+    CombatEntityDefinition(
+      orcWarlord,
+      name: "Orc Warlord",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.ORC_TUSK,
+          lowCount: 3,
+          highCount: 5,
+          weight: 0.5,
+        ),
+        ItemDropType(
+          id: ItemId.WARLORDS_CLEAVER,
+          rarity: Rarity.COMMON,
+          weight: .5,
+        ),
+        ItemDropType(
+          id: ItemId.WARLORDS_CLEAVER,
+          rarity: Rarity.UNCOMMON,
+          weight: .4,
+        ),
+        ItemDropType(
+          id: ItemId.WARLORDS_CLEAVER,
+          rarity: Rarity.RARE,
+          weight: .3,
+        ),
+        ItemDropType(
+          id: ItemId.WARLORDS_CLEAVER,
+          rarity: Rarity.EPIC,
+          weight: .25,
+        ),
+        ItemDropType(
+          id: ItemId.WARLORDS_WARHELM,
+          rarity: Rarity.COMMON,
+          weight: .5,
+        ),
+        ItemDropType(
+          id: ItemId.WARLORDS_WARHELM,
+          rarity: Rarity.UNCOMMON,
+          weight: .4,
+        ),
+        ItemDropType(
+          id: ItemId.WARLORDS_WARHELM,
+          rarity: Rarity.RARE,
+          weight: .3,
+        ),
+        ItemDropType(
+          id: ItemId.WARLORDS_WARHELM,
+          rarity: Rarity.EPIC,
+          weight: .25,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.MITHRIL_BAR, lowCount: 5, highCount: 13),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // Tempest Reach's last boss, at level 144: wind motes in bulk, its
+  // scepter and gauntlets at every quality, and on a tenth of kills the
+  // storm shard nothing else drops
+  TEMPEST(
+    CombatEntityDefinition(
+      tempest,
+      name: "Tempest",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.WIND_MOTE,
+          lowCount: 3,
+          highCount: 5,
+          weight: 0.5,
+        ),
+        ItemDropType(
+          id: ItemId.STORMCALLERS_SCEPTER,
+          rarity: Rarity.COMMON,
+          weight: .5,
+        ),
+        ItemDropType(
+          id: ItemId.STORMCALLERS_SCEPTER,
+          rarity: Rarity.UNCOMMON,
+          weight: .4,
+        ),
+        ItemDropType(
+          id: ItemId.STORMCALLERS_SCEPTER,
+          rarity: Rarity.RARE,
+          weight: .3,
+        ),
+        ItemDropType(
+          id: ItemId.STORMCALLERS_SCEPTER,
+          rarity: Rarity.EPIC,
+          weight: .25,
+        ),
+        ItemDropType(
+          id: ItemId.GALEWRAP_GAUNTLETS,
+          rarity: Rarity.COMMON,
+          weight: .5,
+        ),
+        ItemDropType(
+          id: ItemId.GALEWRAP_GAUNTLETS,
+          rarity: Rarity.UNCOMMON,
+          weight: .4,
+        ),
+        ItemDropType(
+          id: ItemId.GALEWRAP_GAUNTLETS,
+          rarity: Rarity.RARE,
+          weight: .3,
+        ),
+        ItemDropType(
+          id: ItemId.GALEWRAP_GAUNTLETS,
+          rarity: Rarity.EPIC,
+          weight: .25,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(chance: 0.1, entries: [ItemDropType(id: ItemId.STORM_SHARD)]),
+      ],
+    ),
+  ),
 
   // ── SHOPS ───────────────────────────────────────────────────────
   // ShopEntityDefinition, by zone then stock tier
@@ -2715,6 +3073,14 @@ enum EntityId {
       iconAsset: "assets/images/entities/drowned_fen.png",
       rarity: Rarity.RARE,
       dungeonId: DungeonId.DROWNED_FEN,
+    ),
+  ),
+  TEMPEST_REACH_ENTRANCE(
+    DungeonEntityDefinition(
+      name: "Tempest Reach",
+      iconAsset: "assets/images/entities/tempest_reach.png",
+      rarity: Rarity.RARE,
+      dungeonId: DungeonId.TEMPEST_REACH,
     ),
   ),
   GOBLIN_CAMP(
