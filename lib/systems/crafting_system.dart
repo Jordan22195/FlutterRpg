@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/buff_data.dart';
@@ -384,7 +385,10 @@ class CraftingSystem {
     int skillLevel,
     int levelRequirement,
   ) {
-    final levelBonus = (skillLevel - levelRequirement).clamp(0, 99).toDouble();
+    // the stat total against the recipe's level, uncapped: gear and buffs
+    // can lift a total far past 99, and a cap there read every recipe the
+    // total cleared by 99 or more as the same craft
+    final levelBonus = max(0, skillLevel - levelRequirement).toDouble();
     return [
       WeightedDropTableEntry<Rarity>(id: Rarity.COMMON, weight: 100),
       WeightedDropTableEntry<Rarity>(

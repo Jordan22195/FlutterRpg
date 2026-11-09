@@ -527,6 +527,30 @@ List<Widget> equipmentComparisonChips(
     );
   }
 
+  // onyx's bonus to every skill's xp. it is not a stat, so the stats above
+  // never show it; more is the gain
+  int xpPercentOf(EquipmentItem? piece) {
+    final def = piece?.definition;
+    return def is JewelleryDefinition ? def.xpPercentAt(piece!.quality) : 0;
+  }
+
+  final xpMine = xpPercentOf(item);
+  final xpDelta = xpMine - xpPercentOf(baseline);
+  if (xpMine != 0 || xpDelta != 0) {
+    chips.add(
+      StatChip(
+        key: const ValueKey('stat-chip-xp'),
+        icon: Icon(Icons.auto_graph, size: iconSize, color: Colors.grey),
+        value: '+$xpMine% xp',
+        fontSize: fontSize,
+        deltaText: !showDeltas || xpDelta == 0
+            ? null
+            : (xpDelta > 0 ? '+$xpDelta%' : '−${-xpDelta}%'),
+        deltaColor: xpDelta > 0 ? statGainColor : statLossColor,
+      ),
+    );
+  }
+
   // what one swing deals before the attack multiplier; more is the gain
   final swinging = item;
   if (swinging is WeaponItem && swinging.definition.usesDamage) {

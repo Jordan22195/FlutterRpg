@@ -131,19 +131,29 @@ class EquipmentItemDefinition extends ItemDefinition {
   /// rarity it is asked about and nothing else.
   int budgetAt(Rarity rarity) {
     final base = Util.fib(fibLevel);
-    if (rarity == Rarity.COMMON) return base;
     // a piece with no stats to split — a weapon, whose damage is the whole
     // of what it is — has nothing for the floor below to measure, and the
     // walk up to it would never arrive
     if (statWeights.isEmpty) return base;
+    return scaledBudget(base, rarity, _statTotalFor);
+  }
 
+  /// [base] scaled to [rarity], with the floor measured by [statTotal]: what
+  /// a budget pays out once it is split. Shared with jewellery, whose onyx
+  /// reads its budget as an xp percent rather than splitting it into stats.
+  static int scaledBudget(
+    int base,
+    Rarity rarity,
+    int Function(int budget) statTotal,
+  ) {
+    if (rarity == Rarity.COMMON) return base;
     final below = Rarity.values[rarity.index - 1];
     final floor = max(
-      _statTotalFor(base) + rarity.minStatBonus,
-      _statTotalFor(budgetAt(below)) + 1,
+      statTotal(base) + rarity.minStatBonus,
+      statTotal(scaledBudget(base, below, statTotal)) + 1,
     );
     var budget = max(base, (base * rarity.statMultiplier).round());
-    while (_statTotalFor(budget) < floor) {
+    while (statTotal(budget) < floor) {
       budget++;
     }
     return budget;

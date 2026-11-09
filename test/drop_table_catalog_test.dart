@@ -79,10 +79,15 @@ void main() {
     test('weights descend, so the ladder cannot be scrambled', () {
       for (final entry in tables.entries) {
         final weights = entry.value.map((e) => e.weight).toList();
+        // the four core gems are stats, not tiers, so they drop evenly:
+        // the gem table only has to never climb
+        final evenSteps = identical(entry.value, gemDropTable);
         for (var i = 1; i < weights.length; i++) {
           expect(
             weights[i],
-            lessThan(weights[i - 1]),
+            evenSteps
+                ? lessThanOrEqualTo(weights[i - 1])
+                : lessThan(weights[i - 1]),
             reason:
                 '${entry.key}: ${entry.value[i].id} is not rarer than '
                 '${entry.value[i - 1].id}',

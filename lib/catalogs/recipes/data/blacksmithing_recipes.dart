@@ -24,10 +24,10 @@ final List<CraftingRecipe> blacksmithingRecipes = [
   ],
 
   // ── GOLD (jewellery line) ───────────────────────────────────────
-  // Gold is too soft for armour, so it is not a tier: its bar exists to be
-  // turned into ring and necklace bases by Jewelcrafting, not forged into
-  // gear here. Smelting the bar stays in this skill; shaping it into a band
-  // does not — see jc_gold_ring / jc_gold_necklace in jewelcrafting_recipes.
+  // Gold is too soft for armour, so it is not a tier: it is smelted and
+  // shaped into the plain ring and necklace bases Jewelcrafting sets gems
+  // into. A base has no rarity of its own, so like a bar a good craft pays
+  // out in extra bases instead.
   CraftingRecipe(
     id: 'smelt_gold_bar',
     name: 'Gold Bar',
@@ -36,6 +36,28 @@ final List<CraftingRecipe> blacksmithingRecipes = [
     xp: 4,
     inputs: {ItemId.GOLD_ORE: 1},
     output: [WeightedDropTableEntry(id: ItemId.GOLD_BAR, count: 1, weight: 1)],
+    rollsBonusOutput: true,
+  ),
+  CraftingRecipe(
+    id: 'forge_gold_ring',
+    name: 'Gold Ring',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 25,
+    xp: 6,
+    inputs: {ItemId.GOLD_BAR: 1},
+    output: [WeightedDropTableEntry(id: ItemId.GOLD_RING, count: 1, weight: 1)],
+    rollsBonusOutput: true,
+  ),
+  CraftingRecipe(
+    id: 'forge_gold_necklace',
+    name: 'Gold Necklace',
+    skill: SkillId.BLACKSMITHING,
+    levelRequirement: 25,
+    xp: 12,
+    inputs: {ItemId.GOLD_BAR: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.GOLD_NECKLACE, count: 1, weight: 1),
+    ],
     rollsBonusOutput: true,
   ),
 ];

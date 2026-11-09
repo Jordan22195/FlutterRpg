@@ -393,12 +393,25 @@ class PlayerDataService {
     return playerState.currentZoneViewId;
   }
 
-  void applyXp(PlayerData playerState, Map<SkillId, double> xp) {
-    for (final exp in xp.entries) {
+  /// Pays [xp] onto the player, raised by the xp bonus of any onyx worn,
+  /// and returns what was actually paid so a report can show it.
+  Map<SkillId, double> applyXp(
+    PlayerData playerState,
+    Map<SkillId, double> xp,
+  ) {
+    final percent = _equipmentService.xpPercentBonus(playerState.equipmentData);
+    final paid = percent == 0
+        ? xp
+        : {
+            for (final exp in xp.entries)
+              exp.key: exp.value * (1 + percent / 100),
+          };
+    for (final exp in paid.entries) {
       _skillService.addXp(
         exp.value,
         playerState.skillData[exp.key] ?? SkillData(name: "error", xp: 1),
       );
     }
+    return paid;
   }
 }

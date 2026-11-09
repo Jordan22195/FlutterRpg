@@ -174,6 +174,25 @@ void main() {
       );
     });
 
+    testWidgets('onyx shows its xp bonus, set against the onyx worn', (
+      tester,
+    ) async {
+      wear(ItemId.ONYX_NECKLACE); // round necklace: +3%
+      await open(tester, piece(ItemId.ONYX_RADIANT_NECKLACE)); // +34%
+
+      final xp = tester.widget<StatChip>(
+        find.byKey(const ValueKey('stat-chip-xp')),
+      );
+      expect(xp.value, '+34% xp');
+      expect(xp.deltaText, '+31%');
+      expect(xp.deltaColor, statGainColor);
+    });
+
+    testWidgets('a stat gem shows no xp line', (tester) async {
+      await open(tester, piece(ItemId.RUBY_RADIANT_RING));
+      expect(find.byKey(const ValueKey('stat-chip-xp')), findsNothing);
+    });
+
     testWidgets('the piece being worn shows no deltas', (tester) async {
       final worn = wear(ItemId.COPPER_HELMET);
       await open(tester, worn);

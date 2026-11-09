@@ -23,6 +23,10 @@ class RecipeCatalog {
     return _recipes.where((r) => r.skill == skill).toList();
   }
 
+  /// Whether [recipeId] names a recipe the catalog still ships. A save can
+  /// hold an id a later release moved or retired.
+  bool hasRecipe(String recipeId) => _recipes.any((r) => r.id == recipeId);
+
   CraftingRecipe recipeById(String recipeId) {
     try {
       return _recipes.firstWhere((r) => r.id == recipeId);

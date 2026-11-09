@@ -69,6 +69,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/icons/items/
+    - assets/icons/jewellery/
     - assets/icons/skills/
     - assets/images/
     - assets/images/dungeons/

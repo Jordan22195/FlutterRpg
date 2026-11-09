@@ -8,6 +8,7 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/buff_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
+import 'package:rpg/widgets/jewellery_icon.dart';
 import 'package:rpg/widgets/repeat_press_button.dart';
 import '../utilities/image_resolver.dart';
 import '../data/skill_data.dart';
@@ -413,7 +414,10 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     final resolvedImage = _resolveImage();
     final effectiveBorderColor = _effectiveBorderColor;
 
-    Widget icon = _IconOrFallback(imageProvider: resolvedImage);
+    final currentId = id;
+    Widget icon =
+        (currentId == null ? null : JewelleryIcon.forId(currentId)) ??
+        _IconOrFallback(imageProvider: resolvedImage);
     if (depleted) {
       // srcATop paints only where the sprite is opaque, so the art dims
       // without laying a black rectangle over its transparent edges

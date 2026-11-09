@@ -42,16 +42,16 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
-/// Every gem, weighted so a roll lands on the low tiers most of the time.
-/// The ladder is the one the Gem Vein entity already uses inline, which makes
-/// this table a drop-in for it.
+/// Every gem. The four colored gems are the core stats rather than tiers of
+/// one ladder, so they drop evenly; diamond and dragonstone, the combat
+/// pair, are rare; onyx, the xp gem, is rarest of all.
 const List<ItemDropType> gemDropTable = [
   ItemDropType(id: ItemId.TOPAZ, weight: 1),
-  ItemDropType(id: ItemId.SAPPHIRE, weight: 0.7),
-  ItemDropType(id: ItemId.EMERALD, weight: 0.5),
-  ItemDropType(id: ItemId.RUBY, weight: 0.3),
+  ItemDropType(id: ItemId.SAPPHIRE, weight: 1),
+  ItemDropType(id: ItemId.EMERALD, weight: 1),
+  ItemDropType(id: ItemId.RUBY, weight: 1),
   ItemDropType(id: ItemId.DIAMOND, weight: 0.15),
-  ItemDropType(id: ItemId.DRAGONSTONE, weight: 0.07),
+  ItemDropType(id: ItemId.DRAGONSTONE, weight: 0.15),
   ItemDropType(id: ItemId.ONYX, weight: 0.03),
 ];
 

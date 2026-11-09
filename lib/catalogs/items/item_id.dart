@@ -1478,7 +1478,7 @@ enum ItemId {
       name: "Gold Ring",
       value: 8,
       description: "A plain band, ready for a gem.",
-      iconAsset: "assets/icons/items/copper_ring.png",
+      iconAsset: "assets/icons/jewellery/ring_base.png",
     ),
   ),
   GOLD_NECKLACE(
@@ -1486,158 +1486,600 @@ enum ItemId {
       name: "Gold Necklace",
       value: 16,
       description: "A plain chain, ready for a gem.",
-      iconAsset: "assets/icons/items/copper_necklace.png",
+      iconAsset: "assets/icons/jewellery/necklace_base.png",
     ),
   ),
 
   // ── JEWELLERY ───────────────────────────────────────────────────
-  // by gem, in gem order; ring then necklace
+  // gem x cut x setting, everything derived (see JewelleryDefinition).
+  // The round cuts keep the names they had before cuts existed, so saves
+  // holding them still load.
   TOPAZ_RING(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.FINGER,
-      name: "Topaz Ring",
-      value: 40,
-      fibLevel: 2,
-      statWeights: {SkillId.RECOVERY: 4},
-      iconAsset: "assets/icons/items/topaz_ring.png",
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.RING,
     ),
   ),
   TOPAZ_NECKLACE(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.NECK,
-      name: "Topaz Necklace",
-      value: 55,
-      fibLevel: 3,
-      statWeights: {SkillId.RECOVERY: 6},
-      iconAsset: "assets/icons/items/topaz_necklace.png",
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  TOPAZ_SQUARE_RING(
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  TOPAZ_SQUARE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  TOPAZ_CUSHION_RING(
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  TOPAZ_CUSHION_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  TOPAZ_MARQUISE_RING(
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  TOPAZ_MARQUISE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  TOPAZ_ASSCHER_RING(
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  TOPAZ_ASSCHER_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  TOPAZ_RADIANT_RING(
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  TOPAZ_RADIANT_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.TOPAZ,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.NECKLACE,
     ),
   ),
   SAPPHIRE_RING(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.FINGER,
-      name: "Sapphire Ring",
-      value: 70,
-      fibLevel: 3,
-      statWeights: {SkillId.STAMINA: 5},
-      iconAsset: "assets/icons/items/sapphire_ring.png",
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.RING,
     ),
   ),
   SAPPHIRE_NECKLACE(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.NECK,
-      name: "Sapphire Necklace",
-      value: 90,
-      fibLevel: 4,
-      statWeights: {SkillId.STAMINA: 7},
-      iconAsset: "assets/icons/items/sapphire_necklace.png",
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  SAPPHIRE_SQUARE_RING(
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  SAPPHIRE_SQUARE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  SAPPHIRE_CUSHION_RING(
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  SAPPHIRE_CUSHION_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  SAPPHIRE_MARQUISE_RING(
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  SAPPHIRE_MARQUISE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  SAPPHIRE_ASSCHER_RING(
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  SAPPHIRE_ASSCHER_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  SAPPHIRE_RADIANT_RING(
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  SAPPHIRE_RADIANT_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.SAPPHIRE,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.NECKLACE,
     ),
   ),
   EMERALD_RING(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.FINGER,
-      name: "Emerald Ring",
-      value: 100,
-      fibLevel: 4,
-      statWeights: {SkillId.SPEED: 5},
-      iconAsset: "assets/icons/items/emerald_ring.png",
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.RING,
     ),
   ),
   EMERALD_NECKLACE(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.NECK,
-      name: "Emerald Necklace",
-      value: 130,
-      fibLevel: 5,
-      statWeights: {SkillId.SPEED: 7},
-      iconAsset: "assets/icons/items/emerald_necklace.png",
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  EMERALD_SQUARE_RING(
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  EMERALD_SQUARE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  EMERALD_CUSHION_RING(
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  EMERALD_CUSHION_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  EMERALD_MARQUISE_RING(
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  EMERALD_MARQUISE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  EMERALD_ASSCHER_RING(
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  EMERALD_ASSCHER_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  EMERALD_RADIANT_RING(
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  EMERALD_RADIANT_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.EMERALD,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.NECKLACE,
     ),
   ),
   RUBY_RING(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.FINGER,
-      name: "Ruby Ring",
-      value: 150,
-      fibLevel: 5,
-      statWeights: {SkillId.HITPOINTS: 6},
-      iconAsset: "assets/icons/items/ruby_ring.png",
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.RING,
     ),
   ),
   RUBY_NECKLACE(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.NECK,
-      name: "Ruby Necklace",
-      value: 190,
-      fibLevel: 6,
-      statWeights: {SkillId.HITPOINTS: 9},
-      iconAsset: "assets/icons/items/ruby_necklace.png",
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  RUBY_SQUARE_RING(
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  RUBY_SQUARE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  RUBY_CUSHION_RING(
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  RUBY_CUSHION_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  RUBY_MARQUISE_RING(
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  RUBY_MARQUISE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  RUBY_ASSCHER_RING(
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  RUBY_ASSCHER_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  RUBY_RADIANT_RING(
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  RUBY_RADIANT_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.RUBY,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.NECKLACE,
     ),
   ),
   DIAMOND_RING(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.FINGER,
-      name: "Diamond Ring",
-      value: 220,
-      fibLevel: 6,
-      statWeights: {SkillId.DEFENCE: 8},
-      iconAsset: "assets/icons/items/diamond_ring.png",
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.RING,
     ),
   ),
   DIAMOND_NECKLACE(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.NECK,
-      name: "Diamond Necklace",
-      value: 280,
-      fibLevel: 7,
-      statWeights: {SkillId.DEFENCE: 12},
-      iconAsset: "assets/icons/items/diamond_necklace.png",
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  DIAMOND_SQUARE_RING(
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  DIAMOND_SQUARE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  DIAMOND_CUSHION_RING(
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  DIAMOND_CUSHION_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  DIAMOND_MARQUISE_RING(
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  DIAMOND_MARQUISE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  DIAMOND_ASSCHER_RING(
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  DIAMOND_ASSCHER_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  DIAMOND_RADIANT_RING(
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  DIAMOND_RADIANT_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.DIAMOND,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.NECKLACE,
     ),
   ),
   DRAGONSTONE_RING(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.FINGER,
-      name: "Dragonstone Ring",
-      value: 330,
-      fibLevel: 7,
-      statWeights: {SkillId.ATTACK: 9},
-      iconAsset: "assets/icons/items/dragonstone_ring.png",
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.RING,
     ),
   ),
   DRAGONSTONE_NECKLACE(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.NECK,
-      name: "Dragonstone Necklace",
-      value: 420,
-      fibLevel: 8,
-      statWeights: {SkillId.ATTACK: 13},
-      iconAsset: "assets/icons/items/dragonstone_necklace.png",
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  DRAGONSTONE_SQUARE_RING(
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  DRAGONSTONE_SQUARE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  DRAGONSTONE_CUSHION_RING(
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  DRAGONSTONE_CUSHION_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  DRAGONSTONE_MARQUISE_RING(
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  DRAGONSTONE_MARQUISE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  DRAGONSTONE_ASSCHER_RING(
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  DRAGONSTONE_ASSCHER_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  DRAGONSTONE_RADIANT_RING(
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  DRAGONSTONE_RADIANT_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.DRAGONSTONE,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.NECKLACE,
     ),
   ),
   ONYX_RING(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.FINGER,
-      name: "Onyx Ring",
-      value: 550,
-      fibLevel: 8,
-      statWeights: {
-        SkillId.ATTACK: 6,
-        SkillId.DEFENCE: 6,
-        SkillId.HITPOINTS: 6,
-      },
-      iconAsset: "assets/icons/items/onyx_ring.png",
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.RING,
     ),
   ),
   ONYX_NECKLACE(
-    EquipmentItemDefinition(
-      armorSlot: ArmorSlots.NECK,
-      name: "Onyx Necklace",
-      value: 700,
-      fibLevel: 9,
-      statWeights: {
-        SkillId.ATTACK: 9,
-        SkillId.DEFENCE: 9,
-        SkillId.HITPOINTS: 9,
-      },
-      iconAsset: "assets/icons/items/onyx_necklace.png",
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.ROUND,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  ONYX_SQUARE_RING(
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  ONYX_SQUARE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.SQUARE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  ONYX_CUSHION_RING(
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  ONYX_CUSHION_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.CUSHION,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  ONYX_MARQUISE_RING(
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  ONYX_MARQUISE_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.MARQUISE,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  ONYX_ASSCHER_RING(
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  ONYX_ASSCHER_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.ASSCHER,
+      setting: JewellerySetting.NECKLACE,
+    ),
+  ),
+  ONYX_RADIANT_RING(
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.RING,
+    ),
+  ),
+  ONYX_RADIANT_NECKLACE(
+    JewelleryDefinition(
+      gem: GemType.ONYX,
+      cut: GemCut.RADIANT,
+      setting: JewellerySetting.NECKLACE,
     ),
   ),
 

@@ -69,11 +69,12 @@ Future<void> showRecipePickerSheet(
   );
 }
 
-/// The metal a blacksmithing recipe belongs to, read from its id
-/// (`smelt_copper_bar`, `forge_iron_helmet`) — null for recipes with no
-/// metal, which is every other station's.
+/// The tab a recipe belongs to, read from its id: the metal of a
+/// blacksmithing recipe (`smelt_copper_bar`, `forge_iron_helmet`), or the
+/// gem of a jewelcrafting one (`jc_ruby_radiant_ring`) — null for recipes
+/// with neither, which is every other station's.
 String? _metalOf(CraftingRecipe recipe) {
-  final m = RegExp(r'^(?:smelt|forge)_([a-z]+)_').firstMatch(recipe.id);
+  final m = RegExp(r'^(?:smelt|forge|jc)_([a-z]+)_').firstMatch(recipe.id);
   if (m == null) return null;
   final name = m.group(1)!;
   return name[0].toUpperCase() + name.substring(1);
@@ -97,9 +98,45 @@ class RecipePickerSheet extends StatefulWidget {
   State<RecipePickerSheet> createState() => _RecipePickerSheetState();
 }
 
+/// Where a skill's picker was left: its tab and how far down the list it
+/// was scrolled. Kept for the session, so reopening the picker puts the
+/// player back where they were rather than at the top of "All".
+class _PickerPlace {
+  String? metal;
+  double offset = 0;
+}
+
+final Map<SkillId, _PickerPlace> _places = {};
+
+/// Forgets where every recipe picker was left. For tests, which share one
+/// isolate and so would otherwise inherit each other's tabs.
+@visibleForTesting
+void resetRecipePickerPlaces() => _places.clear();
+
 class _RecipePickerSheetState extends State<RecipePickerSheet> {
+  late final _PickerPlace _place = _places.putIfAbsent(
+    widget.skill,
+    _PickerPlace.new,
+  );
+
+  late final ScrollController _scroll = ScrollController(
+    initialScrollOffset: _place.offset,
+  )..addListener(() => _place.offset = _scroll.offset);
+
   /// The metal tab showing; null is every metal.
-  String? _metal;
+  String? get _metal => _place.metal;
+  set _metal(String? metal) {
+    _place.metal = metal;
+    // a new tab is a new list: start it at its top
+    _place.offset = 0;
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   String get title => widget.title;
   SkillId get skill => widget.skill;
@@ -122,6 +159,10 @@ class _RecipePickerSheetState extends State<RecipePickerSheet> {
     final metals = metalLevels.keys.toList()
       ..sort((a, b) => metalLevels[a]!.compareTo(metalLevels[b]!));
     final showTabs = metals.length > 1;
+    // a remembered tab the station no longer offers falls back to "All"
+    if (_metal != null && !(showTabs && metals.contains(_metal))) {
+      _place.metal = null;
+    }
     final recipes = _metal == null
         ? widget.recipes
         : [
@@ -229,6 +270,7 @@ class _RecipePickerSheetState extends State<RecipePickerSheet> {
             const SizedBox(height: 14),
             Flexible(
               child: ListView.separated(
+                controller: _scroll,
                 shrinkWrap: true,
                 itemCount: sorted.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 8),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utilities/image_resolver.dart';
+import 'jewellery_icon.dart';
 
 class IconRenderer<T extends Enum> extends StatelessWidget {
   const IconRenderer({super.key, required this.size, this.id});
@@ -25,7 +26,9 @@ class IconRenderer<T extends Enum> extends StatelessWidget {
       height: size,
       child: Padding(
         padding: const EdgeInsets.all(1),
-        child: _IconOrFallback(imageProvider: resolvedImage),
+        child:
+            (id == null ? null : JewelleryIcon.forId(id!)) ??
+            _IconOrFallback(imageProvider: resolvedImage),
       ),
     );
   }

@@ -26,6 +26,19 @@ class EquipmentService {
     return stats;
   }
 
+  /// The xp bonus, as a percent, every worn onyx piece adds up to. It is a
+  /// bonus to every skill, so it is not a stat and stays out of
+  /// [getStatTotals].
+  int xpPercentBonus(EquipmentData equipmentState) {
+    var percent = 0;
+    for (final item in equipmentState.armorEquipment.values) {
+      if (item == null) continue;
+      final def = item.definition;
+      if (def is JewelleryDefinition) percent += def.xpPercentAt(item.quality);
+    }
+    return percent;
+  }
+
   /// What [item] demands of the player before it can be worn, or null when
   /// nothing does — a piece with no material behind it (jewellery, a boss
   /// drop, a stone axe) asks for level 0, which is not a requirement.

@@ -81,10 +81,18 @@ class CraftingController extends ChangeNotifier {
 
   // the selection the viewed station holds for [skill]. a station offering
   // several skills keeps one selection per skill.
+  //
+  // a saved selection the catalog no longer ships under this skill - a
+  // recipe that was retired, or moved to another skill (the gold bases went
+  // from jewelcrafting to blacksmithing) - reads as nothing selected, rather
+  // than as the empty stand-in recipeById hands back, which has no output
   String selectedRecipeIdFor(SkillId skill) {
-    return _craftingState.selectedRecipeByEntity[_playerState
+    final id =
+        _craftingState.selectedRecipeByEntity[_playerState
             .currentEntityViewId]?[skill] ??
         "";
+    if (id.isEmpty || !_recipeCatalog.hasRecipe(id)) return "";
+    return _recipeCatalog.recipeById(id).skill == skill ? id : "";
   }
 
   // the selection belonging to the crafting entity the player is viewing,
@@ -92,7 +100,10 @@ class CraftingController extends ChangeNotifier {
   String get selectedRecipeId =>
       selectedRecipeIdFor(getCraftingEntitySkillId());
 
-  String get activeRecipeId => _craftingState.activeRecipeId;
+  String get activeRecipeId {
+    final id = _craftingState.activeRecipeId;
+    return _recipeCatalog.hasRecipe(id) ? id : "";
+  }
 
   CraftingRecipe getRecipe(String recipeId) {
     return _recipeCatalog.recipeById(recipeId);

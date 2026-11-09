@@ -44,6 +44,8 @@ void main() {
         final def = entry.value;
         // a damage weapon deals its rung rather than carrying stats
         if (def is WeaponItemDefinition && def.usesDamage) continue;
+        // an xp gem reads its rung as an xp percent rather than stats
+        if (def is JewelleryDefinition && def.gem.boostsXp) continue;
         expect(
           def.statWeights,
           isNotEmpty,

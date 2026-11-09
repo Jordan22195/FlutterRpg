@@ -215,7 +215,8 @@ void main() {
         final r = making(base);
         expect(r, isNotNull, reason: 'nothing makes ${base.name}');
         expect(r!.inputs.keys.single, ItemId.GOLD_BAR);
-        expect(r.skill, SkillId.JEWELCRAFTING);
+        // shaped at the anvil, like the bar; jewelcrafting sets the gem
+        expect(r.skill, SkillId.BLACKSMITHING);
       }
     });
 

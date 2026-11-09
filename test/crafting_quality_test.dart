@@ -57,6 +57,23 @@ void main() {
     expect((counts[Rarity.UNCOMMON] ?? 0), greaterThan(0));
   });
 
+  test('a stat total far past 99 still tells a low recipe from a high one', () {
+    // gear can lift a crafting total into the thousands; the gap to each
+    // recipe's level has to keep counting, or every recipe the total clears
+    // by 99 reads as the same craft
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final system = buildSystem(factory.newGame(catalogs), catalogs);
+
+    double common(int total, int requirement) =>
+        WeightedDropTableService.chances(
+          system.qualityEntries(total, requirement),
+        )[Rarity.COMMON]!;
+
+    expect(common(2099, 1), lessThan(common(2099, 99)));
+    expect(common(2099, 99), lessThan(common(150, 99)));
+  });
+
   test('crafting daggers at level 16 yields quality instances', () {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();

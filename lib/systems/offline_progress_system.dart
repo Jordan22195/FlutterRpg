@@ -479,8 +479,8 @@ class OfflineProgressSystem {
   /// Xp the replay pays itself rather than through a bound action: onto the
   /// player, and into the report so the summary shows it.
   void _awardXp(PlayerData playerState, Map<SkillId, double> xp) {
-    _playerDataService.applyXp(playerState, xp);
-    _offlineProgressService.recordXp(_offlineProgressData, xp);
+    final paid = _playerDataService.applyXp(playerState, xp);
+    _offlineProgressService.recordXp(_offlineProgressData, paid);
   }
 
   /// The stamina one segment moves, on the same rules the frame loop runs

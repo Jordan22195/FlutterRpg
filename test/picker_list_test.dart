@@ -136,6 +136,10 @@ void main() {
   // ---------------------------------------------------------- the picker
 
   group('the crafting recipe picker', () {
+    // the picker remembers its place for the session; each test starts
+    // from a fresh one
+    setUp(resetRecipePickerPlaces);
+
     Future<GameSession> pumpCraftingScreen(WidgetTester tester) async {
       final factory = GameSessionFactory();
       final catalogs = factory.catalog1();
@@ -271,6 +275,59 @@ void main() {
         findsWidgets,
       );
 
+      session.dispose();
+    });
+
+    Future<void> closeSheet(WidgetTester tester) async {
+      await tester.tap(find.byIcon(Icons.close).hitTestable());
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
+
+    testWidgets('reopening the picker returns to the tab it was left on', (
+      tester,
+    ) async {
+      final session = await pumpCraftingScreen(tester);
+      await openSheet(tester);
+      await tester.tap(find.bySemanticsLabel('Iron tab'));
+      await tester.pump();
+      await closeSheet(tester);
+
+      await openSheet(tester);
+      expect(
+        find.bySemanticsLabel(RegExp(r'^Copper .*, (level|locked)')),
+        findsNothing,
+      );
+      expect(
+        find.bySemanticsLabel(RegExp(r'^Iron .*, (level|locked)')),
+        findsWidgets,
+      );
+      session.dispose();
+    });
+
+    testWidgets('reopening the picker returns to where it was scrolled', (
+      tester,
+    ) async {
+      final session = await pumpCraftingScreen(tester);
+      await openSheet(tester);
+      // the recipe list, not the tab strip above it, which scrolls sideways
+      final list = find.descendant(
+        of: find.byType(RecipePickerSheet),
+        matching: find.byWidgetPredicate(
+          (w) => w is Scrollable && w.axisDirection == AxisDirection.down,
+        ),
+      );
+      await tester.drag(list.first, const Offset(0, -600));
+      await tester.pump();
+      final left = tester.state<ScrollableState>(list.first).position.pixels;
+      expect(left, greaterThan(0));
+      await closeSheet(tester);
+
+      await openSheet(tester);
+      expect(
+        tester.state<ScrollableState>(list.first).position.pixels,
+        closeTo(left, 0.5),
+      );
       session.dispose();
     });
 
