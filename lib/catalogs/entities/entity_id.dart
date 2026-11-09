@@ -1589,7 +1589,7 @@ enum EntityId {
   ZOMBIE_LEGENDARY(
     CombatEntityDefinition(zombie, name: "Zombie", rarity: Rarity.LEGENDARY),
   ),
-  // Harpy · roster tier 3 · foothills
+  // Harpy · roster tier 3 · ironroot hills
   HARPY(
     CombatEntityDefinition(
       harpy,
@@ -1635,7 +1635,7 @@ enum EntityId {
   //
   // Tier 10 - Level 89
   //
-  // Giant Scorpion · roster tier 3 · swamp
+  // Giant Scorpion · roster tier 3 · copperdust flats
   GIANT_SCORPION(
     CombatEntityDefinition(
       giantScorpion,
@@ -1674,7 +1674,7 @@ enum EntityId {
       rarity: Rarity.LEGENDARY,
     ),
   ),
-  // Imp · roster tier 3 · foothills
+  // Imp · roster tier 3 · ironroot hills
   IMP(
     CombatEntityDefinition(
       imp,
@@ -1967,7 +1967,7 @@ enum EntityId {
   BANSHEE_LEGENDARY(
     CombatEntityDefinition(banshee, name: "Banshee", rarity: Rarity.LEGENDARY),
   ),
-  // Troll · roster tier 4 · foothills
+  // Troll · roster tier 4 · ironroot hills
   TROLL(
     CombatEntityDefinition(
       troll,
@@ -2008,7 +2008,7 @@ enum EntityId {
       rarity: Rarity.LEGENDARY,
     ),
   ),
-  // Basilisk · roster tier 4 · mine
+  // Basilisk · roster tier 4 · redwall bluffs
   BASILISK(CombatEntityDefinition(basilisk, name: "Basilisk", itemDrops: [])),
   BASILISK_UNCOMMON(
     CombatEntityDefinition(basilisk, name: "Basilisk", rarity: Rarity.UNCOMMON),
@@ -2058,7 +2058,7 @@ enum EntityId {
       rarity: Rarity.LEGENDARY,
     ),
   ),
-  // Gargoyle · roster tier 4 · crypt
+  // Gargoyle · roster tier 4 · redwall bluffs
   GARGOYLE(CombatEntityDefinition(gargoyle, name: "Gargoyle", itemDrops: [])),
   GARGOYLE_UNCOMMON(
     CombatEntityDefinition(gargoyle, name: "Gargoyle", rarity: Rarity.UNCOMMON),
@@ -2145,7 +2145,7 @@ enum EntityId {
       rarity: Rarity.LEGENDARY,
     ),
   ),
-  // Hill Giant · roster tier 5 · foothills
+  // Hill Giant · roster tier 5 · ironroot hills
   HILL_GIANT(
     CombatEntityDefinition(
       hillGiant,
@@ -2254,7 +2254,7 @@ enum EntityId {
       rarity: Rarity.LEGENDARY,
     ),
   ),
-  // Griffin · roster tier 5 · frozen peaks
+  // Griffin · roster tier 5 · redwall bluffs
   GRIFFIN(CombatEntityDefinition(griffin, name: "Griffin", itemDrops: [])),
   GRIFFIN_UNCOMMON(
     CombatEntityDefinition(griffin, name: "Griffin", rarity: Rarity.UNCOMMON),

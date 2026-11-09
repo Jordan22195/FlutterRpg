@@ -323,11 +323,9 @@ class PlayerData {
 
     final data =
         PlayerData(
-            currentZoneId: ZoneId.values.firstWhere(
-              (z) => z.name == rawZoneId,
-              orElse: () =>
-                  throw FormatException('Invalid ZoneId "\$rawZoneId".'),
-            ),
+            // a zone retired since the save puts the player back at the
+            // start rather than failing the load and losing the save
+            currentZoneId: ZoneId.byName(rawZoneId) ?? ZoneId.TUTORIAL_FARM,
             // an entity renamed or retired since the save just isn't on
             // screen any more
             currentEntityViewId:
@@ -367,7 +365,7 @@ class PlayerData {
     // is not worth failing a load over.
     final rawViewZoneId = json['currentZoneViewId'];
     data.currentZoneViewId = rawViewZoneId is String
-        ? (ZoneId.values.asNameMap()[rawViewZoneId] ?? data.currentZoneId)
+        ? (ZoneId.byName(rawViewZoneId) ?? data.currentZoneId)
         : data.currentZoneId;
 
     return data;

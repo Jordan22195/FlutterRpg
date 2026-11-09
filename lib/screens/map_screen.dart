@@ -11,7 +11,6 @@ import '../services/entity_screen_router_service.dart';
 import '../widgets/map_detail_pane.dart';
 import '../widgets/map_edge_painter.dart';
 import '../widgets/map_node_token.dart';
-import '../widgets/recipe_card.dart';
 import '../utilities/shell_page_route.dart';
 
 /// The world map: a graph of places you can walk between, and what walking
@@ -148,15 +147,15 @@ class _MapScreenState extends State<MapScreen> {
   List<MapEdge> _edges(WorldController world) {
     final edges = <MapEdge>[];
 
-    for (final (end, otherEnd, _) in world.travelEdges()) {
+    for (final (end, otherEnd) in world.travelEdges()) {
       final endCenter = zoneNodeCenter(end);
       final otherCenter = zoneNodeCenter(otherEnd);
       if (endCenter == null || otherCenter == null) continue;
 
       // orient each edge away from the player: the badge then sits toward
       // the far end and clears the near node's label. It also decides which
-      // way the hop is priced, and the road is not symmetric — the climb
-      // back up from the mine costs ten times the walk down.
+      // way the hop is timed, and the road is not symmetric — the climb
+      // back up from the mine takes ten times the walk down.
       final endHops = world.travelHopsTo(end);
       final otherHops = world.travelHopsTo(otherEnd);
       final nearIsEnd = endHops >= 0 && (otherHops < 0 || endHops <= otherHops);
@@ -166,8 +165,7 @@ class _MapScreenState extends State<MapScreen> {
         MapEdge(
           from: nearIsEnd ? endCenter : otherCenter,
           to: nearIsEnd ? otherCenter : endCenter,
-          cost: ZoneTravelGraph.edgeCost(near, far),
-          affordable: world.canAffordHop(near, far),
+          time: ZoneTravelGraph.edgeTravelTime(near, far),
         ),
       );
     }
@@ -203,7 +201,19 @@ class _MapScreenState extends State<MapScreen> {
       lockSkill: gateSkill,
       lockLevel: gateLevel,
       showLabel: _showLabel(node),
-      onTap: () => setState(() => _selected = node),
+      onTap: () => _select(node),
+    );
+  }
+
+  /// Picks [node] (null clears the pick). A picked zone recolours the whole
+  /// app — this map, the bars over it and the nav bar under it — in its own
+  /// palette, crossfading as the pick moves, so reading about a place
+  /// already looks like being there. A landmark belongs to no zone and
+  /// leaves the colours as they are.
+  void _select(MapNode? node) {
+    setState(() => _selected = node);
+    context.read<WorldController>().previewOnMap(
+      node is ZoneNode ? node.id : null,
     );
   }
 
@@ -214,13 +224,13 @@ class _MapScreenState extends State<MapScreen> {
     // re-colour the hops the player can no longer pay for
     context.watch<PlayerDataController>();
 
-    final scheme = Theme.of(context).colorScheme;
-
     // after layout, so the viewport's size is known
     final zone = world.currentZoneId;
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _frameCurrentZone(zone),
     );
+
+    final scheme = Theme.of(context).colorScheme;
 
     return SafeArea(
       child: Column(
@@ -251,7 +261,7 @@ class _MapScreenState extends State<MapScreen> {
                           Positioned.fill(
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque,
-                              onTap: () => setState(() => _selected = null),
+                              onTap: () => _select(null),
                             ),
                           ),
 
@@ -266,7 +276,6 @@ class _MapScreenState extends State<MapScreen> {
                                   badgeFill: scheme.surface.withValues(
                                     alpha: 0.85,
                                   ),
-                                  warningColor: RecipeCard.missingMaterialColor,
                                 ),
                               ),
                             ),

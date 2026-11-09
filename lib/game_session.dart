@@ -753,7 +753,7 @@ class GameSessionFactory {
     actionTimingController.addListener(encounterController.onActionTimingFrame);
     // and the world controller watches the same signal for a trip being
     // displaced by something else taking the loop, so an abandoned walk
-    // hands its fare back
+    // is let go of
     actionTimingController.addListener(worldController.onActionTimingFrame);
     // starting anything that is not a dungeon floor walks away from the one
     // that was running, and a floor walked away from goes back to the top.
@@ -983,9 +983,9 @@ class GameSession {
       case BoundActionKind.TRAVEL:
         // the one action a relaunch doesn't put back. a walk taken while the
         // app was shut is a walk the player never got to boost or turn back
-        // from, so the trip is given up and the fare handed back rather than
-        // replayed against a clock they weren't watching.
-        worldController.cancelTravel(target: bound.zoneId);
+        // from, so the trip is given up rather than replayed against a
+        // clock they weren't watching.
+        worldController.cancelTravel();
         return;
     }
 

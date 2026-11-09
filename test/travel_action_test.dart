@@ -30,8 +30,8 @@ void main() {
     data.xp = data.xpTable[level];
   }
 
-  /// Enough stamina to walk anywhere on the near roads, and enough
-  /// exploration to be let in. Deliberately short of the swamp's gate — one
+  /// A full stamina pool to boost with, and enough exploration to be let
+  /// in. Deliberately short of the swamp's gate — one
   /// of these tests needs a zone that stays shut.
   void fund(GameSession session) {
     final player = session.saveGameData.playerData;
@@ -54,7 +54,7 @@ void main() {
   }
 
   group('the roads have their own clock', () {
-    test('a trip takes as long as its roads take, whatever they cost', () {
+    test('a trip takes as long as its roads take', () {
       final graph = ZoneTravelGraph();
 
       // single hops are the edge's own time
@@ -67,7 +67,7 @@ void main() {
         const Duration(milliseconds: 500),
       );
 
-      // and a multi-hop trip is the sum along the road the cost picks:
+      // and a multi-hop trip is the sum along the quickest road:
       // farm >2.5s> forest >5s> haven >10s> swamp >12.5s> foothills
       expect(
         graph.travelTime(ZoneId.TUTORIAL_FARM, ZoneId.FOOTHILLS),
@@ -90,50 +90,17 @@ void main() {
         Duration.zero,
       );
       expect(
-        graph.travelCost(ZoneId.SOUTH_HAVEN, ZoneId.CHALLENGING_MOUNTAIN),
-        double.infinity,
-      );
-    });
-
-    test('what a road costs and how long it takes are two numbers', () {
-      // Seeded proportionally, so today the two still track each other — the
-      // point of this test is that they are separate facts on the edge and
-      // can be moved apart. Retuning one of these expectations should leave
-      // the other one passing untouched.
-      expect(
-        ZoneTravelGraph.edgeCost(ZoneId.SOUTH_HAVEN, ZoneId.FOREST_MINE),
-        1,
-      );
-      expect(
-        ZoneTravelGraph.edgeTravelTime(ZoneId.SOUTH_HAVEN, ZoneId.FOREST_MINE),
-        const Duration(milliseconds: 500),
-      );
-
-      // and both are read in the direction you are walking: the climb back
-      // up out of the mine is its own road
-      expect(
-        ZoneTravelGraph.edgeCost(ZoneId.FOREST_MINE, ZoneId.SOUTH_HAVEN),
-        10,
-      );
-      expect(
-        ZoneTravelGraph.edgeTravelTime(ZoneId.FOREST_MINE, ZoneId.SOUTH_HAVEN),
-        const Duration(seconds: 5),
-      );
-
-      // no road at all: priced as unreachable, not as instant
-      expect(
-        ZoneTravelGraph.edgeCost(ZoneId.TUTORIAL_FARM, ZoneId.SWAMP),
-        double.infinity,
-      );
-      expect(
-        ZoneTravelGraph.edgeTravelTime(ZoneId.TUTORIAL_FARM, ZoneId.SWAMP),
-        Duration.zero,
+        ZoneTravelGraph.isReachable(
+          ZoneId.SOUTH_HAVEN,
+          ZoneId.CHALLENGING_MOUNTAIN,
+        ),
+        isFalse,
       );
     });
   });
 
   group('setting off', () {
-    test('the fare is paid at the door, and you are still standing there', () {
+    test('setting off is free, and you are still standing there', () {
       final session = buildSession();
       fund(session);
       final world = session.worldController;
@@ -142,8 +109,8 @@ void main() {
 
       expect(world.startTravelTo(ZoneId.SOUTH_HAVEN), isTrue);
 
-      // charged in full up front — the whole 15 for farm -> forest -> haven
-      expect(player.stamina, before - 15);
+      // walking costs nothing: only a boost spends stamina
+      expect(player.stamina, before);
       // and not one step of the way yet
       expect(world.currentZoneId, ZoneId.TUTORIAL_FARM);
       expect(world.isTravelling, isTrue);
@@ -152,16 +119,16 @@ void main() {
       session.dispose();
     });
 
-    test('a road you cannot walk charges nothing', () {
+    test('an empty tank still walks; only gates and roads refuse', () {
       final session = buildSession();
       final world = session.worldController;
       final player = session.saveGameData.playerData;
 
-      // a new save has 10 stamina, and South Haven is a 15 trip
-      final before = player.stamina;
-      expect(world.startTravelTo(ZoneId.SOUTH_HAVEN), isFalse);
-      expect(player.stamina, before);
-      expect(world.isTravelling, isFalse);
+      player.stamina = 0;
+      expect(world.startTravelTo(ZoneId.SOUTH_HAVEN), isTrue);
+      expect(player.stamina, 0);
+      expect(world.isTravelling, isTrue);
+      world.cancelTravel();
 
       // the swamp is locked behind exploration whatever the pool says
       fund(session);
@@ -175,7 +142,7 @@ void main() {
       session.dispose();
     });
 
-    test('pressing again mid-trip boosts it rather than paying twice', () {
+    test('pressing again mid-trip boosts it rather than setting off again', () {
       final session = buildSession();
       fund(session);
       final world = session.worldController;
@@ -237,6 +204,27 @@ void main() {
       session.dispose();
     });
 
+    test('an unboosted walk spends no stamina, a boosted one does', () {
+      final session = buildSession();
+      fund(session);
+      final player = session.saveGameData.playerData;
+      final state = session.saveGameData.actionTimingData;
+
+      // half the pool, so recovery has room to show if it were all there was
+      player.stamina = 100;
+      session.worldController.startTravelTo(ZoneId.SOUTH_HAVEN);
+      run(session, seconds: 1.0);
+      // walking hands-off: stamina only recovers
+      expect(player.stamina, greaterThanOrEqualTo(100));
+
+      final beforeBoost = player.stamina;
+      state.buttonHeld = true;
+      run(session, seconds: 1.0);
+      expect(player.stamina, lessThan(beforeBoost));
+
+      session.dispose();
+    });
+
     test('a held boost gets you there sooner', () {
       final session = buildSession();
       fund(session);
@@ -258,19 +246,16 @@ void main() {
   });
 
   group('giving up on a trip', () {
-    test('something else taking the loop hands the fare back', () {
+    test('something else taking the loop lets go of the trip', () {
       final session = buildSession();
       fund(session);
       final world = session.worldController;
-      final player = session.saveGameData.playerData;
 
       world.startTravelTo(ZoneId.SOUTH_HAVEN);
-      expect(player.stamina, 185);
 
       // the stop button, or any action started from another screen
       session.actionTimingController.stop();
 
-      expect(player.stamina, 200);
       expect(world.isTravelling, isFalse);
       expect(world.travelTarget, isNull);
       expect(world.currentZoneId, ZoneId.TUTORIAL_FARM);
@@ -278,19 +263,16 @@ void main() {
       session.dispose();
     });
 
-    test('turning around part way is not charged twice', () {
+    test('turning around part way heads for the new place', () {
       final session = buildSession();
       fund(session);
       final world = session.worldController;
-      final player = session.saveGameData.playerData;
 
       world.startTravelTo(ZoneId.SOUTH_HAVEN);
       run(session, seconds: 1);
-      expect(player.stamina, closeTo(185, 1));
 
-      // changed their mind: the haven fare goes back, the forest one is paid
+      // changed their mind
       expect(world.startTravelTo(ZoneId.SOUTHWOOD_FOREST), isTrue);
-      expect(player.stamina, closeTo(195, 1));
       expect(world.travelTarget, ZoneId.SOUTHWOOD_FOREST);
 
       run(session, seconds: 4);
@@ -391,14 +373,12 @@ void main() {
   });
 
   group('a trip the player was not there for', () {
-    test('a relaunch mid-walk refunds the fare and leaves you put', () {
+    test('a relaunch mid-walk leaves you put', () {
       final before = buildSession();
       fund(before);
       before.worldController.startTravelTo(ZoneId.SOUTH_HAVEN);
       run(before, seconds: 0.5);
 
-      // 200 less the 15 fare, plus whatever the half second recovered
-      expect(before.saveGameData.playerData.stamina, closeTo(185, 1));
       expect(
         before.saveGameData.actionTimingData.boundAction?.kind,
         BoundActionKind.TRAVEL,
@@ -412,10 +392,9 @@ void main() {
       );
       after.resumeBoundAction();
 
-      // the walk is given up: you are where you set off from, with the fare
-      // back, and nothing running
+      // the walk is given up: you are where you set off from, and nothing
+      // is running
       expect(after.worldController.currentZoneId, ZoneId.TUTORIAL_FARM);
-      expect(after.saveGameData.playerData.stamina, 200);
       expect(after.actionTimingController.isRunning, isFalse);
       expect(after.worldController.isTravelling, isFalse);
 

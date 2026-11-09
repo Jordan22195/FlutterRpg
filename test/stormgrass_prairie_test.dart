@@ -63,7 +63,10 @@ void main() {
         ],
       );
       expect(ZoneTravelGraph.isFreeZone(ZoneId.FOOTHILLS), isFalse);
-      expect(graph.travelCost(ZoneId.SWAMP, ZoneId.FOOTHILLS), greaterThan(0));
+      expect(
+        graph.travelTime(ZoneId.SWAMP, ZoneId.FOOTHILLS),
+        greaterThan(Duration.zero),
+      );
     });
 
     test('is drawn on the world map, inside the canvas', () {

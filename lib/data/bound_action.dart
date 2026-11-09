@@ -110,7 +110,7 @@ class BoundAction {
     return BoundAction._(
       kind: kind,
       zoneId: rawZone is String
-          ? ZoneId.values.asNameMap()[rawZone] ?? ZoneId.NULL
+          ? ZoneId.byName(rawZone) ?? ZoneId.NULL
           : ZoneId.NULL,
       entityId: rawEntity is String
           ? EntityId.values.asNameMap()[rawEntity] ?? EntityId.NULL

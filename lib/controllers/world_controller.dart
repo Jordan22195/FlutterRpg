@@ -247,6 +247,39 @@ class WorldController extends ChangeNotifier {
   /// False is what turns the action button into a travel button.
   bool get isViewingCurrentZone => viewedZoneId == currentZoneId;
 
+  // ---- the map's colour preview ----
+
+  /// The zone picked on the world map, whose palette the whole app wears
+  /// while the map is the screen in view. UI state only: never saved.
+  ZoneId? _mapPreviewZone;
+
+  /// Whether the world map itself is on screen — its tab is showing and
+  /// nothing is pushed over it. Kept by the shell, which owns both facts.
+  bool _mapInView = false;
+
+  /// The zone whose palette the app is drawn in: the map's picked zone
+  /// while the map is in view, otherwise the zone the screens are showing.
+  /// Gating on [_mapInView] rather than clearing the pick means leaving the
+  /// map hands the colours back, and coming back with the same zone still
+  /// picked puts them on again.
+  ZoneId get themeZoneId =>
+      (_mapInView ? _mapPreviewZone : null) ?? viewedZoneId;
+
+  /// The map's selection changed: [zone] is the zone now picked, or null for
+  /// nothing (or a landmark, which belongs to no zone).
+  void previewOnMap(ZoneId? zone) {
+    if (_mapPreviewZone == zone) return;
+    _mapPreviewZone = zone;
+    if (_mapInView) notifyListeners();
+  }
+
+  /// See [_mapInView].
+  void setMapInView(bool inView) {
+    if (_mapInView == inView) return;
+    _mapInView = inView;
+    if (_mapPreviewZone != null) notifyListeners();
+  }
+
   /// Points the screens at [zone] without moving the player. Deliberately
   /// does not touch the running action: looking somewhere is free.
   void setViewedZone(ZoneId zone) {
@@ -262,31 +295,20 @@ class WorldController extends ChangeNotifier {
   }
 
   /// The zone graph's edges, for drawing the travel paths on the map.
-  List<(ZoneId, ZoneId, double)> travelEdges() {
+  List<(ZoneId, ZoneId)> travelEdges() {
     return ZoneTravelGraph.travelEdges();
   }
 
-  /// Stamina cost to travel from the player's zone to [target], summed
-  /// along the path through the zone tree.
-  double travelCostTo(ZoneId target) {
-    return _travelGraph.travelCost(_playerState.currentZoneId, target);
-  }
-
-  bool canAffordTravelTo(ZoneId target) {
-    return _playerState.stamina >= travelCostTo(target);
+  /// Whether any road leads from the player's zone to [target]. Walking it
+  /// is free — only boosting the walk spends stamina.
+  bool canReach(ZoneId target) {
+    return ZoneTravelGraph.isReachable(_playerState.currentZoneId, target);
   }
 
   /// Hops along the cheapest route from the player's zone to [target]; 0 when
   /// they are already there, -1 when unreachable.
   int travelHopsTo(ZoneId target) {
     return ZoneTravelGraph.travelHops(_playerState.currentZoneId, target);
-  }
-
-  /// Whether the player's stamina covers walking [from] -> [to] in one hop.
-  /// This is about right now, not about the road: it flips back as stamina
-  /// recovers, which is what makes an unaffordable edge worth marking.
-  bool canAffordHop(ZoneId from, ZoneId to) {
-    return _playerState.stamina >= ZoneTravelGraph.edgeCost(from, to);
   }
 
   /// The player's Exploration level, for stating an unmet zone gate.
@@ -345,23 +367,22 @@ class WorldController extends ChangeNotifier {
   }
 
   /// How long the trip to [target] takes before the speed stat and any boost
-  /// cut it. Its own number, not a function of what the trip costs.
+  /// cut it.
   Duration travelTimeTo(ZoneId target) {
     return _travelGraph.travelTime(_playerState.currentZoneId, target);
   }
 
   /// Whether the player could set off for [target] right now: the gates are
-  /// met, a road exists, and the stamina covers it.
+  /// met and a road exists. Stamina never stands in the way: walking is
+  /// free, and only boosting the walk spends it.
   bool canTravelTo(ZoneId target) {
     if (target == _playerState.currentZoneId) return false;
     if (!meetsZoneRequirement(target)) return false;
-    final cost = travelCostTo(target);
-    return !cost.isInfinite && _playerState.stamina >= cost;
+    return canReach(target);
   }
 
-  /// Moves the player to [target], paying the path's stamina cost.
-  /// Returns false when the level requirement isn't met or stamina can't
-  /// cover the cost. Re-entering the current zone is free.
+  /// Moves the player to [target] at once. Returns false when the level
+  /// requirement isn't met or no road leads there. Travel is free.
   ///
   /// The instant trip. The one the player takes with the travel button runs
   /// on the action loop instead — see [startTravelTo] — and both end in
@@ -371,14 +392,13 @@ class WorldController extends ChangeNotifier {
     if (target == _playerState.currentZoneId) return true;
     if (!canTravelTo(target)) return false;
 
-    _playerDataService.changeStamina(-travelCostTo(target), _playerState);
     _arriveAt(target);
     return true;
   }
 
   /// Puts the player in [target] and settles what the move means for
-  /// anything that was running. Everything after the fare is paid, so the
-  /// instant trip and the walked one arrive the same way.
+  /// anything that was running. The instant trip and the walked one arrive
+  /// the same way.
   void _arriveAt(ZoneId target) {
     // an explore runs on whatever zone the player is standing in, so it
     // follows them: walking into a new zone carries the session over rather
@@ -415,7 +435,8 @@ class WorldController extends ChangeNotifier {
   /// Where the running walk is headed; null when nothing is walking.
   ZoneId? get travelTarget => isTravelling ? _travelTarget : null;
 
-  /// Pays for the trip to [target] up front and starts walking it.
+  /// Starts walking to [target]. The walk itself is free; holding the button
+  /// boosts it, and the boost is what spends stamina.
   ///
   /// Getting there is the whole of it. Arriving does not start whatever the
   /// screen was showing, held button or not: a trip is a decision, and what
@@ -431,17 +452,14 @@ class WorldController extends ChangeNotifier {
       return true;
     }
 
-    // changing your mind about where you were going. the trip in progress is
-    // given up and its fare handed back before the new one is priced, so
-    // turning around is not charged twice — and so the new trip is priced
-    // against the stamina the old one was holding.
+    // changing your mind about where you were going: the trip in progress
+    // is given up and the new one starts from where the player still stands
     if (isTravelling) cancelTravel();
 
     if (!canTravelTo(target)) return false;
 
     _actionTimingController.stop();
 
-    _playerDataService.changeStamina(-travelCostTo(target), _playerState);
     _travelTarget = target;
 
     // walking offers no stance, and the road has no picker to put one back,
@@ -463,19 +481,14 @@ class WorldController extends ChangeNotifier {
     return true;
   }
 
-  /// Gives up on a trip and hands the fare back. The player never left, so
-  /// the refund is the same cost the departure charged.
+  /// Gives up on a trip. The player never left, so they are still standing
+  /// where they set out from. Any stamina a boost already burned on the way
+  /// stays spent: it bought speed while the walk ran.
   ///
   /// This is what a relaunch mid-walk does: a walk the player wasn't there
-  /// for is not replayed, and is not worth their stamina either. [target] is
-  /// for exactly that case — a fresh session has no trip in memory, only the
-  /// destination the save recorded, so the caller supplies it.
-  void cancelTravel({ZoneId? target}) {
-    final destination = target ?? _travelTarget;
+  /// for is not replayed.
+  void cancelTravel() {
     _travelTarget = null;
-    if (destination != null) {
-      _playerDataService.changeStamina(travelCostTo(destination), _playerState);
-    }
     _actionTimingController.stop();
     notifyListeners();
   }
@@ -505,9 +518,8 @@ class WorldController extends ChangeNotifier {
   }
 
   /// Watches for a trip being displaced by something else taking the loop —
-  /// the stop button, or an action started from another screen. The fare was
-  /// paid at the door for a walk that is not going to happen, so it goes
-  /// back. Nothing here fires for an arrival: [doTravelArrive] lets go of
+  /// the stop button, or an action started from another screen — so the
+  /// trip is let go of. Nothing here fires for an arrival: [doTravelArrive] lets go of
   /// the trip before it stops the loop.
   ///
   /// Wired to the timing loop in [GameSessionFactory], the way the encounter

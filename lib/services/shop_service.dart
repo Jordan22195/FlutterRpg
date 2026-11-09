@@ -170,19 +170,68 @@ class ShopService {
     return true;
   }
 
+  /// How many of [entry] the player could buy right now: the whole slot, or
+  /// as many as their coins cover if that is fewer.
+  int affordableCount(
+    ShopStockSlot entry,
+    ShopEntityDefinition def,
+    InventoryData inventoryState,
+  ) {
+    if (entry.count <= 0) return 0;
+    final price = buyPrice(entry.itemId, def);
+    // a free item is the whole slot, whatever is in the purse
+    if (price <= 0) return entry.count;
+    final coins = _inventoryService.getItemCount(inventoryState, ItemId.COINS);
+    final canPay = coins ~/ price;
+    return canPay < entry.count ? canPay : entry.count;
+  }
+
+  /// Buys up to [count] units of [entry], one at a time at the unit price,
+  /// and returns how many were bought — fewer when the slot or the purse
+  /// runs out first.
+  int buyItems(
+    ShopEntity shop,
+    ShopStockSlot entry,
+    ShopEntityDefinition def,
+    InventoryData inventoryState,
+    int count,
+  ) {
+    var bought = 0;
+    while (bought < count && buyItem(shop, entry, def, inventoryState)) {
+      bought++;
+    }
+    return bought;
+  }
+
   /// Sells one unit of the stackable [itemId] for its value in coins.
   /// Returns false when the player has none (or tries to sell coins).
-  bool sellItem(ItemId itemId, InventoryData inventoryState) {
-    if (itemId == ItemId.COINS) return false;
-    if (_inventoryService.getItemCount(inventoryState, itemId) <= 0) {
-      return false;
-    }
+  bool sellItem(ItemId itemId, InventoryData inventoryState) =>
+      sellItems(itemId, 1, inventoryState) > 0;
 
-    _inventoryService.removeItems(inventoryState, itemId, 1);
+  /// Sells up to [count] units of the stackable [itemId], each for its value
+  /// in coins, and returns how many went. Asking for more than the player
+  /// holds sells what there is; coins are never sold.
+  int sellItems(ItemId itemId, int count, InventoryData inventoryState) {
+    if (itemId == ItemId.COINS || count <= 0) return 0;
+    final held = _inventoryService.getItemCount(inventoryState, itemId);
+    final sold = count < held ? count : held;
+    if (sold <= 0) return 0;
+
+    _inventoryService.removeItems(inventoryState, itemId, sold);
     _inventoryService.addItems(inventoryState, [
-      ObjectStack(id: ItemId.COINS, count: sellPrice(itemId)),
+      ObjectStack(id: ItemId.COINS, count: sellPrice(itemId) * sold),
     ]);
-    return true;
+    return sold;
+  }
+
+  /// Sells every piece in the equipment stack [instanceId], each for its
+  /// value, and returns how many went.
+  int sellEquipmentStack(String instanceId, InventoryData inventoryState) {
+    var sold = 0;
+    while (sellEquipment(instanceId, inventoryState)) {
+      sold++;
+    }
+    return sold;
   }
 
   /// Sells one piece off the equipment stack [instanceId] for its value.

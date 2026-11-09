@@ -372,8 +372,7 @@ class ActionOrTravelButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final world = context.watch<WorldController>();
-    // stamina decides whether the trip can be afforded, and it moves every
-    // frame, so the button has to be re-priced as it does
+    // the zone gates read the player's levels, which move as they train
     context.watch<PlayerDataController>();
 
     if (world.isViewingCurrentZone) {
@@ -390,7 +389,7 @@ class ActionOrTravelButton extends StatelessWidget {
     final target = world.viewedZoneId;
     return MomentumPrimaryButton(
       // a trip already under way keeps the button live, so holding it keeps
-      // boosting the walk; otherwise it greys out until the stamina is there
+      // boosting the walk; otherwise it greys out only for a gate or no road
       enabled: world.travelTarget == target || world.canTravelTo(target),
       label: 'Travel',
       color: context.gameColors.travel,

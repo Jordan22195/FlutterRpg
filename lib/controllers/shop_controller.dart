@@ -80,6 +80,31 @@ class ShopController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // whether a buy button buys the whole slot (as much of it as the purse
+  // covers) rather than one unit. held across counters, not saved
+  bool _buyAll = false;
+
+  bool buyAllMode() => _buyAll;
+
+  void setBuyAllMode(bool on) {
+    if (on == _buyAll) return;
+    _buyAll = on;
+    notifyListeners();
+  }
+
+  // whether a sell button sells the whole stack rather than one unit. like
+  // the sort, it lives here so it holds from one counter to the next, and
+  // like the sort it is not saved
+  bool _sellAll = false;
+
+  bool sellAllMode() => _sellAll;
+
+  void setSellAllMode(bool on) {
+    if (on == _sellAll) return;
+    _sellAll = on;
+    notifyListeners();
+  }
+
   List<ShopStockSlot> stock() {
     return _shopService.sortedForDisplay(
       _currentShop()?.stock ?? const [],
@@ -126,12 +151,55 @@ class ShopController extends ChangeNotifier {
     return bought;
   }
 
+  /// How many of [entry] a buy-all press would buy: the whole slot, or as
+  /// many as the player's coins cover.
+  int affordableCount(ShopStockSlot entry) {
+    final def = _shopDefinition(_playerState.currentEntityViewId);
+    if (def == null) return 0;
+    return _shopService.affordableCount(entry, def, _inventoryState);
+  }
+
+  /// Buys as much of [entry] as the player can afford, up to the whole slot.
+  bool buyAll(ShopStockSlot entry) {
+    final shop = _currentShop();
+    final def = _shopDefinition(_playerState.currentEntityViewId);
+    if (shop == null || def == null) return false;
+
+    final bought = _shopService.buyItems(
+      shop,
+      entry,
+      def,
+      _inventoryState,
+      entry.count,
+    );
+    if (bought > 0) notifyListeners();
+    return bought > 0;
+  }
+
   bool sellOne(ItemId itemId) {
     final sold = _shopService.sellItem(itemId, _inventoryState);
     if (sold) {
       notifyListeners();
     }
     return sold;
+  }
+
+  /// Sells the player's whole stack of [itemId].
+  bool sellAll(ItemId itemId) {
+    final sold = _shopService.sellItems(
+      itemId,
+      _inventoryState.itemMap[itemId] ?? 0,
+      _inventoryState,
+    );
+    if (sold > 0) notifyListeners();
+    return sold > 0;
+  }
+
+  /// Sells every piece in the equipment stack [instanceId].
+  bool sellAllEquipment(String instanceId) {
+    final sold = _shopService.sellEquipmentStack(instanceId, _inventoryState);
+    if (sold > 0) notifyListeners();
+    return sold > 0;
   }
 
   bool sellOneEquipment(String instanceId) {

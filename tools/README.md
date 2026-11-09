@@ -176,26 +176,24 @@ Four kinds of asset, split by path, each with its own style and size:
 | `assets/icons/skills/**` | skill icons | 32×32 | `rd_fast__mc_item` |
 | `assets/icons/**` | item icons | 32×32 | `rd_fast__mc_item` |
 | `assets/images/entities/**` | entity art | 128×128 | `rd_fast__game_asset` |
-| `assets/images/zones/**`, `assets/images/dungeons/**` | scene art | — | *not chosen yet* |
+| `assets/images/zones/**`, `assets/images/dungeons/**` | scene art | 128×128 | `rd_fast__retro` |
 
 Skill icons share the item-icon style but stay a separate kind, so you can list,
 filter and re-roll the whole skills row as a set (`--kind skills`) — they have to
 read as one family in the UI in a way the item icons don't.
 
-**Scene art is deliberately unconfigured.** A zone header or dungeon splash is a
-*place*, not a subject on a plain background, and no style has been settled on
-for it. Those assets are listed but never generated — a normal run skips them
-with a note, and `--kind scenes` exits 2 until you pass both `--scene-style` and
-`--scene-size`:
+**Scene art keeps its background.** A zone header or dungeon splash is a
+*place*, not a subject on a plain background, so it is the one kind that does
+not ask the API for transparency (`REMOVE_BG` at the top of the script). It is
+drawn with RD Fast's retro style (`rd_fast__retro`, which accepts 64–384px) at
+128×128. Try another style or size without editing the script:
 
 ```bash
 python3 tools/generate_assets_rd.py --kind scenes \
     --scene-style rd_plus__environment --scene-size 256 --dry-run
 ```
 
-Once you've picked one, set `SCENE_STYLE` / `SCENE_SIZE` at the top of the
-script so it becomes the default. Anything outside all three prefixes is
-reported by `--list` and never generated.
+Anything outside all four prefixes is reported by `--list` and never generated.
 
 ```bash
 pip install -r tools/requirements.txt
@@ -213,7 +211,8 @@ python3 tools/generate_assets_rd.py --force --only ruby_ring   # re-roll one
 style+size in the batch, so it validates each combination and prints a real
 per-kind and total price before you spend anything.
 
-Other flags: `--kind`, `--seed`, `--no-remove-bg`, `--sleep`, `--overrides`,
+Other flags: `--kind`, `--seed`, `--no-remove-bg` (keep backgrounds on every
+kind, not just scenes), `--sleep`, `--overrides`,
 `--no-preflight`, and `--{icon,skill,entity,scene}-{style,size,suffix}`.
 
 ### Prompts
@@ -242,10 +241,9 @@ so a bare `"cadantine.png"` key would put "a bundle of leaves tied with twine"
 on the plant node too. The shipped file keys all of those by full path.
 
 Pre-filled: **every referenced asset** — all item icons, all 20 skill icons, all
-entity art, and the 5 scenes. Sets are written to stay coherent (copper gear all
+entity art, and every zone and dungeon scene. Sets are written to stay coherent (copper gear all
 warm orange, iron all cold grey, each gem's color reused by its ring and
 necklace, each herb's color matched between its item icon and its plant node).
-The scene prompts are written but unused until a scene style is chosen.
 
 ## generate_assets.py
 

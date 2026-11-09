@@ -75,6 +75,12 @@ class SaveSlotController extends ChangeNotifier {
   }
 
   /// Writes [save] into its slot and refreshes the slot's summary.
+  /// Keeps a copy of [raw], the active slot's save that failed to load, out
+  /// of the way of the new game the bootstrap is about to start in its place.
+  /// Without it the first autosave would overwrite the player's save for good.
+  Future<void> preserveUnreadable(Map<String, dynamic> raw) =>
+      _files.preserveUnreadable(activeSlotId, raw);
+
   Future<void> writeSave(SaveGameData save) async {
     final info = _index.slot(save.slotId);
     if (info != null) {

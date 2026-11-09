@@ -48,8 +48,8 @@ void main() {
       // and it is not free the way a dev zone is
       expect(ZoneTravelGraph.isFreeZone(ZoneId.DARKWOOD_FOREST), isFalse);
       expect(
-        graph.travelCost(ZoneId.SOUTH_HAVEN, ZoneId.DARKWOOD_FOREST),
-        greaterThan(0),
+        graph.travelTime(ZoneId.SOUTH_HAVEN, ZoneId.DARKWOOD_FOREST),
+        greaterThan(Duration.zero),
       );
     });
 

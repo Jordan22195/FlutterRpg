@@ -79,7 +79,7 @@ void main() {
     // restock filled the shelf with 10 items (the lazy ListView only
     // builds the visible subset, so assert stock via the controller)
     expect(session.shopController.stock().length, 10);
-    final buyButtons = find.textContaining('Buy ');
+    final buyButtons = find.textContaining(RegExp(r'^Buy \d'));
     expect(buyButtons, findsWidgets);
 
     final coinsBeforeBuy = session.shopController.playerCoins();
@@ -187,7 +187,7 @@ void main() {
     // put, sold out, rather than sliding the next one under the finger
     session.shopController.stock().first.count = 50;
 
-    final buyButtons = find.textContaining('Buy ');
+    final buyButtons = find.textContaining(RegExp(r'^Buy \d'));
     await tester.ensureVisible(buyButtons.first);
     await tester.pumpAndSettle();
 
@@ -260,7 +260,7 @@ void main() {
     entry.count = 500;
     final price = session.shopController.buyPrice(entry.itemId);
 
-    final buyButtons = find.textContaining('Buy ');
+    final buyButtons = find.textContaining(RegExp(r'^Buy \d'));
     await tester.ensureVisible(buyButtons.first);
     await tester.pumpAndSettle();
 
@@ -440,6 +440,147 @@ void main() {
     await tester.pump();
     expect(find.text('Copper Ore'), findsNothing);
     expect(save.inventoryData.itemMap[ItemId.LOGS], 50);
+
+    session.dispose();
+  });
+
+  testWidgets('the sell-all toggle sells a whole stack in one press', (
+    tester,
+  ) async {
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final save = factory.newGame(catalogs);
+    final session = factory.create(
+      save: save,
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+    registerCatalogIconResolvers();
+    EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
+
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    save.inventoryData.itemMap[ItemId.COINS] = 0;
+    save.inventoryData.itemMap[ItemId.COPPER_ORE] = 5;
+    save.inventoryData.itemMap[ItemId.LOGS] = 50;
+    save.playerData.currentZoneId = ZoneId.DEV_FOREST;
+    save.playerData.currentEntityViewId = EntityId.TRADING_POST;
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<WorldController>.value(
+            value: session.worldController,
+          ),
+          ChangeNotifierProvider<ShopController>.value(
+            value: session.shopController,
+          ),
+          ChangeNotifierProvider<InventoryController>.value(
+            value: session.inventoryController,
+          ),
+        ],
+        child: const MaterialApp(home: Scaffold(body: ShopScreen())),
+      ),
+    );
+    await tester.pump();
+
+    final price = session.shopController.sellPrice(ItemId.COPPER_ORE);
+    Finder rowOf(String name) =>
+        find.ancestor(of: find.text(name), matching: find.byType(Card)).first;
+
+    // off by default: a press sells one
+    final toggle = find.byKey(const ValueKey('shop-sell-all-toggle'));
+    expect(tester.widget<Switch>(toggle).value, isFalse);
+    expect(
+      find.descendant(
+        of: rowOf('Copper Ore'),
+        matching: find.text('Sell ${price}c'),
+      ),
+      findsOneWidget,
+    );
+
+    // on: the button prices the whole stack...
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await tester.pump();
+    final sellAll = find.descendant(
+      of: rowOf('Copper Ore'),
+      matching: find.text('Sell all ${price * 5}c'),
+    );
+    expect(sellAll, findsOneWidget);
+
+    // ...and one press sells all of it, and only it
+    await tester.tap(sellAll);
+    await tester.pump();
+    expect(save.inventoryData.itemMap[ItemId.COPPER_ORE] ?? 0, 0);
+    expect(save.inventoryData.itemMap[ItemId.COINS], price * 5);
+    expect(save.inventoryData.itemMap[ItemId.LOGS], 50);
+
+    session.dispose();
+  });
+
+  testWidgets('the buy-all toggle buys a whole slot in one press', (
+    tester,
+  ) async {
+    final factory = GameSessionFactory();
+    final catalogs = factory.catalog1();
+    final save = factory.newGame(catalogs);
+    final session = factory.create(
+      save: save,
+      catalogs: catalogs,
+      vsync: const TestVSync(),
+    );
+    registerCatalogIconResolvers();
+    EnumImageProviderLookup.register<SkillId>(SkillController.imageProviderFor);
+
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    save.inventoryData.itemMap[ItemId.COINS] = 10000000;
+    save.playerData.currentZoneId = ZoneId.DEV_FOREST;
+    save.playerData.currentEntityViewId = EntityId.TRADING_POST;
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<WorldController>.value(
+            value: session.worldController,
+          ),
+          ChangeNotifierProvider<ShopController>.value(
+            value: session.shopController,
+          ),
+          ChangeNotifierProvider<InventoryController>.value(
+            value: session.inventoryController,
+          ),
+        ],
+        child: const MaterialApp(home: Scaffold(body: ShopScreen())),
+      ),
+    );
+    await tester.pump();
+
+    final shop = session.shopController;
+    final entry = shop.stock().first;
+    final slot = entry.count;
+    final price = shop.buyPrice(entry.itemId);
+    final coins = shop.playerCoins();
+    expect(slot, greaterThan(0));
+
+    final toggle = find.byKey(const ValueKey('shop-buy-all-toggle'));
+    expect(tester.widget<Switch>(toggle).value, isFalse);
+
+    // on: the first row prices the whole slot, and one press buys it all
+    await tester.tap(toggle);
+    await tester.pump();
+    final buyAll = find.text('Buy all ${price * slot}c').first;
+    expect(buyAll, findsOneWidget);
+    await tester.tap(buyAll);
+    await tester.pump();
+
+    expect(entry.count, 0);
+    expect(shop.playerCoins(), coins - price * slot);
 
     session.dispose();
   });

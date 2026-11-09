@@ -186,6 +186,206 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     gatherTintBorder: Color(0xFF1F4A52),
   );
 
+  /// South Haven: the slate and plum of the stone cottages in shade, the
+  /// terracotta roofs as the accent.
+  static const southHaven = ZonePalette(
+    bg: Color(0xFF0E0D11),
+    surface: Color(0xFF19161E),
+    surfaceSunken: Color(0xFF141118),
+    raised: Color(0xFF28242F),
+    track: Color(0xFF211E27),
+    border: Color(0xFF24202A),
+    borderStrong: Color(0xFF35303D),
+    borderOverArt: Color(0xFF45404D),
+    divider: Color(0xFF201C26),
+    text: Color(0xFFE5E1EB),
+    textMuted: Color(0xFFA6A1AF),
+    textSubtitle: Color(0xFFBEB9C6),
+    textNavInactive: Color(0xFF96919F),
+    chevron: Color(0xFF7F7A87),
+    accent: Color(0xFFE89464),
+    onAccent: Color(0xFF1C0F07),
+    accentLip: Color(0xFFA0572E),
+    titleShadow: Color(0xFF070609),
+    gatherTintFill: Color(0xFF161E22),
+    gatherTintBorder: Color(0xFF2F3A3F),
+  );
+
+  /// Maplewater Lake: the deep blue of the lake, the maple reds on the
+  /// far shore as the accent.
+  static const maplewater = ZonePalette(
+    bg: Color(0xFF0B1013),
+    surface: Color(0xFF131B21),
+    surfaceSunken: Color(0xFF0F151A),
+    raised: Color(0xFF1F2B34),
+    track: Color(0xFF1A242B),
+    border: Color(0xFF1C262E),
+    borderStrong: Color(0xFF2A3943),
+    borderOverArt: Color(0xFF3A4953),
+    divider: Color(0xFF18222A),
+    text: Color(0xFFDCE8F0),
+    textMuted: Color(0xFF9BAAB5),
+    textSubtitle: Color(0xFFB3C2CC),
+    textNavInactive: Color(0xFF8B9AA5),
+    chevron: Color(0xFF74838D),
+    accent: Color(0xFFF2697C),
+    onAccent: Color(0xFF1E0609),
+    accentLip: Color(0xFFAF283B),
+    titleShadow: Color(0xFF05080A),
+    gatherTintFill: Color(0xFF122126),
+    gatherTintBorder: Color(0xFF283F46),
+  );
+
+  /// Forest Mine: the tunnel's indigo dark, a lantern's amber as the
+  /// accent.
+  static const mine = ZonePalette(
+    bg: Color(0xFF0C0B13),
+    surface: Color(0xFF151420),
+    surfaceSunken: Color(0xFF101019),
+    raised: Color(0xFF222033),
+    track: Color(0xFF1C1B2A),
+    border: Color(0xFF1E1D2D),
+    borderStrong: Color(0xFF2D2B42),
+    borderOverArt: Color(0xFF3D3B52),
+    divider: Color(0xFF1A1929),
+    text: Color(0xFFDEDDEF),
+    textMuted: Color(0xFF9E9CB4),
+    textSubtitle: Color(0xFFB6B4CB),
+    textNavInactive: Color(0xFF8E8CA4),
+    chevron: Color(0xFF77758C),
+    accent: Color(0xFFEBB75E),
+    onAccent: Color(0xFF1D1507),
+    accentLip: Color(0xFFA2762A),
+    titleShadow: Color(0xFF06050A),
+    gatherTintFill: Color(0xFF131F25),
+    gatherTintBorder: Color(0xFF293C45),
+  );
+
+  /// Stormgrass Prairie: the storm front's blue-teal, the golden tallgrass
+  /// as the accent.
+  static const prairie = ZonePalette(
+    bg: Color(0xFF0B1113),
+    surface: Color(0xFF131D21),
+    surfaceSunken: Color(0xFF0F171A),
+    raised: Color(0xFF202D33),
+    track: Color(0xFF1A262B),
+    border: Color(0xFF1C282E),
+    borderStrong: Color(0xFF2B3B42),
+    borderOverArt: Color(0xFF3B4B52),
+    divider: Color(0xFF18242A),
+    text: Color(0xFFDCEAF0),
+    textMuted: Color(0xFF9CADB4),
+    textSubtitle: Color(0xFFB4C4CB),
+    textNavInactive: Color(0xFF8C9DA4),
+    chevron: Color(0xFF75858C),
+    accent: Color(0xFFF2C94C),
+    onAccent: Color(0xFF1E1806),
+    accentLip: Color(0xFFA38323),
+    titleShadow: Color(0xFF05080A),
+    gatherTintFill: Color(0xFF122226),
+    gatherTintBorder: Color(0xFF294045),
+  );
+
+  /// Iron Gate City: the night-purple shadows behind the brick, the gold
+  /// dome as the accent.
+  static const ironGateCity = ZonePalette(
+    bg: Color(0xFF110C12),
+    surface: Color(0xFF1E1420),
+    surfaceSunken: Color(0xFF181019),
+    raised: Color(0xFF302132),
+    track: Color(0xFF281B2A),
+    border: Color(0xFF2B1D2D),
+    borderStrong: Color(0xFF3E2C41),
+    borderOverArt: Color(0xFF4E3C51),
+    divider: Color(0xFF271929),
+    text: Color(0xFFECDEEE),
+    textMuted: Color(0xFFB09DB3),
+    textSubtitle: Color(0xFFC7B5CA),
+    textNavInactive: Color(0xFFA08DA3),
+    chevron: Color(0xFF88768B),
+    accent: Color(0xFFE9CF8C),
+    onAccent: Color(0xFF1C1608),
+    accentLip: Color(0xFFAF8E39),
+    titleShadow: Color(0xFF09050A),
+    gatherTintFill: Color(0xFF141424),
+    gatherTintBorder: Color(0xFF2A2A44),
+  );
+
+  /// Ironroot Hills: the maroon of the rock walls in shade, rust-red iron
+  /// as the accent.
+  static const ironroot = ZonePalette(
+    bg: Color(0xFF130B0D),
+    surface: Color(0xFF201417),
+    surfaceSunken: Color(0xFF191012),
+    raised: Color(0xFF332025),
+    track: Color(0xFF2A1B1F),
+    border: Color(0xFF2D1D21),
+    borderStrong: Color(0xFF422B31),
+    borderOverArt: Color(0xFF523B41),
+    divider: Color(0xFF29191D),
+    text: Color(0xFFEFDDE2),
+    textMuted: Color(0xFFB49CA2),
+    textSubtitle: Color(0xFFCBB4BA),
+    textNavInactive: Color(0xFFA48C92),
+    chevron: Color(0xFF8C757B),
+    accent: Color(0xFFEA7452),
+    onAccent: Color(0xFF1D0C07),
+    accentLip: Color(0xFF9C4228),
+    titleShadow: Color(0xFF0A0506),
+    gatherTintFill: Color(0xFF131C25),
+    gatherTintBorder: Color(0xFF293745),
+  );
+
+  /// Copperdust Flats: burnt-umber desert shadow, the setting sun's
+  /// copper gold as the accent.
+  static const copperdust = ZonePalette(
+    bg: Color(0xFF130E0B),
+    surface: Color(0xFF201714),
+    surfaceSunken: Color(0xFF191310),
+    raised: Color(0xFF332620),
+    track: Color(0xFF2A1F1B),
+    border: Color(0xFF2D221D),
+    borderStrong: Color(0xFF42322B),
+    borderOverArt: Color(0xFF52423B),
+    divider: Color(0xFF291E19),
+    text: Color(0xFFEFE2DD),
+    textMuted: Color(0xFFB4A39C),
+    textSubtitle: Color(0xFFCBBBB4),
+    textNavInactive: Color(0xFFA4938C),
+    chevron: Color(0xFF8C7C75),
+    accent: Color(0xFFFCA43C),
+    onAccent: Color(0xFF201304),
+    accentLip: Color(0xFFA7671A),
+    titleShadow: Color(0xFF0A0705),
+    gatherTintFill: Color(0xFF132225),
+    gatherTintBorder: Color(0xFF294045),
+  );
+
+  /// Redwall Bluffs: the wine-red of the canyon walls, the river's teal
+  /// far below as the accent.
+  static const redwall = ZonePalette(
+    bg: Color(0xFF130B0E),
+    surface: Color(0xFF211319),
+    surfaceSunken: Color(0xFF1A0F14),
+    raised: Color(0xFF332028),
+    track: Color(0xFF2B1A21),
+    border: Color(0xFF2E1C24),
+    borderStrong: Color(0xFF422B35),
+    borderOverArt: Color(0xFF523B45),
+    divider: Color(0xFF2A1820),
+    text: Color(0xFFF0DCE5),
+    textMuted: Color(0xFFB49CA6),
+    textSubtitle: Color(0xFFCBB4BE),
+    textNavInactive: Color(0xFFA48C96),
+    chevron: Color(0xFF8C757F),
+    accent: Color(0xFF72D8C4),
+    onAccent: Color(0xFF0A1A17),
+    accentLip: Color(0xFF3B9281),
+    titleShadow: Color(0xFF0A0507),
+    gatherTintFill: Color(0xFF122526),
+    gatherTintBorder: Color(0xFF294545),
+  );
+
   @override
   ZonePalette copyWith({
     Color? bg,

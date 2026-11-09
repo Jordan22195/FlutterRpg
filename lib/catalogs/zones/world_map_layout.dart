@@ -15,7 +15,7 @@ import 'package:rpg/catalogs/zones/zone_id.dart';
 /// that to stay on screen. What the layout does owe you is room — every pair
 /// of centres here is at least [kMinNodeSpacing] apart, so a token plus its
 /// two-line label never lands on a neighbour.
-const Size kWorldMapSize = Size(800, 760);
+const Size kWorldMapSize = Size(960, 760);
 
 /// Floor on centre-to-centre distance between any two nodes.
 const double kMinNodeSpacing = 100;
@@ -70,7 +70,9 @@ class LandmarkNode extends MapNode {
 /// the meadow in the north, the road running south through the forest to
 /// South Haven, which forks below the town — south-west into the darkwood,
 /// south-east down to the mine — with the swamp on the wet ground east of
-/// the town and the foothills rising beyond it, the goblin warren off to
+/// the town and the prairie rolling out beyond it to Iron Gate City,
+/// at the foot of Ironroot Hills in the far east, the desert flats south of
+/// the prairie with the bluffs beyond them, the goblin warren off to
 /// the east of the road, and the dev zones parked well clear of the real
 /// map.
 const List<MapNode> kWorldMapNodes = [
@@ -83,6 +85,10 @@ const List<MapNode> kWorldMapNodes = [
   ZoneNode(ZoneId.SWAMP, Offset(430, 400)),
   ZoneNode(ZoneId.MAPLEWATER_LAKE, Offset(520, 330)),
   ZoneNode(ZoneId.FOOTHILLS, Offset(620, 480)),
+  ZoneNode(ZoneId.IRON_GATE_CITY, Offset(740, 500)),
+  ZoneNode(ZoneId.IRONROOT_HILLS, Offset(860, 440)),
+  ZoneNode(ZoneId.COPPERDUST_FLATS, Offset(620, 640)),
+  ZoneNode(ZoneId.REDWALL_BLUFFS, Offset(780, 670)),
   ZoneNode(ZoneId.DEV_FOREST, Offset(520, 200)),
   ZoneNode(ZoneId.DEV_DUNGEON_TESTING, Offset(620, 320)),
 ];

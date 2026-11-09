@@ -74,8 +74,7 @@ class CraftingState {
     // tolerated when missing: saves predating per-zone stations
     final rawCraftingZone = json['craftingZoneId'];
     if (rawCraftingZone is String) {
-      state.craftingZoneId =
-          ZoneId.values.asNameMap()[rawCraftingZone] ?? ZoneId.NULL;
+      state.craftingZoneId = ZoneId.byName(rawCraftingZone) ?? ZoneId.NULL;
     }
 
     // tolerated when missing: the oldest saves stored a single global

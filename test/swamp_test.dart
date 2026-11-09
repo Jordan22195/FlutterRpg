@@ -39,8 +39,8 @@ void main() {
       // and it is not free the way a dev zone is
       expect(ZoneTravelGraph.isFreeZone(ZoneId.SWAMP), isFalse);
       expect(
-        graph.travelCost(ZoneId.SOUTH_HAVEN, ZoneId.SWAMP),
-        greaterThan(0),
+        graph.travelTime(ZoneId.SOUTH_HAVEN, ZoneId.SWAMP),
+        greaterThan(Duration.zero),
       );
     });
 

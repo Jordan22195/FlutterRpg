@@ -92,8 +92,19 @@ class _MainShellState extends State<MainShell> {
 
     // route changes can fire while the navigator is building; defer
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      setState(() {});
+      _syncMapInView();
     });
+  }
+
+  // the map is in view when its tab is showing and nothing named is pushed
+  // over its root (a dialog is unnamed and leaves the map on screen). while
+  // it is, the app wears the colours of the zone picked on it
+  void _syncMapInView() {
+    context.read<WorldController>().setMapInView(
+      index == 0 && _mapTabObserver.namedRouteSettings.isEmpty,
+    );
   }
 
   @override
@@ -122,6 +133,7 @@ class _MainShellState extends State<MainShell> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _restoreMapTabStack();
+      _syncMapInView();
       // after the stack: the dungeon restore above pushes its card's
       // screen but deliberately leaves it stopped, and this is what starts
       // it - with the offline gap it was closed on still owed
@@ -194,6 +206,7 @@ class _MainShellState extends State<MainShell> {
       setState(() => index = 0);
       _navKeys[0].currentState?.popUntil((route) => route.isFirst);
       _captureUiState();
+      _syncMapInView();
       // a death while away is already the headline of the offline report,
       // which is about to be raised. one modal saying it is enough - the
       // unwinding above still has to happen either way.
@@ -449,6 +462,7 @@ class _MainShellState extends State<MainShell> {
           onTap: (i) {
             setState(() => index = i);
             _captureUiState();
+            _syncMapInView();
           },
           items: const [
             HearthNavItem(icon: Icons.map_outlined, label: 'Map'),

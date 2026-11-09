@@ -19,7 +19,10 @@ import 'package:rpg/widgets/progress_bars.dart';
 import 'package:rpg/widgets/map_edge_painter.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/map_node_token.dart';
-import 'package:rpg/widgets/recipe_card.dart';
+import 'package:rpg/widgets/art_header.dart';
+import 'package:rpg/theme/hearth_text.dart';
+import 'package:rpg/theme/zone_palette.dart';
+import 'package:rpg/widgets/hearth_nav_bar.dart';
 import 'support/gathering_tools.dart';
 
 // Fixed pumps (the app has periodic timers that never settle).
@@ -270,6 +273,63 @@ void main() {
       expect(find.byType(MapDetailPane), findsNothing);
     });
 
+    testWidgets('picking a zone recolours the map, bars and nav bar', (
+      tester,
+    ) async {
+      await pumpMap(tester);
+      ZonePalette? paletteAt(Finder f) =>
+          Theme.of(tester.element(f.first)).extension<ZonePalette>();
+      final map = find.byType(InteractiveViewer);
+      final bars = find.byType(ProgressBars);
+      final nav = find.byType(HearthNavBar);
+      final home = ZoneId.TUTORIAL_FARM.definition.palette;
+      final haven = ZoneId.SOUTH_HAVEN.definition.palette;
+
+      // nothing picked: everything wears the zone the player is in
+      for (final f in [map, bars, nav]) {
+        expect(paletteAt(f), home);
+      }
+
+      // a pick recolours the whole screen, not just the canvas
+      await select(tester, 'SOUTH_HAVEN');
+      for (final f in [map, bars, nav]) {
+        expect(paletteAt(f), haven);
+      }
+
+      // leaving the map tab hands the colours back...
+      await tester.tap(find.text('Skills'));
+      await settle(tester);
+      expect(paletteAt(nav), home);
+
+      // ...and coming back with the zone still picked puts them on again
+      await tester.tap(find.text('Map'));
+      await settle(tester);
+      expect(paletteAt(nav), haven);
+
+      // letting go of the pick hands them back for good
+      final farm = tester.getRect(tokenFor('TUTORIAL_FARM'));
+      await tester.tapAt(farm.center + const Offset(60, 55));
+      await settle(tester);
+      for (final f in [map, bars, nav]) {
+        expect(paletteAt(f), home);
+      }
+    });
+
+    testWidgets('entering the picked zone keeps its colours', (tester) async {
+      await pumpMap(tester);
+      await select(tester, 'SOUTH_HAVEN');
+      await tester.tap(find.text('Enter'));
+      await settle(tester);
+
+      // the explore screen wears the zone it shows, the same palette
+      expect(
+        Theme.of(
+          tester.element(find.byType(ExploreScreen)),
+        ).extension<ZonePalette>(),
+        ZoneId.SOUTH_HAVEN.definition.palette,
+      );
+    });
+
     testWidgets('it previews what is standing in the place', (tester) async {
       await pumpMap(tester);
       await select(tester, 'SOUTH_HAVEN');
@@ -380,12 +440,60 @@ void main() {
       expect(button.onPressed, isNull);
     });
 
-    testWidgets('it counts the hops, not just the stamina', (tester) async {
+    testWidgets('it counts the hops and states the walk time', (tester) async {
       await pumpMap(tester);
       await select(tester, 'SOUTH_HAVEN');
 
-      // farm >5> forest >10> haven
-      expect(find.text('2 hops · 15 stamina'), findsOneWidget);
+      // farm >2.5s> forest >5s> haven, and no stamina: walking is free
+      expect(find.text('2 hops · 7.5s walk'), findsOneWidget);
+    });
+
+    testWidgets('it is the zone banner: its art, title and colours', (
+      tester,
+    ) async {
+      await pumpMap(tester);
+      await select(tester, 'SOUTH_HAVEN');
+      final def = ZoneId.SOUTH_HAVEN.definition;
+      Finder inPane(Finder f) =>
+          find.descendant(of: find.byType(MapDetailPane), matching: f);
+
+      // the zone's scene art behind it, pixel-crisp
+      final art = tester.widget<Image>(inPane(find.byType(Image)).first);
+      expect((art.image as AssetImage).assetName, def.iconAsset);
+      expect(art.filterQuality, FilterQuality.none);
+
+      // the name in the same pixel title the zone screen wears
+      final title = tester.widget<Text>(inPane(find.text(def.name)));
+      expect(title.style?.fontFamily, HearthText.title.fontFamily);
+
+      // and the Enter button in the zone's own accent
+      final enter = tester.widget<ElevatedButton>(
+        inPane(find.byType(ElevatedButton)),
+      );
+      expect(
+        enter.style?.backgroundColor?.resolve(const <WidgetState>{}),
+        def.palette.accent,
+      );
+    });
+
+    testWidgets('a zone with a level gate shows it on a chip', (tester) async {
+      await pumpMap(tester);
+      await select(tester, 'SOUTHWOOD_FOREST');
+
+      expect(
+        find.descendant(
+          of: find.byType(MapDetailPane),
+          matching: find.byType(ArtHeaderChip),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel(
+          'Zone exploration level '
+          '${ZoneId.SOUTHWOOD_FOREST.definition.explorationLevel}',
+        ),
+        findsOneWidget,
+      );
     });
   });
 
@@ -811,52 +919,32 @@ void main() {
     });
   });
 
-  group('what the player can afford', () {
-    testWidgets('a trip you cannot afford is still a place worth reading', (
+  group('the roads', () {
+    testWidgets('an empty tank still opens every reachable place', (
       tester,
     ) async {
       await pumpMap(tester);
+      sessionOf(tester).saveGameData.playerData.stamina = 0;
+      await settle(tester);
 
-      // a new save starts on 10 stamina and South Haven is a 15 trip. the
-      // fare is out of reach, so the cost reddens — but the door stays open,
-      // because looking costs nothing and the travel button inside is the
-      // one that has to wait for stamina
       await select(tester, 'SOUTH_HAVEN');
-      expect(find.text('2 hops · 15 stamina'), findsOneWidget);
-      final shut = tester.widget<ElevatedButton>(
+      final open = tester.widget<ElevatedButton>(
         find.widgetWithText(ElevatedButton, 'Enter'),
       );
-      expect(shut.onPressed, isNotNull);
+      expect(open.onPressed, isNotNull);
     });
 
-    testWidgets('an unaffordable hop reddens, and clears as stamina returns', (
-      tester,
-    ) async {
+    testWidgets('each road is labelled with its walk time', (tester) async {
       await pumpMap(tester);
-      final player = sessionOf(tester).saveGameData.playerData;
 
-      // Baseline: a full tank clears every road on the map. Set it rather
-      // than relying on the starting 10 — the darkwood road south of South
-      // Haven costs 15, so a fresh player cannot afford the whole map.
-      player.stamina = 50;
-      await settle(tester);
-      expect(edgePainter(tester).edges.every((e) => e.affordable), isTrue);
-      expect(edgePainter(tester).warningColor, RecipeCard.missingMaterialColor);
-
-      player.stamina = 2;
-      await settle(tester);
-
-      // this is a fact about the player right now, so it lands on the road
-      // out of the zone the player is standing in
-      final broke = edgePainter(tester).edges.where((e) => !e.affordable);
-      expect(broke, isNotEmpty);
-
-      player.stamina = 50;
-      await settle(tester);
-      expect(edgePainter(tester).edges.every((e) => e.affordable), isTrue);
+      final farm = zoneNodeCenter(ZoneId.TUTORIAL_FARM)!;
+      final edge = edgePainter(
+        tester,
+      ).edges.firstWhere((e) => e.from == farm || e.to == farm);
+      expect(edge.time, const Duration(milliseconds: 2500));
     });
 
-    testWidgets('the cost badge leans toward the far end of the road', (
+    testWidgets('the time badge leans toward the far end of the road', (
       tester,
     ) async {
       await pumpMap(tester);

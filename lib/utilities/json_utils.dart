@@ -75,6 +75,8 @@ class JsonUtils {
   }
 
   static ZoneId parseZoneId(String rawValue, {String fieldName = 'zoneId'}) {
+    final known = ZoneId.byName(rawValue);
+    if (known != null) return known;
     return parseEnumByName(ZoneId.values, rawValue, fieldName);
   }
 

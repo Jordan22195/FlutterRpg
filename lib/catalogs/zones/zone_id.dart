@@ -139,6 +139,7 @@ enum ZoneId {
   SOUTH_HAVEN(
     ZoneDefinition(
       iconAsset: 'assets/images/zones/south_haven.png',
+      palette: ZonePalette.southHaven,
       type: MapNodeType.SETTLEMENT,
       explorationLevel: 1,
 
@@ -309,6 +310,7 @@ enum ZoneId {
     ZoneDefinition(
       name: "Maplewater Lake",
       iconAsset: 'assets/images/zones/maplewater_lake.png',
+      palette: ZonePalette.maplewater,
       explorationLevel: 30,
       xpPerExplore: 13,
 
@@ -362,6 +364,7 @@ enum ZoneId {
     ZoneDefinition(
       name: "Forest Mine",
       iconAsset: 'assets/images/zones/mine.png',
+      palette: ZonePalette.mine,
       requiredSkill: SkillId.MINING,
       requiredLevel: 5,
       explorationLevel: 15,
@@ -458,6 +461,7 @@ enum ZoneId {
     ZoneDefinition(
       name: "Stormgrass Prairie",
       iconAsset: 'assets/images/zones/stormgrass_prairie.png',
+      palette: ZonePalette.prairie,
       explorationLevel: 35,
       xpPerExplore: 15,
 
@@ -514,6 +518,170 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.ADAMANTITE_VEIN,
           weight: .3,
+          unlockLevel: 70,
+        ),
+      ],
+    ),
+  ),
+  // South of the prairie the grass burns off into high desert: red-brown
+  // hardpan, copper-coloured dust, mesas on the skyline and adobe ruins in
+  // the washes. The prairie's equal — exploration 35, monsters at 55 and 89
+  // — and the giant scorpion's home at last. Gold and gems in the rock.
+  COPPERDUST_FLATS(
+    ZoneDefinition(
+      name: "Copperdust Flats",
+      iconAsset: 'assets/images/zones/copperdust_flats.png',
+      palette: ZonePalette.copperdust,
+      explorationLevel: 35,
+      xpPerExplore: 15,
+
+      permanentEntities: [EntityId.FIREPIT],
+      discoverableEntities: [
+        // level 55: the prairie's snake, at home in the heat
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.RATTLESNAKE,
+          weight: 1.5,
+          unlockLevel: 35,
+        ),
+        // level 89, the desert animal that never belonged in the bog
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GIANT_SCORPION,
+          weight: 1.5,
+          unlockLevel: 36,
+        ),
+        // the prairie's whirlwinds blow south over the flats too
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.DUST_DEVIL,
+          weight: .8,
+          unlockLevel: 38,
+        ),
+        // the flats' mining: gold in the washes, gems in the mesa rock
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GOLD_VEIN,
+          weight: 1,
+          unlockLevel: 35,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GEM_VEIN,
+          weight: .2,
+          unlockLevel: 37,
+        ),
+      ],
+    ),
+  ),
+  // The city at the foot of the hills, where the prairie road meets the
+  // first rise of the range: just outside Ironroot Hills to the west.
+  // Nothing to find by exploring; it is where jewelcrafting is done, the
+  // way South Haven is where alchemy is.
+  IRON_GATE_CITY(
+    ZoneDefinition(
+      name: "Iron Gate City",
+      iconAsset: 'assets/images/zones/iron_gate_city.png',
+      palette: ZonePalette.ironGateCity,
+      type: MapNodeType.SETTLEMENT,
+      explorationLevel: 35,
+
+      permanentEntities: [EntityId.FIREPIT, EntityId.JEWELCRAFTING_BENCH],
+      discoverableEntities: [],
+    ),
+  ),
+  // East of the prairie the grass gives out against the front range: iron-red
+  // rock, scrub and switchbacks climbing toward the peaks. The rung above
+  // Stormgrass — its monsters run 55 to 233 — and the home the old foothills
+  // roster was waiting on. Coal and adamantite in the rock, so it is where
+  // the prairie's mithril meets the next tier.
+  IRONROOT_HILLS(
+    ZoneDefinition(
+      name: "Ironroot Hills",
+      iconAsset: 'assets/images/zones/ironroot_hills.png',
+      palette: ZonePalette.ironroot,
+      explorationLevel: 50,
+      xpPerExplore: 20,
+
+      permanentEntities: [EntityId.FIREPIT],
+      discoverableEntities: [
+        // level 55, the hills' welcome: the prairie's top end, flying
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.HARPY,
+          weight: 1.5,
+          unlockLevel: 50,
+        ),
+        // level 89
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.IMP,
+          weight: 1.5,
+          unlockLevel: 50,
+        ),
+        // the steel tier's fuel, back above ground
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.COAL_VEIN,
+          weight: 1,
+          unlockLevel: 50,
+        ),
+        // level 144, under the bridges and in the passes
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TROLL,
+          weight: 1,
+          unlockLevel: 52,
+        ),
+        // level 233, rare and well past the door
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.HILL_GIANT,
+          weight: .5,
+          unlockLevel: 55,
+        ),
+        // tier 5 mining: rare on the prairie, a proper seam here. Opens
+        // where adamant smelts, the same gate the prairie's vein uses
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.ADAMANTITE_VEIN,
+          weight: .8,
+          unlockLevel: 70,
+        ),
+      ],
+    ),
+  ),
+  // East of the flats the desert breaks into layered red cliffs: sheer walls,
+  // ledges, wind-cut arches and a river far below. One tier above the flats
+  // — exploration 50, monsters at 144 and a rare 233 — with things that
+  // perch, things that stare, and griffins nesting on the rim.
+  REDWALL_BLUFFS(
+    ZoneDefinition(
+      name: "Redwall Bluffs",
+      iconAsset: 'assets/images/zones/redwall_bluffs.png',
+      palette: ZonePalette.redwall,
+      explorationLevel: 50,
+      xpPerExplore: 20,
+
+      permanentEntities: [EntityId.FIREPIT],
+      discoverableEntities: [
+        // level 89, up from the flats below
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GIANT_SCORPION,
+          weight: 1,
+          unlockLevel: 50,
+        ),
+        // level 144: stone that perches on the ledges until it doesn't
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GARGOYLE,
+          weight: 1.5,
+          unlockLevel: 50,
+        ),
+        // level 144, in the shade at the cliff foot
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.BASILISK,
+          weight: 1,
+          unlockLevel: 52,
+        ),
+        // level 233, rare and nesting on the rim
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GRIFFIN,
+          weight: .5,
+          unlockLevel: 55,
+        ),
+        // tier 5 mining in the exposed cliff faces
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.ADAMANTITE_VEIN,
+          weight: .6,
           unlockLevel: 70,
         ),
       ],
@@ -656,4 +824,17 @@ enum ZoneId {
   final ZoneDefinition definition;
 
   String get iconAsset => definition.iconAsset;
+
+  /// Ids that were renamed, keyed by the name a save written before the
+  /// rename still holds. Every save writes a world entry for every zone, so
+  /// a zone rename orphans every save that has ever run the game — even an
+  /// uncommitted one, if a build of it was played. A rename is only safe
+  /// with its old name here; every save decode goes through [byName].
+  static const Map<String, ZoneId> renamed = {'GLIMMERFORD': IRON_GATE_CITY};
+
+  static final Map<String, ZoneId> _byName = values.asNameMap();
+
+  /// The zone a saved [name] refers to, following [renamed]; null when it
+  /// names nothing, so a retired zone can be dropped rather than thrown on.
+  static ZoneId? byName(String name) => _byName[name] ?? renamed[name];
 }

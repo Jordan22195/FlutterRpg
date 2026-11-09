@@ -197,7 +197,7 @@ const zombie = CombatArchetype(
   combatType: CombatType.ROCK_CRAB,
   attackInterval: 2.5,
 );
-// Harpy · roster tier 3 · unplaced (out of the old foothills)
+// Harpy · roster tier 3 · ironroot hills
 const harpy = CombatArchetype(
   iconAsset: 'assets/images/entities/harpy.png',
   fibLevel: 8,
@@ -229,14 +229,14 @@ const rattlesnake = CombatArchetype(
 );
 
 // ── Tier 10 · level 89 (uncommon 144, rare 233, epic 377, legendary 610) ──
-// Giant Scorpion · roster tier 3 · swamp
+// Giant Scorpion · roster tier 3 · copperdust flats
 const giantScorpion = CombatArchetype(
   iconAsset: 'assets/images/entities/giant_scorpion.png',
   fibLevel: 9,
   combatType: CombatType.PLATE_DPS,
   attackInterval: 1.5,
 );
-// Imp · roster tier 3 · unplaced (out of the old foothills)
+// Imp · roster tier 3 · ironroot hills
 const imp = CombatArchetype(
   iconAsset: 'assets/images/entities/imp.png',
   fibLevel: 9,
@@ -282,7 +282,7 @@ const banshee = CombatArchetype(
   combatType: CombatType.GLASS_CANNON,
   attackInterval: 1.5,
 );
-// Troll · roster tier 4 · unplaced (out of the old foothills)
+// Troll · roster tier 4 · ironroot hills
 const troll = CombatArchetype(
   iconAsset: 'assets/images/entities/troll.png',
   fibLevel: 10,
@@ -296,7 +296,7 @@ const minotaur = CombatArchetype(
   combatType: CombatType.PLATE_DPS,
   attackInterval: 2.0,
 );
-// Basilisk · roster tier 4 · mine
+// Basilisk · roster tier 4 · redwall bluffs
 const basilisk = CombatArchetype(
   iconAsset: 'assets/images/entities/basilisk.png',
   fibLevel: 10,
@@ -310,7 +310,7 @@ const darkWizard = CombatArchetype(
   combatType: CombatType.CLOTH_DPS,
   attackInterval: 2.0,
 );
-// Gargoyle · roster tier 4 · crypt
+// Gargoyle · roster tier 4 · redwall bluffs
 const gargoyle = CombatArchetype(
   iconAsset: 'assets/images/entities/gargoyle.png',
   fibLevel: 10,
@@ -326,7 +326,7 @@ const mossGolem = CombatArchetype(
   combatType: CombatType.PLATE_TANK,
   attackInterval: 3.0,
 );
-// Hill Giant · roster tier 5 · unplaced (out of the old foothills)
+// Hill Giant · roster tier 5 · ironroot hills
 const hillGiant = CombatArchetype(
   iconAsset: 'assets/images/entities/hill_giant.png',
   fibLevel: 11,
@@ -354,7 +354,7 @@ const stoneGolem = CombatArchetype(
   combatType: CombatType.PLATE_TANK,
   attackInterval: 3.0,
 );
-// Griffin · roster tier 5 · frozen peaks
+// Griffin · roster tier 5 · redwall bluffs
 const griffin = CombatArchetype(
   iconAsset: 'assets/images/entities/griffin.png',
   fibLevel: 11,

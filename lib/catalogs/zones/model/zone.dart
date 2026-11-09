@@ -56,10 +56,9 @@ class Zone {
       );
     }
 
-    final zoneId = ZoneId.values.firstWhere(
-      (z) => z.name == rawId,
-      orElse: () => throw FormatException('Invalid ZoneId "\$rawId".'),
-    );
+    final zoneId =
+        ZoneId.byName(rawId) ??
+        (throw FormatException('Invalid ZoneId "$rawId".'));
 
     //final permanentEntities = rawPermanent.map((e) {
     //  if (e is! Map<String, dynamic>) {

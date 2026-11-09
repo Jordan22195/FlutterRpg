@@ -65,11 +65,8 @@ EntityId parseEntityId(String rawValue, {String fieldName = 'id'}) {
 }
 
 ZoneId parseZoneId(String rawValue, {String fieldName = 'zoneId'}) {
-  return ZoneId.values.firstWhere(
-    (value) => value.name == rawValue,
-    orElse: () =>
-        throw FormatException('Invalid ZoneId "$rawValue" for "$fieldName".'),
-  );
+  return ZoneId.byName(rawValue) ??
+      (throw FormatException('Invalid ZoneId "$rawValue" for "$fieldName".'));
 }
 
 ArmorSlots parseArmorSlot(String rawValue, {String fieldName = 'armorSlot'}) {

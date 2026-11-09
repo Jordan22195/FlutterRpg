@@ -149,8 +149,15 @@ class _GameBootstrapState extends State<GameBootstrap>
     SaveGameData saveData;
     try {
       saveData = SaveGameData.fromJson(widget.rawSave);
-    } on FormatException {
-      // first run, empty slot or unreadable save: start a new game
+    } on FormatException catch (e) {
+      // first run or empty slot: start a new game. an unreadable save also
+      // starts one, but that new game is autosaved over the slot within
+      // seconds — so a save that had something in it is copied aside first,
+      // and never lost to a loader that could not read it
+      if (widget.rawSave.isNotEmpty) {
+        debugPrint('Unreadable save, kept a copy before starting over: $e');
+        widget.saveSlots.preserveUnreadable(widget.rawSave);
+      }
       saveData = factory.newGame(
         catalogs,
         slotId: widget.saveSlots.activeSlotId,
@@ -268,10 +275,12 @@ class _GameBootstrapState extends State<GameBootstrap>
         ),
       ],
       // the whole app wears the palette of the zone being shown, so the
-      // shell and every screen inside a zone (combat, crafting) share it.
-      // selecting just the zone id keeps world ticks from rebuilding the app
+      // shell and every screen inside a zone (combat, crafting) share it —
+      // or, while the world map is on screen, of the zone picked on it.
+      // selecting just the zone id keeps world ticks from rebuilding the app,
+      // and MaterialApp crossfades the theme when it changes
       child: Selector<WorldController, ZoneId>(
-        selector: (_, world) => world.viewedZoneId,
+        selector: (_, world) => world.themeZoneId,
         builder: (_, zoneId, home) => MaterialApp(
           title: 'RPG',
           theme: hearthTheme(zoneId.definition.palette),

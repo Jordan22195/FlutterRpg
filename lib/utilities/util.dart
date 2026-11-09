@@ -21,6 +21,21 @@ class Util {
     }
   }
 
+  /// A short span written for a badge: "0.5s", "12.5s", "1m 5s". Under a
+  /// minute it keeps one decimal when there is one, since the roads on the
+  /// map differ by half-seconds.
+  static String formatShortDuration(Duration span) {
+    final tenths = span.inMilliseconds ~/ 100;
+    if (tenths < 600) {
+      final whole = tenths ~/ 10;
+      final rest = tenths % 10;
+      return rest == 0 ? '${whole}s' : '$whole.${rest}s';
+    }
+    final minutes = span.inMinutes;
+    final seconds = span.inSeconds % 60;
+    return seconds == 0 ? '${minutes}m' : '${minutes}m ${seconds}s';
+  }
+
   /// A count written to at most three significant digits with a magnitude
   /// suffix: 123 -> "123", 1453 -> "1.45k", 115599 -> "115k",
   /// 1234567 -> "1.23m".

@@ -26,7 +26,6 @@ import 'package:rpg/data/equipment_data.dart';
 /// prints the same set. Adding to it is a deliberate act.
 const knownMissingArt = <String>{
   // Maplewater Lake and its maple tree, before their art
-  'assets/images/zones/maplewater_lake.png',
 
   // the scale, redrawn as an animal's (prompt in rd_prompt_overrides.json)
 
@@ -45,22 +44,6 @@ const knownMissingArt = <String>{
 
   // reagent fires: the woodcutting reagents, the bird's nests and the bog
   // fires, before their art
-
-  // Scene art: zone headers and dungeon splashes. These are the last of the
-  // backlog because they are the one kind the generator will not draw —
-  // assets/images/{zones,dungeons}/** has no style picked, so
-  // generate_assets_rd.py reports them and skips them until it is passed
-  // --scene-style and --scene-size. Prompts for all of them are already
-  // written in tools/rd_prompt_overrides.json.
-  'assets/images/dungeons/goblin_camp.png',
-  'assets/images/dungeons/goblin_queen_lair.png',
-  'assets/images/dungeons/grainery.png',
-  'assets/images/dungeons/spider_den.png',
-  'assets/images/dungeons/drowned_fen.png',
-  'assets/images/dungeons/tempest_reach.png',
-  'assets/images/zones/stormgrass_prairie.png',
-  'assets/images/zones/mine.png',
-  'assets/images/zones/south_haven.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
@@ -552,31 +535,17 @@ void main() {
       // monster when the den was reworked
       EntityId.NAGA,
 
-      // the swamp's old scorpion, taken out for the Murkjaw and kept for a
-      // drier zone to come
-      EntityId.GIANT_SCORPION,
-
-      // the old Ashen Foothills roster, cut when the zone became Stormgrass
-      // Prairie, and waiting on another zone to take them
-      EntityId.HARPY,
-      EntityId.IMP,
-      EntityId.TROLL,
-      EntityId.HILL_GIANT,
-
       // tier 4. The banshee was the darkwood's, and came out of it when its
       // roster was re-cut (the wraith has since come back); the rest have
       // never been placed. darkwood_forest_test holds what the zone kept.
       EntityId.BANSHEE,
       EntityId.MINOTAUR,
-      EntityId.BASILISK,
       EntityId.DARK_WIZARD,
-      EntityId.GARGOYLE,
 
       // tier 5 and up: no zone reaches this far yet
       EntityId.EARTH_ELEMENTAL,
       EntityId.OGRE,
       EntityId.STONE_GOLEM,
-      EntityId.GRIFFIN,
       EntityId.FIRE_ELEMENTAL,
       EntityId.WATER_ELEMENTAL,
       EntityId.YETI,
@@ -708,14 +677,13 @@ void main() {
     });
 
     test('every non-dev zone is reachable from the starting farm', () {
-      final graph = ZoneTravelGraph();
       // unreleased content: it has a definition but no travel edge yet
       const notWiredUp = {ZoneId.CHALLENGING_MOUNTAIN};
       for (final id in ZoneId.values) {
         if (id == ZoneId.NULL || notWiredUp.contains(id)) continue;
         expect(
-          graph.travelCost(ZoneId.TUTORIAL_FARM, id),
-          isNot(double.infinity),
+          ZoneTravelGraph.isReachable(ZoneId.TUTORIAL_FARM, id),
+          isTrue,
           reason: '${id.name} cannot be reached from TUTORIAL_FARM',
         );
       }
@@ -850,6 +818,22 @@ void main() {
       expect(
         ZoneId.values.map((e) => e.name).toSet(),
         containsAll(frozenZoneIds),
+      );
+    });
+
+    test('every ZoneId is frozen the moment it exists', () {
+      // every save writes an entry for every zone, so a zone is in the
+      // player's save as soon as a build with it has run — committed or not.
+      // a new zone goes on frozenZoneIds when it is added, which is what
+      // makes the test above catch renaming it later. a rename that has to
+      // happen keeps its old name in ZoneId.renamed.
+      final unfrozen = ZoneId.values
+          .map((e) => e.name)
+          .where((name) => !frozenZoneIds.contains(name));
+      expect(
+        unfrozen,
+        isEmpty,
+        reason: 'add these to frozenZoneIds: ${unfrozen.join(', ')}',
       );
     });
     test('no DungeonId was renamed or removed', () {
@@ -1144,6 +1128,14 @@ const frozenZoneIds = <String>{
   'SOUTH_HAVEN',
   'FOREST_MINE',
   'CHALLENGING_MOUNTAIN',
+  'DARKWOOD_FOREST',
+  'SWAMP',
+  'MAPLEWATER_LAKE',
+  'FOOTHILLS',
+  'COPPERDUST_FLATS',
+  'IRON_GATE_CITY',
+  'IRONROOT_HILLS',
+  'REDWALL_BLUFFS',
   'DEV_FOREST',
   'DEV_DUNGEON_TESTING',
   'NULL',

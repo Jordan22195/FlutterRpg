@@ -9,11 +9,11 @@ with its own style and size:
     assets/icons/skills/**       skill icons   32x32   rd_fast__mc_item
     assets/icons/**              item icons    32x32   rd_fast__mc_item
     assets/images/entities/**    entity art   128x128  rd_fast__game_asset
-    assets/images/{zones,dungeons}/**   scene art     -- no style chosen --
+    assets/images/{zones,dungeons}/**   scene art  128x128  rd_fast__retro
 
-Scene art (zone headers, dungeon splashes) is a different job from an entity
-sprite, and no style has been settled on for it. Those assets are reported but
-never generated until you pass --scene-style and --scene-size explicitly.
+Scene art (zone headers, dungeon splashes) is a place, not a subject on a plain
+background, so it keeps its generated background: it is the one kind that does
+not ask the API for transparency.
 
 Prompts come from the filename ("guam_leaf.png" -> "guam leaf"), overridden per
 asset by `tools/rd_prompt_overrides.json` — filenames alone make weak prompts
@@ -75,11 +75,16 @@ SKILL_SIZE = 32
 ENTITY_STYLE = "rd_fast__game_asset"
 ENTITY_SIZE = 128
 # Scene art (zone headers, dungeon splashes) is a different job from an entity
-# sprite — it's a place, not a subject on a plain background — and no style has
-# been picked for it yet. Left unset on purpose: scene assets are reported but
-# never generated until --scene-style and --scene-size are passed explicitly.
-SCENE_STYLE = None
-SCENE_SIZE = None
+# sprite — it's a place, not a subject on a plain background. RD Fast's retro
+# style (it accepts 64-384px), drawn at 128 to match the entity art's grid.
+SCENE_STYLE = "rd_fast__retro"
+SCENE_SIZE = 128
+
+# Whether each kind asks the API for a transparent background. Icons and
+# entity sprites sit on the UI, so they lose theirs; a scene *is* its
+# background, so it keeps it. --no-remove-bg turns it off for every kind, and
+# an override's `remove_bg` wins over both.
+REMOVE_BG = {"skills": True, "icons": True, "entities": True, "scenes": False}
 
 # Appended to filename-derived prompts. Retro Diffusion's guidance is to describe
 # the subject only — never the words "pixel art" — so these stay about content.
@@ -210,7 +215,7 @@ class Plan:
 
 def build_plans(assets: list[Asset], overrides: dict[str, dict],
                 settings: dict[str, dict], seed: int | None,
-                remove_bg: bool) -> list[Plan]:
+                allow_remove_bg: bool) -> list[Plan]:
     """Resolve each asset's kind defaults, then layer its override on top."""
     plans = []
     for asset in assets:
@@ -222,7 +227,8 @@ def build_plans(assets: list[Asset], overrides: dict[str, dict],
             style=ov.get("style", kind["style"]),
             size=int(ov.get("size", kind["size"])),
             seed=ov.get("seed", seed),
-            remove_bg=ov.get("remove_bg", remove_bg),
+            remove_bg=ov.get("remove_bg",
+                             allow_remove_bg and kind["remove_bg"]),
             from_override=bool(ov.get("prompt")),
         ))
     return plans
@@ -406,15 +412,17 @@ def main() -> int:
     parser.add_argument("--entity-suffix", default=ENTITY_SUFFIX,
                         help="Appended to filename-derived entity prompts (not to overrides).")
     parser.add_argument("--scene-style", default=SCENE_STYLE,
-                        help="prompt_style for zone and dungeon art. No default — "
-                             "scene assets are skipped until you pick one.")
+                        help=f"prompt_style for zone and dungeon art "
+                             f"(default: {SCENE_STYLE}).")
     parser.add_argument("--scene-size", type=int, default=SCENE_SIZE,
-                        help="Square size for zone and dungeon art. No default.")
+                        help=f"Square size for zone and dungeon art "
+                             f"(default: {SCENE_SIZE}).")
     parser.add_argument("--scene-suffix", default=SCENE_SUFFIX,
                         help="Appended to filename-derived scene prompts (not to overrides).")
     parser.add_argument("--seed", type=int, help="Fixed seed for reproducible runs.")
     parser.add_argument("--no-remove-bg", action="store_true",
-                        help="Keep the generated background instead of asking for transparency.")
+                        help="Keep the generated background on every kind. Scene "
+                             "art keeps it regardless.")
     parser.add_argument("--overrides", default=str(DEFAULT_OVERRIDES), metavar="PATH",
                         help="JSON file of per-asset prompt overrides.")
     parser.add_argument("--sleep", type=float, default=0.0,
@@ -440,6 +448,8 @@ def main() -> int:
         "scenes": {"style": args.scene_style, "size": args.scene_size,
                    "suffix": args.scene_suffix},
     }
+    for kind, cfg in settings.items():
+        cfg["remove_bg"] = REMOVE_BG[kind]
 
     if args.list:
         print_inventory(assets, settings)

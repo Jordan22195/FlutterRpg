@@ -17,8 +17,10 @@ import 'package:rpg/widgets/repeat_press_button.dart';
 shop screen contents:
 -header with shop name, back button and sort button
 -coin balance and restock countdown
--"for sale" list: shop stock with buy buttons (price = value + markup)
--"sell" list: the player's items with sell buttons (price = value)
+-"for sale" list: shop stock with buy buttons (price = value + markup), and
+ a "buy all" toggle that makes each button buy the whole slot
+-"sell" list: the player's items with sell buttons (price = value), and a
+ "sell all" toggle that makes each button sell its whole stack
 */
 
 class ShopScreen extends StatefulWidget {
@@ -46,16 +48,6 @@ class _ShopScreenState extends State<ShopScreen> {
     _heldEquipment = held ? item : null;
     _heldIndex = index;
   });
-
-  Widget _sectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 16, 8, 4),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
-      ),
-    );
-  }
 
   /// [onPressed] null greys the button out, which is what a shop read from
   /// a zone away does with every row: the stock is worth reading before you
@@ -96,6 +88,30 @@ class _ShopScreenState extends State<ShopScreen> {
     // one wrapper either way, so a row that empties under a held button
     // keeps its element, and with it the hold
     return Opacity(key: key, opacity: soldOut ? 0.5 : 1, child: row);
+  }
+
+  /// A list's header with the toggle that turns every button under it from
+  /// one unit a press into the whole stack or slot at once.
+  Widget _toggleHeader({
+    required BuildContext context,
+    required String title,
+    required String toggleLabel,
+    required Key toggleKey,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 0, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(title, style: Theme.of(context).textTheme.titleMedium),
+          ),
+          Text(toggleLabel),
+          Switch(key: toggleKey, value: value, onChanged: onChanged),
+        ],
+      ),
+    );
   }
 
   /// One control for the whole screen: the shelf and both sell lists read
@@ -149,6 +165,8 @@ class _ShopScreenState extends State<ShopScreen> {
       );
     }
     final nextRestockAt = controller.nextRestockAt();
+    final sellAll = controller.sellAllMode();
+    final buyAll = controller.buyAllMode();
 
     return SafeArea(
       child: Padding(
@@ -209,7 +227,14 @@ class _ShopScreenState extends State<ShopScreen> {
             Expanded(
               child: ListView(
                 children: [
-                  _sectionHeader(context, "For Sale"),
+                  _toggleHeader(
+                    context: context,
+                    title: "For Sale",
+                    toggleLabel: "Buy all",
+                    toggleKey: const ValueKey('shop-buy-all-toggle'),
+                    value: buyAll,
+                    onChanged: controller.setBuyAllMode,
+                  ),
                   if (stock.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(8),
@@ -227,14 +252,31 @@ class _ShopScreenState extends State<ShopScreen> {
                         depleted: entry.count <= 0,
                       ),
                       name: controller.itemName(entry.itemId),
-                      buttonLabel: "Buy ${controller.buyPrice(entry.itemId)}c",
-                      onPressed: canTrade && controller.canAfford(entry.itemId)
-                          ? () => controller.buy(entry)
-                          : null,
+                      // buying all prices what the purse actually covers: the
+                      // whole slot, or as much of it as the coins reach
+                      buttonLabel: buyAll
+                          ? "Buy all ${controller.buyPrice(entry.itemId) * controller.affordableCount(entry)}c"
+                          : "Buy ${controller.buyPrice(entry.itemId)}c",
+                      onPressed: !canTrade
+                          ? null
+                          : buyAll
+                          ? (controller.affordableCount(entry) > 0
+                                ? () => controller.buyAll(entry)
+                                : null)
+                          : (controller.canAfford(entry.itemId)
+                                ? () => controller.buy(entry)
+                                : null),
                     ),
 
                   const Divider(),
-                  _sectionHeader(context, "Sell"),
+                  _toggleHeader(
+                    context: context,
+                    title: "Sell",
+                    toggleLabel: "Sell all",
+                    toggleKey: const ValueKey('shop-sell-all-toggle'),
+                    value: sellAll,
+                    onChanged: controller.setSellAllMode,
+                  ),
                   if (sellableItems.isEmpty && sellableEquipment.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(8),
@@ -255,10 +297,15 @@ class _ShopScreenState extends State<ShopScreen> {
                         depleted: item.count <= 0,
                       ),
                       name: controller.itemName(item.id),
-                      buttonLabel: "Sell ${controller.sellPrice(item.id)}c",
-                      onPressed: canTrade
-                          ? () => controller.sellOne(item.id)
-                          : null,
+                      buttonLabel: sellAll
+                          ? "Sell all "
+                                "${controller.sellPrice(item.id) * item.count}c"
+                          : "Sell ${controller.sellPrice(item.id)}c",
+                      onPressed: !canTrade
+                          ? null
+                          : sellAll
+                          ? () => controller.sellAll(item.id)
+                          : () => controller.sellOne(item.id),
                     ),
                   for (final (index, item) in sellableEquipment.indexed)
                     _tradeRow(
@@ -279,10 +326,14 @@ class _ShopScreenState extends State<ShopScreen> {
                         onTap: () => showEquipmentInfoDialog(context, item),
                       ),
                       name: item.name,
-                      buttonLabel: "Sell ${item.value}c",
-                      onPressed: canTrade
-                          ? () => controller.sellOneEquipment(item.instanceId)
-                          : null,
+                      buttonLabel: sellAll
+                          ? "Sell all ${item.value * item.count}c"
+                          : "Sell ${item.value}c",
+                      onPressed: !canTrade
+                          ? null
+                          : sellAll
+                          ? () => controller.sellAllEquipment(item.instanceId)
+                          : () => controller.sellOneEquipment(item.instanceId),
                     ),
                 ],
               ),

@@ -236,6 +236,69 @@ void main() {
     expect(shopService.sellItem(ItemId.COINS, inventory), isFalse);
   });
 
+  test('buying a whole slot stops at the slot or the purse', () {
+    final def = shopDef(EntityId.MINING_SHOP);
+    final shop = def.toEntity(EntityId.MINING_SHOP);
+    shopService.restockIfDue(
+      shop,
+      def,
+      now: DateTime(2026, 1, 1),
+      rng: Random(1),
+    );
+    final entry = shop.stock.firstWhere((s) => s.itemId == ItemId.COPPER_ORE);
+    final price = shopService.buyPrice(entry.itemId, def);
+    expect(price, greaterThan(0));
+    final slot = entry.count;
+
+    // a purse short of the whole slot buys what it covers, and no more
+    final poor = InventoryData(itemMap: {ItemId.COINS: price * 3 + 1});
+    expect(shopService.affordableCount(entry, def, poor), 3);
+    expect(shopService.buyItems(shop, entry, def, poor, entry.count), 3);
+    expect(poor.itemMap[ItemId.COPPER_ORE], 3);
+    expect(poor.itemMap[ItemId.COINS], 1);
+    expect(entry.count, slot - 3);
+
+    // a deep purse takes the rest of the slot
+    final rich = InventoryData(itemMap: {ItemId.COINS: price * slot * 2});
+    expect(shopService.affordableCount(entry, def, rich), slot - 3);
+    expect(
+      shopService.buyItems(shop, entry, def, rich, entry.count),
+      slot - 3,
+    );
+    expect(entry.count, 0);
+    expect(shopService.affordableCount(entry, def, rich), 0);
+  });
+
+  test('selling a whole stack pays for every unit, and no more', () {
+    final inventory = InventoryData(
+      itemMap: {ItemId.COPPER_ORE: 7, ItemId.COINS: 0},
+    );
+    final value = ItemId.COPPER_ORE.build().value;
+
+    // asking for more than is held sells what there is
+    expect(shopService.sellItems(ItemId.COPPER_ORE, 100, inventory), 7);
+    expect(inventory.itemMap[ItemId.COPPER_ORE] ?? 0, 0);
+    expect(inventory.itemMap[ItemId.COINS], value * 7);
+
+    // nothing left: nothing sold, nothing paid
+    expect(shopService.sellItems(ItemId.COPPER_ORE, 1, inventory), 0);
+    expect(inventory.itemMap[ItemId.COINS], value * 7);
+
+    // and coins are never for sale
+    expect(shopService.sellItems(ItemId.COINS, 5, inventory), 0);
+  });
+
+  test('selling an equipment stack sells every piece in it', () {
+    final inventory = InventoryData(itemMap: {ItemId.COINS: 0});
+    final helmet = ItemId.IRON_HELMET.build() as EquipmentItem;
+    helmet.count = 3;
+    inventoryService.addEquipment(inventory, helmet);
+
+    expect(shopService.sellEquipmentStack(helmet.instanceId, inventory), 3);
+    expect(inventory.equipment, isEmpty);
+    expect(inventory.itemMap[ItemId.COINS], helmet.value * 3);
+  });
+
   test('shop stock survives a save/load round trip', () {
     final shop = shopDef(EntityId.TRADING_POST).toEntity(EntityId.TRADING_POST);
     final def = shopDef(EntityId.TRADING_POST);

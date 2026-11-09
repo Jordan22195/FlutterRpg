@@ -107,4 +107,18 @@ class FileManagerService {
 
   Future<void> saveSlot(String slotId, Map<String, dynamic> json) =>
       _store.write(slotName(slotId), json);
+
+  /// Name of the copy kept of a save that could not be loaded.
+  static String unreadableName(String slotId, DateTime at) =>
+      'save_${slotId}_unreadable_${at.millisecondsSinceEpoch}';
+
+  /// Copies a save the game could not load to a document of its own, before
+  /// anything gets the chance to write a new game over it. The copy is never
+  /// read or written again by the game, so a fix to the loader can recover
+  /// it by hand.
+  Future<void> preserveUnreadable(
+    String slotId,
+    Map<String, dynamic> raw, {
+    DateTime? at,
+  }) => _store.write(unreadableName(slotId, at ?? DateTime.now()), raw);
 }

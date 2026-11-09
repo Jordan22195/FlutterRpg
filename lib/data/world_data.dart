@@ -34,12 +34,17 @@ class WorldData {
         throw FormatException('Invalid zone data for "$rawZoneId".');
       }
 
-      final zoneId = ZoneId.values.firstWhere(
-        (z) => z.name == rawZoneId,
-        orElse: () => throw FormatException('Invalid ZoneId "$rawZoneId".'),
-      );
+      // a zone the catalog no longer has is dropped, not thrown on: every
+      // save carries an entry for every zone, so one retired or renamed-
+      // without-an-alias zone would otherwise fail the whole load and the
+      // bootstrap would start a new game over the player's save. a renamed
+      // zone resolves through [ZoneId.renamed]; anything missing afterwards
+      // is rebuilt from the catalog by GameSessionFactory.create
+      final zoneId = ZoneId.byName(rawZoneId);
+      if (zoneId == null) continue;
 
-      zones[zoneId] = Zone.fromJson(rawZone);
+      final zone = Zone.fromJson({...rawZone, 'id': zoneId.name});
+      zones[zoneId] = zone;
     }
 
     return WorldData(zones: zones);
