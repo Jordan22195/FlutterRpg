@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -139,6 +140,10 @@ void main() {
       at: DateTime(2000),
     )!;
 
+    // a cookfire is a steady burn: its own burn time per lay
+    final cookfireBurn =
+        (ItemId.COOKFIRE.definition as FireItemDefinition).duration;
+
     // a settle relights at the segment it is replaying, and the fire has
     // to burn from there
     final t = DateTime(2030, 1, 1, 12);
@@ -149,7 +154,7 @@ void main() {
       buffs,
       at: t,
     );
-    expect(fire().expirationTime, t.add(const Duration(minutes: 3)));
+    expect(fire().expirationTime, t.add(cookfireBurn));
 
     // relit long after it went out: from the relight, not the dead expiry
     final t2 = t.add(const Duration(minutes: 10));
@@ -160,7 +165,7 @@ void main() {
       buffs,
       at: t2,
     );
-    expect(fire().expirationTime, t2.add(const Duration(minutes: 3)));
+    expect(fire().expirationTime, t2.add(cookfireBurn));
 
     // logs added while it burns extend the existing timer
     final t3 = t2.add(const Duration(minutes: 1));
@@ -171,7 +176,7 @@ void main() {
       buffs,
       at: t3,
     );
-    expect(fire().expirationTime, t2.add(const Duration(minutes: 6)));
+    expect(fire().expirationTime, t2.add(cookfireBurn * 2));
 
     // a batch is worth the whole batch's burn time from its instant
     final t4 = t.add(const Duration(hours: 1));
@@ -183,7 +188,7 @@ void main() {
       count: 2,
       at: t4,
     );
-    expect(fire().expirationTime, t4.add(const Duration(minutes: 6)));
+    expect(fire().expirationTime, t4.add(cookfireBurn * 2));
 
     // and with no instant given, a fresh fire burns from now
     session.firemakingSystem.extinguish(EntityId.FIREPIT, zone, buffs);
@@ -196,11 +201,193 @@ void main() {
     );
     final expiry = fire().expirationTime;
     expect(
-      expiry.difference(before.add(const Duration(minutes: 3))).abs(),
+      expiry.difference(before.add(cookfireBurn)).abs(),
       lessThan(const Duration(seconds: 1)),
     );
 
     session.dispose();
+  });
+
+  group('how fires burn', () {
+    final t = DateTime(2030, 1, 1, 12);
+
+    GameSession lit(ItemId fire, {int lays = 1, double scale = 1}) {
+      final session = buildSession();
+      final save = session.saveGameData;
+      session.firemakingSystem.lightOrExtend(
+        fire,
+        EntityId.FIREPIT,
+        save.playerData.currentZoneId,
+        save.playerData.buffData,
+        count: lays,
+        at: t,
+        burnScale: scale,
+      );
+      return session;
+    }
+
+    FireItem fireOf(GameSession session) {
+      final save = session.saveGameData;
+      return session.firemakingSystem.activeFire(
+        EntityId.FIREPIT,
+        save.playerData.currentZoneId,
+        save.playerData.buffData,
+        at: t,
+      )!;
+    }
+
+    void lay(GameSession session, ItemId fire, DateTime at) {
+      final save = session.saveGameData;
+      session.firemakingSystem.lightOrExtend(
+        fire,
+        EntityId.FIREPIT,
+        save.playerData.currentZoneId,
+        save.playerData.buffData,
+        at: at,
+      );
+    }
+
+    test('a campfire burns steady: its burn time a lay, no cap', () {
+      final burn =
+          (ItemId.BASIC_CAMPFIRE.definition as FireItemDefinition).duration;
+      final session = lit(ItemId.BASIC_CAMPFIRE, lays: 40);
+      final fire = fireOf(session);
+      expect(fire.expirationTime, t.add(burn * 40));
+      // one stretch at its full bonus all the way
+      expect(fire.stepsAt(t), [(bonus: 5, left: burn * 40)]);
+      expect(fire.powerAt(t), 5);
+      expect(fire.powerAt(fire.expirationTime.subtract(burn)), 5);
+      session.dispose();
+    });
+
+    test('a bonfire heats with each lay, by less as it nears its cap', () {
+      final session = lit(ItemId.BONFIRE);
+      final fire = fireOf(session);
+      expect(fire.ceiling, 13);
+      expect(fire.heatAt(t), closeTo(0.25 * fire.heatCap, 1e-9));
+      expect(fire.powerAt(t), 5);
+
+      var last = fire.heatAt(t);
+      var gain = double.infinity;
+      for (var i = 1; i <= 6; i++) {
+        lay(session, ItemId.BONFIRE, t);
+        final heat = fire.heatAt(t);
+        expect(heat - last, lessThan(gain), reason: 'lay $i');
+        gain = heat - last;
+        last = heat;
+      }
+      // past the ceiling, but its bonus stops there
+      expect(fire.heatAt(t), greaterThan(13));
+      expect(fire.powerAt(t), 13);
+      session.dispose();
+    });
+
+    test('a bonfire cools down the rungs and goes out under 1 heat', () {
+      final session = lit(ItemId.BONFIRE, lays: 12);
+      final fire = fireOf(session);
+      final steps = fire.stepsAt(t);
+      expect([for (final s in steps) s.bonus], [13, 8, 5, 3, 1]);
+      // each rung ends where the next begins, and the last when it is out
+      var at = t;
+      for (final step in steps) {
+        // midway through the stretch, it gives that rung
+        final mid = at.add(step.left ~/ 2);
+        expect(fire.powerAt(mid), step.bonus);
+        at = at.add(step.left);
+      }
+      expect(
+        at.difference(fire.expirationTime).abs(),
+        lessThan(const Duration(milliseconds: 5)),
+      );
+      expect(fire.powerAt(fire.expirationTime), 0);
+      session.dispose();
+    });
+
+    test('heat over the ceiling cools at the slow peak rate', () {
+      final session = lit(ItemId.BONFIRE, lays: 30);
+      final fire = fireOf(session);
+      final heat = fire.heatAt(t);
+      final toCeiling =
+          FireItem.peakHalfLife.inMicroseconds *
+          (math.log(heat / 13) / math.ln2);
+      final peak = fire.stepsAt(t).first;
+      expect(peak.bonus, 13);
+      expect(peak.left.inMicroseconds, closeTo(toCeiling, 1000));
+      // a few minutes held at the top
+      expect(peak.left, greaterThan(const Duration(minutes: 3)));
+      session.dispose();
+    });
+
+    test('firemaking over the requirement stretches the burn', () {
+      expect(FireItem.burnScaleFor(5, 5), 1);
+      expect(FireItem.burnScaleFor(3, 5), 1);
+      expect(FireItem.burnScaleFor(99, 5), closeTo(1.94, 1e-9));
+
+      final burn =
+          (ItemId.BASIC_CAMPFIRE.definition as FireItemDefinition).duration;
+      final steady = lit(ItemId.BASIC_CAMPFIRE, scale: 2);
+      expect(fireOf(steady).expirationTime, t.add(burn * 2));
+      steady.dispose();
+
+      final base = lit(ItemId.BONFIRE, lays: 12);
+      final stretched = lit(ItemId.BONFIRE, lays: 12, scale: 2);
+      expect(
+        fireOf(stretched).expirationTime.difference(t).inMicroseconds,
+        closeTo(
+          fireOf(base).expirationTime.difference(t).inMicroseconds * 2,
+          1000,
+        ),
+      );
+      expect(
+        fireOf(stretched).maxBurn.inMicroseconds,
+        closeTo(fireOf(base).maxBurn.inMicroseconds * 2, 1000),
+      );
+      base.dispose();
+      stretched.dispose();
+    });
+
+    test('a bonfire\'s max burn is from a full heat cap down to out', () {
+      final session = lit(ItemId.BONFIRE);
+      final fire = fireOf(session);
+      // 20.8 heat: ~3:23 cooling to the ceiling at the peak rate, then
+      // ~7:24 down to out
+      expect(fire.maxBurn.inSeconds, inInclusiveRange(645, 649));
+      expect(fireOf(lit(ItemId.BASIC_CAMPFIRE)).maxBurn, Duration.zero);
+      session.dispose();
+    });
+
+    test('the rung drops are cuts an offline settle stops on', () {
+      final session = lit(ItemId.BONFIRE, lays: 12);
+      final fire = fireOf(session);
+      var at = t;
+      final drops = <DateTime>[];
+      for (final step in fire.stepsAt(t)) {
+        at = at.add(step.left);
+        drops.add(at);
+      }
+      for (final d in drops) {
+        expect(
+          fire.changeTimes.any(
+            (c) => c.difference(d).abs() < const Duration(milliseconds: 5),
+          ),
+          isTrue,
+          reason: '$d',
+        );
+      }
+      session.dispose();
+    });
+
+    test('heat and burn scale survive a save round trip', () {
+      final session = lit(ItemId.BONFIRE, lays: 5, scale: 1.4);
+      final fire = fireOf(session);
+      final json =
+          jsonDecode(jsonEncode(fire.toJson())) as Map<String, dynamic>;
+      final back = Item.fromJson(json) as FireItem;
+      expect(back.heatAt(t), closeTo(fire.heatAt(t), 1e-9));
+      expect(back.burnScale, 1.4);
+      expect(back.expirationTime, fire.expirationTime);
+      session.dispose();
+    });
   });
 
   test('two firepits in a zone burn independently and their buffs sum', () {
@@ -688,7 +875,7 @@ void main() {
     );
 
     // and it still does when a settle asks about an instant it was burning
-    // at, hours after it went out
+    // at, hours after it went out - a cookfire burns steady to the end
     expect(
       session.buffService.getBuffedStatTotal(
         buffData,

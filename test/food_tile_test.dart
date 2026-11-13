@@ -109,14 +109,15 @@ void main() {
     });
 
     testWidgets('a two-stat buff stacks a chip for each', (tester) async {
-      await pumpTile(tester, ItemId.BASIC_CAMPFIRE);
+      // a cookfire carries cooking and hitpoints of its own
+      await pumpTile(tester, ItemId.COOKFIRE);
 
-      expect(chipFor(SkillId.STAMINA), findsOneWidget);
-      expect(chipFor(SkillId.RECOVERY), findsOneWidget);
+      expect(chipFor(SkillId.COOKING), findsOneWidget);
+      expect(chipFor(SkillId.HITPOINTS), findsOneWidget);
       // one above the other, in the order the fire lists them
       expect(
-        tester.getTopLeft(chipFor(SkillId.STAMINA)).dy,
-        lessThan(tester.getTopLeft(chipFor(SkillId.RECOVERY)).dy),
+        tester.getTopLeft(chipFor(SkillId.COOKING)).dy,
+        lessThan(tester.getTopLeft(chipFor(SkillId.HITPOINTS)).dy),
       );
     });
 

@@ -32,6 +32,25 @@ void main() {
       .fold<int>(0, (sum, e) => sum + e.count);
 
   test('a mining node unlocks at the level its ore is smelted at', () {
+    // the level is the vein's own, and no zone entry repeats it
+    for (final e in {
+      EntityId.COPPER: ItemId.COPPER_ORE,
+      EntityId.IRON: ItemId.IRON_ORE,
+      EntityId.COAL_VEIN: ItemId.COAL,
+      EntityId.GOLD_VEIN: ItemId.GOLD_ORE,
+      EntityId.MITHRIL_VEIN: ItemId.MITHRIL_ORE,
+      EntityId.ADAMANTITE_VEIN: ItemId.ADAMANTITE_ORE,
+      EntityId.RUNITE_VEIN: ItemId.RUNEITE_ORE,
+      EntityId.DRAGONITE_VEIN: ItemId.DRAGON_ORE,
+    }.entries) {
+      final def = e.key.definition as EncounterEntityDefinition;
+      final smelt = blacksmithingRecipes
+          .where((r) => r.inputs.containsKey(e.value) && r.name.contains('Bar'))
+          .map((r) => r.levelRequirement)
+          .reduce((a, b) => a < b ? a : b);
+      expect(def.discoveryLevel, smelt, reason: e.key.name);
+    }
+
     int smeltLevel(ItemId ore) => blacksmithingRecipes
         .where((r) => r.inputs.containsKey(ore) && r.name.contains('Bar'))
         .map((r) => r.levelRequirement)

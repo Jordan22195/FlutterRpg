@@ -10,10 +10,19 @@ void main() {
   final town = ZoneId.IRON_GATE_CITY.definition;
 
   group('Iron Gate City', () {
-    test('is a settlement with the jewelcrafting bench', () {
+    test('is a settlement with every skilling table', () {
       expect(town.name, 'Iron Gate City');
       expect(town.type, MapNodeType.SETTLEMENT);
-      expect(town.permanentEntities, contains(EntityId.JEWELCRAFTING_BENCH));
+      expect(
+        town.permanentEntities,
+        containsAll([
+          EntityId.FIREPIT,
+          EntityId.ANVIL,
+          EntityId.ENCHANTING_BENCH,
+          EntityId.JEWELCRAFTING_BENCH,
+          EntityId.ALCHEMY_STATION,
+        ]),
+      );
       expect(town.discoverableEntities, isEmpty);
     });
 

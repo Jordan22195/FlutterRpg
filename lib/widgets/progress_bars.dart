@@ -165,6 +165,7 @@ class ProgressBars extends StatelessWidget {
                       children: [
                         StaminaTimeChip(
                           left: timing.staminaTimeLeft,
+                          spending: timing.staminaSpending,
                           compact: inCombat,
                         ),
                         const SizedBox(width: 6),
@@ -212,14 +213,24 @@ class ProgressBars extends StatelessWidget {
   }
 }
 
-/// How long stamina lasts at the boost being held: an hourglass and the
+/// How long stamina lasts at the boost bar's level: an hourglass and the
 /// time, in the stamina colour, at the left end of the stamina bar. Always
-/// there; with nothing spending stamina it reads ∞, muted.
+/// there; let go, the time is the bar's projection and reads muted, and
+/// with the bar empty it reads ∞.
 class StaminaTimeChip extends StatelessWidget {
-  const StaminaTimeChip({super.key, required this.left, this.compact = false});
+  const StaminaTimeChip({
+    super.key,
+    required this.left,
+    this.spending = true,
+    this.compact = false,
+  });
 
-  /// Null while nothing is spending stamina: the chip stays, reading ∞.
+  /// Null while the bar is worth nothing: the chip stays, reading ∞.
   final Duration? left;
+
+  /// False when the boost is let go: [left] is then what stamina would last
+  /// at the bar's level, not a countdown, and reads muted.
+  final bool spending;
 
   /// The slimmer chip a fight's three-row status bar has room for.
   final bool compact;
@@ -236,7 +247,8 @@ class StaminaTimeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final color = context.gameColors.stamina;
-    final draining = left != null;
+    final hasTime = left != null;
+    final draining = hasTime && spending;
     return Container(
       key: const ValueKey('stamina-time-chip'),
       width: width,
@@ -259,7 +271,7 @@ class StaminaTimeChip extends StatelessWidget {
             ),
             const SizedBox(width: 2),
             Text(
-              draining ? _format(left!) : '∞',
+              hasTime ? _format(left!) : '∞',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -275,8 +287,9 @@ class StaminaTimeChip extends StatelessWidget {
   }
 
   /// m:ss under an hour, so the seconds can be watched running down;
-  /// hours and minutes past it.
+  /// hours and minutes past it, and days and hours past a day.
   static String _format(Duration d) {
+    if (d.inDays > 0) return '${d.inDays}d ${d.inHours % 24}h';
     if (d.inHours > 0) return '${d.inHours}h ${d.inMinutes % 60}m';
     final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
     return '${d.inMinutes}:$seconds';

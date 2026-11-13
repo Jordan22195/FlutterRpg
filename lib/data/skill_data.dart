@@ -41,35 +41,39 @@ class SkillData {
   final String name;
   double xp;
 
-  // Xp-rate tracker: set when the player presses Start/Reset on the skill's
-  // detail screen. Null means no tracker is running for this skill.
-  DateTime? trackerStartTime;
-  double? trackerStartXp;
+  /// What one action of this skill last paid, for the detail screen's level
+  /// goal ("N more of these to get there"). For the combat skills it is a
+  /// running average over recent hits instead, since a single hit says little.
+  /// Null until the skill has paid out once.
+  double? lastActionXp;
+
+  /// The level the player set the goal slider to on the detail screen. Null
+  /// until they move it, which reads as the next level.
+  int? goalLevel;
 
   final List<double> xpTable = SkillData._buildXpTable(99);
 
   SkillData({
     required this.name,
     required this.xp,
-    this.trackerStartTime,
-    this.trackerStartXp,
+    this.lastActionXp,
+    this.goalLevel,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
       'xp': xp,
-      if (trackerStartTime != null)
-        'trackerStartTime': trackerStartTime!.toIso8601String(),
-      if (trackerStartXp != null) 'trackerStartXp': trackerStartXp,
+      if (lastActionXp != null) 'lastActionXp': lastActionXp,
+      if (goalLevel != null) 'goalLevel': goalLevel,
     };
   }
 
   factory SkillData.fromJson(Map<String, dynamic> json) {
     final rawName = json['name'];
     final rawXp = json['xp'];
-    final rawTrackerStartTime = json['trackerStartTime'];
-    final rawTrackerStartXp = json['trackerStartXp'];
+    final rawLastActionXp = json['lastActionXp'];
+    final rawGoalLevel = json['goalLevel'];
 
     if (rawName is! String) {
       throw FormatException('Missing or invalid "name". Expected String.');
@@ -79,21 +83,20 @@ class SkillData {
       throw FormatException('Missing or invalid "xp". Expected number.');
     }
 
-    if (rawTrackerStartTime != null && rawTrackerStartTime is! String) {
-      throw FormatException('Invalid "trackerStartTime". Expected String.');
+    // the old xp tracker's keys are simply ignored
+    if (rawLastActionXp != null && rawLastActionXp is! num) {
+      throw FormatException('Invalid "lastActionXp". Expected number.');
     }
 
-    if (rawTrackerStartXp != null && rawTrackerStartXp is! num) {
-      throw FormatException('Invalid "trackerStartXp". Expected number.');
+    if (rawGoalLevel != null && rawGoalLevel is! num) {
+      throw FormatException('Invalid "goalLevel". Expected number.');
     }
 
     return SkillData(
       name: rawName,
       xp: rawXp.toDouble(),
-      trackerStartTime: rawTrackerStartTime == null
-          ? null
-          : DateTime.tryParse(rawTrackerStartTime as String),
-      trackerStartXp: (rawTrackerStartXp as num?)?.toDouble(),
+      lastActionXp: (rawLastActionXp as num?)?.toDouble(),
+      goalLevel: (rawGoalLevel as num?)?.toInt(),
     );
   }
 

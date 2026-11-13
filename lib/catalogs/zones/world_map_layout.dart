@@ -71,7 +71,7 @@ class LandmarkNode extends MapNode {
 /// South Haven, which forks below the town — south-west into the darkwood,
 /// south-east down to the mine — with the swamp on the wet ground east of
 /// the town and the prairie rolling out beyond it to Iron Gate City,
-/// at the foot of Ironroot Hills in the far east, the desert flats south of
+/// at the foot of Ironroot Hills in the far east, the fishing village on the lake's north-east shore, the desert flats south of
 /// the prairie with the bluffs beyond them, the goblin warren off to
 /// the east of the road, and the dev zones parked well clear of the real
 /// map.
@@ -84,13 +84,14 @@ const List<MapNode> kWorldMapNodes = [
   ZoneNode(ZoneId.FOREST_MINE, Offset(390, 570)),
   ZoneNode(ZoneId.SWAMP, Offset(430, 400)),
   ZoneNode(ZoneId.MAPLEWATER_LAKE, Offset(520, 330)),
+  ZoneNode(ZoneId.MAPLEWATER_VILLAGE, Offset(620, 250)),
   ZoneNode(ZoneId.FOOTHILLS, Offset(620, 480)),
   ZoneNode(ZoneId.IRON_GATE_CITY, Offset(740, 500)),
   ZoneNode(ZoneId.IRONROOT_HILLS, Offset(860, 440)),
   ZoneNode(ZoneId.COPPERDUST_FLATS, Offset(620, 640)),
   ZoneNode(ZoneId.REDWALL_BLUFFS, Offset(780, 670)),
-  ZoneNode(ZoneId.DEV_FOREST, Offset(520, 200)),
-  ZoneNode(ZoneId.DEV_DUNGEON_TESTING, Offset(620, 320)),
+  ZoneNode(ZoneId.DEV_FOREST, Offset(820, 140)),
+  ZoneNode(ZoneId.DEV_DUNGEON_TESTING, Offset(820, 250)),
 ];
 
 /// Map-space centre of [zone]'s token, or null when it isn't laid out.

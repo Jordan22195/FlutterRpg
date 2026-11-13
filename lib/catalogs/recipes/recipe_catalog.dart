@@ -11,6 +11,7 @@ class RecipeCatalog {
   /// this is just their concatenation.
   static final List<CraftingRecipe> _recipes = [
     ...firemakingRecipes,
+    ...fireReagentRecipes,
     ...cookingRecipes,
     ...blacksmithingRecipes,
     ...jewelcraftingRecipes,

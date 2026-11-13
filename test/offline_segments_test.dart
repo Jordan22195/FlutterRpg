@@ -369,7 +369,8 @@ void main() {
     }
 
     test('a boosted speed run drains, breaks, then runs on unboosted', () {
-      final session = boosted(Stance.fast);
+      // a full bar is a short burst, so a deep pool for it to buy actions
+      final session = boosted(Stance.fast, stamina: 99);
       final save = session.saveGameData;
 
       final report = settle(session, 3600);
@@ -443,6 +444,7 @@ void main() {
       final perSecond = timing.boostDrain(
         timing.getCurrentSpeedMultiplier(save.actionTimingData),
         speedStance: true,
+        ceiling: save.actionTimingData.maxBoostMultiplier,
       );
 
       settle(session, 10);
@@ -1287,9 +1289,10 @@ void main() {
       expect(short.actionCount, whole);
       expect(long.actionCount, whole);
 
-      // a 3-minute cookfire relights at 120, 300 and 480 into the gap, or
-      // once at 480 when the first burn lasted that long
-      expect(short.xp[SkillId.FIREMAKING], cookfireXp * 3);
+      // a relit cookfire burns ~268s (3 minutes, stretched for firemaking
+      // 50), so it relights at 120 and ~388 into the gap, or once at 480
+      // when the first burn lasted that long
+      expect(short.xp[SkillId.FIREMAKING], cookfireXp * 2);
       expect(long.xp[SkillId.FIREMAKING], cookfireXp * 1);
     });
 
@@ -1306,13 +1309,13 @@ void main() {
 
       final report = settle(session, 600);
 
-      // lit at 0, 180, 360 and 540: four relight ticks, everything else a
-      // cook
+      // a 3 minute cookfire, stretched for firemaking 50 to ~268s: lit at
+      // 0, ~268 and ~536, three relight ticks, everything else a cook
       final whole = actionsIn(session, 600);
       expect(report.actionCount, whole);
-      expect(report.xp[SkillId.FIREMAKING], cookfireXp * 4);
-      expect(100000 - minnowsOf(session), whole - 4);
-      expect(100000 - logsOf(session), 2 * 4);
+      expect(report.xp[SkillId.FIREMAKING], cookfireXp * 3);
+      expect(100000 - minnowsOf(session), whole - 3);
+      expect(100000 - logsOf(session), 2 * 3);
       expect(session.actionTimingController.isRunning, isTrue);
       expect(
         session.firemakingSystem.activeFire(
@@ -1339,7 +1342,7 @@ void main() {
       final report = settle(session, 600);
 
       // one fire's worth: the relight tick plus the cooks it burned for
-      final oneFire = actionsIn(session, 180);
+      final oneFire = actionsIn(session, 180 * FireItem.burnScaleFor(50, 1));
       expect(report.actionCount, oneFire);
       expect(100000 - minnowsOf(session), oneFire - 1);
       expect(logsOf(session), 0);

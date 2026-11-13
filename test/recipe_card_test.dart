@@ -490,14 +490,18 @@ void main() {
       }
     });
 
-    testWidgets('a campfire wears its two stats', (tester) async {
+    testWidgets('a campfire wears what its kindling gives', (tester) async {
       await pumpCard(
         tester,
         recipeId: 'basic_campfire',
         lockWhenUnderLevel: true,
       );
-      expect(chipFor(SkillId.STAMINA), findsOneWidget);
-      expect(chipFor(SkillId.RECOVERY), findsOneWidget);
+      // no stats of its own: its kindling picks them, at its wood's power
+      expect(
+        find.byWidgetPredicate((w) => w is FirePowerBadge && w.power == 5),
+        findsOneWidget,
+      );
+      expect(find.byWidgetPredicate((w) => w is BuffBadge), findsNothing);
     });
 
     testWidgets('a smithed piece wears none', (tester) async {

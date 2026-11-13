@@ -91,36 +91,25 @@ class SkillService {
     return cap;
   }
 
-  void startXpTracking(SkillData skillState) {
-    skillState.trackerStartTime = DateTime.now();
-    skillState.trackerStartXp = skillState.xp;
+  /// The xp [skillState] needs in total to stand at [level], clamped to the
+  /// table. The goal tracker subtracts the xp held from this.
+  double xpAtLevel(int level, SkillData skillState) {
+    final clamped = level.clamp(1, skillState.xpTable.length - 1);
+    return skillState.xpTable[clamped];
   }
 
-  void resetXpTracking(SkillData skillState) {
-    if (skillState.trackerStartTime == null) return;
-    skillState.trackerStartTime = DateTime.now();
-    skillState.trackerStartXp = skillState.xp;
-  }
-
-  bool isTrackingXp(SkillData skillState) {
-    return skillState.trackerStartTime != null;
-  }
-
-  Duration trackedElapsed(SkillData skillState) {
-    final start = skillState.trackerStartTime;
-    if (start == null) return Duration.zero;
-    return DateTime.now().difference(start);
-  }
-
-  double trackedXpGained(SkillData skillState) {
-    final startXp = skillState.trackerStartXp;
-    if (skillState.trackerStartTime == null || startXp == null) return 0;
-    return skillState.xp - startXp;
-  }
-
-  double xpPerHour(SkillData skillState) {
-    final elapsedHours = trackedElapsed(skillState).inMilliseconds / 3600000;
-    if (elapsedHours <= 0) return 0;
-    return trackedXpGained(skillState) / elapsedHours;
+  /// Notes that one action of [skillState] just paid [xp]. With [average]
+  /// (combat, where one hit is noise) it folds into a running average that
+  /// weights the last ~20 hits; otherwise it is simply the last action's pay.
+  void recordActionXp(
+    double xp,
+    SkillData skillState, {
+    required bool average,
+  }) {
+    if (xp <= 0) return;
+    final prior = skillState.lastActionXp;
+    skillState.lastActionXp = (!average || prior == null)
+        ? xp
+        : prior + (xp - prior) * 0.05;
   }
 }

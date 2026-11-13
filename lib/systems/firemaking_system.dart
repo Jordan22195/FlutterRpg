@@ -52,9 +52,13 @@ class FiremakingSystem {
   /// is the same kind, and replaces it outright when it is not. This is the
   /// whole "add more logs, or start a different fire" rule.
   ///
-  /// [count] lights the same fire that many times at once, which is how an
-  /// offline stretch of firemaking settles: burn time is what a fire craft
-  /// pays out, so n crafts are worth n durations however they are applied.
+  /// [count] is how many lays go on at once, which is how an offline stretch
+  /// of firemaking settles: n crafts are n lays however they are applied.
+  /// A campfire's lays each add its burn time, and a bonfire's raise its
+  /// heat (see [FireItem.addLays]). There is no cap.
+  ///
+  /// [burnScale] is how much longer it burns for the firemaker's level (see
+  /// [FireItem.burnScale]).
   ///
   /// [at] is the instant the fire is lit at, defaulting to now. A cook loop
   /// settling time away relights at the segment it is replaying, and a fire
@@ -67,18 +71,28 @@ class FiremakingSystem {
     BuffData buffState, {
     int count = 1,
     DateTime? at,
+    double burnScale = 1,
   }) {
     if (count <= 0) return;
+    final now = at ?? DateTime.now();
+
+    // the same fire, still burning: the lays go on it, reagents and all
+    final existing = _buffService.getZoneBuff(buffState, zoneId, firepitId);
+    if (existing is FireItem &&
+        existing.id == fireId &&
+        existing.expirationTime.isAfter(now)) {
+      existing.addLays(count, now, scale: burnScale);
+      return;
+    }
+
     final fire = fireId.build();
     if (fire is! FireItem) return;
-
-    // this instance is one application of the fire, so a batched one is
-    // worth the whole batch's burn time - both when it extends the fire
-    // already burning and when it replaces a different one
-    fire.fuelUnits = count;
-    fire.expirationTime = (at ?? DateTime.now()).add(fire.duration);
-
-    _buffService.setZoneBuff(fire, buffState, zoneId, firepitId, at: at);
+    fire.lightAt(now, lays: count, scale: burnScale);
+    // a different fire, or one that has gone out, is replaced outright:
+    // cleared first, since the buff service would otherwise extend a spent
+    // fire of the same kind rather than light this one
+    _buffService.removeZoneBuff(buffState, zoneId, firepitId);
+    _buffService.setZoneBuff(fire, buffState, zoneId, firepitId, at: now);
   }
 
   /// Puts the fire out, ending its buff immediately.

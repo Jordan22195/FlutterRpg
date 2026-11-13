@@ -777,6 +777,58 @@ enum ItemId {
     ),
   ),
 
+  // ── GEODES ──────────────────────────────────────────────────────
+  // Mining's treasure chests, opened from the bag like a bird's nest. A
+  // geode's quality is the tier of the vein it came out of, copper to
+  // adamantite, and sets what is inside: the Miner's set of the matching
+  // tier, and a gem from a richer table the higher it goes. Contents are
+  // geodeRolls in drop_tables.dart.
+  DULL_GEODE(
+    ItemDefinition(
+      name: "Dull Geode",
+      value: 25,
+      quality: Rarity.COMMON,
+      description: "Plain grey stone. It rattles when shaken.",
+      iconAsset: "assets/icons/items/dull_geode.png",
+    ),
+  ),
+  BANDED_GEODE(
+    ItemDefinition(
+      name: "Banded Geode",
+      value: 70,
+      quality: Rarity.UNCOMMON,
+      description: "Ringed with bands of iron-red mineral.",
+      iconAsset: "assets/icons/items/banded_geode.png",
+    ),
+  ),
+  CRYSTAL_GEODE(
+    ItemDefinition(
+      name: "Crystal Geode",
+      value: 160,
+      quality: Rarity.RARE,
+      description: "A hairline crack shows a lining of glittering crystal.",
+      iconAsset: "assets/icons/items/crystal_geode.png",
+    ),
+  ),
+  PRISMATIC_GEODE(
+    ItemDefinition(
+      name: "Prismatic Geode",
+      value: 400,
+      quality: Rarity.EPIC,
+      description: "Throws a small rainbow wherever the light touches it.",
+      iconAsset: "assets/icons/items/prismatic_geode.png",
+    ),
+  ),
+  RADIANT_GEODE(
+    ItemDefinition(
+      name: "Radiant Geode",
+      value: 1000,
+      quality: Rarity.LEGENDARY,
+      description: "Warm to the touch, and faintly glowing.",
+      iconAsset: "assets/icons/items/radiant_geode.png",
+    ),
+  ),
+
   // ── POTIONS ─────────────────────────────────────────────────────
   // BuffItemDefinition, alchemy level ascending. A restore-type potion is
   // a FoodItemDefinition with restoreSkill set.
@@ -2089,9 +2141,11 @@ enum ItemId {
   // A cookfire cooks and carries its own cooking + hitpoints bonus. A
   // campfire or bonfire carries nothing of its own: its wood sets its
   // power, and each fire reagent thrown on it gives that much to the
-  // reagent's stat (see FireReagentDefinition). A bonfire is a rung
-  // stronger and longer than the campfire of the same wood, but a reagent
-  // burns 3 minutes on it rather than 5.
+  // reagent's stat (see FireReagentDefinition). A campfire is a steady
+  // timer at its wood's power. A bonfire burns on heat instead: stoked from
+  // its power up the bonus ladder to two rungs above it, cooling back down
+  // when the logs stop (see FireItem). A reagent burns 3 minutes on it
+  // rather than 5.
   COOKFIRE(
     FireItemDefinition(
       name: "Cookfire",
@@ -2111,7 +2165,7 @@ enum ItemId {
       duration: Duration(minutes: 5),
       power: 5,
       reagentBurn: Duration(minutes: 5),
-      description: "Each reagent thrown on gives +5 to its stat for 5 minutes.",
+      description: "Kindling thrown on gives +5 to its stat for 5 minutes.",
       iconAsset: "assets/images/entities/campfire.png",
     ),
   ),
@@ -2121,9 +2175,12 @@ enum ItemId {
       value: 18,
       skillBonus: {},
       duration: Duration(minutes: 8),
-      power: 8,
+      power: 5,
+      stokes: true,
       reagentBurn: Duration(minutes: 3),
-      description: "Each reagent thrown on gives +8 to its stat for 3 minutes.",
+      description:
+          "Stoke it hot: kindling thrown on gives up to +13 to its "
+          "stat for 3 minutes, cooling back down when the logs stop.",
       iconAsset: "assets/images/entities/bonfire.png",
     ),
   ),
@@ -2146,7 +2203,7 @@ enum ItemId {
       duration: Duration(minutes: 8),
       power: 8,
       reagentBurn: Duration(minutes: 5),
-      description: "Each reagent thrown on gives +8 to its stat for 5 minutes.",
+      description: "Kindling thrown on gives +8 to its stat for 5 minutes.",
       iconAsset: "assets/images/entities/oak_campfire.png",
     ),
   ),
@@ -2156,10 +2213,12 @@ enum ItemId {
       value: 40,
       skillBonus: {},
       duration: Duration(minutes: 13),
-      power: 13,
+      power: 8,
+      stokes: true,
       reagentBurn: Duration(minutes: 3),
       description:
-          "Each reagent thrown on gives +13 to its stat for 3 minutes.",
+          "Stoke it hot: kindling thrown on gives up to +21 to its "
+          "stat for 3 minutes, cooling back down when the logs stop.",
       iconAsset: "assets/images/entities/oak_bonfire.png",
     ),
   ),
@@ -2183,8 +2242,7 @@ enum ItemId {
       duration: Duration(minutes: 13),
       power: 13,
       reagentBurn: Duration(minutes: 5),
-      description:
-          "Each reagent thrown on gives +13 to its stat for 5 minutes.",
+      description: "Kindling thrown on gives +13 to its stat for 5 minutes.",
       iconAsset: "assets/images/entities/willow_campfire.png",
     ),
   ),
@@ -2194,10 +2252,12 @@ enum ItemId {
       value: 85,
       skillBonus: {},
       duration: Duration(minutes: 21),
-      power: 21,
+      power: 13,
+      stokes: true,
       reagentBurn: Duration(minutes: 3),
       description:
-          "Each reagent thrown on gives +21 to its stat for 3 minutes.",
+          "Stoke it hot: kindling thrown on gives up to +34 to its "
+          "stat for 3 minutes, cooling back down when the logs stop.",
       iconAsset: "assets/images/entities/willow_bonfire.png",
     ),
   ),
@@ -2222,7 +2282,7 @@ enum ItemId {
       duration: Duration(minutes: 21),
       power: 8,
       reagentBurn: Duration(minutes: 5),
-      description: "Each reagent thrown on gives +8 to its stat for 5 minutes.",
+      description: "Kindling thrown on gives +8 to its stat for 5 minutes.",
       iconAsset: "assets/images/entities/bog_campfire.png",
     ),
   ),
@@ -2232,10 +2292,12 @@ enum ItemId {
       value: 85,
       skillBonus: {},
       duration: Duration(minutes: 34),
-      power: 13,
+      power: 8,
+      stokes: true,
       reagentBurn: Duration(minutes: 3),
       description:
-          "Each reagent thrown on gives +13 to its stat for 3 minutes.",
+          "Stoke it hot: kindling thrown on gives up to +21 to its "
+          "stat for 3 minutes, cooling back down when the logs stop.",
       iconAsset: "assets/images/entities/bog_bonfire.png",
     ),
   ),
@@ -6700,6 +6762,41 @@ enum ItemId {
       iconAsset: "assets/icons/items/heavy_leather_pants.png",
     ),
   ),
+  // Hides off the den's bosses and chest, on the slots the helm-to-boots set
+  // leaves bare: heavy leather with one point of a stat on top.
+  BEAR_HIDE_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Bear Hide Bracers",
+      value: 200,
+      materialId: EquipmentMaterialId.HEAVY_LEATHER,
+      bonusStats: {SkillId.STRENGTH: 1},
+      description: "Cave bear hide, cured stiff and laced to the elbow.",
+      iconAsset: "assets/icons/items/heavy_leather_bracers.png",
+    ),
+  ),
+  WOLF_HIDE_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Wolf Hide Bracers",
+      value: 200,
+      materialId: EquipmentMaterialId.HEAVY_LEATHER,
+      bonusStats: {SkillId.SPEED: 1},
+      description: "Alpha wolf hide, supple enough to run in.",
+      iconAsset: "assets/icons/items/heavy_leather_bracers.png",
+    ),
+  ),
+  WOLF_HIDE_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Wolf Hide Belt",
+      value: 200,
+      materialId: EquipmentMaterialId.HEAVY_LEATHER,
+      bonusStats: {SkillId.SPEED: 1},
+      description: "A strip of wolf hide, pulled tight for the chase.",
+      iconAsset: "assets/icons/items/heavy_leather_belt.png",
+    ),
+  ),
   HEAVY_LEATHER_GLOVES(
     EquipmentItemDefinition(
       armorSlot: ArmorSlots.HANDS,
@@ -7576,6 +7673,32 @@ enum ItemId {
       statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
       description: "Layer on layer of spider webbing, light and tough.",
       iconAsset: "assets/icons/items/webbed_cloak.png",
+    ),
+  ),
+  // Spider Den's speed trim: a bracer off the first boss and a shoulder
+  // piece off the last, in the cloak's weave.
+  WEBBED_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Webbed Bracers",
+      value: 100,
+      fibLevel: 4,
+      statWeights: {SkillId.DEFENCE: 1, SkillId.ATTACK: 1},
+      bonusStats: {SkillId.SPEED: 1},
+      description: "Webbing wound tight about the wrist, light as thread.",
+      iconAsset: "assets/icons/items/heavy_leather_bracers.png",
+    ),
+  ),
+  BROODMOTHERS_MANTLE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Broodmother's Mantle",
+      value: 120,
+      fibLevel: 5,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      bonusStats: {SkillId.SPEED: 2},
+      description: "Silk spun over the shoulders of a thousand hatchlings.",
+      iconAsset: "assets/icons/items/iron_pauldrons.png",
     ),
   ),
   VENOMFANG_RING(

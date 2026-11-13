@@ -40,11 +40,7 @@ enum ZoneId {
           weight: 1,
           unlockLevel: 1,
         ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.COPPER,
-          weight: 1,
-          unlockLevel: 1,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.CHICKEN,
           weight: 1,
@@ -106,11 +102,7 @@ enum ZoneId {
           unlockLevel: 13,
         ),
 
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.IRON,
-          weight: .5,
-          unlockLevel: 20,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GOBLIN_CAMP,
           weight: .01,
@@ -178,11 +170,7 @@ enum ZoneId {
           weight: 1.5,
           unlockLevel: 20,
         ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.COAL_VEIN,
-          weight: 1,
-          unlockLevel: 40,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COAL_VEIN, weight: 1),
         // the mine's bats roost in the dark canopy too
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GIANT_BAT,
@@ -360,6 +348,26 @@ enum ZoneId {
       ],
     ),
   ),
+  // The fishing village on the lake's shore. Nothing to find by exploring;
+  // it is where the lake's catch is bought and sold, and where the fishing
+  // rods up to mithril and the logs up to maple are sold.
+  MAPLEWATER_VILLAGE(
+    ZoneDefinition(
+      name: "Maplewater Village",
+      iconAsset: 'assets/images/zones/maplewater_lake.png',
+      palette: ZonePalette.maplewater,
+      type: MapNodeType.SETTLEMENT,
+      explorationLevel: 30,
+
+      permanentEntities: [
+        EntityId.FIREPIT,
+        EntityId.MAPLEWATER_TRADING_POST,
+        EntityId.FISHING_SHOP,
+        EntityId.LUMBER_MILL,
+      ],
+      discoverableEntities: [],
+    ),
+  ),
   FOREST_MINE(
     ZoneDefinition(
       name: "Forest Mine",
@@ -372,32 +380,16 @@ enum ZoneId {
 
       permanentEntities: [],
       discoverableEntities: [
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.COPPER,
-          weight: 2,
-          unlockLevel: 1,
-        ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.IRON,
-          weight: 2,
-          unlockLevel: 20,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 2),
+        WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 2),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GIANT_SPIDER,
           weight: 1,
           unlockLevel: 18,
         ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.COAL_VEIN,
-          weight: .8,
-          unlockLevel: 40,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COAL_VEIN, weight: .8),
         // gold sits with the other veins, deeper in than coal
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.GOLD_VEIN,
-          weight: .5,
-          unlockLevel: 25,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.GOLD_VEIN, weight: .5),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GEM_VEIN,
           weight: .08,
@@ -443,11 +435,7 @@ enum ZoneId {
           weight: 1,
           unlockLevel: 33,
         ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.COPPER,
-          weight: 1,
-          unlockLevel: 1,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 1),
       ],
     ),
   ),
@@ -486,11 +474,7 @@ enum ZoneId {
         ),
         // tier 4 mining, the rung above the darkwood's coal. A vein opens
         // at the level its ore smelts at, not inside the zone's range
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.MITHRIL_VEIN,
-          weight: 1,
-          unlockLevel: 60,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.MITHRIL_VEIN, weight: 1),
         // the greater potions' herb, the next rung past the swamp's mirecap
         WeightedDropTableEntry<EntityId>(
           id: EntityId.BLUESTEM,
@@ -518,7 +502,6 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.ADAMANTITE_VEIN,
           weight: .3,
-          unlockLevel: 70,
         ),
       ],
     ),
@@ -556,11 +539,7 @@ enum ZoneId {
           unlockLevel: 38,
         ),
         // the flats' mining: gold in the washes, gems in the mesa rock
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.GOLD_VEIN,
-          weight: 1,
-          unlockLevel: 35,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.GOLD_VEIN, weight: 1),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GEM_VEIN,
           weight: .2,
@@ -572,7 +551,8 @@ enum ZoneId {
   // The city at the foot of the hills, where the prairie road meets the
   // first rise of the range: just outside Ironroot Hills to the west.
   // Nothing to find by exploring; it is where jewelcrafting is done, the
-  // way South Haven is where alchemy is.
+  // way South Haven is where alchemy is, and it keeps every other skilling
+  // table too, so a city is somewhere the whole craft can be done at once.
   IRON_GATE_CITY(
     ZoneDefinition(
       name: "Iron Gate City",
@@ -581,7 +561,13 @@ enum ZoneId {
       type: MapNodeType.SETTLEMENT,
       explorationLevel: 35,
 
-      permanentEntities: [EntityId.FIREPIT, EntityId.JEWELCRAFTING_BENCH],
+      permanentEntities: [
+        EntityId.FIREPIT,
+        EntityId.ANVIL,
+        EntityId.ENCHANTING_BENCH,
+        EntityId.JEWELCRAFTING_BENCH,
+        EntityId.ALCHEMY_STATION,
+      ],
       discoverableEntities: [],
     ),
   ),
@@ -613,11 +599,7 @@ enum ZoneId {
           unlockLevel: 50,
         ),
         // the steel tier's fuel, back above ground
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.COAL_VEIN,
-          weight: 1,
-          unlockLevel: 50,
-        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COAL_VEIN, weight: 1),
         // level 144, under the bridges and in the passes
         WeightedDropTableEntry<EntityId>(
           id: EntityId.TROLL,
@@ -635,7 +617,6 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.ADAMANTITE_VEIN,
           weight: .8,
-          unlockLevel: 70,
         ),
       ],
     ),
@@ -682,7 +663,6 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.ADAMANTITE_VEIN,
           weight: .6,
-          unlockLevel: 70,
         ),
       ],
     ),

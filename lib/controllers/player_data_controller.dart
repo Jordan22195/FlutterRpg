@@ -62,7 +62,9 @@ class PlayerDataController extends ChangeNotifier {
       _playerDataService.staminaRecoveryPerSecond(_playerData),
       _playerData,
     );
-    _playerDataService.applyXp(_playerData, {SkillId.RECOVERY: 10});
+    _playerDataService.applyXp(_playerData, {
+      SkillId.RECOVERY: 10,
+    }, isAction: false);
   }
 
   /// Player data is mutated by other domains (combat xp, gathering and
@@ -162,30 +164,21 @@ class PlayerDataController extends ChangeNotifier {
     return _playerDataService.getXpToLevelUp(id, _playerData);
   }
 
-  void startXpTracker(SkillId id) {
-    _playerDataService.startXpTracker(id, _playerData);
+  double getXpAtLevel(SkillId id, int level) {
+    return _playerDataService.getXpAtLevel(id, level, _playerData);
+  }
+
+  int? getGoalLevel(SkillId id) {
+    return _playerDataService.getGoalLevel(id, _playerData);
+  }
+
+  void setGoalLevel(SkillId id, int level) {
+    _playerDataService.setGoalLevel(id, level, _playerData);
     notifyListeners();
   }
 
-  void resetXpTracker(SkillId id) {
-    _playerDataService.resetXpTracker(id, _playerData);
-    notifyListeners();
-  }
-
-  bool isTrackingXp(SkillId id) {
-    return _playerDataService.isTrackingXp(id, _playerData);
-  }
-
-  Duration getTrackedElapsed(SkillId id) {
-    return _playerDataService.getTrackedElapsed(id, _playerData);
-  }
-
-  double getTrackedXpGained(SkillId id) {
-    return _playerDataService.getTrackedXpGained(id, _playerData);
-  }
-
-  double getXpPerHour(SkillId id) {
-    return _playerDataService.getXpPerHour(id, _playerData);
+  double? getLastActionXp(SkillId id) {
+    return _playerDataService.getLastActionXp(id, _playerData);
   }
 
   void debugSetSkillLevel(SkillId id, int level) {

@@ -213,9 +213,7 @@ class MapDetailPane extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Expanded(
-                      child: _titleBlock(context, name, type, distance),
-                    ),
+                    Expanded(child: _titleBlock(context, name, type, distance)),
                     const SizedBox(width: 12),
                     _enterButton(context, enabled, onPressed),
                   ],

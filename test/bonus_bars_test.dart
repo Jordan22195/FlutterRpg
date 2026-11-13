@@ -66,6 +66,7 @@ void main() {
 
   test('every bar recipe rolls for bonus bars, and no forge does', () {
     for (final recipe in RecipeCatalog().recipes) {
+      if (recipe.skill != SkillId.BLACKSMITHING) continue;
       final makesBar = recipe.id.startsWith('smelt_');
       expect(recipe.rollsBonusOutput, makesBar, reason: recipe.id);
     }

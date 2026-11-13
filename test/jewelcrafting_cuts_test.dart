@@ -145,17 +145,20 @@ void main() {
     });
 
     test('a necklace sits a rung above the ring', () {
-      expect(
-        stats(GemType.RUBY, GemCut.RADIANT, JewellerySetting.NECKLACE),
-        {SkillId.STRENGTH: 55},
-      );
+      expect(stats(GemType.RUBY, GemCut.RADIANT, JewellerySetting.NECKLACE), {
+        SkillId.STRENGTH: 55,
+      });
     });
 
     test('rarity scales a piece like blacksmithed gear', () {
       final byRarity = [
         for (final r in Rarity.values)
-          stats(GemType.RUBY, GemCut.RADIANT, JewellerySetting.RING, r)[
-            SkillId.STRENGTH],
+          stats(
+            GemType.RUBY,
+            GemCut.RADIANT,
+            JewellerySetting.RING,
+            r,
+          )[SkillId.STRENGTH],
       ];
       expect(byRarity, [34, 41, 48, 54, 61]);
     });
@@ -182,13 +185,15 @@ void main() {
       ];
       expect(cuts, [2, 3, 5, 8, 13, 21]);
       expect(
-        defOf(GemType.ONYX, GemCut.RADIANT, ring)
-            .xpPercentAt(Rarity.LEGENDARY),
+        defOf(GemType.ONYX, GemCut.RADIANT, ring).xpPercentAt(Rarity.LEGENDARY),
         38,
       );
       expect(
-        defOf(GemType.ONYX, GemCut.RADIANT, JewellerySetting.NECKLACE)
-            .xpPercentAt(Rarity.LEGENDARY),
+        defOf(
+          GemType.ONYX,
+          GemCut.RADIANT,
+          JewellerySetting.NECKLACE,
+        ).xpPercentAt(Rarity.LEGENDARY),
         61,
       );
       expect(
@@ -231,9 +236,12 @@ void main() {
   test('core gems drop evenly; the special gems are rarer, onyx rarest', () {
     double weight(ItemId id) =>
         gemDropTable.singleWhere((e) => e.id == id).weight;
-    final core = [ItemId.TOPAZ, ItemId.SAPPHIRE, ItemId.EMERALD, ItemId.RUBY]
-        .map(weight)
-        .toSet();
+    final core = [
+      ItemId.TOPAZ,
+      ItemId.SAPPHIRE,
+      ItemId.EMERALD,
+      ItemId.RUBY,
+    ].map(weight).toSet();
     expect(core, hasLength(1));
     expect(weight(ItemId.DIAMOND), weight(ItemId.DRAGONSTONE));
     expect(weight(ItemId.DIAMOND), lessThan(core.single));

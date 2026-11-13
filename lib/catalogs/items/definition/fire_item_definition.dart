@@ -11,9 +11,10 @@ import 'package:rpg/catalogs/items/definition/zone_buff_item_definition.dart';
 ///   tended with fire reagents instead.
 /// - its wood is its [power]: the bonus every reagent thrown on it gives,
 ///   whatever the stat. Better wood, bigger buffs.
-/// - [reagentBurn] is how long one reagent lasts on it. A bonfire is a
-///   rung stronger than a campfire of the same wood, but eats reagents
-///   faster.
+/// - [reagentBurn] is how long one reagent lasts on it.
+/// - a bonfire [stokes]: it burns on heat rather than a timer, starting from
+///   its [power] and stoked up the bonus ladder to two rungs above it, then
+///   cooling back down (see FireItem). It eats reagents faster.
 class FireItemDefinition extends ZoneBuffItemDefinition {
   final bool canCook;
 
@@ -24,6 +25,10 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
   /// How long one reagent burns on this fire.
   final Duration reagentBurn;
 
+  /// Whether this fire burns on heat - stoked up, cooling down - rather
+  /// than a steady timer.
+  final bool stokes;
+
   const FireItemDefinition({
     required super.name,
     required super.value,
@@ -32,6 +37,7 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
     this.canCook = false,
     this.power = 0,
     this.reagentBurn = const Duration(minutes: 5),
+    this.stokes = false,
     super.description,
     super.iconAsset,
     super.quality,
@@ -53,6 +59,7 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
     bool? canCook,
     int? power,
     Duration? reagentBurn,
+    bool? stokes,
   }) {
     return FireItemDefinition(
       name: name ?? this.name,
@@ -65,6 +72,7 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
       canCook: canCook ?? this.canCook,
       power: power ?? this.power,
       reagentBurn: reagentBurn ?? this.reagentBurn,
+      stokes: stokes ?? this.stokes,
     );
   }
 

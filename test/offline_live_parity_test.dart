@@ -205,8 +205,10 @@ void main() {
           band: 0.15,
           seconds: 600,
           // live relights on the first action after the fire is swept, the
-          // settle on the instant it went out: up to an action apart
-          fireSlack: 3.1,
+          // settle on the instant it went out: up to an action apart each
+          // time. a lay is ~2 minutes, so ten minutes relights about five
+          // times and the gap can build to an action per relight
+          fireSlack: 3.1 * 5,
           clump: 1,
         ),
         (

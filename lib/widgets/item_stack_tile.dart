@@ -250,7 +250,13 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
               Row(
                 children: [
                   Icon(Icons.timer),
-                  Text("${itemDef.duration.inSeconds}s"),
+                  // a bonfire has no fixed burn: it lasts as long as it is
+                  // stoked and then cools
+                  Text(
+                    itemDef is FireItemDefinition && itemDef.stokes
+                        ? "Burns on heat"
+                        : "${itemDef.duration.inSeconds}s",
+                  ),
                   // what is actually on the clock, next to what one dose
                   // is worth. drinking extends rather than restarts, so
                   // this is the number that grows as the button is held.
@@ -585,7 +591,7 @@ class FirePowerBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final fontSize = _StatChip.fontSizeFor(tileSize);
     return _StatChip(
-      label: 'Each reagent +$power',
+      label: 'Kindling +$power',
       amount: power,
       tileSize: tileSize,
       icon: Icon(

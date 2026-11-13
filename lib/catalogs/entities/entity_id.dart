@@ -195,6 +195,7 @@ enum EntityId {
       name: "Copper Vein",
       iconAsset: "assets/images/entities/copper.png",
 
+      discoveryLevel: 1,
       entityType: SkillId.MINING,
       defence: 1,
       hitpoints: 5,
@@ -203,7 +204,10 @@ enum EntityId {
 
         // rare gem finds (lower tiers only in the starter vein)
       ],
-      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.05)],
+      bonusDrops: [
+        DropRoll(entries: gemDropTable, chance: 0.05),
+        DropRoll(chance: 0.02, entries: [ItemDropType(id: ItemId.DULL_GEODE)]),
+      ],
     ),
   ),
   IRON(
@@ -211,6 +215,7 @@ enum EntityId {
       name: "Iron Vein",
       iconAsset: "assets/images/entities/iron.png",
 
+      discoveryLevel: 20,
       entityType: SkillId.MINING,
       defence: 10,
       hitpoints: 15,
@@ -219,7 +224,13 @@ enum EntityId {
 
         // rare gem finds, all tiers
       ],
-      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.1)],
+      bonusDrops: [
+        DropRoll(entries: gemDropTable, chance: 0.1),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.BANDED_GEODE)],
+        ),
+      ],
     ),
   ),
   // Tier 3 mining alongside the coal vein, and the first node anywhere that
@@ -229,11 +240,18 @@ enum EntityId {
       name: "Gold Vein",
       iconAsset: "assets/images/entities/gold_vein.png",
 
+      discoveryLevel: 25,
       entityType: SkillId.MINING,
       defence: 20,
       hitpoints: 30,
       itemDrops: [
         ItemDropType(id: ItemId.GOLD_ORE, weight: 1, lowCount: 1, highCount: 2),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.CRYSTAL_GEODE)],
+        ),
       ],
     ),
   ),
@@ -242,13 +260,20 @@ enum EntityId {
       name: "Coal Vein",
       iconAsset: "assets/images/entities/coal_vein.png",
 
+      discoveryLevel: 40,
       entityType: SkillId.MINING,
       defence: 20,
       hitpoints: 25,
       itemDrops: [
         ItemDropType(id: ItemId.COAL, weight: 1, lowCount: 1, highCount: 3),
       ],
-      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.5)],
+      bonusDrops: [
+        DropRoll(entries: gemDropTable, chance: 0.5),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.BANDED_GEODE)],
+        ),
+      ],
     ),
   ),
   GEM_VEIN(
@@ -261,6 +286,12 @@ enum EntityId {
       defence: 40,
       hitpoints: 30,
       itemDrops: gemDropTable,
+      bonusDrops: [
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.CRYSTAL_GEODE)],
+        ),
+      ],
     ),
   ),
   // Tier 4 mining, the rung above the coal and gold veins, and the first
@@ -273,11 +304,18 @@ enum EntityId {
       name: "Mithril Vein",
       iconAsset: "assets/images/entities/mithril_vein.png",
 
+      discoveryLevel: 60,
       entityType: SkillId.MINING,
       defence: 40,
       hitpoints: 40,
       itemDrops: [ItemDropType(id: ItemId.MITHRIL_ORE, weight: 1)],
-      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.15)],
+      bonusDrops: [
+        DropRoll(entries: gemDropTable, chance: 0.15),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.PRISMATIC_GEODE)],
+        ),
+      ],
     ),
   ),
   // Tier 5 mining, the prairie's rare find past its mithril, and the first
@@ -288,11 +326,61 @@ enum EntityId {
       iconAsset: "assets/images/entities/adamantite_vein.png",
       rarity: Rarity.RARE,
 
+      discoveryLevel: 70,
       entityType: SkillId.MINING,
       defence: 55,
       hitpoints: 50,
       itemDrops: [ItemDropType(id: ItemId.ADAMANTITE_ORE, weight: 1)],
-      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.2)],
+      bonusDrops: [
+        DropRoll(entries: gemDropTable, chance: 0.2),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.PRISMATIC_GEODE)],
+        ),
+      ],
+    ),
+  ),
+
+  // Tier 6 mining, past the adamantite. Not placed in any zone yet.
+  RUNITE_VEIN(
+    EncounterEntityDefinition(
+      name: "Runite Vein",
+      iconAsset: "assets/images/entities/runite_vein.png",
+      rarity: Rarity.EPIC,
+
+      discoveryLevel: 80,
+      entityType: SkillId.MINING,
+      defence: 70,
+      hitpoints: 60,
+      itemDrops: [ItemDropType(id: ItemId.RUNEITE_ORE, weight: 1)],
+      bonusDrops: [
+        DropRoll(entries: gemDropTable, chance: 0.25),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.RADIANT_GEODE)],
+        ),
+      ],
+    ),
+  ),
+  // Tier 7 mining, the deepest vein. Not placed in any zone yet.
+  DRAGONITE_VEIN(
+    EncounterEntityDefinition(
+      name: "Dragonite Vein",
+      iconAsset: "assets/images/entities/dragonite_vein.png",
+      rarity: Rarity.LEGENDARY,
+
+      discoveryLevel: 90,
+      entityType: SkillId.MINING,
+      defence: 85,
+      hitpoints: 70,
+      itemDrops: [ItemDropType(id: ItemId.DRAGON_ORE, weight: 1)],
+      bonusDrops: [
+        DropRoll(entries: gemDropTable, chance: 0.3),
+        DropRoll(
+          chance: 0.02,
+          entries: [ItemDropType(id: ItemId.RADIANT_GEODE)],
+        ),
+      ],
     ),
   ),
 
@@ -839,6 +927,10 @@ enum EntityId {
           chance: 0.25,
           entries: [ItemDropType(id: ItemId.WEBBED_CLOAK)],
         ),
+        DropRoll(
+          chance: 0.25,
+          entries: [ItemDropType(id: ItemId.WEBBED_BRACERS)],
+        ),
       ],
     ),
   ),
@@ -922,7 +1014,7 @@ enum EntityId {
         ItemDropType(id: ItemId.WOLF_CLAW, weight: 1),
         ItemDropType(id: ItemId.WOLF_PELT, weight: 1),
       ],
-      bonusDrops: [DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable)],
+      bonusDrops: [DropRoll(chance: 0.05, entries: denAlphaArmorDropTable)],
     ),
   ),
   // Giant Bat · roster tier 2 · mine
@@ -1208,7 +1300,7 @@ enum EntityId {
         ItemDropType(id: ItemId.BEAR_HIDE, weight: 1),
         ItemDropType(id: ItemId.BEAR_RUMP, weight: 1),
       ],
-      bonusDrops: [DropRoll(chance: 0.05, entries: wolfDenMinorArmorDropTable)],
+      bonusDrops: [DropRoll(chance: 0.05, entries: caveBearArmorDropTable)],
     ),
   ),
   // Mudlurc · roster tier 2 · swamp
@@ -2723,6 +2815,12 @@ enum EntityId {
           weight: .5,
         ),
       ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.25,
+          entries: [ItemDropType(id: ItemId.BROODMOTHERS_MANTLE)],
+        ),
+      ],
     ),
   ),
   GOBLIN_QUEEN(
@@ -3011,6 +3109,69 @@ enum EntityId {
         ShopStockEntry(itemId: ItemId.IRON_PICKAXE, count: 1),
         ShopStockEntry(itemId: ItemId.STEEL_PICKAXE, count: 1),
         ShopStockEntry(itemId: ItemId.MITHRIL_PICKAXE, count: 1),
+      ],
+    ),
+  ),
+  // Maplewater Village's own trading post. The stock is TBD: a single
+  // placeholder entry keeps the shop valid until the real pool is decided.
+  MAPLEWATER_TRADING_POST(
+    ShopEntityDefinition(
+      name: "Maplewater Trading Post",
+      iconAsset: "assets/images/entities/trading_post.png",
+      rarity: Rarity.UNCOMMON,
+      stockSlots: 1,
+      shopStockPool: [
+        // TBD: placeholder stock
+        ShopStockEntry(itemId: ItemId.LOGS, count: 100),
+      ],
+    ),
+  ),
+  // The village's fishing shop: every raw fish up to catfish, the novice
+  // fisher's set and the rods up to mithril. The whole pool fits on the shelf
+  // so a restock never hides an item.
+  FISHING_SHOP(
+    ShopEntityDefinition(
+      name: "Fishing Shop",
+      iconAsset: "assets/images/entities/trading_post.png",
+      stockSlots: 20,
+      shopStockPool: [
+        ShopStockEntry(itemId: ItemId.MINNOW, count: 500),
+        ShopStockEntry(itemId: ItemId.CARP, count: 500),
+        ShopStockEntry(itemId: ItemId.CRAYFISH, count: 500),
+        ShopStockEntry(itemId: ItemId.BLUEGILL, count: 500),
+        ShopStockEntry(itemId: ItemId.TROUT, count: 500),
+        ShopStockEntry(itemId: ItemId.PIKE, count: 500),
+        ShopStockEntry(itemId: ItemId.BOG_EEL, count: 500),
+        ShopStockEntry(itemId: ItemId.SALMON, count: 500),
+        ShopStockEntry(itemId: ItemId.CATFISH, count: 500),
+        ShopStockEntry(itemId: ItemId.NOVICE_FISHERS_HAT, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_FISHERS_TUNIC, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_FISHERS_PANTS, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_FISHERS_GLOVES, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_FISHERS_BOOTS, count: 1),
+        ShopStockEntry(itemId: ItemId.NOVICE_FISHERS_CLOAK, count: 1),
+        ShopStockEntry(itemId: ItemId.SIMPLE_FISHING_ROD, count: 1),
+        ShopStockEntry(itemId: ItemId.COPPER_FISHING_ROD, count: 1),
+        ShopStockEntry(itemId: ItemId.IRON_FISHING_ROD, count: 1),
+        ShopStockEntry(itemId: ItemId.STEEL_FISHING_ROD, count: 1),
+        ShopStockEntry(itemId: ItemId.MITHRIL_FISHING_ROD, count: 1),
+      ],
+    ),
+  ),
+  // The village's lumber mill: every log the game has, up to maple. Yew logs
+  // don't exist yet; add them to this pool when the tree lands.
+  LUMBER_MILL(
+    ShopEntityDefinition(
+      name: "Lumber Mill",
+      iconAsset: "assets/images/entities/trading_post.png",
+      // the whole pool fits on the shelf, so a restock never hides an item
+      stockSlots: 5,
+      shopStockPool: [
+        ShopStockEntry(itemId: ItemId.LOGS, count: 500),
+        ShopStockEntry(itemId: ItemId.OAK_LOGS, count: 500),
+        ShopStockEntry(itemId: ItemId.WILLOW_LOGS, count: 500),
+        ShopStockEntry(itemId: ItemId.BOG_LOGS, count: 500),
+        ShopStockEntry(itemId: ItemId.MAPLE_LOGS, count: 500),
       ],
     ),
   ),

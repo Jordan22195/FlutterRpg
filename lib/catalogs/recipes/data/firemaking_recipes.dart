@@ -7,6 +7,35 @@ import 'package:rpg/services/weighted_drop_table_service.dart';
 /// open cooking; campfires and bonfires cost more logs and burn reagents for
 /// their buffs (see FireReagentDefinition). Burning logs is the grind: these
 /// recipes are where Firemaking's xp comes from.
+/// Throwing a fire reagent on a lit campfire or bonfire: one per reagent,
+/// run off the action button like a cooking recipe. Each buffs the
+/// reagent's stat by the fire's power for the fire's reagent burn, and pays
+/// the reagent's unlock level in xp (5 / 8 / 13).
+final List<CraftingRecipe> fireReagentRecipes = [
+  // the firepit's picked reagents, all thrown at once: what the action
+  // button runs, its costs and xp the reagents' own
+  const CraftingRecipe(
+    id: reagentMixRecipeId,
+    name: 'Kindling',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 1,
+    inputs: {},
+    output: [],
+    xp: 0,
+  ),
+  for (final id in ItemId.values)
+    if (id.definition case final FireReagentDefinition def)
+      CraftingRecipe(
+        id: 'tend_${id.name.toLowerCase()}',
+        name: def.name,
+        skill: SkillId.FIREMAKING,
+        levelRequirement: def.levelRequirement,
+        xp: def.levelRequirement.toDouble(),
+        inputs: {id: 1},
+        output: [WeightedDropTableEntry(id: id, count: 1, weight: 1)],
+      ),
+];
+
 const List<CraftingRecipe> firemakingRecipes = [
   // Firemaking. three fire types across two log tiers: cookfires are cheap
   // and open cooking, campfires and bonfires cost more logs for a bigger

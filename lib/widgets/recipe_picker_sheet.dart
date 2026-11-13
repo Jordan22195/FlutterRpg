@@ -4,12 +4,14 @@ import 'package:provider/provider.dart';
 import '../catalogs/items/items.dart';
 import '../catalogs/recipes/recipes.dart';
 import '../controllers/action_timing_controller.dart';
+import '../controllers/buff_controller.dart';
 import '../controllers/crafting_controller.dart';
 import '../controllers/player_data_controller.dart';
 import '../data/skill_data.dart';
 import '../theme/hearth_text.dart';
 import '../utilities/util.dart';
 import 'explore_card.dart';
+import 'fire_reagents.dart';
 import 'icon_renderer.dart';
 import 'item_stack_tile.dart';
 
@@ -45,6 +47,7 @@ Future<void> showRecipePickerSheet(
   required SkillId skill,
   required List<CraftingRecipe> recipes,
   required void Function(CraftingRecipe recipe) onSelected,
+  bool Function(CraftingRecipe recipe)? isPicked,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -61,9 +64,11 @@ Future<void> showRecipePickerSheet(
       title: title,
       skill: skill,
       recipes: recipes,
+      isPicked: isPicked,
+      // a sheet picking several keeps open: each tap toggles one
       onSelected: (recipe) {
         onSelected(recipe);
-        Navigator.of(ctx).pop();
+        if (isPicked == null) Navigator.of(ctx).pop();
       },
     ),
   );
@@ -87,12 +92,17 @@ class RecipePickerSheet extends StatefulWidget {
     required this.skill,
     required this.recipes,
     required this.onSelected,
+    this.isPicked,
   });
 
   final String title;
   final SkillId skill;
   final List<CraftingRecipe> recipes;
   final void Function(CraftingRecipe recipe) onSelected;
+
+  /// Set for a sheet that picks several: which recipes are in. Each tap then
+  /// toggles one, and the sheet stays open until it is closed.
+  final bool Function(CraftingRecipe recipe)? isPicked;
 
   @override
   State<RecipePickerSheet> createState() => _RecipePickerSheetState();
@@ -145,6 +155,9 @@ class _RecipePickerSheetState extends State<RecipePickerSheet> {
   @override
   Widget build(BuildContext context) {
     final level = context.watch<PlayerDataController>().getSkillLevel(skill);
+    // a toggle changes what is picked, so a multi-pick sheet follows it
+    final isPicked = widget.isPicked;
+    if (isPicked != null) context.watch<CraftingController>();
     // one tab per metal, lowest-opening first; a station whose recipes have
     // no metals gets none
     final metalLevels = <String, int>{};
@@ -170,9 +183,13 @@ class _RecipePickerSheetState extends State<RecipePickerSheet> {
               if (_metalOf(r) == _metal) r,
           ];
     // lowest level first; List.sort is not stable, so ties keep data order
-    // by comparing the original index
+    // by comparing the original index. reagents keep the order they are
+    // handed in - the stage's ring order - so the picker reads the same way
+    final keepOrder =
+        recipes.isNotEmpty && recipes.every((r) => r.tendReagent != null);
     final indexed = recipes.asMap().entries.toList()
       ..sort((a, b) {
+        if (keepOrder) return a.key.compareTo(b.key);
         final byLevel = a.value.levelRequirement.compareTo(
           b.value.levelRequirement,
         );
@@ -223,7 +240,9 @@ class _RecipePickerSheetState extends State<RecipePickerSheet> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${skillDisplayName(skill)} · Lv $level',
+                          isPicked == null
+                              ? '${skillDisplayName(skill)} · Lv $level'
+                              : 'Pick any to keep topped up · Lv $level',
                           style: const TextStyle(
                             fontFamily: HearthText.body,
                             fontWeight: FontWeight.w600,
@@ -280,6 +299,7 @@ class _RecipePickerSheetState extends State<RecipePickerSheet> {
                     recipe: r,
                     skill: skill,
                     locked: level < r.levelRequirement,
+                    selected: isPicked?.call(r) ?? false,
                     onTap: () => onSelected(r),
                   );
                 },
@@ -394,6 +414,14 @@ class RecipePickerCard extends StatelessWidget {
     final name = outputId.definition.name;
     final xp = _formatXp(recipe.xp);
 
+    // a reagent wears the stat it buffs, ringed by how full that buff is on
+    // the fire. the buff tick drains it, so only a reagent card follows it
+    final reagent = recipe.tendReagent;
+    final buffedStat = reagent == null
+        ? null
+        : (reagent.definition as FireReagentDefinition).stat;
+    if (buffedStat != null) context.watch<BuffController>();
+
     final semantics = locked
         ? '$name, locked, requires level ${recipe.levelRequirement}'
         : '$name, level ${recipe.levelRequirement}, $xp xp'
@@ -496,6 +524,15 @@ class RecipePickerCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
+          if (buffedStat != null) ...[
+            BuffRing(
+              key: ValueKey('recipe-buff-ring-${buffedStat.name}'),
+              stat: buffedStat,
+              fullness: crafting.reagentFullness(buffedStat),
+              size: 32,
+            ),
+            const SizedBox(width: 10),
+          ],
           locked ? _requires() : _levelAndXp(xp),
         ],
       ),

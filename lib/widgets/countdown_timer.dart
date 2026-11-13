@@ -11,6 +11,7 @@ class CountdownTimer extends StatefulWidget {
     required this.expirationTime,
     this.size = 16,
     this.showIcon = true,
+    this.clock = false,
   });
 
   /// The time at which the countdown ends.
@@ -21,6 +22,19 @@ class CountdownTimer extends StatefulWidget {
   /// narrow to spare the width — an item tile has a count badge in the
   /// other one, and the two must not run into each other.
   final bool showIcon;
+
+  /// Read as a running clock, "mm:ss", instead of the coarse unit. For a
+  /// timer the player watches tick, like a fire burning down.
+  final bool clock;
+
+  /// "07:05": whole minutes and seconds left, rounded up so the clock reads
+  /// 00:00 only once the time is actually out.
+  static String formatClock(Duration remaining) {
+    if (remaining.inMilliseconds <= 0) return '00:00';
+    final total = (remaining.inMilliseconds / 1000).ceil();
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(total ~/ 60)}:${two(total % 60)}';
+  }
 
   /// "2h" / "6m" / "45s" - the coarse unit, the way the timer itself
   /// reads. Shared so a stretch of time that is not counting down yet can
@@ -84,7 +98,9 @@ class _CountdownTimerState extends State<CountdownTimer> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final remaining = widget.expirationTime.difference(now);
-    final remainingText = CountdownTimer.formatDuration(remaining);
+    final remainingText = widget.clock
+        ? CountdownTimer.formatClock(remaining)
+        : CountdownTimer.formatDuration(remaining);
     double size = widget.size;
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -93,7 +109,16 @@ class _CountdownTimerState extends State<CountdownTimer> {
           Icon(Icons.schedule, size: size),
           SizedBox(width: 6),
         ],
-        Text(remainingText, style: TextStyle(fontSize: size * 0.8)),
+        Text(
+          remainingText,
+          // even-width digits, so a ticking clock doesn't jitter the chip
+          style: TextStyle(
+            fontSize: size * 0.8,
+            fontFeatures: widget.clock
+                ? const [FontFeature.tabularFigures()]
+                : null,
+          ),
+        ),
       ],
     );
   }

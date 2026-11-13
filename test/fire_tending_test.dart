@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/drop_tables.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/catalogs/recipes/recipes.dart';
 import 'package:rpg/data/buff_data.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
@@ -13,8 +14,8 @@ import 'package:rpg/systems/fire_tending_system.dart';
 
 // Reagent fires. The wood sets a fire's power, the reagent picks the stat,
 // a campfire or bonfire gives nothing until tended, and the buffs end with
-// the fire. Logs are the grind: tending by hand pays a little xp, and the
-// auto-tend and Keep fire fed switches pay none.
+// the fire. Logs are the grind: a reagent recipe, run off the action button,
+// pays a little xp on top.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -92,19 +93,33 @@ void main() {
           ItemId.OAK_BONFIRE,
           ItemId.WILLOW_BONFIRE,
         ].map((id) => def(id).power),
-        [8, 13, 21],
+        [5, 8, 13],
       );
     });
 
-    test('a bonfire is a rung stronger but eats reagents faster', () {
-      expect(
-        def(ItemId.BONFIRE).power,
-        greaterThan(def(ItemId.BASIC_CAMPFIRE).power),
-      );
-      expect(
-        def(ItemId.BONFIRE).reagentBurn,
-        lessThan(def(ItemId.BASIC_CAMPFIRE).reagentBurn),
-      );
+    test('a bonfire starts at its campfire, stokes two rungs past it, and '
+        'eats kindling faster', () {
+      for (final (campfire, bonfire) in [
+        (ItemId.BASIC_CAMPFIRE, ItemId.BONFIRE),
+        (ItemId.OAK_CAMPFIRE, ItemId.OAK_BONFIRE),
+        (ItemId.WILLOW_CAMPFIRE, ItemId.WILLOW_BONFIRE),
+        (ItemId.BOG_CAMPFIRE, ItemId.BOG_BONFIRE),
+      ]) {
+        expect(def(bonfire).power, def(campfire).power, reason: bonfire.name);
+        expect(def(bonfire).stokes, isTrue, reason: bonfire.name);
+        expect(def(campfire).stokes, isFalse, reason: campfire.name);
+        expect(
+          (bonfire.build() as FireItem).ceiling,
+          FireItem.stepped(def(campfire).power, 2),
+          reason: bonfire.name,
+        );
+        expect(
+          def(bonfire).reagentBurn,
+          lessThan(def(campfire).reagentBurn),
+          reason: bonfire.name,
+        );
+      }
+      expect((ItemId.BONFIRE.build() as FireItem).ceiling, 13);
     });
 
     test('bog is willow one rung weaker and one rung longer', () {
@@ -140,16 +155,28 @@ void main() {
       final fire = light(session, ItemId.BASIC_CAMPFIRE, at: now);
       final burn = fire.definition.reagentBurn;
 
+      // three 5 minute lays: room for two 5 minute reagents and a part
+      session.firemakingSystem.lightOrExtend(
+        ItemId.BASIC_CAMPFIRE,
+        EntityId.FIREPIT,
+        session.saveGameData.playerData.currentZoneId,
+        session.saveGameData.playerData.buffData,
+        count: 2,
+        at: now,
+      );
+      fire.expirationTime = fire.expirationTime.subtract(
+        const Duration(minutes: 2),
+      );
       fire.tend(SkillId.STRENGTH, now);
       fire.tend(SkillId.STRENGTH, now);
       expect(fire.reagentExpirations[SkillId.STRENGTH], now.add(burn * 2));
 
-      // the reagents outlast the 5-minute fire, but stop counting with it
+      // a third would outlast the fire, so it stops at the fire's end
+      fire.tend(SkillId.STRENGTH, now);
+      expect(fire.reagentExpirations[SkillId.STRENGTH], fire.expirationTime);
+
+      // and the buff stops with the fire
       final afterFire = fire.expirationTime.add(const Duration(seconds: 1));
-      expect(
-        fire.reagentExpirations[SkillId.STRENGTH]!.isAfter(afterFire),
-        isTrue,
-      );
       expect(totals(session, at: afterFire), isEmpty);
       session.dispose();
     });
@@ -197,75 +224,271 @@ void main() {
       setFiremaking(session, 10);
       save.playerData.currentEntityViewId = EntityId.FIREPIT;
 
+      TendBlock block(ItemId reagent) => session.fireTendingSystem.blockFor(
+        reagent,
+        EntityId.FIREPIT,
+        save.playerData.currentZoneId,
+        save.playerData,
+        save.inventoryData,
+      );
+
       light(session, ItemId.COOKFIRE);
-      expect(session.fireController.blockFor(ItemId.ACORN), TendBlock.cookfire);
+      expect(block(ItemId.ACORN), TendBlock.cookfire);
 
       light(session, ItemId.BASIC_CAMPFIRE);
-      expect(session.fireController.blockFor(ItemId.ACORN), TendBlock.none);
-      expect(session.fireController.blockFor(ItemId.OAK_SAP), TendBlock.level);
+      expect(block(ItemId.ACORN), TendBlock.none);
+      expect(block(ItemId.OAK_SAP), TendBlock.level);
       session.dispose();
     });
 
-    test('throwing one by hand pays its level in xp; auto-tend pays none', () {
+    // runs one tick of [recipeId] at the firepit through the crafting path,
+    // as the action button does
+    void craft(GameSession session, String recipeId) {
+      final save = session.saveGameData;
+      save.craftingState.craftingEntityId = EntityId.FIREPIT;
+      save.craftingState.activeRecipeId = recipeId;
+      session.craftingSystem.craftActiveRecipe(
+        save.craftingState,
+        save.playerData,
+        save.inventoryData,
+        save.playerData.buffData,
+        save.worldData,
+      );
+    }
+
+    void pickFire(GameSession session, String recipeId) {
+      session.saveGameData.craftingState.selectedRecipeByEntity[EntityId
+          .FIREPIT] = {
+        SkillId.FIREMAKING: recipeId,
+      };
+    }
+
+    test('every reagent has a recipe, and the fire list leaves them out', () {
+      final session = buildSession();
+      final reagents = [
+        for (final r in session.craftingController.availableReagentRecipes())
+          r.tendReagent,
+      ];
+      expect(reagents.toSet(), FireTendingSystem.reagents.toSet());
+      // in the order the stage shows their rings
+      final stats = [
+        for (final id in reagents)
+          FireTendingSystem.reagentDefinition(id!)!.stat.index,
+      ];
+      expect(stats, [...stats]..sort());
+      for (final r in session.craftingController.availableReagentRecipes()) {
+        expect(r.skill, SkillId.FIREMAKING);
+        expect(r.xp, FireTendingSystem.tendXp(r.tendReagent!));
+      }
+      expect(
+        session.craftingController
+            .availableRecipesFor(SkillId.FIREMAKING)
+            .where((r) => r.tendReagent != null || r.isReagentMix),
+        isEmpty,
+      );
+      session.dispose();
+    });
+
+    test('a reagent recipe throws one on and pays its level in xp', () {
       final session = buildSession();
       final save = session.saveGameData;
       setFiremaking(session, 20);
       save.inventoryData.itemMap[ItemId.ACORN] = 5;
-      save.inventoryData.itemMap[ItemId.DRY_TWIGS] = 5;
-      save.playerData.currentEntityViewId = EntityId.FIREPIT;
-      light(session, ItemId.BASIC_CAMPFIRE);
+      final now = DateTime.now();
+      final fire = light(session, ItemId.BASIC_CAMPFIRE, at: now);
       final skill = save.playerData.skillData[SkillId.FIREMAKING]!;
 
       final before = skill.xp;
-      expect(session.fireController.tend(ItemId.ACORN), isTrue);
+      craft(session, 'tend_acorn');
       expect(skill.xp - before, FireTendingSystem.tendXp(ItemId.ACORN));
       expect(save.inventoryData.itemMap[ItemId.ACORN], 4);
-
-      save.playerData.autoTendReagents.add(ItemId.DRY_TWIGS);
-      final beforeAuto = skill.xp;
-      expect(
-        session.fireTendingSystem.autoTend(save.playerData, save.inventoryData),
-        isTrue,
-      );
-      expect(save.inventoryData.itemMap[ItemId.DRY_TWIGS], 4);
-      expect(skill.xp, beforeAuto);
+      expect(fire.reagentActive(SkillId.STRENGTH, DateTime.now()), isTrue);
       session.dispose();
     });
 
-    test('Keep fire fed lays the same logs on before the fire goes out', () {
+    test('kindling never lights a cold pit', () {
       final session = buildSession();
       final save = session.saveGameData;
       setFiremaking(session, 20);
+      save.inventoryData.itemMap[ItemId.ACORN] = 5;
       save.inventoryData.itemMap[ItemId.LOGS] = 5;
+      pickFire(session, 'basic_campfire');
+
+      craft(session, 'tend_acorn');
+      // nothing spent and nothing lit: the fire has to be lit first
+      expect(save.inventoryData.itemMap[ItemId.LOGS], 5);
+      expect(save.inventoryData.itemMap[ItemId.ACORN], 5);
+      expect(
+        session.firemakingSystem.activeFire(
+          EntityId.FIREPIT,
+          save.playerData.currentZoneId,
+          save.playerData.buffData,
+        ),
+        isNull,
+      );
+      session.dispose();
+    });
+
+    test('kindling needs a campfire or bonfire already burning', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      setFiremaking(session, 20);
+      save.inventoryData.itemMap[ItemId.ACORN] = 5;
+      save.inventoryData.itemMap[ItemId.LOGS] = 5;
+      save.craftingState.craftingEntityId = EntityId.FIREPIT;
+      bool canRun() => session.craftingSystem.recipeRequirementsMet(
+        'tend_acorn',
+        save.playerData,
+        save.inventoryData,
+        save.craftingState,
+      );
+
+      // a cookfire burning: nothing to throw it on
+      pickFire(session, 'cookfire');
+      light(session, ItemId.COOKFIRE);
+      expect(canRun(), isFalse);
+
+      // a campfire picked with the logs to light it is not enough
+      pickFire(session, 'basic_campfire');
+      expect(canRun(), isFalse);
+
+      // one burning is
+      light(session, ItemId.BASIC_CAMPFIRE);
+      expect(canRun(), isTrue);
+      session.dispose();
+    });
+
+    void pickMix(GameSession session, List<String> recipeIds) {
+      session.saveGameData.craftingState.reagentMixByEntity[EntityId.FIREPIT] =
+          [...recipeIds];
+    }
+
+    test('a kindling mix throws one of every picked reagent at once', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      setFiremaking(session, 20);
+      save.inventoryData.itemMap[ItemId.ACORN] = 5;
+      save.inventoryData.itemMap[ItemId.TREE_BARK] = 5;
+      save.inventoryData.itemMap[ItemId.DRY_TWIGS] = 5;
       final now = DateTime.now();
       final fire = light(session, ItemId.BASIC_CAMPFIRE, at: now);
-      fire.tend(SkillId.STRENGTH, now, count: 3);
-      final out = fire.expirationTime;
+      pickMix(session, ['tend_acorn', 'tend_tree_bark', 'tend_dry_twigs']);
+      final skill = save.playerData.skillData[SkillId.FIREMAKING]!;
+      final before = skill.xp;
 
-      // off: the fire is left to burn out
-      session.fireTendingSystem.autoTend(
-        save.playerData,
-        save.inventoryData,
-        at: out,
-      );
-      expect(save.inventoryData.itemMap[ItemId.LOGS], 5);
-
-      save.playerData.keepFireFed = true;
-      session.fireTendingSystem.autoTend(
-        save.playerData,
-        save.inventoryData,
-        at: out,
-      );
-      expect(save.inventoryData.itemMap[ItemId.LOGS] ?? 0, 0);
-      expect(fire.expirationTime, out.add(fire.definition.duration));
-      // and its reagent is still burning past where the fire would have died
+      craft(session, reagentMixRecipeId);
+      for (final id in [ItemId.ACORN, ItemId.TREE_BARK, ItemId.DRY_TWIGS]) {
+        expect(save.inventoryData.itemMap[id], 4, reason: id.name);
+      }
+      for (final stat in [SkillId.STRENGTH, SkillId.DEFENCE, SkillId.STAMINA]) {
+        expect(fire.reagentActive(stat, DateTime.now()), isTrue);
+      }
       expect(
-        totals(
-          session,
-          at: out.add(const Duration(minutes: 1)),
-        )[SkillId.STRENGTH],
-        fire.power,
+        skill.xp - before,
+        FireTendingSystem.tendXp(ItemId.ACORN) +
+            FireTendingSystem.tendXp(ItemId.TREE_BARK) +
+            FireTendingSystem.tendXp(ItemId.DRY_TWIGS),
       );
+      session.dispose();
+    });
+
+    test('a mix skips full rings and stops once every ring is full', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      setFiremaking(session, 20);
+      save.inventoryData.itemMap[ItemId.ACORN] = 10;
+      save.inventoryData.itemMap[ItemId.TREE_BARK] = 10;
+      save.playerData.currentEntityViewId = EntityId.FIREPIT;
+      final now = DateTime.now();
+      final fire = light(session, ItemId.BASIC_CAMPFIRE, at: now);
+      pickMix(session, ['tend_acorn', 'tend_tree_bark']);
+      // strength already full
+      fire.tend(SkillId.STRENGTH, now, count: 10);
+
+      final controller = session.craftingController;
+      expect(
+        controller.startCraftingActionFor(reagentMixRecipeId, EntityId.FIREPIT),
+        isTrue,
+      );
+      controller.doCraftingAction(1);
+      expect(save.inventoryData.itemMap[ItemId.ACORN], 10);
+      expect(save.inventoryData.itemMap[ItemId.TREE_BARK], 9);
+      // a 5 minute campfire holds one 5 minute bark: full, so it stopped
+      expect(controller.mixFull(), isTrue);
+      expect(session.actionTimingController.isRunning, isFalse);
+      session.dispose();
+    });
+
+    test('a mix keeps picked reagents in stage order', () {
+      final session = buildSession();
+      save(GameSession s) => s.saveGameData;
+      pickMix(session, ['tend_acorn', 'tend_dry_twigs', 'tend_tree_bark']);
+      save(session).playerData.currentEntityViewId = EntityId.FIREPIT;
+      final stats = [
+        for (final r in session.craftingController.reagentMix())
+          FireTendingSystem.reagentDefinition(r.tendReagent!)!.stat,
+      ];
+      // stamina, strength, defence: the order SkillId lists them
+      expect(stats, [SkillId.STAMINA, SkillId.STRENGTH, SkillId.DEFENCE]);
+      session.dispose();
+    });
+
+    test('a reagent buff stacks to at most the fire\'s end', () {
+      final session = buildSession();
+      final now = DateTime(2030, 1, 1, 12);
+      final fire = light(session, ItemId.BASIC_CAMPFIRE, at: now);
+
+      fire.tend(SkillId.STRENGTH, now, count: 100);
+      expect(fire.reagentExpirations[SkillId.STRENGTH], fire.expirationTime);
+
+      // more logs give it room: the next reagent extends past the old end
+      final oldEnd = fire.expirationTime;
+      session.firemakingSystem.lightOrExtend(
+        ItemId.BASIC_CAMPFIRE,
+        EntityId.FIREPIT,
+        session.saveGameData.playerData.currentZoneId,
+        session.saveGameData.playerData.buffData,
+        at: now,
+      );
+      fire.tend(SkillId.STRENGTH, now);
+      // a reagent outlasts a lay, so it runs to the new end
+      expect(fire.expirationTime.isAfter(oldEnd), isTrue);
+      expect(fire.reagentExpirations[SkillId.STRENGTH], fire.expirationTime);
+      session.dispose();
+    });
+
+    test('a reagent ring reads its time left out of the fire\'s', () {
+      final session = buildSession();
+      final now = DateTime(2030, 1, 1, 12);
+      final zone = session.saveGameData.playerData.currentZoneId;
+      final buffs = session.saveGameData.playerData.buffData;
+      final fire = light(session, ItemId.BASIC_CAMPFIRE, at: now);
+      void addLogs() => session.firemakingSystem.lightOrExtend(
+        ItemId.BASIC_CAMPFIRE,
+        EntityId.FIREPIT,
+        zone,
+        buffs,
+        at: now,
+      );
+
+      expect(fire.reagentFullness(SkillId.STRENGTH, now), 0);
+
+      // a reagent as long as the fire fills its ring
+      fire.tend(SkillId.STRENGTH, now);
+      expect(fire.reagentFullness(SkillId.STRENGTH, now), closeTo(1, 1e-4));
+
+      // the fire doubled: the ring halves until more reagents go on
+      addLogs();
+      expect(fire.reagentFullness(SkillId.STRENGTH, now), closeTo(0.5, 1e-4));
+      fire.tend(SkillId.STRENGTH, now);
+      expect(fire.reagentFullness(SkillId.STRENGTH, now), closeTo(1, 1e-4));
+
+      // halfway through, both have burnt the same: still full
+      final mid = now.add(const Duration(minutes: 1));
+      expect(fire.reagentFullness(SkillId.STRENGTH, mid), closeTo(1, 1e-4));
+
+      // and it empties with the fire
+      expect(fire.reagentFullness(SkillId.STRENGTH, fire.expirationTime), 0);
       session.dispose();
     });
 
@@ -273,6 +496,15 @@ void main() {
       final session = buildSession();
       final now = DateTime.now();
       final fire = light(session, ItemId.BASIC_CAMPFIRE, at: now);
+      // enough lays that the fast tier outlasts the reagent
+      session.firemakingSystem.lightOrExtend(
+        ItemId.BASIC_CAMPFIRE,
+        EntityId.FIREPIT,
+        session.saveGameData.playerData.currentZoneId,
+        session.saveGameData.playerData.buffData,
+        count: 15,
+        at: now,
+      );
       fire.tend(SkillId.STRENGTH, now);
       expect(
         session.buffService.nextExpiration(
@@ -307,41 +539,112 @@ void main() {
       session.dispose();
     });
 
-    test('auto-tend keeps a reagent up across an offline gap', () {
+    test('a full ring stops the reagent loop until more logs go on', () {
       final session = buildSession();
       final save = session.saveGameData;
       setFiremaking(session, 20);
-      save.inventoryData.itemMap[ItemId.LOGS] = 5000;
+      save.inventoryData.itemMap[ItemId.ACORN] = 10;
+      save.inventoryData.itemMap[ItemId.LOGS] = 5;
+      save.playerData.currentEntityViewId = EntityId.FIREPIT;
+      pickFire(session, 'basic_campfire');
+      light(session, ItemId.BASIC_CAMPFIRE);
+      final controller = session.craftingController;
+      final timing = session.actionTimingController;
+
+      // a 5 minute campfire holds one 5 minute acorn: the tick that throws
+      // it fills the ring and stops the loop
+      expect(
+        controller.startCraftingActionFor('tend_acorn', EntityId.FIREPIT),
+        isTrue,
+      );
+      controller.doCraftingAction(1);
+      expect(save.inventoryData.itemMap[ItemId.ACORN], 9);
+      expect(controller.reagentFull('tend_acorn'), isTrue);
+      expect(timing.isRunning, isFalse);
+
+      // full, it won't start again
+      expect(
+        controller.startCraftingActionFor('tend_acorn', EntityId.FIREPIT),
+        isFalse,
+      );
+      // a different reagent's ring is its own
+      expect(controller.reagentFull('tend_tree_bark'), isFalse);
+
+      // more logs make room for another
+      save.craftingState.activeRecipeId = 'basic_campfire';
+      craft(session, 'basic_campfire');
+      expect(controller.reagentFull('tend_acorn'), isFalse);
+      expect(
+        controller.startCraftingActionFor('tend_acorn', EntityId.FIREPIT),
+        isTrue,
+      );
+      timing.stop();
+      session.dispose();
+    });
+
+    test('a batch throws on only what the fire has room for', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      setFiremaking(session, 20);
+      save.inventoryData.itemMap[ItemId.ACORN] = 10;
+      final fire = light(session, ItemId.BASIC_CAMPFIRE);
+      save.craftingState.craftingEntityId = EntityId.FIREPIT;
+      save.craftingState.activeRecipeId = 'tend_acorn';
+
+      final result = session.craftingSystem.craftActiveRecipe(
+        save.craftingState,
+        save.playerData,
+        save.inventoryData,
+        save.playerData.buffData,
+        save.worldData,
+        craftCount: 10,
+        offline: true,
+      );
+      expect(result.actionsPerformed, 1);
+      expect(save.inventoryData.itemMap[ItemId.ACORN], 9);
+      expect(fire.reagentExpirations[SkillId.STRENGTH], fire.expirationTime);
+      session.dispose();
+    });
+
+    test('a kindling mix keeps its buffs up across an offline gap', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      setFiremaking(session, 20);
       save.inventoryData.itemMap[ItemId.ACORN] = 20;
-      save.playerData.autoTendReagents.add(ItemId.ACORN);
+      save.inventoryData.itemMap[ItemId.TREE_BARK] = 20;
+      save.playerData.currentEntityViewId = EntityId.FIREPIT;
+      // a long fire already burning, for the kindling to go on
+      final now = DateTime.now();
+      final start = now.subtract(const Duration(minutes: 10));
+      session.firemakingSystem.lightOrExtend(
+        ItemId.BASIC_CAMPFIRE,
+        EntityId.FIREPIT,
+        save.playerData.currentZoneId,
+        save.playerData.buffData,
+        count: 10,
+        at: start,
+      );
+      pickMix(session, ['tend_acorn', 'tend_tree_bark']);
       expect(
         session.craftingController.startCraftingActionFor(
-          'basic_campfire',
+          reagentMixRecipeId,
           EntityId.FIREPIT,
         ),
         isTrue,
       );
 
-      final now = DateTime.now();
-      save.playerData.lastActionTime = now.subtract(
-        const Duration(minutes: 10),
-      );
+      save.playerData.lastActionTime = start;
       session.offlineProgressSystem.settle(
         save.playerData,
         save.actionTimingData,
         now: now,
       );
 
-      // ten minutes at one acorn per campfire burn
-      final burn = def(ItemId.BASIC_CAMPFIRE).reagentBurn;
-      final owed = (const Duration(minutes: 10).inSeconds / burn.inSeconds)
-          .ceil();
-      final spent = 20 - (save.inventoryData.itemMap[ItemId.ACORN] ?? 0);
-      expect(spent, inInclusiveRange(owed, owed + 1));
-      expect(
-        totals(session, at: now)[SkillId.STRENGTH],
-        def(ItemId.BASIC_CAMPFIRE).power,
-      );
+      // both went on, and both buffs are still up
+      expect(save.inventoryData.itemMap[ItemId.ACORN] ?? 0, lessThan(20));
+      expect(save.inventoryData.itemMap[ItemId.TREE_BARK] ?? 0, lessThan(20));
+      expect(totals(session, at: now)[SkillId.STRENGTH], 5);
+      expect(totals(session, at: now)[SkillId.DEFENCE], 5);
       session.actionTimingController.stop();
       session.dispose();
     });

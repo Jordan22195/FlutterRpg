@@ -289,28 +289,23 @@ class PlayerDataService {
     return _skillService.xpToLevelUp(getSkillData(id, playerState));
   }
 
-  void startXpTracker(SkillId id, PlayerData playerState) {
-    _skillService.startXpTracking(getSkillData(id, playerState));
+  /// Total xp [id] needs to stand at [level].
+  double getXpAtLevel(SkillId id, int level, PlayerData playerState) {
+    return _skillService.xpAtLevel(level, getSkillData(id, playerState));
   }
 
-  void resetXpTracker(SkillId id, PlayerData playerState) {
-    _skillService.resetXpTracking(getSkillData(id, playerState));
+  int? getGoalLevel(SkillId id, PlayerData playerState) {
+    return getSkillData(id, playerState).goalLevel;
   }
 
-  bool isTrackingXp(SkillId id, PlayerData playerState) {
-    return _skillService.isTrackingXp(getSkillData(id, playerState));
+  void setGoalLevel(SkillId id, int level, PlayerData playerState) {
+    getSkillData(id, playerState).goalLevel = level;
   }
 
-  Duration getTrackedElapsed(SkillId id, PlayerData playerState) {
-    return _skillService.trackedElapsed(getSkillData(id, playerState));
-  }
-
-  double getTrackedXpGained(SkillId id, PlayerData playerState) {
-    return _skillService.trackedXpGained(getSkillData(id, playerState));
-  }
-
-  double getXpPerHour(SkillId id, PlayerData playerState) {
-    return _skillService.xpPerHour(getSkillData(id, playerState));
+  /// What one action of [id] pays, or null before it has paid anything. See
+  /// [SkillData.lastActionXp].
+  double? getLastActionXp(SkillId id, PlayerData playerState) {
+    return getSkillData(id, playerState).lastActionXp;
   }
 
   void debugSetSkillLevel(SkillId id, int level, PlayerData playerState) {
@@ -395,10 +390,15 @@ class PlayerDataService {
 
   /// Pays [xp] onto the player, raised by the xp bonus of any onyx worn,
   /// and returns what was actually paid so a report can show it.
+  ///
+  /// [isAction] is whether this pay is one action's worth, which is noted on
+  /// the skill for the level goal tracker. The per-frame stance and recovery
+  /// trickles pass false: they are not actions and would drown the number.
   Map<SkillId, double> applyXp(
     PlayerData playerState,
-    Map<SkillId, double> xp,
-  ) {
+    Map<SkillId, double> xp, {
+    bool isAction = true,
+  }) {
     final percent = _equipmentService.xpPercentBonus(playerState.equipmentData);
     final paid = percent == 0
         ? xp
@@ -407,11 +407,26 @@ class PlayerDataService {
               exp.key: exp.value * (1 + percent / 100),
           };
     for (final exp in paid.entries) {
-      _skillService.addXp(
-        exp.value,
-        playerState.skillData[exp.key] ?? SkillData(name: "error", xp: 1),
-      );
+      final skill =
+          playerState.skillData[exp.key] ?? SkillData(name: "error", xp: 1);
+      _skillService.addXp(exp.value, skill);
+      if (isAction) {
+        _skillService.recordActionXp(
+          exp.value,
+          skill,
+          average: _combatSkills.contains(exp.key),
+        );
+      }
     }
     return paid;
   }
+
+  /// Skills paid per hit, whose action xp is a running average.
+  static const _combatSkills = {
+    SkillId.HITPOINTS,
+    SkillId.ATTACK,
+    SkillId.RANGED,
+    SkillId.MAGIC,
+    SkillId.DEFENCE,
+  };
 }

@@ -84,11 +84,58 @@ class CraftingSystem {
       return result;
     }
 
+    // the firepit's reagent mix throws its reagents together
+    if (r.isReagentMix) {
+      return _throwMix(
+        craftCount,
+        craftingState,
+        playerState,
+        inventoryState,
+        buffState,
+        result,
+        at: at,
+      );
+    }
+
     // Check again. this comes before the fire check so a cook with nothing
     // left to cook never burns logs on a fire it will not use
     final craftable = craftableCount(r.id, inventoryState);
     final crafts = craftCount < craftable ? craftCount : craftable;
     if (crafts <= 0) return result;
+
+    // a reagent goes on the station's fire rather than into the bag, and
+    // only on a campfire or bonfire already burning
+    final reagent = r.tendReagent;
+    if (reagent != null) {
+      final fire = _firemakingSystem.activeFire(
+        craftingState.craftingEntityId,
+        playerState.currentZoneId,
+        playerState.buffData,
+        at: at,
+      );
+      if (fire == null || !fire.tendable) return result;
+      // only as many as the fire has room for: past its end a reagent
+      // would burn for nothing. a full ring throws none
+      final room = _reagentRoom(fire, reagent, at ?? DateTime.now());
+      final thrown = crafts < room ? crafts : room;
+      if (thrown <= 0) return result;
+      for (final entry in r.inputs.entries) {
+        _inventoryService.removeItems(
+          inventoryState,
+          entry.key,
+          entry.value * thrown,
+        );
+      }
+      fire.tend(
+        (reagent.definition as FireReagentDefinition).stat,
+        at ?? DateTime.now(),
+        count: thrown,
+      );
+      result.actionsPerformed = thrown;
+      result.xp = {r.skill: r.xp * thrown};
+      _playerDataService.applyXp(playerState, result.xp);
+      return result;
+    }
 
     // cooking needs a fire that can cook, at the moment being crafted. a
     // live craft asks about now; a settle asks about the segment it is
@@ -102,6 +149,7 @@ class CraftingSystem {
           at: at,
         )) {
       return _relightTick(
+        cookFireRecipeAt(craftingState.craftingEntityId, craftingState),
         craftingState,
         playerState,
         inventoryState,
@@ -153,6 +201,7 @@ class CraftingSystem {
           playerState.currentZoneId,
           buffState,
           count: craftedItemObjectStack.count,
+          burnScale: _burnScaleFor(r, playerState, at: at),
         );
         continue;
       }
@@ -186,8 +235,9 @@ class CraftingSystem {
     return result;
   }
 
-  /// A cook tick with no cookfire under it spends itself lighting the one
-  /// [station] has picked: the logs are paid, the fire is lit at [at] and
+  /// A cook or tend tick with no fire it can work under it spends itself
+  /// lighting [fire], the one the station has picked: the logs are paid, the
+  /// fire is lit at [at] and
   /// firemaking is trained, exactly as a manual craft of that fire would.
   /// Nothing is cooked, so the session grid and the report's items stay
   /// food-only.
@@ -202,6 +252,7 @@ class CraftingSystem {
   /// running while the player travels would light the wrong pit, which is
   /// the same pre-existing gap as that path's.
   EncounterActionResult _relightTick(
+    CraftingRecipe? fire,
     CraftingState craftingState,
     PlayerData playerState,
     InventoryData inventoryState,
@@ -210,7 +261,6 @@ class CraftingSystem {
     DateTime? at,
   }) {
     final station = craftingState.craftingEntityId;
-    final fire = cookFireRecipeAt(station, craftingState);
     if (fire == null) return result;
     if (!checkRecipeLevelRequirement(fire.id, playerState, at: at)) {
       return result;
@@ -229,6 +279,7 @@ class CraftingSystem {
       playerState.currentZoneId,
       buffState,
       at: at,
+      burnScale: _burnScaleFor(fire, playerState, at: at),
     );
 
     result.actionsPerformed = 1;
@@ -236,6 +287,23 @@ class CraftingSystem {
     result.xp = {SkillId.FIREMAKING: fire.xp};
     _playerDataService.applyXp(playerState, result.xp);
     return result;
+  }
+
+  /// How much longer a fire laid from [fireRecipe] burns for the player's
+  /// firemaking at [at]: the stat total, gear and buffs included and
+  /// uncapped, against the recipe's level (see [FireItem.burnScaleFor]).
+  double _burnScaleFor(
+    CraftingRecipe fireRecipe,
+    PlayerData playerState, {
+    DateTime? at,
+  }) {
+    final level =
+        _playerDataService.getStatTotals(
+          playerState,
+          at: at,
+        )[SkillId.FIREMAKING] ??
+        1;
+    return FireItem.burnScaleFor(level, fireRecipe.levelRequirement);
   }
 
   /// The cookfire recipe [station] has picked, or null when its firemaking
@@ -247,14 +315,36 @@ class CraftingSystem {
     EntityId station,
     CraftingState craftingState,
   ) {
+    final r = _pickedFireRecipeAt(station, craftingState);
+    final definition = r?.output.first.id.definition;
+    if (definition is! FireItemDefinition || !definition.canCook) return null;
+    return r;
+  }
+
+  /// The campfire or bonfire recipe [station] has picked, or null when its
+  /// fire selection is empty or a cookfire. It is what a tend tick lights
+  /// when there is no fire to throw its reagent on.
+  CraftingRecipe? tendFireRecipeAt(
+    EntityId station,
+    CraftingState craftingState,
+  ) {
+    final r = _pickedFireRecipeAt(station, craftingState);
+    final definition = r?.output.first.id.definition;
+    if (definition is! FireItemDefinition || !definition.tendable) return null;
+    return r;
+  }
+
+  CraftingRecipe? _pickedFireRecipeAt(
+    EntityId station,
+    CraftingState craftingState,
+  ) {
     final id =
         craftingState.selectedRecipeByEntity[station]?[SkillId.FIREMAKING] ??
         '';
     if (id.isEmpty) return null;
     final r = _recipeCatalog.recipeById(id);
     if (r.skill != SkillId.FIREMAKING || r.output.isEmpty) return null;
-    final definition = r.output.first.id.definition;
-    if (definition is! FireItemDefinition || !definition.canCook) return null;
+    if (r.tendReagent != null) return null;
     return r;
   }
 
@@ -267,8 +357,38 @@ class CraftingSystem {
     PlayerData playerState,
     InventoryData inventoryState, {
     DateTime? at,
+  }) => _canLight(
+    cookFireRecipeAt(station, craftingState),
+    playerState,
+    inventoryState,
+    at: at,
+  );
+
+  /// Whether a tend can proceed at [station] at [at]: a campfire or bonfire
+  /// is burning there. Reagents never light a fire of their own - the pit
+  /// has to be lit first.
+  bool tendingConditionsMet(
+    EntityId station,
+    CraftingState craftingState,
+    PlayerData playerState,
+    InventoryData inventoryState, {
+    DateTime? at,
   }) {
-    final fire = cookFireRecipeAt(station, craftingState);
+    final fire = _firemakingSystem.activeFire(
+      station,
+      playerState.currentZoneId,
+      playerState.buffData,
+      at: at,
+    );
+    return fire != null && fire.tendable;
+  }
+
+  bool _canLight(
+    CraftingRecipe? fire,
+    PlayerData playerState,
+    InventoryData inventoryState, {
+    DateTime? at,
+  }) {
     if (fire == null) return false;
     if (!checkRecipeLevelRequirement(fire.id, playerState, at: at)) {
       return false;
@@ -585,6 +705,26 @@ class CraftingSystem {
     if (!checkRecipeLevelRequirement(recipeId, playerState, at: at)) {
       return false;
     }
+
+    // a reagent mix runs while any of its reagents has somewhere to go: a
+    // fire to light first, or room on the one burning
+    if (_recipeCatalog.recipeById(recipeId).isReagentMix) {
+      return tendingConditionsMet(
+            craftingState.craftingEntityId,
+            craftingState,
+            playerState,
+            inventoryState,
+            at: at,
+          ) &&
+          mixHasWork(
+            craftingState.craftingEntityId,
+            craftingState,
+            playerState,
+            inventoryState,
+            at: at,
+          );
+    }
+
     if (craftableCount(recipeId, inventoryState) <= 0) return false;
 
     // cooking needs a fire that can cook, or the logs to light one. checking
@@ -603,6 +743,184 @@ class CraftingSystem {
       return false;
     }
 
+    // a reagent needs a campfire or bonfire to go on, or the logs to light
+    // the picked one
+    if (r.tendReagent != null &&
+        !tendingConditionsMet(
+          craftingState.craftingEntityId,
+          craftingState,
+          playerState,
+          inventoryState,
+          at: at,
+        )) {
+      return false;
+    }
+
+    // and stops once its ring is full. checking it here is what ends a
+    // running tend loop the tick the buff reaches the fire's end
+    if (reagentFull(
+      recipeId,
+      craftingState.craftingEntityId,
+      playerState,
+      at: at,
+    )) {
+      return false;
+    }
+
     return true;
+  }
+
+  /// Whether the reagent [recipeId] throws already burns to the end of the
+  /// fire at [station] at [at] - its ring is full, and another would be
+  /// wasted. False for a cold pit, which the tend lights first, and for any
+  /// recipe that is not a reagent.
+  bool reagentFull(
+    String recipeId,
+    EntityId station,
+    PlayerData playerState, {
+    DateTime? at,
+  }) {
+    final reagent = _recipeCatalog.recipeById(recipeId).tendReagent;
+    if (reagent == null) return false;
+    final fire = _firemakingSystem.activeFire(
+      station,
+      playerState.currentZoneId,
+      playerState.buffData,
+      at: at,
+    );
+    if (fire == null || !fire.tendable) return false;
+    return _reagentRoom(fire, reagent, at ?? DateTime.now()) <= 0;
+  }
+
+  /// The reagent recipes [station] has picked to keep topped up, in the
+  /// order the stage shows their rings: by the stat each buffs ([SkillId]
+  /// order - stamina, strength, recovery, attack...). The mix tile, the
+  /// picker and the order they are thrown on all read it.
+  List<CraftingRecipe> mixAt(EntityId station, CraftingState craftingState) {
+    final ids = craftingState.reagentMixByEntity[station] ?? const [];
+    return [
+      for (final id in ids)
+        if (_recipeCatalog.hasRecipe(id) &&
+            _recipeCatalog.recipeById(id).tendReagent != null)
+          _recipeCatalog.recipeById(id),
+    ]..sort(compareReagentRecipes);
+  }
+
+  /// Orders reagent recipes by the stat each buffs, in [SkillId] order -
+  /// the order the stage shows their rings.
+  static int compareReagentRecipes(CraftingRecipe a, CraftingRecipe b) {
+    final sa = (a.tendReagent!.definition as FireReagentDefinition).stat;
+    final sb = (b.tendReagent!.definition as FireReagentDefinition).stat;
+    return sa.index.compareTo(sb.index);
+  }
+
+  /// How many of [station]'s picked reagents the bag holds, all told.
+  int mixHeldCount(
+    EntityId station,
+    CraftingState craftingState,
+    InventoryData inventoryState,
+  ) {
+    var held = 0;
+    for (final r in mixAt(station, craftingState)) {
+      held += craftableCount(r.id, inventoryState);
+    }
+    return held;
+  }
+
+  /// Whether a mix tick at [station] at [at] would throw anything: a
+  /// campfire or bonfire is burning, and some picked reagent is unlocked,
+  /// held, and has room on it.
+  bool mixHasWork(
+    EntityId station,
+    CraftingState craftingState,
+    PlayerData playerState,
+    InventoryData inventoryState, {
+    DateTime? at,
+  }) {
+    final fire = _firemakingSystem.activeFire(
+      station,
+      playerState.currentZoneId,
+      playerState.buffData,
+      at: at,
+    );
+    if (fire == null || !fire.tendable) return false;
+    for (final r in mixAt(station, craftingState)) {
+      if (!checkRecipeLevelRequirement(r.id, playerState, at: at)) continue;
+      if (craftableCount(r.id, inventoryState) <= 0) continue;
+      if (_reagentRoom(fire, r.tendReagent!, at ?? DateTime.now()) > 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// One mix tick: one of every picked reagent that is unlocked, held and has
+  /// room on the fire goes on at once, in the order the stage shows their
+  /// rings - stamina, then strength, recovery, attack and so on. A batch
+  /// settling time away runs [crafts] such ticks. Nothing goes on a pit that
+  /// is not burning a campfire or bonfire.
+  EncounterActionResult _throwMix(
+    int crafts,
+    CraftingState craftingState,
+    PlayerData playerState,
+    InventoryData inventoryState,
+    BuffData buffState,
+    EncounterActionResult result, {
+    DateTime? at,
+  }) {
+    final station = craftingState.craftingEntityId;
+    final fire = _firemakingSystem.activeFire(
+      station,
+      playerState.currentZoneId,
+      playerState.buffData,
+      at: at,
+    );
+    if (fire == null || !fire.tendable) return result;
+
+    final now = at ?? DateTime.now();
+    SkillId statOf(CraftingRecipe r) =>
+        (r.tendReagent!.definition as FireReagentDefinition).stat;
+    // already in stage order
+    final mix = [
+      for (final r in mixAt(station, craftingState))
+        if (checkRecipeLevelRequirement(r.id, playerState, at: at)) r,
+    ];
+
+    var ticks = 0;
+    var xp = 0.0;
+    for (var i = 0; i < crafts; i++) {
+      var thrownThisTick = 0;
+      for (final r in mix) {
+        if (craftableCount(r.id, inventoryState) <= 0) continue;
+        if (_reagentRoom(fire, r.tendReagent!, now) <= 0) continue;
+        for (final entry in r.inputs.entries) {
+          _inventoryService.removeItems(inventoryState, entry.key, entry.value);
+        }
+        fire.tend(statOf(r), now);
+        xp += r.xp;
+        thrownThisTick++;
+      }
+      // every ring full, or nothing left to throw
+      if (thrownThisTick == 0) break;
+      ticks++;
+    }
+    if (ticks <= 0) return result;
+    result.actionsPerformed = ticks;
+    result.xp = {SkillId.FIREMAKING: xp};
+    _playerDataService.applyXp(playerState, result.xp);
+    return result;
+  }
+
+  /// How many more of [reagent] [fire] has room for at [at]: enough to carry
+  /// its buff to the fire's end, the last one allowed to run over.
+  int _reagentRoom(FireItem fire, ItemId reagent, DateTime at) {
+    final stat = (reagent.definition as FireReagentDefinition).stat;
+    final current = fire.reagentExpirations[stat];
+    final base = current != null && current.isAfter(at) ? current : at;
+    final gap = fire.expirationTime.difference(base).inMicroseconds;
+    if (gap <= 0) return 0;
+    // a reagent burns longer on a fire a better firemaker laid
+    final burn = fire.definition.reagentBurn.inMicroseconds * fire.burnScale;
+    return (gap / burn).ceil();
   }
 }

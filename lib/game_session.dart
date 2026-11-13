@@ -470,7 +470,6 @@ class GameSessionFactory {
     // systems
     final firemakingSystem = FiremakingSystem(buffService: buffService);
     final fireTendingSystem = FireTendingSystem(
-      buffService: buffService,
       inventoryService: inventoryService,
       playerDataService: playerDataService,
       firemakingSystem: firemakingSystem,
@@ -544,7 +543,6 @@ class GameSessionFactory {
       offlineProgressData: offlineProgressData,
       potionSystem: potionSystem,
       inventoryData: save.inventoryData,
-      fireTendingSystem: fireTendingSystem,
     );
 
     //controllers
@@ -583,11 +581,7 @@ class GameSessionFactory {
     );
     final fireController = FireController(
       playerState: save.playerData,
-      inventoryData: save.inventoryData,
-      actionTimingState: save.actionTimingData,
       firemakingSystem: firemakingSystem,
-      fireTendingSystem: fireTendingSystem,
-      inventoryService: inventoryService,
     );
     final encounterController = EncounterController(
       playerData: save.playerData,
@@ -618,8 +612,6 @@ class GameSessionFactory {
       // the tick drinking a potion changes the bag, and the potions screen
       // and inventory both have to follow it
       onAutoDrink: potionController.refresh,
-      fireTendingSystem: fireTendingSystem,
-      onAutoTend: fireController.refresh,
     );
     final craftingController = CraftingController(
       actionTimingController: actionTimingController,

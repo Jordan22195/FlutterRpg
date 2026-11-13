@@ -25,6 +25,17 @@ import 'package:rpg/data/equipment_data.dart';
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
 const knownMissingArt = <String>{
+  // the runite and dragonite veins, before their art
+  'assets/images/entities/runite_vein.png',
+  'assets/images/entities/dragonite_vein.png',
+
+  // the five mining geodes, before their art
+  'assets/icons/items/dull_geode.png',
+  'assets/icons/items/banded_geode.png',
+  'assets/icons/items/crystal_geode.png',
+  'assets/icons/items/prismatic_geode.png',
+  'assets/icons/items/radiant_geode.png',
+
   // Maplewater Lake and its maple tree, before their art
 
   // the scale, redrawn as an animal's (prompt in rd_prompt_overrides.json)
@@ -303,6 +314,9 @@ void main() {
 
     test('recipe output tables are rollable', () {
       for (final r in RecipeCatalog().recipes) {
+        // the firepit's kindling mix runs the reagent recipes; it has no
+        // output of its own
+        if (r.isReagentMix) continue;
         checkDropTable(r.output, 'recipe ${r.id}');
       }
     });
@@ -366,6 +380,8 @@ void main() {
 
     test('every recipe consumes and produces something', () {
       for (final r in RecipeCatalog().recipes) {
+        // the kindling mix spends and pays what its picked reagents do
+        if (r.isReagentMix) continue;
         expect(r.inputs, isNotEmpty, reason: '${r.id} has no inputs');
         for (final e in r.inputs.entries) {
           expect(
@@ -1131,6 +1147,7 @@ const frozenZoneIds = <String>{
   'DARKWOOD_FOREST',
   'SWAMP',
   'MAPLEWATER_LAKE',
+  'MAPLEWATER_VILLAGE',
   'FOOTHILLS',
   'COPPERDUST_FLATS',
   'IRON_GATE_CITY',

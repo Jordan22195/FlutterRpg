@@ -23,12 +23,27 @@ class StagePanel extends StatelessWidget {
     this.hit,
     this.footer,
     this.footerRightInset = 0,
+    this.footerHeight = 0,
+    this.banner,
+    this.bannerHeight = 0,
+    this.side,
   });
 
-  /// Pinned along the bottom edge from the left, e.g. the reagent buffs
-  /// burning on a fire. [footerRightInset] keeps it clear of [corner].
+  /// Pinned down the right edge from the top, between any [banner] and a
+  /// [footer] with a [footerHeight], e.g. a fire's burn levels.
+  final Widget? side;
+
+  /// Pinned across the top edge, e.g. the reagent buffs burning on a fire.
+  /// The sprite and [leading] stand below its [bannerHeight].
+  final Widget? banner;
+  final double bannerHeight;
+
+  /// Pinned along the bottom edge from the left, e.g. a fire's fuel gauge.
+  /// [footerRightInset] keeps it clear of [corner]. A [footerHeight] keeps
+  /// the sprite and [leading] above it; without one it floats over them.
   final Widget? footer;
   final double footerRightInset;
+  final double footerHeight;
 
   /// The last hit on the subject, floated up beside the sprite — clear of
   /// every bar, where the eye already is.
@@ -88,21 +103,46 @@ class StagePanel extends StatelessWidget {
             : null,
         child: Stack(
           children: [
-            Align(
-              alignment: heading == null
-                  ? Alignment.center
-                  : const Alignment(0.3, 0.4),
-              child: sprite,
+            // with a banner the sprite is centred in the room left under it
+            Positioned.fill(
+              top: banner == null ? 0 : 10 + bannerHeight,
+              bottom: footer == null || footerHeight <= 0
+                  ? 0
+                  : 10 + footerHeight,
+              child: Align(
+                alignment: heading == null
+                    ? Alignment.center
+                    : const Alignment(0.3, 0.4),
+                child: sprite,
+              ),
             ),
+            if (banner != null)
+              Positioned(left: 12, right: 12, top: 10, child: banner!),
             if (heading != null) Positioned(left: 14, top: 12, child: heading!),
             if (leading != null)
-              Positioned(left: 10, top: 10, bottom: 10, child: leading!),
+              Positioned(
+                left: 10,
+                top: banner == null ? 10 : 16 + bannerHeight,
+                bottom: footer == null || footerHeight <= 0
+                    ? 10
+                    : 16 + footerHeight,
+                child: leading!,
+              ),
             if (footer != null)
               Positioned(
                 left: 10,
                 right: 12 + footerRightInset,
                 bottom: 10,
                 child: footer!,
+              ),
+            if (side != null)
+              Positioned(
+                right: 12,
+                top: 10,
+                bottom: footer == null || footerHeight <= 0
+                    ? 10
+                    : 16 + footerHeight,
+                child: side!,
               ),
             if (corner != null)
               Positioned(right: 12, bottom: 12, child: corner!),

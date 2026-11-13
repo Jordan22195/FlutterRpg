@@ -128,12 +128,39 @@ const List<ItemDropType> goblinSupplyDrops = [
 ];
 
 /// The Wolf Den set's minor slots, evenly, at uncommon: a den boss rolls one
-/// of these on a rare chance. The majors are the den chest's.
+/// of these on a rare chance. The majors are the den chest's. The Cave Bear
+/// and the Den Alpha Wolf each roll their own cut of it, below.
 const List<ItemDropType> wolfDenMinorArmorDropTable = [
   ItemDropType(id: ItemId.WOLF_DEN_HELM, rarity: Rarity.UNCOMMON, weight: 1),
   ItemDropType(id: ItemId.WOLF_DEN_CLOAK, rarity: Rarity.UNCOMMON, weight: 1),
   ItemDropType(id: ItemId.WOLF_DEN_GLOVES, rarity: Rarity.UNCOMMON, weight: 1),
   ItemDropType(id: ItemId.WOLF_DEN_BOOTS, rarity: Rarity.UNCOMMON, weight: 1),
+];
+
+/// What the Cave Bear rolls on its rare chance: the set without the boots,
+/// and the bear hide bracers in their place.
+const List<ItemDropType> caveBearArmorDropTable = [
+  ItemDropType(id: ItemId.WOLF_DEN_HELM, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_CLOAK, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_GLOVES, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(
+    id: ItemId.BEAR_HIDE_BRACERS,
+    rarity: Rarity.UNCOMMON,
+    weight: 1,
+  ),
+];
+
+/// What the Den Alpha Wolf rolls on its rare chance: the set without the
+/// gloves, and the wolf hide bracers in their place.
+const List<ItemDropType> denAlphaArmorDropTable = [
+  ItemDropType(id: ItemId.WOLF_DEN_HELM, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_CLOAK, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(id: ItemId.WOLF_DEN_BOOTS, rarity: Rarity.UNCOMMON, weight: 1),
+  ItemDropType(
+    id: ItemId.WOLF_HIDE_BRACERS,
+    rarity: Rarity.UNCOMMON,
+    weight: 1,
+  ),
 ];
 
 /// The whole Wolf Den set at rare, evenly: a long shot from the den's end
@@ -147,10 +174,12 @@ const List<ItemDropType> wolfDenRareSetDropTable = [
   ItemDropType(id: ItemId.WOLF_DEN_LEGGUARDS, rarity: Rarity.RARE, weight: 1),
 ];
 
-/// The Wolf Den set's major slots, evenly: the den chest's rare pick.
+/// The Wolf Den set's major slots, evenly, and the wolf hide belt: the den
+/// chest's rare pick.
 const List<ItemDropType> wolfDenMajorArmorDropTable = [
   ItemDropType(id: ItemId.WOLF_DEN_CHESTGUARD, weight: 1),
   ItemDropType(id: ItemId.WOLF_DEN_LEGGUARDS, weight: 1),
+  ItemDropType(id: ItemId.WOLF_HIDE_BELT, weight: 1),
 ];
 
 const List<ItemDropType> ironMajorArmorDropTable = [
@@ -370,4 +399,129 @@ const Map<ItemId, List<DropRoll>> birdsNestRolls = {
     DropRoll(chance: 0.08, entries: noviceWoodcuttersGearDropTable),
     DropRoll(chance: 0.02, entries: gemDropTable),
   ],
+};
+
+// ── MINING · GEODES ──────────────────────────────────────────────────
+
+/// The basic Miner's set, evenly.
+const List<ItemDropType> basicMinersGearDropTable = [
+  ItemDropType(id: ItemId.BASIC_MINERS_HAT),
+  ItemDropType(id: ItemId.BASIC_MINERS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_MINERS_PANTS),
+  ItemDropType(id: ItemId.BASIC_MINERS_GLOVES),
+  ItemDropType(id: ItemId.BASIC_MINERS_BOOTS),
+  ItemDropType(id: ItemId.BASIC_MINERS_CLOAK),
+];
+
+/// The novice Miner's set, evenly.
+const List<ItemDropType> noviceMinersGearDropTable = [
+  ItemDropType(id: ItemId.NOVICE_MINERS_HAT),
+  ItemDropType(id: ItemId.NOVICE_MINERS_TUNIC),
+  ItemDropType(id: ItemId.NOVICE_MINERS_PANTS),
+  ItemDropType(id: ItemId.NOVICE_MINERS_GLOVES),
+  ItemDropType(id: ItemId.NOVICE_MINERS_BOOTS),
+  ItemDropType(id: ItemId.NOVICE_MINERS_CLOAK),
+];
+
+/// The apprentice Miner's set, evenly.
+const List<ItemDropType> apprenticeMinersGearDropTable = [
+  ItemDropType(id: ItemId.APPRENTICE_MINERS_HAT),
+  ItemDropType(id: ItemId.APPRENTICE_MINERS_TUNIC),
+  ItemDropType(id: ItemId.APPRENTICE_MINERS_PANTS),
+  ItemDropType(id: ItemId.APPRENTICE_MINERS_GLOVES),
+  ItemDropType(id: ItemId.APPRENTICE_MINERS_BOOTS),
+  ItemDropType(id: ItemId.APPRENTICE_MINERS_CLOAK),
+];
+
+/// The advanced Miner's set, evenly.
+const List<ItemDropType> advancedMinersGearDropTable = [
+  ItemDropType(id: ItemId.ADVANCED_MINERS_HAT),
+  ItemDropType(id: ItemId.ADVANCED_MINERS_TUNIC),
+  ItemDropType(id: ItemId.ADVANCED_MINERS_PANTS),
+  ItemDropType(id: ItemId.ADVANCED_MINERS_GLOVES),
+  ItemDropType(id: ItemId.ADVANCED_MINERS_BOOTS),
+  ItemDropType(id: ItemId.ADVANCED_MINERS_CLOAK),
+];
+
+/// The master Miner's set, evenly.
+const List<ItemDropType> masterMinersGearDropTable = [
+  ItemDropType(id: ItemId.MASTER_MINERS_HAT),
+  ItemDropType(id: ItemId.MASTER_MINERS_TUNIC),
+  ItemDropType(id: ItemId.MASTER_MINERS_PANTS),
+  ItemDropType(id: ItemId.MASTER_MINERS_GLOVES),
+  ItemDropType(id: ItemId.MASTER_MINERS_BOOTS),
+  ItemDropType(id: ItemId.MASTER_MINERS_CLOAK),
+];
+
+/// Gems by geode quality: the cheap colored four first, the combat pair
+/// next, onyx last. Each tier shifts the weight toward the rarer stones.
+const List<ItemDropType> dullGeodeGemTable = [
+  ItemDropType(id: ItemId.TOPAZ, weight: 1),
+  ItemDropType(id: ItemId.SAPPHIRE, weight: 1),
+];
+
+const List<ItemDropType> bandedGeodeGemTable = [
+  ItemDropType(id: ItemId.TOPAZ, weight: 1),
+  ItemDropType(id: ItemId.SAPPHIRE, weight: 1),
+  ItemDropType(id: ItemId.EMERALD, weight: 1),
+  ItemDropType(id: ItemId.RUBY, weight: 1),
+];
+
+const List<ItemDropType> crystalGeodeGemTable = [
+  ItemDropType(id: ItemId.TOPAZ, weight: 1),
+  ItemDropType(id: ItemId.SAPPHIRE, weight: 1),
+  ItemDropType(id: ItemId.EMERALD, weight: 1),
+  ItemDropType(id: ItemId.RUBY, weight: 1),
+  ItemDropType(id: ItemId.DIAMOND, weight: 0.3),
+  ItemDropType(id: ItemId.DRAGONSTONE, weight: 0.3),
+];
+
+const List<ItemDropType> prismaticGeodeGemTable = [
+  ItemDropType(id: ItemId.EMERALD, weight: 1),
+  ItemDropType(id: ItemId.RUBY, weight: 1),
+  ItemDropType(id: ItemId.DIAMOND, weight: 0.6),
+  ItemDropType(id: ItemId.DRAGONSTONE, weight: 0.6),
+  ItemDropType(id: ItemId.ONYX, weight: 0.08),
+];
+
+const List<ItemDropType> radiantGeodeGemTable = [
+  ItemDropType(id: ItemId.DIAMOND, weight: 1),
+  ItemDropType(id: ItemId.DRAGONSTONE, weight: 1),
+  ItemDropType(id: ItemId.ONYX, weight: 0.25),
+];
+
+/// What opening one geode rolls: a gem every time from a table that gets
+/// richer with the geode's quality (and a second from the Prismatic up), and
+/// a long shot at a piece of the Miner's set of the matching tier. The
+/// quality tracks the vein it came from, so the better the node the better
+/// the gear and the stones. Geodes are the only source of Miner's gear.
+const Map<ItemId, List<DropRoll>> geodeRolls = {
+  ItemId.DULL_GEODE: [
+    DropRoll(entries: dullGeodeGemTable),
+    DropRoll(chance: 0.10, entries: basicMinersGearDropTable),
+  ],
+  ItemId.BANDED_GEODE: [
+    DropRoll(entries: bandedGeodeGemTable),
+    DropRoll(chance: 0.08, entries: noviceMinersGearDropTable),
+  ],
+  ItemId.CRYSTAL_GEODE: [
+    DropRoll(entries: crystalGeodeGemTable),
+    DropRoll(chance: 0.06, entries: apprenticeMinersGearDropTable),
+  ],
+  ItemId.PRISMATIC_GEODE: [
+    DropRoll(entries: prismaticGeodeGemTable),
+    DropRoll(chance: 0.5, entries: prismaticGeodeGemTable),
+    DropRoll(chance: 0.05, entries: advancedMinersGearDropTable),
+  ],
+  ItemId.RADIANT_GEODE: [
+    DropRoll(entries: radiantGeodeGemTable),
+    DropRoll(chance: 0.75, entries: radiantGeodeGemTable),
+    DropRoll(chance: 0.04, entries: masterMinersGearDropTable),
+  ],
+};
+
+/// Everything that opens from the bag like a chest: nests and geodes.
+const Map<ItemId, List<DropRoll>> openableRolls = {
+  ...birdsNestRolls,
+  ...geodeRolls,
 };

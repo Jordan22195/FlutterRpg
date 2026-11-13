@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:rpg/data/player_data.dart';
@@ -67,7 +68,20 @@ class ActionTimingData {
   double accelPerSecond =
       0.5; // how quickly speed bar fills when button is held
   double decelPerSecond =
-      .75; // how quickly speed bar empties when button is released
+      .6; // how quickly speed bar empties when button is released
+
+  /// How fast the bar is moving, in bar per second. Held, it is
+  /// [accelPerSecond]; let go, it bleeds off at [boostCoastDrag] through
+  /// zero down to -[decelPerSecond], so a released boost keeps climbing a
+  /// moment, crests, then falls. Not serialized - a resumed save starts it
+  /// at rest.
+  double boostVelocity = 0.0;
+
+  /// How quickly a released bar's velocity bleeds off, in bar per second
+  /// per second. At 2.0 a bar let go mid-climb coasts up for a quarter
+  /// second (about a sixteenth of a bar), then takes 0.2s more to reach full
+  /// fall.
+  double boostCoastDrag = 2.0;
 
   // the boost ceiling; refreshed from the speed stat every frame.
   double maxBoostMultiplier = 2.0;
@@ -305,29 +319,44 @@ class ActionTimingController extends ChangeNotifier {
   }
 
   /// How long stamina lasts at the boost as it stands right now, or null
-  /// while nothing is spending it - the bar sits at 1x, or nothing holds it
-  /// up, so recovery is running instead.
+  /// while the bar is worth nothing - it sits at 1x - or the time runs past
+  /// [staminaTimeCap].
+  ///
+  /// Read off the bar's level whether or not anything is holding it up: let
+  /// go, it is what stamina would last if the bar were held where it is
+  /// now, so the chip keeps a time as the bar falls - see
+  /// [staminaSpending] for whether it is actually being spent.
   ///
   /// A speed boost burns by the second; a strength one by the action, so
   /// it is spread over the action's current length - and only spent while
   /// actions are firing.
   Duration? get staminaTimeLeft {
     final state = _actionTimingState;
-    if (!state.buttonHeld && !state.boostLocked) return null;
     final speed = state.boostingSpeed;
     if (!speed && !state.running) return null;
     final drain = _actionTimingService.boostDrain(
       getCurrentSpeedMultiplier(),
       speedStance: speed,
+      ceiling: state.maxBoostMultiplier,
     );
     if (drain <= 0) return null;
     final seconds = getCurrentActionDuration().inMicroseconds / 1e6;
     final perSecond = speed ? drain : (seconds <= 0 ? 0.0 : drain / seconds);
     if (perSecond <= 0) return null;
-    return Duration(
-      milliseconds: (_playerState.stamina / perSecond * 1000).round(),
-    );
+    final lasts = _playerState.stamina / perSecond;
+    if (lasts > staminaTimeCap.inSeconds) return null;
+    return Duration(milliseconds: (lasts * 1000).round());
   }
+
+  /// Past this the chip reads ∞: a bar at a sliver lasts longer than
+  /// anyone will hold it, and a far-off time is noise.
+  static const Duration staminaTimeCap = Duration(days: 99);
+
+  /// Whether stamina is being spent on the boost right now - a finger on
+  /// the button or the lock. Let go, [staminaTimeLeft] still reads a time,
+  /// but it is the bar's projection rather than a countdown.
+  bool get staminaSpending =>
+      _actionTimingState.buttonHeld || _actionTimingState.boostLocked;
 
   /// Total rate multiplier: the cut the speed stat already makes to the
   /// interval, times the momentum boost on top. Standing still this is the
@@ -742,7 +771,11 @@ class ActionTimingSystem {
     // [0, max stamina]. only a speed boost is charged by the second - a
     // strength one paid for itself when the action fired, below.
     final drainPerSecond = actionTimingState.boostingSpeed
-        ? _actionTimingService.boostDrain(boostMulitplier, speedStance: true)
+        ? _actionTimingService.boostDrain(
+            boostMulitplier,
+            speedStance: true,
+            ceiling: actionTimingState.maxBoostMultiplier,
+          )
         : 0.0;
     final recoveryPerSecond = _playerDataService.staminaRecoveryPerSecond(
       playerState,
@@ -757,7 +790,7 @@ class ActionTimingSystem {
       if (wasBelowMax && recoveryPerSecond > 0) {
         _playerDataService.applyXp(playerState, {
           SkillId.RECOVERY: recoveryPerSecond * dt,
-        });
+        }, isAction: false);
       }
     } else {
       _playerDataService.changeStamina(-1 * drainPerSecond * dt, playerState);
@@ -768,7 +801,7 @@ class ActionTimingSystem {
       _playerDataService.applyXp(playerState, {
         boostSkill: boostMulitplier * 1 * dt,
         SkillId.STAMINA: 1 * dt,
-      });
+      }, isAction: false);
     }
     return false;
   }
@@ -792,11 +825,42 @@ class ActionTimingService {
   /// stamina and strength is about ten boosted actions.
   static const double strengthDrainPerAction = 25.0;
 
+  /// EXPERIMENT, switchable: speed's ceiling went linear, which made the
+  /// squared drain grow with speed squared - a full bar lasted 1333/level
+  /// seconds rather than thirty. On, the fast stance's drain is squared in
+  /// the bar's fill but linear in the ceiling, which puts the thirty
+  /// seconds back. Off restores the plain square above.
+  static const bool linearSpeedDrain = true;
+
+  /// [speedDrainPerSecond]'s stand-in while [linearSpeedDrain] is on:
+  /// a full bar drains this times the ceiling's bonus, tuned so it comes
+  /// to two points per speed level - five seconds of a pool ten points a
+  /// stamina level deep.
+  static const double linearSpeedDrainPerSecond = 133.3;
+
+  /// How steeply the fast stance's drain falls off as the bar eases, while
+  /// [linearSpeedDrain] is on: drain goes as the bar's fill to this power.
+  /// log2(120), so half a bar lasts 120 times a full one - about ten
+  /// minutes against five seconds.
+  static final double speedDrainFillExponent = log(120) / ln2;
+
   /// What a boost of [multiplier] costs, per second in the fast stance and
-  /// per action in a strength one.
-  double boostDrain(double multiplier, {required bool speedStance}) {
+  /// per action in a strength one. [ceiling] is the boost's max multiplier,
+  /// which the fast stance's drain reads while [linearSpeedDrain] is on.
+  double boostDrain(
+    double multiplier, {
+    required bool speedStance,
+    double? ceiling,
+  }) {
     final bonus = multiplier - 1;
     if (bonus <= 0) return 0;
+    if (speedStance && linearSpeedDrain && ceiling != null && ceiling > 1) {
+      final span = ceiling - 1;
+      final fill = (bonus / span).clamp(0.0, 1.0);
+      return linearSpeedDrainPerSecond *
+          span *
+          pow(fill, speedDrainFillExponent).toDouble();
+    }
     final rate = speedStance ? speedDrainPerSecond : strengthDrainPerAction;
     return rate * bonus * bonus;
   }
@@ -879,26 +943,25 @@ class ActionTimingService {
       setLockActionSpeed(false, actionTimingState);
     }
 
-    // a locked speed holds steady
+    // a locked speed holds steady, and comes off the lock at rest
     if (actionTimingState.boostLocked) {
+      actionTimingState.boostVelocity = 0.0;
       return;
     }
 
-    // momentum update
-    if (actionTimingState.buttonHeld && hasStamina) {
-      // calculate the current percentage of max boost (0 .. 1)
-      // increase boost amount by accerlation amount if button is pressed
-      actionTimingState.percentOfMaxBoost =
-          (actionTimingState.percentOfMaxBoost +
-                  actionTimingState.accelPerSecond * dt)
-              .clamp(0.0, 1.0);
+    // momentum update: held, the bar climbs at the full rate. let go, the
+    // climb carries on and slows, stops, then turns into the fall - so a
+    // boost feels like it has weight rather than dropping the instant the
+    // finger lifts.
+    final state = actionTimingState;
+    if (state.buttonHeld && hasStamina) {
+      state.boostVelocity = state.accelPerSecond;
     } else {
-      // decrease boost bar amount be deceleration amount if button is not held
-      actionTimingState.percentOfMaxBoost =
-          (actionTimingState.percentOfMaxBoost -
-                  actionTimingState.decelPerSecond * dt)
-              .clamp(0.0, 1.0);
+      state.boostVelocity = (state.boostVelocity - state.boostCoastDrag * dt)
+          .clamp(-state.decelPerSecond, state.accelPerSecond);
     }
+    state.percentOfMaxBoost =
+        (state.percentOfMaxBoost + state.boostVelocity * dt).clamp(0.0, 1.0);
   }
 
   void setLockActionSpeed(bool locked, ActionTimingData actionTimingState) {
@@ -933,6 +996,7 @@ class ActionTimingService {
     actionTimingState.running = false;
     actionTimingState.actionProgressPercentComplete = 0.0;
     actionTimingState.percentOfMaxBoost = 0.0;
+    actionTimingState.boostVelocity = 0.0;
     actionTimingState.buttonHeld = false;
     actionTimingState.lastElapsed = Duration.zero;
     actionTimingState.boostLocked = false;

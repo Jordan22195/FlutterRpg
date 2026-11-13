@@ -39,13 +39,15 @@ void main() {
     final timing = session.actionTimingController;
     session.saveGameData.playerData.stamina = 100;
 
-    // nothing held: recovery runs, so there is no clock
+    // an empty bar is worth nothing, so there is no clock
     expect(timing.staminaTimeLeft, isNull);
+    expect(timing.staminaSpending, isFalse);
 
     holdSpeedBoost(session);
     final drain = ActionTimingService().boostDrain(
       timing.getCurrentSpeedMultiplier(),
       speedStance: true,
+      ceiling: session.saveGameData.actionTimingData.maxBoostMultiplier,
     );
     expect(drain, greaterThan(0));
     expect(
@@ -53,11 +55,19 @@ void main() {
       closeTo(100 / drain * 1000, 1),
     );
 
+    // let go, it still reads what the bar is worth where it sits - but
+    // nothing is spending it
+    session.saveGameData.actionTimingData.buttonHeld = false;
+    expect(
+      timing.staminaTimeLeft!.inMilliseconds,
+      closeTo(100 / drain * 1000, 1),
+    );
+    expect(timing.staminaSpending, isFalse);
+
     // locked rather than held drains just the same
-    session.saveGameData.actionTimingData
-      ..buttonHeld = false
-      ..boostLocked = true;
+    session.saveGameData.actionTimingData.boostLocked = true;
     expect(timing.staminaTimeLeft, isNotNull);
+    expect(timing.staminaSpending, isTrue);
 
     // and a bar at rest spends nothing
     session.saveGameData.actionTimingData.percentOfMaxBoost = 0;
@@ -131,11 +141,40 @@ void main() {
     // the bar holds still as the chip starts counting
     expect(tester.getRect(bar), resting);
 
+    // let go with the bar still up: the time stays, the bar's projection
     session.saveGameData.actionTimingData.buttonHeld = false;
+    session.actionTimingController.notifyListeners();
+    await tester.pump();
+    expect(
+      find.descendant(
+        of: chip,
+        matching: find.text('${left.inMinutes}:$seconds'),
+      ),
+      findsOneWidget,
+    );
+
+    // and once the bar has emptied, forever
+    session.saveGameData.actionTimingData.percentOfMaxBoost = 0;
     session.actionTimingController.notifyListeners();
     await tester.pump();
     expect(find.descendant(of: chip, matching: find.text('∞')), findsOneWidget);
     expect(tester.getRect(bar), resting);
     session.dispose();
+  });
+  testWidgets('the chip reads m:ss, then hours, then days', (tester) async {
+    Future<void> reads(Duration left, String text) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: StaminaTimeChip(left: left)),
+        ),
+      );
+      expect(find.text(text), findsOneWidget, reason: '$left');
+    }
+
+    await reads(const Duration(minutes: 2, seconds: 5), '2:05');
+    await reads(const Duration(hours: 1, minutes: 52), '1h 52m');
+    await reads(const Duration(hours: 23, minutes: 59), '23h 59m');
+    await reads(const Duration(hours: 30), '1d 6h');
+    await reads(const Duration(days: 12, hours: 3, minutes: 40), '12d 3h');
   });
 }

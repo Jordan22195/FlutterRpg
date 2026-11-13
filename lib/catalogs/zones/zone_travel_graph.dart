@@ -34,6 +34,11 @@ class ZoneTravelGraph {
     },
     ZoneId.MAPLEWATER_LAKE: {
       ZoneId.SWAMP: TravelEdge(time: Duration(seconds: 10)),
+      // the village is a short walk round the shore
+      ZoneId.MAPLEWATER_VILLAGE: TravelEdge(time: Duration(milliseconds: 2500)),
+    },
+    ZoneId.MAPLEWATER_VILLAGE: {
+      ZoneId.MAPLEWATER_LAKE: TravelEdge(time: Duration(milliseconds: 2500)),
     },
     ZoneId.FOOTHILLS: {
       ZoneId.SWAMP: TravelEdge(time: Duration(milliseconds: 12500)),

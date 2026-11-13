@@ -4,7 +4,9 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
 /// Alchemy. A herb and a reagent into a potion: the herb sets the tier,
-/// the reagent picks the stat.
+/// the reagent picks the stat. A potion has no rarity, so every brew rolls
+/// the crafting quality table and pays a good roll out in extra potions,
+/// the way a smelt pays extra bars.
 const List<CraftingRecipe> alchemyRecipes = [
   // The minor tier, all off guam leaf. Level 1 is the three whose reagents
   // already drop (feathers off chickens, minnows off the pond, iron off a
@@ -25,6 +27,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_minor_fishing_potion',
@@ -40,6 +43,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_minor_defence_potion',
@@ -55,6 +59,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_minor_stamina_potion',
@@ -70,6 +75,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_minor_recovery_potion',
@@ -85,6 +91,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_minor_attack_potion',
@@ -100,6 +107,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_minor_strength_potion',
@@ -115,6 +123,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   // The first tier above minor: harralander in place of guam leaf, with the
   // reagent that has no other use.
@@ -128,6 +137,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(id: ItemId.RECOVERY_POTION, count: 1, weight: 1),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_speed_potion',
@@ -139,6 +149,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(id: ItemId.SPEED_POTION, count: 1, weight: 1),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_attack_potion',
@@ -150,6 +161,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(id: ItemId.ATTACK_POTION, count: 1, weight: 1),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_strength_potion',
@@ -161,6 +173,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(id: ItemId.STRENGTH_POTION, count: 1, weight: 1),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_fishing_potion',
@@ -172,6 +185,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(id: ItemId.FISHING_POTION, count: 1, weight: 1),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_defence_potion',
@@ -183,6 +197,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(id: ItemId.DEFENCE_POTION, count: 1, weight: 1),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_stamina_potion',
@@ -194,6 +209,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(id: ItemId.STAMINA_POTION, count: 1, weight: 1),
     ],
+    rollsBonusOutput: true,
   ),
   // the super tier: Blackmire Swamp's mirecap, and a swamp reagent each
   CraftingRecipe(
@@ -210,6 +226,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_super_fishing_potion',
@@ -225,6 +242,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_super_stamina_potion',
@@ -240,6 +258,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_super_defence_potion',
@@ -255,6 +274,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_super_speed_potion',
@@ -270,6 +290,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_super_strength_potion',
@@ -285,6 +306,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_super_attack_potion',
@@ -300,6 +322,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
 
   // The utility tier: Stormgrass Prairie's sweetgrass and a reagent, for
@@ -318,6 +341,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_foragers_potion',
@@ -329,6 +353,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(id: ItemId.FORAGERS_POTION, count: 1, weight: 1),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_smiths_potion',
@@ -340,6 +365,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(id: ItemId.SMITHS_POTION, count: 1, weight: 1),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_alchemists_potion',
@@ -351,6 +377,7 @@ const List<CraftingRecipe> alchemyRecipes = [
     output: [
       WeightedDropTableEntry(id: ItemId.ALCHEMISTS_POTION, count: 1, weight: 1),
     ],
+    rollsBonusOutput: true,
   ),
 
   // The greater tier: bluestem and a prairie reagent for +21. There is no
@@ -369,6 +396,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_greater_speed_potion',
@@ -384,6 +412,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_greater_stamina_potion',
@@ -399,6 +428,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_greater_defence_potion',
@@ -414,6 +444,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_greater_strength_potion',
@@ -429,6 +460,7 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
   CraftingRecipe(
     id: 'alch_greater_attack_potion',
@@ -444,5 +476,6 @@ const List<CraftingRecipe> alchemyRecipes = [
         weight: 1,
       ),
     ],
+    rollsBonusOutput: true,
   ),
 ];

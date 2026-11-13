@@ -66,9 +66,9 @@ void main() {
 
   test('the speed stat sets the boost ceiling', () {
     // the ceiling is 1 + speedStatBonus, and the curve behind that bonus is
-    // a balance number — it has been linear and is a root now. What is
-    // pinned is that the ceiling is that curve, and the shape it has to
-    // keep: every point pays, and no point pays as much as the one before.
+    // a balance number — it was a root and is linear now. What is pinned is
+    // that the ceiling is that curve, and the shape it has to keep: every
+    // point pays, and every point pays the same as the one before.
     final player = newPlayer();
     setLevel(player, SkillId.SPEED, 20);
 
@@ -80,7 +80,7 @@ void main() {
     // a boost ceiling below 1 would be a penalty for having the stat
     expect(state.maxBoostMultiplier, greaterThan(1.0));
 
-    // rising, and with diminishing returns, all the way up the ladder
+    // rising by the same step all the way up the ladder
     final service = ActionTimingService();
     var previous = service.maxSpeedBoostForStat(1);
     var previousStep = double.infinity;
@@ -88,14 +88,52 @@ void main() {
       final ceiling = service.maxSpeedBoostForStat(level);
       final step = ceiling - previous;
       expect(step, greaterThan(0), reason: 'speed $level bought nothing');
-      expect(
-        step,
-        lessThanOrEqualTo(previousStep + 1e-9),
-        reason: 'speed $level pays more than the point below it',
-      );
+      if (previousStep.isFinite) {
+        expect(
+          step,
+          closeTo(previousStep, 1e-9),
+          reason: 'speed $level pays differently from the point below it',
+        );
+      }
       previous = ceiling;
       previousStep = step;
     }
+  });
+
+  test('a released boost coasts up, crests, then falls', () {
+    final player = newPlayer();
+    setLevel(player, SkillId.SPEED, 20);
+    setLevel(player, SkillId.STAMINA, 50);
+    player.stamina = playerDataService.getMaxStamina(player);
+
+    final state = ActionTimingData();
+    state.buttonHeld = true;
+    run(state, player, seconds: 1.0);
+    final released = state.percentOfMaxBoost;
+    expect(released, closeTo(0.5, 0.03));
+
+    // let go: the climb carries on a moment rather than dropping at once
+    state.buttonHeld = false;
+    run(state, player, seconds: 0.25);
+    expect(state.percentOfMaxBoost, greaterThan(released));
+
+    // crests accel² / (2 · drag) above where it was let go
+    var peak = state.percentOfMaxBoost;
+    for (var i = 0; i < 20; i++) {
+      run(state, player, seconds: 0.05);
+      if (state.percentOfMaxBoost > peak) peak = state.percentOfMaxBoost;
+    }
+    final rise =
+        state.accelPerSecond *
+        state.accelPerSecond /
+        (2 * state.boostCoastDrag);
+    expect(peak, closeTo(released + rise, 0.02));
+    expect(state.percentOfMaxBoost, lessThan(peak));
+
+    // and then it empties
+    run(state, player, seconds: 3.0);
+    expect(state.percentOfMaxBoost, 0);
+    expect(state.boostVelocity, closeTo(-state.decelPerSecond, 1e-9));
   });
 
   test('holding the button boosts speed and drains stamina', () {
@@ -327,10 +365,10 @@ void main() {
         speedStat: speedStat,
       );
 
-      // 25 speed is a quarter off: 2000 / (1 + 0.05*sqrt(25))
-      expect(at(25).inMilliseconds, 1600);
+      // 25 speed: 2000 / (1 + 0.0075*25)
+      expect(at(25).inMilliseconds, 1684);
       // and it keeps paying at the top of the range rather than flattening
-      expect(at(99).inMilliseconds, closeTo(2000 / 1.4975, 1));
+      expect(at(99).inMilliseconds, closeTo(2000 / 1.7425, 1));
       expect(at(99), lessThan(at(50)));
       expect(at(50), lessThan(at(25)));
     });
@@ -417,12 +455,38 @@ void main() {
       return player;
     }
 
-    test('a full bar is about thirty seconds at any level', () {
-      // the pool grows with the stamina stat and the drain grows with the
-      // boost it funds, so the two cancel: level does not change the burst
-      expect(burstSeconds(built(stamina: 5, speed: 5)), closeTo(30, 6));
-      expect(burstSeconds(built(stamina: 95, speed: 95)), closeTo(30, 6));
-    });
+    test(
+      'a full bar is a short burst at any level',
+      () {
+        // the pool grows with the stamina stat and the drain grows with the
+        // boost it funds, so the two cancel: level does not change the burst
+        expect(burstSeconds(built(stamina: 5, speed: 5)), closeTo(5, 1));
+        expect(burstSeconds(built(stamina: 95, speed: 95)), closeTo(5, 1));
+      },
+      skip: !ActionTimingService.linearSpeedDrain,
+    );
+
+    test(
+      'linear drain: a full bar is five seconds at any level',
+      () {
+        final service = ActionTimingService();
+        for (final level in [5, 48, 99]) {
+          final ceiling = service.maxSpeedBoostForStat(level);
+          final pool = 10.0 * level; // equal stamina and speed
+          double lasts(double fill) =>
+              pool /
+              service.boostDrain(
+                1 + fill * (ceiling - 1),
+                speedStance: true,
+                ceiling: ceiling,
+              );
+          expect(lasts(1.0), closeTo(5, 0.1), reason: 'full bar at $level');
+          // half the bar lasts 120 times as long
+          expect(lasts(0.5), closeTo(600, 10), reason: 'half bar at $level');
+        }
+      },
+      skip: !ActionTimingService.linearSpeedDrain,
+    );
 
     test('the burst is a build ratio, not a level', () {
       final even = burstSeconds(built(stamina: 20, speed: 20));

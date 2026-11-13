@@ -43,26 +43,31 @@ SkillId boostTrainedSkill(SkillId skillBoost) {
 /// slowly rather than hitting a wall.
 double boostStatBonus(int stat) => 0.1 * sqrt(stat < 0 ? 0 : stat);
 
-/// Speed's half of that curve. Speed pays twice - once by shortening the
-/// interval and again through the boost ceiling - so each half carries
-/// half the exponent, and the two multiply back to [boostStatBonus]'s
-/// shape at the top end.
-double speedStatBonus(int stat) => 0.1 * sqrt(stat < 0 ? 0 : stat);
+/// Speed's boost ceiling: what a full bar adds to the action rate.
+///
+/// Linear rather than a root. The root front-loaded the stat - half its
+/// value was gone by 25 - so a flat speed buff at mid levels moved the
+/// kill rate by a few percent. Linear, every point is worth the same rate
+/// at any level. Tuned so speed 48 lands about where the root had it.
+double speedStatBonus(int stat) => kSpeedBoostPerPoint * (stat < 0 ? 0 : stat);
 
 /// How much of the interval speed takes off standing still, before any of
 /// the boost bar is filled. The interval is divided by `1 + this`, so it
 /// approaches zero without ever arriving - which is what lets the old hard
-/// floor go.
-double speedIdleBonus(int stat) => 0.05 * sqrt(stat < 0 ? 0 : stat);
+/// floor go. Linear, like [speedStatBonus].
+double speedIdleBonus(int stat) => kSpeedIdlePerPoint * (stat < 0 ? 0 : stat);
 
-/// What a stance's boost is worth at [fill] of the bar, as a multiplier:
-/// the idle cut standing still, times the ceiling's share the bar has
-/// filled. The fast stance spends it on the swing rate and a strength stance
-/// on the hit, so the two are priced on one curve — and a weapon's affinity
-/// for each decides how much of it lands.
-double stanceBoost(int stat, double fill) =>
-    (1 + speedIdleBonus(stat)) *
-    (1 + fill.clamp(0.0, 1.0) * speedStatBonus(stat));
+/// Rate each speed point adds standing still, and on top with a full bar.
+const double kSpeedIdlePerPoint = 0.0075;
+const double kSpeedBoostPerPoint = 0.015;
+
+/// What a strength stance's boost is worth at [fill] of the bar, as a
+/// multiplier on the hit. It once shared speed's curve; speed went linear
+/// and this kept the root halves it had, so strength damage is unchanged.
+double stanceBoost(int stat, double fill) {
+  final root = sqrt(stat < 0 ? 0 : stat);
+  return (1 + 0.05 * root) * (1 + fill.clamp(0.0, 1.0) * 0.1 * root);
+}
 
 /// The share of [boostStatBonus] a strength stance is worth standing
 /// still. Small but always on; the boost bar buys the rest.
@@ -188,15 +193,6 @@ class PlayerData {
   /// the live tick and an offline settle read the same set.
   Set<ItemId> autoDrinkPotions = {};
 
-  /// Fire reagents re-thrown on the zone's fire whenever their buff lapses
-  /// while an action runs - auto-drink's counterpart for fires. Read by the
-  /// live tick and an offline settle alike.
-  Set<ItemId> autoTendReagents = {};
-
-  /// Lays another batch of the burning fire's logs on before it goes out,
-  /// while an action runs, so its reagent buffs don't end with it.
-  bool keepFireFed = false;
-
   DateTime lastActionTime = DateTime.now();
 
   // mutable stats
@@ -236,8 +232,6 @@ class PlayerData {
       'stamina': stamina,
       'autoEatRule': autoEatRule.toJson(),
       'autoDrinkPotions': [for (final id in autoDrinkPotions) id.name],
-      'autoTendReagents': [for (final id in autoTendReagents) id.name],
-      'keepFireFed': keepFireFed,
       // the stance and the skill it lends its boost to travel together: a
       // strength stance on a rock boosts mining, which the stance alone
       // cannot say. without them a relaunch drops back to fast while the
@@ -344,10 +338,9 @@ class PlayerData {
                   json['autoEatRule'] as Map<String, dynamic>,
                 )
               : AutoEatRule.standard
-          ..autoDrinkPotions = _readAutoDrinkPotions(json['autoDrinkPotions'])
-          // both absent from a save older than tended fires: off
-          ..autoTendReagents = _readAutoDrinkPotions(json['autoTendReagents'])
-          ..keepFireFed = json['keepFireFed'] == true;
+          // a save's old autoTendReagents / keepFireFed are ignored: reagents
+          // go on by the action button now, not a switch
+          ..autoDrinkPotions = _readAutoDrinkPotions(json['autoDrinkPotions']);
 
     // a save from before the stance was kept comes back in fast, as it
     // always did. both halves or neither: a stance with no skill to boost

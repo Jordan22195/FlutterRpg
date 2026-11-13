@@ -7,10 +7,11 @@ import '../services/inventory_service.dart';
 import '../services/weighted_drop_table_service.dart';
 
 /// Bird's nests: woodcutting's treasure chests. A tree sheds one now and
-/// then, and opening it from the bag rolls [birdsNestRolls] - a lining of
+/// then, and opening it from the bag rolls [openableRolls] - a lining of
 /// fire reagents, a long shot at the Woodcutter's set of the nest's tier,
 /// and a longer one at a gem. It pays out the way a dungeon chest does, so
-/// it opens in the same dialog.
+/// it opens in the same dialog. Mining's geodes open the same way, so this
+/// system opens those too (see geodeRolls).
 class BirdsNestSystem {
   final InventoryService _inventoryService;
   final WeightedDropTableService _dropTableService;
@@ -21,13 +22,13 @@ class BirdsNestSystem {
   }) : _inventoryService = inventoryService,
        _dropTableService = dropTableService;
 
-  static bool isNest(ItemId id) => birdsNestRolls.containsKey(id);
+  static bool isNest(ItemId id) => openableRolls.containsKey(id);
 
   /// Opens up to [max] of the [nest]s held (all of them when null) and
   /// returns what came out, totalled by item and quality. Equipment arrives
   /// at the quality its line names.
   List<ChestLoot> open(ItemId nest, InventoryData inventoryState, {int? max}) {
-    final rolls = birdsNestRolls[nest];
+    final rolls = openableRolls[nest];
     if (rolls == null) return const [];
     final held = _inventoryService.getItemCount(inventoryState, nest);
     final count = max == null || max > held ? held : max;

@@ -187,7 +187,7 @@ void main() {
       setLevel(session, SkillId.FIREMAKING, 10);
       save.inventoryData.itemMap[ItemId.LOGS] = 200;
 
-      // a cookfire is 2 logs for 3 minutes of fire
+      // a cookfire is 2 logs for one lay of fire
       craft(session, 'cookfire', craftCount: 10, station: EntityId.FIREPIT);
 
       final fire = session.firemakingSystem.activeFire(
@@ -198,7 +198,16 @@ void main() {
 
       expect(fire, isNotNull);
       final burning = fire!.expirationTime.difference(DateTime.now());
-      expect(burning.inMinutes, closeTo(30, 1));
+      expect(
+        burning.inSeconds,
+        // ten 3 minute lays, stretched for firemaking 10 over the
+        // cookfire's level 1
+        closeTo(
+          (const Duration(minutes: 3) * 10).inSeconds *
+              FireItem.burnScaleFor(10, 1),
+          2,
+        ),
+      );
       expect(save.inventoryData.itemMap[ItemId.LOGS], 180);
     });
 

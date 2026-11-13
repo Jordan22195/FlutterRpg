@@ -10,7 +10,6 @@ import '../services/offline_progress_service.dart';
 import '../services/player_data_service.dart';
 import '../services/skill_service.dart';
 import '../data/inventory_data.dart';
-import 'fire_tending_system.dart';
 import 'potion_system.dart';
 
 /// Settles the time the app spent backgrounded while an action was running.
@@ -40,11 +39,6 @@ class OfflineProgressSystem {
   final OfflineProgressService _offlineProgressService;
   final PotionSystem _potionSystem;
 
-  // throws the auto-tend reagents and keeps the zone's fire fed at the
-  // instants a segment owes them. optional, so a settle built without fires
-  // in mind settles exactly as it always did
-  final FireTendingSystem? _fireTendingSystem;
-
   // the bag the settle drinks auto-drink potions out of
   final InventoryData _inventoryData;
 
@@ -63,9 +57,7 @@ class OfflineProgressSystem {
     required OfflineProgressData offlineProgressData,
     required PotionSystem potionSystem,
     required InventoryData inventoryData,
-    FireTendingSystem? fireTendingSystem,
-  }) : _fireTendingSystem = fireTendingSystem,
-       _actionTimingService = actionTimingService,
+  }) : _actionTimingService = actionTimingService,
        _actionTimingSystem = actionTimingSystem,
        _playerDataService = playerDataService,
        _skillService = skillService,
@@ -128,9 +120,12 @@ class OfflineProgressSystem {
 
     // an unlocked bar is only kept up by a finger on the button, and the
     // frames stopped with nothing holding it: live it emptied within the
-    // first second and a half of the gap. read as-is it would boost the
+    // first few seconds of the gap. read as-is it would boost the
     // whole gap and never drain, since only a locked boost is charged here
-    if (!timingState.boostLocked) timingState.percentOfMaxBoost = 0.0;
+    if (!timingState.boostLocked) {
+      timingState.percentOfMaxBoost = 0.0;
+      timingState.boostVelocity = 0.0;
+    }
 
     // how far through its current action the loop is, as a share of one -
     // the same running fraction the frame loop keeps. it comes in from the
@@ -162,13 +157,6 @@ class OfflineProgressSystem {
           _inventoryData,
           at: playerState.lastActionTime,
         ),
-      );
-
-      // ---- and the fire's armed reagents, the same way
-      _fireTendingSystem?.autoTend(
-        playerState,
-        _inventoryData,
-        at: playerState.lastActionTime,
       );
 
       // ---- read the state this segment runs at
@@ -254,14 +242,6 @@ class OfflineProgressSystem {
       );
       remaining -= spanUsed;
 
-      // ---- a fire this segment was cut on is fed before the sweep below
-      // can take it, so its reagents outlive the lay of logs that ran out
-      _fireTendingSystem?.autoTend(
-        playerState,
-        _inventoryData,
-        at: playerState.lastActionTime,
-      );
-
       // ---- expire what this segment outlived, at the moment it did
       _buffService.checkBuffExpriations(
         playerState.buffData,
@@ -341,6 +321,7 @@ class OfflineProgressSystem {
     if (timingState.boostLocked && playerState.stamina <= 0) {
       _actionTimingService.setLockActionSpeed(false, timingState);
       timingState.percentOfMaxBoost = 0.0;
+      timingState.boostVelocity = 0.0;
     }
 
     // every read is taken at the segment's own instant: a fire or potion
@@ -392,6 +373,7 @@ class OfflineProgressSystem {
     final drain = _actionTimingService.boostDrain(
       _actionTimingService.getCurrentSpeedMultiplier(timingState),
       speedStance: timingState.boostingSpeed,
+      ceiling: timingState.maxBoostMultiplier,
     );
     if (drain <= 0) return null;
     if (timingState.boostingSpeed) return playerState.stamina / drain;
@@ -479,7 +461,7 @@ class OfflineProgressSystem {
   /// Xp the replay pays itself rather than through a bound action: onto the
   /// player, and into the report so the summary shows it.
   void _awardXp(PlayerData playerState, Map<SkillId, double> xp) {
-    final paid = _playerDataService.applyXp(playerState, xp);
+    final paid = _playerDataService.applyXp(playerState, xp, isAction: false);
     _offlineProgressService.recordXp(_offlineProgressData, paid);
   }
 
@@ -516,6 +498,7 @@ class OfflineProgressSystem {
     final drain = _actionTimingService.boostDrain(
       multiplier,
       speedStance: timingState.boostingSpeed,
+      ceiling: timingState.maxBoostMultiplier,
     );
     final spent = timingState.boostingSpeed ? drain * seconds : drain * actions;
     _playerDataService.changeStamina(-spent, playerState, at: at);
@@ -533,6 +516,7 @@ class OfflineProgressSystem {
       );
       _actionTimingService.setLockActionSpeed(false, timingState);
       timingState.percentOfMaxBoost = 0.0;
+      timingState.boostVelocity = 0.0;
     }
   }
 

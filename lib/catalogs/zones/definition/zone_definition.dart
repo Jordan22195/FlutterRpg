@@ -8,7 +8,20 @@ import 'package:rpg/theme/zone_palette.dart';
 class ZoneDefinition {
   final String name;
   final List<EntityId> permanentEntities;
-  final List<WeightedDropTableEntry<EntityId>> discoverableEntities;
+  final List<WeightedDropTableEntry<EntityId>> _discoverableEntities;
+
+  /// What this zone can turn up. An entity that sets its own
+  /// [EncounterEntityDefinition.discoveryLevel] is gated by that, whatever
+  /// the zone's entry says; every other entry keeps the zone's level.
+  List<WeightedDropTableEntry<EntityId>> get discoverableEntities => [
+    for (final e in _discoverableEntities)
+      switch (e.id.definition) {
+        EncounterEntityDefinition(:final discoveryLevel?) => e.copyWith(
+          unlockLevel: discoveryLevel,
+        ),
+        _ => e,
+      },
+  ];
   // items are on a separate drop table and have a chance to drop when
   // an exploration action happens.
   final List<WeightedDropTableEntry<ItemId>> discoverableItems;
@@ -43,7 +56,7 @@ class ZoneDefinition {
 
   const ZoneDefinition({
     required this.name,
-    required this.discoverableEntities,
+    required List<WeightedDropTableEntry<EntityId>> discoverableEntities,
     required this.permanentEntities,
     this.discoverableItems = const [],
     required this.iconAsset,
@@ -53,7 +66,7 @@ class ZoneDefinition {
     this.explorationLevel = 0,
     this.xpPerExplore = 0,
     this.palette = ZonePalette.meadow,
-  });
+  }) : _discoverableEntities = discoverableEntities;
 
   /// Every entity id this zone's content declares, permanent or discoverable
   /// (including entries still gated behind an unlockLevel — the gate decides

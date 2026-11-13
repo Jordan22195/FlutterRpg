@@ -92,8 +92,36 @@ class CraftingController extends ChangeNotifier {
             .currentEntityViewId]?[skill] ??
         "";
     if (id.isEmpty || !_recipeCatalog.hasRecipe(id)) return "";
-    return _recipeCatalog.recipeById(id).skill == skill ? id : "";
+    final recipe = _recipeCatalog.recipeById(id);
+    if (recipe.tendReagent != null) return "";
+    return recipe.skill == skill ? id : "";
   }
+
+  /// The reagents the firepit on screen has picked to keep topped up.
+  List<CraftingRecipe> reagentMix() =>
+      _craftingSystem.mixAt(_playerState.currentEntityViewId, _craftingState);
+
+  /// Whether [recipeId] is in the firepit's mix.
+  bool inReagentMix(String recipeId) =>
+      reagentMix().any((r) => r.id == recipeId);
+
+  /// Adds the reagent [recipeId] to the firepit's mix, or takes it out.
+  void toggleReagentInMix(String recipeId) {
+    if (_recipeCatalog.recipeById(recipeId).tendReagent == null) return;
+    final mix = _craftingState.reagentMixByEntity.putIfAbsent(
+      _playerState.currentEntityViewId,
+      () => [],
+    );
+    if (!mix.remove(recipeId)) mix.add(recipeId);
+    notifyListeners();
+  }
+
+  /// Every reagent recipe, for the firepit's reagent picker, in the order
+  /// the stage shows their rings.
+  List<CraftingRecipe> availableReagentRecipes() => [
+    for (final r in _recipeCatalog.recipesForSkill(SkillId.FIREMAKING))
+      if (r.tendReagent != null) r,
+  ]..sort(CraftingSystem.compareReagentRecipes);
 
   // the selection belonging to the crafting entity the player is viewing,
   // for that station's own skill
@@ -118,7 +146,12 @@ class CraftingController extends ChangeNotifier {
     if (skill == SkillId.NULL) {
       return _recipeCatalog.recipes;
     }
-    return _recipeCatalog.recipesForSkill(skill);
+    // reagents are firemaking recipes too, but the firepit picks them on a
+    // card of their own: the fire picker lists only fires
+    return [
+      for (final r in _recipeCatalog.recipesForSkill(skill))
+        if (r.tendReagent == null && !r.isReagentMix) r,
+    ];
   }
 
   /// True when the station on screen is the one the crafting session
@@ -229,7 +262,13 @@ class CraftingController extends ChangeNotifier {
   void selectRecipe(String recipeId) {
     // selections are stored per crafting entity, then per skill. the skill
     // comes from the recipe, so callers never have to pass it.
-    final skill = _recipeCatalog.recipeById(recipeId).skill;
+    final recipe = _recipeCatalog.recipeById(recipeId);
+    // a reagent is picked into the firepit's mix, not over it
+    if (recipe.tendReagent != null) {
+      toggleReagentInMix(recipeId);
+      return;
+    }
+    final skill = recipe.skill;
     (_craftingState.selectedRecipeByEntity[_playerState.currentEntityViewId] ??=
             {})[skill] =
         recipeId;
@@ -349,6 +388,18 @@ class CraftingController extends ChangeNotifier {
   }
 
   int getMaxNumberCraftsForRecipe(String recipeId) {
+    // a mix is as many throws as its reagents in the bag
+    if (_recipeCatalog.recipeById(recipeId).isReagentMix) {
+      // the session's pit while the mix is running there, the one on screen
+      // otherwise
+      return _craftingSystem.mixHeldCount(
+        isCraftingHere() || _craftingState.activeRecipeId != recipeId
+            ? _playerState.currentEntityViewId
+            : _craftingState.craftingEntityId,
+        _craftingState,
+        _inventoryState,
+      );
+    }
     return _craftingSystem.craftableCount(recipeId, _inventoryState);
   }
 
@@ -398,6 +449,49 @@ class CraftingController extends ChangeNotifier {
       _buffState,
     );
   }
+
+  /// The burn the viewed fire still has to come, highest bonus first, each
+  /// with how long it lasts - the stage's chips.
+  List<BurnStep> fireSteps() =>
+      activeFire()?.stepsAt(DateTime.now()) ?? const [];
+
+  /// The campfire or bonfire the viewed firepit has picked, which its
+  /// reagents go on; null when its fire selection is empty or a cookfire.
+  CraftingRecipe? tendFireRecipe() => _craftingSystem.tendFireRecipeAt(
+    _playerState.currentEntityViewId,
+    _craftingState,
+  );
+
+  /// Whether a reagent can go on at the viewed firepit right now: a
+  /// campfire or bonfire burns there, or the picked one can be lit.
+  bool canTend() => _craftingSystem.tendingConditionsMet(
+    _playerState.currentEntityViewId,
+    _craftingState,
+    _playerState,
+    _inventoryState,
+  );
+
+  /// Whether the reagent [recipeId] already burns to the viewed fire's end:
+  /// its ring is full, so the button has nothing to add.
+  /// Whether nothing in the firepit's mix can go on the fire on screen right
+  /// now: every picked reagent's ring is full, or it is not held.
+  bool mixFull() => !_craftingSystem.mixHasWork(
+    _playerState.currentEntityViewId,
+    _craftingState,
+    _playerState,
+    _inventoryState,
+  );
+
+  bool reagentFull(String recipeId) => _craftingSystem.reagentFull(
+    recipeId,
+    _playerState.currentEntityViewId,
+    _playerState,
+  );
+
+  /// How full [stat]'s reagent buff on the viewed firepit's fire is: its
+  /// time left out of the fire's, 0 when it is down.
+  double reagentFullness(SkillId stat) =>
+      activeFire()?.reagentFullness(stat, DateTime.now()) ?? 0;
 
   /// Whether the viewed firepit's fire can cook on it.
   bool canCook() => activeFire()?.canCook ?? false;

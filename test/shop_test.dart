@@ -261,10 +261,7 @@ void main() {
     // a deep purse takes the rest of the slot
     final rich = InventoryData(itemMap: {ItemId.COINS: price * slot * 2});
     expect(shopService.affordableCount(entry, def, rich), slot - 3);
-    expect(
-      shopService.buyItems(shop, entry, def, rich, entry.count),
-      slot - 3,
-    );
+    expect(shopService.buyItems(shop, entry, def, rich, entry.count), slot - 3);
     expect(entry.count, 0);
     expect(shopService.affordableCount(entry, def, rich), 0);
   });

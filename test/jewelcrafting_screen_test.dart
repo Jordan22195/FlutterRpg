@@ -121,26 +121,28 @@ void main() {
     tester,
   ) async {
     final session = await pumpBench(tester);
-    final skill = session.saveGameData.playerData.skillData[
-        SkillId.JEWELCRAFTING]!;
+    final skill =
+        session.saveGameData.playerData.skillData[SkillId.JEWELCRAFTING]!;
     skill.xp = skill.xpTable[60];
 
     List<String> odds() => [
       for (final rarity in ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'])
         (tester
-                    .widget<Text>(
-                      find
-                          .descendant(
-                            of: find.ancestor(
+                .widget<Text>(
+                  find
+                      .descendant(
+                        of: find
+                            .ancestor(
                               of: find.text(rarity),
                               matching: find.byType(Row),
-                            ).first,
-                            matching: find.textContaining('%'),
-                          )
-                          .first,
-                    )
-                    .data ??
-                ''),
+                            )
+                            .first,
+                        matching: find.textContaining('%'),
+                      )
+                      .first,
+                )
+                .data ??
+            ''),
     ];
 
     session.craftingController.selectRecipe('jc_topaz_ring');

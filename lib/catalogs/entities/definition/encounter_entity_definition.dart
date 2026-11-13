@@ -18,6 +18,12 @@ class EncounterEntityDefinition extends EntityDefinition {
   /// stacks, tertiary drops). Empty for most entities.
   final List<DropRoll> bonusDrops;
 
+  /// The Exploration level at which this can be found, in every zone that
+  /// lists it. Null leaves the gate to each zone's own entry. A vein sets
+  /// it to the level its ore smelts at, so the gate lives here once rather
+  /// than being repeated, and drifting, in every zone that holds the vein.
+  final int? discoveryLevel;
+
   const EncounterEntityDefinition({
     required super.name,
     required super.iconAsset,
@@ -27,6 +33,7 @@ class EncounterEntityDefinition extends EntityDefinition {
     required this.hitpoints,
     required this.itemDrops,
     this.bonusDrops = const [],
+    this.discoveryLevel,
   });
 
   /// [itemDrops] as a table keyed by the drops themselves, so a roll comes
@@ -36,9 +43,14 @@ class EncounterEntityDefinition extends EntityDefinition {
   List<WeightedDropTableEntry<ItemDropType>> get weightedDropTable =>
       itemDrops.weighted;
 
-  /// The level of [entityType] needed before this can be worked at all. 0,
-  /// the default, is ungated; herbs and fishing spots set their own.
-  int get requiredLevel => 0;
+  /// The level of [entityType] needed before this can be worked at all. A
+  /// tree or a vein is gated by its own [defence], so the level to work a
+  /// node reads straight off how hard it is to cut. Herbs and fishing spots
+  /// set their own; anything else is ungated (0).
+  int get requiredLevel =>
+      entityType == SkillId.WOODCUTTING || entityType == SkillId.MINING
+      ? defence
+      : 0;
 
   /// [weightedDropTable] cut to the drops a [level] in [entityType] reaches.
   /// A drop's own unlock level gates it the way [requiredLevel] gates the
@@ -69,6 +81,7 @@ class EncounterEntityDefinition extends EntityDefinition {
       hitpoints: hitpoints ?? this.hitpoints,
       itemDrops: itemDrops ?? this.itemDrops,
       bonusDrops: bonusDrops ?? this.bonusDrops,
+      discoveryLevel: discoveryLevel,
     );
   }
 }

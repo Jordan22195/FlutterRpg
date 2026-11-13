@@ -19,6 +19,12 @@ class CraftingState {
   // holds a fire selection and a cooking selection at the same time
   Map<EntityId, Map<SkillId, String>> selectedRecipeByEntity = {};
 
+  // the reagents a firepit has picked to throw on its fire together, as
+  // reagent recipe ids. its own map, not a slot above: a reagent recipe
+  // trains firemaking, and the FIREMAKING slot already holds the fire the
+  // pit lights
+  Map<EntityId, List<String>> reagentMixByEntity = {};
+
   // selections read from a save that predates the per-skill nesting. the
   // skill they belong to is a recipe catalog lookup, which this class has
   // no reference to, so GameSessionFactory files them and clears this.
@@ -35,6 +41,9 @@ class CraftingState {
           id.name,
           bySkill.map((skill, recipeId) => MapEntry(skill.name, recipeId)),
         ),
+      ),
+      'reagentMixByEntity': reagentMixByEntity.map(
+        (id, recipeIds) => MapEntry(id.name, recipeIds),
       ),
       'craftingEntityId': craftingEntityId.name,
       'craftingZoneId': craftingZoneId.name,
@@ -99,6 +108,31 @@ class CraftingState {
           if (skill != null && recipeId is String) {
             (state.selectedRecipeByEntity[id] ??= {})[skill] = recipeId;
           }
+        }
+      }
+    }
+
+    // tolerated when missing: saves from before reagents were recipes. a
+    // save from when a firepit held a single reagent reads as a mix of one
+    final rawMix = json['reagentMixByEntity'];
+    final rawSingle = json['selectedReagentByEntity'];
+    if (rawMix is Map<String, dynamic>) {
+      for (final entry in rawMix.entries) {
+        final id = EntityId.values.asNameMap()[entry.key];
+        final ids = entry.value;
+        if (id != null && ids is List) {
+          state.reagentMixByEntity[id] = [
+            for (final r in ids)
+              if (r is String) r,
+          ];
+        }
+      }
+    } else if (rawSingle is Map<String, dynamic>) {
+      for (final entry in rawSingle.entries) {
+        final id = EntityId.values.asNameMap()[entry.key];
+        final recipeId = entry.value;
+        if (id != null && recipeId is String) {
+          state.reagentMixByEntity[id] = [recipeId];
         }
       }
     }
