@@ -135,13 +135,27 @@ String stanceLabel(Stance stance) {
 /// style; the tool skills - mining, woodcutting, fishing - trade power for
 /// pace. Everything else runs
 /// fast with nothing to choose - see [PlayerDataService.coerceStanceFor].
-List<Stance> stancesForEntity(EncounterEntity entity) {
-  if (entity is CombatEntity) {
+List<Stance> stancesForEntity(EncounterEntity entity) =>
+    _stancesFor(isCombat: entity is CombatEntity, skill: entity.entityType);
+
+/// [stancesForEntity] read off an entity's catalog entry, for when only its
+/// id is to hand — what the action loop records it is running, say.
+List<Stance> stancesForEntityId(EntityId id) {
+  final def = id.definition;
+  if (def is! EncounterEntityDefinition) return const [Stance.fast];
+  return _stancesFor(
+    isCombat: def is CombatEntityDefinition,
+    skill: def.entityType,
+  );
+}
+
+List<Stance> _stancesFor({required bool isCombat, required SkillId skill}) {
+  if (isCombat) {
     return const [Stance.offensive, Stance.defensive, Stance.fast];
   }
-  if (entity.entityType == SkillId.MINING ||
-      entity.entityType == SkillId.WOODCUTTING ||
-      entity.entityType == SkillId.FISHING) {
+  if (skill == SkillId.MINING ||
+      skill == SkillId.WOODCUTTING ||
+      skill == SkillId.FISHING) {
     return const [Stance.strong, Stance.fast];
   }
   return const [Stance.fast];

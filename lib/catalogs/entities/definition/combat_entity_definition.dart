@@ -14,33 +14,45 @@ import 'package:rpg/utilities/util.dart';
 /// across attack, defence and hitpoints, so every enemy sits on the same
 /// curve and a level reads the same everywhere.
 ///
-/// One definition is a single *rarity variant* of a monster. What the
-/// variants share — art, tier, how it fights — lives on the shared
-/// [CombatArchetype]; what makes a variant its own thing (name, rarity,
-/// drops) is written here.
+/// One definition is one monster. What every monster of its kind shares —
+/// art, how it fights, the common loot — lives on its [CombatArchetype];
+/// what makes this one its own (name, rung, loot of its own, the rarity
+/// border it is drawn with) is written here.
 ///
-/// Drops default to the common variant's, scaled to this one's rarity (see
-/// [itemDrops]), so a variant only writes the loot that sets it apart.
+/// [rarity] is cosmetic: it colors the border around the portrait and
+/// nothing else. The level is [fibLevel] alone.
+///
+/// Drops default to the archetype's, scaled to how far above its
+/// [CombatArchetype.lootFibLevel] this monster sits (see [itemDrops]), so a
+/// monster only writes the loot that sets it apart.
 class CombatEntityDefinition extends EncounterEntityDefinition {
-  /// The monster this is a variant of.
+  /// The kind of monster this is.
   final CombatArchetype archetype;
+
+  /// Index into [Util.fibonacciCache]: the rung of the ladder this monster
+  /// stands on. A level is always a rung — there is no way to write one
+  /// between them, so every monster lines up with a gear tier.
+  final int fibLevel;
+
+  /// Seconds between swings, or null to swing at the archetype's pace.
+  final double? ownAttackInterval;
 
   /// Set on the one monster that ends a dungeon floor, and on nothing else:
   /// a boss is its own entity, so a monster that is a boss in one place is
   /// never also a regular somewhere. The dungeon screen draws its tile apart.
   final bool isDungeonBoss;
 
-  /// The main table as written here, or null to inherit the common
-  /// variant's. Written, it replaces the inherited table outright.
+  /// The main table as written here, or null to inherit the archetype's.
+  /// Written, it replaces the inherited table outright.
   final List<ItemDropType>? ownItemDrops;
 
   /// Lines added to the main table, on top of whichever [itemDrops]
   /// resolves to — inherited or written. Never scaled: they are written at
-  /// the counts and qualities this variant drops them at.
+  /// the counts and qualities this monster drops them at.
   final List<ItemDropType> extraItemDrops;
 
-  /// The bonus rolls as written here, or null to inherit the common
-  /// variant's. `const []` turns the inherited ones off.
+  /// The bonus rolls as written here, or null to inherit the archetype's.
+  /// `const []` turns the inherited ones off.
   final List<DropRoll>? ownBonusDrops;
 
   /// Bonus rolls added to whichever [bonusDrops] resolves to.
@@ -48,8 +60,10 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
 
   const CombatEntityDefinition(
     this.archetype, {
+    required this.fibLevel,
     required super.name,
     super.rarity,
+    double? attackInterval,
     List<ItemDropType>? itemDrops,
     this.extraItemDrops = const [],
     List<DropRoll>? bonusDrops,
@@ -58,8 +72,10 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
     // art comes from the archetype, and the combat stats are derived from
     // level and type by the getters below; the fields the parent stores
     // for all of them are never read. Nor are the drop lists it stores:
-    // the getters below resolve them against the common variant.
-  }) : ownItemDrops = itemDrops,
+    // the getters below resolve them against the archetype.
+  }) : assert(fibLevel >= 0, 'a level is a rung of the Fibonacci ladder'),
+       ownAttackInterval = attackInterval,
+       ownItemDrops = itemDrops,
        ownBonusDrops = bonusDrops,
        super(
          iconAsset: '',
@@ -69,35 +85,25 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
          itemDrops: const [],
        );
 
-  /// The regular COMMON variant of [archetype] — the one whose drops every
-  /// other variant inherits by default. Null for an archetype with no
-  /// common regular (some monsters start at uncommon), and for any common,
-  /// which is the rung the scaling starts from. A boss is
-  /// never the base, even a common one: its table is bulk loot written for
-  /// the end of a floor.
-  CombatEntityDefinition? get base =>
-      rarity == Rarity.COMMON ? null : _commonByArchetype[archetype];
-
-  static final Map<CombatArchetype, CombatEntityDefinition> _commonByArchetype =
-      {
-        for (final id in EntityId.values.reversed)
-          if (id.definition case final CombatEntityDefinition def
-              when def.rarity == Rarity.COMMON && !def.isDungeonBoss)
-            def.archetype: def,
-      };
+  /// How many rungs above the archetype's loot this monster stands: what
+  /// its inherited drops are scaled by. A monster may stand below the rung
+  /// its archetype's loot was written for — a level-89 banshee on an
+  /// archetype whose loot is written at 144 — but then it cannot inherit,
+  /// since that would mean dropping less than one of something: it writes
+  /// its own tables, and the catalog test holds it to that.
+  int get lootSteps => fibLevel - archetype.lootFibLevel;
 
   /// Resolved tables, built once per definition: rolled on every kill, and
   /// scaling a table flattens it.
   static final Expando<List<ItemDropType>> _itemDropsCache = Expando();
   static final Expando<List<DropRoll>> _bonusDropsCache = Expando();
 
-  /// The main table: [ownItemDrops] if written, otherwise the common
-  /// variant's scaled to this rarity ([WeightedDrops.scaledTo] — more of
-  /// each stack, equipment a rung up per rarity step), then
-  /// [extraItemDrops] on top.
+  /// The main table: [ownItemDrops] if written, otherwise the archetype's
+  /// scaled by [lootSteps] ([WeightedDrops.scaledBy] — more of each stack,
+  /// equipment a rung up per step), then [extraItemDrops] on top.
   @override
   List<ItemDropType> get itemDrops => _itemDropsCache[this] ??= [
-    ...ownItemDrops ?? base?.itemDrops.scaledTo(rarity) ?? const [],
+    ...ownItemDrops ?? archetype.itemDrops.scaledBy(lootSteps),
     ...extraItemDrops,
   ];
 
@@ -107,10 +113,10 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
   List<DropRoll> get bonusDrops => _bonusDropsCache[this] ??= [
     ...ownBonusDrops ??
         [
-          for (final roll in base?.bonusDrops ?? const <DropRoll>[])
+          for (final roll in archetype.bonusDrops)
             DropRoll(
               chance: roll.chance,
-              entries: roll.entries.scaledTo(rarity),
+              entries: roll.entries.scaledBy(lootSteps),
             ),
         ],
     ...extraBonusDrops,
@@ -119,21 +125,15 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
   @override
   String get iconAsset => archetype.iconAsset;
 
-  /// Index into [Util.fibonacciCache] of the COMMON variant's level.
-  int get fibLevel => archetype.fibLevel;
-
   CombatType get combatType => archetype.combatType;
 
-  double get attackInterval => archetype.attackInterval;
+  double get attackInterval => ownAttackInterval ?? archetype.attackInterval;
 
-  /// The stat budget. A variant's rarity walks it up the same Fibonacci
-  /// ladder its tier sits on: common is the archetype's own rung and
-  /// legendary is four rungs higher, so an epic chicken and a common
-  /// scarecrow can land on the same number and mean the same thing.
+  /// The stat budget: the rung [fibLevel] names.
   ///
   /// Recoverable from the three stats via [CombatType.levelOf] — for a
   /// regular; a boss's hitpoints are multiplied past what its level gives.
-  int get level => Util.fib(fibLevel + rarity.index);
+  int get level => Util.fib(fibLevel);
 
   int get attack => combatType.attackAt(level);
 
@@ -158,10 +158,12 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
   /// [iconAsset], [defence] and [hitpoints] are inherited from the base
   /// signature but have no meaning here — art comes from the archetype and
   /// the stats come from [level] and [combatType], so vary the archetype
-  /// (or the rarity) instead.
+  /// (or the fibLevel) instead.
   @override
   CombatEntityDefinition copyWith({
     CombatArchetype? archetype,
+    int? fibLevel,
+    double? attackInterval,
     String? name,
     String? iconAsset,
     Rarity? rarity,
@@ -176,15 +178,17 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
   }) {
     assert(
       iconAsset == null && defence == null && hitpoints == null,
-      'art and combat stats are derived: pass an archetype or a rarity, '
+      'art and combat stats are derived: pass an archetype or a fibLevel, '
       'not iconAsset/defence/hitpoints',
     );
     return CombatEntityDefinition(
       archetype ?? this.archetype,
+      fibLevel: fibLevel ?? this.fibLevel,
+      attackInterval: attackInterval ?? ownAttackInterval,
       name: name ?? this.name,
       rarity: rarity ?? this.rarity,
-      // the written tables, not the resolved ones, so a copy at another
-      // rarity re-scales what it inherits rather than freezing this one's
+      // the written tables, not the resolved ones, so a copy on another
+      // rung re-scales what it inherits rather than freezing this one's
       itemDrops: itemDrops ?? ownItemDrops,
       extraItemDrops: extraItemDrops ?? this.extraItemDrops,
       bonusDrops: bonusDrops ?? ownBonusDrops,

@@ -129,22 +129,24 @@ class PlaceTile extends StatelessWidget {
     // an entity rarer than common — a dungeon, a rare creature — is
     // outlined in its rarity, 2px, as its stack tile was
     final rarity = currentId is EntityId
-        ? rarityBorderColor(currentId.definition.rarity)
+        ? entityBorderColor(currentId.definition.rarity)
         : null;
 
     final image = EnumImageProviderLookup.resolveDynamic(id);
     final fallback = Icon(fallbackIcon, size: 28, color: palette.textMuted);
 
+    // an entity's art sits bare, as on the encounter stage: no fill, no
+    // border
+    final bare = transparentFrame || currentId is EntityId;
+
     final frame = Container(
       width: _frameWidth,
       height: _frameHeight,
       decoration: BoxDecoration(
-        color: transparentFrame ? Colors.transparent : tint.fill,
+        color: bare ? Colors.transparent : tint.fill,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: transparentFrame
-              ? Colors.transparent
-              : (rarity ?? tint.border),
+          color: bare ? Colors.transparent : (rarity ?? tint.border),
           width: rarity != null ? 2 : 1,
         ),
       ),

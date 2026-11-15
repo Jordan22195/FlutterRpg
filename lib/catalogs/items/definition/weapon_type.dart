@@ -105,6 +105,9 @@ enum WeaponTypeId {
       fibOffset: 1,
       actionInterval: MediumAttackSpeed,
       statWeight: {SkillId.ATTACK: 12, SkillId.DEFENCE: 4},
+      // half a sword's hit: the stat budget it carries is the other half,
+      // so a scepter is one weapon's worth rather than a sword and a helm
+      damageScale: 0.5,
     ),
   );
 
@@ -139,9 +142,9 @@ class WeaponEquipmentParameters {
   /// The *level* it asks for stays the material's.
   final SkillId skillRequirement;
 
-  /// Stats the weapon adds on top of its damage. Nothing, for anything that
-  /// swings — its damage is the whole of what it is, and Attack is the
-  /// multiplier on it. A sickle or a rod, which do not hit, pour their rung
+  /// Stats the weapon adds on top of its damage. Empty for the fighting
+  /// shapes, whose smithed metal pieces take their rung as Attack instead
+  /// (see [WeaponItemDefinition.defaultStatWeights]). A sickle or a rod, which do not hit, pour their rung
   /// into their skill instead; a unique may carry a rider.
   final Map<SkillId, int> statWeight;
 

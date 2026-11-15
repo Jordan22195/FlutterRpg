@@ -218,6 +218,11 @@ class JewelleryDefinition extends EquipmentItemDefinition {
   @override
   int get fibLevel => cut.rung + gem.rungOffset + armorSlot.fibOffset;
 
+  /// Jewellery is gated where it is cut, at the bench, not where it is
+  /// worn — so it never takes the rung-derived level a unique does.
+  @override
+  int get skillLevelRequirement => 0;
+
   @override
   Map<SkillId, int> get statWeights {
     final stat = gem.stat;

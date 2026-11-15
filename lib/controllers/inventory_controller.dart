@@ -30,6 +30,11 @@ class InventoryController extends ChangeNotifier {
   /// controller is built after this one.
   VoidCallback? onZoneScouted;
 
+  /// Called with how many of a chest (nest, geode, cache) were just opened
+  /// from the bag. Wired to the encounter controller, so a chest opened off
+  /// the gathering loot window leaves that window too.
+  void Function(ItemId id, int opened)? onChestsOpened;
+
   InventoryController({
     required InventoryData inventoryData,
     required BuffData buffState,
@@ -118,8 +123,11 @@ class InventoryController extends ChangeNotifier {
 
   /// Opens up to [max] of [id] (all held when null) and returns the haul.
   List<ChestLoot> openNests(ItemId id, {int? max}) {
+    final before = getItemCount(id);
     final loot =
         _birdsNestSystem?.open(id, _inventoryData, max: max) ?? const [];
+    final opened = before - getItemCount(id);
+    if (opened > 0) onChestsOpened?.call(id, opened);
     if (loot.isNotEmpty) notifyListeners();
     return loot;
   }

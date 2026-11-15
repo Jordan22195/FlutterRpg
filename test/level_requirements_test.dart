@@ -1,10 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:rpg/catalogs/drop_tables.dart';
+
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/zones/map_node_type.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/action_result.dart';
+import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'support/gathering_tools.dart';
@@ -96,6 +99,10 @@ void main() {
     FishingEntityDefinition def(EntityId id) =>
         id.definition as FishingEntityDefinition;
 
+    // a spot's fish: its main table less the junk nested into it
+    List<ItemDropType> fishAt(FishingEntityDefinition spot) =>
+        spot.itemDrops.where((d) => d is! NestedDrop).toList();
+
     test('each spot asks for its Fishing level', () {
       for (final MapEntry(key: id, value: level) in spots.entries) {
         expect(def(id).requiredLevel, level, reason: '$id');
@@ -110,7 +117,7 @@ void main() {
         final next = i + 1 < ordered.length
             ? def(ordered[i + 1]).requiredLevel
             : 100;
-        final levels = spot.itemDrops.map((f) => f.unlockLevel).toList();
+        final levels = fishAt(spot).map((f) => f.unlockLevel).toList();
 
         expect(levels.first, spot.requiredLevel, reason: spot.name);
         for (var j = 1; j < levels.length; j++) {
@@ -127,7 +134,7 @@ void main() {
           .recipesForSkill(SkillId.COOKING);
       var checked = 0;
       for (final id in spots.keys) {
-        for (final fish in def(id).itemDrops) {
+        for (final fish in fishAt(def(id))) {
           final recipes = cooking.where((r) => r.inputs.containsKey(fish.id));
           for (final recipe in recipes) {
             expect(
@@ -145,7 +152,7 @@ void main() {
     test('every fish has one home', () {
       final homes = <ItemId, EntityId>{};
       for (final id in spots.keys) {
-        for (final fish in def(id).itemDrops) {
+        for (final fish in fishAt(def(id))) {
           expect(
             homes.containsKey(fish.id),
             isFalse,
@@ -212,8 +219,19 @@ void main() {
       );
     }
 
-    Set<ItemId> caught(EncounterActionResult result) =>
-        result.items.map((stack) => stack.id as ItemId).toSet();
+    // the fish landed, leaving out the junk a cast can pull up instead and
+    // the water's reagents and cache that come up beside a catch
+    final notFish = <ItemId>{
+      for (final e in fishingJunkDropTable) e.id,
+      for (final id in EntityId.values)
+        if (id.definition case final FishingEntityDefinition def)
+          for (final roll in def.bonusDrops)
+            for (final e in roll.entries.flattened) e.id,
+    };
+    Set<ItemId> caught(EncounterActionResult result) => result.items
+        .map((stack) => stack.id as ItemId)
+        .where((id) => !notFish.contains(id))
+        .toSet();
 
     test('below a spot\'s level, casting there catches nothing', () {
       final session = buildSession();

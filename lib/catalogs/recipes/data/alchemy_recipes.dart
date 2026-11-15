@@ -478,4 +478,91 @@ const List<CraftingRecipe> alchemyRecipes = [
     ],
     rollsBonusOutput: true,
   ),
+
+  // The waters' potions: a herb of each tier and a fishing spot's own
+  // reagent, which only comes up on a line or out of that water's cache
+  CraftingRecipe(
+    id: 'alch_minor_cooking_potion',
+    name: 'Minor Cooking Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 5,
+    xp: 30,
+    inputs: {ItemId.GUAM_LEAF: 1, ItemId.LILY_PAD: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.MINOR_COOKING_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+    rollsBonusOutput: true,
+  ),
+  CraftingRecipe(
+    id: 'alch_minor_woodcutting_potion',
+    name: 'Minor Woodcutting Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 10,
+    xp: 50,
+    inputs: {ItemId.GUAM_LEAF: 1, ItemId.CREEK_MOSS: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.MINOR_WOODCUTTING_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+    rollsBonusOutput: true,
+  ),
+  CraftingRecipe(
+    id: 'alch_cooking_potion',
+    name: 'Cooking Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 20,
+    xp: 110,
+    inputs: {ItemId.HARRALANDER: 1, ItemId.FRESHWATER_MUSSEL: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.COOKING_POTION, count: 1, weight: 1),
+    ],
+    rollsBonusOutput: true,
+  ),
+  CraftingRecipe(
+    id: 'alch_woodsmans_potion',
+    name: "Woodsman's Potion",
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 32,
+    xp: 160,
+    inputs: {ItemId.SWEETGRASS: 1, ItemId.DUCKWEED: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.WOODSMANS_POTION, count: 1, weight: 1),
+    ],
+    rollsBonusOutput: true,
+  ),
+  CraftingRecipe(
+    id: 'alch_explorers_potion',
+    name: "Explorer's Potion",
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 34,
+    xp: 170,
+    inputs: {ItemId.SWEETGRASS: 1, ItemId.SEA_KELP: 1},
+    output: [
+      WeightedDropTableEntry(id: ItemId.EXPLORERS_POTION, count: 1, weight: 1),
+    ],
+    rollsBonusOutput: true,
+  ),
+  CraftingRecipe(
+    id: 'alch_greater_fishing_potion',
+    name: 'Greater Fishing Potion',
+    skill: SkillId.ALCHEMY,
+    levelRequirement: 40,
+    xp: 250,
+    inputs: {ItemId.BLUESTEM: 1, ItemId.LAKE_SPONGE: 1},
+    output: [
+      WeightedDropTableEntry(
+        id: ItemId.GREATER_FISHING_POTION,
+        count: 1,
+        weight: 1,
+      ),
+    ],
+    rollsBonusOutput: true,
+  ),
 ];

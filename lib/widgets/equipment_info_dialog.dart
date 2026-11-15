@@ -52,7 +52,7 @@ void showEquipmentInfoDialog(BuildContext context, EquipmentItem item) {
         return AlertDialog(
           title: Text(
             current.displayName,
-            style: TextStyle(color: qualityColor),
+            style: TextStyle(color: rarityTextColor(current.quality)),
           ),
           content: SingleChildScrollView(
             child: Column(
@@ -73,7 +73,9 @@ void showEquipmentInfoDialog(BuildContext context, EquipmentItem item) {
                   current.quality.label.isEmpty
                       ? 'Common'
                       : current.quality.label,
-                  style: TextStyle(color: qualityColor ?? Colors.grey),
+                  style: TextStyle(
+                    color: rarityTextColor(current.quality) ?? Colors.grey,
+                  ),
                 ),
                 if (current.enchantName.isNotEmpty)
                   Text('Enchanted: of the ${current.enchantName}'),
@@ -112,7 +114,7 @@ void showEquipmentInfoDialog(BuildContext context, EquipmentItem item) {
                   spacing: 6,
                   runSpacing: 4,
                   children: [
-                    for (final rarity in Rarity.values)
+                    for (final rarity in Rarity.ladder)
                       ChoiceChip(
                         label: Text(
                           rarity.label.isEmpty ? 'Common' : rarity.label,

@@ -68,22 +68,23 @@ void main() {
       expect(def.hitpoints, greaterThan(100));
     });
 
-    test('every kill yields a guaranteed unique', () {
+    test('every kill pays her hoard, and her uniques on a chance', () {
       final def = EntityId.GOBLIN_QUEEN.definition as CombatEntityDefinition;
       final rng = Random(7);
 
       const uniques = {ItemId.GOBLIN_CROWN, ItemId.GOBLIN_SCEPTER};
-      for (var i = 0; i < 200; i++) {
-        final drops = [
-          service.roll(def.weightedDropTable, rng: rng),
-          ...service.rollBonus(def.bonusDrops, rng: rng),
-        ];
-        final ids = drops.map((s) => s.id.id).toSet();
-        // guaranteed one of the uniques
-        expect(ids.intersection(uniques), isNotEmpty);
-        // and nothing else: an entity drops no coins
-        expect(ids.difference(uniques), isEmpty);
+      final seen = <ItemId>{};
+      for (var i = 0; i < 400; i++) {
+        final main = service.roll(def.weightedDropTable, rng: rng);
+        // the main table is the hoard, never a unique
+        expect(uniques, isNot(contains(main.id.id)));
+        for (final s in service.rollBonus(def.bonusDrops, rng: rng)) {
+          seen.add(s.id.id);
+        }
       }
+      // both uniques turn up across enough kills, and nothing but them
+      // rides her bonus rolls
+      expect(seen, uniques);
     });
   });
 

@@ -131,6 +131,7 @@ void main() {
         ItemId.WILLOW_LOGS: 500,
         ItemId.BOG_LOGS: 500,
         ItemId.MAPLE_LOGS: 500,
+        ItemId.YEW_LOGS: 500,
       });
     });
   });

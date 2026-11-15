@@ -151,7 +151,8 @@ class _AutoEatSlider extends StatelessWidget {
 
 /// Bottom-sheet equipment picker for one slot: shows what's currently
 /// equipped, then every candidate with per-stat deltas vs. the equipped
-/// item (green = higher, red = lower). Tapping a candidate equips it.
+/// item (green = higher, red = lower). Tapping a candidate equips it. A row
+/// of chips above the list sorts the candidates by any stat they carry.
 class EquipmentPicker {
   static void show(
     BuildContext context, {
@@ -170,84 +171,277 @@ class EquipmentPicker {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+      builder: (ctx) => _EquipmentPickerSheet(
+        title: title,
+        slotLabel: slotLabel,
+        equipped: equipped,
+        available: available,
+        onEquip: onEquip,
+        onUnequip: onUnequip,
+        lockedReason: lockedReason,
+      ),
+    );
+  }
+}
+
+/// One way the picker can order its candidates: a stat, read off each
+/// piece, highest first.
+class EquipmentSortKey {
+  const EquipmentSortKey({
+    required this.id,
+    required this.label,
+    required this.icon,
+    required this.valueOf,
+  });
+
+  /// Stable name, used for the chip's key: `equipment-sort-$id`.
+  final String id;
+  final String label;
+  final Widget icon;
+
+  /// The piece's value for this stat; higher sorts first.
+  final double Function(EquipmentItem item) valueOf;
+
+  /// The keys worth offering for [items]: every skill stat any of them
+  /// carries, in skill order, then xp, damage, dps and speed where any
+  /// piece has them.
+  static List<EquipmentSortKey> forItems(Iterable<EquipmentItem> items) {
+    final list = items.toList();
+    final skills = <SkillId>{
+      for (final item in list)
+        for (final e in item.effectiveSkillBonus.entries)
+          if (e.value != 0) e.key,
+    }.toList()..sort((a, b) => a.index.compareTo(b.index));
+
+    final keys = <EquipmentSortKey>[
+      for (final skill in skills)
+        EquipmentSortKey(
+          id: skill.name,
+          label: _titleCase(skill.name),
+          icon: IconRenderer(size: 14, id: skill),
+          valueOf: (item) => (item.effectiveSkillBonus[skill] ?? 0).toDouble(),
+        ),
+    ];
+
+    if (list.any((item) => _xpPercentOf(item) != 0)) {
+      keys.add(
+        EquipmentSortKey(
+          id: 'xp',
+          label: 'XP',
+          icon: const Icon(Icons.auto_graph, size: 14, color: Colors.grey),
+          valueOf: (item) => _xpPercentOf(item).toDouble(),
+        ),
+      );
+    }
+
+    bool swings(EquipmentItem item) =>
+        item is WeaponItem && item.definition.usesDamage;
+    if (list.any(swings)) {
+      keys.add(
+        EquipmentSortKey(
+          id: 'damage',
+          label: 'Damage',
+          icon: const Icon(Icons.gavel, size: 14, color: Colors.grey),
+          valueOf: (item) => swings(item) ? (item as WeaponItem).damage : 0,
+        ),
+      );
+      keys.add(
+        EquipmentSortKey(
+          id: 'dps',
+          label: 'DPS',
+          icon: const Icon(Icons.bolt, size: 14, color: Colors.grey),
+          valueOf: (item) =>
+              swings(item) ? (item as WeaponItem).damagePerSecond : 0,
+        ),
+      );
+    }
+    if (list.any((item) => item is WeaponItem)) {
+      // faster is better: the shorter interval sorts first, and anything
+      // that is not a weapon after every weapon
+      keys.add(
+        EquipmentSortKey(
+          id: 'speed',
+          label: 'Speed',
+          icon: const Icon(Icons.timer, size: 14, color: Colors.grey),
+          valueOf: (item) => item is WeaponItem
+              ? -item.actionInterval.inMilliseconds.toDouble()
+              : double.negativeInfinity,
+        ),
+      );
+    }
+    return keys;
+  }
+
+  /// [items] ordered by this stat, highest first; ties keep their order.
+  List<EquipmentItem> sort(List<EquipmentItem> items) {
+    final indexed = [for (var i = 0; i < items.length; i++) (i, items[i])];
+    indexed.sort((a, b) {
+      final byValue = valueOf(b.$2).compareTo(valueOf(a.$2));
+      return byValue != 0 ? byValue : a.$1.compareTo(b.$1);
+    });
+    return [for (final e in indexed) e.$2];
+  }
+}
+
+String _titleCase(String name) {
+  final lower = name.toLowerCase();
+  return '${lower[0].toUpperCase()}${lower.substring(1)}';
+}
+
+int _xpPercentOf(EquipmentItem? piece) {
+  final def = piece?.definition;
+  return def is JewelleryDefinition ? def.xpPercentAt(piece!.quality) : 0;
+}
+
+class _EquipmentPickerSheet extends StatefulWidget {
+  const _EquipmentPickerSheet({
+    required this.title,
+    required this.slotLabel,
+    required this.equipped,
+    required this.available,
+    required this.onEquip,
+    this.onUnequip,
+    this.lockedReason,
+  });
+
+  final String title;
+  final String slotLabel;
+  final EquipmentItem? equipped;
+  final List<EquipmentItem> available;
+  final void Function(EquipmentItem item) onEquip;
+  final VoidCallback? onUnequip;
+  final String? Function(EquipmentItem item)? lockedReason;
+
+  @override
+  State<_EquipmentPickerSheet> createState() => _EquipmentPickerSheetState();
+}
+
+class _EquipmentPickerSheetState extends State<_EquipmentPickerSheet> {
+  late final List<EquipmentSortKey> _sortKeys = EquipmentSortKey.forItems(
+    widget.available,
+  );
+
+  /// The stat the list is sorted by, or null for the bag's own order.
+  EquipmentSortKey? _sortBy;
+
+  @override
+  Widget build(BuildContext context) {
+    final equipped = widget.equipped;
+    final onUnequip = widget.onUnequip;
+    final sortBy = _sortBy;
+    final available = sortBy == null
+        ? widget.available
+        : sortBy.sort(widget.available);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  _SlotPill(label: slotLabel),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const _SectionLabel('Currently equipped'),
-              const SizedBox(height: 6),
-              if (equipped != null)
-                _PickerCard(
-                  item: equipped,
-                  baseline: equipped,
-                  isEquipped: true,
-                  onUnequip: onUnequip == null
-                      ? null
-                      : () {
-                          onUnequip();
-                          Navigator.of(ctx).pop();
-                        },
-                )
-              else
-                const _EmptySlotCard(),
-              const SizedBox(height: 12),
-              const _SectionLabel('Available — tap to equip'),
-              const SizedBox(height: 6),
-              if (available.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Center(
-                    child: Text(
-                      'No items for this slot',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                )
-              else
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: available.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, i) {
-                      final candidate = available[i];
-                      final locked = lockedReason?.call(candidate);
-                      return _PickerCard(
-                        item: candidate,
-                        baseline: equipped,
-                        lockedReason: locked,
-                        onTap: locked != null
-                            ? null
-                            : () {
-                                onEquip(candidate);
-                                Navigator.of(ctx).pop();
-                              },
-                      );
-                    },
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+              ),
+              _SlotPill(label: widget.slotLabel),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 12),
+          const _SectionLabel('Currently equipped'),
+          const SizedBox(height: 6),
+          if (equipped != null)
+            _PickerCard(
+              item: equipped,
+              baseline: equipped,
+              isEquipped: true,
+              onUnequip: onUnequip == null
+                  ? null
+                  : () {
+                      onUnequip();
+                      Navigator.of(context).pop();
+                    },
+            )
+          else
+            const _EmptySlotCard(),
+          const SizedBox(height: 12),
+          const _SectionLabel('Available — tap to equip'),
+          const SizedBox(height: 6),
+          if (available.length > 1 && _sortKeys.isNotEmpty) ...[
+            _sortRow(context),
+            const SizedBox(height: 8),
+          ],
+          if (available.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  'No items for this slot',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            )
+          else
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: available.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (_, i) {
+                  final candidate = available[i];
+                  final locked = widget.lockedReason?.call(candidate);
+                  return _PickerCard(
+                    key: ObjectKey(candidate),
+                    item: candidate,
+                    baseline: equipped,
+                    lockedReason: locked,
+                    onTap: locked != null
+                        ? null
+                        : () {
+                            widget.onEquip(candidate);
+                            Navigator.of(context).pop();
+                          },
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// "Sort" then one chip per stat; tapping the chosen one again goes back
+  /// to the bag's order.
+  Widget _sortRow(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SingleChildScrollView(
+      key: const ValueKey('equipment-sort-row'),
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          Icon(Icons.sort, size: 16, color: scheme.outline),
+          const SizedBox(width: 6),
+          for (final key in _sortKeys) ...[
+            ChoiceChip(
+              key: ValueKey('equipment-sort-${key.id}'),
+              avatar: key.icon,
+              label: Text(key.label, style: const TextStyle(fontSize: 12)),
+              visualDensity: VisualDensity.compact,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              showCheckmark: false,
+              selected: identical(_sortBy, key),
+              onSelected: (on) => setState(() => _sortBy = on ? key : null),
+            ),
+            const SizedBox(width: 6),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -332,6 +526,7 @@ class _EmptySlotCard extends StatelessWidget {
 /// shows stats with deltas against [baseline] and equips on tap.
 class _PickerCard extends StatelessWidget {
   const _PickerCard({
+    super.key,
     required this.item,
     required this.baseline,
     this.isEquipped = false,
@@ -398,7 +593,7 @@ class _PickerCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: qualityColor,
+                          color: rarityTextColor(item.quality),
                         ),
                       ),
                       if (locked != null) ...[
@@ -529,13 +724,8 @@ List<Widget> equipmentComparisonChips(
 
   // onyx's bonus to every skill's xp. it is not a stat, so the stats above
   // never show it; more is the gain
-  int xpPercentOf(EquipmentItem? piece) {
-    final def = piece?.definition;
-    return def is JewelleryDefinition ? def.xpPercentAt(piece!.quality) : 0;
-  }
-
-  final xpMine = xpPercentOf(item);
-  final xpDelta = xpMine - xpPercentOf(baseline);
+  final xpMine = _xpPercentOf(item);
+  final xpDelta = xpMine - _xpPercentOf(baseline);
   if (xpMine != 0 || xpDelta != 0) {
     chips.add(
       StatChip(

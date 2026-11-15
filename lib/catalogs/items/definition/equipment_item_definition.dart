@@ -73,11 +73,38 @@ class EquipmentItemDefinition extends ItemDefinition {
   /// made of, so it overrides this.
   Map<SkillId, int> get defaultStatWeights => materialId.parameters.statWeight;
 
-  /// The skill, and the level in it, a piece demands to be worn. Always
-  /// the material's: a piece is gated by what it is made of.
+  /// The skill, and the level in it, a piece demands to be worn. The
+  /// material's: a piece is gated by what it is made of.
   SkillId get skillRequirement => materialId.parameters.skillRequirement;
 
-  int get skillLevelRequirement => materialId.parameters.skillLevelRequirement;
+  /// The material's level — or, for a piece made of nothing (a boss
+  /// unique), the level of the material whose rung it is worth: its own
+  /// rung less [fibOffset], read off the ladder. A unique as strong as
+  /// adamant asks for adamant's level. Anything at copper's rung or below
+  /// stays free, and so do dev pieces ([fixedStats]) and anything marked
+  /// [ungated].
+  int get skillLevelRequirement {
+    if (materialId != EquipmentMaterialId.NULL ||
+        fixedStats != null ||
+        ungated) {
+      return materialId.parameters.skillLevelRequirement;
+    }
+    return levelRequirementForRung(fibLevel - fibOffset);
+  }
+
+  /// The level the material ladder asks for at [rung]: 0 at copper's rung
+  /// or below, the top of the ladder past its end.
+  static int levelRequirementForRung(int rung) {
+    if (rung <= 0) return 0;
+    var level = 0;
+    for (final material in EquipmentMaterialId.values) {
+      final p = material.parameters;
+      if (p.fibLevel <= rung && p.skillLevelRequirement > level) {
+        level = p.skillLevelRequirement;
+      }
+    }
+    return level;
+  }
 
   /// Stats a piece carries as written, at every rarity, in place of the
   /// budget split. For dev items only — nothing in the real catalog sets it.
@@ -88,6 +115,12 @@ class EquipmentItemDefinition extends ItemDefinition {
   /// Den's speed. Not scaled by [Rarity], so it reads the same on a common
   /// piece as on a rare one.
   final Map<SkillId, int>? bonusStats;
+
+  /// Set on a piece made of nothing that anyone may wear whatever its rung
+  /// — cloth, which has no tier to be gated by. Without it a material-less
+  /// piece asks for the level its rung is worth (see
+  /// [skillLevelRequirement]).
+  final bool ungated;
 
   const EquipmentItemDefinition({
     required super.name,
@@ -101,9 +134,15 @@ class EquipmentItemDefinition extends ItemDefinition {
     super.quality,
     this.fixedStats,
     this.bonusStats,
+    this.ungated = false,
   }) : _armorSlot = armorSlot,
        _fibLevel = fibLevel,
        _statWeights = statWeights;
+
+  /// The rung whose fib value is the stat budget. [fibLevel] for anything
+  /// worn; a weapon prices its stats off its metal alone (see
+  /// [WeaponItemDefinition]).
+  int get budgetRung => fibLevel;
 
   /// The scale the weights are read against.
   int get totalWeight =>
@@ -130,7 +169,7 @@ class EquipmentItemDefinition extends ItemDefinition {
   /// step baked into its [fibLevel] by the catalog, so this takes the
   /// rarity it is asked about and nothing else.
   int budgetAt(Rarity rarity) {
-    final base = Util.fib(fibLevel);
+    final base = Util.fib(budgetRung);
     // a piece with no stats to split — a weapon, whose damage is the whole
     // of what it is — has nothing for the floor below to measure, and the
     // walk up to it would never arrive
@@ -146,7 +185,7 @@ class EquipmentItemDefinition extends ItemDefinition {
     Rarity rarity,
     int Function(int budget) statTotal,
   ) {
-    if (rarity == Rarity.COMMON) return base;
+    if (rarity.rung <= 0) return base;
     final below = Rarity.values[rarity.index - 1];
     final floor = max(
       statTotal(base) + rarity.minStatBonus,
@@ -257,6 +296,7 @@ class EquipmentItemDefinition extends ItemDefinition {
       statWeights: statWeights ?? _statWeights,
       fixedStats: fixedStats,
       bonusStats: bonusStats,
+      ungated: ungated,
     );
   }
 

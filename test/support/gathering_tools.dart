@@ -3,7 +3,7 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 
 /// Equips the starter gathering tools — the stone axe and pickaxe and the
-/// simple rod Farmer John sells — so a fixture can chop, mine and fish.
+/// simple rod the Farmer's Stall sells — so a fixture can chop, mine and fish.
 /// Trees, ore and fishing spots refuse to be worked bare-handed; a test
 /// about something else that happens to gather on the way calls this.
 void equipGatheringTools(SaveGameData save) {

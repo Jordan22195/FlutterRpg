@@ -71,7 +71,7 @@ class EquipmentCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: qualityColor,
+                                color: rarityTextColor(item.quality),
                               ),
                             ),
                           ),

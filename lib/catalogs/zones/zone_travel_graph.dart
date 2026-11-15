@@ -23,9 +23,19 @@ class ZoneTravelGraph {
     },
     ZoneId.FOREST_MINE: {
       ZoneId.SOUTH_HAVEN: TravelEdge(time: Duration(seconds: 5)),
+      // down the shaft to the second level
+      ZoneId.FOREST_MINE_DEPTHS: TravelEdge(time: Duration(milliseconds: 2500)),
+    },
+    ZoneId.FOREST_MINE_DEPTHS: {
+      ZoneId.FOREST_MINE: TravelEdge(time: Duration(milliseconds: 2500)),
     },
     ZoneId.DARKWOOD_FOREST: {
       ZoneId.SOUTH_HAVEN: TravelEdge(time: Duration(milliseconds: 7500)),
+      // south, down out of the trees into the hollow
+      ZoneId.MISTGRAVE_HOLLOW: TravelEdge(time: Duration(milliseconds: 7500)),
+    },
+    ZoneId.MISTGRAVE_HOLLOW: {
+      ZoneId.DARKWOOD_FOREST: TravelEdge(time: Duration(milliseconds: 7500)),
     },
     ZoneId.SWAMP: {
       ZoneId.SOUTH_HAVEN: TravelEdge(time: Duration(seconds: 10)),
@@ -34,8 +44,17 @@ class ZoneTravelGraph {
     },
     ZoneId.MAPLEWATER_LAKE: {
       ZoneId.SWAMP: TravelEdge(time: Duration(seconds: 10)),
+      // up the slope to the yews
+      ZoneId.YEW_GROVE: TravelEdge(time: Duration(seconds: 5)),
       // the village is a short walk round the shore
       ZoneId.MAPLEWATER_VILLAGE: TravelEdge(time: Duration(milliseconds: 2500)),
+    },
+    ZoneId.YEW_GROVE: {
+      ZoneId.MAPLEWATER_LAKE: TravelEdge(time: Duration(seconds: 5)),
+      ZoneId.MAGIC_GROVE: TravelEdge(time: Duration(seconds: 5)),
+    },
+    ZoneId.MAGIC_GROVE: {
+      ZoneId.YEW_GROVE: TravelEdge(time: Duration(seconds: 5)),
     },
     ZoneId.MAPLEWATER_VILLAGE: {
       ZoneId.MAPLEWATER_LAKE: TravelEdge(time: Duration(milliseconds: 2500)),
@@ -52,6 +71,13 @@ class ZoneTravelGraph {
     },
     ZoneId.IRONROOT_HILLS: {
       ZoneId.IRON_GATE_CITY: TravelEdge(time: Duration(milliseconds: 2500)),
+      ZoneId.IRONROOT_MINE: TravelEdge(time: Duration(milliseconds: 2500)),
+
+      // north-east up into the mountains
+      ZoneId.GREYSPINE_MOUNTAIN: TravelEdge(time: Duration(milliseconds: 7500)),
+    },
+    ZoneId.IRONROOT_MINE: {
+      ZoneId.IRONROOT_HILLS: TravelEdge(time: Duration(milliseconds: 2500)),
     },
     ZoneId.COPPERDUST_FLATS: {
       ZoneId.FOOTHILLS: TravelEdge(time: Duration(seconds: 10)),
@@ -59,6 +85,33 @@ class ZoneTravelGraph {
     },
     ZoneId.REDWALL_BLUFFS: {
       ZoneId.COPPERDUST_FLATS: TravelEdge(time: Duration(milliseconds: 7500)),
+      // south-east up into the ash
+      ZoneId.ASHRIDGE_MOUNTAINS: TravelEdge(time: Duration(milliseconds: 7500)),
+    },
+    ZoneId.GREYSPINE_MOUNTAIN: {
+      ZoneId.IRONROOT_HILLS: TravelEdge(time: Duration(milliseconds: 7500)),
+      ZoneId.SADDLEGATE: TravelEdge(time: Duration(milliseconds: 2500)),
+      ZoneId.FROSTCROWN_PEAKS: TravelEdge(time: Duration(milliseconds: 7500)),
+    },
+    // the pass town joins the two ranges: a short walk down into either
+    ZoneId.SADDLEGATE: {
+      ZoneId.GREYSPINE_MOUNTAIN: TravelEdge(time: Duration(milliseconds: 2500)),
+      ZoneId.ASHRIDGE_MOUNTAINS: TravelEdge(time: Duration(milliseconds: 2500)),
+      ZoneId.STORMCROWN_PEAKS: TravelEdge(time: Duration(milliseconds: 7500)),
+    },
+    ZoneId.ASHRIDGE_MOUNTAINS: {
+      ZoneId.REDWALL_BLUFFS: TravelEdge(time: Duration(milliseconds: 7500)),
+      ZoneId.SADDLEGATE: TravelEdge(time: Duration(milliseconds: 2500)),
+      ZoneId.MOLTENSPIRE_PEAKS: TravelEdge(time: Duration(milliseconds: 7500)),
+    },
+    ZoneId.FROSTCROWN_PEAKS: {
+      ZoneId.GREYSPINE_MOUNTAIN: TravelEdge(time: Duration(milliseconds: 7500)),
+    },
+    ZoneId.STORMCROWN_PEAKS: {
+      ZoneId.SADDLEGATE: TravelEdge(time: Duration(milliseconds: 7500)),
+    },
+    ZoneId.MOLTENSPIRE_PEAKS: {
+      ZoneId.ASHRIDGE_MOUNTAINS: TravelEdge(time: Duration(milliseconds: 7500)),
     },
   };
 

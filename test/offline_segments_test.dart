@@ -808,12 +808,12 @@ void main() {
     test('reports the killer and how far into the gap it happened', () {
       final session = buildSession();
       final save = session.saveGameData;
-      fight(session, EntityId.IMP_LEGENDARY);
+      fight(session, EntityId.IMP);
 
       final report = settle(session, 3600);
 
       expect(report.died, isTrue);
-      expect(report.killedBy, EntityId.IMP_LEGENDARY);
+      expect(report.killedBy, EntityId.IMP);
       expect(report.diedAfter, isNotNull);
       // it happened early in the hour, not at the end of it
       expect(report.diedAfter!, lessThan(const Duration(minutes: 10)));

@@ -7,6 +7,7 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'package:rpg/systems/encounter_system.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
 /// A drop table line can be a reference to another table.
@@ -561,36 +562,38 @@ void main() {
     });
 
     test('one item on two lines of a table reads as a single row', () {
-      // the uncommon giant spider's flattened table pays one item on two
-      // lines. Two rows splitting its odds is a worse answer than one row
-      // carrying their sum, and flattening makes the same thing happen
-      // whenever two nested tables can pay the same item
-      const spider = EntityId.GIANT_SPIDER_UNCOMMON;
-      final lines =
-          (spider.definition as EncounterEntityDefinition).itemDrops.flattened;
+      // flattening can pay one item on two lines whenever two nested tables
+      // carry it. Two rows splitting its odds is a worse answer than one row
+      // carrying their sum
+      final lines = [
+        ...const [
+          NestedDrop([
+            ItemDropType(id: ItemId.SILK, weight: 1),
+            ItemDropType(id: ItemId.VENOM, weight: 1),
+          ]),
+          NestedDrop([ItemDropType(id: ItemId.SILK, weight: 1)]),
+          ItemDropType(id: ItemId.FEATHER, weight: 2),
+        ].flattened,
+      ];
       final total = lines.fold<double>(0, (sum, d) => sum + d.weight);
-      final byItem = <ItemId, double>{};
-      for (final line in lines) {
-        byItem[line.id] = (byItem[line.id] ?? 0) + line.weight;
-      }
-      final doubled = lines
-          .map((d) => d.id)
-          .firstWhere((id) => lines.where((d) => d.id == id).length > 1);
+      final silk = lines
+          .where((d) => d.id == ItemId.SILK)
+          .fold<double>(0, (sum, d) => sum + d.weight);
+      expect(lines.where((d) => d.id == ItemId.SILK), hasLength(2));
 
-      final session = buildSession();
-      final details = session.worldController.entityDetails(
-        spider.build() as EncounterEntity,
+      final rows = EncounterSystem.dropRows(
+        lines,
+        rollChance: 1.0,
+        bonus: false,
       );
 
-      expect(details.drops, hasLength(byItem.length));
-      final merged = details.drops.singleWhere((d) => d.itemId == doubled);
-      expect(merged.chance, closeTo(byItem[doubled]! / total, 1e-9));
+      expect(rows, hasLength(3));
+      final merged = rows.singleWhere((d) => d.itemId == ItemId.SILK);
+      expect(merged.chance, closeTo(silk / total, 1e-9));
       expect(
-        details.drops.fold<double>(0, (sum, d) => sum + d.chance),
+        rows.fold<double>(0, (sum, d) => sum + d.chance),
         closeTo(1.0, 1e-9),
       );
-
-      session.dispose();
     });
   });
 }

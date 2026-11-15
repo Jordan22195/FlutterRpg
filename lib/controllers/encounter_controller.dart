@@ -1127,6 +1127,20 @@ class EncounterController extends ChangeNotifier {
     return _inventoryService.getObjectStackList(_encounterState.itemDrops);
   }
 
+  /// Takes [count] of [id] off this session's loot: a chest opened from the
+  /// bag is spent, so the loot window stops offering it. Never below zero —
+  /// chests from before the session are opened from the same stack.
+  void consumeSessionDrop(ItemId id, int count) {
+    final held = _encounterState.itemDrops.itemMap[id] ?? 0;
+    if (held <= 0) return;
+    _inventoryService.removeItems(
+      _encounterState.itemDrops,
+      id,
+      count > held ? held : count,
+    );
+    notifyListeners();
+  }
+
   // the equipment this session has dropped, one instance per quality
   // rolled, under the same session guard as [itemDrops]
   List<EquipmentItem> equipmentDrops() {

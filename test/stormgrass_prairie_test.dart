@@ -373,9 +373,9 @@ void main() {
       EquipmentItemDefinition eq(ItemId id) =>
           id.definition as EquipmentItemDefinition;
 
-      expect(eq(ItemId.WARLORDS_WARHELM).fibLevel, 5);
-      expect(eq(ItemId.ALPHAS_MANTLE).fibLevel, 5);
-      expect(eq(ItemId.GALEWRAP_GAUNTLETS).fibLevel, 6);
+      expect(eq(ItemId.WARLORDS_WARHELM).fibLevel, 4);
+      expect(eq(ItemId.ALPHAS_MANTLE).fibLevel, 4);
+      expect(eq(ItemId.GALEWRAP_GAUNTLETS).fibLevel, 5);
       // the Fen's own trims and major, one rung down
       expect(
         eq(ItemId.WARLORDS_WARHELM).fibLevel,
@@ -389,18 +389,19 @@ void main() {
       expect(eq(ItemId.WARLORDS_WARHELM).armorSlot, ArmorSlots.HEAD);
       expect(eq(ItemId.ALPHAS_MANTLE).armorSlot, ArmorSlots.BACK);
       expect(eq(ItemId.GALEWRAP_GAUNTLETS).armorSlot, ArmorSlots.HANDS);
+      // defence-led, with attack second: no boss unique is pure defence
       expect(eq(ItemId.GALEWRAP_GAUNTLETS).statWeights, {
-        SkillId.ATTACK: 8,
-        SkillId.DEFENCE: 4,
+        SkillId.DEFENCE: 8,
+        SkillId.ATTACK: 4,
       });
     });
 
-    test('its weapons hit at rune damage, and Tempest\'s at dragon', () {
+    test('its weapons hit at adamant damage, and Tempest\'s at rune', () {
       WeaponItemDefinition w(ItemId id) =>
           id.definition as WeaponItemDefinition;
-      expect(w(ItemId.WARLORDS_CLEAVER).materialRung, 5);
-      expect(w(ItemId.ALPHAS_FANG).materialRung, 5);
-      expect(w(ItemId.STORMCALLERS_SCEPTER).materialRung, 6);
+      expect(w(ItemId.WARLORDS_CLEAVER).materialRung, 4);
+      expect(w(ItemId.ALPHAS_FANG).materialRung, 4);
+      expect(w(ItemId.STORMCALLERS_SCEPTER).materialRung, 5);
     });
   });
 

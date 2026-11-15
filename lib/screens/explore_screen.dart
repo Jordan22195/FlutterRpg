@@ -426,7 +426,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   child: worldController.isViewingCurrentZone
                       ? ActionTimerRow(
                           key: const ValueKey('explore-row'),
-                          label: 'Exploring',
+                          label: worldController.isExploringViewed()
+                              ? 'Exploring'
+                              : 'Explore',
                           color: context.gameColors.exploration,
                           // empty unless exploring is the action running:
                           // working an entity must not fill this zone's timer

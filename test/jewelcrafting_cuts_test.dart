@@ -152,7 +152,7 @@ void main() {
 
     test('rarity scales a piece like blacksmithed gear', () {
       final byRarity = [
-        for (final r in Rarity.values)
+        for (final r in Rarity.ladder)
           stats(
             GemType.RUBY,
             GemCut.RADIANT,

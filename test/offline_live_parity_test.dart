@@ -725,7 +725,7 @@ void main() {
       setLevel(s, SkillId.DEFENCE, 1);
       final player = s.saveGameData.playerData;
       player.hitpoints = s.playerDataService.maxHitpoints(player);
-      bindNode(s, EntityId.COW_LEGENDARY);
+      bindNode(s, EntityId.GOBLIN_RARE);
     }
 
     test('both sides die, at about the same time', () {

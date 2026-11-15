@@ -348,6 +348,62 @@ enum ZoneId {
       ],
     ),
   ),
+  // A skilling grove up the hill from Maplewater Lake: yews older than
+  // the village, and nothing that fights back. Woodcutting only, with a
+  // firepit to burn what is cut.
+  YEW_GROVE(
+    ZoneDefinition(
+      name: "Old Yew Grove",
+      iconAsset: 'assets/images/zones/forest.png',
+      palette: ZonePalette.forest,
+      requiredSkill: SkillId.WOODCUTTING,
+      requiredLevel: 40,
+      explorationLevel: 40,
+      xpPerExplore: 15,
+
+      permanentEntities: [EntityId.FIREPIT],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.YEW_TREE,
+          weight: 1.5,
+          unlockLevel: 40,
+        ),
+        // the lake's maples creep up the slope
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MAPLE_TREE,
+          weight: .5,
+          unlockLevel: 40,
+        ),
+      ],
+    ),
+  ),
+  // Deeper in past the yews, where the light goes strange: the magic
+  // trees. The top of the woodcutting ladder, and nothing that fights.
+  MAGIC_GROVE(
+    ZoneDefinition(
+      name: "Witchlight Grove",
+      iconAsset: 'assets/images/zones/darkwood_forest.png',
+      palette: ZonePalette.forest,
+      requiredSkill: SkillId.WOODCUTTING,
+      requiredLevel: 55,
+      explorationLevel: 55,
+      xpPerExplore: 22,
+
+      permanentEntities: [EntityId.FIREPIT],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MAGIC_TREE,
+          weight: 1.5,
+          unlockLevel: 55,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.YEW_TREE,
+          weight: .5,
+          unlockLevel: 55,
+        ),
+      ],
+    ),
+  ),
   // The fishing village on the lake's shore. Nothing to find by exploring;
   // it is where the lake's catch is bought and sold, and where the fishing
   // rods up to mithril and the logs up to maple are sold.
@@ -380,7 +436,9 @@ enum ZoneId {
 
       permanentEntities: [],
       discoverableEntities: [
-        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 2),
+        // the veins by rarity: copper the bulk of the rock, iron behind it,
+        // coal uncommon and gold rare. The depths below carry the rest
+        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: 3),
         WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 2),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GIANT_SPIDER,
@@ -388,8 +446,7 @@ enum ZoneId {
           unlockLevel: 18,
         ),
         WeightedDropTableEntry<EntityId>(id: EntityId.COAL_VEIN, weight: .8),
-        // gold sits with the other veins, deeper in than coal
-        WeightedDropTableEntry<EntityId>(id: EntityId.GOLD_VEIN, weight: .5),
+        WeightedDropTableEntry<EntityId>(id: EntityId.GOLD_VEIN, weight: .25),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GEM_VEIN,
           weight: .08,
@@ -410,6 +467,45 @@ enum ZoneId {
           id: ItemId.SOUL_SHARD,
           weight: .01,
           unlockLevel: 30,
+        ),
+        WeightedDropTableEntry(id: ItemId.NULL, weight: 1),
+      ],
+    ),
+  ),
+  // The second level of the Forest Mine, down the shaft from the first.
+  // A skilling zone: no monsters, only rock. Coal is the bulk of it, then
+  // iron, gold and the first mithril this side of the prairie, with gems
+  // the rarest seam.
+  FOREST_MINE_DEPTHS(
+    ZoneDefinition(
+      name: "Forest Mine Depths",
+      iconAsset: 'assets/images/zones/mine.png',
+      palette: ZonePalette.mine,
+      requiredSkill: SkillId.MINING,
+      requiredLevel: 20,
+      explorationLevel: 25,
+      xpPerExplore: 10,
+
+      permanentEntities: [],
+      discoverableEntities: [
+        // in decreasing rarity: coal, iron, gold, mithril, gems
+        WeightedDropTableEntry<EntityId>(id: EntityId.COAL_VEIN, weight: 2),
+        WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: 1.5),
+        WeightedDropTableEntry<EntityId>(id: EntityId.GOLD_VEIN, weight: .8),
+        WeightedDropTableEntry<EntityId>(id: EntityId.MITHRIL_VEIN, weight: .4),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GEM_VEIN,
+          weight: .15,
+          unlockLevel: 30,
+        ),
+      ],
+      discoverableItems: [
+        WeightedDropTableEntry(
+          id: ItemId.COINS,
+          count: 20,
+          highCount: 120,
+          weight: .12,
+          unlockLevel: 25,
         ),
         WeightedDropTableEntry(id: ItemId.NULL, weight: 1),
       ],
@@ -548,6 +644,54 @@ enum ZoneId {
       ],
     ),
   ),
+  // South of the darkwood the trees give out into a deep, fog-filled
+  // hollow of leaning headstones, and an abandoned monastery at the bottom
+  // of it. Stormgrass Prairie's equal — exploration 35, the dead at 55 and
+  // 89 — and nothing to gather: the hollow is for fighting, and the Haunted
+  // Ruins hold its level-144 bosses.
+  MISTGRAVE_HOLLOW(
+    ZoneDefinition(
+      name: "Mistgrave Hollow",
+      iconAsset: 'assets/images/zones/mistgrave_hollow.png',
+      palette: ZonePalette.mistgrave,
+      explorationLevel: 35,
+      xpPerExplore: 15,
+
+      permanentEntities: [EntityId.FIREPIT, EntityId.HAUNTED_RUINS_ENTRANCE],
+      discoverableEntities: [
+        // level 55, the darkwood's dead come further south
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.RESTLESS_SKELETON,
+          weight: 1.5,
+          unlockLevel: 35,
+        ),
+        // level 55
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.ZOMBIE,
+          weight: 1.5,
+          unlockLevel: 35,
+        ),
+        // level 89
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GRAVE_GHOUL,
+          weight: 1,
+          unlockLevel: 37,
+        ),
+        // level 89
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.WAILING_BANSHEE,
+          weight: 1,
+          unlockLevel: 37,
+        ),
+        // level 89, rare and deep in the fog
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MIST_WRAITH,
+          weight: .6,
+          unlockLevel: 38,
+        ),
+      ],
+    ),
+  ),
   // The city at the foot of the hills, where the prairie road meets the
   // first rise of the range: just outside Ironroot Hills to the west.
   // Nothing to find by exploring; it is where jewelcrafting is done, the
@@ -621,6 +765,42 @@ enum ZoneId {
       ],
     ),
   ),
+  // The mine under Ironroot Hills, sunk into the iron-red rock off the
+  // switchbacks. A skilling zone with no monsters: coal and mithril in the
+  // walls, adamantite deeper in, and the first runite anywhere, rare.
+  IRONROOT_MINE(
+    ZoneDefinition(
+      name: "Ironroot Mine",
+      iconAsset: 'assets/images/zones/mine.png',
+      palette: ZonePalette.mine,
+      requiredSkill: SkillId.MINING,
+      requiredLevel: 40,
+      explorationLevel: 50,
+      xpPerExplore: 20,
+
+      permanentEntities: [],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(id: EntityId.COAL_VEIN, weight: 1.5),
+        WeightedDropTableEntry<EntityId>(id: EntityId.MITHRIL_VEIN, weight: 1),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.ADAMANTITE_VEIN,
+          weight: .6,
+        ),
+        // tier 6, rare; opens where rune smelts
+        WeightedDropTableEntry<EntityId>(id: EntityId.RUNITE_VEIN, weight: .15),
+      ],
+      discoverableItems: [
+        WeightedDropTableEntry(
+          id: ItemId.COINS,
+          count: 50,
+          highCount: 300,
+          weight: .12,
+          unlockLevel: 50,
+        ),
+        WeightedDropTableEntry(id: ItemId.NULL, weight: 1),
+      ],
+    ),
+  ),
   // East of the flats the desert breaks into layered red cliffs: sheer walls,
   // ledges, wind-cut arches and a river far below. One tier above the flats
   // — exploration 50, monsters at 144 and a rare 233 — with things that
@@ -663,6 +843,242 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.ADAMANTITE_VEIN,
           weight: .6,
+        ),
+      ],
+    ),
+  ),
+  // ── THE MOUNTAINS · exploration 70 ──────────────────────────────
+  // Past the hills and the bluffs the land climbs into two ranges, joined
+  // by the pass town of Saddlegate. Their monsters run 144 to 233; the
+  // rung above, 377, is held only by the bosses of each range's dungeon.
+  //
+  // North-east of Ironroot Hills: grey granite and a long rocky spine,
+  // with the snowline above. Runite in the rock, the first proper seam
+  // outside the Ironroot Mine. The way up to the Frostcrown Peaks.
+  GREYSPINE_MOUNTAIN(
+    ZoneDefinition(
+      name: "Greyspine Mountain",
+      iconAsset: 'assets/images/zones/greyspine_mountain.png',
+      palette: ZonePalette.greyspine,
+      explorationLevel: 70,
+      xpPerExplore: 28,
+
+      permanentEntities: [
+        EntityId.FIREPIT,
+        EntityId.SPINEHOLD_CAVERNS_ENTRANCE,
+      ],
+      discoverableEntities: [
+        // level 144, the hills' trolls followed up the passes
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TROLL,
+          weight: 1.5,
+          unlockLevel: 70,
+        ),
+        // level 144
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MINOTAUR,
+          weight: 1.5,
+          unlockLevel: 70,
+        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COAL_VEIN, weight: 1),
+        // level 233
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.OGRE,
+          weight: 1,
+          unlockLevel: 72,
+        ),
+        // level 233, rare and well past the door
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.STONE_GOLEM,
+          weight: .5,
+          unlockLevel: 75,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.ADAMANTITE_VEIN,
+          weight: .6,
+        ),
+        // tier 6; opens where rune smelts
+        WeightedDropTableEntry<EntityId>(id: EntityId.RUNITE_VEIN, weight: .8),
+      ],
+    ),
+  ),
+  // South-east of Redwall Bluffs: ridges grey with fallen ash, cracked dark
+  // rock and steam vents with fire in their throats. The way up to the
+  // Moltenspire Peaks.
+  ASHRIDGE_MOUNTAINS(
+    ZoneDefinition(
+      name: "Ashridge Mountains",
+      iconAsset: 'assets/images/zones/ashridge_mountains.png',
+      palette: ZonePalette.ashridge,
+      explorationLevel: 70,
+      xpPerExplore: 28,
+
+      permanentEntities: [EntityId.FIREPIT, EntityId.ASHEN_VAULTS_ENTRANCE],
+      discoverableEntities: [
+        // level 144, the bluffs' stone come further east
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GARGOYLE,
+          weight: 1.5,
+          unlockLevel: 70,
+        ),
+        // level 144
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.DARK_WIZARD,
+          weight: 1.5,
+          unlockLevel: 70,
+        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COAL_VEIN, weight: 1),
+        // level 233
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.EARTH_ELEMENTAL,
+          weight: 1,
+          unlockLevel: 72,
+        ),
+        // level 233, out of the vents
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.FIRE_ELEMENTAL,
+          weight: .5,
+          unlockLevel: 75,
+        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.MITHRIL_VEIN, weight: .6),
+        WeightedDropTableEntry<EntityId>(id: EntityId.RUNITE_VEIN, weight: .8),
+      ],
+    ),
+  ),
+  // The town in the saddle between the two ranges, where the road from
+  // Greyspine meets the road from the Ashridge, and the path up to the
+  // Stormcrown Peaks begins. Nothing to find by exploring; it keeps every
+  // crafting table, the way Iron Gate City does.
+  SADDLEGATE(
+    ZoneDefinition(
+      name: "Saddlegate",
+      iconAsset: 'assets/images/zones/saddlegate.png',
+      palette: ZonePalette.saddlegate,
+      type: MapNodeType.SETTLEMENT,
+      explorationLevel: 70,
+
+      permanentEntities: [
+        EntityId.FIREPIT,
+        EntityId.ANVIL,
+        EntityId.ENCHANTING_BENCH,
+        EntityId.ALCHEMY_STATION,
+      ],
+      discoverableEntities: [],
+    ),
+  ),
+  // ── THE PEAKS · exploration 90 ──────────────────────────────────
+  // Above the ranges, three summits. Their monsters run 233 to 377; the
+  // rung above, 610, is held only by the bosses of each peak's dungeon.
+  // Dragonite in the rock of all three, richest under Moltenspire.
+  //
+  // Above Greyspine: ice spires, wind-blown snow, frozen falls.
+  FROSTCROWN_PEAKS(
+    ZoneDefinition(
+      name: "Frostcrown Peaks",
+      iconAsset: 'assets/images/zones/frostcrown_peaks.png',
+      palette: ZonePalette.frostcrown,
+      explorationLevel: 90,
+      xpPerExplore: 35,
+
+      permanentEntities: [EntityId.FIREPIT, EntityId.HOARFROST_HOLLOW_ENTRANCE],
+      discoverableEntities: [
+        // level 233, the mountain's ogres gone up into the snow
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.OGRE,
+          weight: 1.5,
+          unlockLevel: 90,
+        ),
+        // level 233, the meltwater given a will
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.WATER_ELEMENTAL,
+          weight: 1.5,
+          unlockLevel: 90,
+        ),
+        // level 377
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.YETI,
+          weight: 1,
+          unlockLevel: 92,
+        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.RUNITE_VEIN, weight: .6),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.DRAGONITE_VEIN,
+          weight: .3,
+        ),
+      ],
+    ),
+  ),
+  // Above Saddlegate: summits wrapped in storm cloud, lightning on the rock.
+  STORMCROWN_PEAKS(
+    ZoneDefinition(
+      name: "Stormcrown Peaks",
+      iconAsset: 'assets/images/zones/stormcrown_peaks.png',
+      palette: ZonePalette.stormcrown,
+      explorationLevel: 90,
+      xpPerExplore: 35,
+
+      permanentEntities: [EntityId.FIREPIT, EntityId.THUNDERHALL_ENTRANCE],
+      discoverableEntities: [
+        // level 233, up from the bluffs' rim
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GRIFFIN,
+          weight: 1.5,
+          unlockLevel: 90,
+        ),
+        // level 377
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.ROC,
+          weight: 1,
+          unlockLevel: 92,
+        ),
+        // level 377, rare
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.WYVERN,
+          weight: .5,
+          unlockLevel: 95,
+        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.RUNITE_VEIN, weight: .6),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.DRAGONITE_VEIN,
+          weight: .3,
+        ),
+      ],
+    ),
+  ),
+  // Above the Ashridge: spires of black rock over rivers of lava.
+  MOLTENSPIRE_PEAKS(
+    ZoneDefinition(
+      name: "Moltenspire Peaks",
+      iconAsset: 'assets/images/zones/moltenspire_peaks.png',
+      palette: ZonePalette.moltenspire,
+      explorationLevel: 90,
+      xpPerExplore: 35,
+
+      permanentEntities: [EntityId.FIREPIT, EntityId.THE_CALDERA_ENTRANCE],
+      discoverableEntities: [
+        // level 233
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.FIRE_ELEMENTAL,
+          weight: 1.5,
+          unlockLevel: 90,
+        ),
+        // level 377
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.DRAKE,
+          weight: 1,
+          unlockLevel: 92,
+        ),
+        // level 377, rare
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.IRON_GOLEM,
+          weight: .5,
+          unlockLevel: 95,
+        ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.RUNITE_VEIN, weight: .6),
+        // the proper dragonite seam
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.DRAGONITE_VEIN,
+          weight: .8,
         ),
       ],
     ),

@@ -151,41 +151,32 @@ void main() {
 
   test('every giant bat and zombie variant drops what its common does', () {
     for (final (base, variants) in [
-      (
-        EntityId.GIANT_BAT,
-        [
-          EntityId.GIANT_BAT_UNCOMMON,
-          EntityId.GIANT_BAT_RARE,
-          EntityId.GIANT_BAT_EPIC,
-          EntityId.GIANT_BAT_LEGENDARY,
-        ],
-      ),
-      (
-        EntityId.ZOMBIE,
-        [
-          EntityId.ZOMBIE_UNCOMMON,
-          EntityId.THICKET_ZOMBIE,
-          EntityId.ZOMBIE_RARE,
-          EntityId.ZOMBIE_EPIC,
-          EntityId.ZOMBIE_LEGENDARY,
-        ],
-      ),
+      (EntityId.GIANT_BAT, [EntityId.GIANT_BAT_UNCOMMON]),
+      (EntityId.ZOMBIE, [EntityId.ZOMBIE_UNCOMMON, EntityId.THICKET_ZOMBIE]),
     ]) {
       final ids = idsIn(combat(base).itemDrops);
       for (final v in variants) {
         expect(idsIn(combat(v).itemDrops), ids, reason: v.name);
       }
     }
+    // the rags are the overworld zombies' — a boss owns its own pieces
+    // only (design/DUNGEON_LOOT_GUIDE.md)
     expect(
       combat(
         EntityId.THICKET_ZOMBIE,
+      ).bonusDrops.expand((r) => r.entries).map((e) => e.id),
+      isNot(contains(anyOf(tatteredClothDropTable.map((e) => e.id).toList()))),
+    );
+    expect(
+      combat(
+        EntityId.ZOMBIE,
       ).bonusDrops.expand((r) => r.entries).map((e) => e.id),
       containsAll(tatteredClothDropTable.map((e) => e.id)),
     );
   });
 
   test(
-    'the spider den bosses drop the cloak and ring; the chest holds rare',
+    'the spider den bosses drop the cloak and ring; the chest gives some at rare',
     () {
       ids(List<DropRoll> rolls) =>
           rolls.expand((r) => r.entries).map((e) => e.id);
@@ -197,18 +188,23 @@ void main() {
         ids(combat(EntityId.THICKET_ZOMBIE).bonusDrops),
         contains(ItemId.VENOMFANG_RING),
       );
+      // the bosses' pieces in the chest come at rare, their top; the chest's
+      // own leggings at both of the band's
       final rare = DungeonId.SPIDER_DEN.definition.chestRolls
           .expand((r) => r.entries)
-          .where((e) => e.rarity == Rarity.RARE);
-      expect(rare.map((e) => e.id), {
+          .where((e) => e.rarity == Rarity.RARE)
+          .map((e) => e.id)
+          .toSet();
+      expect(rare, {
         ItemId.WEBBED_CLOAK,
-        ItemId.VENOMFANG_RING,
+        ItemId.SPIDER_SILK_NECKLACE,
+        ItemId.BROODSILK_LEGGINGS,
       });
     },
   );
 
   test(
-    'the spider den chest hauls the darkwood in bulk, and an epic necklace',
+    'the spider den chest hauls the darkwood in bulk, and its own leggings',
     () {
       final rolls = DungeonId.SPIDER_DEN.definition.chestRolls;
       final bulk = [
@@ -233,15 +229,14 @@ void main() {
       for (final e in bulk) {
         expect((e.lowCount, e.highCount), (20, 80), reason: e.id.name);
       }
+      // nothing above the band: no epic necklace any more
       expect(
-        rolls
-            .expand((r) => r.entries)
-            .any(
-              (e) =>
-                  e.id == ItemId.SPIDER_SILK_NECKLACE &&
-                  e.rarity == Rarity.EPIC,
-            ),
-        isTrue,
+        rolls.expand((r) => r.entries).where((e) => e.rarity == Rarity.EPIC),
+        isEmpty,
+      );
+      expect(
+        rolls.expand((r) => r.entries).map((e) => e.id),
+        contains(ItemId.BROODSILK_LEGGINGS),
       );
     },
   );

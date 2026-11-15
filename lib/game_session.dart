@@ -705,6 +705,7 @@ class GameSessionFactory {
     // explore finds land in the player inventory as well as the zone list
     worldController.addListener(inventoryController.refresh);
     inventoryController.onZoneScouted = worldController.refresh;
+    inventoryController.onChestsOpened = encounterController.consumeSessionDrop;
 
     // encounter actions mutate world data (entity counts, removals);
     // forward so world listeners (explore screen) rebuild

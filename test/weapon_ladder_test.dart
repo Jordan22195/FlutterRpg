@@ -62,7 +62,14 @@ void main() {
         );
         expect(def.armorSlot, type.slot);
         expect(def.actionInterval, type.actionInterval);
-        expect(def.statWeights, type.statWeight);
+        // a smithed fighting shape takes its rung as attack; the rest keep
+        // their type's split
+        expect(
+          def.statWeights,
+          type.statWeight.isEmpty && type.skillRequirement == SkillId.ATTACK
+              ? {SkillId.ATTACK: 1}
+              : type.statWeight,
+        );
       }
     }
   });
@@ -196,9 +203,15 @@ void main() {
       final perSecond = <double>[];
       for (final shape in ['DAGGER', 'SWORD', 'GREATSWORD']) {
         final def = defFor(metal.key, shape);
-        // the damage is the whole of what it is: no attack on it
-        expect(def.statWeights, isEmpty, reason: '${metal.key}_$shape');
-        expect(def.statsAt(Rarity.COMMON), isEmpty);
+        // a smithed weapon carries its rung's budget as attack on top
+        expect(def.statWeights, {
+          SkillId.ATTACK: 1,
+        }, reason: '${metal.key}_$shape');
+        expect(
+          def.statsAt(Rarity.COMMON)[SkillId.ATTACK],
+          greaterThan(0),
+          reason: '${metal.key}_$shape',
+        );
         final seconds = def.actionInterval.inMicroseconds / 1e6;
         perSecond.add(def.damageAt(Rarity.COMMON) / seconds);
 

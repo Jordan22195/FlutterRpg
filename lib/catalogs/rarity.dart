@@ -5,10 +5,9 @@
 ///
 /// The two halves of the game read it differently, on purpose.
 ///
-/// A monster's rarity is a step up the Fibonacci ladder: [index] is how
-/// many rungs above common the variant sits, so an epic chicken is a
-/// genuinely different monster three rungs along
-/// (`CombatEntityDefinition.level`).
+/// A monster's rarity is cosmetic: it picks the border its portrait is
+/// drawn with and nothing else. Its level is its own rung
+/// (`CombatEntityDefinition.fibLevel`).
 ///
 /// A piece of equipment's rarity is a multiplier on the stat budget its
 /// definition already carries: [statMultiplier] scales it, and
@@ -23,18 +22,16 @@
 /// (`rarityBorderColor` in `widgets/item_stack_tile.dart`), so the catalog
 /// stays free of Flutter painting.
 enum Rarity {
-  COMMON('', 1.0, 0, 1),
-  UNCOMMON('Uncommon', 1.2, 1, 2),
-  RARE('Rare', 1.4, 2, 3),
-  EPIC('Epic', 1.6, 3, 5),
-  LEGENDARY('Legendary', 1.8, 4, 8);
+  /// Below the ladder: worthless byproducts (burnt food, an old boot).
+  /// Only items sit here; nothing rolls it and nothing raises into it.
+  JUNK('Junk', 1.0, 0),
+  COMMON('', 1.0, 0),
+  UNCOMMON('Uncommon', 1.2, 1),
+  RARE('Rare', 1.4, 2),
+  EPIC('Epic', 1.6, 3),
+  LEGENDARY('Legendary', 1.8, 4);
 
-  const Rarity(
-    this.label,
-    this.statMultiplier,
-    this.minStatBonus,
-    this.dropCountMultiplier,
-  );
+  const Rarity(this.label, this.statMultiplier, this.minStatBonus);
 
   /// Display name; empty for common, which is not worth saying.
   final String label;
@@ -49,11 +46,14 @@ enum Rarity {
   /// strictly better than the common it was rolled against.
   final int minStatBonus;
 
-  /// How many times its common's stacks a monster variant at this rarity
-  /// drops when it inherits the common's table
-  /// (`CombatEntityDefinition.itemDrops`). It walks the same Fibonacci
-  /// ladder the variant's level does, so loot keeps pace with the fight.
-  final int dropCountMultiplier;
+  /// How many rungs above common this tier sits: common is 0, legendary 4,
+  /// and junk -1. Read this, not [index], for anything that scales with
+  /// the ladder, so junk sitting below common shifts nothing.
+  int get rung => index - COMMON.index;
+
+  /// The tiers something can roll or be raised through, common to
+  /// legendary; junk is left out.
+  static final List<Rarity> ladder = values.sublist(COMMON.index);
 
   /// This rarity [steps] rungs further up, stopping at legendary.
   Rarity raisedBy(int steps) =>

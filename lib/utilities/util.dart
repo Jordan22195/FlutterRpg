@@ -114,9 +114,8 @@ class Util {
   ];
 
   /// The level at rung [index] of the Fibonacci ladder every combat tier
-  /// is placed on. A rarity variant is its archetype's rung plus its own
-  /// `Rarity.index`, so the top of the ladder is reachable by an ordinary
-  /// legendary and running off the end is a content bug worth naming.
+  /// is placed on (`CombatEntityDefinition.fibLevel`). Running off the end
+  /// is a content bug worth naming.
   /// One share of a stat budget, split by weight and floored at 1 so
   /// nothing lands on a stat of zero.
   ///
@@ -133,8 +132,8 @@ class Util {
         0,
         fibonacciCache.length - 1,
         'index',
-        'no level on the Fibonacci ladder — the tier plus its rarity step '
-            'is past the end of fibonacciCache',
+        'no level on the Fibonacci ladder — the rung is past the end of '
+            'fibonacciCache',
       );
     }
     return fibonacciCache[index];

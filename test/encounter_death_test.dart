@@ -20,11 +20,11 @@ Future<void> settle(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 100));
 }
 
-// The catalog's fastest heavy hitter: a 1.0s swing interval (nothing swings
-// sooner), an attack a starting player cannot survive one of, and enough hp
-// to outlast anything the player can do back - so the player is the one who
-// dies. Its stats come off its definition, so retuning it is free.
-CombatEntity lethalEnemy() => EntityId.IMP_LEGENDARY.build() as CombatEntity;
+// A fast heavy hitter: a 1.0s swing interval (nothing swings sooner), an
+// attack a starting player cannot survive one of, and enough hp to outlast
+// anything the player can do back - so the player is the one who dies. Its
+// stats come off its definition, so retuning it is free.
+CombatEntity lethalEnemy() => EntityId.IMP.build() as CombatEntity;
 
 // long enough to cover a real swing interval, which the catalog measures in
 // whole seconds rather than the milliseconds a fabricated enemy could use

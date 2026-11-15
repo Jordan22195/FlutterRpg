@@ -184,4 +184,114 @@ const List<CraftingRecipe> firemakingRecipes = [
       WeightedDropTableEntry(id: ItemId.BOG_BONFIRE, count: 1, weight: 1),
     ],
   ),
+
+  // Maple, yew and magic (tiers 4 to 6). The same log counts all the way
+  // up; each tier's xp is three times the last, like the tiers below.
+  CraftingRecipe(
+    id: 'maple_cookfire',
+    name: 'Maple Cookfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 60,
+    xp: 405,
+    inputs: {ItemId.MAPLE_LOGS: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MAPLE_COOKFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'maple_campfire',
+    name: 'Maple Campfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 64,
+    xp: 990,
+    inputs: {ItemId.MAPLE_LOGS: 5},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MAPLE_CAMPFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'maple_bonfire',
+    name: 'Maple Bonfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 70,
+    xp: 3060,
+    inputs: {ItemId.MAPLE_LOGS: 15},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MAPLE_BONFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'yew_cookfire',
+    name: 'Yew Cookfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 72,
+    xp: 1215,
+    inputs: {ItemId.YEW_LOGS: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.YEW_COOKFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'yew_campfire',
+    name: 'Yew Campfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 76,
+    xp: 2970,
+    inputs: {ItemId.YEW_LOGS: 5},
+    output: [
+      WeightedDropTableEntry(id: ItemId.YEW_CAMPFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'yew_bonfire',
+    name: 'Yew Bonfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 82,
+    xp: 9180,
+    inputs: {ItemId.YEW_LOGS: 15},
+    output: [
+      WeightedDropTableEntry(id: ItemId.YEW_BONFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'magic_cookfire',
+    name: 'Magic Cookfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 84,
+    xp: 3645,
+    inputs: {ItemId.MAGIC_LOGS: 2},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MAGIC_COOKFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'magic_campfire',
+    name: 'Magic Campfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 88,
+    xp: 8910,
+    inputs: {ItemId.MAGIC_LOGS: 5},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MAGIC_CAMPFIRE, count: 1, weight: 1),
+    ],
+  ),
+
+  CraftingRecipe(
+    id: 'magic_bonfire',
+    name: 'Magic Bonfire',
+    skill: SkillId.FIREMAKING,
+    levelRequirement: 94,
+    xp: 27540,
+    inputs: {ItemId.MAGIC_LOGS: 15},
+    output: [
+      WeightedDropTableEntry(id: ItemId.MAGIC_BONFIRE, count: 1, weight: 1),
+    ],
+  ),
 ];

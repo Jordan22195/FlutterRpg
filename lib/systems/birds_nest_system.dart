@@ -10,8 +10,9 @@ import '../services/weighted_drop_table_service.dart';
 /// then, and opening it from the bag rolls [openableRolls] - a lining of
 /// fire reagents, a long shot at the Woodcutter's set of the nest's tier,
 /// and a longer one at a gem. It pays out the way a dungeon chest does, so
-/// it opens in the same dialog. Mining's geodes open the same way, so this
-/// system opens those too (see geodeRolls).
+/// it opens in the same dialog. Mining's geodes and fishing's sunken caches
+/// open the same way, so this system opens those too (see geodeRolls and
+/// sunkenCacheRolls).
 class BirdsNestSystem {
   final InventoryService _inventoryService;
   final WeightedDropTableService _dropTableService;

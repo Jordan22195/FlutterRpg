@@ -1,16 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:rpg/catalogs/drop_tables.dart';
 import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/data/equipment_data.dart';
+import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/data/skill_data.dart';
-import 'package:rpg/systems/dungeon_system.dart';
 
-// The Wolf Den set is heavy leather's stats plus speed: +1 on the minor
-// slots and +2 on the major ones. Bosses drop the minors, the chest the majors.
+// The Wolf Den set is heavy leather turned to speed: the same rung and the
+// same budget as the hide it is cut from, split speed-first rather than
+// attack and defence evenly. Each den boss owns two pieces; the chest owns
+// the body pieces. See design/DUNGEON_LOOT_GUIDE.md.
 void main() {
   final heavy = {
     ArmorSlots.HEAD: ItemId.HEAVY_LEATHER_COIF,
@@ -20,64 +21,121 @@ void main() {
     ArmorSlots.CHEST: ItemId.HEAVY_LEATHER_CHEST,
     ArmorSlots.LEGS: ItemId.HEAVY_LEATHER_PANTS,
   };
-  final set = {
-    ItemId.WOLF_DEN_HELM: 1,
-    ItemId.WOLF_DEN_CLOAK: 1,
-    ItemId.WOLF_DEN_GLOVES: 1,
-    ItemId.WOLF_DEN_BOOTS: 1,
-    ItemId.WOLF_DEN_CHESTGUARD: 2,
-    ItemId.WOLF_DEN_LEGGUARDS: 2,
-  };
+  const set = [
+    ItemId.WOLF_DEN_HELM,
+    ItemId.WOLF_DEN_CLOAK,
+    ItemId.WOLF_DEN_GLOVES,
+    ItemId.WOLF_DEN_BOOTS,
+    ItemId.WOLF_DEN_CHESTGUARD,
+    ItemId.WOLF_DEN_LEGGUARDS,
+  ];
 
-  test('each piece is its heavy counterpart plus speed at every rarity', () {
-    for (final entry in set.entries) {
-      final def = entry.key.definition as EquipmentItemDefinition;
-      final base = heavy[def.armorSlot]!.definition as EquipmentItemDefinition;
+  EquipmentItemDefinition gear(ItemId id) =>
+      id.definition as EquipmentItemDefinition;
+  int total(Map<SkillId, int> stats) => stats.values.fold(0, (a, b) => a + b);
+
+  Map<ItemId, Set<Rarity>> bonusGear(EntityId id) {
+    final out = <ItemId, Set<Rarity>>{};
+    for (final roll in (id.definition as CombatEntityDefinition).bonusDrops) {
+      for (final e in roll.entries.flattened) {
+        if (e.id.definition is EquipmentItemDefinition) {
+          (out[e.id] ??= {}).add(e.rarity);
+        }
+      }
+    }
+    return out;
+  }
+
+  test('each piece is worth its heavy counterpart, split toward speed', () {
+    for (final id in set) {
+      final def = gear(id);
+      final base = gear(heavy[def.armorSlot]!);
+      expect(def.materialId, EquipmentMaterialId.HEAVY_LEATHER);
+      expect(def.bonusStats, isNull, reason: id.name);
       for (final rarity in Rarity.values) {
-        final stats = def.statsAt(rarity);
-        final expected = base.statsAt(rarity);
-        expect(stats[SkillId.SPEED], entry.value, reason: entry.key.name);
         expect(
-          {...stats}..remove(SkillId.SPEED),
-          expected,
-          reason: '${entry.key.name} at ${rarity.name}',
+          total(def.statsAt(rarity)),
+          total(base.statsAt(rarity)),
+          reason: '${id.name} at ${rarity.name}',
         );
+      }
+      expect(def.statWeights.keys, contains(SkillId.SPEED), reason: id.name);
+    }
+    // every piece leads with its combat stat and keeps speed second
+    for (final id in set) {
+      final w = gear(id).statWeights;
+      expect(
+        w[SkillId.SPEED],
+        lessThan(w.values.reduce((a, b) => a > b ? a : b)),
+        reason: id.name,
+      );
+    }
+    expect(gear(ItemId.WOLF_DEN_CHESTGUARD).statWeights, {
+      SkillId.DEFENCE: 2,
+      SkillId.SPEED: 1,
+    });
+  });
+
+  test('each den boss owns two pieces, at uncommon and rare', () {
+    const owned = {
+      EntityId.CAVE_BEAR: {ItemId.BEAR_HIDE_BRACERS, ItemId.WOLF_DEN_HELM},
+      EntityId.DEN_ALPHA_WOLF: {
+        ItemId.WOLF_HIDE_BRACERS,
+        ItemId.WOLF_DEN_BOOTS,
+      },
+      EntityId.GROTTO_FUNGAL_MONSTER: {
+        ItemId.REDCAP_RING,
+        ItemId.WOLF_DEN_GLOVES,
+      },
+    };
+    for (final MapEntry(key: boss, value: items) in owned.entries) {
+      final drops = bonusGear(boss);
+      expect(drops.keys.toSet(), items, reason: boss.name);
+      for (final rarities in drops.values) {
+        expect(rarities, {Rarity.UNCOMMON, Rarity.RARE}, reason: boss.name);
       }
     }
   });
 
-  test('the dungeon bosses drop the minors, rarely', () {
-    for (final boss in [
-      EntityId.CAVE_BEAR,
-      EntityId.DEN_ALPHA_WOLF,
-      EntityId.GROTTO_FUNGAL_MONSTER,
-    ]) {
-      final def = boss.definition as CombatEntityDefinition;
-      final roll = def.bonusDrops.singleWhere(
-        (r) => r.entries == wolfDenMinorArmorDropTable,
+  test(
+    'the chest owns the body pieces, and gives some boss pieces at rare',
+    () {
+      final rolls = DungeonId.WOLF_DEN.definition.chestRolls;
+      final gearLines = [
+        for (final r in rolls)
+          for (final e in r.entries.flattened)
+            if (e.id.definition is EquipmentItemDefinition) e,
+      ];
+      final ids = gearLines.map((e) => e.id).toSet();
+      expect(
+        ids,
+        containsAll([ItemId.WOLF_DEN_CHESTGUARD, ItemId.WOLF_DEN_LEGGUARDS]),
       );
-      expect(roll.chance, lessThan(0.1), reason: boss.name);
-    }
-    expect(wolfDenMinorArmorDropTable.map((e) => e.id), {
-      ItemId.WOLF_DEN_HELM,
-      ItemId.WOLF_DEN_CLOAK,
-      ItemId.WOLF_DEN_GLOVES,
-      ItemId.WOLF_DEN_BOOTS,
-    });
-  });
+      for (final boss in [
+        EntityId.CAVE_BEAR,
+        EntityId.DEN_ALPHA_WOLF,
+        EntityId.GROTTO_FUNGAL_MONSTER,
+      ]) {
+        final drops = bonusGear(boss).keys;
+        expect(drops, isNot(contains(ItemId.WOLF_DEN_CHESTGUARD)));
+        expect(drops, isNot(contains(ItemId.WOLF_DEN_LEGGUARDS)));
+      }
+      // the boss pieces it gives are at the bosses' top rarity, never above
+      for (final e in gearLines) {
+        if (e.id == ItemId.WOLF_DEN_CHESTGUARD ||
+            e.id == ItemId.WOLF_DEN_LEGGUARDS) {
+          continue;
+        }
+        expect(e.rarity, Rarity.RARE, reason: e.id.name);
+      }
+    },
+  );
 
-  test('the chest holds the majors and bulk resources', () {
-    final rolls = DungeonId.WOLF_DEN.definition.chestRolls;
-    expect(
-      rolls.where((r) => r.entries == wolfDenMajorArmorDropTable).single.chance,
-      lessThan(0.5),
-    );
+  test('the chest still hauls the forest in bulk', () {
     final bulk = [
-      for (final r in rolls)
-        for (final e in r.entries)
-          if (r.entries != wolfDenMajorArmorDropTable &&
-              r.entries != wolfDenRareSetDropTable)
-            e,
+      for (final r in DungeonId.WOLF_DEN.definition.chestRolls)
+        for (final e in r.entries.flattened)
+          if (e.id.definition is! EquipmentItemDefinition) e,
     ];
     expect(
       bulk.map((e) => e.id),
@@ -97,27 +155,16 @@ void main() {
     }
   });
 
-  test(
-    'the boss minors drop uncommon and the end chest holds the set at rare',
-    () {
-      expect(wolfDenMinorArmorDropTable.map((e) => e.rarity).toSet(), {
-        Rarity.UNCOMMON,
-      });
-      expect(wolfDenRareSetDropTable.map((e) => e.rarity).toSet(), {
-        Rarity.RARE,
-      });
-      expect(wolfDenRareSetDropTable.map((e) => e.id).toSet(), {
-        ...wolfDenMinorArmorDropTable.map((e) => e.id),
-        ...wolfDenMajorArmorDropTable.map((e) => e.id),
-      });
-      expect(
-        DungeonId.WOLF_DEN.definition.chestRolls.any(
-          (r) => r.entries == wolfDenRareSetDropTable,
-        ),
-        isTrue,
-      );
-    },
-  );
+  test('the pieces no boss owns fall to the den\'s own wolves and bears', () {
+    expect(
+      bonusGear(EntityId.FOREST_WOLF_UNCOMMON).keys,
+      contains(ItemId.WOLF_DEN_CLOAK),
+    );
+    expect(
+      bonusGear(EntityId.BEAR_UNCOMMON).keys,
+      contains(ItemId.WOLF_HIDE_BELT),
+    );
+  });
 
   test('the grotto boss hauls bulk herbs, mushrooms and logs, and a ring', () {
     final boss =
@@ -133,12 +180,9 @@ void main() {
       expect(e.lowCount, 50, reason: e.id.name);
       expect(e.highCount, 150, reason: e.id.name);
     }
-    final ring = ItemId.REDCAP_RING.definition as EquipmentItemDefinition;
+    final ring = gear(ItemId.REDCAP_RING);
     expect(ring.fibLevel, 2);
-    expect(ring.statWeights.keys, [SkillId.RECOVERY]);
-    expect(
-      boss.bonusDrops.expand((r) => r.entries).map((e) => e.id),
-      contains(ItemId.REDCAP_RING),
-    );
+    // recovery rides on a strength piece rather than standing alone
+    expect(ring.statWeights, {SkillId.STRENGTH: 2, SkillId.RECOVERY: 1});
   });
 }

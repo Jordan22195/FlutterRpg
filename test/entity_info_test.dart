@@ -497,8 +497,9 @@ void main() {
       final minnow = drops.singleWhere((d) => d.itemId == ItemId.MINNOW);
       final carp = drops.singleWhere((d) => d.itemId == ItemId.CARP);
       // the odds are the ones a cast has now: the minnow is the whole table
+      // but for the junk a cast can drag up instead
       expect(minnow.locked, isFalse);
-      expect(minnow.chance, 1.0);
+      expect(minnow.chance, closeTo(1 / (1 + fishingJunkWeight), 1e-9));
       expect(carp.locked, isTrue);
       expect(carp.lockedUntil, 5);
       expect(carp.chance, 0);
@@ -537,7 +538,7 @@ void main() {
         EntityId.TRANQUIL_POND,
       ).drops.singleWhere((d) => d.itemId == ItemId.CARP);
       expect(opened.locked, isFalse);
-      expect(opened.chance, closeTo(0.5 / 1.5, 1e-9));
+      expect(opened.chance, closeTo(0.5 / (1.5 + fishingJunkWeight), 1e-9));
       expect(
         find.byKey(const ValueKey('drop-CARP-COMMON-locked')),
         findsNothing,

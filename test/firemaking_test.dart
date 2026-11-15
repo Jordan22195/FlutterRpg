@@ -913,6 +913,9 @@ void main() {
         ItemId.COOKFIRE,
         ItemId.OAK_COOKFIRE,
         ItemId.WILLOW_COOKFIRE,
+        ItemId.MAPLE_COOKFIRE,
+        ItemId.YEW_COOKFIRE,
+        ItemId.MAGIC_COOKFIRE,
       ]) {
         final def = id.definition as FireItemDefinition;
         expect(def.canCook, isTrue);

@@ -15,7 +15,7 @@ import 'package:rpg/catalogs/zones/zone_id.dart';
 /// that to stay on screen. What the layout does owe you is room — every pair
 /// of centres here is at least [kMinNodeSpacing] apart, so a token plus its
 /// two-line label never lands on a neighbour.
-const Size kWorldMapSize = Size(960, 760);
+const Size kWorldMapSize = Size(1320, 760);
 
 /// Floor on centre-to-centre distance between any two nodes.
 const double kMinNodeSpacing = 100;
@@ -68,11 +68,15 @@ class LandmarkNode extends MapNode {
 
 /// Every node drawn on the world map, laid out roughly geographically:
 /// the meadow in the north, the road running south through the forest to
-/// South Haven, which forks below the town — south-west into the darkwood,
-/// south-east down to the mine — with the swamp on the wet ground east of
+/// South Haven, which forks below the town — south-west into the darkwood and on down to the hollow below it,
+/// south-east down to the mine and its depths below — with the swamp on the wet ground east of
 /// the town and the prairie rolling out beyond it to Iron Gate City,
-/// at the foot of Ironroot Hills in the far east, the fishing village on the lake's north-east shore, the desert flats south of
-/// the prairie with the bluffs beyond them, the goblin warren off to
+/// at the foot of Ironroot Hills in the far east with the Ironroot Mine below them to the south-east, the fishing village on the lake's north-east shore with the yew and
+/// magic groves up the slope north of the lake, the desert flats south of
+/// the prairie with the bluffs beyond them, the two mountain ranges east
+/// of the hills and the bluffs with Saddlegate in the pass between them
+/// and the three peaks beyond (frost north, storm above the pass, lava
+/// south), the goblin warren off to
 /// the east of the road, and the dev zones parked well clear of the real
 /// map.
 const List<MapNode> kWorldMapNodes = [
@@ -81,15 +85,26 @@ const List<MapNode> kWorldMapNodes = [
   ZoneNode(ZoneId.SOUTHWOOD_FOREST, Offset(150, 300)),
   ZoneNode(ZoneId.SOUTH_HAVEN, Offset(230, 460)),
   ZoneNode(ZoneId.DARKWOOD_FOREST, Offset(150, 620)),
+  ZoneNode(ZoneId.MISTGRAVE_HOLLOW, Offset(240, 710)),
   ZoneNode(ZoneId.FOREST_MINE, Offset(390, 570)),
+  ZoneNode(ZoneId.FOREST_MINE_DEPTHS, Offset(420, 690)),
   ZoneNode(ZoneId.SWAMP, Offset(430, 400)),
   ZoneNode(ZoneId.MAPLEWATER_LAKE, Offset(520, 330)),
   ZoneNode(ZoneId.MAPLEWATER_VILLAGE, Offset(620, 250)),
+  ZoneNode(ZoneId.YEW_GROVE, Offset(480, 190)),
+  ZoneNode(ZoneId.MAGIC_GROVE, Offset(560, 90)),
   ZoneNode(ZoneId.FOOTHILLS, Offset(620, 480)),
   ZoneNode(ZoneId.IRON_GATE_CITY, Offset(740, 500)),
   ZoneNode(ZoneId.IRONROOT_HILLS, Offset(860, 440)),
+  ZoneNode(ZoneId.IRONROOT_MINE, Offset(900, 570)),
   ZoneNode(ZoneId.COPPERDUST_FLATS, Offset(620, 640)),
   ZoneNode(ZoneId.REDWALL_BLUFFS, Offset(780, 670)),
+  ZoneNode(ZoneId.GREYSPINE_MOUNTAIN, Offset(1000, 330)),
+  ZoneNode(ZoneId.SADDLEGATE, Offset(1040, 500)),
+  ZoneNode(ZoneId.ASHRIDGE_MOUNTAINS, Offset(980, 680)),
+  ZoneNode(ZoneId.FROSTCROWN_PEAKS, Offset(1180, 250)),
+  ZoneNode(ZoneId.STORMCROWN_PEAKS, Offset(1220, 460)),
+  ZoneNode(ZoneId.MOLTENSPIRE_PEAKS, Offset(1180, 680)),
   ZoneNode(ZoneId.DEV_FOREST, Offset(820, 140)),
   ZoneNode(ZoneId.DEV_DUNGEON_TESTING, Offset(820, 250)),
 ];

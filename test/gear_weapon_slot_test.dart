@@ -114,11 +114,8 @@ void main() {
     bag(ItemId.GOBLIN_SCEPTER);
     await pumpGear(tester);
 
-    // a worn weapon selects on the first tap and opens the picker from the
-    // detail card, as every slot does
+    // tapping a worn weapon's tile opens its picker straight away
     await tester.tap(weaponTile);
-    await tester.pump();
-    await tester.tap(find.text('Change'));
     await tester.pumpAndSettle();
 
     final pitchfork = ItemId.PITCHFORK.build() as EquipmentItem;

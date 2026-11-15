@@ -202,26 +202,22 @@ class _GearScreenState extends State<GearScreen> {
     );
   }
 
-  void _onSlotTap(ArmorSlots slot, EquipmentItem? item) {
-    if (item == null) {
-      _openSlotPicker(slot);
-    } else {
-      setState(() {
-        _selectedSlot = slot;
-        _selectedTool = null;
-      });
-    }
+  /// Tapping a slot selects it for the detail card and opens its picker,
+  /// worn or empty.
+  void _onSlotTap(ArmorSlots slot) {
+    setState(() {
+      _selectedSlot = slot;
+      _selectedTool = null;
+    });
+    _openSlotPicker(slot);
   }
 
-  void _onToolTap(SkillId skill, EquipmentItem? item) {
-    if (item == null) {
-      _openToolPicker(skill);
-    } else {
-      setState(() {
-        _selectedTool = skill;
-        _selectedSlot = null;
-      });
-    }
+  void _onToolTap(SkillId skill) {
+    setState(() {
+      _selectedTool = skill;
+      _selectedSlot = null;
+    });
+    _openToolPicker(skill);
   }
 
   @override
@@ -458,8 +454,7 @@ class _GearScreenState extends State<GearScreen> {
               selected: _selectedSlot == slot,
               emptyLabel: _slotShortLabels[slot]!,
               upgrade: _slotHasUpgrade(equipmentController, slot),
-              onTap: () =>
-                  _onSlotTap(slot, _slotItem(equipmentController, slot)),
+              onTap: () => _onSlotTap(slot),
             ),
             if (slot != slots.last) const SizedBox(height: 10),
           ],
@@ -512,8 +507,7 @@ class _GearScreenState extends State<GearScreen> {
               selected: _selectedSlot == slot,
               emptyLabel: _slotShortLabels[slot]!,
               upgrade: _slotHasUpgrade(equipmentController, slot),
-              onTap: () =>
-                  _onSlotTap(slot, _slotItem(equipmentController, slot)),
+              onTap: () => _onSlotTap(slot),
             ),
             if (slot != _weaponSlots.last) const SizedBox(width: 10),
           ],
@@ -546,10 +540,7 @@ class _GearScreenState extends State<GearScreen> {
                           .read<InventoryController>()
                           .getSlotItemListForSkill(ArmorSlots.TOOL, skill),
                     ),
-                    onTap: () => _onToolTap(
-                      skill,
-                      equipmentController.getToolForSkill(skill),
-                    ),
+                    onTap: () => _onToolTap(skill),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -718,7 +709,9 @@ class _GearScreenState extends State<GearScreen> {
                     style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
-                      color: item == null ? scheme.outline : qualityColor,
+                      color: item == null
+                          ? scheme.outline
+                          : rarityTextColor(item.quality),
                     ),
                   ),
                   if (item != null) ...[

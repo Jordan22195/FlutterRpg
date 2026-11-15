@@ -98,7 +98,7 @@ class SpriteFrame extends StatelessWidget {
     final tint = tintFor(context, kind);
     final currentId = id;
     final rarity = currentId is EntityId
-        ? rarityBorderColor(currentId.definition.rarity)
+        ? entityBorderColor(currentId.definition.rarity)
         : null;
 
     Widget sprite = SpriteFrame.sprite(id, size: spriteSize ?? size - 12);
@@ -113,6 +113,10 @@ class SpriteFrame extends StatelessWidget {
         child: sprite,
       );
     }
+
+    // an entity's art sits bare, as on the encounter stage; only a boss keeps
+    // its gold frame
+    final bare = currentId is EntityId && !isBoss;
 
     final frame = isBoss
         ? Container(
@@ -145,12 +149,14 @@ class SpriteFrame extends StatelessWidget {
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: fill ?? tint.fill,
+              color: bare ? null : fill ?? tint.fill,
               borderRadius: BorderRadius.circular(radius),
-              border: Border.all(
-                color: rarity ?? tint.border,
-                width: rarity != null ? 2 : 1,
-              ),
+              border: bare
+                  ? null
+                  : Border.all(
+                      color: rarity ?? tint.border,
+                      width: rarity != null ? 2 : 1,
+                    ),
             ),
             alignment: Alignment.center,
             child: sprite,

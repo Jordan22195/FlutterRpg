@@ -57,31 +57,38 @@ void main() {
       final def = ItemId.COPPER_HELMET.definition as EquipmentItemDefinition;
       expect(def.budgetAt(Rarity.COMMON), Util.fib(def.fibLevel));
 
-      final budgets = Rarity.values.map(def.budgetAt).toList();
+      final budgets = Rarity.ladder.map(def.budgetAt).toList();
       for (var i = 1; i < budgets.length; i++) {
         expect(
           budgets[i],
           greaterThan(budgets[i - 1]),
-          reason: '${Rarity.values[i]} must beat ${Rarity.values[i - 1]}',
+          reason: '${Rarity.ladder[i]} must beat ${Rarity.ladder[i - 1]}',
         );
       }
-
-      // and a monster reads its tier off the very same expression
-      final chicken = EntityId.CHICKEN.definition as CombatEntityDefinition;
-      final epicChicken =
-          EntityId.CHICKEN_EPIC.definition as CombatEntityDefinition;
-      expect(epicChicken.level, Util.fib(chicken.fibLevel + Rarity.EPIC.index));
     });
 
-    test('common is the only uncolored tier, and every other is distinct', () {
-      expect(rarityBorderColor(Rarity.COMMON), isNull);
+    test('every tier frames an item, each in its own color', () {
+      expect(rarityBorderColor(Rarity.JUNK), kJunkBorderColor);
+      expect(rarityBorderColor(Rarity.COMMON), kCommonBorderColor);
 
-      final colored = Rarity.values
-          .where((r) => r != Rarity.COMMON)
-          .map(rarityBorderColor)
-          .toList();
+      final colored = Rarity.values.map(rarityBorderColor).toList();
       expect(colored, everyElement(isNotNull));
       expect(colored.toSet(), hasLength(colored.length));
+    });
+
+    test('a common entity goes unframed; text keeps its default tint', () {
+      expect(entityBorderColor(Rarity.COMMON), isNull);
+      expect(rarityTextColor(Rarity.COMMON), isNull);
+      expect(entityBorderColor(Rarity.RARE), rarityBorderColor(Rarity.RARE));
+    });
+
+    test('junk sits below the ladder without shifting it', () {
+      expect(Rarity.COMMON.rung, 0);
+      expect(Rarity.LEGENDARY.rung, 4);
+      expect(Rarity.ladder.first, Rarity.COMMON);
+      expect(Rarity.ladder, isNot(contains(Rarity.JUNK)));
+      expect(ItemId.BURNT_FOOD.definition.quality, Rarity.JUNK);
+      expect(ItemId.OLD_BOOT.definition.quality, Rarity.JUNK);
     });
   });
 

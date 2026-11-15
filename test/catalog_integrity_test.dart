@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -25,9 +26,44 @@ import 'package:rpg/data/equipment_data.dart';
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
 const knownMissingArt = <String>{
+  // Mistgrave Hollow and the Haunted Ruins, before their art: the zone
+  // header, the dungeon splash and the entrance tile
+  'assets/images/zones/mistgrave_hollow.png',
+  'assets/images/dungeons/haunted_ruins.png',
+  'assets/images/entities/haunted_ruins.png',
+  // the dungeon chest and camp uniques of the loot restructure, before
+  // their art
+  'assets/icons/items/farmhands_gloves.png',
+  'assets/icons/items/sergeants_shiv.png',
+  'assets/icons/items/warband_belt.png',
+  'assets/icons/items/camp_banner_cloak.png',
+  'assets/icons/items/broodsilk_leggings.png',
+  'assets/icons/items/murkhide_cuirass.png',
+  'assets/icons/items/stormhide_legs.png',
+  'assets/icons/items/queens_train.png',
+
   // the runite and dragonite veins, before their art
   'assets/images/entities/runite_vein.png',
   'assets/images/entities/dragonite_vein.png',
+
+  // the yew and magic trees, their logs and fires, and the upper bird's
+  // nests, before their art
+  'assets/images/entities/yew_tree.png',
+  'assets/images/entities/magic_tree.png',
+  'assets/icons/items/yew_logs.png',
+  'assets/icons/items/magic_logs.png',
+  'assets/icons/items/sturdy_birds_nest.png',
+  'assets/icons/items/gilded_birds_nest.png',
+  'assets/icons/items/enchanted_birds_nest.png',
+  'assets/images/entities/maple_cookfire.png',
+  'assets/images/entities/maple_campfire.png',
+  'assets/images/entities/maple_bonfire.png',
+  'assets/images/entities/yew_cookfire.png',
+  'assets/images/entities/yew_campfire.png',
+  'assets/images/entities/yew_bonfire.png',
+  'assets/images/entities/magic_cookfire.png',
+  'assets/images/entities/magic_campfire.png',
+  'assets/images/entities/magic_bonfire.png',
 
   // the five mining geodes, before their art
   'assets/icons/items/dull_geode.png',
@@ -55,6 +91,39 @@ const knownMissingArt = <String>{
 
   // reagent fires: the woodcutting reagents, the bird's nests and the bog
   // fires, before their art
+
+  // the fishing loot pass: junk, the waters' reagents, sunken caches and
+  // the waters' potions, before their art
+  'assets/icons/items/old_boot.png',
+  'assets/icons/items/tin_can.png',
+  'assets/icons/items/tangled_line.png',
+  'assets/icons/items/sodden_driftwood.png',
+  'assets/icons/items/lily_pad.png',
+  'assets/icons/items/creek_moss.png',
+  'assets/icons/items/freshwater_mussel.png',
+  'assets/icons/items/duckweed.png',
+  'assets/icons/items/lake_sponge.png',
+  'assets/icons/items/sea_kelp.png',
+  'assets/icons/items/cattail_fluff.png',
+  'assets/icons/items/dried_reeds.png',
+  'assets/icons/items/river_driftwood.png',
+  'assets/icons/items/peat_clod.png',
+  'assets/icons/items/dried_rushes.png',
+  'assets/icons/items/bone_coral.png',
+  'assets/icons/items/ambergris.png',
+  'assets/icons/items/pond_cache.png',
+  'assets/icons/items/creek_cache.png',
+  'assets/icons/items/river_cache.png',
+  'assets/icons/items/marsh_cache.png',
+  'assets/icons/items/small_lake_cache.png',
+  'assets/icons/items/lake_cache.png',
+  'assets/icons/items/ocean_cache.png',
+  'assets/icons/items/minor_cooking_potion.png',
+  'assets/icons/items/minor_woodcutting_potion.png',
+  'assets/icons/items/cooking_potion.png',
+  'assets/icons/items/woodsmans_potion.png',
+  'assets/icons/items/explorers_potion.png',
+  'assets/icons/items/greater_fishing_potion.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
@@ -240,6 +309,50 @@ void main() {
               'EntityId.${id.name} stats (${def.attack}/${def.defence}/'
               '${def.hitpoints}) do not read back as level ${def.level}',
         );
+      }
+    });
+  });
+
+  group('equipment stat split', () {
+    const combat = {
+      SkillId.ATTACK,
+      SkillId.DEFENCE,
+      SkillId.RANGED,
+      SkillId.MAGIC,
+    };
+    const secondary = {
+      SkillId.SPEED,
+      SkillId.STRENGTH,
+      SkillId.STAMINA,
+      SkillId.RECOVERY,
+    };
+    int top(Map<SkillId, int> stats, Set<SkillId> of) => stats.entries
+        .where((e) => of.contains(e.key))
+        .fold(0, (m, e) => max(m, e.value));
+
+    test('a piece mixing combat and secondary stats leads with combat', () {
+      for (final id in ItemId.values) {
+        // the dev ring carries everything evenly on purpose
+        if (id == ItemId.GOD_RING) continue;
+        final def = id.definition;
+        if (def is! EquipmentItemDefinition) continue;
+        final w = def.statWeights;
+        if (!w.keys.any(combat.contains) || !w.keys.any(secondary.contains)) {
+          continue;
+        }
+        expect(
+          top(w, combat),
+          greaterThan(top(w, secondary)),
+          reason: '${id.name} weights $w put a secondary stat first',
+        );
+        for (final rarity in Rarity.ladder) {
+          final stats = def.statsAt(rarity);
+          expect(
+            top(stats, combat),
+            greaterThanOrEqualTo(top(stats, secondary)),
+            reason: '${id.name} at ${rarity.name}: $stats',
+          );
+        }
       }
     });
   });
@@ -555,23 +668,13 @@ void main() {
       // roster was re-cut (the wraith has since come back); the rest have
       // never been placed. darkwood_forest_test holds what the zone kept.
       EntityId.BANSHEE,
-      EntityId.MINOTAUR,
-      EntityId.DARK_WIZARD,
 
-      // tier 5 and up: no zone reaches this far yet
-      EntityId.EARTH_ELEMENTAL,
-      EntityId.OGRE,
-      EntityId.STONE_GOLEM,
-      EntityId.FIRE_ELEMENTAL,
-      EntityId.WATER_ELEMENTAL,
-      EntityId.YETI,
-      EntityId.IRON_GOLEM,
+      // tier 6 and up. The mountain and peak dungeons hold their own boss
+      // entities on these archetypes (STEEL_SENTINEL, CALDERA_DRAGON and
+      // the rest), so the regulars themselves still stand nowhere
       EntityId.STEEL_GOLEM,
       EntityId.LICH,
       EntityId.CLOUD_GIANT,
-      EntityId.ROC,
-      EntityId.WYVERN,
-      EntityId.DRAKE,
       EntityId.KRAKEN,
       EntityId.DRAGON,
       EntityId.LESSER_DEMON,
@@ -772,7 +875,7 @@ void main() {
       // against a bare definition rather than the catalog, which is free to
       // tag as many items as it likes
       expect(const ItemDefinition(name: 'x', value: 1).quality, Rarity.COMMON);
-      expect(Rarity.COMMON.index, 0, reason: 'common must be no rungs up');
+      expect(Rarity.COMMON.rung, 0, reason: 'common must be no rungs up');
       expect(Rarity.COMMON.label, isEmpty);
 
       // a declared quality has to survive a copyWith that is not about
@@ -857,6 +960,260 @@ void main() {
         DungeonId.values.map((e) => e.name).toSet(),
         containsAll(frozenDungeonIds),
       );
+    });
+  });
+
+  // A unique — a piece made of nothing, dropped by a monster — is worth the
+  // material whose rung it sits on (its rung less its slot and shape). The
+  // catalog's material drops run about six rungs under the monster, so a
+  // unique may run at most five under: a little ahead of the steel or
+  // mithril dropping beside it, never a dragon piece off an L144 boss.
+  group('loot curve', () {
+    bool isUnique(ItemId id) {
+      final def = id.definition;
+      return def is EquipmentItemDefinition &&
+          def is! JewelleryDefinition &&
+          def.materialId == EquipmentMaterialId.NULL &&
+          def.fixedStats == null &&
+          !def.ungated;
+    }
+
+    int materialRung(ItemId id) {
+      final def = id.definition as EquipmentItemDefinition;
+      return def.fibLevel - def.fibOffset;
+    }
+
+    int ceilingFor(int monsterRung) =>
+        monsterRung - 5 < 0 ? 0 : monsterRung - 5;
+
+    Iterable<ItemDropType> dropsOf(CombatEntityDefinition def) => [
+      ...def.itemDrops.flattened,
+      for (final roll in def.bonusDrops) ...roll.entries.flattened,
+    ];
+
+    test('no monster drops a unique above its rung', () {
+      final over = <String>[];
+      for (final id in EntityId.values) {
+        final def = id.definition;
+        if (def is! CombatEntityDefinition) continue;
+        for (final drop in dropsOf(def)) {
+          if (!isUnique(drop.id)) continue;
+          if (materialRung(drop.id) > ceilingFor(def.fibLevel)) {
+            over.add(
+              '${id.name} (rung ${def.fibLevel}) → ${drop.id.name} '
+              '(worth rung ${materialRung(drop.id)}, ceiling '
+              '${ceilingFor(def.fibLevel)})',
+            );
+          }
+        }
+      }
+      expect(over.toSet(), isEmpty);
+    });
+
+    test('no dungeon chest holds a unique above its bosses', () {
+      final over = <String>[];
+      for (final id in DungeonId.values) {
+        final def = id.definition;
+        var top = 0;
+        for (final entry in def.entries) {
+          for (final ref in entry.entities) {
+            final e = ref.entityId.definition;
+            if (e is CombatEntityDefinition && e.fibLevel > top) {
+              top = e.fibLevel;
+            }
+          }
+        }
+        for (final roll in def.chestRolls) {
+          for (final drop in roll.entries.flattened) {
+            if (!isUnique(drop.id)) continue;
+            if (materialRung(drop.id) > ceilingFor(top)) {
+              over.add('${id.name} chest → ${drop.id.name}');
+            }
+          }
+        }
+      }
+      expect(over, isEmpty);
+    });
+
+    test('a unique stronger than copper asks for a level to wear', () {
+      final free = [
+        for (final id in ItemId.values)
+          if (isUnique(id) &&
+              materialRung(id) > 0 &&
+              (id.definition as EquipmentItemDefinition)
+                      .skillLevelRequirement <=
+                  0)
+            id.name,
+      ];
+      expect(free, isEmpty);
+    });
+
+    test('every weapon swings at its type\'s pace', () {
+      // a dagger, a sword and a greatsword deal the same per second on a
+      // rung; a weapon that sped its own swing up would break that
+      final off = [
+        for (final id in ItemId.values)
+          if (id.definition case final WeaponItemDefinition def
+              when def.actionInterval !=
+                  def.weaponType.parameters.actionInterval)
+            id.name,
+      ];
+      expect(off, isEmpty);
+    });
+
+    test('a shape that hits and carries stats takes a reduced hit', () {
+      // a full sword's damage and an armour budget on top is two pieces in
+      // one slot
+      final doubled = [
+        for (final type in WeaponTypeId.values)
+          if (type.parameters.usesDamage &&
+              type.parameters.statWeight.isNotEmpty &&
+              type.parameters.damageScale > 0.5)
+            type.name,
+      ];
+      expect(doubled, isEmpty);
+    });
+  });
+
+  // The shape every dungeon's loot takes — design/DUNGEON_LOOT_GUIDE.md.
+  // A boss's uniques ride its bonus rolls, each at its own rarity; its
+  // main table is the material haul. A dungeon whose bosses carry no gear
+  // yet is skipped until they do.
+  group('loot structure', () {
+    bool isBoss(EntityId id) {
+      final def = id.definition;
+      return def is CombatEntityDefinition && def.isDungeonBoss;
+    }
+
+    // a boss's uniques, and the rarities each one drops at
+    Map<ItemId, Set<Rarity>> uniquesOf(EntityId boss) {
+      final def = boss.definition as CombatEntityDefinition;
+      final out = <ItemId, Set<Rarity>>{};
+      for (final roll in def.bonusDrops) {
+        for (final line in roll.entries.flattened) {
+          if (line.id.definition is! EquipmentItemDefinition) continue;
+          (out[line.id] ??= {}).add(line.rarity);
+        }
+      }
+      return out;
+    }
+
+    final dungeons = [
+      for (final id in DungeonId.values)
+        if (id != DungeonId.NULL && !id.name.startsWith('DEV')) id,
+    ];
+    List<EntityId> bossesOf(DungeonId id) => [
+      for (final entry in id.definition.entries)
+        for (final ref in entry.entities)
+          if (isBoss(ref.entityId)) ref.entityId,
+    ];
+    bool hasGear(DungeonId id) =>
+        bossesOf(id).any((b) => uniquesOf(b).isNotEmpty);
+
+    // two rarities, one step apart: the band's pair
+    String? pairOf(Set<Rarity> r) {
+      if (r.length != 2) return null;
+      final i = r.map((x) => x.index).toList()..sort();
+      if (i[1] - i[0] != 1) return null;
+      return '${Rarity.values[i[0]].name}/${Rarity.values[i[1]].name}';
+    }
+
+    test('every boss owns one or two uniques, at its band\'s two rarities', () {
+      final owners = <ItemId, Set<EntityId>>{};
+      final wrong = <String>[];
+      for (final id in dungeons.where(hasGear)) {
+        final pairs = <String?>{};
+        for (final boss in bossesOf(id)) {
+          final uniques = uniquesOf(boss);
+          if (uniques.isEmpty || uniques.length > 2) {
+            wrong.add('${boss.name} has ${uniques.length} uniques');
+          }
+          for (final MapEntry(key: item, value: rarities) in uniques.entries) {
+            (owners[item] ??= {}).add(boss);
+            final pair = pairOf(rarities);
+            if (pair == null) wrong.add('${boss.name} → ${item.name}');
+            pairs.add(pair);
+          }
+        }
+        if (pairs.length > 1) wrong.add('${id.name} mixes bands $pairs');
+      }
+      for (final MapEntry(key: item, value: bosses) in owners.entries) {
+        if (bosses.length > 1) wrong.add('${item.name} shared by $bosses');
+      }
+      expect(wrong, isEmpty);
+    });
+
+    test('every chest has its own pieces, and only some of the bosses\', '
+        'at no better than the bosses drop them', () {
+      final wrong = <String>[];
+      for (final id in dungeons.where(hasGear)) {
+        final bossTop = <ItemId, int>{};
+        final bands = <String?>{};
+        for (final boss in bossesOf(id)) {
+          for (final MapEntry(key: item, value: r) in uniquesOf(boss).entries) {
+            bossTop[item] = r.map((x) => x.index).reduce(max);
+            bands.add(pairOf(r));
+          }
+        }
+        final chest = <ItemId, Set<Rarity>>{};
+        for (final roll in id.definition.chestRolls) {
+          for (final line in roll.entries.flattened) {
+            if (line.id.definition is! EquipmentItemDefinition) continue;
+            (chest[line.id] ??= {}).add(line.rarity);
+          }
+        }
+        final exclusives = {
+          for (final e in chest.entries)
+            if (!bossTop.containsKey(e.key)) e.key: e.value,
+        };
+        final pieces = {
+          for (final e in chest.entries)
+            if (bossTop.containsKey(e.key)) e.key: e.value,
+        };
+        if (exclusives.isEmpty || exclusives.length > 2) {
+          wrong.add('${id.name} chest has ${exclusives.length} exclusives');
+        }
+        for (final MapEntry(key: item, value: r) in exclusives.entries) {
+          if (!bands.contains(pairOf(r))) {
+            wrong.add('${id.name} chest → ${item.name} off the band');
+          }
+        }
+        // a few of the bosses' pieces, never the whole set
+        final allOfThem = bossTop.length > 1 && pieces.length >= bossTop.length;
+        if (pieces.length > 3 || allOfThem) {
+          wrong.add(
+            '${id.name} chest gives ${pieces.length} of ${bossTop.length}',
+          );
+        }
+        for (final MapEntry(key: item, value: r) in pieces.entries) {
+          if (r.any((x) => x.index > bossTop[item]!)) {
+            wrong.add('${id.name} chest → ${item.name} above its boss');
+          }
+        }
+      }
+      expect(wrong, isEmpty);
+    });
+
+    test('no boss or chest unique is pure defence: that is the smith\'s', () {
+      final pure = <String>{};
+      for (final id in dungeons.where(hasGear)) {
+        final items = <ItemId>{
+          for (final boss in bossesOf(id)) ...uniquesOf(boss).keys,
+          for (final roll in id.definition.chestRolls)
+            for (final line in roll.entries.flattened)
+              if (line.id.definition is EquipmentItemDefinition) line.id,
+        };
+        for (final item in items) {
+          final weights = (item.definition as EquipmentItemDefinition)
+              .statWeights
+              .keys
+              .toSet();
+          if (weights.length == 1 && weights.single == SkillId.DEFENCE) {
+            pure.add(item.name);
+          }
+        }
+      }
+      expect(pure, isEmpty);
     });
   });
 }
@@ -1136,6 +1493,15 @@ const frozenEntityIds = <String>{
   'SPIDER_DEN_ENTRANCE',
   'GOBLIN_CAMP',
   'DEV_DUNGEON_ENTRANCE',
+  'RESTLESS_SKELETON',
+  'GRAVE_GHOUL',
+  'WAILING_BANSHEE',
+  'MIST_WRAITH',
+  'FALLEN_MONK',
+  'THE_GRAVEKEEPER',
+  'THE_WEEPING_ABBESS',
+  'THE_UNDYING_ABBOT',
+  'HAUNTED_RUINS_ENTRANCE',
 };
 
 const frozenZoneIds = <String>{
@@ -1143,16 +1509,27 @@ const frozenZoneIds = <String>{
   'SOUTHWOOD_FOREST',
   'SOUTH_HAVEN',
   'FOREST_MINE',
+  'FOREST_MINE_DEPTHS',
   'CHALLENGING_MOUNTAIN',
   'DARKWOOD_FOREST',
   'SWAMP',
   'MAPLEWATER_LAKE',
   'MAPLEWATER_VILLAGE',
+  'YEW_GROVE',
+  'MAGIC_GROVE',
   'FOOTHILLS',
   'COPPERDUST_FLATS',
+  'MISTGRAVE_HOLLOW',
   'IRON_GATE_CITY',
   'IRONROOT_HILLS',
+  'IRONROOT_MINE',
   'REDWALL_BLUFFS',
+  'GREYSPINE_MOUNTAIN',
+  'ASHRIDGE_MOUNTAINS',
+  'SADDLEGATE',
+  'FROSTCROWN_PEAKS',
+  'STORMCROWN_PEAKS',
+  'MOLTENSPIRE_PEAKS',
   'DEV_FOREST',
   'DEV_DUNGEON_TESTING',
   'NULL',
@@ -1164,4 +1541,5 @@ const frozenDungeonIds = <String>{
   'SPIDER_DEN',
   'GOBLIN_CAMP',
   'DEV_TRANSIENT_DUNGEON',
+  'HAUNTED_RUINS',
 };

@@ -40,6 +40,34 @@ enum DungeonId {
       type: DungeonType.LANDMARK,
       mapNodeType: MapNodeType.BOSS_LAIR,
       keyItemId: ItemId.GOBLIN_QUEEN_KEY,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.RUNITE_BAR, lowCount: 10, highCount: 30),
+            ItemDropType(
+              id: ItemId.ADAMANTITE_BAR,
+              lowCount: 20,
+              highCount: 60,
+            ),
+          ],
+        ),
+        DropRoll(chance: 0.5, entries: gemDropTable),
+        // the chest's exclusive at the band's two rarities, and some of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.25,
+          entries: [ItemDropType(id: ItemId.QUEENS_TRAIN, rarity: Rarity.RARE)],
+        ),
+        DropRoll(
+          chance: 0.06,
+          entries: [ItemDropType(id: ItemId.QUEENS_TRAIN, rarity: Rarity.EPIC)],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [ItemDropType(id: ItemId.GOBLIN_CROWN, rarity: Rarity.EPIC)],
+        ),
+      ],
       entries: [
         DungeonEntry(
           name: "Warren Entrance",
@@ -69,8 +97,7 @@ enum DungeonId {
       iconAsset: "assets/images/dungeons/spider_den.png",
       type: DungeonType.ZONE,
       // a bulk haul of everything the darkwood gives, a roll apiece, and the
-      // bosses' pieces at rare on a long shot, the necklace at epic on a
-      // longer one
+      // Broodsilk Leggings, which only the chest gives
       chestRolls: [
         DropRoll(
           entries: [
@@ -103,17 +130,29 @@ enum DungeonId {
             ItemDropType(id: ItemId.ROTTEN_FLESH, lowCount: 20, highCount: 80),
           ],
         ),
+        // the chest's exclusive at the band's two rarities, and some of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
         DropRoll(
-          chance: 0.1,
+          chance: 0.5,
           entries: [
-            ItemDropType(id: ItemId.WEBBED_CLOAK, rarity: Rarity.RARE),
-            ItemDropType(id: ItemId.VENOMFANG_RING, rarity: Rarity.RARE),
+            ItemDropType(
+              id: ItemId.BROODSILK_LEGGINGS,
+              rarity: Rarity.UNCOMMON,
+            ),
           ],
         ),
         DropRoll(
-          chance: 0.03,
+          chance: 0.15,
           entries: [
-            ItemDropType(id: ItemId.SPIDER_SILK_NECKLACE, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.BROODSILK_LEGGINGS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.3,
+          entries: [
+            ItemDropType(id: ItemId.WEBBED_CLOAK, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.SPIDER_SILK_NECKLACE, rarity: Rarity.RARE),
           ],
         ),
       ],
@@ -167,9 +206,28 @@ enum DungeonId {
               highCount: 50,
             ),
             ItemDropType(id: ItemId.COOKED_BEEF, lowCount: 20, highCount: 50),
-            ItemDropType(id: ItemId.COPPER_SWORD, rarity: Rarity.UNCOMMON),
-            ItemDropType(id: ItemId.COPPER_DAGGER, rarity: Rarity.UNCOMMON),
-            ItemDropType(id: ItemId.COPPER_GREATSWORD, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+        // the chest's exclusive at the band's two rarities, and some of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.2,
+          entries: [
+            ItemDropType(id: ItemId.FARMHAND_GLOVES, rarity: Rarity.COMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.05,
+          entries: [
+            ItemDropType(id: ItemId.FARMHAND_GLOVES, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.CHICKEN_CHARM, rarity: Rarity.UNCOMMON),
+            ItemDropType(id: ItemId.PITCHFORK, rarity: Rarity.UNCOMMON),
           ],
         ),
       ],
@@ -209,8 +267,7 @@ enum DungeonId {
       iconAsset: "assets/images/dungeons/wolf_den.png",
       type: DungeonType.ZONE,
       // a bulk haul of everything the forest gives, a roll apiece, and the
-      // set's chest and legs on a rare chance, and now and then a rare
-      // piece of any slot
+      // set's chest and legs, which only the chest gives
       chestRolls: [
         DropRoll(
           entries: [
@@ -257,8 +314,37 @@ enum DungeonId {
             ItemDropType(id: ItemId.BEAR_HIDE, lowCount: 20, highCount: 80),
           ],
         ),
-        DropRoll(chance: 0.1, entries: wolfDenMajorArmorDropTable),
-        DropRoll(chance: 0.05, entries: wolfDenRareSetDropTable),
+        // the chest's exclusive at the band's two rarities, and some of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.5,
+          entries: [
+            ItemDropType(
+              id: ItemId.WOLF_DEN_CHESTGUARD,
+              rarity: Rarity.UNCOMMON,
+            ),
+            ItemDropType(
+              id: ItemId.WOLF_DEN_LEGGUARDS,
+              rarity: Rarity.UNCOMMON,
+            ),
+          ],
+        ),
+        DropRoll(
+          chance: 0.15,
+          entries: [
+            ItemDropType(id: ItemId.WOLF_DEN_CHESTGUARD, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.WOLF_DEN_LEGGUARDS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.3,
+          entries: [
+            ItemDropType(id: ItemId.WOLF_DEN_HELM, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.WOLF_DEN_BOOTS, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.WOLF_DEN_GLOVES, rarity: Rarity.RARE),
+          ],
+        ),
       ],
       entries: [
         DungeonEntry(
@@ -339,17 +425,26 @@ enum DungeonId {
             ItemDropType(id: ItemId.MURKJAW_FANG, lowCount: 5, highCount: 13),
           ],
         ),
+        // the chest's exclusive at the band's two rarities, and some of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
         DropRoll(
-          chance: 0.1,
+          chance: 0.5,
           entries: [
-            ItemDropType(id: ItemId.CROWQUILL_BRACERS, rarity: Rarity.RARE),
-            ItemDropType(id: ItemId.OOZE_SLICK_BELT, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.MURKHIDE_CUIRASS, rarity: Rarity.UNCOMMON),
           ],
         ),
         DropRoll(
-          chance: 0.03,
+          chance: 0.15,
           entries: [
-            ItemDropType(id: ItemId.MURKJAW_PAULDRONS, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.MURKHIDE_CUIRASS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.3,
+          entries: [
+            ItemDropType(id: ItemId.CROWQUILL_BRACERS, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.MURKJAW_PAULDRONS, rarity: Rarity.RARE),
           ],
         ),
       ],
@@ -441,19 +536,26 @@ enum DungeonId {
             ),
           ],
         ),
+        // the chest's exclusive at the band's two rarities, and some of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
         DropRoll(
-          chance: 0.1,
+          chance: 0.25,
           entries: [
-            ItemDropType(id: ItemId.WARLORDS_CLEAVER, rarity: Rarity.RARE),
-            ItemDropType(id: ItemId.WARLORDS_WARHELM, rarity: Rarity.RARE),
-            ItemDropType(id: ItemId.ALPHAS_FANG, rarity: Rarity.RARE),
-            ItemDropType(id: ItemId.ALPHAS_MANTLE, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.STORMHIDE_LEGS, rarity: Rarity.RARE),
           ],
         ),
         DropRoll(
-          chance: 0.03,
+          chance: 0.06,
           entries: [
-            ItemDropType(id: ItemId.STORMCALLERS_SCEPTER, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.STORMHIDE_LEGS, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.WARLORDS_WARHELM, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.ALPHAS_MANTLE, rarity: Rarity.EPIC),
             ItemDropType(id: ItemId.GALEWRAP_GAUNTLETS, rarity: Rarity.EPIC),
           ],
         ),
@@ -491,12 +593,421 @@ enum DungeonId {
       ],
     ),
   ),
+  // The abandoned monastery at the bottom of Mistgrave Hollow, at Tempest
+  // Reach's tier: the hollow's 55-89 dead in its graveyard, nave and
+  // ossuary, and a level-144 boss at the end of each.
+  HAUNTED_RUINS(
+    DungeonDefinition(
+      name: "Haunted Ruins",
+      iconAsset: "assets/images/dungeons/haunted_ruins.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.MITHRIL_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.MITHRIL_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.ROTTEN_FLESH, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.GRAVE_MOSS, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.ENCHANTING_ESSENCE,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.ENCHANTING_RUNE,
+              lowCount: 5,
+              highCount: 13,
+            ),
+          ],
+        ),
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(
+              id: ItemId.ENCHANTING_PRISM,
+              lowCount: 1,
+              highCount: 3,
+            ),
+          ],
+        ),
+        DropRoll(chance: 0.03, entries: [ItemDropType(id: ItemId.SOUL_SHARD)]),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Graveyard Gate",
+          entities: [
+            DungeonEntityRef(EntityId.RESTLESS_SKELETON, count: 16),
+            DungeonEntityRef(EntityId.ZOMBIE, count: 8),
+            DungeonEntityRef(EntityId.THE_GRAVEKEEPER, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Silent Nave",
+          entities: [
+            DungeonEntityRef(EntityId.WAILING_BANSHEE, count: 10),
+            DungeonEntityRef(EntityId.GRAVE_GHOUL, count: 14),
+            DungeonEntityRef(EntityId.THE_WEEPING_ABBESS, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Ossuary",
+          entities: [
+            DungeonEntityRef(EntityId.FALLEN_MONK, count: 10),
+            DungeonEntityRef(EntityId.MIST_WRAITH, count: 7),
+            DungeonEntityRef(EntityId.WAILING_BANSHEE, count: 7),
+            DungeonEntityRef(EntityId.THE_UNDYING_ABBOT, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // The caverns under Greyspine Mountain. Its rooms hold the mountain's
+  // 144-233 monsters; each ends in a level-377 boss, the only ones in the
+  // range.
+  SPINEHOLD_CAVERNS(
+    DungeonDefinition(
+      name: "Spinehold Caverns",
+      iconAsset: "assets/images/dungeons/spinehold_caverns.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.RUNEITE_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.RUNITE_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.ADAMANTITE_ORE,
+              lowCount: 20,
+              highCount: 80,
+            ),
+            ItemDropType(
+              id: ItemId.ADAMANTITE_BAR,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.COINS, lowCount: 2000, highCount: 8000),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Troll Bridge",
+          entities: [
+            DungeonEntityRef(EntityId.TROLL, count: 16),
+            DungeonEntityRef(EntityId.MINOTAUR, count: 8),
+            DungeonEntityRef(EntityId.ELDER_ROC, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The High Gallery",
+          entities: [
+            DungeonEntityRef(EntityId.MINOTAUR, count: 10),
+            DungeonEntityRef(EntityId.OGRE, count: 14),
+            DungeonEntityRef(EntityId.STEEL_SENTINEL, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Drake's Roost",
+          entities: [
+            DungeonEntityRef(EntityId.OGRE, count: 10),
+            DungeonEntityRef(EntityId.STONE_GOLEM, count: 14),
+            DungeonEntityRef(EntityId.GREYSPINE_DRAKE, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // Old vaults buried under the Ashridge's ash. The range's 144-233
+  // monsters, and a level-377 boss at the end of each room.
+  ASHEN_VAULTS(
+    DungeonDefinition(
+      name: "The Ashen Vaults",
+      iconAsset: "assets/images/dungeons/ashen_vaults.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.RUNEITE_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.RUNITE_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.ADAMANTITE_ORE,
+              lowCount: 20,
+              highCount: 80,
+            ),
+            ItemDropType(
+              id: ItemId.ADAMANTITE_BAR,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.COINS, lowCount: 2000, highCount: 8000),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Ash Drifts",
+          entities: [
+            DungeonEntityRef(EntityId.GARGOYLE, count: 16),
+            DungeonEntityRef(EntityId.DARK_WIZARD, count: 8),
+            DungeonEntityRef(EntityId.ASH_WYVERN, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Slag Halls",
+          entities: [
+            DungeonEntityRef(EntityId.DARK_WIZARD, count: 10),
+            DungeonEntityRef(EntityId.EARTH_ELEMENTAL, count: 14),
+            DungeonEntityRef(EntityId.SLAG_WARDEN, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Furnace Heart",
+          entities: [
+            DungeonEntityRef(EntityId.EARTH_ELEMENTAL, count: 10),
+            DungeonEntityRef(EntityId.FIRE_ELEMENTAL, count: 14),
+            DungeonEntityRef(EntityId.HEART_OF_THE_RIDGE, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // The glacier cave under Frostcrown. The peak's 233-377 monsters, and a
+  // level-610 boss at the end of each room.
+  HOARFROST_HOLLOW(
+    DungeonDefinition(
+      name: "Hoarfrost Hollow",
+      iconAsset: "assets/images/dungeons/hoarfrost_hollow.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.RUNEITE_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.RUNITE_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.DRAGON_ORE, lowCount: 10, highCount: 40),
+            ItemDropType(id: ItemId.DRAGON_BAR, lowCount: 10, highCount: 40),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.COINS, lowCount: 5000, highCount: 20000),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Ice Gate",
+          entities: [
+            DungeonEntityRef(EntityId.OGRE, count: 16),
+            DungeonEntityRef(EntityId.WATER_ELEMENTAL, count: 8),
+            DungeonEntityRef(EntityId.YETI_PATRIARCH, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Frozen Pillars",
+          entities: [
+            DungeonEntityRef(EntityId.WATER_ELEMENTAL, count: 12),
+            DungeonEntityRef(EntityId.YETI, count: 12),
+            DungeonEntityRef(EntityId.FROST_GIANT, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Wyrm's Throne",
+          entities: [
+            DungeonEntityRef(EntityId.YETI, count: 14),
+            DungeonEntityRef(EntityId.OGRE, count: 10),
+            DungeonEntityRef(EntityId.FROST_WYRM, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // A ruined hall on Stormcrown's summit. The peak's 233-377 monsters, and
+  // a level-610 boss at the end of each room.
+  THUNDERHALL(
+    DungeonDefinition(
+      name: "Thunderhall",
+      iconAsset: "assets/images/dungeons/thunderhall.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.RUNEITE_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.RUNITE_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.DRAGON_ORE, lowCount: 10, highCount: 40),
+            ItemDropType(id: ItemId.DRAGON_BAR, lowCount: 10, highCount: 40),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.COINS, lowCount: 5000, highCount: 20000),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Windswept Steps",
+          entities: [
+            DungeonEntityRef(EntityId.GRIFFIN, count: 16),
+            DungeonEntityRef(EntityId.ROC, count: 8),
+            DungeonEntityRef(EntityId.ROC_BROODMOTHER, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Broken Colonnade",
+          entities: [
+            DungeonEntityRef(EntityId.ROC, count: 12),
+            DungeonEntityRef(EntityId.WYVERN, count: 12),
+            DungeonEntityRef(EntityId.THUNDERBIRD, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Giant's Throne",
+          entities: [
+            DungeonEntityRef(EntityId.WYVERN, count: 10),
+            DungeonEntityRef(EntityId.GRIFFIN, count: 14),
+            DungeonEntityRef(EntityId.STORM_GIANT, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // The crater at Moltenspire's heart. The peak's 233-377 monsters, and a
+  // level-610 boss at the end of each room.
+  THE_CALDERA(
+    DungeonDefinition(
+      name: "The Caldera",
+      iconAsset: "assets/images/dungeons/the_caldera.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.RUNEITE_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.RUNITE_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.DRAGON_ORE, lowCount: 10, highCount: 40),
+            ItemDropType(id: ItemId.DRAGON_BAR, lowCount: 10, highCount: 40),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.COINS, lowCount: 5000, highCount: 20000),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Crater Rim",
+          entities: [
+            DungeonEntityRef(EntityId.FIRE_ELEMENTAL, count: 16),
+            DungeonEntityRef(EntityId.DRAKE, count: 8),
+            DungeonEntityRef(EntityId.CALDERA_LESSER_DEMON, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Obsidian Spires",
+          entities: [
+            DungeonEntityRef(EntityId.DRAKE, count: 12),
+            DungeonEntityRef(EntityId.IRON_GOLEM, count: 12),
+            DungeonEntityRef(EntityId.CALDERA_GREATER_DEMON, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Lava Lake",
+          entities: [
+            DungeonEntityRef(EntityId.IRON_GOLEM, count: 10),
+            DungeonEntityRef(EntityId.FIRE_ELEMENTAL, count: 14),
+            DungeonEntityRef(EntityId.CALDERA_DRAGON, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
   // ── TRANSIENT · a discovered entrance, consumed on completion ───
   GOBLIN_CAMP(
     DungeonDefinition(
       name: "Goblin Camp",
       iconAsset: "assets/images/dungeons/goblin_camp.png",
       type: DungeonType.TRANSIENT,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.IRON_BAR, lowCount: 5, highCount: 15),
+            ItemDropType(id: ItemId.OAK_LOGS, lowCount: 10, highCount: 30),
+            ItemDropType(id: ItemId.GUAM_LEAF, lowCount: 5, highCount: 15),
+          ],
+        ),
+        // the chest's exclusive at the band's two rarities, and some of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.05,
+          entries: [
+            ItemDropType(id: ItemId.CAMP_BANNER_CLOAK, rarity: Rarity.COMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.015,
+          entries: [
+            ItemDropType(id: ItemId.CAMP_BANNER_CLOAK, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.03,
+          entries: [
+            ItemDropType(id: ItemId.SERGEANTS_SHIV, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+      ],
       entries: [
         DungeonEntry(
           name: "Camp",

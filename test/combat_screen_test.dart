@@ -294,14 +294,14 @@ void main() {
       tester.element(find.byType(MapScreen)),
       listen: false,
     );
-    final rare = EntityId.CHICKEN_RARE.build() as EncounterEntity;
+    final rare = EntityId.ROTWOOD_SCARECROW_1.build() as EncounterEntity;
     session.saveGameData.worldData.zones[zoneId]!.discoveredEntities.add(rare);
 
     await tester.tap(find.byKey(ValueKey('map-node-${zoneId.name}')));
     await settle(tester);
     await tester.tap(find.text('Enter'));
     await settle(tester);
-    final tile = find.byKey(const ValueKey(EntityId.CHICKEN_RARE));
+    final tile = find.byKey(const ValueKey(EntityId.ROTWOOD_SCARECROW_1));
     await tester.scrollUntilVisible(
       tile,
       100,
@@ -318,7 +318,7 @@ void main() {
     await settle(tester);
     expect(find.byType(EncounterScreen), findsOneWidget);
 
-    final rarity = rarityBorderColor(EntityId.CHICKEN_RARE.definition.rarity);
+    final rarity = entityBorderColor(EntityId.ROTWOOD_SCARECROW_1.definition.rarity);
     expect(rarity, isNotNull);
     expect(tester.widget<StagePanel>(find.byType(StagePanel)).outline, rarity);
     final side = stageBorder(tester);

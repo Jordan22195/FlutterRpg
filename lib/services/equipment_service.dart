@@ -40,8 +40,9 @@ class EquipmentService {
   }
 
   /// What [item] demands of the player before it can be worn, or null when
-  /// nothing does — a piece with no material behind it (jewellery, a boss
-  /// drop, a stone axe) asks for level 0, which is not a requirement.
+  /// nothing does — jewellery, a stone axe, or a unique no stronger than
+  /// copper asks for level 0, which is not a requirement. A stronger boss
+  /// unique asks for the level of the material its rung is worth.
   ///
   /// The skill comes from what the piece *is* and the level from what it is
   /// *made of*: a mithril sword asks for attack at mithril's level where a

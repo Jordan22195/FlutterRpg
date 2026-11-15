@@ -487,7 +487,7 @@ class CraftingSystem {
   }
 
   /// The crafts' worth of output one bonus-output craft at [tier] pays.
-  static int bonusOutputFor(Rarity tier) => tier.index + 1;
+  static int bonusOutputFor(Rarity tier) => tier.rung + 1;
 
   /// Rolls the quality tier for a crafted piece of equipment. Common is
   /// always the most likely outcome; levels above the recipe requirement
@@ -593,7 +593,7 @@ class CraftingSystem {
       qualityEntries(skillLevel, levelRequirement),
     );
     return [
-      for (final quality in Rarity.values)
+      for (final quality in Rarity.ladder)
         RecipeOutcomeChance(
           // common's label is empty, since it is the unprefixed name
           label: quality.label.isEmpty ? 'Common' : quality.label,
@@ -615,7 +615,7 @@ class CraftingSystem {
     final perCraft = recipe.output.first.count;
     final itemId = recipe.output.first.id;
     return [
-      for (final tier in Rarity.values)
+      for (final tier in Rarity.ladder)
         RecipeOutcomeChance(
           label:
               '${bonusOutputFor(tier) * perCraft}x ${itemId.definition.name}',

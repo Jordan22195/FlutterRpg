@@ -286,6 +286,32 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     gatherTintBorder: Color(0xFF294045),
   );
 
+  /// Mistgrave Hollow: fog lying grey-green over dark slate headstones, and
+  /// the pale green of a grave lantern as the accent.
+  static const mistgrave = ZonePalette(
+    bg: Color(0xFF0B0F0E),
+    surface: Color(0xFF141A19),
+    surfaceSunken: Color(0xFF101514),
+    raised: Color(0xFF1F2826),
+    track: Color(0xFF19211F),
+    border: Color(0xFF1B2422),
+    borderStrong: Color(0xFF2A3633),
+    borderOverArt: Color(0xFF3A4844),
+    divider: Color(0xFF172020),
+    text: Color(0xFFDDE8E3),
+    textMuted: Color(0xFF98A9A3),
+    // ~38% of the way from textMuted to text
+    textSubtitle: Color(0xFFB2C1BB),
+    textNavInactive: Color(0xFF889993),
+    chevron: Color(0xFF71827C),
+    accent: Color(0xFFB8F0C8),
+    onAccent: Color(0xFF0C2013),
+    accentLip: Color(0xFF6FA882),
+    titleShadow: Color(0xFF040606),
+    gatherTintFill: Color(0xFF132320),
+    gatherTintBorder: Color(0xFF2A4540),
+  );
+
   /// Iron Gate City: the night-purple shadows behind the brick, the gold
   /// dome as the accent.
   static const ironGateCity = ZonePalette(
@@ -384,6 +410,154 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF0A0507),
     gatherTintFill: Color(0xFF122526),
     gatherTintBorder: Color(0xFF294545),
+  );
+
+  /// Greyspine Mountain: the slate blue of granite in shade, the high sky over
+  /// the snowline as the accent.
+  static const greyspine = ZonePalette(
+    bg: Color(0xFF0C0E12),
+    surface: Color(0xFF15181F),
+    surfaceSunken: Color(0xFF111318),
+    raised: Color(0xFF232630),
+    track: Color(0xFF1D2028),
+    border: Color(0xFF1F222B),
+    borderStrong: Color(0xFF2F333F),
+    borderOverArt: Color(0xFF3E424E),
+    divider: Color(0xFF1B1E27),
+    text: Color(0xFFDFE3ED),
+    textMuted: Color(0xFFA0A4B1),
+    textSubtitle: Color(0xFFB8BCC8),
+    textNavInactive: Color(0xFF8F94A1),
+    chevron: Color(0xFF797D88),
+    accent: Color(0xFF7FB2F0),
+    onAccent: Color(0xFF07111D),
+    accentLip: Color(0xFF306EBB),
+    titleShadow: Color(0xFF05060A),
+    gatherTintFill: Color(0xFF131E26),
+    gatherTintBorder: Color(0xFF293945),
+  );
+
+  /// Ashridge Mountains: ash-dark charcoal, the ember glowing in the fissures
+  /// as the accent.
+  static const ashridge = ZonePalette(
+    bg: Color(0xFF0C0F12),
+    surface: Color(0xFF151A1F),
+    surfaceSunken: Color(0xFF101418),
+    raised: Color(0xFF222931),
+    track: Color(0xFF1C2229),
+    border: Color(0xFF1E252C),
+    borderStrong: Color(0xFF2D3640),
+    borderOverArt: Color(0xFF3D464F),
+    divider: Color(0xFF1A2127),
+    text: Color(0xFFDEE6EE),
+    textMuted: Color(0xFF9EA8B2),
+    textSubtitle: Color(0xFFB6BFC9),
+    textNavInactive: Color(0xFF8E98A2),
+    chevron: Color(0xFF77808A),
+    accent: Color(0xFFFF6B2E),
+    onAccent: Color(0xFF1D0E07),
+    accentLip: Color(0xFF933A15),
+    titleShadow: Color(0xFF05070A),
+    gatherTintFill: Color(0xFF131F26),
+    gatherTintBorder: Color(0xFF293C45),
+  );
+
+  /// Saddlegate: the cold slate of the pass, the brick of its chimneys as the
+  /// accent.
+  static const saddlegate = ZonePalette(
+    bg: Color(0xFF0C0D12),
+    surface: Color(0xFF15171F),
+    surfaceSunken: Color(0xFF111218),
+    raised: Color(0xFF232630),
+    track: Color(0xFF1D1F28),
+    border: Color(0xFF1F212B),
+    borderStrong: Color(0xFF2F323F),
+    borderOverArt: Color(0xFF3E424E),
+    divider: Color(0xFF1B1D27),
+    text: Color(0xFFDFE2ED),
+    textMuted: Color(0xFFA0A3B1),
+    textSubtitle: Color(0xFFB8BBC8),
+    textNavInactive: Color(0xFF8F93A1),
+    chevron: Color(0xFF797C88),
+    accent: Color(0xFFE07A4F),
+    onAccent: Color(0xFF1D0E07),
+    accentLip: Color(0xFF824328),
+    titleShadow: Color(0xFF05060A),
+    gatherTintFill: Color(0xFF131F26),
+    gatherTintBorder: Color(0xFF293C45),
+  );
+
+  /// Frostcrown Peaks: deep glacier navy, ice cyan as the accent.
+  static const frostcrown = ZonePalette(
+    bg: Color(0xFF0B0E14),
+    surface: Color(0xFF131821),
+    surfaceSunken: Color(0xFF0F131A),
+    raised: Color(0xFF1F2734),
+    track: Color(0xFF1A202B),
+    border: Color(0xFF1C222E),
+    borderStrong: Color(0xFF2A3343),
+    borderOverArt: Color(0xFF3A4353),
+    divider: Color(0xFF181E2A),
+    text: Color(0xFFDCE3F0),
+    textMuted: Color(0xFF9BA4B5),
+    textSubtitle: Color(0xFFB3BCCC),
+    textNavInactive: Color(0xFF8A94A6),
+    chevron: Color(0xFF747D8D),
+    accent: Color(0xFF7FE6FF),
+    onAccent: Color(0xFF07191D),
+    accentLip: Color(0xFF1FB6DA),
+    titleShadow: Color(0xFF05070A),
+    gatherTintFill: Color(0xFF132126),
+    gatherTintBorder: Color(0xFF293E45),
+  );
+
+  /// Stormcrown Peaks: storm-cloud blue-grey, the pale violet of the lightning
+  /// as the accent.
+  static const stormcrown = ZonePalette(
+    bg: Color(0xFF0B0E13),
+    surface: Color(0xFF141820),
+    surfaceSunken: Color(0xFF101319),
+    raised: Color(0xFF212632),
+    track: Color(0xFF1B202A),
+    border: Color(0xFF1D222D),
+    borderStrong: Color(0xFF2C3241),
+    borderOverArt: Color(0xFF3C4251),
+    divider: Color(0xFF191E28),
+    text: Color(0xFFDDE3EF),
+    textMuted: Color(0xFF9DA4B3),
+    textSubtitle: Color(0xFFB5BBCA),
+    textNavInactive: Color(0xFF8D94A3),
+    chevron: Color(0xFF767C8B),
+    accent: Color(0xFFC3B5FF),
+    onAccent: Color(0xFF0B071D),
+    accentLip: Color(0xFF684AE5),
+    titleShadow: Color(0xFF05060A),
+    gatherTintFill: Color(0xFF131E26),
+    gatherTintBorder: Color(0xFF293945),
+  );
+
+  /// Moltenspire Peaks: scorched crimson-black, molten gold as the accent.
+  static const moltenspire = ZonePalette(
+    bg: Color(0xFF130B0C),
+    surface: Color(0xFF211415),
+    surfaceSunken: Color(0xFF1A0F10),
+    raised: Color(0xFF332022),
+    track: Color(0xFF2A1B1C),
+    border: Color(0xFF2D1C1E),
+    borderStrong: Color(0xFF422B2D),
+    borderOverArt: Color(0xFF523B3D),
+    divider: Color(0xFF29191A),
+    text: Color(0xFFF0DDDE),
+    textMuted: Color(0xFFB49C9E),
+    textSubtitle: Color(0xFFCBB4B6),
+    textNavInactive: Color(0xFFA48C8E),
+    chevron: Color(0xFF8C7577),
+    accent: Color(0xFFFFB02E),
+    onAccent: Color(0xFF1D1507),
+    accentLip: Color(0xFF936415),
+    titleShadow: Color(0xFF0A0505),
+    gatherTintFill: Color(0xFF132226),
+    gatherTintBorder: Color(0xFF294145),
   );
 
   @override

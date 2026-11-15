@@ -30,8 +30,32 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
 
   /// A weapon splits by what it is, not what it is made of: copper is a
   /// defensive metal, and a copper sword is still an attacking weapon.
+  ///
+  /// A smithed fighting weapon — a metal dagger, sword or greatsword —
+  /// carries its rung's budget as Attack on top of its damage. Tools, the
+  /// material-less uniques and shapes with a split of their own keep their
+  /// type's.
   @override
-  Map<SkillId, int> get defaultStatWeights => weaponType.parameters.statWeight;
+  Map<SkillId, int> get defaultStatWeights {
+    final type = weaponType.parameters;
+    if (type.statWeight.isEmpty && isSmithedCombatWeapon) {
+      return const {SkillId.ATTACK: 1};
+    }
+    return type.statWeight;
+  }
+
+  /// A smithed weapon's Attack is priced off its metal, not its shape: the
+  /// shape already buys a slower, harder swing, and every shape of a metal
+  /// is meant to land the same damage per second.
+  @override
+  int get budgetRung => isSmithedCombatWeapon ? materialRung : fibLevel;
+
+  /// Whether this is a fighting weapon forged from a metal on the ladder.
+  bool get isSmithedCombatWeapon =>
+      materialId != EquipmentMaterialId.NULL &&
+      materialId.parameters is MetalEquipmentParameters &&
+      usesDamage &&
+      skillRequirement == SkillId.ATTACK;
 
   /// Wielded with the skill its shape is wielded with — the level it asks
   /// for is still the metal's, which is why only the skill moves here.

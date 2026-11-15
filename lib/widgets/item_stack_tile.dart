@@ -21,10 +21,20 @@ import 'explore_card.dart';
 /// equipment rolled, which are one ladder. A rare vein and a rare sword are
 /// framed in the same blue. Common has no special color (falls back to the
 /// theme outline).
+/// Common's outline: a soft silver rather than pure white, so a bag full of
+/// commons doesn't glare.
+const Color kCommonBorderColor = Color(0xFFC4C4C4);
+
+/// Junk's outline: a dark, grimy taupe, well clear of common's silver so the
+/// worthless stuff reads as such at a glance.
+const Color kJunkBorderColor = Color(0xFF5F574C);
+
 Color? rarityBorderColor(Rarity rarity) {
   switch (rarity) {
+    case Rarity.JUNK:
+      return kJunkBorderColor;
     case Rarity.COMMON:
-      return null;
+      return kCommonBorderColor;
     case Rarity.UNCOMMON:
       return Colors.green;
     case Rarity.RARE:
@@ -35,6 +45,17 @@ Color? rarityBorderColor(Rarity rarity) {
       return Colors.orange;
   }
 }
+
+/// The outline an entity's portrait wears: its rarity's color, except that
+/// a common entity goes unframed. Items frame every tier, common included.
+Color? entityBorderColor(Rarity rarity) =>
+    rarity == Rarity.COMMON ? null : rarityBorderColor(rarity);
+
+/// The tint for text naming something at [rarity]: its border color, except
+/// that common keeps the default text color, since white text vanishes on a
+/// light palette.
+Color? rarityTextColor(Rarity rarity) =>
+    rarity == Rarity.COMMON ? null : rarityBorderColor(rarity);
 
 /// Opens the details for [id] that tapping its tile would: the equipment
 /// dialog, with the piece's stats, for something wearable; the item dialog
@@ -410,7 +431,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
     if (borderColor != null) return borderColor;
     final currentId = id;
     if (currentId is EntityId) {
-      return rarityBorderColor(currentId.definition.rarity);
+      return entityBorderColor(currentId.definition.rarity);
     }
     return rarityBorderColor(_effectiveQuality);
   }

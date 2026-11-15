@@ -132,7 +132,13 @@ void main() {
 
       clearFloorOnce(session, lair, 0);
       expect(dungeons.keyPaid(lair), isTrue);
-      expect(dungeons.keyCount(lair), 0);
+      // the warren's goblins can drop a fresh key; clear the bag so the
+      // reset below is the only thing that could ask for one
+      session.inventoryService.setItemCount(
+        session.saveGameData.inventoryData,
+        ItemId.GOBLIN_QUEEN_KEY,
+        0,
+      );
 
       dungeons.resetDungeon(lair);
 
@@ -201,7 +207,12 @@ void main() {
       final dungeons = session.dungeonController;
       final progress = progressOf(session);
       const grainery = DungeonId.GRAINERY;
-      // the grainery's weapons are written at uncommon
+      // every piece of gear the chest can give, at the rarity it is written
+      final written = <(ItemId, Rarity)>{
+        for (final r in grainery.definition.chestRolls)
+          for (final e in r.entries)
+            if (e.id.definition is EquipmentItemDefinition) (e.id, e.rarity),
+      };
       for (var i = 0; i < 40; i++) {
         progress.earnChest(grainery);
         progress.resetRun(grainery);
@@ -214,7 +225,9 @@ void main() {
         (l) => l.id.definition is EquipmentItemDefinition,
       );
       expect(weapons, isNotEmpty);
-      expect(weapons.map((l) => l.rarity), everyElement(Rarity.UNCOMMON));
+      for (final l in weapons) {
+        expect(written, contains((l.id, l.rarity)), reason: l.id.name);
+      }
       expect(loot.firstWhere((l) => l.id == ItemId.LOGS).rarity, Rarity.COMMON);
       session.dispose();
     });

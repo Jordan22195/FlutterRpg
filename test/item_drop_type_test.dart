@@ -14,7 +14,7 @@ import 'package:rpg/services/weighted_drop_table_service.dart';
 /// and the shape of the fight are held constant.
 const testArchetype = CombatArchetype(
   iconAsset: '',
-  fibLevel: 0,
+  lootFibLevel: 0,
   combatType: CombatType.CLOTH_DPS,
   attackInterval: 1,
 );
@@ -37,6 +37,7 @@ void main() {
       ];
       const def = CombatEntityDefinition(
         testArchetype,
+        fibLevel: 0,
         name: 'Test',
         itemDrops: drops,
       );
@@ -52,6 +53,7 @@ void main() {
     test('rolls the drop itself, quality and all', () {
       const def = CombatEntityDefinition(
         testArchetype,
+        fibLevel: 0,
         name: 'Test',
         itemDrops: [
           ItemDropType(id: ItemId.FISHBONE_DAGGER, rarity: Rarity.UNCOMMON),
@@ -67,6 +69,7 @@ void main() {
     test('keeps one item at two qualities as two drops', () {
       const def = CombatEntityDefinition(
         testArchetype,
+        fibLevel: 0,
         name: 'Test',
         itemDrops: [
           ItemDropType(id: ItemId.FISHBONE_DAGGER, weight: 1),

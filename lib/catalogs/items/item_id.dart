@@ -54,6 +54,7 @@ enum ItemId {
   // byproducts nobody wants and hides nobody has tanned yet
   BURNT_FOOD(
     ItemDefinition(
+      quality: Rarity.JUNK,
       name: "Burnt Food",
       value: 1,
       iconAsset: "assets/icons/items/burnt_food.png",
@@ -61,6 +62,7 @@ enum ItemId {
   ),
   COW_HIDE(
     ItemDefinition(
+      quality: Rarity.JUNK,
       name: "Cow Hide",
       value: 1,
       iconAsset: "assets/icons/items/cow_hide.png",
@@ -68,6 +70,7 @@ enum ItemId {
   ),
   ANIMAL_PELT(
     ItemDefinition(
+      quality: Rarity.JUNK,
       name: "Fur Pelt",
       value: 1,
       iconAsset: "assets/icons/items/fur_pelt.png",
@@ -75,6 +78,7 @@ enum ItemId {
   ),
   WOLF_PELT(
     ItemDefinition(
+      quality: Rarity.JUNK,
       name: "Wolf Pelt",
       value: 1,
       iconAsset: "assets/icons/items/wolf_pelt.png",
@@ -82,6 +86,7 @@ enum ItemId {
   ),
   BEAR_HIDE(
     ItemDefinition(
+      quality: Rarity.JUNK,
       name: "Bear Hide",
       value: 1,
       iconAsset: "assets/icons/items/bear_hide.png",
@@ -90,10 +95,49 @@ enum ItemId {
   // the Murkjaw's hide: tough, scaled and held for a crafting use to come
   MURKJAW_HIDE(
     ItemDefinition(
+      quality: Rarity.JUNK,
       name: "Murkjaw Hide",
       value: 30,
       description: "Thick, scaled and still smelling of the bog.",
       iconAsset: "assets/icons/items/murkjaw_hide.png",
+    ),
+  ),
+
+  // what a line drags up instead of a fish: worth nothing, sold for a coin
+  OLD_BOOT(
+    ItemDefinition(
+      quality: Rarity.JUNK,
+      name: "Old Boot",
+      value: 1,
+      description: "Waterlogged and missing its partner.",
+      iconAsset: "assets/icons/items/old_boot.png",
+    ),
+  ),
+  TIN_CAN(
+    ItemDefinition(
+      quality: Rarity.JUNK,
+      name: "Tin Can",
+      value: 1,
+      description: "Rusted through. Something used to live in it.",
+      iconAsset: "assets/icons/items/tin_can.png",
+    ),
+  ),
+  TANGLED_LINE(
+    ItemDefinition(
+      quality: Rarity.JUNK,
+      name: "Tangled Line",
+      value: 1,
+      description: "Someone else's lost tackle, knotted past saving.",
+      iconAsset: "assets/icons/items/tangled_line.png",
+    ),
+  ),
+  SODDEN_DRIFTWOOD(
+    ItemDefinition(
+      quality: Rarity.JUNK,
+      name: "Sodden Driftwood",
+      value: 1,
+      description: "Too wet to burn and too soft to carve.",
+      iconAsset: "assets/icons/items/sodden_driftwood.png",
     ),
   ),
 
@@ -134,6 +178,23 @@ enum ItemId {
       name: "Maple Logs",
       value: 25,
       iconAsset: "assets/icons/items/maple_logs.png",
+    ),
+  ),
+  // the Old Yew Grove's wood, past the maple
+  YEW_LOGS(
+    ItemDefinition(
+      name: "Yew Logs",
+      value: 50,
+      iconAsset: "assets/icons/items/yew_logs.png",
+    ),
+  ),
+  // Witchlight Grove's wood, the top of the ladder
+  MAGIC_LOGS(
+    ItemDefinition(
+      name: "Magic Logs",
+      value: 100,
+      description: "Faintly warm, and lighter than wood should be.",
+      iconAsset: "assets/icons/items/magic_logs.png",
     ),
   ),
 
@@ -679,6 +740,58 @@ enum ItemId {
     ),
   ),
 
+  // the waters' alchemy reagents, one per fishing spot, pulled up now and
+  // then in place of nothing and lining that water's sunken cache. The
+  // marsh has none of its own here: its leech and frog come up as catches
+  LILY_PAD(
+    ItemDefinition(
+      name: "Lily Pad",
+      value: 6,
+      description: "Broad, waxy and cool. Settles a cook's nerves.",
+      iconAsset: "assets/icons/items/lily_pad.png",
+    ),
+  ),
+  CREEK_MOSS(
+    ItemDefinition(
+      name: "Creek Moss",
+      value: 8,
+      description: "A green fist of it, torn off a streambed stone.",
+      iconAsset: "assets/icons/items/creek_moss.png",
+    ),
+  ),
+  FRESHWATER_MUSSEL(
+    ItemDefinition(
+      name: "Freshwater Mussel",
+      value: 20,
+      description: "Clamped shut on whatever it found.",
+      iconAsset: "assets/icons/items/freshwater_mussel.png",
+    ),
+  ),
+  DUCKWEED(
+    ItemDefinition(
+      name: "Duckweed",
+      value: 30,
+      description: "A dripping mat of tiny leaves, thick as felt.",
+      iconAsset: "assets/icons/items/duckweed.png",
+    ),
+  ),
+  LAKE_SPONGE(
+    ItemDefinition(
+      name: "Lake Sponge",
+      value: 45,
+      description: "Soft, pale and full of cold deep water.",
+      iconAsset: "assets/icons/items/lake_sponge.png",
+    ),
+  ),
+  SEA_KELP(
+    ItemDefinition(
+      name: "Sea Kelp",
+      value: 55,
+      description: "A long ribbon of brown kelp, slick with salt.",
+      iconAsset: "assets/icons/items/sea_kelp.png",
+    ),
+  ),
+
   // ── FIRE REAGENTS ───────────────────────────────────────────────
   // FireReagentDefinition, firemaking level ascending. Woodcutting's side
   // drops: three off the tree, four off the oak, and all seven off every
@@ -756,10 +869,87 @@ enum ItemId {
     ),
   ),
 
+  // the waters' fire reagents, one per fishing spot. Every wood reagent
+  // already holds a combat stat, so these buff the skills instead, on the
+  // Fibonacci rungs past the oak's 13
+  CATTAIL_FLUFF(
+    FireReagentDefinition(
+      name: "Cattail Fluff",
+      value: 4,
+      stat: SkillId.FISHING,
+      levelRequirement: 21,
+      description:
+          "Burst seed-heads that catch in a breath. The smoke smells of the pond.",
+      iconAsset: "assets/icons/items/cattail_fluff.png",
+    ),
+  ),
+  DRIED_REEDS(
+    FireReagentDefinition(
+      name: "Dried Reeds",
+      value: 4,
+      stat: SkillId.COOKING,
+      levelRequirement: 21,
+      description: "A bundle of creek reeds, dry enough to crackle.",
+      iconAsset: "assets/icons/items/dried_reeds.png",
+    ),
+  ),
+  RIVER_DRIFTWOOD(
+    FireReagentDefinition(
+      name: "River Driftwood",
+      value: 8,
+      stat: SkillId.WOODCUTTING,
+      levelRequirement: 34,
+      description: "Grey and smooth, worn bare by the current.",
+      iconAsset: "assets/icons/items/river_driftwood.png",
+    ),
+  ),
+  PEAT_CLOD(
+    FireReagentDefinition(
+      name: "Peat Clod",
+      value: 8,
+      stat: SkillId.HERBALISM,
+      levelRequirement: 34,
+      description: "Dense black bog earth that smoulders for hours.",
+      iconAsset: "assets/icons/items/peat_clod.png",
+    ),
+  ),
+  DRIED_RUSHES(
+    FireReagentDefinition(
+      name: "Dried Rushes",
+      value: 14,
+      stat: SkillId.MINING,
+      levelRequirement: 55,
+      description: "Stiff lake rushes that burn hot and fast.",
+      iconAsset: "assets/icons/items/dried_rushes.png",
+    ),
+  ),
+  BONE_CORAL(
+    FireReagentDefinition(
+      name: "Bleached Bone Coral",
+      value: 20,
+      stat: SkillId.ALCHEMY,
+      levelRequirement: 55,
+      description: "Chalk-white and brittle. Its smoke burns blue.",
+      iconAsset: "assets/icons/items/bone_coral.png",
+    ),
+  ),
+  AMBERGRIS(
+    FireReagentDefinition(
+      name: "Ambergris",
+      value: 40,
+      stat: SkillId.EXPLORATION,
+      levelRequirement: 89,
+      description:
+          "A waxy grey lump from the deep. Its smoke carries a long way.",
+      iconAsset: "assets/icons/items/ambergris.png",
+    ),
+  ),
+
   // ── BIRD'S NESTS ────────────────────────────────────────────────
   // Woodcutting's treasure chests, tree tier ascending. Opened from the
-  // bag; what is inside is in birds_nests.dart. The Sturdy, Gilded and
-  // Enchanted nests wait on the maple, yew and magic trees.
+  // bag; what is inside is birdsNestRolls in drop_tables.dart. One nest a
+  // tier of Woodcutter's gear: small and woven off the low trees, sturdy
+  // off the maple, gilded off the yew, enchanted off the magic tree.
   SMALL_BIRDS_NEST(
     ItemDefinition(
       name: "Small Bird's Nest",
@@ -774,6 +964,30 @@ enum ItemId {
       value: 60,
       description: "Tightly woven and heavier than it looks.",
       iconAsset: "assets/icons/items/woven_birds_nest.png",
+    ),
+  ),
+  STURDY_BIRDS_NEST(
+    ItemDefinition(
+      name: "Sturdy Bird's Nest",
+      value: 150,
+      description: "Built of maple twigs to last a dozen springs.",
+      iconAsset: "assets/icons/items/sturdy_birds_nest.png",
+    ),
+  ),
+  GILDED_BIRDS_NEST(
+    ItemDefinition(
+      name: "Gilded Bird's Nest",
+      value: 400,
+      description: "Some magpie has lined it with gold thread.",
+      iconAsset: "assets/icons/items/gilded_birds_nest.png",
+    ),
+  ),
+  ENCHANTED_BIRDS_NEST(
+    ItemDefinition(
+      name: "Enchanted Bird's Nest",
+      value: 1000,
+      description: "It hums softly, and the eggs inside never hatch.",
+      iconAsset: "assets/icons/items/enchanted_birds_nest.png",
     ),
   ),
 
@@ -826,6 +1040,77 @@ enum ItemId {
       quality: Rarity.LEGENDARY,
       description: "Warm to the touch, and faintly glowing.",
       iconAsset: "assets/icons/items/radiant_geode.png",
+    ),
+  ),
+
+  // ── SUNKEN CACHES ───────────────────────────────────────────────
+  // Fishing's treasure chests, opened from the bag like a geode. One per
+  // body of water, its quality the water's tier: inside are that water's
+  // own reagents, its cooked fish, a fishing potion, now and then a
+  // scouting map of the zone it lies in, and a long shot at the Fisher's
+  // set of the matching tier. Contents are sunkenCacheRolls in
+  // drop_tables.dart.
+  POND_CACHE(
+    ItemDefinition(
+      name: "Silted Tackle Box",
+      value: 20,
+      quality: Rarity.COMMON,
+      description: "Someone's lost tackle box, clogged with pond silt.",
+      iconAsset: "assets/icons/items/pond_cache.png",
+    ),
+  ),
+  CREEK_CACHE(
+    ItemDefinition(
+      name: "Mossy Creek Cache",
+      value: 30,
+      quality: Rarity.COMMON,
+      description: "A little tin box, green with moss, wedged under a stone.",
+      iconAsset: "assets/icons/items/creek_cache.png",
+    ),
+  ),
+  RIVER_CACHE(
+    ItemDefinition(
+      name: "Rusted River Cache",
+      value: 70,
+      quality: Rarity.UNCOMMON,
+      description: "A rusted lockbox the current rolled downstream.",
+      iconAsset: "assets/icons/items/river_cache.png",
+    ),
+  ),
+  MARSH_CACHE(
+    ItemDefinition(
+      name: "Bog-Sunk Cache",
+      value: 80,
+      quality: Rarity.UNCOMMON,
+      description: "Black with peat and heavier than it should be.",
+      iconAsset: "assets/icons/items/marsh_cache.png",
+    ),
+  ),
+  SMALL_LAKE_CACHE(
+    ItemDefinition(
+      name: "Silt-Crusted Chest",
+      value: 160,
+      quality: Rarity.RARE,
+      description: "A small chest, crusted shut with lake silt.",
+      iconAsset: "assets/icons/items/small_lake_cache.png",
+    ),
+  ),
+  LAKE_CACHE(
+    ItemDefinition(
+      name: "Waterlogged Strongbox",
+      value: 400,
+      quality: Rarity.EPIC,
+      description: "Iron-banded and swollen with lake water.",
+      iconAsset: "assets/icons/items/lake_cache.png",
+    ),
+  ),
+  OCEAN_CACHE(
+    ItemDefinition(
+      name: "Barnacled Sea Chest",
+      value: 1000,
+      quality: Rarity.LEGENDARY,
+      description: "Crusted in barnacles. Something rattles inside.",
+      iconAsset: "assets/icons/items/ocean_cache.png",
     ),
   ),
 
@@ -1161,6 +1446,70 @@ enum ItemId {
     ),
   ),
 
+  // The waters' potions: a herb of each tier and a fishing spot's reagent,
+  // at that tier's strength. The lake's sponge makes the greater fishing
+  // potion the prairie had no water for
+  MINOR_COOKING_POTION(
+    BuffItemDefinition(
+      name: "Minor Cooking Potion",
+      value: 14,
+      skillBonus: {SkillId.COOKING: 5},
+      duration: Duration(minutes: 3),
+      description: "Guam and a lily pad. Burns a little less.",
+      iconAsset: "assets/icons/items/minor_cooking_potion.png",
+    ),
+  ),
+  MINOR_WOODCUTTING_POTION(
+    BuffItemDefinition(
+      name: "Minor Woodcutting Potion",
+      value: 16,
+      skillBonus: {SkillId.WOODCUTTING: 5},
+      duration: Duration(minutes: 3),
+      description: "Guam and creek moss. Bites a little deeper.",
+      iconAsset: "assets/icons/items/minor_woodcutting_potion.png",
+    ),
+  ),
+  COOKING_POTION(
+    BuffItemDefinition(
+      name: "Cooking Potion",
+      value: 90,
+      skillBonus: {SkillId.COOKING: 10},
+      duration: Duration(minutes: 3),
+      description: "Harralander and a mussel. A cook's steady hand.",
+      iconAsset: "assets/icons/items/cooking_potion.png",
+    ),
+  ),
+  WOODSMANS_POTION(
+    BuffItemDefinition(
+      name: "Woodsman's Potion",
+      value: 150,
+      skillBonus: {SkillId.WOODCUTTING: 13},
+      duration: Duration(minutes: 3),
+      description: "Sweetgrass and duckweed. Every swing finds the grain.",
+      iconAsset: "assets/icons/items/woodsmans_potion.png",
+    ),
+  ),
+  EXPLORERS_POTION(
+    BuffItemDefinition(
+      name: "Explorer's Potion",
+      value: 170,
+      skillBonus: {SkillId.EXPLORATION: 13},
+      duration: Duration(minutes: 3),
+      description: "Sweetgrass and sea kelp. The horizon looks closer.",
+      iconAsset: "assets/icons/items/explorers_potion.png",
+    ),
+  ),
+  GREATER_FISHING_POTION(
+    BuffItemDefinition(
+      name: "Greater Fishing Potion",
+      value: 260,
+      skillBonus: {SkillId.FISHING: 21},
+      duration: Duration(minutes: 3),
+      description: "Bluestem and a lake sponge. The deep water comes to you.",
+      iconAsset: "assets/icons/items/greater_fishing_potion.png",
+    ),
+  ),
+
   // ── RAW FOOD · MEAT ─────────────────────────────────────────────
   // level ascending
   CHICKEN_MEAT(
@@ -1214,7 +1563,7 @@ enum ItemId {
       name: "Crayfish",
       value: 2,
       iconAsset: "assets/icons/items/crayfish.png",
-      xpValue: 3,
+      xpValue: 6,
     ),
   ),
   BLUEGILL(
@@ -1222,7 +1571,7 @@ enum ItemId {
       name: "Bluegill",
       value: 3,
       iconAsset: "assets/icons/items/bluegill.png",
-      xpValue: 3,
+      xpValue: 6,
     ),
   ),
   TROUT(
@@ -1230,7 +1579,7 @@ enum ItemId {
       name: "Trout",
       value: 5,
       iconAsset: "assets/icons/items/trout.png",
-      xpValue: 4,
+      xpValue: 8,
     ),
   ),
   PIKE(
@@ -1238,7 +1587,7 @@ enum ItemId {
       name: "Pike",
       value: 7,
       iconAsset: "assets/icons/items/pike.png",
-      xpValue: 5,
+      xpValue: 28,
     ),
   ),
   // the marsh's catch, the River's level-20 equivalent
@@ -1247,7 +1596,7 @@ enum ItemId {
       name: "Bog Eel",
       value: 7,
       iconAsset: "assets/icons/items/bog_eel.png",
-      xpValue: 5,
+      xpValue: 40,
     ),
   ),
   SALMON(
@@ -1255,7 +1604,7 @@ enum ItemId {
       name: "Salmon",
       value: 10,
       iconAsset: "assets/icons/items/salmon.png",
-      xpValue: 6,
+      xpValue: 33,
     ),
   ),
   CATFISH(
@@ -1263,7 +1612,7 @@ enum ItemId {
       name: "Catfish",
       value: 15,
       iconAsset: "assets/icons/items/catfish.png",
-      xpValue: 8,
+      xpValue: 150,
     ),
   ),
   BASS(
@@ -1271,7 +1620,7 @@ enum ItemId {
       name: "Bass",
       value: 20,
       iconAsset: "assets/icons/items/bass.png",
-      xpValue: 8,
+      xpValue: 150,
     ),
   ),
   WHITEFISH(
@@ -1279,7 +1628,7 @@ enum ItemId {
       name: "Whitefish",
       value: 25,
       iconAsset: "assets/icons/items/whitefish.png",
-      xpValue: 10,
+      xpValue: 470,
     ),
   ),
   STURGEON(
@@ -1287,7 +1636,7 @@ enum ItemId {
       name: "Sturgeon",
       value: 27,
       iconAsset: "assets/icons/items/sturgeon.png",
-      xpValue: 12,
+      xpValue: 565,
     ),
   ),
   TUNA(
@@ -1295,7 +1644,7 @@ enum ItemId {
       name: "Tuna",
       value: 30,
       iconAsset: "assets/icons/items/tuna.png",
-      xpValue: 15,
+      xpValue: 2150,
     ),
   ),
   SWORDFISH(
@@ -1303,7 +1652,7 @@ enum ItemId {
       name: "Swordfish",
       value: 50,
       iconAsset: "assets/icons/items/swordfish.png",
-      xpValue: 16,
+      xpValue: 2295,
     ),
   ),
   SHARK(
@@ -1311,7 +1660,7 @@ enum ItemId {
       name: "Shark",
       value: 100,
       iconAsset: "assets/icons/items/shark.png",
-      xpValue: 18,
+      xpValue: 2580,
     ),
   ),
 
@@ -2301,6 +2650,122 @@ enum ItemId {
       iconAsset: "assets/images/entities/bog_bonfire.png",
     ),
   ),
+  // Tiers 4 to 6: maple, yew and magic, each one rung up the ladder from
+  // the wood below it.
+  MAPLE_COOKFIRE(
+    FireItemDefinition(
+      name: "Maple Cookfire",
+      value: 45,
+      skillBonus: {SkillId.COOKING: 13, SkillId.HITPOINTS: 13},
+      duration: Duration(minutes: 13),
+      canCook: true,
+      description: "Cooks food. +13 cooking and hitpoints while it burns.",
+      iconAsset: "assets/images/entities/maple_cookfire.png",
+    ),
+  ),
+  MAPLE_CAMPFIRE(
+    FireItemDefinition(
+      name: "Maple Campfire",
+      value: 55,
+      skillBonus: {},
+      duration: Duration(minutes: 21),
+      power: 21,
+      reagentBurn: Duration(minutes: 5),
+      description: "Kindling thrown on gives +21 to its stat for 5 minutes.",
+      iconAsset: "assets/images/entities/maple_campfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE(
+    FireItemDefinition(
+      name: "Maple Bonfire",
+      value: 180,
+      skillBonus: {},
+      duration: Duration(minutes: 34),
+      power: 21,
+      stokes: true,
+      reagentBurn: Duration(minutes: 3),
+      description:
+          "Stoke it hot: kindling thrown on gives up to +55 to its "
+          "stat for 3 minutes, cooling back down when the logs stop.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  YEW_COOKFIRE(
+    FireItemDefinition(
+      name: "Yew Cookfire",
+      value: 95,
+      skillBonus: {SkillId.COOKING: 21, SkillId.HITPOINTS: 21},
+      duration: Duration(minutes: 21),
+      canCook: true,
+      description: "Cooks food. +21 cooking and hitpoints while it burns.",
+      iconAsset: "assets/images/entities/yew_cookfire.png",
+    ),
+  ),
+  YEW_CAMPFIRE(
+    FireItemDefinition(
+      name: "Yew Campfire",
+      value: 115,
+      skillBonus: {},
+      duration: Duration(minutes: 34),
+      power: 34,
+      reagentBurn: Duration(minutes: 5),
+      description: "Kindling thrown on gives +34 to its stat for 5 minutes.",
+      iconAsset: "assets/images/entities/yew_campfire.png",
+    ),
+  ),
+  YEW_BONFIRE(
+    FireItemDefinition(
+      name: "Yew Bonfire",
+      value: 380,
+      skillBonus: {},
+      duration: Duration(minutes: 55),
+      power: 34,
+      stokes: true,
+      reagentBurn: Duration(minutes: 3),
+      description:
+          "Stoke it hot: kindling thrown on gives up to +89 to its "
+          "stat for 3 minutes, cooling back down when the logs stop.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  MAGIC_COOKFIRE(
+    FireItemDefinition(
+      name: "Magic Cookfire",
+      value: 200,
+      skillBonus: {SkillId.COOKING: 34, SkillId.HITPOINTS: 34},
+      duration: Duration(minutes: 34),
+      canCook: true,
+      description: "Cooks food. +34 cooking and hitpoints while it burns.",
+      iconAsset: "assets/images/entities/magic_cookfire.png",
+    ),
+  ),
+  MAGIC_CAMPFIRE(
+    FireItemDefinition(
+      name: "Magic Campfire",
+      value: 240,
+      skillBonus: {},
+      duration: Duration(minutes: 55),
+      power: 55,
+      reagentBurn: Duration(minutes: 5),
+      description: "Kindling thrown on gives +55 to its stat for 5 minutes.",
+      iconAsset: "assets/images/entities/magic_campfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE(
+    FireItemDefinition(
+      name: "Magic Bonfire",
+      value: 800,
+      skillBonus: {},
+      duration: Duration(minutes: 89),
+      power: 55,
+      stokes: true,
+      reagentBurn: Duration(minutes: 3),
+      description:
+          "Stoke it hot: kindling thrown on gives up to +144 to its "
+          "stat for 3 minutes, cooling back down when the logs stop.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
 
   // ── ARMOR · HELMET ─────────────────────────────────────────────
   // tier ascending
@@ -3047,6 +3512,7 @@ enum ItemId {
       fibLevel: 1,
       statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
       iconAsset: "assets/icons/items/bracers_of_the_wolf.png",
+      ungated: true,
     ),
   ),
 
@@ -3060,6 +3526,7 @@ enum ItemId {
       fibLevel: 1,
       statWeights: {SkillId.DEFENCE: 2},
       iconAsset: "assets/icons/items/wool_cloak.png",
+      ungated: true,
     ),
   ),
   LINEN_CAPE(
@@ -3070,6 +3537,7 @@ enum ItemId {
       fibLevel: 2,
       statWeights: {SkillId.DEFENCE: 3},
       iconAsset: "assets/icons/items/linen_cape.png",
+      ungated: true,
     ),
   ),
 
@@ -3080,9 +3548,8 @@ enum ItemId {
   // +3, +5, +8, +13 a common piece — and asks for 1, 20, 40, 60 or 80 in it
   // (see SkillingGearTier). By skill, then tier, then slot.
   //
-  // The basic fisher's boots, hat and tunic drop off the Wolf Den's bosses;
-  // the pants, gloves and cloak rotate through the trading post, whose
-  // markup puts them at 1,000 coins. Nothing else has a source yet
+  // The Fisher's set comes only out of sunken caches, each tier from the
+  // caches of the waters at its level (see sunkenCacheRolls)
   BASIC_FISHERS_HAT(
     SkillingGearDefinition(
       armorSlot: ArmorSlots.HEAD,
@@ -6699,16 +7166,15 @@ enum ItemId {
     ),
   ),
   // ── ARMOUR · WOLF DEN SET ──────────────────────────────────────
-  // Heavy leather's stats at every slot, plus speed on top: +1 on the
-  // minor slots (helm, cloak, gloves, boots), +2 on the major ones (chest,
-  // legs). The minors drop off the den's bosses, the majors from its chest.
+  // Heavy leather split with speed: the combat stat always leads, speed
+  // rides second. The minors drop off the den's bosses, the majors from its chest.
   WOLF_DEN_HELM(
     EquipmentItemDefinition(
       armorSlot: ArmorSlots.HEAD,
       name: "Wolf Den Helm",
       value: 200,
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
       materialId: EquipmentMaterialId.HEAVY_LEATHER,
-      bonusStats: {SkillId.SPEED: 1},
       iconAsset: "assets/icons/items/heavy_leather_coif.png",
     ),
   ),
@@ -6717,8 +7183,8 @@ enum ItemId {
       armorSlot: ArmorSlots.BACK,
       name: "Wolf Den Cloak",
       value: 200,
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
       materialId: EquipmentMaterialId.HEAVY_LEATHER,
-      bonusStats: {SkillId.SPEED: 1},
       iconAsset: "assets/icons/items/wool_cloak.png",
     ),
   ),
@@ -6727,8 +7193,8 @@ enum ItemId {
       armorSlot: ArmorSlots.HANDS,
       name: "Wolf Den Gloves",
       value: 200,
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
       materialId: EquipmentMaterialId.HEAVY_LEATHER,
-      bonusStats: {SkillId.SPEED: 1},
       iconAsset: "assets/icons/items/heavy_leather_gloves.png",
     ),
   ),
@@ -6737,8 +7203,8 @@ enum ItemId {
       armorSlot: ArmorSlots.FEET,
       name: "Wolf Den Boots",
       value: 200,
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
       materialId: EquipmentMaterialId.HEAVY_LEATHER,
-      bonusStats: {SkillId.SPEED: 1},
       iconAsset: "assets/icons/items/heavy_leather_boots.png",
     ),
   ),
@@ -6747,8 +7213,8 @@ enum ItemId {
       armorSlot: ArmorSlots.CHEST,
       name: "Wolf Den Chestguard",
       value: 600,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.SPEED: 1},
       materialId: EquipmentMaterialId.HEAVY_LEATHER,
-      bonusStats: {SkillId.SPEED: 2},
       iconAsset: "assets/icons/items/heavy_leather_chest.png",
     ),
   ),
@@ -6757,8 +7223,8 @@ enum ItemId {
       armorSlot: ArmorSlots.LEGS,
       name: "Wolf Den Legguards",
       value: 400,
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
       materialId: EquipmentMaterialId.HEAVY_LEATHER,
-      bonusStats: {SkillId.SPEED: 2},
       iconAsset: "assets/icons/items/heavy_leather_pants.png",
     ),
   ),
@@ -6769,8 +7235,8 @@ enum ItemId {
       armorSlot: ArmorSlots.WRIST,
       name: "Bear Hide Bracers",
       value: 200,
+      statWeights: {SkillId.STRENGTH: 2, SkillId.RECOVERY: 1},
       materialId: EquipmentMaterialId.HEAVY_LEATHER,
-      bonusStats: {SkillId.STRENGTH: 1},
       description: "Cave bear hide, cured stiff and laced to the elbow.",
       iconAsset: "assets/icons/items/heavy_leather_bracers.png",
     ),
@@ -6780,8 +7246,8 @@ enum ItemId {
       armorSlot: ArmorSlots.WRIST,
       name: "Wolf Hide Bracers",
       value: 200,
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
       materialId: EquipmentMaterialId.HEAVY_LEATHER,
-      bonusStats: {SkillId.SPEED: 1},
       description: "Alpha wolf hide, supple enough to run in.",
       iconAsset: "assets/icons/items/heavy_leather_bracers.png",
     ),
@@ -6791,8 +7257,8 @@ enum ItemId {
       armorSlot: ArmorSlots.WAIST,
       name: "Wolf Hide Belt",
       value: 200,
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
       materialId: EquipmentMaterialId.HEAVY_LEATHER,
-      bonusStats: {SkillId.SPEED: 1},
       description: "A strip of wolf hide, pulled tight for the chase.",
       iconAsset: "assets/icons/items/heavy_leather_belt.png",
     ),
@@ -6934,7 +7400,7 @@ enum ItemId {
       name: "Wood Shield",
       value: 8,
       fibLevel: 1,
-      statWeights: {SkillId.DEFENCE: 1},
+      statWeights: {SkillId.DEFENCE: 2, SkillId.STRENGTH: 1},
       iconAsset: "assets/icons/items/wood_shield.png",
     ),
   ),
@@ -7539,7 +8005,7 @@ enum ItemId {
       name: "Chicken Charm",
       value: 150,
       fibLevel: 0,
-      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
       iconAsset: "assets/icons/items/chicken_charm.png",
     ),
   ),
@@ -7549,7 +8015,7 @@ enum ItemId {
       name: "Redcap Ring",
       value: 150,
       fibLevel: 2,
-      statWeights: {SkillId.RECOVERY: 1},
+      statWeights: {SkillId.STRENGTH: 2, SkillId.RECOVERY: 1},
       description: "A band of hardened fungus, warm to the touch.",
       iconAsset: "assets/icons/items/redcap_ring.png",
     ),
@@ -7560,7 +8026,7 @@ enum ItemId {
       name: "Mood Ring",
       value: 150,
       fibLevel: 0,
-      statWeights: {SkillId.DEFENCE: 1},
+      statWeights: {SkillId.DEFENCE: 2, SkillId.STAMINA: 1},
       iconAsset: "assets/icons/items/mood_ring.png",
     ),
   ),
@@ -7659,7 +8125,7 @@ enum ItemId {
       armorSlot: ArmorSlots.NECK,
       name: "Spider Silk Necklace",
       value: 120,
-      fibLevel: 5,
+      fibLevel: 4,
       statWeights: {SkillId.ATTACK: 8, SkillId.DEFENCE: 4},
       iconAsset: "assets/icons/items/spider_silk_necklace.png",
     ),
@@ -7669,7 +8135,7 @@ enum ItemId {
       armorSlot: ArmorSlots.BACK,
       name: "Webbed Cloak",
       value: 100,
-      fibLevel: 4,
+      fibLevel: 3,
       statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
       description: "Layer on layer of spider webbing, light and tough.",
       iconAsset: "assets/icons/items/webbed_cloak.png",
@@ -7682,9 +8148,8 @@ enum ItemId {
       armorSlot: ArmorSlots.WRIST,
       name: "Webbed Bracers",
       value: 100,
-      fibLevel: 4,
-      statWeights: {SkillId.DEFENCE: 1, SkillId.ATTACK: 1},
-      bonusStats: {SkillId.SPEED: 1},
+      fibLevel: 3,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.SPEED: 1},
       description: "Webbing wound tight about the wrist, light as thread.",
       iconAsset: "assets/icons/items/heavy_leather_bracers.png",
     ),
@@ -7695,8 +8160,7 @@ enum ItemId {
       name: "Broodmother's Mantle",
       value: 120,
       fibLevel: 5,
-      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
-      bonusStats: {SkillId.SPEED: 2},
+      statWeights: {SkillId.DEFENCE: 2, SkillId.SPEED: 1},
       description: "Silk spun over the shoulders of a thousand hatchlings.",
       iconAsset: "assets/icons/items/iron_pauldrons.png",
     ),
@@ -7706,8 +8170,8 @@ enum ItemId {
       armorSlot: ArmorSlots.FINGER,
       name: "Venomfang Ring",
       value: 100,
-      fibLevel: 4,
-      statWeights: {SkillId.ATTACK: 1, SkillId.STRENGTH: 1},
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 2, SkillId.STRENGTH: 1},
       description: "A spider's fang set in silk-wound bone.",
       iconAsset: "assets/icons/items/venomfang_ring.png",
     ),
@@ -7721,8 +8185,8 @@ enum ItemId {
       armorSlot: ArmorSlots.WRIST,
       name: "Crowquill Bracers",
       value: 100,
-      fibLevel: 4,
-      statWeights: {SkillId.ATTACK: 1, SkillId.STRENGTH: 1},
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
       description: "Black quills bound edge-on along the forearm.",
       iconAsset: "assets/icons/items/crowquill_bracers.png",
     ),
@@ -7732,8 +8196,8 @@ enum ItemId {
       armorSlot: ArmorSlots.WAIST,
       name: "Ooze-Slick Belt",
       value: 100,
-      fibLevel: 4,
-      statWeights: {SkillId.DEFENCE: 2, SkillId.STRENGTH: 1},
+      fibLevel: 3,
+      statWeights: {SkillId.STRENGTH: 2, SkillId.STAMINA: 1},
       description: "Hardened slime, cinched tight. Blows slide off it.",
       iconAsset: "assets/icons/items/ooze_slick_belt.png",
     ),
@@ -7743,8 +8207,8 @@ enum ItemId {
       armorSlot: ArmorSlots.SHOULDER,
       name: "Murkjaw Pauldrons",
       value: 120,
-      fibLevel: 5,
-      statWeights: {SkillId.STRENGTH: 8, SkillId.DEFENCE: 4},
+      fibLevel: 4,
+      statWeights: {SkillId.DEFENCE: 8, SkillId.STRENGTH: 4},
       description: "The Matriarch's scaled shoulders, still heavy with bog.",
       iconAsset: "assets/icons/items/murkjaw_pauldrons.png",
     ),
@@ -7759,7 +8223,7 @@ enum ItemId {
       name: "Warlord's Cleaver",
       value: 150,
       weaponType: WeaponTypeId.SWORD,
-      fibLevel: 6,
+      fibLevel: 5,
       description: "A notched slab of steel that has ended a lot of raids.",
       iconAsset: "assets/icons/items/warlords_cleaver.png",
     ),
@@ -7769,8 +8233,8 @@ enum ItemId {
       armorSlot: ArmorSlots.HEAD,
       name: "Warlord's Warhelm",
       value: 130,
-      fibLevel: 5,
-      statWeights: {SkillId.STRENGTH: 2, SkillId.DEFENCE: 1},
+      fibLevel: 4,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.STRENGTH: 1},
       description: "A horned iron helm, dented from the inside out.",
       iconAsset: "assets/icons/items/warlords_warhelm.png",
     ),
@@ -7780,7 +8244,7 @@ enum ItemId {
       name: "Alpha's Fang",
       value: 150,
       weaponType: WeaponTypeId.DAGGER,
-      fibLevel: 5,
+      fibLevel: 4,
       description: "The Alpha's own fang, bound to a bone grip.",
       iconAsset: "assets/icons/items/alphas_fang.png",
     ),
@@ -7790,8 +8254,8 @@ enum ItemId {
       armorSlot: ArmorSlots.BACK,
       name: "Alpha's Mantle",
       value: 130,
-      fibLevel: 5,
-      statWeights: {SkillId.ATTACK: 2, SkillId.DEFENCE: 1},
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
       description: "A sabertooth pelt worn the way it wore it.",
       iconAsset: "assets/icons/items/alphas_mantle.png",
     ),
@@ -7801,7 +8265,7 @@ enum ItemId {
       name: "Stormcaller's Scepter",
       value: 200,
       weaponType: WeaponTypeId.SCEPTER,
-      fibLevel: 7,
+      fibLevel: 6,
       description: "A rod of fused sand that hums before a strike.",
       iconAsset: "assets/icons/items/stormcallers_scepter.png",
     ),
@@ -7811,10 +8275,101 @@ enum ItemId {
       armorSlot: ArmorSlots.HANDS,
       name: "Galewrap Gauntlets",
       value: 180,
-      fibLevel: 6,
-      statWeights: {SkillId.ATTACK: 8, SkillId.DEFENCE: 4},
+      fibLevel: 5,
+      statWeights: {SkillId.DEFENCE: 8, SkillId.ATTACK: 4},
       description: "Strips of storm-cloth that never quite stop moving.",
       iconAsset: "assets/icons/items/galewrap_gauntlets.png",
+    ),
+  ),
+  // ── dungeon chest and camp uniques ──────────────────────────────
+  // See design/DUNGEON_LOOT_GUIDE.md: one boss owns each, and a chest's
+  // exclusive takes a slot its bosses leave open.
+  FARMHAND_GLOVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Farmhand's Gloves",
+      value: 40,
+      fibLevel: 0,
+      statWeights: {SkillId.STRENGTH: 2, SkillId.STAMINA: 1},
+      description: "Cracked from a season of pitching hay.",
+      iconAsset: "assets/icons/items/farmhands_gloves.png",
+    ),
+  ),
+  SERGEANTS_SHIV(
+    WeaponItemDefinition(
+      name: "Sergeant's Shiv",
+      value: 60,
+      weaponType: WeaponTypeId.DAGGER,
+      fibLevel: 1,
+      description: "Short, ugly and quick. The sergeant's favourite argument.",
+      iconAsset: "assets/icons/items/sergeants_shiv.png",
+    ),
+  ),
+  WARBAND_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Warband Belt",
+      value: 60,
+      fibLevel: 1,
+      statWeights: {SkillId.ATTACK: 2, SkillId.STRENGTH: 1},
+      description: "Hung with the trophies of a dozen raids.",
+      iconAsset: "assets/icons/items/warband_belt.png",
+    ),
+  ),
+  CAMP_BANNER_CLOAK(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Camp Banner Cloak",
+      value: 60,
+      fibLevel: 1,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      description:
+          "The goblin camp's banner, worn as a cloak by whoever took it.",
+      iconAsset: "assets/icons/items/camp_banner_cloak.png",
+    ),
+  ),
+  BROODSILK_LEGGINGS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Broodsilk Leggings",
+      value: 160,
+      fibLevel: 4,
+      statWeights: {SkillId.SPEED: 2, SkillId.STAMINA: 1},
+      description: "Woven from the Broodmother's own silk. They never snag.",
+      iconAsset: "assets/icons/items/broodsilk_leggings.png",
+    ),
+  ),
+  MURKHIDE_CUIRASS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Murkhide Cuirass",
+      value: 160,
+      fibLevel: 4,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.STRENGTH: 1},
+      description: "Murkjaw hide, cured black in the fen's own water.",
+      iconAsset: "assets/icons/items/murkhide_cuirass.png",
+    ),
+  ),
+  STORMHIDE_LEGS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Stormhide Legs",
+      value: 220,
+      fibLevel: 5,
+      statWeights: {SkillId.STRENGTH: 2, SkillId.STAMINA: 1},
+      description: "Sabertooth hide stitched with wind-mote thread.",
+      iconAsset: "assets/icons/items/stormhide_legs.png",
+    ),
+  ),
+  QUEENS_TRAIN(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Queen's Train",
+      value: 260,
+      fibLevel: 5,
+      statWeights: {SkillId.SPEED: 2, SkillId.RECOVERY: 1},
+      description: "The Goblin Queen's trailing cloak, lighter than it looks.",
+      iconAsset: "assets/icons/items/queens_train.png",
     ),
   ),
 
@@ -7890,6 +8445,38 @@ enum ItemId {
       value: 800,
       description:
           "A hand-drawn survey of Forest Mine. Using it uncovers "
+          "${ScoutingMapItemDefinition.discoveries} discoveries there at once.",
+      iconAsset: "assets/icons/items/scouting_map.png",
+    ),
+  ),
+
+  // sold at the Farmer's Stall; also fished out of the zone's sunken caches
+  SCOUTING_MAP_TUTORIAL_FARM(
+    ScoutingMapItemDefinition(
+      name: "Scouting Map of Southglen Meadow",
+      value: 200,
+      description:
+          "A hand-drawn survey of Southglen Meadow. Using it uncovers "
+          "${ScoutingMapItemDefinition.discoveries} discoveries there at once.",
+      iconAsset: "assets/icons/items/scouting_map.png",
+    ),
+  ),
+  SCOUTING_MAP_SWAMP(
+    ScoutingMapItemDefinition(
+      name: "Scouting Map of Blackmire Swamp",
+      value: 900,
+      description:
+          "A hand-drawn survey of Blackmire Swamp. Using it uncovers "
+          "${ScoutingMapItemDefinition.discoveries} discoveries there at once.",
+      iconAsset: "assets/icons/items/scouting_map.png",
+    ),
+  ),
+  SCOUTING_MAP_MAPLEWATER_LAKE(
+    ScoutingMapItemDefinition(
+      name: "Scouting Map of Maplewater Lake",
+      value: 1200,
+      description:
+          "A hand-drawn survey of Maplewater Lake. Using it uncovers "
           "${ScoutingMapItemDefinition.discoveries} discoveries there at once.",
       iconAsset: "assets/icons/items/scouting_map.png",
     ),

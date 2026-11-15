@@ -71,7 +71,7 @@ void main() {
           Util.fib(def.fibLevel),
           reason: '${entry.key.name} at COMMON',
         );
-        for (final rarity in Rarity.values) {
+        for (final rarity in Rarity.ladder) {
           expect(
             def.statsAt(rarity).values.single,
             def.budgetAt(rarity),
@@ -95,7 +95,7 @@ void main() {
         // damage weapons carry no stats, and dev items state theirs outright
         if (def.statWeights.isEmpty || def.fixedStats != null) continue;
         var previous = 0;
-        for (final rarity in Rarity.values) {
+        for (final rarity in Rarity.ladder) {
           final total = totalAt(def, rarity);
           expect(
             total,
@@ -113,7 +113,7 @@ void main() {
         // damage weapons carry no stats, and dev items state theirs outright
         if (def.statWeights.isEmpty || def.fixedStats != null) continue;
         final common = totalAt(def, Rarity.COMMON);
-        for (final rarity in Rarity.values) {
+        for (final rarity in Rarity.ladder) {
           expect(
             totalAt(def, rarity) - common,
             greaterThanOrEqualTo(rarity.minStatBonus),
@@ -176,7 +176,7 @@ void main() {
     );
 
     test('doubling every weight describes the same piece', () {
-      for (final rarity in Rarity.values) {
+      for (final rarity in Rarity.ladder) {
         expect(scaled.statsAt(rarity), base.statsAt(rarity));
       }
     });
@@ -271,7 +271,7 @@ void main() {
     // case the ladder is worth going back to. It still walks, and stats
     // still ignore it: a rung-0 helmet at epic is 4 by the +3 floor, not
     // fib(3) = 5.
-    expect(helmet.fibLevel, def.fibLevel + Rarity.EPIC.index);
+    expect(helmet.fibLevel, def.fibLevel + Rarity.EPIC.rung);
     expect(helmet.effectiveSkillBonus[SkillId.DEFENCE], 4);
     expect(Util.fib(helmet.fibLevel), 5);
   });

@@ -809,7 +809,13 @@ void main() {
       await settle(tester);
 
       expect(find.byKey(kTravelBarKey), findsNothing);
-      expect(find.text('Exploring'), findsOneWidget);
+      // idle, the row reads as the thing to do rather than the thing doing
+      final row = find.byKey(const ValueKey('explore-row'));
+      expect(
+        find.descendant(of: row, matching: find.text('Explore')),
+        findsOneWidget,
+      );
+      expect(find.text('Exploring'), findsNothing);
     });
 
     testWidgets('the road takes the explore row\'s place, not a new one', (

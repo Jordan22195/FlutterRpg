@@ -62,6 +62,21 @@ void main() {
 
   FireItemDefinition def(ItemId id) => id.definition as FireItemDefinition;
 
+  // the waters' reagents come up on a fishing line and buff the skills,
+  // higher up the ladder; the woodcutting seven are the combat stats
+  const waterReagents = {
+    ItemId.CATTAIL_FLUFF,
+    ItemId.DRIED_REEDS,
+    ItemId.RIVER_DRIFTWOOD,
+    ItemId.PEAT_CLOD,
+    ItemId.DRIED_RUSHES,
+    ItemId.BONE_CORAL,
+    ItemId.AMBERGRIS,
+  };
+  final woodReagents = FireTendingSystem.reagents
+      .where((id) => !waterReagents.contains(id))
+      .toList();
+
   group('the fire ladder', () {
     const fib = {1, 2, 3, 5, 8, 13, 21, 34, 55, 89};
 
@@ -84,16 +99,22 @@ void main() {
           ItemId.BASIC_CAMPFIRE,
           ItemId.OAK_CAMPFIRE,
           ItemId.WILLOW_CAMPFIRE,
+          ItemId.MAPLE_CAMPFIRE,
+          ItemId.YEW_CAMPFIRE,
+          ItemId.MAGIC_CAMPFIRE,
         ].map((id) => def(id).power),
-        [5, 8, 13],
+        [5, 8, 13, 21, 34, 55],
       );
       expect(
         [
           ItemId.BONFIRE,
           ItemId.OAK_BONFIRE,
           ItemId.WILLOW_BONFIRE,
+          ItemId.MAPLE_BONFIRE,
+          ItemId.YEW_BONFIRE,
+          ItemId.MAGIC_BONFIRE,
         ].map((id) => def(id).power),
-        [5, 8, 13],
+        [5, 8, 13, 21, 34, 55],
       );
     });
 
@@ -104,6 +125,9 @@ void main() {
         (ItemId.OAK_CAMPFIRE, ItemId.OAK_BONFIRE),
         (ItemId.WILLOW_CAMPFIRE, ItemId.WILLOW_BONFIRE),
         (ItemId.BOG_CAMPFIRE, ItemId.BOG_BONFIRE),
+        (ItemId.MAPLE_CAMPFIRE, ItemId.MAPLE_BONFIRE),
+        (ItemId.YEW_CAMPFIRE, ItemId.YEW_BONFIRE),
+        (ItemId.MAGIC_CAMPFIRE, ItemId.MAGIC_BONFIRE),
       ]) {
         expect(def(bonfire).power, def(campfire).power, reason: bonfire.name);
         expect(def(bonfire).stokes, isTrue, reason: bonfire.name);
@@ -194,9 +218,9 @@ void main() {
       session.dispose();
     });
 
-    test('every stat can be tended by Firemaking 13', () {
+    test('every combat stat can be tended by Firemaking 13', () {
       final stats = {
-        for (final id in FireTendingSystem.reagents)
+        for (final id in woodReagents)
           FireTendingSystem.reagentDefinition(id)!.stat,
       };
       expect(stats, {
@@ -208,12 +232,39 @@ void main() {
         SkillId.SPEED,
         SkillId.HITPOINTS,
       });
-      for (final id in FireTendingSystem.reagents) {
+      for (final id in woodReagents) {
         expect(
           FireTendingSystem.reagentDefinition(id)!.levelRequirement,
           lessThanOrEqualTo(13),
         );
       }
+    });
+
+    test('each water reagent buffs a skill no other reagent does', () {
+      final stats = [
+        for (final id in FireTendingSystem.reagents)
+          FireTendingSystem.reagentDefinition(id)!.stat,
+      ];
+      expect(stats.toSet(), hasLength(stats.length), reason: 'one per stat');
+      for (final id in waterReagents) {
+        final d = FireTendingSystem.reagentDefinition(id)!;
+        expect(
+          const {21, 34, 55, 89},
+          contains(d.levelRequirement),
+          reason: id.name,
+        );
+        expect(d.levelRequirement, greaterThan(13), reason: id.name);
+        expect(FireTendingSystem.reagentFor(d.stat), id);
+      }
+    });
+
+    test('a water reagent on a campfire buffs its skill', () {
+      final session = buildSession();
+      final now = DateTime.now();
+      final fire = light(session, ItemId.BASIC_CAMPFIRE, at: now);
+      fire.tend(SkillId.FISHING, now);
+      expect(totals(session, at: now)[SkillId.FISHING], fire.power);
+      session.dispose();
     });
 
     test('a cookfire cannot be tended, and a reagent waits on its level', () {
@@ -660,10 +711,13 @@ void main() {
       expect({
         ...shed(EntityId.TREE),
         ...shed(EntityId.OAK_TREE),
-      }, containsAll(FireTendingSystem.reagents));
+      }, containsAll(woodReagents));
       expect(shed(EntityId.TREE), contains(ItemId.SMALL_BIRDS_NEST));
       expect(shed(EntityId.WILLOW_TREE), contains(ItemId.WOVEN_BIRDS_NEST));
       expect(shed(EntityId.BOG_TREE), contains(ItemId.WOVEN_BIRDS_NEST));
+      expect(shed(EntityId.MAPLE_TREE), contains(ItemId.STURDY_BIRDS_NEST));
+      expect(shed(EntityId.YEW_TREE), contains(ItemId.GILDED_BIRDS_NEST));
+      expect(shed(EntityId.MAGIC_TREE), contains(ItemId.ENCHANTED_BIRDS_NEST));
     });
 
     test('reagents come with nearly every log, more of them up the trees', () {
@@ -686,11 +740,14 @@ void main() {
         reagentRoll(EntityId.TREE),
         reagentRoll(EntityId.OAK_TREE),
         reagentRoll(EntityId.WILLOW_TREE),
+        reagentRoll(EntityId.MAPLE_TREE),
+        reagentRoll(EntityId.YEW_TREE),
+        reagentRoll(EntityId.MAGIC_TREE),
       ];
       for (final (chance, _) in ladder) {
         expect(chance, greaterThanOrEqualTo(0.9));
       }
-      expect(ladder.map((r) => r.$2), [1, 2, 3]);
+      expect(ladder.map((r) => r.$2), [1, 2, 3, 5, 8, 13]);
       expect(reagentRoll(EntityId.BOG_TREE), reagentRoll(EntityId.WILLOW_TREE));
     });
 

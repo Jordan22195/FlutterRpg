@@ -402,7 +402,7 @@ class _ChestLootDialogState extends State<ChestLootDialog>
   /// from zero as the tile pops in.
   Widget _lootTile(ChestLoot stack, int order, ZonePalette palette) {
     final rarity = stack.rarity;
-    final tone = rarityBorderColor(rarity) ?? palette.textMuted;
+    final tone = rarityTextColor(rarity) ?? palette.textMuted;
     final delay = LootPop.delayFor(order);
     final style = HearthText.rowMeta.copyWith(fontSize: 12, height: 1.15);
     return Column(

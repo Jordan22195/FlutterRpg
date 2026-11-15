@@ -79,10 +79,13 @@ void main() {
         expect(spiderSlots, isNot(contains(eq(swamp).armorSlot)));
       }
 
-      // the two trim pieces both carry strength
-      for (final id in [ItemId.CROWQUILL_BRACERS, ItemId.OOZE_SLICK_BELT]) {
-        expect(eq(id).statWeights, contains(SkillId.STRENGTH), reason: id.name);
-      }
+      // the trims split the fen's two focuses: the crow's bracers are
+      // speed, the ooze's belt strength
+      expect(eq(ItemId.CROWQUILL_BRACERS).statWeights, contains(SkillId.SPEED));
+      expect(
+        eq(ItemId.OOZE_SLICK_BELT).statWeights,
+        contains(SkillId.STRENGTH),
+      );
     });
   });
 

@@ -127,61 +127,6 @@ const List<ItemDropType> goblinSupplyDrops = [
   ItemDropType(id: ItemId.IRON_DAGGER, rarity: Rarity.RARE, weight: 0.05),
 ];
 
-/// The Wolf Den set's minor slots, evenly, at uncommon: a den boss rolls one
-/// of these on a rare chance. The majors are the den chest's. The Cave Bear
-/// and the Den Alpha Wolf each roll their own cut of it, below.
-const List<ItemDropType> wolfDenMinorArmorDropTable = [
-  ItemDropType(id: ItemId.WOLF_DEN_HELM, rarity: Rarity.UNCOMMON, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_CLOAK, rarity: Rarity.UNCOMMON, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_GLOVES, rarity: Rarity.UNCOMMON, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_BOOTS, rarity: Rarity.UNCOMMON, weight: 1),
-];
-
-/// What the Cave Bear rolls on its rare chance: the set without the boots,
-/// and the bear hide bracers in their place.
-const List<ItemDropType> caveBearArmorDropTable = [
-  ItemDropType(id: ItemId.WOLF_DEN_HELM, rarity: Rarity.UNCOMMON, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_CLOAK, rarity: Rarity.UNCOMMON, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_GLOVES, rarity: Rarity.UNCOMMON, weight: 1),
-  ItemDropType(
-    id: ItemId.BEAR_HIDE_BRACERS,
-    rarity: Rarity.UNCOMMON,
-    weight: 1,
-  ),
-];
-
-/// What the Den Alpha Wolf rolls on its rare chance: the set without the
-/// gloves, and the wolf hide bracers in their place.
-const List<ItemDropType> denAlphaArmorDropTable = [
-  ItemDropType(id: ItemId.WOLF_DEN_HELM, rarity: Rarity.UNCOMMON, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_CLOAK, rarity: Rarity.UNCOMMON, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_BOOTS, rarity: Rarity.UNCOMMON, weight: 1),
-  ItemDropType(
-    id: ItemId.WOLF_HIDE_BRACERS,
-    rarity: Rarity.UNCOMMON,
-    weight: 1,
-  ),
-];
-
-/// The whole Wolf Den set at rare, evenly: a long shot from the den's end
-/// chest, over and above its common majors.
-const List<ItemDropType> wolfDenRareSetDropTable = [
-  ItemDropType(id: ItemId.WOLF_DEN_HELM, rarity: Rarity.RARE, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_CLOAK, rarity: Rarity.RARE, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_GLOVES, rarity: Rarity.RARE, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_BOOTS, rarity: Rarity.RARE, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_CHESTGUARD, rarity: Rarity.RARE, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_LEGGUARDS, rarity: Rarity.RARE, weight: 1),
-];
-
-/// The Wolf Den set's major slots, evenly, and the wolf hide belt: the den
-/// chest's rare pick.
-const List<ItemDropType> wolfDenMajorArmorDropTable = [
-  ItemDropType(id: ItemId.WOLF_DEN_CHESTGUARD, weight: 1),
-  ItemDropType(id: ItemId.WOLF_DEN_LEGGUARDS, weight: 1),
-  ItemDropType(id: ItemId.WOLF_HIDE_BELT, weight: 1),
-];
-
 const List<ItemDropType> ironMajorArmorDropTable = [
   ItemDropType(id: ItemId.IRON_CHESTPLATE, weight: 1),
   ItemDropType(id: ItemId.IRON_LEGS, weight: 1),
@@ -358,6 +303,39 @@ const List<ItemDropType> willowReagentDropTable = [
   ItemDropType(id: ItemId.OAK_SAP, lowCount: 3, highCount: 3, weight: 1),
 ];
 
+/// What the maple sheds: all seven, five at a time.
+const List<ItemDropType> mapleReagentDropTable = [
+  ItemDropType(id: ItemId.DRY_TWIGS, lowCount: 5, highCount: 5, weight: 1),
+  ItemDropType(id: ItemId.TREE_BARK, lowCount: 5, highCount: 5, weight: 1),
+  ItemDropType(id: ItemId.PINE_RESIN, lowCount: 5, highCount: 5, weight: 1),
+  ItemDropType(id: ItemId.ACORN, lowCount: 5, highCount: 5, weight: 1),
+  ItemDropType(id: ItemId.OAK_GALL, lowCount: 5, highCount: 5, weight: 1),
+  ItemDropType(id: ItemId.DRY_LEAVES, lowCount: 5, highCount: 5, weight: 1),
+  ItemDropType(id: ItemId.OAK_SAP, lowCount: 5, highCount: 5, weight: 1),
+];
+
+/// What the yew sheds: all seven, eight at a time.
+const List<ItemDropType> yewReagentDropTable = [
+  ItemDropType(id: ItemId.DRY_TWIGS, lowCount: 8, highCount: 8, weight: 1),
+  ItemDropType(id: ItemId.TREE_BARK, lowCount: 8, highCount: 8, weight: 1),
+  ItemDropType(id: ItemId.PINE_RESIN, lowCount: 8, highCount: 8, weight: 1),
+  ItemDropType(id: ItemId.ACORN, lowCount: 8, highCount: 8, weight: 1),
+  ItemDropType(id: ItemId.OAK_GALL, lowCount: 8, highCount: 8, weight: 1),
+  ItemDropType(id: ItemId.DRY_LEAVES, lowCount: 8, highCount: 8, weight: 1),
+  ItemDropType(id: ItemId.OAK_SAP, lowCount: 8, highCount: 8, weight: 1),
+];
+
+/// What the magic tree sheds: all seven, thirteen at a time.
+const List<ItemDropType> magicReagentDropTable = [
+  ItemDropType(id: ItemId.DRY_TWIGS, lowCount: 13, highCount: 13, weight: 1),
+  ItemDropType(id: ItemId.TREE_BARK, lowCount: 13, highCount: 13, weight: 1),
+  ItemDropType(id: ItemId.PINE_RESIN, lowCount: 13, highCount: 13, weight: 1),
+  ItemDropType(id: ItemId.ACORN, lowCount: 13, highCount: 13, weight: 1),
+  ItemDropType(id: ItemId.OAK_GALL, lowCount: 13, highCount: 13, weight: 1),
+  ItemDropType(id: ItemId.DRY_LEAVES, lowCount: 13, highCount: 13, weight: 1),
+  ItemDropType(id: ItemId.OAK_SAP, lowCount: 13, highCount: 13, weight: 1),
+];
+
 /// How often a log comes with its reagents: nearly always.
 const double treeReagentChance = 0.9;
 
@@ -381,6 +359,36 @@ const List<ItemDropType> noviceWoodcuttersGearDropTable = [
   ItemDropType(id: ItemId.NOVICE_WOODCUTTERS_CLOAK),
 ];
 
+/// The apprentice Woodcutter's set, evenly: a sturdy nest's long shot.
+const List<ItemDropType> apprenticeWoodcuttersGearDropTable = [
+  ItemDropType(id: ItemId.APPRENTICE_WOODCUTTERS_HAT),
+  ItemDropType(id: ItemId.APPRENTICE_WOODCUTTERS_TUNIC),
+  ItemDropType(id: ItemId.APPRENTICE_WOODCUTTERS_PANTS),
+  ItemDropType(id: ItemId.APPRENTICE_WOODCUTTERS_GLOVES),
+  ItemDropType(id: ItemId.APPRENTICE_WOODCUTTERS_BOOTS),
+  ItemDropType(id: ItemId.APPRENTICE_WOODCUTTERS_CLOAK),
+];
+
+/// The advanced Woodcutter's set, evenly: a gilded nest's long shot.
+const List<ItemDropType> advancedWoodcuttersGearDropTable = [
+  ItemDropType(id: ItemId.ADVANCED_WOODCUTTERS_HAT),
+  ItemDropType(id: ItemId.ADVANCED_WOODCUTTERS_TUNIC),
+  ItemDropType(id: ItemId.ADVANCED_WOODCUTTERS_PANTS),
+  ItemDropType(id: ItemId.ADVANCED_WOODCUTTERS_GLOVES),
+  ItemDropType(id: ItemId.ADVANCED_WOODCUTTERS_BOOTS),
+  ItemDropType(id: ItemId.ADVANCED_WOODCUTTERS_CLOAK),
+];
+
+/// The master Woodcutter's set, evenly: a enchanted nest's long shot.
+const List<ItemDropType> masterWoodcuttersGearDropTable = [
+  ItemDropType(id: ItemId.MASTER_WOODCUTTERS_HAT),
+  ItemDropType(id: ItemId.MASTER_WOODCUTTERS_TUNIC),
+  ItemDropType(id: ItemId.MASTER_WOODCUTTERS_PANTS),
+  ItemDropType(id: ItemId.MASTER_WOODCUTTERS_GLOVES),
+  ItemDropType(id: ItemId.MASTER_WOODCUTTERS_BOOTS),
+  ItemDropType(id: ItemId.MASTER_WOODCUTTERS_CLOAK),
+];
+
 /// What opening one nest rolls: a lining of fire reagents (one roll per
 /// reagent, Fibonacci by nest tier), a long shot at a piece of the
 /// Woodcutter's set of the nest's tier, and a longer one at a gem. Nests are
@@ -398,6 +406,46 @@ const Map<ItemId, List<DropRoll>> birdsNestRolls = {
     DropRoll(entries: fireReagentDropTable),
     DropRoll(chance: 0.08, entries: noviceWoodcuttersGearDropTable),
     DropRoll(chance: 0.02, entries: gemDropTable),
+  ],
+  // up the trees the lining doubles along the ladder, the gear gets rarer
+  // as it gets better, and the gem gets likelier
+  ItemId.STURDY_BIRDS_NEST: [
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(chance: 0.05, entries: apprenticeWoodcuttersGearDropTable),
+    DropRoll(chance: 0.03, entries: gemDropTable),
+  ],
+  ItemId.GILDED_BIRDS_NEST: [
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(chance: 0.03, entries: advancedWoodcuttersGearDropTable),
+    DropRoll(chance: 0.05, entries: gemDropTable),
+  ],
+  ItemId.ENCHANTED_BIRDS_NEST: [
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(entries: fireReagentDropTable),
+    DropRoll(chance: 0.02, entries: masterWoodcuttersGearDropTable),
+    DropRoll(chance: 0.08, entries: gemDropTable),
   ],
 };
 
@@ -520,8 +568,287 @@ const Map<ItemId, List<DropRoll>> geodeRolls = {
   ],
 };
 
-/// Everything that opens from the bag like a chest: nests and geodes.
+// ── FISHING · JUNK, WATER REAGENTS AND SUNKEN CACHES ───────────────
+
+/// What a line drags up instead of a fish. It sits in every fishing spot's
+/// main table, so a junk cast is a cast with no catch and no fish xp.
+const List<ItemDropType> fishingJunkDropTable = [
+  ItemDropType(id: ItemId.OLD_BOOT, weight: 1),
+  ItemDropType(id: ItemId.TIN_CAN, weight: 1),
+  ItemDropType(id: ItemId.TANGLED_LINE, weight: 1),
+  ItemDropType(id: ItemId.SODDEN_DRIFTWOOD, weight: 1),
+];
+
+/// How much of a fishing spot's main table is junk: a quarter of the
+/// weight its top fish carries.
+const double fishingJunkWeight = 0.25;
+
+/// How often a catch comes up with one of the water's own reagents.
+const double waterReagentChance = 0.15;
+
+/// How often a catch comes up with the water's sunken cache: a geode's odds.
+const double sunkenCacheChance = 0.02;
+
+/// The basic Fisher's set, evenly.
+const List<ItemDropType> basicFishersGearDropTable = [
+  ItemDropType(id: ItemId.BASIC_FISHERS_HAT),
+  ItemDropType(id: ItemId.BASIC_FISHERS_TUNIC),
+  ItemDropType(id: ItemId.BASIC_FISHERS_PANTS),
+  ItemDropType(id: ItemId.BASIC_FISHERS_GLOVES),
+  ItemDropType(id: ItemId.BASIC_FISHERS_BOOTS),
+  ItemDropType(id: ItemId.BASIC_FISHERS_CLOAK),
+];
+
+/// The novice Fisher's set, evenly.
+const List<ItemDropType> noviceFishersGearDropTable = [
+  ItemDropType(id: ItemId.NOVICE_FISHERS_HAT),
+  ItemDropType(id: ItemId.NOVICE_FISHERS_TUNIC),
+  ItemDropType(id: ItemId.NOVICE_FISHERS_PANTS),
+  ItemDropType(id: ItemId.NOVICE_FISHERS_GLOVES),
+  ItemDropType(id: ItemId.NOVICE_FISHERS_BOOTS),
+  ItemDropType(id: ItemId.NOVICE_FISHERS_CLOAK),
+];
+
+/// The apprentice Fisher's set, evenly.
+const List<ItemDropType> apprenticeFishersGearDropTable = [
+  ItemDropType(id: ItemId.APPRENTICE_FISHERS_HAT),
+  ItemDropType(id: ItemId.APPRENTICE_FISHERS_TUNIC),
+  ItemDropType(id: ItemId.APPRENTICE_FISHERS_PANTS),
+  ItemDropType(id: ItemId.APPRENTICE_FISHERS_GLOVES),
+  ItemDropType(id: ItemId.APPRENTICE_FISHERS_BOOTS),
+  ItemDropType(id: ItemId.APPRENTICE_FISHERS_CLOAK),
+];
+
+/// The advanced Fisher's set, evenly.
+const List<ItemDropType> advancedFishersGearDropTable = [
+  ItemDropType(id: ItemId.ADVANCED_FISHERS_HAT),
+  ItemDropType(id: ItemId.ADVANCED_FISHERS_TUNIC),
+  ItemDropType(id: ItemId.ADVANCED_FISHERS_PANTS),
+  ItemDropType(id: ItemId.ADVANCED_FISHERS_GLOVES),
+  ItemDropType(id: ItemId.ADVANCED_FISHERS_BOOTS),
+  ItemDropType(id: ItemId.ADVANCED_FISHERS_CLOAK),
+];
+
+/// The master Fisher's set, evenly.
+const List<ItemDropType> masterFishersGearDropTable = [
+  ItemDropType(id: ItemId.MASTER_FISHERS_HAT),
+  ItemDropType(id: ItemId.MASTER_FISHERS_TUNIC),
+  ItemDropType(id: ItemId.MASTER_FISHERS_PANTS),
+  ItemDropType(id: ItemId.MASTER_FISHERS_GLOVES),
+  ItemDropType(id: ItemId.MASTER_FISHERS_BOOTS),
+  ItemDropType(id: ItemId.MASTER_FISHERS_CLOAK),
+];
+
+/// Each water's own reagents, evenly: an alchemy reagent and a fire
+/// reagent (the marsh's two alchemy reagents are its leech and frog). What
+/// a catch sometimes comes up with, and what that water's cache is lined
+/// with.
+const List<ItemDropType> pondReagentDropTable = [
+  ItemDropType(id: ItemId.LILY_PAD, weight: 1),
+  ItemDropType(id: ItemId.CATTAIL_FLUFF, weight: 1),
+];
+
+const List<ItemDropType> creekReagentDropTable = [
+  ItemDropType(id: ItemId.CREEK_MOSS, weight: 1),
+  ItemDropType(id: ItemId.DRIED_REEDS, weight: 1),
+];
+
+const List<ItemDropType> riverReagentDropTable = [
+  ItemDropType(id: ItemId.FRESHWATER_MUSSEL, weight: 1),
+  ItemDropType(id: ItemId.RIVER_DRIFTWOOD, weight: 1),
+];
+
+const List<ItemDropType> marshReagentDropTable = [
+  ItemDropType(id: ItemId.LEECH, weight: 1),
+  ItemDropType(id: ItemId.MARSH_FROG, weight: 1),
+  ItemDropType(id: ItemId.PEAT_CLOD, weight: 1),
+];
+
+const List<ItemDropType> smallLakeReagentDropTable = [
+  ItemDropType(id: ItemId.DUCKWEED, weight: 1),
+  ItemDropType(id: ItemId.DRIED_RUSHES, weight: 1),
+];
+
+const List<ItemDropType> lakeReagentDropTable = [
+  ItemDropType(id: ItemId.LAKE_SPONGE, weight: 1),
+  ItemDropType(id: ItemId.BONE_CORAL, weight: 1),
+];
+
+const List<ItemDropType> oceanReagentDropTable = [
+  ItemDropType(id: ItemId.SEA_KELP, weight: 1),
+  ItemDropType(id: ItemId.AMBERGRIS, weight: 1),
+];
+
+/// Each water's cooked fish, evenly, one to three at a time.
+const List<ItemDropType> pondCookedFishDropTable = [
+  ItemDropType(id: ItemId.COOKED_MINNOW, lowCount: 1, highCount: 3, weight: 1),
+  ItemDropType(id: ItemId.COOKED_CARP, lowCount: 1, highCount: 3, weight: 1),
+];
+
+const List<ItemDropType> creekCookedFishDropTable = [
+  ItemDropType(
+    id: ItemId.COOKED_CRAYFISH,
+    lowCount: 1,
+    highCount: 3,
+    weight: 1,
+  ),
+  ItemDropType(
+    id: ItemId.COOKED_BLUEGILL,
+    lowCount: 1,
+    highCount: 3,
+    weight: 1,
+  ),
+  ItemDropType(id: ItemId.COOKED_TROUT, lowCount: 1, highCount: 3, weight: 1),
+];
+
+const List<ItemDropType> riverCookedFishDropTable = [
+  ItemDropType(id: ItemId.COOKED_PIKE, lowCount: 1, highCount: 3, weight: 1),
+  ItemDropType(id: ItemId.COOKED_SALMON, lowCount: 1, highCount: 3, weight: 1),
+];
+
+const List<ItemDropType> marshCookedFishDropTable = [
+  ItemDropType(id: ItemId.COOKED_BOG_EEL, lowCount: 1, highCount: 3, weight: 1),
+];
+
+const List<ItemDropType> smallLakeCookedFishDropTable = [
+  ItemDropType(id: ItemId.COOKED_CATFISH, lowCount: 1, highCount: 3, weight: 1),
+  ItemDropType(id: ItemId.COOKED_BASS, lowCount: 1, highCount: 3, weight: 1),
+];
+
+const List<ItemDropType> lakeCookedFishDropTable = [
+  ItemDropType(
+    id: ItemId.COOKED_WHITEFISH,
+    lowCount: 1,
+    highCount: 3,
+    weight: 1,
+  ),
+  ItemDropType(
+    id: ItemId.COOKED_STURGEON,
+    lowCount: 1,
+    highCount: 3,
+    weight: 1,
+  ),
+];
+
+const List<ItemDropType> oceanCookedFishDropTable = [
+  ItemDropType(id: ItemId.COOKED_TUNA, lowCount: 1, highCount: 3, weight: 1),
+  ItemDropType(
+    id: ItemId.COOKED_SWORDFISH,
+    lowCount: 1,
+    highCount: 3,
+    weight: 1,
+  ),
+  ItemDropType(id: ItemId.COOKED_SHARK, lowCount: 1, highCount: 3, weight: 1),
+];
+
+/// What opening one sunken cache rolls: a lining of the water's own
+/// reagents (Fibonacci by the water's tier), a stack of its cooked fish,
+/// a fair shot at a fishing potion, a scouting map of the zone the water
+/// lies in (the lake and ocean have no zone yet, so no map), and a long shot
+/// at a piece of the Fisher's set of the matching tier. Caches are the only
+/// source of Fisher's gear.
+const Map<ItemId, List<DropRoll>> sunkenCacheRolls = {
+  ItemId.POND_CACHE: [
+    DropRoll(entries: pondReagentDropTable),
+    DropRoll(entries: pondReagentDropTable),
+    DropRoll(entries: pondCookedFishDropTable),
+    DropRoll(
+      chance: 0.25,
+      entries: [ItemDropType(id: ItemId.MINOR_FISHING_POTION)],
+    ),
+    DropRoll(
+      chance: 0.05,
+      entries: [ItemDropType(id: ItemId.SCOUTING_MAP_TUTORIAL_FARM)],
+    ),
+    DropRoll(chance: 0.13, entries: basicFishersGearDropTable),
+  ],
+  ItemId.CREEK_CACHE: [
+    DropRoll(entries: creekReagentDropTable),
+    DropRoll(entries: creekReagentDropTable),
+    DropRoll(entries: creekCookedFishDropTable),
+    DropRoll(
+      chance: 0.25,
+      entries: [ItemDropType(id: ItemId.MINOR_FISHING_POTION)],
+    ),
+    DropRoll(
+      chance: 0.05,
+      entries: [ItemDropType(id: ItemId.SCOUTING_MAP_SOUTHWOOD_FOREST)],
+    ),
+    DropRoll(chance: 0.13, entries: basicFishersGearDropTable),
+  ],
+  ItemId.RIVER_CACHE: [
+    DropRoll(entries: riverReagentDropTable),
+    DropRoll(entries: riverReagentDropTable),
+    DropRoll(entries: riverReagentDropTable),
+    DropRoll(entries: riverCookedFishDropTable),
+    DropRoll(chance: 0.25, entries: [ItemDropType(id: ItemId.FISHING_POTION)]),
+    DropRoll(
+      chance: 0.05,
+      entries: [ItemDropType(id: ItemId.SCOUTING_MAP_DARKWOOD_FOREST)],
+    ),
+    DropRoll(chance: 0.08, entries: noviceFishersGearDropTable),
+  ],
+  ItemId.MARSH_CACHE: [
+    DropRoll(entries: marshReagentDropTable),
+    DropRoll(entries: marshReagentDropTable),
+    DropRoll(entries: marshReagentDropTable),
+    DropRoll(entries: marshCookedFishDropTable),
+    DropRoll(chance: 0.25, entries: [ItemDropType(id: ItemId.FISHING_POTION)]),
+    DropRoll(
+      chance: 0.05,
+      entries: [ItemDropType(id: ItemId.SCOUTING_MAP_SWAMP)],
+    ),
+    DropRoll(chance: 0.08, entries: noviceFishersGearDropTable),
+  ],
+  ItemId.SMALL_LAKE_CACHE: [
+    DropRoll(entries: smallLakeReagentDropTable),
+    DropRoll(entries: smallLakeReagentDropTable),
+    DropRoll(entries: smallLakeReagentDropTable),
+    DropRoll(entries: smallLakeReagentDropTable),
+    DropRoll(entries: smallLakeReagentDropTable),
+    DropRoll(entries: smallLakeCookedFishDropTable),
+    DropRoll(chance: 0.25, entries: [ItemDropType(id: ItemId.FISHING_POTION)]),
+    DropRoll(
+      chance: 0.05,
+      entries: [ItemDropType(id: ItemId.SCOUTING_MAP_MAPLEWATER_LAKE)],
+    ),
+    DropRoll(chance: 0.06, entries: apprenticeFishersGearDropTable),
+  ],
+  ItemId.LAKE_CACHE: [
+    DropRoll(entries: lakeReagentDropTable),
+    DropRoll(entries: lakeReagentDropTable),
+    DropRoll(entries: lakeReagentDropTable),
+    DropRoll(entries: lakeReagentDropTable),
+    DropRoll(entries: lakeReagentDropTable),
+    DropRoll(entries: lakeCookedFishDropTable),
+    DropRoll(
+      chance: 0.25,
+      entries: [ItemDropType(id: ItemId.SUPER_FISHING_POTION)],
+    ),
+    DropRoll(chance: 0.05, entries: advancedFishersGearDropTable),
+  ],
+  ItemId.OCEAN_CACHE: [
+    DropRoll(entries: oceanReagentDropTable),
+    DropRoll(entries: oceanReagentDropTable),
+    DropRoll(entries: oceanReagentDropTable),
+    DropRoll(entries: oceanReagentDropTable),
+    DropRoll(entries: oceanReagentDropTable),
+    DropRoll(entries: oceanReagentDropTable),
+    DropRoll(entries: oceanReagentDropTable),
+    DropRoll(entries: oceanReagentDropTable),
+    DropRoll(entries: oceanCookedFishDropTable),
+    DropRoll(
+      chance: 0.25,
+      entries: [ItemDropType(id: ItemId.SUPER_FISHING_POTION)],
+    ),
+    DropRoll(chance: 0.04, entries: masterFishersGearDropTable),
+  ],
+};
+
+/// Everything that opens from the bag like a chest: nests, geodes and
+/// sunken caches.
 const Map<ItemId, List<DropRoll>> openableRolls = {
   ...birdsNestRolls,
   ...geodeRolls,
+  ...sunkenCacheRolls,
 };

@@ -22,6 +22,7 @@ class EnchantingService {
   /// The material an item of [quality] disenchants into.
   ItemId materialForQuality(Rarity quality) {
     switch (quality) {
+      case Rarity.JUNK:
       case Rarity.COMMON:
         return ItemId.ENCHANTING_DUST;
       case Rarity.UNCOMMON:

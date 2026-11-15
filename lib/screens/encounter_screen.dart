@@ -788,7 +788,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       hit: hit,
       // a creature rarer than common is outlined in its rarity, as its tile
       // was on the zone that led here
-      outline: rarityBorderColor(entity.id.definition.rarity),
+      outline: entityBorderColor(entity.id.definition.rarity),
       onTap: portraitTap(context, entity),
       corner: StageCountPill(count: entity.count, borderColor: tint.border),
       leading: view.queueRemaining.isEmpty
@@ -853,7 +853,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       sprite: sprite,
       hit: hit,
       isBoss: boss,
-      outline: rarityBorderColor(entity.id.definition.rarity),
+      outline: entityBorderColor(entity.id.definition.rarity),
       onTap: portraitTap(context, entity),
       heading: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

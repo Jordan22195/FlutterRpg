@@ -224,7 +224,7 @@ class _Odds extends StatelessWidget {
                       // colour the way a crafted piece wears its border
                       color: outcome.quality == null
                           ? null
-                          : rarityBorderColor(outcome.quality!),
+                          : rarityTextColor(outcome.quality!),
                     ),
                   ),
                 ),

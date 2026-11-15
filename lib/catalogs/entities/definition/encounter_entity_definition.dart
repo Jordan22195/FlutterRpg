@@ -24,6 +24,12 @@ class EncounterEntityDefinition extends EntityDefinition {
   /// than being repeated, and drifting, in every zone that holds the vein.
   final int? discoveryLevel;
 
+  /// Xp a point of damage against this node pays, for the nodes whose xp is
+  /// their damage (trees and veins). A harder node is worked slower, so it pays more
+  /// a point to stay the better hour; 1 for everything else. Combat ignores
+  /// it — a fight's xp is routed by stance instead.
+  final double xpPerDamage;
+
   const EncounterEntityDefinition({
     required super.name,
     required super.iconAsset,
@@ -34,6 +40,7 @@ class EncounterEntityDefinition extends EntityDefinition {
     required this.itemDrops,
     this.bonusDrops = const [],
     this.discoveryLevel,
+    this.xpPerDamage = 1,
   });
 
   /// [itemDrops] as a table keyed by the drops themselves, so a roll comes
@@ -82,6 +89,7 @@ class EncounterEntityDefinition extends EntityDefinition {
       itemDrops: itemDrops ?? this.itemDrops,
       bonusDrops: bonusDrops ?? this.bonusDrops,
       discoveryLevel: discoveryLevel,
+      xpPerDamage: xpPerDamage,
     );
   }
 }

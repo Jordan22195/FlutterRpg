@@ -186,17 +186,19 @@ void main() {
   });
 
   test('South Haven\'s trading post rotates every basic gloves, boots and '
-      'cloak but the woodcutter\'s', () {
+      'cloak but the woodcutter\'s and the fisher\'s', () {
     const sold = {ArmorSlots.HANDS, ArmorSlots.FEET, ArmorSlots.BACK};
-    // the woodcutter's set comes out of bird's nests instead
+    // the woodcutter's set comes out of bird's nests and the fisher's out of
+    // sunken caches instead
+    const notSold = {SkillId.WOODCUTTING, SkillId.FISHING};
     final pieces = {
       for (final entry in gear.entries)
         if (entry.value.tier == SkillingGearTier.BASIC &&
-            entry.value.skill != SkillId.WOODCUTTING &&
+            !notSold.contains(entry.value.skill) &&
             sold.contains(entry.value.armorSlot))
           entry.key,
     };
-    expect(pieces, hasLength((skills.length - 1) * sold.length));
+    expect(pieces, hasLength((skills.length - 2) * sold.length));
 
     final def = EntityId.TRADING_POST.definition as ShopEntityDefinition;
     final pool = def.shopStockPool.map((e) => e.itemId).toList();

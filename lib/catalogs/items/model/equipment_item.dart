@@ -67,7 +67,7 @@ class EquipmentItem extends Item {
   /// which now scales the definition's rung by [Rarity.statMultiplier], so
   /// nothing in play reads this. It is the other tuning of the same idea,
   /// left here in case the ladder is worth going back to.
-  int get fibLevel => definition.fibLevel + quality.index;
+  int get fibLevel => definition.fibLevel + quality.rung;
 
   /// Rolled by crafting, drops and shop stock; falls back to whatever the
   /// definition declares for a piece that was never rolled.

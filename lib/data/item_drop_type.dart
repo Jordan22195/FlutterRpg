@@ -2,6 +2,7 @@ import 'package:rpg/catalogs/items/definition/equipment_item_definition.dart';
 import 'package:rpg/catalogs/items/item_id.dart';
 import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
+import 'package:rpg/utilities/util.dart';
 
 /// One line of a drop table: which item falls, how big a stack, how often,
 /// and at what quality.
@@ -263,22 +264,28 @@ extension WeightedDrops on List<ItemDropType> {
     return out;
   }
 
-  /// This table as a monster variant at [rarity] drops it, when the table
-  /// was written for the common one: the same lines at the same odds, but
-  /// each piece of equipment [Rarity.index] rungs further up its quality
-  /// ladder and every other stack [Rarity.dropCountMultiplier] times the
-  /// size. Equipment keeps its count — a better dagger is the upgrade, not
+  /// This table as a monster [steps] rungs above the one it was written
+  /// for drops it (`CombatEntityDefinition.lootSteps`): the same lines at
+  /// the same odds, but each piece of equipment [steps] rungs further up its
+  /// quality ladder and every other stack `Util.fib(steps)` times the size —
+  /// 1, 2, 3, 5, 8… so the loot climbs the same ladder the monster's level
+  /// does. Equipment keeps its count — a better dagger is the upgrade, not
   /// more daggers.
   ///
   /// References are flattened first, so a quality a [NestedDrop] stamps
   /// on is the one that gets raised.
-  List<ItemDropType> scaledTo(Rarity rarity) {
-    if (rarity == Rarity.COMMON) return this;
-    final multiplier = rarity.dropCountMultiplier;
+  List<ItemDropType> scaledBy(int steps) {
+    // nothing to scale, whichever way: an archetype with no loot of its own
+    if (isEmpty || steps == 0) return this;
+    assert(
+      steps > 0,
+      'a monster below the rung its loot is for writes its own',
+    );
+    final multiplier = Util.fib(steps);
     return [
       for (final drop in flattened)
         if (drop.id.definition is EquipmentItemDefinition)
-          drop.copyWith(rarity: drop.rarity.raisedBy(rarity.index))
+          drop.copyWith(rarity: drop.rarity.raisedBy(steps))
         else
           drop.copyWith(
             lowCount: drop.lowCount * multiplier,

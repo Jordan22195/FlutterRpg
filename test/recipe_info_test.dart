@@ -63,7 +63,7 @@ void main() {
       expect(details.rollsQuality, isTrue);
       expect(
         details.outcomes.map((o) => o.quality).toList(),
-        Rarity.values,
+        Rarity.ladder,
         reason: 'the tab should show the whole ladder, in ladder order',
       );
       final sum = details.outcomes.fold<double>(0, (s, o) => s + o.chance);
@@ -136,7 +136,7 @@ void main() {
       final details = detailsFor('smelt_copper_bar');
 
       expect(details.rollsQuality, isFalse);
-      expect(details.outcomes, hasLength(Rarity.values.length));
+      expect(details.outcomes, hasLength(Rarity.ladder.length));
       expect(
         details.outcomes.every((o) => o.itemId == ItemId.COPPER_BAR),
         isTrue,
@@ -247,7 +247,7 @@ void main() {
       expect(find.text('3 / 1'), findsOneWidget);
 
       expect(find.text('QUALITY'), findsOneWidget);
-      for (final tier in Rarity.values) {
+      for (final tier in Rarity.ladder) {
         final label = tier.label.isEmpty ? 'Common' : tier.label;
         expect(find.text(label), findsOneWidget, reason: 'missing $label row');
       }

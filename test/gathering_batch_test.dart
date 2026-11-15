@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rpg/catalogs/drop_tables.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
@@ -60,8 +61,20 @@ void main() {
     return (seconds * 1e6 ~/ interval.inMicroseconds);
   }
 
-  int itemsIn(EncounterActionResult result) =>
-      result.items.fold<int>(0, (sum, stack) => sum + stack.count);
+  // what the water brings up beside a catch rather than as one: its
+  // reagents and sunken cache, rolled on top of the main table
+  final fishingExtras = <ItemId>{
+    for (final id in EntityId.values)
+      if (id.definition case final FishingEntityDefinition def)
+        for (final roll in def.bonusDrops)
+          for (final e in roll.entries) e.id,
+  };
+
+  // the main-table rolls a result paid: for fishing, one a catch, fish or
+  // junk, leaving out the extras that ride along
+  int itemsIn(EncounterActionResult result) => result.items
+      .where((stack) => !fishingExtras.contains(stack.id))
+      .fold<int>(0, (sum, stack) => sum + stack.count);
 
   double xpFor(GameSession session, SkillId skill) =>
       session.saveGameData.playerData.skillData[skill]!.xp;
@@ -205,21 +218,27 @@ void main() {
       expect(itemsIn(result), lessThanOrEqualTo(100));
       // a spot replenishes rather than depleting: it is still there to fish
       expect(pond.count, 1);
+      // a catch is a pond fish or junk, and the water's extras ride along
+      final catchable = {
+        ItemId.MINNOW,
+        ItemId.CARP,
+        for (final e in fishingJunkDropTable) e.id,
+      };
       expect(
         result.items
             .map((stack) => stack.id)
-            .every((id) => [ItemId.MINNOW, ItemId.CARP].contains(id)),
+            .every(
+              (id) => catchable.contains(id) || fishingExtras.contains(id),
+            ),
         isTrue,
       );
       expect(
-        session.inventoryService.getItemCount(
-              save.inventoryData,
-              ItemId.MINNOW,
-            ) +
-            session.inventoryService.getItemCount(
-              save.inventoryData,
-              ItemId.CARP,
-            ),
+        catchable.fold<int>(
+          0,
+          (sum, id) =>
+              sum +
+              session.inventoryService.getItemCount(save.inventoryData, id),
+        ),
         itemsIn(result),
       );
       session.dispose();

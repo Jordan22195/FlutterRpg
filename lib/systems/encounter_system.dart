@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
+
 import 'package:rpg/data/skill_data.dart';
 import '../data/combat_tuning.dart';
 
@@ -465,7 +467,9 @@ class EncounterSystem {
     double damage,
   ) {
     final total = xpPerDamage * damage;
-    if (entity is! CombatEntity) return {entity.entityType: total};
+    if (entity is! CombatEntity) {
+      return {entity.entityType: total * _nodeXpScale(entity)};
+    }
 
     switch (playerState.stance) {
       case Stance.offensive:
@@ -677,8 +681,16 @@ class EncounterSystem {
         }
         return weightSum <= 0 ? 0 : xpSum / weightSum;
       default:
-        return xpPerDamage * def.hitpoints;
+        return xpPerDamage * def.hitpoints * _nodeXpScale(e);
     }
+  }
+
+  /// The node's own [EncounterEntityDefinition.xpPerDamage]; 1 for a fight
+  /// or anything without one.
+  double _nodeXpScale(EncounterEntity e) {
+    if (e is CombatEntity) return 1;
+    final def = e.id.definition;
+    return def is EncounterEntityDefinition ? def.xpPerDamage : 1;
   }
 
   /// The weighted xp of one catch at fishing spot [e], over only the fish
@@ -800,7 +812,7 @@ class EncounterSystem {
       final locked = main.where((e) => e.unlockLevel > level).toList()
         ..sort((a, b) => a.unlockLevel.compareTo(b.unlockLevel));
       return [
-        ..._dropRows(
+        ...dropRows(
           main.where((e) => e.unlockLevel <= level).toList(),
           rollChance: 1.0,
           bonus: false,
@@ -817,7 +829,7 @@ class EncounterSystem {
             lockedUntil: e.unlockLevel,
           ),
         for (final roll in def.bonusDrops)
-          ..._dropRows(
+          ...dropRows(
             roll.entries.flattened,
             rollChance: roll.chance,
             bonus: true,
@@ -826,9 +838,9 @@ class EncounterSystem {
     }
 
     return [
-      ..._dropRows(main, rollChance: 1.0, bonus: false),
+      ...dropRows(main, rollChance: 1.0, bonus: false),
       for (final roll in def.bonusDrops)
-        ..._dropRows(
+        ...dropRows(
           roll.entries.flattened,
           rollChance: roll.chance,
           bonus: true,
@@ -848,7 +860,8 @@ class EncounterSystem {
   /// its lines are therefore mutually exclusive. Separate [DropRoll]s are
   /// independent events, which is why the merge lives at this level and not
   /// across [_buildDropChances].
-  List<EntityDropChance> _dropRows(
+  @visibleForTesting
+  static List<EntityDropChance> dropRows(
     List<ItemDropType> entries, {
     required double rollChance,
     required bool bonus,
@@ -1104,6 +1117,15 @@ class EncounterSystem {
       result,
     );
 
+    // each catch may come up with the water's reagents or its sunken cache
+    // as well: paid beside the fish, and worth no fishing xp of their own
+    _payOutDrops(
+      _dropTableService.rollBonusMulitpleTimes(result.catches, def.bonusDrops),
+      playerInventory,
+      encounter.itemDrops,
+      result,
+    );
+
     // xp is the fish's, each one of them, not the cast's
     result.xp[SkillId.FISHING] = _xpFor(paid);
 
@@ -1181,6 +1203,14 @@ class EncounterSystem {
     if (catchTable.isEmpty) return result;
     final drops = _payOutDrops(
       _dropTableService.rollMulitpleTimes(catches, catchTable),
+      playerInventory,
+      encounter.itemDrops,
+      result,
+    );
+    // the water's reagents and cache ride along with the catches, as a
+    // single cast pays them, and add no xp
+    _payOutDrops(
+      _dropTableService.rollBonusMulitpleTimes(catches, def.bonusDrops),
       playerInventory,
       encounter.itemDrops,
       result,
