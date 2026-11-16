@@ -105,16 +105,37 @@ class CraftingController extends ChangeNotifier {
   bool inReagentMix(String recipeId) =>
       reagentMix().any((r) => r.id == recipeId);
 
-  /// Adds the reagent [recipeId] to the firepit's mix, or takes it out.
+  /// Picks the reagent [recipeId] as the firepit's kindling, or unpicks it
+  /// when it already is. A fire carries one kindling, so picking another
+  /// replaces it.
   void toggleReagentInMix(String recipeId) {
     if (_recipeCatalog.recipeById(recipeId).tendReagent == null) return;
-    final mix = _craftingState.reagentMixByEntity.putIfAbsent(
-      _playerState.currentEntityViewId,
-      () => [],
-    );
-    if (!mix.remove(recipeId)) mix.add(recipeId);
+    if (inReagentMix(recipeId)) {
+      _craftingState.reagentMixByEntity.remove(
+        _playerState.currentEntityViewId,
+      );
+      notifyListeners();
+      return;
+    }
+    pickKindling(recipeId);
+  }
+
+  /// Makes the reagent [recipeId] the firepit's one kindling.
+  void pickKindling(String recipeId) {
+    if (_recipeCatalog.recipeById(recipeId).tendReagent == null) return;
+    _craftingState.reagentMixByEntity[_playerState.currentEntityViewId] = [
+      recipeId,
+    ];
     notifyListeners();
   }
+
+  /// How many fires a zone may hold at once for the player's Firemaking.
+  int fireCap() => _craftingSystem.fireCap(_playerState);
+
+  /// The Firemaking level the next fire opens at, or null at the top.
+  int? nextFireCapLevel() => FireSlots.nextCapLevel(
+    _playerDataService.getSkillLevel(SkillId.FIREMAKING, _playerState),
+  );
 
   /// Every reagent recipe, for the firepit's reagent picker, in the order
   /// the stage shows their rings.
@@ -263,9 +284,9 @@ class CraftingController extends ChangeNotifier {
     // selections are stored per crafting entity, then per skill. the skill
     // comes from the recipe, so callers never have to pass it.
     final recipe = _recipeCatalog.recipeById(recipeId);
-    // a reagent is picked into the firepit's mix, not over it
+    // a reagent is the firepit's kindling, picked apart from its fire
     if (recipe.tendReagent != null) {
-      toggleReagentInMix(recipeId);
+      pickKindling(recipeId);
       return;
     }
     final skill = recipe.skill;

@@ -26,93 +26,15 @@ import 'package:rpg/data/equipment_data.dart';
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
 const knownMissingArt = <String>{
-  // Mistgrave Hollow and the Haunted Ruins, before their art: the zone
-  // header, the dungeon splash and the entrance tile
-  'assets/images/zones/mistgrave_hollow.png',
-  'assets/images/dungeons/haunted_ruins.png',
-  'assets/images/entities/haunted_ruins.png',
-  // the runite and dragonite veins, before their art
-  'assets/images/entities/runite_vein.png',
-  'assets/images/entities/dragonite_vein.png',
-
-  // the yew and magic trees, their logs and fires, and the upper bird's
-  // nests, before their art
-  'assets/images/entities/yew_tree.png',
-  'assets/images/entities/magic_tree.png',
-  'assets/icons/items/yew_logs.png',
-  'assets/icons/items/magic_logs.png',
-  'assets/icons/items/sturdy_birds_nest.png',
-  'assets/icons/items/gilded_birds_nest.png',
-  'assets/icons/items/enchanted_birds_nest.png',
-  'assets/images/entities/maple_cookfire.png',
-  'assets/images/entities/maple_campfire.png',
-  'assets/images/entities/maple_bonfire.png',
-  'assets/images/entities/yew_cookfire.png',
-  'assets/images/entities/yew_campfire.png',
-  'assets/images/entities/yew_bonfire.png',
-  'assets/images/entities/magic_cookfire.png',
-  'assets/images/entities/magic_campfire.png',
-  'assets/images/entities/magic_bonfire.png',
-
-  // the five mining geodes, before their art
-  'assets/icons/items/dull_geode.png',
-  'assets/icons/items/banded_geode.png',
-  'assets/icons/items/crystal_geode.png',
-  'assets/icons/items/prismatic_geode.png',
-  'assets/icons/items/radiant_geode.png',
-
-  // Maplewater Lake and its maple tree, before their art
-
-  // the scale, redrawn as an animal's (prompt in rd_prompt_overrides.json)
-
-  // the skeleton, redrawn as armored (prompt in rd_prompt_overrides.json)
-
-  // grave drops off the dark forest's skeletons and zombies, before their art
-
-  // the sturgeon, the lake's level 70 fish, added before its art
-
-  // the crayfish, the creek's level 7 catch, added before its art
-
-  // the wood shield, the Rotwood Scarecrow's rare drop, added before its art
-
-  // Blackmire Swamp's content pass: its new monsters, gathering spots,
-  // reagents, super potions and the Drowned Fen's gear, before their art
-
-  // reagent fires: the woodcutting reagents, the bird's nests and the bog
-  // fires, before their art
-
-  // the fishing loot pass: junk, the waters' reagents, sunken caches and
-  // the waters' potions, before their art
-  'assets/icons/items/old_boot.png',
-  'assets/icons/items/tin_can.png',
-  'assets/icons/items/tangled_line.png',
-  'assets/icons/items/sodden_driftwood.png',
-  'assets/icons/items/lily_pad.png',
-  'assets/icons/items/creek_moss.png',
-  'assets/icons/items/freshwater_mussel.png',
-  'assets/icons/items/duckweed.png',
-  'assets/icons/items/lake_sponge.png',
-  'assets/icons/items/sea_kelp.png',
-  'assets/icons/items/cattail_fluff.png',
-  'assets/icons/items/dried_reeds.png',
-  'assets/icons/items/river_driftwood.png',
-  'assets/icons/items/peat_clod.png',
-  'assets/icons/items/dried_rushes.png',
-  'assets/icons/items/bone_coral.png',
-  'assets/icons/items/ambergris.png',
-  'assets/icons/items/pond_cache.png',
-  'assets/icons/items/creek_cache.png',
-  'assets/icons/items/river_cache.png',
-  'assets/icons/items/marsh_cache.png',
-  'assets/icons/items/small_lake_cache.png',
-  'assets/icons/items/lake_cache.png',
-  'assets/icons/items/ocean_cache.png',
-  'assets/icons/items/minor_cooking_potion.png',
-  'assets/icons/items/minor_woodcutting_potion.png',
-  'assets/icons/items/cooking_potion.png',
-  'assets/icons/items/woodsmans_potion.png',
-  'assets/icons/items/explorers_potion.png',
-  'assets/icons/items/greater_fishing_potion.png',
+  // zone headers deleted to be redrawn as landscapes
+  'assets/images/zones/farm.png',
+  'assets/images/zones/south_haven.png',
+  'assets/images/zones/mine.png',
+  'assets/images/zones/forest_mine_depths.png',
+  'assets/images/zones/swamp.png',
+  'assets/images/zones/iron_gate_city.png',
+  'assets/images/zones/ironroot_hills.png',
+  'assets/images/zones/ironroot_mine.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
@@ -1497,6 +1419,9 @@ const frozenZoneIds = <String>{
   'TUTORIAL_FARM',
   'SOUTHWOOD_FOREST',
   'SOUTH_HAVEN',
+  'REEDWATER_VALE',
+  'MUDMOUTH_DELTA',
+  'SALTWIND_COAST',
   'FOREST_MINE',
   'FOREST_MINE_DEPTHS',
   'CHALLENGING_MOUNTAIN',

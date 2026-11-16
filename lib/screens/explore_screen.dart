@@ -3,6 +3,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rpg/controllers/buff_controller.dart';
+import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
@@ -111,6 +112,54 @@ class _ExploreScreenState extends State<ExploreScreen> {
   /// isn't fought or gathered for materials. A fishing spot is an encounter
   /// but never depletes, so it sits with the places too.
   static bool _isPlace(Entity e) => e is! EncounterEntity || e is FishingEntity;
+
+  /// The zone's fires: a tile for each one burning (or being worked), then
+  /// "Light a fire" while fewer than the cap are going, or the level the next
+  /// one opens at once they all are. A cold slot is not a place of its own,
+  /// so none shows; a zone without fire slots shows nothing.
+  List<Widget> _fireTiles(WorldController worldController, List<Entity> all) {
+    final slots = [
+      for (final e in all)
+        if (e is FirePitEntity) e,
+    ];
+    if (slots.isEmpty) return const [];
+    final buffs = context.watch<BuffController>();
+    final crafting = context.watch<CraftingController>();
+    final now = DateTime.now();
+    bool lit(EntityId id) {
+      final fire = buffs.getZoneBuffFor(id);
+      return fire is FireItem && fire.expirationTime.isAfter(now);
+    }
+
+    final shown = [
+      for (final e in slots)
+        if (lit(e.id) || _isActive(worldController, e)) e,
+    ];
+    final litCount = slots.where((e) => lit(e.id)).length;
+    final cap = crafting.fireCap();
+    final free = litCount >= cap
+        ? null
+        : slots.where((e) => !lit(e.id) && !shown.contains(e)).firstOrNull;
+    final next = crafting.nextFireCapLevel();
+
+    return [
+      if (free != null)
+        _LightFireTile(
+          key: const ValueKey('light-fire-tile'),
+          fires: litCount,
+          cap: cap,
+          onTap: () => worldController.navigateToEntity(free.id, context),
+        )
+      else if (litCount >= cap && next != null)
+        _LightFireTile(
+          key: const ValueKey('next-fire-tile'),
+          fires: litCount,
+          cap: cap,
+          nextLevel: next,
+        ),
+      for (final e in shown) _buildPlaceTile(worldController, e),
+    ];
+  }
 
   /// One of the zone's places, as a tile in the places grid. Tapping it
   /// opens the place, as the card it replaces did.
@@ -357,8 +406,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 padding: const EdgeInsets.only(top: 8),
                 child: PlaceGrid(
                   tiles: [
+                    // fires come first: one tile per fire burning, then the
+                    // way to light another while the zone has room
+                    ..._fireTiles(worldController, structures),
                     for (final e in structures)
-                      _buildPlaceTile(worldController, e),
+                      if (e is! FirePitEntity)
+                        _buildPlaceTile(worldController, e),
                     for (final d in unfoundPlaces)
                       _UndiscoveredCard(
                         key: ValueKey('undiscovered-${d.name}'),
@@ -605,6 +658,91 @@ class _PinnedTabBar extends SliverPersistentHeaderDelegate {
   // with the screen anyway
   @override
   bool shouldRebuild(_PinnedTabBar oldDelegate) => true;
+}
+
+/// The place a new fire goes: a muted "+" tile the height of a place tile.
+/// With every fire the player may light already burning it names the
+/// Firemaking level the next one opens at, and does nothing.
+class _LightFireTile extends StatelessWidget {
+  const _LightFireTile({
+    super.key,
+    required this.fires,
+    required this.cap,
+    this.nextLevel,
+    this.onTap,
+  });
+
+  final int fires;
+  final int cap;
+  final int? nextLevel;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final muted = palette.textMuted;
+    final full = onTap == null;
+    final title = full ? 'Fires: $fires/$cap' : 'Light a fire';
+    final line = full
+        ? 'Next at Firemaking $nextLevel'
+        : 'Firemaking · $fires/$cap';
+    return Semantics(
+      button: !full,
+      label: '$title, ${PlaceTile.spoken(line)}',
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: palette.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: SizedBox(
+            height: PlaceTile.height,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    full ? Icons.lock_outline : Icons.add_circle_outline,
+                    size: 32,
+                    color: muted,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: HearthText.rowTitle.copyWith(
+                      fontSize: 15,
+                      height: 1.1,
+                      color: full ? muted : palette.text,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    line,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: HearthText.rowMeta.copyWith(
+                      fontSize: 12,
+                      height: 1.1,
+                      color: muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// A lit fire's remaining burn time, in a pill over its tile's sprite.

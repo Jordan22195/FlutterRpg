@@ -52,15 +52,27 @@ class BuffService {
   }) {
     Map<SkillId, int> total = {};
     final now = at ?? DateTime.now();
-    final activeBuffs = [
-      ...buffState.globalBuffs.values,
-      ...?buffState.zoneBuffs[currentZoneId]?.values,
-    ];
+    // fires don't stack: of every fire in the zone buffing a stat, only the
+    // strongest counts, so a second fire is for a second stat
+    final bestFire = <SkillId, int>{};
+    final activeBuffs = <BuffItem>[...buffState.globalBuffs.values];
+    for (final buff in [...?buffState.zoneBuffs[currentZoneId]?.values]) {
+      if (buff is! FireItem) {
+        activeBuffs.add(buff);
+        continue;
+      }
+      for (final entry in buff.bonusAt(now).entries) {
+        final best = bestFire[entry.key];
+        if (best == null || entry.value > best) {
+          bestFire[entry.key] = entry.value;
+        }
+      }
+    }
     for (final buff in activeBuffs) {
       total = Util.addMap(total, buff.bonusAt(now));
     }
 
-    return total;
+    return Util.addMap(total, bestFire);
   }
 
   /// Set/refresh the buff owned by [ownerEntityId] in [zoneId].

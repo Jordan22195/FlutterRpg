@@ -132,7 +132,7 @@ enum ZoneId {
     ZoneDefinition(
       iconAsset: 'assets/images/zones/south_haven.png',
       palette: ZonePalette.southHaven,
-      type: MapNodeType.SETTLEMENT,
+      type: MapNodeType.TOWN,
       explorationLevel: 1,
 
       name: "South Haven",
@@ -143,6 +143,41 @@ enum ZoneId {
         EntityId.MINING_SHOP,
         EntityId.ALCHEMY_STATION,
       ],
+      discoverableEntities: [],
+    ),
+  ),
+  // The three west-coast zones off Southwood Forest. Skeletons for now: no
+  // entities yet, so they are places to walk through until content lands.
+  REEDWATER_VALE(
+    ZoneDefinition(
+      name: "Reedwater Vale",
+      iconAsset: "assets/images/zones/reedwater_vale.png",
+      palette: ZonePalette.reedwater,
+      explorationLevel: 10,
+      xpPerExplore: 5,
+      permanentEntities: [],
+      discoverableEntities: [],
+    ),
+  ),
+  MUDMOUTH_DELTA(
+    ZoneDefinition(
+      name: "Mudmouth Delta",
+      iconAsset: "assets/images/zones/mudmouth_delta.png",
+      palette: ZonePalette.mudmouth,
+      explorationLevel: 15,
+      xpPerExplore: 7,
+      permanentEntities: [],
+      discoverableEntities: [],
+    ),
+  ),
+  SALTWIND_COAST(
+    ZoneDefinition(
+      name: "Saltwind Coast",
+      iconAsset: "assets/images/zones/saltwind_coast.png",
+      palette: ZonePalette.saltwind,
+      explorationLevel: 20,
+      xpPerExplore: 9,
+      permanentEntities: [],
       discoverableEntities: [],
     ),
   ),
@@ -297,6 +332,7 @@ enum ZoneId {
   MAPLEWATER_LAKE(
     ZoneDefinition(
       name: "Maplewater Lake",
+      type: MapNodeType.SKILLING,
       iconAsset: 'assets/images/zones/maplewater_lake.png',
       palette: ZonePalette.maplewater,
       explorationLevel: 30,
@@ -354,7 +390,8 @@ enum ZoneId {
   YEW_GROVE(
     ZoneDefinition(
       name: "Old Yew Grove",
-      iconAsset: 'assets/images/zones/forest.png',
+      type: MapNodeType.SKILLING,
+      iconAsset: 'assets/images/zones/yew_grove.png',
       palette: ZonePalette.forest,
       requiredSkill: SkillId.WOODCUTTING,
       requiredLevel: 40,
@@ -382,7 +419,8 @@ enum ZoneId {
   MAGIC_GROVE(
     ZoneDefinition(
       name: "Witchlight Grove",
-      iconAsset: 'assets/images/zones/darkwood_forest.png',
+      type: MapNodeType.SKILLING,
+      iconAsset: 'assets/images/zones/witchlight_grove.png',
       palette: ZonePalette.forest,
       requiredSkill: SkillId.WOODCUTTING,
       requiredLevel: 55,
@@ -410,9 +448,9 @@ enum ZoneId {
   MAPLEWATER_VILLAGE(
     ZoneDefinition(
       name: "Maplewater Village",
-      iconAsset: 'assets/images/zones/maplewater_lake.png',
+      iconAsset: 'assets/images/zones/maplewater_village.png',
       palette: ZonePalette.maplewater,
-      type: MapNodeType.SETTLEMENT,
+      type: MapNodeType.TOWN,
       explorationLevel: 30,
 
       permanentEntities: [
@@ -427,6 +465,7 @@ enum ZoneId {
   FOREST_MINE(
     ZoneDefinition(
       name: "Forest Mine",
+      type: MapNodeType.SKILLING,
       iconAsset: 'assets/images/zones/mine.png',
       palette: ZonePalette.mine,
       requiredSkill: SkillId.MINING,
@@ -479,7 +518,8 @@ enum ZoneId {
   FOREST_MINE_DEPTHS(
     ZoneDefinition(
       name: "Forest Mine Depths",
-      iconAsset: 'assets/images/zones/mine.png',
+      type: MapNodeType.SKILLING,
+      iconAsset: 'assets/images/zones/forest_mine_depths.png',
       palette: ZonePalette.mine,
       requiredSkill: SkillId.MINING,
       requiredLevel: 20,
@@ -514,7 +554,7 @@ enum ZoneId {
   CHALLENGING_MOUNTAIN(
     ZoneDefinition(
       name: "The Mountain",
-      iconAsset: "",
+      iconAsset: "assets/images/zones/the_mountain.png",
       explorationLevel: 30,
       xpPerExplore: 120,
 
@@ -702,7 +742,7 @@ enum ZoneId {
       name: "Iron Gate City",
       iconAsset: 'assets/images/zones/iron_gate_city.png',
       palette: ZonePalette.ironGateCity,
-      type: MapNodeType.SETTLEMENT,
+      type: MapNodeType.TOWN,
       explorationLevel: 35,
 
       permanentEntities: [
@@ -771,7 +811,8 @@ enum ZoneId {
   IRONROOT_MINE(
     ZoneDefinition(
       name: "Ironroot Mine",
-      iconAsset: 'assets/images/zones/mine.png',
+      type: MapNodeType.SKILLING,
+      iconAsset: 'assets/images/zones/ironroot_mine.png',
       palette: ZonePalette.mine,
       requiredSkill: SkillId.MINING,
       requiredLevel: 40,
@@ -954,7 +995,7 @@ enum ZoneId {
       name: "Saddlegate",
       iconAsset: 'assets/images/zones/saddlegate.png',
       palette: ZonePalette.saddlegate,
-      type: MapNodeType.SETTLEMENT,
+      type: MapNodeType.TOWN,
       explorationLevel: 70,
 
       permanentEntities: [

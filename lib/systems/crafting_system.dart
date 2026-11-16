@@ -103,6 +103,19 @@ class CraftingSystem {
     final crafts = craftCount < craftable ? craftCount : craftable;
     if (crafts <= 0) return result;
 
+    // a fire laid in a cold slot is a new fire, and a zone holds only as
+    // many as the firemaker's level allows
+    if (r.skill == SkillId.FIREMAKING &&
+        r.tendReagent == null &&
+        !_slotOpen(
+          craftingState.craftingEntityId,
+          playerState,
+          buffState,
+          at: at,
+        )) {
+      return result;
+    }
+
     // a reagent goes on the station's fire rather than into the bag, and
     // only on a campfire or bonfire already burning
     final reagent = r.tendReagent;
@@ -266,6 +279,7 @@ class CraftingSystem {
       return result;
     }
     if (craftableCount(fire.id, inventoryState) <= 0) return result;
+    if (!_slotOpen(station, playerState, buffState, at: at)) return result;
 
     for (final entry in fire.inputs.entries) {
       _inventoryService.removeItems(inventoryState, entry.key, entry.value);
@@ -288,6 +302,26 @@ class CraftingSystem {
     _playerDataService.applyXp(playerState, result.xp);
     return result;
   }
+
+  /// The fires a zone may hold at once for the player's base Firemaking.
+  int fireCap(PlayerData playerState) => FireSlots.capFor(
+    _playerDataService.getSkillLevel(SkillId.FIREMAKING, playerState),
+  );
+
+  /// Whether a fire may be laid in [station] in the player's zone at [at]:
+  /// it is already burning, or the zone is under its [fireCap].
+  bool _slotOpen(
+    EntityId station,
+    PlayerData playerState,
+    BuffData buffState, {
+    DateTime? at,
+  }) => _firemakingSystem.canLight(
+    station,
+    playerState.currentZoneId,
+    buffState,
+    fireCap(playerState),
+    at: at,
+  );
 
   /// How much longer a fire laid from [fireRecipe] burns for the player's
   /// firemaking at [at]: the stat total, gear and buffs included and
@@ -357,12 +391,14 @@ class CraftingSystem {
     PlayerData playerState,
     InventoryData inventoryState, {
     DateTime? at,
-  }) => _canLight(
-    cookFireRecipeAt(station, craftingState),
-    playerState,
-    inventoryState,
-    at: at,
-  );
+  }) =>
+      _canLight(
+        cookFireRecipeAt(station, craftingState),
+        playerState,
+        inventoryState,
+        at: at,
+      ) &&
+      _slotOpen(station, playerState, playerState.buffData, at: at);
 
   /// Whether a tend can proceed at [station] at [at]: a campfire or bonfire
   /// is burning there. Reagents never light a fire of their own - the pit
@@ -727,6 +763,20 @@ class CraftingSystem {
 
     if (craftableCount(recipeId, inventoryState) <= 0) return false;
 
+    // a fire needs a slot: the one it is laid in already burning, or room
+    // in the zone for one more
+    final recipe = _recipeCatalog.recipeById(recipeId);
+    if (recipe.skill == SkillId.FIREMAKING &&
+        recipe.tendReagent == null &&
+        !_slotOpen(
+          craftingState.craftingEntityId,
+          playerState,
+          playerState.buffData,
+          at: at,
+        )) {
+      return false;
+    }
+
     // cooking needs a fire that can cook, or the logs to light one. checking
     // it here is what stops a running cook loop once the fire has burnt out
     // and there is nothing left to relight it with, via the requirements
@@ -915,6 +965,8 @@ class CraftingSystem {
   /// its buff to the fire's end, the last one allowed to run over.
   int _reagentRoom(FireItem fire, ItemId reagent, DateTime at) {
     final stat = (reagent.definition as FireReagentDefinition).stat;
+    // one kindling per fire: a different one has no room at all
+    if (!fire.takesKindling(stat, at)) return 0;
     final current = fire.reagentExpirations[stat];
     final base = current != null && current.isAfter(at) ? current : at;
     final gap = fire.expirationTime.difference(base).inMicroseconds;

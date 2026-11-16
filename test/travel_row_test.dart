@@ -82,9 +82,14 @@ void main() {
   testWidgets('a firepit a zone away shows the road for its timer', (
     tester,
   ) async {
-    await openAway(tester, EntityId.FIREPIT.definition.name);
+    // a cold zone has no firepit standing: the way in is lighting one
+    await openAway(tester, 'Light a fire');
 
     expect(find.byType(FirepitScreen), findsOneWidget);
+    expect(
+      session.saveGameData.playerData.currentEntityViewId,
+      EntityId.FIREPIT,
+    );
     expect(find.byType(TravelRow), findsOneWidget);
     expect(find.text('Tending'), findsNothing);
   });

@@ -785,8 +785,8 @@ void main() {
     session.dispose();
   });
 
-  testWidgets('kindling is picked several at once into a mix, and the '
-      'button throws the whole mix', (tester) async {
+  testWidgets('a fire takes one kindling: picked, thrown, and a second one '
+      'waits for another fire', (tester) async {
     final session = await pumpFirepit(
       tester,
       lightRecipeId: 'basic_campfire',
@@ -798,22 +798,19 @@ void main() {
     final strengthRing = find.byKey(
       const ValueKey('fire-reagent-ring-STRENGTH'),
     );
-    final defenceRing = find.byKey(const ValueKey('fire-reagent-ring-DEFENCE'));
     expect(strengthRing, findsNothing);
 
     // an empty kindling tile opens its picker at once, which lists every
     // reagent with the stat it buffs, ringed
-    await tester.tap(reagentCard);
-    await settle(tester);
-    final sheet = find.byType(RecipePickerSheet);
-    expect(
-      find.descendant(
-        of: sheet,
-        matching: find.byKey(const ValueKey('recipe-buff-ring-STRENGTH')),
-      ),
-      findsOneWidget,
-    );
-    Future<void> toggle(String recipeId) async {
+    Future<void> pick(String recipeId) async {
+      await tester.tap(reagentCard);
+      await settle(tester);
+      if (find.byType(RecipePickerSheet).evaluate().isEmpty) {
+        // the card was not yet the active one: a second tap opens it
+        await tester.tap(reagentCard);
+        await settle(tester);
+      }
+      final sheet = find.byType(RecipePickerSheet);
       final cards = find.descendant(
         of: sheet,
         matching: find.byType(RecipePickerCard),
@@ -826,28 +823,36 @@ void main() {
       await tester.ensureVisible(cards.at(row));
       await tester.tap(cards.at(row));
       await settle(tester);
+      await tester.pump(const Duration(milliseconds: 400));
     }
 
-    // each tap toggles one in, and the sheet stays open for more
-    await toggle('tend_acorn');
-    await toggle('tend_tree_bark');
-    expect(sheet, findsOneWidget);
+    await tester.tap(reagentCard);
+    await settle(tester);
+    final sheet = find.byType(RecipePickerSheet);
     expect(
-      [for (final r in session.craftingController.reagentMix()) r.id],
-      ['tend_acorn', 'tend_tree_bark'],
+      find.descendant(
+        of: sheet,
+        matching: find.byKey(const ValueKey('recipe-buff-ring-STRENGTH')),
+      ),
+      findsOneWidget,
     );
     await tester.tap(find.byIcon(Icons.close).hitTestable());
     await settle(tester);
     await tester.pump(const Duration(milliseconds: 400));
 
-    // the kindling tile runs the mix, and wears each picked stat's ring
+    // one pick, and the sheet closes on it
+    await pick('tend_acorn');
+    expect(sheet, findsNothing);
+    expect(
+      [for (final r in session.craftingController.reagentMix()) r.id],
+      ['tend_acorn'],
+    );
     expect(marks(tester), [false, true]);
     expect(find.text('Add Kindling'), findsOneWidget);
     expect(buttonEnabled(tester), isTrue);
     expect(find.byKey(const ValueKey('mix-ring-STRENGTH')), findsOneWidget);
-    expect(find.byKey(const ValueKey('mix-ring-DEFENCE')), findsOneWidget);
 
-    // one tick throws both
+    // a tick throws it
     expect(
       session.craftingController.startCraftingActionFor(
         reagentMixRecipeId,
@@ -860,16 +865,7 @@ void main() {
     await settle(tester);
     await tester.pump(const Duration(milliseconds: 400));
     expect(save.inventoryData.itemMap[ItemId.ACORN], 2);
-    expect(save.inventoryData.itemMap[ItemId.TREE_BARK], 2);
-
-    // the stage rings both, left to right in stat order; a campfire's
-    // kindling burns as long as the campfire, so each fills its ring
     expect(strengthRing, findsOneWidget);
-    expect(defenceRing, findsOneWidget);
-    expect(
-      tester.getCenter(strengthRing).dx,
-      lessThan(tester.getCenter(defenceRing).dx),
-    );
     double ringValue(Finder ring) => tester
         .widget<CircularProgressIndicator>(
           find.descendant(
@@ -878,14 +874,12 @@ void main() {
           ),
         )
         .value!;
+    // a campfire's kindling burns as long as the campfire: a full ring
     expect(ringValue(strengthRing), closeTo(1, 0.01));
-
-    // full: the loop stopped itself, and the button can't add more
     expect(session.actionTimingController.isRunning, isFalse);
     expect(buttonEnabled(tester), isFalse);
 
-    // more logs on the fire: the rings drop to the share they still cover,
-    // and there is room again
+    // more logs on the fire make room again
     save.craftingState.activeRecipeId = 'basic_campfire';
     session.craftingSystem.craftActiveRecipe(
       save.craftingState,
@@ -899,6 +893,23 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(ringValue(strengthRing), closeTo(0.5, 0.01));
     expect(buttonEnabled(tester), isTrue);
+
+    // a second kindling replaces the pick, but this fire won't take it
+    // while its strength burns: that is another fire's job
+    await pick('tend_tree_bark');
+    expect(
+      [for (final r in session.craftingController.reagentMix()) r.id],
+      ['tend_tree_bark'],
+    );
+    expect(
+      find.text('Burning Strength kindling - light another fire'),
+      findsOneWidget,
+    );
+    expect(buttonEnabled(tester), isFalse);
+    expect(
+      find.byKey(const ValueKey('fire-reagent-ring-DEFENCE')),
+      findsNothing,
+    );
 
     session.actionTimingController.stop();
     session.dispose();

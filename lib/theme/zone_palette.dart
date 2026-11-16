@@ -312,6 +312,81 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     gatherTintBorder: Color(0xFF2A4540),
   );
 
+  /// Reedwater Vale: the green-teal of slow river water under reeds, a
+  /// dragonfly's gold as the accent.
+  static const reedwater = ZonePalette(
+    bg: Color(0xFF0A130F),
+    surface: Color(0xFF122119),
+    surfaceSunken: Color(0xFF0E1A14),
+    raised: Color(0xFF1D3629),
+    track: Color(0xFF19291F),
+    border: Color(0xFF1B2D23),
+    borderStrong: Color(0xFF29453A),
+    borderOverArt: Color(0xFF39594B),
+    divider: Color(0xFF16281F),
+    text: Color(0xFFE3F1E6),
+    textMuted: Color(0xFF9CB8A6),
+    textSubtitle: Color(0xFFBBD4C2),
+    textNavInactive: Color(0xFF8CA896),
+    chevron: Color(0xFF749282),
+    accent: Color(0xFFE8C95A),
+    onAccent: Color(0xFF1E1806),
+    accentLip: Color(0xFFA38A2A),
+    titleShadow: Color(0xFF040A07),
+    gatherTintFill: Color(0xFF10261F),
+    gatherTintBorder: Color(0xFF28483E),
+  );
+
+  /// Mudmouth Delta: silt-brown channels spreading through olive reed beds,
+  /// a heron's pale blue as the accent.
+  static const mudmouth = ZonePalette(
+    bg: Color(0xFF110F0B),
+    surface: Color(0xFF1C1912),
+    surfaceSunken: Color(0xFF16140E),
+    raised: Color(0xFF2E2A1E),
+    track: Color(0xFF26231A),
+    border: Color(0xFF29251B),
+    borderStrong: Color(0xFF3B3627),
+    borderOverArt: Color(0xFF4C4636),
+    divider: Color(0xFF231F17),
+    text: Color(0xFFECE8D8),
+    textMuted: Color(0xFFADA68F),
+    textSubtitle: Color(0xFFC6BFA8),
+    textNavInactive: Color(0xFF9D967F),
+    chevron: Color(0xFF857F6A),
+    accent: Color(0xFF8CC8DC),
+    onAccent: Color(0xFF08181E),
+    accentLip: Color(0xFF4F8A9E),
+    titleShadow: Color(0xFF080705),
+    gatherTintFill: Color(0xFF1B2218),
+    gatherTintBorder: Color(0xFF353F2B),
+  );
+
+  /// Saltwind Coast: open-sea blue under a bright sky, coral and sea foam as
+  /// the accent.
+  static const saltwind = ZonePalette(
+    bg: Color(0xFF080F16),
+    surface: Color(0xFF0F1B26),
+    surfaceSunken: Color(0xFF0B1620),
+    raised: Color(0xFF1A2D3F),
+    track: Color(0xFF15253A),
+    border: Color(0xFF172B3D),
+    borderStrong: Color(0xFF244259),
+    borderOverArt: Color(0xFF335871),
+    divider: Color(0xFF12243A),
+    text: Color(0xFFE2EEF5),
+    textMuted: Color(0xFF94AEC0),
+    textSubtitle: Color(0xFFB4CAD8),
+    textNavInactive: Color(0xFF849FB2),
+    chevron: Color(0xFF6C889B),
+    accent: Color(0xFFFF8E78),
+    onAccent: Color(0xFF260C06),
+    accentLip: Color(0xFFB04E39),
+    titleShadow: Color(0xFF03070B),
+    gatherTintFill: Color(0xFF0E2433),
+    gatherTintBorder: Color(0xFF254A60),
+  );
+
   /// Iron Gate City: the night-purple shadows behind the brick, the gold
   /// dome as the accent.
   static const ironGateCity = ZonePalette(

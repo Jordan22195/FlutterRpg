@@ -3,21 +3,24 @@ import 'package:provider/provider.dart';
 
 import '../catalogs/dungeons/dungeon_id.dart';
 import '../catalogs/entities/entities.dart';
+import '../catalogs/zones/map_node_type.dart';
 import '../catalogs/zones/world_map_layout.dart';
 import '../catalogs/zones/zone_id.dart';
 import '../controllers/world_controller.dart';
 import '../data/skill_category.dart';
+import '../data/skill_data.dart';
 import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
 import '../theme/zone_palette.dart';
 import '../utilities/util.dart';
-import 'art_header.dart';
-import 'item_stack_tile.dart';
+import 'icon_renderer.dart';
+import 'pixel_sprites.dart';
 import 'recipe_card.dart';
 
-/// The selected place, shown as its own banner: the zone's scene art under
-/// a scrim, its name in the same pixel title the zone screen wears, what
-/// kind of place it is and how far off, and what's standing there.
+/// The selected place, shown as its own banner: the zone's scene art behind
+/// a scrim, its name in the same pixel title the zone screen wears, and —
+/// in symbols rather than words — what kind of place it is, how far off,
+/// and what you'd find there, or what keeps it shut.
 ///
 /// It is the zone header in miniature, drawn in the zone's own palette, so
 /// picking a node on the map already looks like arriving there.
@@ -37,9 +40,6 @@ class MapDetailPane extends StatelessWidget {
   /// Fixed height, reserved whether or not anything is selected, so the map
   /// canvas never resizes under the player's finger.
   static const double height = 176;
-
-  /// Size of an entity preview tile.
-  static const double tileSize = 30;
 
   final MapNode node;
 
@@ -88,27 +88,11 @@ class MapDetailPane extends StatelessWidget {
       context: context,
       artAsset: def.iconAsset,
       name: def.name,
-      type: node.type.label,
-      distance: _distanceLine(
-        isCurrent,
-        reachable,
-        world.travelHopsTo(node.id),
-        world.travelTimeTo(node.id),
-      ),
-      levelChip: def.explorationLevel > 0
-          ? ArtHeaderChip(
-              icon: Icon(
-                Icons.explore_outlined,
-                size: 16,
-                color: context.gameColors.exploration,
-              ),
-              label: '${def.explorationLevel}',
-              semanticsLabel: 'Zone exploration level ${def.explorationLevel}',
-            )
-          : null,
-      foot: locked
-          ? _requirements(context, world, node.id)
-          : _entityPreview(context, world.zoneEntities(node.id)),
+      type: node.type,
+      where: _where(context, isCurrent, reachable, world.travelTimeTo(node.id)),
+      chips: locked
+          ? _requirements(world, node.id)
+          : _contents(world, node.id),
       enabled: !locked && reachable,
       onPressed: () => onEnter(node.id),
     );
@@ -116,43 +100,150 @@ class MapDetailPane extends StatelessWidget {
 
   Widget _landmarkBanner(BuildContext context, LandmarkNode node) {
     final def = node.id.definition;
+    // landmarks aren't on the travel graph: you walk in from wherever you
+    // are, and the run itself is what costs you
     return _banner(
       context: context,
       artAsset: def.iconAsset,
       name: def.name,
-      type: node.type.label,
-      // landmarks aren't on the travel graph: you walk in from wherever you
-      // are, and the run itself is what costs you
-      distance: 'No stamina to enter',
-      levelChip: null,
-      foot: const SizedBox.shrink(),
+      type: node.type,
+      where: const [],
+      chips: const [],
       enabled: true,
       onPressed: () => onEnterLandmark(node.id),
     );
   }
 
-  String _distanceLine(
+  /// Where the place is from you, as a symbol: a pin when you're standing
+  /// in it, a bar when no road reaches it, otherwise a walker and the time.
+  List<Widget> _where(
+    BuildContext context,
     bool isCurrent,
     bool reachable,
-    int hops,
     Duration time,
   ) {
-    if (isCurrent) return 'You are here';
-    if (!reachable) return 'Unreachable';
-    final hopWord = hops == 1 ? 'hop' : 'hops';
-    return '$hops $hopWord · ${Util.formatShortDuration(time)} walk';
+    final palette = context.palette;
+    Widget icon(IconData data, String tip) => Tooltip(
+      message: tip,
+      child: Icon(data, size: 15, color: palette.textSubtitle),
+    );
+
+    if (isCurrent) return [icon(Icons.place, 'You are here')];
+    if (!reachable) return [icon(Icons.block, 'Unreachable')];
+    return [
+      icon(Icons.directions_walk, 'Walk'),
+      const SizedBox(width: 2),
+      Text(
+        Util.formatShortDuration(time),
+        style: HearthText.rowMeta.copyWith(
+          fontSize: 12,
+          color: palette.textSubtitle,
+        ),
+      ),
+    ];
   }
 
-  /// The banner itself: art, scrim, title block and the foot row, laid out
-  /// the way [ArtHeader] lays out an open zone header.
+  /// What the zone holds, as its own icons: the structures standing in it,
+  /// then every discovery your Exploration already reaches, each with the
+  /// level it asks of you. The catalog, not your finds — this is a preview
+  /// of the place, not of your save. Whatever is still beyond your level is
+  /// one "?" chip with a count, so the place keeps some secrets.
+  List<Widget> _contents(WorldController world, ZoneId zoneId) {
+    final details = world.zoneDetails(zoneId);
+    final seen = <String>{};
+    final chips = <Widget>[];
+
+    void add(EntityId id) {
+      final def = id.definition;
+      // fire slots and the like are one thing to the eye
+      if (!seen.add(def.iconAsset.isEmpty ? def.name : def.iconAsset)) return;
+      final level = _levelOf(def);
+      chips.add(
+        _Chip(
+          tooltip: def.name,
+          children: [
+            _asset(def.iconAsset),
+            if (level > 0) _ChipLabel('$level'),
+          ],
+        ),
+      );
+    }
+
+    for (final id in details.zone.permanentEntities) {
+      add(id);
+    }
+    for (final d in details.entities) {
+      if (!d.locked) add(d.id as EntityId);
+    }
+
+    final hidden = details.entities.where((d) => d.locked).length;
+    if (hidden > 0) {
+      chips.add(
+        _Chip(
+          tooltip: '$hidden still hidden',
+          muted: true,
+          children: [
+            const Icon(Icons.help_outline, size: 15),
+            _ChipLabel('$hidden'),
+          ],
+        ),
+      );
+    }
+    return chips;
+  }
+
+  /// The level an entity asks of you: a fighter's own level, a node's
+  /// gathering level. 0 for the things that ask nothing, like a shop.
+  static int _levelOf(EntityDefinition def) => switch (def) {
+    final CombatEntityDefinition c => c.level,
+    final EncounterEntityDefinition e => e.requiredLevel,
+    _ => 0,
+  };
+
+  /// Why a locked place is locked: one red chip per unmet gate, a lock, the
+  /// skill's icon and the level it wants. A locked node still opens this
+  /// pane — being told what it takes is the point.
+  List<Widget> _requirements(WorldController world, ZoneId zoneId) {
+    final def = zoneId.definition;
+    return [
+      if (!world.meetsZoneExplorationRequirement(zoneId))
+        _lockChip(SkillId.EXPLORATION, def.explorationLevel),
+      if (!world.meetsZoneSkillRequirement(zoneId))
+        _lockChip(def.requiredSkill, def.requiredLevel),
+    ];
+  }
+
+  Widget _lockChip(SkillId skill, int level) => _Chip(
+    tooltip: 'Requires ${skillLabel(skill)} $level',
+    color: RecipeCard.missingMaterialColor,
+    children: [
+      const Icon(Icons.lock, size: 14, color: RecipeCard.missingMaterialColor),
+      IconRenderer<SkillId>(size: 18, id: skill),
+      _ChipLabel('$level', color: RecipeCard.missingMaterialColor),
+    ],
+  );
+
+  static Widget _asset(String path) => SizedBox.square(
+    dimension: 18,
+    child: path.isEmpty
+        ? const Icon(Icons.help_outline, size: 15)
+        : Image.asset(
+            path,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.none,
+            errorBuilder: (_, _, _) => const Icon(Icons.help_outline, size: 15),
+          ),
+  );
+
+  /// The banner itself: art on the right under a scrim that clears toward
+  /// it, and on the left the title, the meta row, the chips and Enter.
   Widget _banner({
     required BuildContext context,
     required String artAsset,
     required String name,
-    required String type,
-    required String distance,
-    required Widget? levelChip,
-    required Widget foot,
+    required MapNodeType type,
+    required List<Widget> where,
+    required List<Widget> chips,
     required bool enabled,
     required VoidCallback onPressed,
   }) {
@@ -171,115 +262,95 @@ class MapDetailPane extends StatelessWidget {
             Image.asset(
               artAsset,
               fit: BoxFit.cover,
-              // the middle of the scene, below the sky, the way the zone
-              // header's strip sits
-              alignment: const Alignment(0, 0.2),
+              // the middle of the scene, below the sky, pushed right where
+              // the scrim lets it show
+              alignment: const Alignment(0.6, 0.2),
               // zone art is pixel art; smoothing it blurs the pixels
               filterQuality: FilterQuality.none,
               // undrawn art: the banner is the palette's background alone
               errorBuilder: (_, _, _) => const SizedBox.shrink(),
             ),
 
-          // light over the scene, heavy under the text, so the art reads
-          // at the top and the name and icons read at the foot
+          // heavy under the text on the left, clearing to the right so the
+          // art reads there in full
           IgnorePointer(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
                   colors: [
+                    bg.withValues(alpha: 0.96),
+                    bg.withValues(alpha: 0.82),
                     bg.withValues(alpha: 0.1),
-                    bg.withValues(alpha: 0.6),
-                    bg.withValues(alpha: 0.94),
                   ],
-                  stops: const [0, 0.42, 0.78],
+                  stops: const [0, 0.5, 1],
                 ),
               ),
             ),
           ),
 
-          if (levelChip != null)
-            Positioned(top: 10, right: 12, child: levelChip),
-
-          Positioned(
-            left: 14,
-            right: 12,
-            bottom: 10,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  // the zone screen's own title, a size down to fit the pane
+                  style: HearthText.title.copyWith(
+                    fontSize: 22,
+                    color: palette.text,
+                    shadows: [
+                      Shadow(
+                        offset: const Offset(0, 2),
+                        color: palette.titleShadow,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Expanded(child: _titleBlock(context, name, type, distance)),
-                    const SizedBox(width: 12),
-                    _enterButton(context, enabled, onPressed),
+                    // the type wears its map token's glyph and colour, so
+                    // the pane and the node you tapped plainly match
+                    Tooltip(
+                      message: type.label,
+                      child: PixelArt(PixelSprites.glyph(type), unit: 1),
+                    ),
+                    if (where.isNotEmpty) const SizedBox(width: 10),
+                    ...where,
                   ],
                 ),
                 const SizedBox(height: 8),
-                SizedBox(height: tileSize, child: foot),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        // two rows at most; a zone with more than that
+                        // keeps the rest for its own screen
+                        child: ClipRect(
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: chips,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _enterButton(context, enabled, onPressed),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _titleBlock(
-    BuildContext context,
-    String name,
-    String type,
-    String distance,
-  ) {
-    final palette = context.palette;
-    final meta = HearthText.rowMeta.copyWith(
-      fontSize: 12,
-      color: palette.textSubtitle,
-    );
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          // the zone screen's own title, a size down to fit the pane
-          style: HearthText.title.copyWith(
-            fontSize: 24,
-            color: palette.text,
-            shadows: [
-              Shadow(offset: const Offset(0, 2), color: palette.titleShadow),
-            ],
-          ),
-        ),
-        const SizedBox(height: 2),
-        Row(
-          children: [
-            Text(
-              type,
-              style: meta.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.8,
-                color: palette.text,
-              ),
-            ),
-            Text('  ·  ', style: meta),
-            Flexible(
-              child: Text(
-                distance,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: meta,
-              ),
-            ),
-          ],
-        ),
-      ],
     );
   }
 
@@ -304,104 +375,68 @@ class MapDetailPane extends StatelessWidget {
       child: const Text('Enter'),
     );
   }
+}
 
-  /// What's standing in the place, laid out the way the zone itself lays it
-  /// out: the permanent structures, then a rule, then whatever exploring
-  /// there has turned up, each with its count.
-  ///
-  /// This is a preview of the zone screen you'd land on, so it splits the
-  /// same way that screen does — fishing spots side with the structures,
-  /// because they are fixtures that never deplete rather than nodes you
-  /// work through. A node worked down to nothing is no longer there, so an
-  /// empty count drops out of the row rather than showing a zero.
-  Widget _entityPreview(BuildContext context, List<Entity> entities) {
-    final structures = <Entity>[];
-    final discovered = <EncounterEntity>[];
-    for (final e in entities) {
-      if (e is EncounterEntity && e is! FishingEntity) {
-        if (e.count > 0) discovered.add(e);
-      } else {
-        structures.add(e);
-      }
-    }
-    if (structures.isEmpty && discovered.isEmpty) {
-      return const SizedBox.shrink();
-    }
+/// One small icon-and-number tag: a thing in the zone, or a gate on it.
+class _Chip extends StatelessWidget {
+  const _Chip({
+    required this.tooltip,
+    required this.children,
+    this.color,
+    this.muted = false,
+  });
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final e in structures) _entityTile(e.id, 1),
-          if (structures.isNotEmpty && discovered.isNotEmpty)
-            Container(
-              width: 1,
-              height: tileSize * 0.7,
-              margin: const EdgeInsets.symmetric(horizontal: 7),
-              color: context.palette.borderOverArt,
-            ),
-          for (final e in discovered) _entityTile(e.id, e.count),
-        ],
+  final String tooltip;
+  final List<Widget> children;
+
+  /// Tints the frame, for the red lock chips.
+  final Color? color;
+
+  /// Dims the content, for the "still hidden" count.
+  final bool muted;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final tint = color ?? palette.text;
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        height: 24,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: tint.withValues(alpha: color == null ? 0.08 : 0.12),
+          border: Border.all(color: tint.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: IconTheme.merge(
+          data: IconThemeData(
+            color: muted ? palette.textMuted : palette.textSubtitle,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 3,
+            children: children,
+          ),
+        ),
       ),
     );
   }
+}
 
-  Widget _entityTile(EntityId id, int count) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 5),
-      child: ItemStackTile<EntityId>(
-        size: tileSize,
-        id: id,
-        count: count,
-        showInfoDialogOnTap: false,
-        // a preview row: the reader wants "lots of trees", not 115,599
-        compactCount: true,
-      ),
-    );
-  }
+class _ChipLabel extends StatelessWidget {
+  const _ChipLabel(this.text, {this.color});
 
-  /// Why a locked place is locked, and how far off you are. A locked node
-  /// still opens this pane — being told "Requires Mining 5" is the point.
-  Widget _requirements(
-    BuildContext context,
-    WorldController world,
-    ZoneId zoneId,
-  ) {
-    final def = zoneId.definition;
-    final lines = <String>[];
+  final String text;
+  final Color? color;
 
-    if (!world.meetsZoneExplorationRequirement(zoneId)) {
-      lines.add(
-        'Requires Exploration ${def.explorationLevel} '
-        '— you have ${world.playerExplorationLevel}',
-      );
-    }
-    if (!world.meetsZoneSkillRequirement(zoneId)) {
-      lines.add(
-        'Requires ${skillLabel(def.requiredSkill)} ${def.requiredLevel} '
-        '— you have ${world.skillLevelFor(def.requiredSkill)}',
-      );
-    }
-
-    // two gates can be unmet at once; the pair scales down rather than
-    // spilling out of the foot row
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: Alignment.centerLeft,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final line in lines)
-            Text(
-              line,
-              style: HearthText.rowMeta.copyWith(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: RecipeCard.missingMaterialColor,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: HearthText.rowMeta.copyWith(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: color ?? context.palette.text,
+    ),
+  );
 }

@@ -7,8 +7,8 @@ import '../services/buff_service.dart';
 /// Fires, and the firepits they burn in.
 ///
 /// A fire is not an entity — it is a [FireItem] zone buff keyed to the firepit
-/// that owns it. That means a firepit holds exactly one fire at a time, two
-/// firepits in a zone burn independently, and a fire's remaining time survives
+/// that owns it. That means a firepit holds exactly one fire at a time, the
+/// fire slots in a zone (see [FireSlots]) burn independently, and a fire's remaining time survives
 /// save/load without any entity state to keep in sync.
 class FiremakingSystem {
   final BuffService _buffService;
@@ -35,6 +35,42 @@ class FiremakingSystem {
     // while still in the map. treat it as out.
     if (buff.expirationTime.isBefore(at ?? DateTime.now())) return null;
     return buff;
+  }
+
+  /// The fire slots burning in [zoneId] at [at], in slot order.
+  List<EntityId> litSlots(ZoneId zoneId, BuffData buffState, {DateTime? at}) =>
+      [
+        for (final slot in FireSlots.slots)
+          if (activeFire(slot, zoneId, buffState, at: at) != null) slot,
+      ];
+
+  /// Whether a fire may be laid in [firepitId]: one already burns there, or
+  /// the zone has fewer than [cap] fires going (see [FireSlots.capFor]).
+  bool canLight(
+    EntityId firepitId,
+    ZoneId zoneId,
+    BuffData buffState,
+    int cap, {
+    DateTime? at,
+  }) {
+    if (activeFire(firepitId, zoneId, buffState, at: at) != null) return true;
+    return litSlots(zoneId, buffState, at: at).length < cap;
+  }
+
+  /// The slot a new fire in [zoneId] goes in: the first cold one, or null
+  /// when [cap] fires are already burning.
+  EntityId? freeSlot(
+    ZoneId zoneId,
+    BuffData buffState,
+    int cap, {
+    DateTime? at,
+  }) {
+    final lit = litSlots(zoneId, buffState, at: at);
+    if (lit.length >= cap) return null;
+    for (final slot in FireSlots.slots) {
+      if (!lit.contains(slot)) return slot;
+    }
+    return null;
   }
 
   /// Whether cooking recipes are available at [firepitId] at [at],

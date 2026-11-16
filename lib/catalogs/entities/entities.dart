@@ -16,6 +16,7 @@ export 'definition/shop_stock_entry.dart';
 export 'combat_archetype.dart';
 export 'combat_type.dart';
 export 'entity_id.dart';
+export 'fire_slots.dart';
 export '../rarity.dart';
 export 'model/combat_entity.dart';
 export 'model/crafting_entity.dart';

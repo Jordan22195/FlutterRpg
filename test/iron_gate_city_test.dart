@@ -12,7 +12,7 @@ void main() {
   group('Iron Gate City', () {
     test('is a settlement with every skilling table', () {
       expect(town.name, 'Iron Gate City');
-      expect(town.type, MapNodeType.SETTLEMENT);
+      expect(town.type, MapNodeType.TOWN);
       expect(
         town.permanentEntities,
         containsAll([

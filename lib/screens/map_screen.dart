@@ -11,16 +11,20 @@ import '../services/entity_screen_router_service.dart';
 import '../widgets/map_detail_pane.dart';
 import '../widgets/map_edge_painter.dart';
 import '../widgets/map_node_token.dart';
+import '../widgets/pixel_sprites.dart';
+import '../theme/hearth_text.dart';
 import '../utilities/shell_page_route.dart';
 
 /// The world map: a graph of places you can walk between, and what walking
 /// there costs.
 ///
 /// The split of duties is the whole design. A node says what a place *is*
-/// (its type glyph), whether it is shut (the padlock) and whether you're
-/// standing in it (the ring). An edge says what the trip costs, once. Every
-/// sentence of detail — names of gates, what's in town, the way in — lives
-/// in the pane docked underneath, which never covers the map.
+/// (its pixel token: wilderness diamond, town shield, skilling round),
+/// whether it is shut (the padlock) and whether you're standing in it (the
+/// YOU flag). An edge says what the trip costs, once, and the picked
+/// place's route is drawn in gold. Every sentence of detail — names of
+/// gates, what's in town, the way in — lives in the pane docked underneath,
+/// which never covers the map.
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -38,6 +42,10 @@ class _MapScreenState extends State<MapScreen> {
   final GlobalKey _viewport = GlobalKey();
   MapNode? _selected;
   double _scale = 1;
+
+  /// Kinds of place the filter rail has switched off. Their tokens fade
+  /// back rather than vanish, so the roads through them still make sense.
+  final Set<MapNodeType> _hidden = {};
 
   /// The zone the view is currently framed on, so opening the map and
   /// coming back from a trip both start you looking at where you are
@@ -70,14 +78,20 @@ class _MapScreenState extends State<MapScreen> {
   /// Panning only. How far in the player is zoomed is their setting, not
   /// something travelling gets to reset, so the current scale is carried
   /// through and only the translation is recomputed.
+  static final Size _paddedSize = Size(
+    kWorldMapSize.width + 2 * kWorldMapPadding,
+    kWorldMapSize.height + 2 * kWorldMapPadding,
+  );
+
   void _frameCurrentZone(ZoneId zone) {
     if (_framedOn == zone || !mounted) return;
     final box = _viewport.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
 
     final target =
-        zoneNodeCenter(zone) ??
-        Offset(kWorldMapSize.width / 2, kWorldMapSize.height / 2);
+        (zoneNodeCenter(zone) ??
+            Offset(kWorldMapSize.width / 2, kWorldMapSize.height / 2)) +
+        const Offset(kWorldMapPadding, kWorldMapPadding);
     _framedOn = zone;
 
     // the canvas draws at scale*p + translation, so putting `target` under
@@ -88,12 +102,12 @@ class _MapScreenState extends State<MapScreen> {
         _clampAxis(
           box.size.width / 2 - target.dx * scale,
           box.size.width,
-          kWorldMapSize.width * scale,
+          _paddedSize.width * scale,
         ),
         _clampAxis(
           box.size.height / 2 - target.dy * scale,
           box.size.height,
-          kWorldMapSize.height * scale,
+          _paddedSize.height * scale,
         ),
         0,
         1,
@@ -160,8 +174,19 @@ class _MapScreenState extends State<MapScreen> {
     return (def.requiredSkill, def.requiredLevel);
   }
 
+  /// The hops of the quickest way from where the player stands to the
+  /// picked zone, as (from, to) pairs. Empty when nothing (or a landmark,
+  /// which isn't on the travel graph) is picked.
+  Set<(ZoneId, ZoneId)> _routeLegs(WorldController world) {
+    final picked = _selected;
+    if (picked is! ZoneNode) return const {};
+    final path = ZoneTravelGraph.travelPath(world.currentZoneId, picked.id);
+    return {for (var i = 0; i < path.length - 1; i++) (path[i], path[i + 1])};
+  }
+
   List<MapEdge> _edges(WorldController world) {
     final edges = <MapEdge>[];
+    final route = _routeLegs(world);
 
     for (final (end, otherEnd) in world.travelEdges()) {
       final endCenter = zoneNodeCenter(end);
@@ -182,6 +207,9 @@ class _MapScreenState extends State<MapScreen> {
           from: nearIsEnd ? endCenter : otherCenter,
           to: nearIsEnd ? otherCenter : endCenter,
           time: ZoneTravelGraph.edgeTravelTime(near, far),
+          onRoute:
+              route.contains((end, otherEnd)) ||
+              route.contains((otherEnd, end)),
         ),
       );
     }
@@ -217,6 +245,7 @@ class _MapScreenState extends State<MapScreen> {
       lockSkill: gateSkill,
       lockLevel: gateLevel,
       showLabel: _showLabel(node),
+      dimmed: _hidden.contains(node.type.group),
       onTap: () => _select(node),
     );
   }
@@ -263,7 +292,7 @@ class _MapScreenState extends State<MapScreen> {
                     maxScale: 2.5,
                     boundaryMargin: EdgeInsets.zero,
                     child: SizedBox.fromSize(
-                      size: kWorldMapSize,
+                      size: _paddedSize,
                       child: Stack(
                         children: [
                           // pixel-art terrain: nearest-neighbour keeps it
@@ -288,63 +317,79 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                           ),
 
-                          Positioned.fill(
-                            child: IgnorePointer(
-                              child: CustomPaint(
-                                painter: MapEdgePainter(
-                                  edges: _edges(world),
-                                  lineColor: scheme.onSurface.withValues(
-                                    alpha: 0.35,
-                                  ),
-                                  badgeFill: scheme.surface.withValues(
-                                    alpha: 0.85,
+                          // roads and tokens live in the unpadded space
+                          Positioned(
+                            left: kWorldMapPadding,
+                            top: kWorldMapPadding,
+                            width: kWorldMapSize.width,
+                            height: kWorldMapSize.height,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Positioned.fill(
+                                  child: IgnorePointer(
+                                    child: CustomPaint(
+                                      painter: MapEdgePainter(
+                                        edges: _edges(world),
+                                        lineColor: const Color(0xBFF1E4C3),
+                                        badgeFill: const Color(0xF0171210),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
+
+                                for (final node in kWorldMapNodes)
+                                  Positioned(
+                                    left:
+                                        node.center.dx -
+                                        MapNodeToken.slotWidth / 2,
+                                    top:
+                                        node.center.dy -
+                                        MapNodeToken.tokenCenterY,
+                                    child: _tokenFor(world, node),
+                                  ),
+                              ],
                             ),
                           ),
-
-                          for (final node in kWorldMapNodes)
-                            Positioned(
-                              left: node.center.dx - MapNodeToken.slotWidth / 2,
-                              top: node.center.dy - MapNodeToken.tokenCenterY,
-                              child: _tokenFor(world, node),
-                            ),
                         ],
                       ),
                     ),
                   ),
                 ),
 
-                // the canvas pans under the title, so the title sits on a
-                // scrim that fades the map out beneath it rather than
-                // letting labels collide with it
+                // what kinds of place to show: one toggle per node type
                 Positioned(
-                  left: 0,
-                  top: 0,
-                  right: 0,
-                  child: IgnorePointer(
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            scheme.surface,
-                            scheme.surface.withValues(alpha: 0.9),
-                            scheme.surface.withValues(alpha: 0),
-                          ],
-                          stops: const [0, 0.45, 1],
+                  left: 12,
+                  top: 12,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final type in MapNodeType.mapGroups) ...[
+                        _FilterButton(
+                          type: type,
+                          on: !_hidden.contains(type),
+                          onTap: () => setState(() {
+                            if (!_hidden.remove(type)) _hidden.add(type);
+                          }),
                         ),
-                      ),
-                      child: Text(
-                        'World Map',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                    ),
+                        const SizedBox(height: 10),
+                      ],
+                    ],
                   ),
                 ),
+
+                // with nothing picked, the foot of the map says where you
+                // are and lets you step straight back in
+                if (_selected == null)
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 12,
+                    child: _LocationBar(
+                      zone: zone,
+                      onEnter: () => _enterZone(world, zone),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -357,6 +402,147 @@ class _MapScreenState extends State<MapScreen> {
               onEnter: (zoneId) => _enterZone(world, zoneId),
               onEnterLandmark: _enterLandmark,
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One switch on the map's filter rail: the type's pixel glyph on a dark
+/// square, with a bar in the type's colour along its foot while it's on.
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({
+    required this.type,
+    required this.on,
+    required this.onTap,
+  });
+
+  static const double size = 44;
+
+  final MapNodeType type;
+  final bool on;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = type.label[0] + type.label.substring(1).toLowerCase();
+    return Semantics(
+      button: true,
+      toggled: on,
+      label: '$name places',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: const Color(0xF21B1511),
+            border: Border.all(color: PixelSprites.outline, width: 2),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Opacity(
+                opacity: on ? 1 : 0.35,
+                child: PixelArt(PixelSprites.glyph(type), unit: 1.5),
+              ),
+              if (on)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 3,
+                  child: ColoredBox(color: type.color),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The foot of the map when nothing is picked: the type glyph and name of
+/// the place you're standing in, and a way straight back into it.
+class _LocationBar extends StatelessWidget {
+  const _LocationBar({required this.zone, required this.onEnter});
+
+  final ZoneId zone;
+  final VoidCallback onEnter;
+
+  @override
+  Widget build(BuildContext context) {
+    final def = zone.definition;
+    return Container(
+      height: 56,
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+      decoration: BoxDecoration(
+        color: const Color(0xF2171210),
+        border: Border.all(color: PixelSprites.outline, width: 3),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F0B08),
+              border: Border(
+                bottom: BorderSide(color: def.type.color, width: 3),
+              ),
+            ),
+            child: PixelArt(PixelSprites.glyph(def.type), unit: 1.5),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'YOU ARE AT',
+                  style: TextStyle(
+                    fontFamily: HearthText.pixel,
+                    fontSize: 11,
+                    height: 1.1,
+                    color: Color(0xFFA8977A),
+                  ),
+                ),
+                Text(
+                  def.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: HearthText.pixel,
+                    fontSize: 17,
+                    height: 1.2,
+                    color: Color(0xFFF1E4C3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TextButton(
+            onPressed: onEnter,
+            style: TextButton.styleFrom(
+              backgroundColor: PixelSprites.gold,
+              foregroundColor: const Color(0xFF1A1208),
+              minimumSize: const Size(72, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              shape: const RoundedRectangleBorder(
+                side: BorderSide(color: PixelSprites.outline, width: 2),
+              ),
+              textStyle: const TextStyle(
+                fontFamily: HearthText.pixel,
+                fontSize: 16,
+              ),
+            ),
+            child: const Text('Enter'),
+          ),
         ],
       ),
     );

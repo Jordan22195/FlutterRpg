@@ -19,6 +19,7 @@ import 'package:rpg/widgets/progress_bars.dart';
 import 'package:rpg/widgets/map_edge_painter.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/map_node_token.dart';
+import 'package:rpg/widgets/pixel_sprites.dart';
 import 'package:rpg/widgets/art_header.dart';
 import 'package:rpg/theme/hearth_text.dart';
 import 'package:rpg/theme/zone_palette.dart';
@@ -81,17 +82,17 @@ MapEdgePainter edgePainter(WidgetTester tester) {
   return paint.painter! as MapEdgePainter;
 }
 
+/// The pixel token drawn inside a node, open (type glyph showing) or shut.
+Finder badge({MapNodeType? type, required bool locked}) => find.byWidgetPredicate(
+  (w) =>
+      w is MapNodeBadge &&
+      w.locked == locked &&
+      (type == null || w.type.group == type),
+);
+
 Finder entityTiles(WidgetTester tester) => find.descendant(
   of: find.byType(MapDetailPane),
   matching: find.byType(ItemStackTile<EntityId>),
-);
-
-/// The rule between the structures and what exploring has turned up.
-Finder separators(WidgetTester tester) => find.descendant(
-  of: find.byType(MapDetailPane),
-  matching: find.byWidgetPredicate(
-    (w) => w is Container && w.constraints?.maxWidth == 1,
-  ),
 );
 
 Future<void> select(WidgetTester tester, String enumName) async {
@@ -171,7 +172,7 @@ void main() {
       expect(
         find.descendant(
           of: tokenFor('SOUTH_HAVEN'),
-          matching: find.byIcon(MapNodeType.SETTLEMENT.glyph),
+          matching: badge(type: MapNodeType.TOWN, locked: false),
         ),
         findsOneWidget,
       );
@@ -195,7 +196,7 @@ void main() {
       expect(
         find.descendant(
           of: tokenFor('FOREST_MINE'),
-          matching: find.byIcon(MapNodeType.WILDERNESS.glyph),
+          matching: badge(locked: false),
         ),
         findsNothing,
       );
@@ -232,9 +233,17 @@ void main() {
       expect(
         find.descendant(
           of: tokenFor('TUTORIAL_FARM'),
-          matching: find.byIcon(MapNodeType.WILDERNESS.glyph),
+          matching: badge(type: MapNodeType.WILDERNESS, locked: false),
         ),
         findsOneWidget,
+      );
+      expect(
+        find.descendant(of: tokenFor('TUTORIAL_FARM'), matching: find.text('YOU')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: tokenFor('SOUTH_HAVEN'), matching: find.text('YOU')),
+        findsNothing,
       );
     });
   });
@@ -256,12 +265,12 @@ void main() {
       expect(pane.height, MapDetailPane.height);
       expect(find.byType(MapNodeToken), findsNWidgets(kWorldMapNodes.length));
       expect(find.text('South Haven'), findsWidgets);
-      expect(find.text(MapNodeType.SETTLEMENT.label), findsOneWidget);
+      expect(find.byTooltip(MapNodeType.TOWN.label), findsOneWidget);
 
       // another node just swaps the contents
       await select(tester, 'TUTORIAL_FARM');
-      expect(find.text(MapNodeType.SETTLEMENT.label), findsNothing);
-      expect(find.text('You are here'), findsOneWidget);
+      expect(find.byTooltip(MapNodeType.TOWN.label), findsNothing);
+      expect(find.byTooltip('You are here'), findsOneWidget);
       expect(find.text('Enter'), findsOneWidget);
 
       // and tapping bare map puts the room back. The gap between the
@@ -330,96 +339,30 @@ void main() {
       );
     });
 
-    testWidgets('it previews what is standing in the place', (tester) async {
+    testWidgets('it previews what the zone holds, not what you have found', (
+      tester,
+    ) async {
       await pumpMap(tester);
-      await select(tester, 'SOUTH_HAVEN');
+      Finder inPane(Finder f) =>
+          find.descendant(of: find.byType(MapDetailPane), matching: f);
+      final details = sessionOf(
+        tester,
+      ).worldController.zoneDetails(ZoneId.TUTORIAL_FARM);
+      final reachable = details.entities.where((d) => !d.locked).toList();
+      final hidden = details.entities.length - reachable.length;
+      expect(reachable, isNotEmpty);
 
-      // the per-node service dots moved in here, as the same entity tiles
-      // the zone screen itself uses
-      for (final id in [
-        EntityId.ANVIL,
-        EntityId.FIREPIT,
-        EntityId.TRADING_POST,
-      ]) {
-        expect(
-          find.descendant(
-            of: find.byType(MapDetailPane),
-            matching: find.byWidgetPredicate(
-              (w) => w is ItemStackTile<EntityId> && w.id == id,
-            ),
-          ),
-          findsOneWidget,
-          reason: '${id.name} is a permanent structure of South Haven',
-        );
+      await select(tester, 'TUTORIAL_FARM');
+
+      // every discovery your Exploration reaches, by its own icon, found
+      // or not — and the rest kept back as one count
+      for (final d in reachable) {
+        expect(inPane(find.byTooltip(d.name)), findsWidgets);
       }
-    });
-
-    testWidgets('structures lead, discovered entities follow a rule', (
-      tester,
-    ) async {
-      await pumpMap(tester);
-      final session = sessionOf(tester);
-      final zone = session.saveGameData.worldData.zones[ZoneId.TUTORIAL_FARM]!;
-
-      // nothing found here yet: structures only, and no rule to draw
-      await select(tester, 'TUTORIAL_FARM');
-      final structureCount = zone.permanentEntities.length;
-      expect(entityTiles(tester), findsNWidgets(structureCount));
-      expect(separators(tester), findsNothing);
-
-      // find something, and the row grows a second half behind a rule
-      zone.discoveredEntities.add(EntityId.TREE.build() as EncounterEntity);
-      await select(tester, 'SOUTH_HAVEN');
-      await select(tester, 'TUTORIAL_FARM');
-
-      expect(entityTiles(tester), findsNWidgets(structureCount + 1));
-      expect(separators(tester), findsOneWidget);
-    });
-
-    testWidgets('a big count is abbreviated, not spelled out', (tester) async {
-      await pumpMap(tester);
-      final session = sessionOf(tester);
-      final zone = session.saveGameData.worldData.zones[ZoneId.TUTORIAL_FARM]!;
-
-      final many = EntityId.TREE.build() as EncounterEntity;
-      many.count = 115599;
-      zone.discoveredEntities.add(many);
-      await select(tester, 'TUTORIAL_FARM');
-
-      // six digits at full size would cover the art they are counting
-      expect(
-        find.descendant(
-          of: find.byType(MapDetailPane),
-          matching: find.text('115k'),
-        ),
-        findsOneWidget,
-      );
-      expect(find.text('115599'), findsNothing);
-
-      final tile = tester.widget<ItemStackTile<EntityId>>(
-        find.byWidgetPredicate(
-          (w) => w is ItemStackTile<EntityId> && w.id == EntityId.TREE,
-        ),
-      );
-      expect(tile.compactCount, isTrue);
-    });
-
-    testWidgets('a node worked down to nothing drops out of the row', (
-      tester,
-    ) async {
-      await pumpMap(tester);
-      final session = sessionOf(tester);
-      final zone = session.saveGameData.worldData.zones[ZoneId.TUTORIAL_FARM]!;
-      final structureCount = zone.permanentEntities.length;
-
-      final spent = EntityId.TREE.build() as EncounterEntity;
-      spent.count = 0;
-      zone.discoveredEntities.add(spent);
-      await select(tester, 'TUTORIAL_FARM');
-
-      // an exhausted node isn't there any more; a zero would say it was
-      expect(entityTiles(tester), findsNWidgets(structureCount));
-      expect(separators(tester), findsNothing);
+      if (hidden > 0) {
+        expect(inPane(find.byTooltip('$hidden still hidden')), findsOneWidget);
+      }
+      expect(entityTiles(tester), findsNothing);
     });
 
     testWidgets('a locked node still opens, and says why it is shut', (
@@ -428,8 +371,9 @@ void main() {
       await pumpMap(tester);
       await select(tester, 'FOREST_MINE');
 
-      expect(find.text('Requires Exploration 15 — you have 1'), findsOneWidget);
-      expect(find.text('Requires Mining 5 — you have 1'), findsOneWidget);
+      // a red lock chip per unmet gate: the skill's icon and the level
+      expect(find.byTooltip('Requires Exploration 15'), findsOneWidget);
+      expect(find.byTooltip('Requires Mining 5'), findsOneWidget);
 
       final button = tester.widget<ElevatedButton>(
         find.descendant(
@@ -440,12 +384,13 @@ void main() {
       expect(button.onPressed, isNull);
     });
 
-    testWidgets('it counts the hops and states the walk time', (tester) async {
+    testWidgets('it states the walk time', (tester) async {
       await pumpMap(tester);
       await select(tester, 'SOUTH_HAVEN');
 
       // farm >2.5s> forest >5s> haven, and no stamina: walking is free
-      expect(find.text('2 hops · 7.5s walk'), findsOneWidget);
+      expect(find.byTooltip('Walk'), findsOneWidget);
+      expect(find.text('7.5s'), findsOneWidget);
     });
 
     testWidgets('it is the zone banner: its art, title and colours', (
@@ -476,7 +421,7 @@ void main() {
       );
     });
 
-    testWidgets('a zone with a level gate shows it on a chip', (tester) async {
+    testWidgets('a zone with a level gate shows no level chip', (tester) async {
       await pumpMap(tester);
       await select(tester, 'SOUTHWOOD_FOREST');
 
@@ -485,14 +430,7 @@ void main() {
           of: find.byType(MapDetailPane),
           matching: find.byType(ArtHeaderChip),
         ),
-        findsOneWidget,
-      );
-      expect(
-        find.bySemanticsLabel(
-          'Zone exploration level '
-          '${ZoneId.SOUTHWOOD_FOREST.definition.explorationLevel}',
-        ),
-        findsOneWidget,
+        findsNothing,
       );
     });
   });
@@ -625,7 +563,7 @@ void main() {
       await pumpMap(tester);
 
       await select(tester, 'TUTORIAL_FARM');
-      expect(find.text('You are here'), findsOneWidget);
+      expect(find.byTooltip('You are here'), findsOneWidget);
 
       await tester.tap(find.text('Enter'));
       await settle(tester);
@@ -649,7 +587,7 @@ void main() {
       await tester.tap(find.byIcon(Icons.arrow_back));
       await settle(tester);
 
-      expect(find.text('World Map'), findsOneWidget);
+      expect(find.byType(InteractiveViewer), findsOneWidget);
       expect(session.worldController.viewedZoneId, ZoneId.TUTORIAL_FARM);
     });
 
@@ -950,13 +888,10 @@ void main() {
       expect(edge.time, const Duration(milliseconds: 2500));
     });
 
-    testWidgets('the time badge leans toward the far end of the road', (
+    testWidgets('a road is drawn away from the node you stand on', (
       tester,
     ) async {
       await pumpMap(tester);
-
-      // biased past the midpoint so it clears the near node's two-line label
-      expect(MapEdgePainter.badgePosition, greaterThan(0.5));
 
       final farm = zoneNodeCenter(ZoneId.TUTORIAL_FARM)!;
       final edge = edgePainter(
@@ -964,6 +899,62 @@ void main() {
       ).edges.firstWhere((e) => e.from == farm || e.to == farm);
       // the player is standing on the farm, so the road is drawn away from it
       expect(edge.from, farm);
+    });
+  });
+
+  group('node types', () {
+    testWidgets('each kind of place has its own token shape', (tester) async {
+      await pumpMap(tester);
+
+      expect(tokenWidget(tester, 'SOUTHWOOD_FOREST').type.group, MapNodeType.WILDERNESS);
+      expect(tokenWidget(tester, 'SOUTH_HAVEN').type, MapNodeType.TOWN);
+      expect(tokenWidget(tester, 'FOREST_MINE').type, MapNodeType.SKILLING);
+      // a lair is a landmark, but it reads as wilderness on the map
+      expect(tokenWidget(tester, 'GOBLIN_QUEEN_LAIR').type.group, MapNodeType.WILDERNESS);
+
+      expect(MapNodeType.WILDERNESS.frame, MapNodeFrame.DIAMOND);
+      expect(MapNodeType.TOWN.frame, MapNodeFrame.SHIELD);
+      expect(MapNodeType.SKILLING.frame, MapNodeFrame.ROUND);
+    });
+
+    testWidgets('the filter rail fades a kind of place without removing it', (
+      tester,
+    ) async {
+      await pumpMap(tester);
+      expect(tokenWidget(tester, 'SOUTH_HAVEN').dimmed, isFalse);
+
+      await tester.tap(find.bySemanticsLabel('Town places'));
+      await settle(tester);
+
+      expect(tokenWidget(tester, 'SOUTH_HAVEN').dimmed, isTrue);
+      expect(tokenWidget(tester, 'SOUTHWOOD_FOREST').dimmed, isFalse);
+      expect(find.byType(MapNodeToken), findsNWidgets(kWorldMapNodes.length));
+    });
+
+    testWidgets('picking a zone draws the way there in gold', (tester) async {
+      await pumpMap(tester);
+      expect(edgePainter(tester).edges.where((e) => e.onRoute), isEmpty);
+
+      await select(tester, 'SOUTH_HAVEN');
+
+      final route = ZoneTravelGraph.travelPath(
+        ZoneId.TUTORIAL_FARM,
+        ZoneId.SOUTH_HAVEN,
+      );
+      expect(
+        edgePainter(tester).edges.where((e) => e.onRoute).length,
+        route.length - 1,
+      );
+    });
+
+    testWidgets('with nothing picked, the map says where you are', (
+      tester,
+    ) async {
+      await pumpMap(tester);
+      expect(find.text('YOU ARE AT'), findsOneWidget);
+
+      await select(tester, 'SOUTH_HAVEN');
+      expect(find.text('YOU ARE AT'), findsNothing);
     });
   });
 }

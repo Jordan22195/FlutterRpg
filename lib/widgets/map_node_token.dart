@@ -2,19 +2,25 @@ import 'package:flutter/material.dart';
 
 import '../catalogs/zones/map_node_type.dart';
 import '../data/skill_data.dart';
+import '../theme/hearth_text.dart';
 import 'icon_renderer.dart';
+import 'pixel_sprites.dart';
 
-/// One place on the world map: a fixed-size circular token with its name
-/// underneath.
+/// One place on the world map: a pixel-art token cut to its type's shape,
+/// with its name on a plate underneath.
 ///
-/// Every token is the same size whatever the place is called, so "Goblin
+/// Wilderness is a diamond with crossed swords, a town is a shield with a
+/// house, a skilling spot is a round token with a pickaxe. Shape says the
+/// type first and colour backs it up, so the three read apart at a glance.
+///
+/// Every slot is the same size whatever the place is called, so "Goblin
 /// Queen's Lair" takes up exactly as much map as "Forest" and the layout's
 /// spacing means what it says. The name wraps below the token instead of
 /// inflating it.
 ///
 /// The token carries three things and no more: what kind of place this is
-/// (the type glyph), whether it is shut to you (the padlock), and whether
-/// you are standing in it (the ring and the pip). What a trip there *costs*
+/// (the shape and glyph), whether it is shut to you (the padlock), and
+/// whether you are standing in it (the YOU flag). What a trip there *costs*
 /// belongs to the edge you'd walk down, and everything else belongs to the
 /// detail pane.
 class MapNodeToken extends StatelessWidget {
@@ -28,25 +34,31 @@ class MapNodeToken extends StatelessWidget {
     this.lockSkill = SkillId.NULL,
     this.lockLevel = 0,
     this.showLabel = true,
+    this.dimmed = false,
     this.onTap,
   });
 
-  /// Diameter of the circular token. Sized past the 44px touch-target floor
-  /// the action bar works to, since a map is tapped at arm's length.
-  static const double tokenSize = 48;
+  /// The square the token is centred in. The shield, the tallest of the
+  /// three shapes, fits inside it; all three clear the 44px touch floor.
+  static const double tokenSize = 56;
 
   /// Width of the whole slot: the token plus the room its label may wrap
   /// into. Wider than the token so a long name doesn't shove its neighbours.
   static const double slotWidth = 96;
 
   /// Height of the whole slot: token, gap, and two lines of label.
-  static const double slotHeight = 92;
+  static const double slotHeight = 96;
 
   /// Distance from the top of the slot to the token's centre, so callers can
   /// position a slot by the centre the layout data gives them.
-  static const double tokenCenterY = 26;
+  static const double tokenCenterY = 30;
 
-  static const double _pipSize = 7;
+  /// Room the YOU flag takes above the token. It hangs outside the slot, so
+  /// it never shifts the token off the centre the layout gives it.
+  static const double _flagHeight = 30;
+
+  static const Color _plate = Color(0xE6120E0B);
+  static const Color _plateText = Color(0xFFF1E4C3);
 
   final String name;
   final MapNodeType type;
@@ -62,123 +74,54 @@ class MapNodeToken extends StatelessWidget {
   /// out far enough that every label at once would be soup.
   final bool showLabel;
 
+  /// Faded back because the filter rail has this kind of place switched
+  /// off. It stays on the map (and tappable) so the roads still make sense.
+  final bool dimmed;
+
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     return SizedBox(
       width: slotWidth,
       height: slotHeight,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              height: tokenCenterY + tokenSize / 2,
-              width: tokenSize + _pipSize,
-              child: Center(child: _token(scheme)),
-            ),
-            const SizedBox(height: 4),
-            if (showLabel) Expanded(child: _label(context, scheme)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _token(ColorScheme scheme) {
-    // a locked place is shut, and that is all the token says about it: no
-    // type glyph, because you haven't been told what's in there yet
-    final border = isCurrent
-        ? BorderSide(color: scheme.primary, width: 2)
-        : isSelected
-        ? BorderSide(color: scheme.onSurface.withValues(alpha: 0.7), width: 2)
-        : BorderSide(color: scheme.outline, width: 1);
-
-    final circle = Container(
-      width: tokenSize,
-      height: tokenSize,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: scheme.surfaceContainerHighest,
-        border: Border.fromBorderSide(border),
-        boxShadow: isCurrent
-            ? [
-                BoxShadow(
-                  color: scheme.primary.withValues(alpha: 0.35),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: isLocked ? _lockedFace(scheme) : _typeFace(scheme),
-    );
-
-    if (!isCurrent) return circle;
-
-    // "you are here": a pip on the token's bottom rim, half outside the
-    // circle so it reads as a marker planted on the place rather than as
-    // another glyph inside it
-    return SizedBox(
-      width: tokenSize + _pipSize,
-      height: tokenSize + _pipSize,
-      child: Stack(
-        alignment: Alignment.topCenter,
-        // the ring's glow spills past the pip's box, and a Stack clips to
-        // its bounds by default — which turned the halo into a grey square
-        clipBehavior: Clip.none,
-        children: [
-          Positioned(top: 0, child: circle),
-          Positioned(
-            top: tokenSize - _pipSize / 2,
-            child: Container(
-              width: _pipSize,
-              height: _pipSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: scheme.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _typeFace(ColorScheme scheme) {
-    return Center(child: Icon(type.glyph, size: 22, color: scheme.onSurface));
-  }
-
-  Widget _lockedFace(ColorScheme scheme) {
-    return Opacity(
-      opacity: 0.55,
-      child: CustomPaint(
-        painter: _HatchPainter(color: scheme.outline.withValues(alpha: 0.5)),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+        child: Opacity(
+          opacity: dimmed ? 0.3 : 1,
+          child: Stack(
+            // the YOU flag hangs above the slot
+            clipBehavior: Clip.none,
             children: [
-              Icon(Icons.lock, size: 18, color: scheme.onSurface),
-              if (lockSkill != SkillId.NULL && lockLevel > 0)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconRenderer<SkillId>(size: 12, id: lockSkill),
-                    Text(
-                      '$lockLevel',
-                      style: TextStyle(
-                        fontSize: 10,
-                        height: 1,
-                        fontWeight: FontWeight.w600,
-                        color: scheme.onSurface,
-                      ),
-                    ),
-                  ],
+              Positioned(
+                left: 0,
+                right: 0,
+                top: tokenCenterY - tokenSize / 2,
+                height: tokenSize,
+                child: Center(child: _token()),
+              ),
+              if (showLabel && !dimmed)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: tokenCenterY + tokenSize / 2 + 2,
+                  bottom: 0,
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: _label(),
+                  ),
+                ),
+              if (isCurrent)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: tokenCenterY - _badgeHalfHeight() - _flagHeight,
+                  height: _flagHeight,
+                  child: const Align(
+                    alignment: Alignment.bottomCenter,
+                    child: _YouFlag(),
+                  ),
                 ),
             ],
           ),
@@ -187,52 +130,116 @@ class MapNodeToken extends StatelessWidget {
     );
   }
 
-  Widget _label(BuildContext context, ColorScheme scheme) {
-    // map art and edges run behind these, so the name carries its own halo
-    // in the background colour rather than sitting on a hard plate
-    final glow = [
-      Shadow(blurRadius: 3, color: scheme.surface),
-      Shadow(blurRadius: 6, color: scheme.surface),
-      Shadow(blurRadius: 9, color: scheme.surface),
-    ];
+  double _badgeHalfHeight() {
+    final rows = switch (type.frame) {
+      MapNodeFrame.DIAMOND => 31,
+      MapNodeFrame.SHIELD => 34,
+      MapNodeFrame.ROUND => 26,
+    };
+    return rows * PixelSprites.mapUnit / 2;
+  }
 
-    return Text(
-      name,
-      textAlign: TextAlign.center,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        color: scheme.onSurface.withValues(alpha: isLocked ? 0.5 : 0.9),
-        height: 1.15,
-        shadows: glow,
+  Widget _token() {
+    final badge = MapNodeBadge(
+      type: type,
+      selected: isSelected,
+      locked: isLocked,
+    );
+    if (!isLocked) return badge;
+
+    // a locked place is shut, and that is all the token says about it: the
+    // padlock and the gate, no type glyph
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        badge,
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.lock, size: 16, color: _plateText),
+            if (lockSkill != SkillId.NULL && lockLevel > 0)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconRenderer<SkillId>(size: 12, id: lockSkill),
+                  Text(
+                    '$lockLevel',
+                    style: const TextStyle(
+                      fontFamily: HearthText.pixel,
+                      fontSize: 11,
+                      height: 1,
+                      color: _plateText,
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _label() {
+    final selected = isSelected && !isLocked;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: selected ? PixelSprites.selectedRim : _plate,
+        border: Border.all(color: PixelSprites.outline, width: 2),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(5, 1, 5, 2),
+        child: Text(
+          name,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontFamily: HearthText.pixel,
+            fontSize: 12,
+            height: 1.15,
+            color: selected
+                ? const Color(0xFF1A1208)
+                : _plateText.withValues(alpha: isLocked ? 0.55 : 1),
+          ),
+        ),
       ),
     );
   }
 }
 
-/// Diagonal hatching across a locked token's face.
-class _HatchPainter extends CustomPainter {
-  const _HatchPainter({required this.color});
-
-  final Color color;
+/// "You are here": a gold YOU tag with a pixel pointer, planted over the
+/// token rather than drawn inside it, so where you are and what the place
+/// is both stay readable.
+class _YouFlag extends StatelessWidget {
+  const _YouFlag();
 
   @override
-  void paint(Canvas canvas, Size size) {
-    canvas.save();
-    canvas.clipPath(Path()..addOval(Offset.zero & size));
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1;
-    for (var x = -size.height; x < size.width; x += 6) {
-      canvas.drawLine(
-        Offset(x, size.height),
-        Offset(x + size.height, 0),
-        paint,
-      );
-    }
-    canvas.restore();
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: PixelSprites.gold,
+            border: Border.all(color: PixelSprites.outline, width: 2),
+          ),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 5),
+            child: Text(
+              'YOU',
+              style: TextStyle(
+                fontFamily: HearthText.pixel,
+                fontSize: 11,
+                height: 1.2,
+                color: Color(0xFF1A1208),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 1),
+        PixelArt(PixelSprites.arrow, unit: 1.6),
+      ],
+    );
   }
-
-  @override
-  bool shouldRepaint(_HatchPainter oldDelegate) => oldDelegate.color != color;
 }

@@ -14,6 +14,21 @@ class ZoneTravelGraph {
     ZoneId.SOUTHWOOD_FOREST: {
       ZoneId.TUTORIAL_FARM: TravelEdge(time: Duration(milliseconds: 2500)),
       ZoneId.SOUTH_HAVEN: TravelEdge(time: Duration(seconds: 5)),
+      // south-west down to the river
+      ZoneId.REEDWATER_VALE: TravelEdge(time: Duration(seconds: 5)),
+    },
+    ZoneId.REEDWATER_VALE: {
+      ZoneId.SOUTHWOOD_FOREST: TravelEdge(time: Duration(seconds: 5)),
+      // west, following the river down to its mouth
+      ZoneId.MUDMOUTH_DELTA: TravelEdge(time: Duration(seconds: 5)),
+    },
+    ZoneId.MUDMOUTH_DELTA: {
+      ZoneId.REEDWATER_VALE: TravelEdge(time: Duration(seconds: 5)),
+      // south along the shore to open sea
+      ZoneId.SALTWIND_COAST: TravelEdge(time: Duration(seconds: 5)),
+    },
+    ZoneId.SALTWIND_COAST: {
+      ZoneId.MUDMOUTH_DELTA: TravelEdge(time: Duration(seconds: 5)),
     },
     ZoneId.SOUTH_HAVEN: {
       ZoneId.SOUTHWOOD_FOREST: TravelEdge(time: Duration(seconds: 5)),

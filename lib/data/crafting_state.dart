@@ -121,10 +121,10 @@ class CraftingState {
         final id = EntityId.values.asNameMap()[entry.key];
         final ids = entry.value;
         if (id != null && ids is List) {
-          state.reagentMixByEntity[id] = [
-            for (final r in ids)
-              if (r is String) r,
-          ];
+          // a fire carries one kindling now: a mix saved from when it held
+          // several keeps its first
+          final first = ids.whereType<String>().firstOrNull;
+          state.reagentMixByEntity[id] = [?first];
         }
       }
     } else if (rawSingle is Map<String, dynamic>) {

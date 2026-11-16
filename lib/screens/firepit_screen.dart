@@ -1,3 +1,4 @@
+import '../data/skill_category.dart';
 import 'package:flutter/material.dart';
 import 'package:rpg/theme/hearth_theme.dart';
 import 'package:rpg/widgets/action_timer.dart';
@@ -45,11 +46,10 @@ firepit screen contents:
  empty card opens it on the first tap). with the fire card
  highlighted the button builds the picked fire over and over.
  the second card follows the picked fire:
- -a campfire or bonfire: the reagent card, holding every reagent picked to
-  keep topped up (the picker takes several). each tick throws one of every
-  picked reagent with room at once, in stage order - stamina, strength,
-  recovery, attack... - and stops once every ring is full. reagents only
-  go on a fire already lit
+ -a campfire or bonfire: the kindling card, holding the one reagent picked
+  to keep topped up - a fire carries one kindling, so a second stat needs a
+  second fire. each tick throws one while its ring has room, and stops once
+  it is full. kindling only goes on a fire already lit
  -anything else: the cooking card, locked until a cookfire is picked. the
   button cooks, lighting the picked cookfire on its first tick and
   relighting it whenever it burns out
@@ -104,6 +104,16 @@ class _FirepitScreenState extends State<FirepitScreen>
     return _Section.fire;
   }
 
+  /// The stat whose kindling is burning on [fire] when the picked kindling
+  /// is a different one, which it won't take; null when the pick can go on.
+  SkillId? _otherKindling(FireItem fire, List<CraftingRecipe> mix) {
+    if (mix.isEmpty) return null;
+    final stat =
+        (mix.first.tendReagent!.definition as FireReagentDefinition).stat;
+    if (fire.takesKindling(stat, DateTime.now())) return null;
+    return fire.kindlingAt(DateTime.now());
+  }
+
   void _showRecipePicker(
     BuildContext context,
     CraftingController controller,
@@ -122,10 +132,7 @@ class _FirepitScreenState extends State<FirepitScreen>
           : controller.stationEntityId.definition.name,
       skill: skill,
       recipes: recipes,
-      // reagents are picked several at once into the firepit's mix
-      isPicked: section == _Section.tend
-          ? (r) => controller.inReagentMix(r.id)
-          : null,
+      // a fire carries one kindling: picking one closes the sheet
       onSelected: (r) {
         controller.selectRecipe(r.id);
         setState(() => _activeSection = section);
@@ -331,6 +338,16 @@ class _FirepitScreenState extends State<FirepitScreen>
                                 const _CardHint(
                                   icon: Icons.local_fire_department_outlined,
                                   text: 'Light the fire first',
+                                )
+                              // one kindling per fire: a different pick waits
+                              // for the one burning to run out
+                              else if (_otherKindling(fire, reagentMix)
+                                  case final burning?)
+                                _CardHint(
+                                  icon: Icons.block,
+                                  text:
+                                      'Burning ${skillLabel(burning)} '
+                                      'kindling - light another fire',
                                 ),
                             ] else ...[
                               const _SectionLabel('Cooking'),

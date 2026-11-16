@@ -9,7 +9,17 @@ import '../services/player_data_service.dart';
 import 'firemaking_system.dart';
 
 /// Why a reagent can't be thrown on right now. [none] means it can.
-enum TendBlock { none, notAReagent, noFire, cookfire, level, noneHeld }
+enum TendBlock {
+  none,
+  notAReagent,
+  noFire,
+  cookfire,
+  level,
+  noneHeld,
+
+  /// The fire already carries a different kindling (one per fire).
+  otherKindling,
+}
 
 /// Tending a fire: throwing fire reagents on a lit campfire or bonfire.
 ///
@@ -76,6 +86,9 @@ class FireTendingSystem {
     );
     if (fire == null) return TendBlock.noFire;
     if (!fire.tendable) return TendBlock.cookfire;
+    if (!fire.takesKindling(def.stat, at ?? DateTime.now())) {
+      return TendBlock.otherKindling;
+    }
     final level = _playerDataService.getSkillLevel(
       SkillId.FIREMAKING,
       playerState,

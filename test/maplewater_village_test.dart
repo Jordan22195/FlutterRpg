@@ -22,7 +22,7 @@ void main() {
       'is a settlement with a trading post, a fishing shop and a lumber mill',
       () {
         expect(town.name, 'Maplewater Village');
-        expect(town.type, MapNodeType.SETTLEMENT);
+        expect(town.type, MapNodeType.TOWN);
         expect(
           town.permanentEntities,
           containsAll([

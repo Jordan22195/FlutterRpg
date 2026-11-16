@@ -390,36 +390,41 @@ void main() {
     });
   });
 
-  test('two firepits in a zone burn independently and their buffs sum', () {
+  test('two fires in a zone burn independently, and the best one counts', () {
     final session = buildSession();
     final save = session.saveGameData;
+    // level 40 opens three fire slots
     stockForFiremaking(session);
 
-    // ANVIL stands in for a second firepit: the model keys on the owning
-    // entity id, so any two distinct ids are two independent fires
     craftAt(session, 'basic_campfire', EntityId.FIREPIT);
-    craftAt(session, 'basic_campfire', EntityId.ANVIL);
+    craftAt(session, 'basic_campfire', EntityId.FIREPIT_2);
 
     final zoneBuffs =
         save.playerData.buffData.zoneBuffs[save.playerData.currentZoneId]!;
-    expect(zoneBuffs.keys, containsAll([EntityId.FIREPIT, EntityId.ANVIL]));
+    expect(zoneBuffs.keys, containsAll([EntityId.FIREPIT, EntityId.FIREPIT_2]));
 
     // a campfire gives nothing until it is tended: an acorn on each
     final now = DateTime.now();
     for (final fire in zoneBuffs.values.whereType<FireItem>()) {
       fire.tend(SkillId.STRENGTH, now);
     }
-    final total = session.buffService.getBuffedStatTotal(
+    Map<SkillId, int> total() => session.buffService.getBuffedStatTotal(
       save.playerData.buffData,
       save.playerData.currentZoneId,
     );
     final power =
         (ItemId.BASIC_CAMPFIRE.definition as FireItemDefinition).power;
     expect(
-      total[SkillId.STRENGTH],
-      power * 2,
-      reason: 'two tended campfires should double their strength bonus',
+      total()[SkillId.STRENGTH],
+      power,
+      reason: 'fires on the same stat do not stack: the best one counts',
     );
+
+    // a third fire on another stat adds its own
+    craftAt(session, 'basic_campfire', EntityId.FIREPIT_3);
+    (zoneBuffs[EntityId.FIREPIT_3] as FireItem).tend(SkillId.DEFENCE, now);
+    expect(total()[SkillId.STRENGTH], power);
+    expect(total()[SkillId.DEFENCE], power);
 
     session.dispose();
   });

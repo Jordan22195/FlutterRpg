@@ -414,47 +414,34 @@ void main() {
           [...recipeIds];
     }
 
-    test('a kindling mix throws one of every picked reagent at once', () {
+    test('kindling throws its one reagent, and nothing beside it', () {
       final session = buildSession();
       final save = session.saveGameData;
       setFiremaking(session, 20);
       save.inventoryData.itemMap[ItemId.ACORN] = 5;
       save.inventoryData.itemMap[ItemId.TREE_BARK] = 5;
-      save.inventoryData.itemMap[ItemId.DRY_TWIGS] = 5;
       final now = DateTime.now();
       final fire = light(session, ItemId.BASIC_CAMPFIRE, at: now);
-      pickMix(session, ['tend_acorn', 'tend_tree_bark', 'tend_dry_twigs']);
+      pickMix(session, ['tend_acorn']);
       final skill = save.playerData.skillData[SkillId.FIREMAKING]!;
       final before = skill.xp;
 
       craft(session, reagentMixRecipeId);
-      for (final id in [ItemId.ACORN, ItemId.TREE_BARK, ItemId.DRY_TWIGS]) {
-        expect(save.inventoryData.itemMap[id], 4, reason: id.name);
-      }
-      for (final stat in [SkillId.STRENGTH, SkillId.DEFENCE, SkillId.STAMINA]) {
-        expect(fire.reagentActive(stat, DateTime.now()), isTrue);
-      }
-      expect(
-        skill.xp - before,
-        FireTendingSystem.tendXp(ItemId.ACORN) +
-            FireTendingSystem.tendXp(ItemId.TREE_BARK) +
-            FireTendingSystem.tendXp(ItemId.DRY_TWIGS),
-      );
+      expect(save.inventoryData.itemMap[ItemId.ACORN], 4);
+      expect(save.inventoryData.itemMap[ItemId.TREE_BARK], 5);
+      expect(fire.activeReagentStats(DateTime.now()), [SkillId.STRENGTH]);
+      expect(skill.xp - before, FireTendingSystem.tendXp(ItemId.ACORN));
       session.dispose();
     });
-
-    test('a mix skips full rings and stops once every ring is full', () {
+    test('kindling stops once its ring is full', () {
       final session = buildSession();
       final save = session.saveGameData;
       setFiremaking(session, 20);
-      save.inventoryData.itemMap[ItemId.ACORN] = 10;
       save.inventoryData.itemMap[ItemId.TREE_BARK] = 10;
       save.playerData.currentEntityViewId = EntityId.FIREPIT;
       final now = DateTime.now();
-      final fire = light(session, ItemId.BASIC_CAMPFIRE, at: now);
-      pickMix(session, ['tend_acorn', 'tend_tree_bark']);
-      // strength already full
-      fire.tend(SkillId.STRENGTH, now, count: 10);
+      light(session, ItemId.BASIC_CAMPFIRE, at: now);
+      pickMix(session, ['tend_tree_bark']);
 
       final controller = session.craftingController;
       expect(
@@ -462,28 +449,27 @@ void main() {
         isTrue,
       );
       controller.doCraftingAction(1);
-      expect(save.inventoryData.itemMap[ItemId.ACORN], 10);
       expect(save.inventoryData.itemMap[ItemId.TREE_BARK], 9);
       // a 5 minute campfire holds one 5 minute bark: full, so it stopped
       expect(controller.mixFull(), isTrue);
       expect(session.actionTimingController.isRunning, isFalse);
       session.dispose();
     });
-
-    test('a mix keeps picked reagents in stage order', () {
+    test('a fire carries one kindling: picking another replaces it', () {
       final session = buildSession();
-      save(GameSession s) => s.saveGameData;
-      pickMix(session, ['tend_acorn', 'tend_dry_twigs', 'tend_tree_bark']);
-      save(session).playerData.currentEntityViewId = EntityId.FIREPIT;
-      final stats = [
-        for (final r in session.craftingController.reagentMix())
-          FireTendingSystem.reagentDefinition(r.tendReagent!)!.stat,
-      ];
-      // stamina, strength, defence: the order SkillId lists them
-      expect(stats, [SkillId.STAMINA, SkillId.STRENGTH, SkillId.DEFENCE]);
+      session.saveGameData.playerData.currentEntityViewId = EntityId.FIREPIT;
+      final controller = session.craftingController;
+      controller.selectRecipe('tend_acorn');
+      controller.selectRecipe('tend_tree_bark');
+      expect(
+        [for (final r in controller.reagentMix()) r.id],
+        ['tend_tree_bark'],
+      );
+      // toggled again, it is unpicked
+      controller.toggleReagentInMix('tend_tree_bark');
+      expect(controller.reagentMix(), isEmpty);
       session.dispose();
     });
-
     test('a reagent buff stacks to at most the fire\'s end', () {
       final session = buildSession();
       final now = DateTime(2030, 1, 1, 12);
@@ -618,8 +604,8 @@ void main() {
         controller.startCraftingActionFor('tend_acorn', EntityId.FIREPIT),
         isFalse,
       );
-      // a different reagent's ring is its own
-      expect(controller.reagentFull('tend_tree_bark'), isFalse);
+      // a fire carries one kindling: a different one has no room on it
+      expect(controller.reagentFull('tend_tree_bark'), isTrue);
 
       // more logs make room for another
       save.craftingState.activeRecipeId = 'basic_campfire';
@@ -657,12 +643,11 @@ void main() {
       session.dispose();
     });
 
-    test('a kindling mix keeps its buffs up across an offline gap', () {
+    test('kindling keeps its buff up across an offline gap', () {
       final session = buildSession();
       final save = session.saveGameData;
       setFiremaking(session, 20);
       save.inventoryData.itemMap[ItemId.ACORN] = 20;
-      save.inventoryData.itemMap[ItemId.TREE_BARK] = 20;
       save.playerData.currentEntityViewId = EntityId.FIREPIT;
       // a long fire already burning, for the kindling to go on
       final now = DateTime.now();
@@ -675,7 +660,7 @@ void main() {
         count: 10,
         at: start,
       );
-      pickMix(session, ['tend_acorn', 'tend_tree_bark']);
+      pickMix(session, ['tend_acorn']);
       expect(
         session.craftingController.startCraftingActionFor(
           reagentMixRecipeId,
@@ -691,11 +676,8 @@ void main() {
         now: now,
       );
 
-      // both went on, and both buffs are still up
       expect(save.inventoryData.itemMap[ItemId.ACORN] ?? 0, lessThan(20));
-      expect(save.inventoryData.itemMap[ItemId.TREE_BARK] ?? 0, lessThan(20));
       expect(totals(session, at: now)[SkillId.STRENGTH], 5);
-      expect(totals(session, at: now)[SkillId.DEFENCE], 5);
       session.actionTimingController.stop();
       session.dispose();
     });

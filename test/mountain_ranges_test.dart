@@ -37,7 +37,7 @@ void main() {
 
     test('Saddlegate is a settlement with the crafting tables', () {
       final town = ZoneId.SADDLEGATE.definition;
-      expect(town.type, MapNodeType.SETTLEMENT);
+      expect(town.type, MapNodeType.TOWN);
       expect(town.discoverableEntities, isEmpty);
       expect(
         town.permanentEntities,

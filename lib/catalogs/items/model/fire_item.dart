@@ -290,6 +290,22 @@ class FireItem extends ZoneBuffItem {
       if (reagentActive(stat, at)) stat,
   ];
 
+  /// Whether kindling for [stat] can go on at [at]. A fire carries one
+  /// kindling: it takes more of the one burning on it, or any once nothing
+  /// is, but never a second stat beside the first.
+  bool takesKindling(SkillId stat, DateTime at) {
+    for (final active in activeReagentStats(at)) {
+      if (active != stat) return false;
+    }
+    return true;
+  }
+
+  /// The kindling stat burning on this fire at [at], or null when none is.
+  SkillId? kindlingAt(DateTime at) {
+    final active = activeReagentStats(at);
+    return active.isEmpty ? null : active.first;
+  }
+
   /// How full [stat]'s reagent buff is at [at]: its time left out of the
   /// fire's, 0 to 1. A buff can burn no longer than its fire, so a full ring
   /// is one that lasts as long as the fire does; laying more logs on lowers

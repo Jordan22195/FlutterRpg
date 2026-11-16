@@ -84,6 +84,32 @@ enum EntityId {
       iconAsset: "assets/images/entities/firepit.png",
     ),
   ),
+  // the other fire slots a zone opens as firemaking rises (see FireSlots).
+  // FIREPIT stays slot 1 so fires saved before slots existed keep burning
+  FIREPIT_2(
+    FirePitEntityDefinition(
+      name: "Firepit",
+      iconAsset: "assets/images/entities/firepit.png",
+    ),
+  ),
+  FIREPIT_3(
+    FirePitEntityDefinition(
+      name: "Firepit",
+      iconAsset: "assets/images/entities/firepit.png",
+    ),
+  ),
+  FIREPIT_4(
+    FirePitEntityDefinition(
+      name: "Firepit",
+      iconAsset: "assets/images/entities/firepit.png",
+    ),
+  ),
+  FIREPIT_5(
+    FirePitEntityDefinition(
+      name: "Firepit",
+      iconAsset: "assets/images/entities/firepit.png",
+    ),
+  ),
 
   // ── WOODCUTTING ─────────────────────────────────────────────────
   // EncounterEntityDefinition, tier ascending — pairs with the LOGS items
@@ -971,12 +997,12 @@ enum EntityId {
   //
   // Giant Spider · roster tier 2 · forest
   GIANT_SPIDER(
-    CombatEntityDefinition(spider, fibLevel: 6, name: "Giant Spider"),
+    CombatEntityDefinition(spider, fibLevel: 5, name: "Giant Spider"),
   ),
   GIANT_SPIDER_UNCOMMON(
     CombatEntityDefinition(
       spider,
-      fibLevel: 7,
+      fibLevel: 6,
       name: "Giant Spider",
       rarity: Rarity.UNCOMMON,
       itemDrops: [NestedDrop(spiderDropTable, countMultiplier: 2)],
@@ -987,7 +1013,7 @@ enum EntityId {
   THICKET_WEAVER(
     CombatEntityDefinition(
       spider,
-      fibLevel: 8,
+      fibLevel: 7,
       name: "Thicket Weaver",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
@@ -1020,11 +1046,11 @@ enum EntityId {
     ),
   ),
   // Forest Wolf · roster tier 2 · forest
-  FOREST_WOLF(CombatEntityDefinition(wolf, fibLevel: 6, name: "Forest Wolf")),
+  FOREST_WOLF(CombatEntityDefinition(wolf, fibLevel: 4, name: "Forest Wolf")),
   FOREST_WOLF_UNCOMMON(
     CombatEntityDefinition(
       wolf,
-      fibLevel: 7,
+      fibLevel: 5,
       name: "Elder Forest Wolf",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
@@ -1050,7 +1076,7 @@ enum EntityId {
   FOREST_WOLF_RARE(
     CombatEntityDefinition(
       wolf,
-      fibLevel: 8,
+      fibLevel: 6,
       name: "Alpha Forest Wolf",
       rarity: Rarity.RARE,
       itemDrops: [
@@ -1071,7 +1097,7 @@ enum EntityId {
   DEN_ALPHA_WOLF(
     CombatEntityDefinition(
       wolf,
-      fibLevel: 8,
+      fibLevel: 6,
       name: "Den Alpha Wolf",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
@@ -1109,11 +1135,11 @@ enum EntityId {
     ),
   ),
   // Giant Bat · roster tier 2 · mine
-  GIANT_BAT(CombatEntityDefinition(giantBat, fibLevel: 7, name: "Giant Bat")),
+  GIANT_BAT(CombatEntityDefinition(giantBat, fibLevel: 6, name: "Giant Bat")),
   GIANT_BAT_UNCOMMON(
     CombatEntityDefinition(
       giantBat,
-      fibLevel: 8,
+      fibLevel: 7,
       name: "Giant Bat",
       rarity: Rarity.UNCOMMON,
     ),
@@ -1163,11 +1189,11 @@ enum EntityId {
   // goblin's quality as an override, so the family is one-word edits
   // rather than hand-written copies of the same six lines. The fish nest never takes one — only equipment
   // carries a quality.
-  GOBLIN(CombatEntityDefinition(goblin, fibLevel: 5, name: "Goblin")),
+  GOBLIN(CombatEntityDefinition(goblin, fibLevel: 3, name: "Goblin")),
   GOBLIN_UNCOMMON(
     CombatEntityDefinition(
       goblin,
-      fibLevel: 6,
+      fibLevel: 4,
       name: "Goblin Scout",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
@@ -1186,7 +1212,7 @@ enum EntityId {
   GOBLIN_RARE(
     CombatEntityDefinition(
       goblin,
-      fibLevel: 7,
+      fibLevel: 5,
       name: "Goblin Warrior",
       rarity: Rarity.RARE,
       itemDrops: [
@@ -1205,7 +1231,7 @@ enum EntityId {
   GOBLIN_EPIC(
     CombatEntityDefinition(
       goblin,
-      fibLevel: 8,
+      fibLevel: 6,
       name: "Goblin General",
       rarity: Rarity.EPIC,
       itemDrops: [
@@ -1224,7 +1250,7 @@ enum EntityId {
   GOBLIN_LEGENDARY(
     CombatEntityDefinition(
       goblin,
-      fibLevel: 9,
+      fibLevel: 7,
       name: "Goblin Queen",
       rarity: Rarity.LEGENDARY,
       itemDrops: [
@@ -1241,11 +1267,11 @@ enum EntityId {
     ),
   ),
   // Bear · roster tier 2 · forest
-  BEAR(CombatEntityDefinition(bear, fibLevel: 6, name: "Bear")),
+  BEAR(CombatEntityDefinition(bear, fibLevel: 4, name: "Bear")),
   BEAR_UNCOMMON(
     CombatEntityDefinition(
       bear,
-      fibLevel: 7,
+      fibLevel: 5,
       name: "Bear",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
@@ -1284,7 +1310,7 @@ enum EntityId {
   CAVE_BEAR(
     CombatEntityDefinition(
       bear,
-      fibLevel: 8,
+      fibLevel: 6,
       name: "Cave Bear",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
@@ -1511,11 +1537,11 @@ enum EntityId {
   // Tier 9 - Level 55
   //
   // Skeleton · roster tier 3 · dark forest
-  SKELETON(CombatEntityDefinition(skeleton, fibLevel: 7, name: "Skeleton")),
+  SKELETON(CombatEntityDefinition(skeleton, fibLevel: 6, name: "Skeleton")),
   SKELETON_UNCOMMON(
     CombatEntityDefinition(
       skeleton,
-      fibLevel: 8,
+      fibLevel: 7,
       name: "Skeleton",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
@@ -1539,11 +1565,11 @@ enum EntityId {
     ),
   ),
   // Zombie · roster tier 3 · dark forest
-  ZOMBIE(CombatEntityDefinition(zombie, fibLevel: 8, name: "Zombie")),
+  ZOMBIE(CombatEntityDefinition(zombie, fibLevel: 7, name: "Zombie")),
   ZOMBIE_UNCOMMON(
     CombatEntityDefinition(
       zombie,
-      fibLevel: 9,
+      fibLevel: 8,
       name: "Zombie",
       rarity: Rarity.UNCOMMON,
     ),
@@ -1554,7 +1580,7 @@ enum EntityId {
   THICKET_ZOMBIE(
     CombatEntityDefinition(
       zombie,
-      fibLevel: 9,
+      fibLevel: 8,
       name: "Cocooned Zombie",
       isDungeonBoss: true,
       rarity: Rarity.UNCOMMON,
@@ -1683,7 +1709,7 @@ enum EntityId {
   // Tier 11 - Level 144
   //
   // Wraith · roster tier 4 · dark forest
-  WRAITH(CombatEntityDefinition(wraith, fibLevel: 10, name: "Wraith")),
+  WRAITH(CombatEntityDefinition(wraith, fibLevel: 9, name: "Wraith")),
   // Banshee · roster tier 4 · dark forest
   BANSHEE(CombatEntityDefinition(banshee, fibLevel: 10, name: "Banshee")),
   // Troll · roster tier 4 · ironroot hills
@@ -1832,7 +1858,7 @@ enum EntityId {
   GOBLIN_SCOUT(
     CombatEntityDefinition(
       goblinScout,
-      fibLevel: 4,
+      fibLevel: 2,
       name: "Goblin",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
@@ -1857,7 +1883,7 @@ enum EntityId {
   GOBLIN_SEARGENT(
     CombatEntityDefinition(
       goblinSeargent,
-      fibLevel: 6,
+      fibLevel: 4,
       name: "Goblin Seargent",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
@@ -1918,7 +1944,7 @@ enum EntityId {
   SPIDER_BROODMOTHER(
     CombatEntityDefinition(
       spiderBroodmother,
-      fibLevel: 9,
+      fibLevel: 8,
       name: "Spider Broodmother",
       isDungeonBoss: true,
       rarity: Rarity.EPIC,

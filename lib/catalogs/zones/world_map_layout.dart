@@ -15,7 +15,13 @@ import 'package:rpg/catalogs/zones/zone_id.dart';
 /// that to stay on screen. What the layout does owe you is room — every pair
 /// of centres here is at least [kMinNodeSpacing] apart, so a token plus its
 /// two-line label never lands on a neighbour.
-const Size kWorldMapSize = Size(1320, 760);
+const Size kWorldMapSize = Size(1620, 760);
+
+/// Open ocean drawn around the map on every side, so a node on the coast
+/// can still be panned to the middle of the screen. The painted image is
+/// [kWorldMapSize] plus this margin on each edge; node coordinates stay in
+/// the unpadded space.
+const double kWorldMapPadding = 400;
 
 /// Floor on centre-to-centre distance between any two nodes.
 const double kMinNodeSpacing = 100;
@@ -78,35 +84,41 @@ class LandmarkNode extends MapNode {
 /// and the three peaks beyond (frost north, storm above the pass, lava
 /// south), the goblin warren off to
 /// the east of the road, and the dev zones parked well clear of the real
-/// map.
+/// map. West of Southwood Forest the river valley, the delta and the coast
+/// run down the new western shore.
 const List<MapNode> kWorldMapNodes = [
-  ZoneNode(ZoneId.TUTORIAL_FARM, Offset(200, 140)),
-  LandmarkNode(DungeonId.GOBLIN_QUEEN_LAIR, Offset(320, 250)),
-  ZoneNode(ZoneId.SOUTHWOOD_FOREST, Offset(150, 300)),
-  ZoneNode(ZoneId.SOUTH_HAVEN, Offset(230, 460)),
-  ZoneNode(ZoneId.DARKWOOD_FOREST, Offset(150, 620)),
-  ZoneNode(ZoneId.MISTGRAVE_HOLLOW, Offset(240, 710)),
-  ZoneNode(ZoneId.FOREST_MINE, Offset(390, 570)),
-  ZoneNode(ZoneId.FOREST_MINE_DEPTHS, Offset(420, 690)),
-  ZoneNode(ZoneId.SWAMP, Offset(430, 400)),
-  ZoneNode(ZoneId.MAPLEWATER_LAKE, Offset(520, 330)),
-  ZoneNode(ZoneId.MAPLEWATER_VILLAGE, Offset(620, 250)),
-  ZoneNode(ZoneId.YEW_GROVE, Offset(480, 190)),
-  ZoneNode(ZoneId.MAGIC_GROVE, Offset(560, 90)),
-  ZoneNode(ZoneId.FOOTHILLS, Offset(620, 480)),
-  ZoneNode(ZoneId.IRON_GATE_CITY, Offset(740, 500)),
-  ZoneNode(ZoneId.IRONROOT_HILLS, Offset(860, 440)),
-  ZoneNode(ZoneId.IRONROOT_MINE, Offset(900, 570)),
-  ZoneNode(ZoneId.COPPERDUST_FLATS, Offset(620, 640)),
-  ZoneNode(ZoneId.REDWALL_BLUFFS, Offset(780, 670)),
-  ZoneNode(ZoneId.GREYSPINE_MOUNTAIN, Offset(1000, 330)),
-  ZoneNode(ZoneId.SADDLEGATE, Offset(1040, 500)),
-  ZoneNode(ZoneId.ASHRIDGE_MOUNTAINS, Offset(980, 680)),
-  ZoneNode(ZoneId.FROSTCROWN_PEAKS, Offset(1180, 250)),
-  ZoneNode(ZoneId.STORMCROWN_PEAKS, Offset(1220, 460)),
-  ZoneNode(ZoneId.MOLTENSPIRE_PEAKS, Offset(1180, 680)),
-  ZoneNode(ZoneId.DEV_FOREST, Offset(820, 140)),
-  ZoneNode(ZoneId.DEV_DUNGEON_TESTING, Offset(820, 250)),
+  ZoneNode(ZoneId.TUTORIAL_FARM, Offset(500, 140)),
+  LandmarkNode(DungeonId.GOBLIN_QUEEN_LAIR, Offset(620, 250)),
+  ZoneNode(ZoneId.SOUTHWOOD_FOREST, Offset(450, 300)),
+  // the west coast, off Southwood Forest: the river valley south-west of it,
+  // the delta where the river fans out to the west, the open coast below
+  ZoneNode(ZoneId.REEDWATER_VALE, Offset(300, 420)),
+  ZoneNode(ZoneId.MUDMOUTH_DELTA, Offset(140, 420)),
+  ZoneNode(ZoneId.SALTWIND_COAST, Offset(140, 570)),
+  ZoneNode(ZoneId.SOUTH_HAVEN, Offset(530, 460)),
+  ZoneNode(ZoneId.DARKWOOD_FOREST, Offset(450, 620)),
+  ZoneNode(ZoneId.MISTGRAVE_HOLLOW, Offset(540, 710)),
+  ZoneNode(ZoneId.FOREST_MINE, Offset(690, 570)),
+  ZoneNode(ZoneId.FOREST_MINE_DEPTHS, Offset(720, 690)),
+  ZoneNode(ZoneId.SWAMP, Offset(730, 400)),
+  ZoneNode(ZoneId.MAPLEWATER_LAKE, Offset(820, 330)),
+  ZoneNode(ZoneId.MAPLEWATER_VILLAGE, Offset(920, 250)),
+  ZoneNode(ZoneId.YEW_GROVE, Offset(780, 190)),
+  ZoneNode(ZoneId.MAGIC_GROVE, Offset(860, 90)),
+  ZoneNode(ZoneId.FOOTHILLS, Offset(920, 480)),
+  ZoneNode(ZoneId.IRON_GATE_CITY, Offset(1040, 500)),
+  ZoneNode(ZoneId.IRONROOT_HILLS, Offset(1160, 440)),
+  ZoneNode(ZoneId.IRONROOT_MINE, Offset(1200, 570)),
+  ZoneNode(ZoneId.COPPERDUST_FLATS, Offset(920, 640)),
+  ZoneNode(ZoneId.REDWALL_BLUFFS, Offset(1080, 670)),
+  ZoneNode(ZoneId.GREYSPINE_MOUNTAIN, Offset(1300, 330)),
+  ZoneNode(ZoneId.SADDLEGATE, Offset(1340, 500)),
+  ZoneNode(ZoneId.ASHRIDGE_MOUNTAINS, Offset(1280, 680)),
+  ZoneNode(ZoneId.FROSTCROWN_PEAKS, Offset(1480, 250)),
+  ZoneNode(ZoneId.STORMCROWN_PEAKS, Offset(1520, 460)),
+  ZoneNode(ZoneId.MOLTENSPIRE_PEAKS, Offset(1480, 680)),
+  ZoneNode(ZoneId.DEV_FOREST, Offset(1120, 140)),
+  ZoneNode(ZoneId.DEV_DUNGEON_TESTING, Offset(1120, 250)),
 ];
 
 /// Map-space centre of [zone]'s token, or null when it isn't laid out.

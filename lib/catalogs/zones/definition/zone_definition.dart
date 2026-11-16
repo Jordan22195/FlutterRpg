@@ -7,7 +7,11 @@ import 'package:rpg/theme/zone_palette.dart';
 
 class ZoneDefinition {
   final String name;
-  final List<EntityId> permanentEntities;
+  final List<EntityId> _permanentEntities;
+
+  /// The places that stand in this zone for good. A firepit in the
+  /// definition stands for every fire slot (see [FireSlots]).
+  List<EntityId> get permanentEntities => FireSlots.expand(_permanentEntities);
   final List<WeightedDropTableEntry<EntityId>> _discoverableEntities;
 
   /// What this zone can turn up. An entity that sets its own
@@ -57,7 +61,7 @@ class ZoneDefinition {
   const ZoneDefinition({
     required this.name,
     required List<WeightedDropTableEntry<EntityId>> discoverableEntities,
-    required this.permanentEntities,
+    required List<EntityId> permanentEntities,
     this.discoverableItems = const [],
     required this.iconAsset,
     this.type = MapNodeType.WILDERNESS,
@@ -66,7 +70,8 @@ class ZoneDefinition {
     this.explorationLevel = 0,
     this.xpPerExplore = 0,
     this.palette = ZonePalette.meadow,
-  }) : _discoverableEntities = discoverableEntities;
+  }) : _discoverableEntities = discoverableEntities,
+       _permanentEntities = permanentEntities;
 
   /// Every entity id this zone's content declares, permanent or discoverable
   /// (including entries still gated behind an unlockLevel — the gate decides

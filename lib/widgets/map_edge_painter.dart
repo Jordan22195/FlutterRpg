@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../utilities/util.dart';
-
 /// One road on the world map: where it runs and how long the hop takes.
 class MapEdge {
-  const MapEdge({required this.from, required this.to, required this.time});
+  const MapEdge({
+    required this.from,
+    required this.to,
+    required this.time,
+    this.onRoute = false,
+  });
 
   /// The end nearer the player. The time badge is biased away from it, so
   /// the badge clears this node's label rather than landing on it.
@@ -16,79 +19,88 @@ class MapEdge {
   /// cut it. Walking is free, so time is all a road is labelled with.
   final Duration time;
 
+  /// Part of the quickest way from where the player stands to the picked
+  /// place. Route roads are drawn solid gold, so picking a node shows the
+  /// way there before you read a word of the pane.
+  final bool onRoute;
+
   @override
   bool operator ==(Object other) =>
       other is MapEdge &&
       other.from == from &&
       other.to == to &&
-      other.time == time;
+      other.time == time &&
+      other.onRoute == onRoute;
 
   @override
-  int get hashCode => Object.hash(from, to, time);
+  int get hashCode => Object.hash(from, to, time, onRoute);
 }
 
-/// Draws the travel graph: one uniform line per road, with the hop's travel
-/// time in a small pill along it.
+/// Draws the travel graph in the map's pixel style: a dashed track per
+/// road with the hop's travel time on a small square plate, and the route
+/// to the picked place drawn solid in gold.
 ///
-/// Every road is drawn the same weight and the same colour. Time is stated
-/// once, as a number, and never encoded a second time in the stroke.
+/// Every ordinary road is the same weight and colour. Time is stated once,
+/// as a number, and never encoded a second time in the stroke.
 class MapEdgePainter extends CustomPainter {
   const MapEdgePainter({
     required this.edges,
     required this.lineColor,
     required this.badgeFill,
+    this.textColor = const Color(0xFFF1E4C3),
+    this.routeColor = const Color(0xFFF0C04A),
+    this.outlineColor = const Color(0xFF0A0806),
   });
 
-  /// How far along the edge the badge sits, measured from the near end.
-  /// Past the midpoint so it clears the near node's two-line label.
-  static const double badgePosition = 0.62;
-
-  static const double _badgeRadius = 10;
+  static const double _dash = 6;
+  static const double _gap = 4;
 
   final List<MapEdge> edges;
   final Color lineColor;
   final Color badgeFill;
+  final Color textColor;
+  final Color routeColor;
+  final Color outlineColor;
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final edge in edges) {
-      final color = lineColor;
-
+    // ordinary roads under the route, so the gold line is never cut by a
+    // dashed one crossing it
+    for (final edge in edges.where((e) => !e.onRoute)) {
+      _dashed(canvas, edge.from, edge.to);
+    }
+    for (final edge in edges.where((e) => e.onRoute)) {
       canvas.drawLine(
         edge.from,
         edge.to,
         Paint()
-          ..color = color
-          ..strokeWidth = 2
-          ..strokeCap = StrokeCap.round,
+          ..color = outlineColor
+          ..strokeWidth = 10
+          ..strokeCap = StrokeCap.square,
       );
-
-      final at = Offset.lerp(edge.from, edge.to, badgePosition)!;
-      final text = TextPainter(
-        text: TextSpan(
-          text: Util.formatShortDuration(edge.time),
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-
-      final width = (text.width + 12).clamp(_badgeRadius * 2, double.infinity);
-      final pill = RRect.fromRectAndRadius(
-        Rect.fromCenter(center: at, width: width, height: _badgeRadius * 2),
-        const Radius.circular(_badgeRadius),
-      );
-      canvas.drawRRect(pill, Paint()..color = badgeFill);
-      canvas.drawRRect(
-        pill,
+      canvas.drawLine(
+        edge.from,
+        edge.to,
         Paint()
-          ..color = color
-          ..style = PaintingStyle.stroke,
+          ..color = routeColor
+          ..strokeWidth = 6
+          ..strokeCap = StrokeCap.square,
       );
-      text.paint(canvas, at - Offset(text.width / 2, text.height / 2));
+    }
+  }
+
+  void _dashed(Canvas canvas, Offset from, Offset to) {
+    final length = (to - from).distance;
+    if (length == 0) return;
+    final dir = (to - from) / length;
+    final paint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.butt
+      ..isAntiAlias = false;
+    for (var d = 0.0; d < length; d += _dash + _gap) {
+      final end = (d + _dash).clamp(0.0, length);
+      canvas.drawLine(from + dir * d, from + dir * end, paint);
     }
   }
 
@@ -98,6 +110,8 @@ class MapEdgePainter extends CustomPainter {
     // an identity check here would repaint on every tick forever
     return oldDelegate.lineColor != lineColor ||
         oldDelegate.badgeFill != badgeFill ||
+        oldDelegate.textColor != textColor ||
+        oldDelegate.routeColor != routeColor ||
         !listEquals(oldDelegate.edges, edges);
   }
 }

@@ -8,6 +8,7 @@ import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
+import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
@@ -32,6 +33,7 @@ void main() {
   Future<GameSession> pumpExplore(
     WidgetTester tester, {
     String? lightRecipeId,
+    int firemakingLevel = 40,
   }) async {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
@@ -50,7 +52,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     final firemaking = save.playerData.skillData[SkillId.FIREMAKING]!;
-    firemaking.xp = firemaking.xpTable[40];
+    firemaking.xp = firemaking.xpTable[firemakingLevel];
     save.inventoryData.itemMap[ItemId.LOGS] = 200;
 
     if (lightRecipeId != null) {
@@ -74,6 +76,9 @@ void main() {
           ),
           ChangeNotifierProvider<BuffController>.value(
             value: session.buffController,
+          ),
+          ChangeNotifierProvider<CraftingController>.value(
+            value: session.craftingController,
           ),
           ChangeNotifierProvider<InventoryController>.value(
             value: session.inventoryController,
@@ -117,12 +122,63 @@ void main() {
       .map((w) => w.id)
       .toList();
 
-  testWidgets('a cold firepit advertises firemaking only', (tester) async {
+  testWidgets('a cold zone offers to light a fire, first among its places', (
+    tester,
+  ) async {
     final session = await pumpExplore(tester);
 
-    expect(find.text('Firepit'), findsOneWidget);
-    expect(skillSprites(tester), [SkillId.FIREMAKING]);
+    // no fire is burning, so no firepit stands there: just the way to make
+    // one
+    expect(find.text('Firepit'), findsNothing);
+    for (final slot in FireSlots.slots) {
+      expect(find.byKey(ValueKey(slot)), findsNothing);
+    }
+    final light = find.byKey(const ValueKey('light-fire-tile'));
+    expect(light, findsOneWidget);
+    expect(find.text('Light a fire'), findsOneWidget);
+    // level 40 holds three fires
+    expect(find.text('Firemaking · 0/3'), findsOneWidget);
     expect(find.byType(CountdownTimer), findsNothing);
+
+    // it leads the grid
+    final tiles = tester.widgetList<Widget>(
+      find.byWidgetPredicate(
+        (w) =>
+            w.key == const ValueKey('light-fire-tile') ||
+            (w is PlaceTile && w.key is ValueKey<EntityId>),
+      ),
+    );
+    expect(tiles.first.key, const ValueKey('light-fire-tile'));
+
+    session.dispose();
+  });
+
+  testWidgets('a lit fire leaves room for another under the cap', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester, lightRecipeId: 'basic_campfire');
+
+    expect(find.byKey(const ValueKey(EntityId.FIREPIT)), findsOneWidget);
+    expect(find.byKey(const ValueKey('light-fire-tile')), findsOneWidget);
+    expect(find.text('Firemaking · 1/3'), findsOneWidget);
+
+    session.dispose();
+  });
+
+  testWidgets('at the cap, the tile names the level the next fire opens at', (
+    tester,
+  ) async {
+    // level 1 holds one fire; the second opens at 13
+    final session = await pumpExplore(
+      tester,
+      lightRecipeId: 'cookfire',
+      firemakingLevel: 1,
+    );
+
+    expect(find.byKey(const ValueKey(EntityId.FIREPIT)), findsOneWidget);
+    expect(find.byKey(const ValueKey('light-fire-tile')), findsNothing);
+    expect(find.byKey(const ValueKey('next-fire-tile')), findsOneWidget);
+    expect(find.text('Next at Firemaking 13'), findsOneWidget);
 
     session.dispose();
   });
@@ -206,7 +262,7 @@ void main() {
       session.dispose();
     });
 
-    testWidgets('a cold firepit wears none', (tester) async {
+    testWidgets('a cold zone wears none', (tester) async {
       final session = await pumpExplore(tester);
       expect(stats, findsNothing);
       session.dispose();
