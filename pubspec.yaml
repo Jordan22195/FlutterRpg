@@ -74,6 +74,7 @@ flutter:
     - assets/images/
     - assets/images/dungeons/
     - assets/images/entities/
+    - assets/images/map/
     - assets/images/zones/
 
   # Hearth UI type: Figtree for everything, Pixelify Sans for titles.

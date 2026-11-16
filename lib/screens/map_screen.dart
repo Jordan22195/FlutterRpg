@@ -85,12 +85,28 @@ class _MapScreenState extends State<MapScreen> {
     final scale = _view.value.getMaxScaleOnAxis();
     _view.value = Matrix4.identity()
       ..translateByDouble(
-        box.size.width / 2 - target.dx * scale,
-        box.size.height / 2 - target.dy * scale,
+        _clampAxis(
+          box.size.width / 2 - target.dx * scale,
+          box.size.width,
+          kWorldMapSize.width * scale,
+        ),
+        _clampAxis(
+          box.size.height / 2 - target.dy * scale,
+          box.size.height,
+          kWorldMapSize.height * scale,
+        ),
         0,
         1,
       )
       ..scaleByDouble(scale, scale, scale, 1);
+  }
+
+  /// Keeps one axis of the framing translation inside the map's bounds: the
+  /// map's edge never pulls in past the viewport's edge, and a map smaller
+  /// than the viewport is centred instead.
+  double _clampAxis(double translation, double viewport, double content) {
+    if (content <= viewport) return (viewport - content) / 2;
+    return translation.clamp(viewport - content, 0.0);
   }
 
   /// Opens a zone — any zone, not just the one you're standing in. Looking
@@ -245,16 +261,23 @@ class _MapScreenState extends State<MapScreen> {
                     constrained: false,
                     minScale: 0.5,
                     maxScale: 2.5,
-                    boundaryMargin: const EdgeInsets.all(80),
+                    boundaryMargin: EdgeInsets.zero,
                     child: SizedBox.fromSize(
                       size: kWorldMapSize,
                       child: Stack(
                         children: [
-                          // the seam map art drops into later: nothing above
-                          // it assumes an opaque backdrop, because the labels
-                          // carry their own halo and the badges their own fill
+                          // pixel-art terrain: nearest-neighbour keeps it
+                          // crisp when the canvas is zoomed. The surface
+                          // colour behind it covers any load gap.
                           Positioned.fill(
                             child: ColoredBox(color: scheme.surface),
+                          ),
+                          Positioned.fill(
+                            child: Image.asset(
+                              'assets/images/map/world_map.png',
+                              fit: BoxFit.fill,
+                              filterQuality: FilterQuality.none,
+                            ),
                           ),
 
                           // tapping bare map clears the selection

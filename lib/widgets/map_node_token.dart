@@ -104,7 +104,7 @@ class MapNodeToken extends StatelessWidget {
       height: tokenSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        color: scheme.surfaceContainerHighest,
         border: Border.fromBorderSide(border),
         boxShadow: isCurrent
             ? [

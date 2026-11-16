@@ -31,17 +31,6 @@ const knownMissingArt = <String>{
   'assets/images/zones/mistgrave_hollow.png',
   'assets/images/dungeons/haunted_ruins.png',
   'assets/images/entities/haunted_ruins.png',
-  // the dungeon chest and camp uniques of the loot restructure, before
-  // their art
-  'assets/icons/items/farmhands_gloves.png',
-  'assets/icons/items/sergeants_shiv.png',
-  'assets/icons/items/warband_belt.png',
-  'assets/icons/items/camp_banner_cloak.png',
-  'assets/icons/items/broodsilk_leggings.png',
-  'assets/icons/items/murkhide_cuirass.png',
-  'assets/icons/items/stormhide_legs.png',
-  'assets/icons/items/queens_train.png',
-
   // the runite and dragonite veins, before their art
   'assets/images/entities/runite_vein.png',
   'assets/images/entities/dragonite_vein.png',
