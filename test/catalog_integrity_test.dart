@@ -35,6 +35,29 @@ const knownMissingArt = <String>{
   'assets/images/zones/iron_gate_city.png',
   'assets/images/zones/ironroot_hills.png',
   'assets/images/zones/ironroot_mine.png',
+  // the west-coast monsters (Reedwater Vale, Mudmouth Delta, Saltwind Coast)
+  'assets/images/entities/river_toad.png',
+  'assets/images/entities/water_strider.png',
+  'assets/images/entities/snapping_turtle.png',
+  'assets/images/entities/crab.png',
+  'assets/images/entities/mire_hippo.png',
+  'assets/images/entities/crocodile.png',
+  'assets/images/entities/sea_serpent.png',
+  // and their drops
+  'assets/icons/items/hippo_hide.png',
+  'assets/icons/items/crocodile_hide.png',
+  'assets/icons/items/serpent_scale.png',
+  'assets/icons/items/toad_wart.png',
+  'assets/icons/items/strider_leg.png',
+  'assets/icons/items/turtle_shell.png',
+  'assets/icons/items/crab_claw.png',
+  'assets/icons/items/hippo_tusk.png',
+  'assets/icons/items/crocodile_tooth.png',
+  'assets/icons/items/serpent_fang.png',
+  'assets/icons/items/toad_legs.png',
+  'assets/icons/items/crab_meat.png',
+  'assets/icons/items/turtle_meat.png',
+  'assets/icons/items/hippo_rump.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
@@ -570,10 +593,6 @@ void main() {
       // the rare scarecrow. Its name predates the _RARE suffix convention,
       // so it reads as a base entity here rather than as a variant
       EntityId.ROTWOOD_SCARECROW_1,
-
-      // the Wolf Den's old last boss, swapped out for the grotto's fungal
-      // monster when the den was reworked
-      EntityId.NAGA,
 
       // tier 4. The banshee was the darkwood's, and came out of it when its
       // roster was re-cut (the wraith has since come back); the rest have

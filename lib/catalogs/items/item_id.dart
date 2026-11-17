@@ -102,6 +102,34 @@ enum ItemId {
       iconAsset: "assets/icons/items/murkjaw_hide.png",
     ),
   ),
+  // the west-coast hides: Mudmouth Delta's hippo and crocodile, and the
+  // Saltwind sea serpent's scale
+  HIPPO_HIDE(
+    ItemDefinition(
+      quality: Rarity.JUNK,
+      name: "Hippo Hide",
+      value: 20,
+      description: "Grey, hairless and an inch thick.",
+      iconAsset: "assets/icons/items/hippo_hide.png",
+    ),
+  ),
+  CROCODILE_HIDE(
+    ItemDefinition(
+      quality: Rarity.JUNK,
+      name: "Crocodile Hide",
+      value: 35,
+      description: "Ridged armour plates, still caked in delta silt.",
+      iconAsset: "assets/icons/items/crocodile_hide.png",
+    ),
+  ),
+  SERPENT_SCALE(
+    ItemDefinition(
+      name: "Serpent Scale",
+      value: 50,
+      description: "A palm-wide scale that shimmers like a wet shell.",
+      iconAsset: "assets/icons/items/serpent_scale.png",
+    ),
+  ),
 
   // what a line drags up instead of a fish: worth nothing, sold for a coin
   OLD_BOOT(
@@ -670,6 +698,64 @@ enum ItemId {
       value: 40,
       description: "A yellowed, hooked tooth from something that waits.",
       iconAsset: "assets/icons/items/murkjaw_fang.png",
+    ),
+  ),
+  // the west-coast monster parts, by zone: Reedwater Vale, Mudmouth Delta,
+  // Saltwind Coast. Meant as alchemy secondaries; no recipe uses them yet.
+  TOAD_WART(
+    ItemDefinition(
+      name: "Toad Wart",
+      value: 8,
+      description: "A lumpy nodule that weeps something bitter.",
+      iconAsset: "assets/icons/items/toad_wart.png",
+    ),
+  ),
+  STRIDER_LEG(
+    ItemDefinition(
+      name: "Strider Leg",
+      value: 8,
+      description: "Long, hair-fine and impossibly light.",
+      iconAsset: "assets/icons/items/strider_leg.png",
+    ),
+  ),
+  TURTLE_SHELL(
+    ItemDefinition(
+      name: "Turtle Shell",
+      value: 20,
+      description: "Mossy on top, hard as iron underneath.",
+      iconAsset: "assets/icons/items/turtle_shell.png",
+    ),
+  ),
+  CRAB_CLAW(
+    ItemDefinition(
+      name: "Crab Claw",
+      value: 10,
+      description: "It still snaps if you press the joint.",
+      iconAsset: "assets/icons/items/crab_claw.png",
+    ),
+  ),
+  HIPPO_TUSK(
+    ItemDefinition(
+      name: "Hippo Tusk",
+      value: 30,
+      description: "A curved ivory blade worn smooth by river mud.",
+      iconAsset: "assets/icons/items/hippo_tusk.png",
+    ),
+  ),
+  CROCODILE_TOOTH(
+    ItemDefinition(
+      name: "Crocodile Tooth",
+      value: 45,
+      description: "One of many. It grows another.",
+      iconAsset: "assets/icons/items/crocodile_tooth.png",
+    ),
+  ),
+  SERPENT_FANG(
+    ItemDefinition(
+      name: "Serpent Fang",
+      value: 80,
+      description: "As long as a dagger, and salt-white.",
+      iconAsset: "assets/icons/items/serpent_fang.png",
     ),
   ),
   // Stormgrass Prairie's reagents, one off each of its monsters: the
@@ -1532,6 +1618,35 @@ enum ItemId {
       name: "Bear Rump",
       value: 2,
       iconAsset: "assets/icons/items/bear_rump.png",
+    ),
+  ),
+  // the west-coast meats; nothing cooks them yet
+  TOAD_LEGS(
+    ItemDefinition(
+      name: "Toad Legs",
+      value: 3,
+      iconAsset: "assets/icons/items/toad_legs.png",
+    ),
+  ),
+  CRAB_MEAT(
+    ItemDefinition(
+      name: "Crab Meat",
+      value: 4,
+      iconAsset: "assets/icons/items/crab_meat.png",
+    ),
+  ),
+  TURTLE_MEAT(
+    ItemDefinition(
+      name: "Turtle Meat",
+      value: 5,
+      iconAsset: "assets/icons/items/turtle_meat.png",
+    ),
+  ),
+  HIPPO_RUMP(
+    ItemDefinition(
+      name: "Hippo Rump",
+      value: 6,
+      iconAsset: "assets/icons/items/hippo_rump.png",
     ),
   ),
 

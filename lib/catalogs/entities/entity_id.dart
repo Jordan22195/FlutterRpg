@@ -997,7 +997,14 @@ enum EntityId {
   //
   // Giant Spider · roster tier 2 · forest
   GIANT_SPIDER(
-    CombatEntityDefinition(spider, fibLevel: 5, name: "Giant Spider"),
+    CombatEntityDefinition(
+      spider,
+      fibLevel: 5,
+      name: "Giant Spider",
+      // below the archetype's loot rung, so it writes its own tables: the
+      // archetype's lines as written, nothing scaled up
+      itemDrops: [NestedDrop(spiderDropTable)],
+    ),
   ),
   GIANT_SPIDER_UNCOMMON(
     CombatEntityDefinition(
@@ -1046,7 +1053,19 @@ enum EntityId {
     ),
   ),
   // Forest Wolf · roster tier 2 · forest
-  FOREST_WOLF(CombatEntityDefinition(wolf, fibLevel: 4, name: "Forest Wolf")),
+  FOREST_WOLF(
+    CombatEntityDefinition(
+      wolf,
+      fibLevel: 4,
+      name: "Forest Wolf",
+      // below the archetype's loot rung, so it writes its own tables: the
+      // archetype's lines as written, nothing scaled up
+      itemDrops: [
+        ItemDropType(id: ItemId.WOLF_CLAW, weight: 1),
+        ItemDropType(id: ItemId.WOLF_PELT, weight: 1),
+      ],
+    ),
+  ),
   FOREST_WOLF_UNCOMMON(
     CombatEntityDefinition(
       wolf,
@@ -1135,7 +1154,19 @@ enum EntityId {
     ),
   ),
   // Giant Bat · roster tier 2 · mine
-  GIANT_BAT(CombatEntityDefinition(giantBat, fibLevel: 6, name: "Giant Bat")),
+  GIANT_BAT(
+    CombatEntityDefinition(
+      giantBat,
+      fibLevel: 6,
+      name: "Giant Bat",
+      // below the archetype's loot rung, so it writes its own tables: the
+      // archetype's lines as written, nothing scaled up
+      itemDrops: [
+        ItemDropType(id: ItemId.BAT_WING, lowCount: 1, highCount: 2, weight: 1),
+        ItemDropType(id: ItemId.BAT_FANG, weight: 0.6),
+      ],
+    ),
+  ),
   GIANT_BAT_UNCOMMON(
     CombatEntityDefinition(
       giantBat,
@@ -1146,6 +1177,32 @@ enum EntityId {
   ),
   // Slime · roster tier 2 · mine
   SLIME(CombatEntityDefinition(slime, fibLevel: 7, name: "Slime")),
+  // the Wolf Den's Sunken Grotto trash, two rungs under the bat and slime
+  // the open world fields, so the floor sits with the den's other two.
+  // Below their archetypes' loot rung, so they write their own tables: the
+  // archetype's lines at their smallest.
+  GROTTO_BAT(
+    CombatEntityDefinition(
+      giantBat,
+      fibLevel: 4,
+      name: "Giant Bat",
+      itemDrops: [
+        ItemDropType(id: ItemId.BAT_WING, weight: 1),
+        ItemDropType(id: ItemId.BAT_FANG, weight: 0.6),
+      ],
+    ),
+  ),
+  GROTTO_SLIME(
+    CombatEntityDefinition(
+      slime,
+      fibLevel: 5,
+      name: "Slime",
+      itemDrops: [
+        ItemDropType(id: ItemId.SLIME_OOZE, weight: 1),
+        ItemDropType(id: ItemId.SLIME_CORE, weight: 0.05),
+      ],
+    ),
+  ),
   // Carrion Crow · swamp. Quick and fragile; picks the bog's dead clean.
   CARRION_CROW(
     CombatEntityDefinition(carrionCrow, fibLevel: 7, name: "Carrion Crow"),
@@ -1189,7 +1246,26 @@ enum EntityId {
   // goblin's quality as an override, so the family is one-word edits
   // rather than hand-written copies of the same six lines. The fish nest never takes one — only equipment
   // carries a quality.
-  GOBLIN(CombatEntityDefinition(goblin, fibLevel: 3, name: "Goblin")),
+  GOBLIN(
+    CombatEntityDefinition(
+      goblin,
+      fibLevel: 3,
+      name: "Goblin",
+      // below the archetype's loot rung, so it writes its own tables: the
+      // archetype's lines as written, nothing scaled up
+      itemDrops: [
+        NestedDrop(cookedFishDropTable, weight: 2),
+        NestedDrop(mediumLeatherMinorArmorDropTable, weight: 1),
+        ...goblinSupplyDrops,
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.05,
+          entries: [ItemDropType(id: ItemId.GOBLIN_QUEEN_KEY)],
+        ),
+      ],
+    ),
+  ),
   GOBLIN_UNCOMMON(
     CombatEntityDefinition(
       goblin,
@@ -1267,7 +1343,25 @@ enum EntityId {
     ),
   ),
   // Bear · roster tier 2 · forest
-  BEAR(CombatEntityDefinition(bear, fibLevel: 4, name: "Bear")),
+  BEAR(
+    CombatEntityDefinition(
+      bear,
+      fibLevel: 4,
+      name: "Bear",
+      // below the archetype's loot rung, so it writes its own tables: the
+      // archetype's lines as written, nothing scaled up
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.BEAR_CLAW,
+          lowCount: 1,
+          highCount: 3,
+          weight: 1,
+        ),
+        ItemDropType(id: ItemId.BEAR_HIDE, weight: 1),
+        ItemDropType(id: ItemId.BEAR_RUMP, weight: 1),
+      ],
+    ),
+  ),
   BEAR_UNCOMMON(
     CombatEntityDefinition(
       bear,
@@ -1417,7 +1511,7 @@ enum EntityId {
   GROTTO_FUNGAL_MONSTER(
     CombatEntityDefinition(
       fungalMonster,
-      fibLevel: 8,
+      fibLevel: 6,
       name: "Grotto Fungal Monster",
       isDungeonBoss: true,
       // a bulk haul: one stack of the grotto's growth per kill
@@ -1537,7 +1631,26 @@ enum EntityId {
   // Tier 9 - Level 55
   //
   // Skeleton · roster tier 3 · dark forest
-  SKELETON(CombatEntityDefinition(skeleton, fibLevel: 6, name: "Skeleton")),
+  SKELETON(
+    CombatEntityDefinition(
+      skeleton,
+      fibLevel: 6,
+      name: "Skeleton",
+      // below the archetype's loot rung, so it writes its own tables: the
+      // archetype's lines as written, nothing scaled up
+      itemDrops: [
+        NestedDrop(graveScrapDropTable, weight: 3),
+        NestedDrop(steelMinorArmorDropTable, weight: 1),
+        NestedDrop(steelToolsDropTable, weight: 0.6),
+        NestedDrop(steelMajorArmorDropTable, weight: 0.4),
+        ItemDropType(
+          id: ItemId.STEEL_SHIELD,
+          weight: 0.2,
+          rarity: Rarity.UNCOMMON,
+        ),
+      ],
+    ),
+  ),
   SKELETON_UNCOMMON(
     CombatEntityDefinition(
       skeleton,
@@ -1565,7 +1678,17 @@ enum EntityId {
     ),
   ),
   // Zombie · roster tier 3 · dark forest
-  ZOMBIE(CombatEntityDefinition(zombie, fibLevel: 7, name: "Zombie")),
+  ZOMBIE(
+    CombatEntityDefinition(
+      zombie,
+      fibLevel: 7,
+      name: "Zombie",
+      // below the archetype's loot rung, so it writes its own tables: the
+      // archetype's lines as written, nothing scaled up
+      itemDrops: [NestedDrop(graveScrapDropTable)],
+      bonusDrops: [DropRoll(entries: tatteredClothDropTable, chance: 0.04)],
+    ),
+  ),
   ZOMBIE_UNCOMMON(
     CombatEntityDefinition(
       zombie,
@@ -1709,7 +1832,28 @@ enum EntityId {
   // Tier 11 - Level 144
   //
   // Wraith · roster tier 4 · dark forest
-  WRAITH(CombatEntityDefinition(wraith, fibLevel: 9, name: "Wraith")),
+  WRAITH(
+    CombatEntityDefinition(
+      wraith,
+      fibLevel: 9,
+      name: "Wraith",
+      // below the archetype's loot rung, so it writes its own tables: the
+      // archetype's lines as written, nothing scaled up
+      itemDrops: [
+        ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1),
+        ItemDropType(
+          id: ItemId.GRAVE_MOSS,
+          lowCount: 1,
+          highCount: 3,
+          weight: 2,
+        ),
+        ItemDropType(id: ItemId.BLACK_GREATSWORD, weight: 0.2),
+      ],
+      bonusDrops: [
+        DropRoll(entries: tatteredClothUncommonDropTable, chance: 0.15),
+      ],
+    ),
+  ),
   // Banshee · roster tier 4 · dark forest
   BANSHEE(CombatEntityDefinition(banshee, fibLevel: 10, name: "Banshee")),
   // Troll · roster tier 4 · ironroot hills
@@ -1730,7 +1874,49 @@ enum EntityId {
   //
   // Moss Golem · roster tier 5 · swamp
   MOSS_GOLEM(
-    CombatEntityDefinition(mossGolem, fibLevel: 11, name: "Moss Golem"),
+    CombatEntityDefinition(
+      mossGolem,
+      fibLevel: 9,
+      name: "Moss Golem",
+      // below the archetype's loot rung (11), so it writes its own tables:
+      // the archetype's lines at their smallest
+      itemDrops: [
+        ItemDropType(id: ItemId.ATTACK_POTION, weight: 1),
+        ItemDropType(id: ItemId.STRENGTH_POTION, weight: 1),
+        ItemDropType(id: ItemId.DEFENCE_POTION, weight: 1),
+        ItemDropType(id: ItemId.STAMINA_POTION, weight: 1),
+        ItemDropType(id: ItemId.SPEED_POTION, weight: 1),
+        NestedDrop(herbDropTable, weight: 3),
+        ItemDropType(id: ItemId.OAK_LOGS, lowCount: 2, highCount: 5, weight: 1),
+        ItemDropType(
+          id: ItemId.WILLOW_LOGS,
+          lowCount: 2,
+          highCount: 5,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.MAPLE_LOGS,
+          lowCount: 2,
+          highCount: 4,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.STEEL_BAR,
+          lowCount: 1,
+          highCount: 3,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.MITHRIL_BAR,
+          lowCount: 1,
+          highCount: 2,
+          weight: 1,
+        ),
+        NestedDrop(mithrilArmorDropTable, weight: 1),
+        NestedDrop(mithrilWeaponsDropTable, weight: 1),
+      ],
+      bonusDrops: [DropRoll(entries: gemDropTable, chance: 0.3)],
+    ),
   ),
   // Hill Giant · roster tier 5 · ironroot hills
   HILL_GIANT(
@@ -1805,6 +1991,87 @@ enum EntityId {
   // Greater Demon · roster tier 7 · underworld
   GREATER_DEMON(
     CombatEntityDefinition(greaterDemon, fibLevel: 13, name: "Greater Demon"),
+  ),
+
+  // ── COMBAT · WEST COAST ────────────────────────────────────────
+  // The three zones off Southwood Forest, each a band of the ladder:
+  // Reedwater Vale 13–34, Mudmouth Delta 21–55, Saltwind Coast 34–89.
+
+  // Reedwater Vale
+  RIVER_TOAD(
+    CombatEntityDefinition(riverToad, fibLevel: 5, name: "River Toad"),
+  ),
+  WATER_STRIDER(
+    CombatEntityDefinition(waterStrider, fibLevel: 5, name: "Water Strider"),
+  ),
+  // the fen's mudlurc a rung below its archetype's loot, so it writes its
+  // own table: river fish and iron tools instead of steel and leather
+  MUDLURC_FISHER(
+    CombatEntityDefinition(
+      mudlurc,
+      fibLevel: 6,
+      name: "Mudlurc Fisher",
+      itemDrops: [
+        ItemDropType(id: ItemId.SCALE, lowCount: 1, highCount: 2, weight: 3),
+        NestedDrop(riverCookedFishDropTable, weight: 2),
+        NestedDrop(ironToolsDropTable, weight: 0.3),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.03,
+          entries: [ItemDropType(id: ItemId.FISHING_POTION)],
+        ),
+      ],
+    ),
+  ),
+  SNAPPING_TURTLE(
+    CombatEntityDefinition(
+      snappingTurtle,
+      fibLevel: 7,
+      name: "Snapping Turtle",
+    ),
+  ),
+
+  // Mudmouth Delta
+  MUD_CRAB(CombatEntityDefinition(crab, fibLevel: 6, name: "Mud Crab")),
+  MIRE_HIPPO(
+    CombatEntityDefinition(mireHippo, fibLevel: 7, name: "Mire Hippo"),
+  ),
+  CROCODILE(CombatEntityDefinition(crocodile, fibLevel: 8, name: "Crocodile")),
+
+  // Saltwind Coast (the coast's naga is the roster's NAGA)
+  // the mud crab a rung up: its table scaled, plus the sea's kelp, and the
+  // ocean's reagents in place of the marsh's
+  SHORE_CRAB(
+    CombatEntityDefinition(
+      crab,
+      fibLevel: 7,
+      name: "Shore Crab",
+      extraItemDrops: [ItemDropType(id: ItemId.SEA_KELP, weight: 0.5)],
+      bonusDrops: [DropRoll(chance: 0.05, entries: oceanReagentDropTable)],
+    ),
+  ),
+  // the water elemental at 55, far below its archetype's 233 loot rung, so
+  // it writes its own table
+  TIDAL_ELEMENTAL(
+    CombatEntityDefinition(
+      waterElemental,
+      fibLevel: 8,
+      name: "Tidal Elemental",
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.ENCHANTING_ESSENCE,
+          lowCount: 1,
+          highCount: 3,
+          weight: 2,
+        ),
+        NestedDrop(oceanReagentDropTable, weight: 1),
+        ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 0.2),
+      ],
+    ),
+  ),
+  SEA_SERPENT(
+    CombatEntityDefinition(seaSerpent, fibLevel: 9, name: "Sea Serpent"),
   ),
 
   // ── COMBAT · NAMED CHARACTERS ──────────────────────────────────

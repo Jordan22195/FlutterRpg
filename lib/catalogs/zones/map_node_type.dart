@@ -74,13 +74,7 @@ enum MapNodeType {
     Color(0xFF8F3420),
   );
 
-  const MapNodeType(
-    this.glyph,
-    this.label,
-    this.frame,
-    this.color,
-    this.shade,
-  );
+  const MapNodeType(this.glyph, this.label, this.frame, this.color, this.shade);
 
   /// A Material stand-in for the type, for places outside the map that
   /// don't draw the pixel token (discovery tiles and the like).

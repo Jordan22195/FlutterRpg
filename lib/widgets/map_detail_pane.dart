@@ -89,10 +89,11 @@ class MapDetailPane extends StatelessWidget {
       artAsset: def.iconAsset,
       name: def.name,
       type: node.type,
-      where: _where(context, isCurrent, reachable, world.travelTimeTo(node.id)),
-      chips: locked
-          ? _requirements(world, node.id)
-          : _contents(world, node.id),
+      where: [
+        ..._where(context, isCurrent, reachable, world.travelTimeTo(node.id)),
+        ..._combatRange(context, world.zoneCombatLevelRange(node.id)),
+      ],
+      chips: locked ? _requirements(world, node.id) : _contents(world, node.id),
       enabled: !locked && reachable,
       onPressed: () => onEnter(node.id),
     );
@@ -138,6 +139,38 @@ class MapDetailPane extends StatelessWidget {
         style: HearthText.rowMeta.copyWith(
           fontSize: 12,
           color: palette.textSubtitle,
+        ),
+      ),
+    ];
+  }
+
+  /// How hard the zone fights: the attack icon and its creatures' combat
+  /// levels, low to high, in the meta row beside the walk. Shown for locked
+  /// zones too — how tough a place is matters most before you can go.
+  List<Widget> _combatRange(BuildContext context, ({int min, int max})? range) {
+    if (range == null) return const [];
+    final palette = context.palette;
+    final label = range.min == range.max
+        ? '${range.min}'
+        : '${range.min}–${range.max}';
+    return [
+      const SizedBox(width: 10),
+      Tooltip(
+        key: const ValueKey('zone-combat-range'),
+        message: 'Combat level $label',
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 3,
+          children: [
+            const IconRenderer<SkillId>(size: 15, id: SkillId.ATTACK),
+            Text(
+              label,
+              style: HearthText.rowMeta.copyWith(
+                fontSize: 12,
+                color: palette.textSubtitle,
+              ),
+            ),
+          ],
         ),
       ),
     ];

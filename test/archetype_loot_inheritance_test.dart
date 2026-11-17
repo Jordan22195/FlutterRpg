@@ -149,8 +149,11 @@ void main() {
     });
 
     test('inherits bonus rolls at the same chance, entries scaled', () {
-      final common = combat(EntityId.WRAITH).bonusDrops.single;
-      final two = raised(EntityId.WRAITH, 2).bonusDrops.single;
+      // a bare definition on the archetype: the catalog's wraiths sit below
+      // its loot rung and write their own
+      const on = CombatEntityDefinition(wraith, fibLevel: 10, name: 'Wraith');
+      final common = on.bonusDrops.single;
+      final two = on.copyWith(fibLevel: 12).bonusDrops.single;
       expect(two.chance, common.chance);
       // the wraith's rags are uncommon; two rungs up is epic
       expect(two.entries.map((e) => e.rarity).toSet(), {Rarity.EPIC});

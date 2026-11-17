@@ -368,8 +368,8 @@ enum DungeonId {
         DungeonEntry(
           name: "Sunken Grotto",
           entities: [
-            DungeonEntityRef(EntityId.GIANT_BAT, count: 5),
-            DungeonEntityRef(EntityId.SLIME, count: 10),
+            DungeonEntityRef(EntityId.GROTTO_BAT, count: 5),
+            DungeonEntityRef(EntityId.GROTTO_SLIME, count: 10),
             DungeonEntityRef(EntityId.GROTTO_FUNGAL_MONSTER, count: 1),
           ],
         ),

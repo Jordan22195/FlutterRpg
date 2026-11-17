@@ -5,12 +5,12 @@ import 'package:rpg/data/skill_data.dart';
 enum EquipmentMaterialId {
   NULL(MetalEquipmentParameters(fibLevel: 0, skillLevelRequirement: 0)),
   COPPER(MetalEquipmentParameters(fibLevel: 0, skillLevelRequirement: 1)),
-  IRON(MetalEquipmentParameters(fibLevel: 1, skillLevelRequirement: 20)),
-  STEEL(MetalEquipmentParameters(fibLevel: 2, skillLevelRequirement: 40)),
-  MITHRIL(MetalEquipmentParameters(fibLevel: 3, skillLevelRequirement: 60)),
-  ADAMANT(MetalEquipmentParameters(fibLevel: 4, skillLevelRequirement: 70)),
-  RUNE(MetalEquipmentParameters(fibLevel: 5, skillLevelRequirement: 80)),
-  DRAGON(MetalEquipmentParameters(fibLevel: 6, skillLevelRequirement: 90)),
+  IRON(MetalEquipmentParameters(fibLevel: 2, skillLevelRequirement: 20)),
+  STEEL(MetalEquipmentParameters(fibLevel: 3, skillLevelRequirement: 40)),
+  MITHRIL(MetalEquipmentParameters(fibLevel: 4, skillLevelRequirement: 60)),
+  ADAMANT(MetalEquipmentParameters(fibLevel: 5, skillLevelRequirement: 70)),
+  RUNE(MetalEquipmentParameters(fibLevel: 6, skillLevelRequirement: 80)),
+  DRAGON(MetalEquipmentParameters(fibLevel: 7, skillLevelRequirement: 90)),
 
   // The hides. A hide splits its rung between attack and defence, so it has
   // to sit a rung above the plate it wants to match on defence — which is

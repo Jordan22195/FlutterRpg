@@ -146,8 +146,9 @@ enum ZoneId {
       discoverableEntities: [],
     ),
   ),
-  // The three west-coast zones off Southwood Forest. Skeletons for now: no
-  // entities yet, so they are places to walk through until content lands.
+  // The three west-coast zones off Southwood Forest, each a band of the
+  // monster ladder: Reedwater Vale 13–34, Mudmouth Delta 21–55, Saltwind
+  // Coast 34–89. Monsters only so far: no gathering or stations yet.
   REEDWATER_VALE(
     ZoneDefinition(
       name: "Reedwater Vale",
@@ -156,7 +157,28 @@ enum ZoneId {
       explorationLevel: 10,
       xpPerExplore: 5,
       permanentEntities: [],
-      discoverableEntities: [],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.RIVER_TOAD,
+          weight: 1.5,
+          unlockLevel: 10,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.WATER_STRIDER,
+          weight: 1.5,
+          unlockLevel: 10,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MUDLURC_FISHER,
+          weight: 1,
+          unlockLevel: 11,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SNAPPING_TURTLE,
+          weight: .6,
+          unlockLevel: 12,
+        ),
+      ],
     ),
   ),
   MUDMOUTH_DELTA(
@@ -167,7 +189,23 @@ enum ZoneId {
       explorationLevel: 15,
       xpPerExplore: 7,
       permanentEntities: [],
-      discoverableEntities: [],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MUD_CRAB,
+          weight: 1.5,
+          unlockLevel: 15,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MIRE_HIPPO,
+          weight: 1,
+          unlockLevel: 16,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.CROCODILE,
+          weight: .5,
+          unlockLevel: 17,
+        ),
+      ],
     ),
   ),
   SALTWIND_COAST(
@@ -178,7 +216,28 @@ enum ZoneId {
       explorationLevel: 20,
       xpPerExplore: 9,
       permanentEntities: [],
-      discoverableEntities: [],
+      discoverableEntities: [
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SHORE_CRAB,
+          weight: 1.5,
+          unlockLevel: 20,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.NAGA,
+          weight: 1,
+          unlockLevel: 21,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.TIDAL_ELEMENTAL,
+          weight: 1,
+          unlockLevel: 22,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SEA_SERPENT,
+          weight: .3,
+          unlockLevel: 23,
+        ),
+      ],
     ),
   ),
   DARKWOOD_FOREST(

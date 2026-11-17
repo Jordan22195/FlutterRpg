@@ -125,6 +125,31 @@ const scarecrow = CombatArchetype(
     ItemDropType(id: ItemId.WOOD_SHIELD, weight: .3),
   ],
 );
+// River Toad · reedwater vale. The vale's starter: tough-skinned and slow.
+const riverToad = CombatArchetype(
+  iconAsset: 'assets/images/entities/river_toad.png',
+  lootFibLevel: 5,
+  combatType: CombatType.LEATHER_TANK,
+  attackInterval: 2.0,
+  itemDrops: [
+    ItemDropType(id: ItemId.TOAD_LEGS, weight: 2),
+    ItemDropType(id: ItemId.TOAD_WART, weight: 1),
+    NestedDrop(ironMinorArmorDropTable, weight: 0.3),
+  ],
+  bonusDrops: [DropRoll(chance: 0.05, entries: riverReagentDropTable)],
+);
+// Water Strider · reedwater vale. Fast and fragile.
+const waterStrider = CombatArchetype(
+  iconAsset: 'assets/images/entities/water_strider.png',
+  lootFibLevel: 5,
+  combatType: CombatType.GLASS_CANNON,
+  attackInterval: 1.0,
+  itemDrops: [
+    ItemDropType(id: ItemId.STRIDER_LEG, weight: 2),
+    ItemDropType(id: ItemId.LILY_PAD, weight: 1),
+  ],
+  bonusDrops: [DropRoll(chance: 0.05, entries: riverReagentDropTable)],
+);
 
 // ── Tier 7 · level 21 ──
 // Giant Spider · roster tier 2 · forest
@@ -179,6 +204,21 @@ const carrionCrow = CombatArchetype(
     ItemDropType(id: ItemId.FEATHER, lowCount: 1, highCount: 3, weight: 1),
     ItemDropType(id: ItemId.CROW_QUILL, weight: 0.5),
   ],
+);
+// Crab · mudmouth delta and saltwind coast. One archetype for both: the
+// delta's mud crab sits on the loot rung, the coast's shore crab one above
+// it, inheriting the table scaled and adding the sea's kelp.
+const crab = CombatArchetype(
+  iconAsset: 'assets/images/entities/crab.png',
+  lootFibLevel: 6,
+  combatType: CombatType.ROCK_CRAB,
+  attackInterval: 2.5,
+  itemDrops: [
+    ItemDropType(id: ItemId.CRAB_MEAT, weight: 2),
+    ItemDropType(id: ItemId.CRAB_CLAW, weight: 1),
+    ItemDropType(id: ItemId.PEAT_CLOD, weight: 0.5),
+  ],
+  bonusDrops: [DropRoll(chance: 0.05, entries: marshReagentDropTable)],
 );
 
 // ── Tier 8 · level 34 ──
@@ -279,6 +319,33 @@ const kobold = CombatArchetype(
     // todo big rat tail ach
   ],
 );
+// Snapping Turtle · reedwater vale. The vale's top end: all shell.
+const snappingTurtle = CombatArchetype(
+  iconAsset: 'assets/images/entities/snapping_turtle.png',
+  lootFibLevel: 7,
+  combatType: CombatType.SHELL,
+  attackInterval: 2.5,
+  itemDrops: [
+    ItemDropType(id: ItemId.TURTLE_MEAT, weight: 2),
+    ItemDropType(id: ItemId.TURTLE_SHELL, weight: 1),
+    NestedDrop(steelMinorArmorDropTable, weight: 0.4),
+    ItemDropType(id: ItemId.STEEL_SHIELD, weight: 0.1),
+  ],
+  bonusDrops: [DropRoll(chance: 0.03, entries: riverReagentDropTable)],
+);
+// Mire Hippo · mudmouth delta. Slow, huge and very hard to put down.
+const mireHippo = CombatArchetype(
+  iconAsset: 'assets/images/entities/mire_hippo.png',
+  lootFibLevel: 7,
+  combatType: CombatType.LEATHER_TANK,
+  attackInterval: 2.5,
+  itemDrops: [
+    ItemDropType(id: ItemId.HIPPO_RUMP, weight: 1),
+    ItemDropType(id: ItemId.HIPPO_HIDE, weight: 1),
+    ItemDropType(id: ItemId.HIPPO_TUSK, weight: 0.5),
+    NestedDrop(mediumLeatherMinorArmorDropTable, weight: 0.4),
+  ],
+);
 
 // ── Tier 9 · level 55 ──
 // Skeleton · roster tier 3 · dark forest
@@ -321,6 +388,30 @@ const naga = CombatArchetype(
   lootFibLevel: 8,
   combatType: CombatType.LEATHER_DPS,
   attackInterval: 1.5,
+  itemDrops: [
+    ItemDropType(id: ItemId.SCALE, lowCount: 2, highCount: 4, weight: 2),
+    ItemDropType(
+      id: ItemId.ENCHANTING_ESSENCE,
+      lowCount: 1,
+      highCount: 2,
+      weight: 1,
+    ),
+    NestedDrop(oceanReagentDropTable, weight: 1),
+    NestedDrop(mithrilWeaponsDropTable, weight: 0.2),
+  ],
+);
+// Crocodile · mudmouth delta. The delta's top end, and its biggest bite.
+const crocodile = CombatArchetype(
+  iconAsset: 'assets/images/entities/crocodile.png',
+  lootFibLevel: 8,
+  combatType: CombatType.LEATHER_TANK,
+  attackInterval: 2.5,
+  itemDrops: [
+    ItemDropType(id: ItemId.CROCODILE_HIDE, weight: 1),
+    ItemDropType(id: ItemId.SCALE, lowCount: 1, highCount: 3, weight: 1),
+    ItemDropType(id: ItemId.CROCODILE_TOOTH, weight: 0.5),
+  ],
+  bonusDrops: [DropRoll(chance: 0.05, entries: heavyLeatherDropTable)],
 );
 // Orc · roster tier 3 · stormgrass prairie. One archetype for every orc:
 // the common is the prairie's level 55 raider and the uncommon its level
@@ -414,6 +505,20 @@ const dustDevil = CombatArchetype(
     ),
     ItemDropType(id: ItemId.WIND_MOTE, weight: 0.5),
   ],
+);
+// Sea Serpent · saltwind coast. The coast's top end.
+const seaSerpent = CombatArchetype(
+  iconAsset: 'assets/images/entities/sea_serpent.png',
+  lootFibLevel: 9,
+  combatType: CombatType.LEATHER_DPS,
+  attackInterval: 1.5,
+  itemDrops: [
+    ItemDropType(id: ItemId.SERPENT_SCALE, weight: 2),
+    NestedDrop(oceanCookedFishDropTable, weight: 1),
+    ItemDropType(id: ItemId.SERPENT_FANG, weight: 0.5),
+  ],
+  // no adamant table exists yet, so mithril stands in
+  bonusDrops: [DropRoll(chance: 0.03, entries: mithrilArmorDropTable)],
 );
 
 // ── Tier 11 · level 144 ──

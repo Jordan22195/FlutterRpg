@@ -83,12 +83,13 @@ MapEdgePainter edgePainter(WidgetTester tester) {
 }
 
 /// The pixel token drawn inside a node, open (type glyph showing) or shut.
-Finder badge({MapNodeType? type, required bool locked}) => find.byWidgetPredicate(
-  (w) =>
-      w is MapNodeBadge &&
-      w.locked == locked &&
-      (type == null || w.type.group == type),
-);
+Finder badge({MapNodeType? type, required bool locked}) =>
+    find.byWidgetPredicate(
+      (w) =>
+          w is MapNodeBadge &&
+          w.locked == locked &&
+          (type == null || w.type.group == type),
+    );
 
 Finder entityTiles(WidgetTester tester) => find.descendant(
   of: find.byType(MapDetailPane),
@@ -238,11 +239,17 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.descendant(of: tokenFor('TUTORIAL_FARM'), matching: find.text('YOU')),
+        find.descendant(
+          of: tokenFor('TUTORIAL_FARM'),
+          matching: find.text('YOU'),
+        ),
         findsOneWidget,
       );
       expect(
-        find.descendant(of: tokenFor('SOUTH_HAVEN'), matching: find.text('YOU')),
+        find.descendant(
+          of: tokenFor('SOUTH_HAVEN'),
+          matching: find.text('YOU'),
+        ),
         findsNothing,
       );
     });
@@ -906,11 +913,17 @@ void main() {
     testWidgets('each kind of place has its own token shape', (tester) async {
       await pumpMap(tester);
 
-      expect(tokenWidget(tester, 'SOUTHWOOD_FOREST').type.group, MapNodeType.WILDERNESS);
+      expect(
+        tokenWidget(tester, 'SOUTHWOOD_FOREST').type.group,
+        MapNodeType.WILDERNESS,
+      );
       expect(tokenWidget(tester, 'SOUTH_HAVEN').type, MapNodeType.TOWN);
       expect(tokenWidget(tester, 'FOREST_MINE').type, MapNodeType.SKILLING);
       // a lair is a landmark, but it reads as wilderness on the map
-      expect(tokenWidget(tester, 'GOBLIN_QUEEN_LAIR').type.group, MapNodeType.WILDERNESS);
+      expect(
+        tokenWidget(tester, 'GOBLIN_QUEEN_LAIR').type.group,
+        MapNodeType.WILDERNESS,
+      );
 
       expect(MapNodeType.WILDERNESS.frame, MapNodeFrame.DIAMOND);
       expect(MapNodeType.TOWN.frame, MapNodeFrame.SHIELD);
@@ -955,6 +968,71 @@ void main() {
 
       await select(tester, 'SOUTH_HAVEN');
       expect(find.text('YOU ARE AT'), findsNothing);
+    });
+  });
+
+  group('zone combat range', () {
+    testWidgets('a zone with fights shows its lowest to highest fight level', (
+      tester,
+    ) async {
+      await pumpMap(tester);
+      final world = sessionOf(tester).worldController;
+
+      // every zone's range is read off its creatures and dungeons,
+      // permanent and discoverable — a dungeon at its toughest fight —
+      // and is null only where nothing fights
+      var dungeonCounted = false;
+      for (final zone in ZoneId.values) {
+        final def = zone.definition;
+        final levels = <int>[];
+        for (final id in [
+          ...def.permanentEntities,
+          for (final e in def.discoverableEntities) e.id,
+        ]) {
+          final entity = id.definition;
+          if (entity is CombatEntityDefinition) levels.add(entity.level);
+          if (entity is DungeonEntityDefinition) {
+            final fights = [
+              for (final entry in entity.dungeonId.definition.entries)
+                for (final ref in entry.entities)
+                  if (ref.entityId.definition
+                      case final CombatEntityDefinition c)
+                    c.level,
+            ];
+            if (fights.isNotEmpty) {
+              levels.add(fights.reduce((a, b) => a > b ? a : b));
+              dungeonCounted = true;
+            }
+          }
+        }
+        final range = world.zoneCombatLevelRange(zone);
+        if (levels.isEmpty) {
+          expect(range, isNull, reason: zone.name);
+        } else {
+          expect(range!.min, levels.reduce((a, b) => a < b ? a : b));
+          expect(range.max, levels.reduce((a, b) => a > b ? a : b));
+        }
+      }
+      // some zone holds a dungeon, so the dungeon path is exercised
+      expect(dungeonCounted, isTrue);
+
+      // and the pane shows it beside the walk
+      final fighting = kWorldMapNodes.whereType<ZoneNode>().firstWhere(
+        (n) => world.zoneCombatLevelRange(n.id) != null,
+      );
+      await select(tester, fighting.id.name);
+      final range = world.zoneCombatLevelRange(fighting.id)!;
+      final label = range.min == range.max
+          ? '${range.min}'
+          : '${range.min}–${range.max}';
+      expect(find.byTooltip('Combat level $label'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('zone-combat-range')),
+          matching: find.text(label),
+        ),
+        findsOneWidget,
+      );
     });
   });
 }

@@ -12,6 +12,7 @@ import 'package:rpg/data/inventory_data.dart';
 import '../data/bound_action.dart';
 import '../data/offline_progress_data.dart';
 import '../services/offline_progress_service.dart';
+import '../catalogs/dungeons/dungeon_id.dart';
 import '../catalogs/zones/zones.dart';
 import '../services/player_data_service.dart';
 import '../services/exploration_service.dart';
@@ -175,9 +176,11 @@ class WorldController extends ChangeNotifier {
   /// The combat level a dungeon's tile shows: its toughest fight, the
   /// highest-level creature on any of its floors. Null for a dungeon with
   /// nothing to fight in it.
-  int? dungeonLevel(DungeonEntity e) {
+  int? dungeonLevel(DungeonEntity e) => _dungeonLevel(e.dungeonId);
+
+  static int? _dungeonLevel(DungeonId id) {
     int? highest;
-    for (final entry in e.dungeonId.definition.entries) {
+    for (final entry in id.definition.entries) {
       for (final ref in entry.entities) {
         final def = ref.entityId.definition;
         if (def is! CombatEntityDefinition) continue;
@@ -359,6 +362,33 @@ class WorldController extends ChangeNotifier {
   /// is in, so the map can preview a place before you walk to it.
   List<Entity> zoneEntities(ZoneId zoneId) {
     return _explorationService.getZoneEntities(zoneId, _worldState);
+  }
+
+  /// The lowest and highest combat level among the fights [zoneId] holds:
+  /// the creatures and dungeons standing there and every one exploring can
+  /// turn up, a dungeon at its toughest fight. Read off
+  /// the catalog, not the save, so the map can tell you how hard a place
+  /// fights before you have found anything in it. Null for a zone with
+  /// nothing to fight.
+  ({int min, int max})? zoneCombatLevelRange(ZoneId zoneId) {
+    final def = zoneId.definition;
+    int? lo;
+    int? hi;
+    for (final id in [
+      ...def.permanentEntities,
+      for (final e in def.discoverableEntities) e.id,
+    ]) {
+      final level = switch (id.definition) {
+        final CombatEntityDefinition c => c.level,
+        // a dungeon counts at the level its tile shows: its toughest fight
+        final DungeonEntityDefinition d => _dungeonLevel(d.dungeonId),
+        _ => null,
+      };
+      if (level == null) continue;
+      if (lo == null || level < lo) lo = level;
+      if (hi == null || level > hi) hi = level;
+    }
+    return lo == null ? null : (min: lo, max: hi!);
   }
 
   /// Everything the zone detail screen shows for [zoneId].
