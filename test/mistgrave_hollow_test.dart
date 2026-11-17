@@ -65,13 +65,14 @@ void main() {
     });
 
     test('keeps a fire and the way into the ruins', () {
+      // a firepit in a zone opens all five of its fire slots
       expect(hollow.permanentEntities, [
-        EntityId.FIREPIT,
+        ...FireSlots.slots,
         EntityId.HAUNTED_RUINS_ENTRANCE,
       ]);
     });
 
-    test('turns up only the dead, at 55 and 89', () {
+    test('turns up only the dead, at 55 and 89 (the zombie at 34)', () {
       expect(discoverable(), [
         EntityId.RESTLESS_SKELETON,
         EntityId.ZOMBIE,
@@ -80,7 +81,9 @@ void main() {
         EntityId.MIST_WRAITH,
       ]);
       for (final id in discoverable()) {
-        expect(combat(id).level, anyOf(55, 89), reason: id.name);
+        expect(combat(id).level, anyOf(34, 55, 89), reason: id.name);
+        // only the plain zombie, lowered in the rebalance, runs at 34
+        if (combat(id).level == 34) expect(id, EntityId.ZOMBIE);
         expect(combat(id).isDungeonBoss, isFalse, reason: id.name);
       }
     });
@@ -88,7 +91,7 @@ void main() {
     test('gates the 89s past its door, the way the prairie does', () {
       for (final e in hollow.discoverableEntities) {
         final def = combat(e.id);
-        if (def.level == 55) {
+        if (def.level <= 55) {
           expect(e.unlockLevel, hollow.explorationLevel, reason: e.id.name);
         } else {
           expect(
@@ -129,7 +132,7 @@ void main() {
         for (final ref in card.entities.take(card.entities.length - 1)) {
           final def = combat(ref.entityId);
           expect(def.isDungeonBoss, isFalse, reason: ref.entityId.name);
-          expect(def.level, anyOf(55, 89), reason: ref.entityId.name);
+          expect(def.level, anyOf(34, 55, 89), reason: ref.entityId.name);
         }
       }
     });

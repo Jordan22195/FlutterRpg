@@ -93,6 +93,8 @@ void main() {
         final def = id.definition;
         if (def is! FishingEntityDefinition) continue;
         for (final fish in def.itemDrops) {
+          // junk comes up in place of a catch, as a nested table
+          if (fish.id == ItemId.NULL) continue;
           expect(
             cooked.contains(fish.id) || brewed.contains(fish.id),
             isTrue,

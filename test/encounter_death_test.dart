@@ -9,6 +9,7 @@ import 'package:rpg/game_session.dart';
 import 'package:rpg/main.dart';
 import 'package:rpg/screens/explore_screen.dart';
 import 'package:rpg/screens/main_shell.dart';
+import 'package:rpg/screens/map_screen.dart';
 import 'package:rpg/services/file_manager_service.dart';
 
 // Fixed pumps instead of pumpAndSettle: the session's periodic timers
@@ -27,8 +28,10 @@ Future<void> settle(WidgetTester tester) async {
 CombatEntity lethalEnemy() => EntityId.IMP.build() as CombatEntity;
 
 // long enough to cover a real swing interval, which the catalog measures in
-// whole seconds rather than the milliseconds a fabricated enemy could use
-const deathFrames = 300;
+// whole seconds rather than the milliseconds a fabricated enemy could use.
+// a wall-clock budget rather than a frame count: a loaded machine spaces
+// frames further apart than the gap asks for, or not at all
+const deathBudget = Duration(seconds: 10);
 const deathFrameGap = Duration(milliseconds: 5);
 
 void main() {
@@ -46,7 +49,8 @@ void main() {
   // the enemy swing timer runs off the wall clock, so frames have to be
   // spaced by real time for an attack to land
   Future<void> fightUntilDeath(EncounterController encounter) async {
-    for (var i = 0; i < deathFrames; i++) {
+    final clock = Stopwatch()..start();
+    while (clock.elapsed < deathBudget) {
       encounter.onActionTimingFrame();
       if (encounter.deathSequence > 0) return;
       await Future<void>.delayed(deathFrameGap);
@@ -95,11 +99,12 @@ void main() {
     await tester.tap(find.text('Enter'));
     await settle(tester);
     expect(find.byType(ExploreScreen), findsOneWidget);
-    expect(find.text('World Map'), findsNothing);
+    expect(find.byType(MapScreen), findsNothing);
 
     // die: frames need real time between them for the enemy to swing
     expect(encounter.startEncounterActionFor(lethalEnemy()), isTrue);
-    for (var i = 0; i < deathFrames && encounter.deathSequence == 0; i++) {
+    final clock = Stopwatch()..start();
+    while (clock.elapsed < deathBudget && encounter.deathSequence == 0) {
       encounter.onActionTimingFrame();
       await tester.runAsync(() => Future<void>.delayed(deathFrameGap));
       await tester.pump();
@@ -109,7 +114,7 @@ void main() {
 
     // back on the map screen, with the notice
     expect(find.text('You died'), findsOneWidget);
-    expect(find.text('World Map'), findsOneWidget);
+    expect(find.byType(MapScreen), findsOneWidget);
     expect(find.byType(ExploreScreen), findsNothing);
 
     // the notice dismisses

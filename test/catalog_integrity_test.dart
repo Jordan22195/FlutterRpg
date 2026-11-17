@@ -25,61 +25,7 @@ import 'package:rpg/data/equipment_data.dart';
 /// Art that is referenced but not drawn yet. This is the backlog, and it
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
-const knownMissingArt = <String>{
-  // zone headers deleted to be redrawn as landscapes
-  'assets/images/zones/farm.png',
-  'assets/images/zones/south_haven.png',
-  'assets/images/zones/mine.png',
-  'assets/images/zones/forest_mine_depths.png',
-  'assets/images/zones/swamp.png',
-  'assets/images/zones/iron_gate_city.png',
-  'assets/images/zones/ironroot_hills.png',
-  'assets/images/zones/ironroot_mine.png',
-  // the west-coast monsters (Reedwater Vale, Mudmouth Delta, Saltwind Coast)
-  'assets/images/entities/river_toad.png',
-  'assets/images/entities/water_strider.png',
-  'assets/images/entities/snapping_turtle.png',
-  'assets/images/entities/crab.png',
-  'assets/images/entities/mire_hippo.png',
-  'assets/images/entities/crocodile.png',
-  'assets/images/entities/sea_serpent.png',
-  // and their drops
-  'assets/icons/items/hippo_hide.png',
-  'assets/icons/items/crocodile_hide.png',
-  'assets/icons/items/serpent_scale.png',
-  'assets/icons/items/toad_wart.png',
-  'assets/icons/items/strider_leg.png',
-  'assets/icons/items/turtle_shell.png',
-  'assets/icons/items/crab_claw.png',
-  'assets/icons/items/hippo_tusk.png',
-  'assets/icons/items/crocodile_tooth.png',
-  'assets/icons/items/serpent_fang.png',
-  'assets/icons/items/toad_legs.png',
-  'assets/icons/items/crab_meat.png',
-  'assets/icons/items/turtle_meat.png',
-  'assets/icons/items/hippo_rump.png',
-  // the west-coast dungeons: entrances, banners, and their uniques
-  'assets/images/entities/reedmaze.png',
-  'assets/images/entities/silt_warrens.png',
-  'assets/images/entities/brinedeep_caves.png',
-  'assets/images/dungeons/reedmaze.png',
-  'assets/images/dungeons/silt_warrens.png',
-  'assets/images/dungeons/brinedeep_caves.png',
-  'assets/icons/items/croakers_charm.png',
-  'assets/icons/items/snapjaw_shell.png',
-  'assets/icons/items/rivercane_mantle.png',
-  'assets/icons/items/mudclaw_grips.png',
-  'assets/icons/items/wallowhide_treads.png',
-  'assets/icons/items/mudmaw_jawblade.png',
-  'assets/icons/items/siltscale_coif.png',
-  'assets/icons/items/brinecrushers_claw.png',
-  'assets/icons/items/brineclaw_bracers.png',
-  'assets/icons/items/tidecallers_scepter.png',
-  'assets/icons/items/saltscale_sandals.png',
-  'assets/icons/items/leviathans_fang.png',
-  'assets/icons/items/leviathan_girdle.png',
-  'assets/icons/items/pearlscale_cuirass.png',
-};
+const knownMissingArt = <String>{};
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
 /// so nothing in them ships even once the art exists. Declaring a directory

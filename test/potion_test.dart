@@ -146,9 +146,12 @@ void main() {
   group('the alchemy recipes', () {
     // the minor tier is the guam-leaf recipes; the tiers above brew off
     // a herb of their own
+    // the waters' potions (cooking, woodcutting) brew off guam too, but
+    // with a fishing spot's reagent: they are their own line
     List<CraftingRecipe> minorRecipes() => RecipeCatalog()
         .recipesForSkill(SkillId.ALCHEMY)
         .where((r) => r.inputs.containsKey(ItemId.GUAM_LEAF))
+        .where((r) => potionStats.containsKey(r.output.single.id))
         .toList();
 
     test('the recovery potion is harralander and grave moss', () {

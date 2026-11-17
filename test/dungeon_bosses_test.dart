@@ -89,9 +89,12 @@ void main() {
     }
   });
 
-  test('the Webbed Thicket\'s boss is its own zombie', () {
-    final thicket = DungeonId.SPIDER_DEN.definition.entries.first;
-    expect(thicket.entities.last.entityId, EntityId.THICKET_ZOMBIE);
+  test('Cocoon Hollow\'s boss is its own zombie', () {
+    // the Webbed Thicket ends on the Thicket Weaver; the zombie holds the
+    // floor after it
+    final hollow = DungeonId.SPIDER_DEN.definition.entries[1];
+    expect(hollow.name, 'Cocoon Hollow');
+    expect(hollow.entities.last.entityId, EntityId.THICKET_ZOMBIE);
     final boss = EntityId.THICKET_ZOMBIE.definition as CombatEntityDefinition;
     final regular =
         EntityId.ZOMBIE_UNCOMMON.definition as CombatEntityDefinition;

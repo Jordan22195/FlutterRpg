@@ -41,7 +41,7 @@ void main() {
     );
 
     // ---- Map tab ----
-    expect(find.text('World Map'), findsOneWidget);
+    expect(find.byType(MapScreen), findsOneWidget);
 
     // open the zone the player is standing in. Walking somewhere else is
     // map_screen_test's job; this one only needs a zone whose fixtures it

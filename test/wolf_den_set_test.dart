@@ -181,7 +181,8 @@ void main() {
       expect(e.highCount, 150, reason: e.id.name);
     }
     final ring = gear(ItemId.REDCAP_RING);
-    expect(ring.fibLevel, 2);
+    // a rung under the boss's loot ceiling (rung 6 - 5)
+    expect(ring.fibLevel, 1);
     // recovery rides on a strength piece rather than standing alone
     expect(ring.statWeights, {SkillId.STRENGTH: 2, SkillId.RECOVERY: 1});
   });

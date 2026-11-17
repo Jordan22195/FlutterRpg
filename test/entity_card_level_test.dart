@@ -7,6 +7,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
+import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
@@ -19,8 +20,6 @@ import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/level_standing.dart';
 import 'package:rpg/theme/game_colors.dart';
-import 'package:rpg/theme/zone_palette.dart';
-import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/segmented_tabs.dart';
 import 'package:rpg/widgets/fill_bar.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
@@ -112,6 +111,9 @@ void main() {
           ChangeNotifierProvider<BuffController>.value(
             value: session.buffController,
           ),
+          ChangeNotifierProvider<CraftingController>.value(
+            value: session.craftingController,
+          ),
           ChangeNotifierProvider<InventoryController>.value(
             value: session.inventoryController,
           ),
@@ -182,34 +184,6 @@ void main() {
       isTrue,
     );
     expect(cardText(EntityId.TRANQUIL_POND, 'Fishing'), findsNothing);
-
-    session.dispose();
-  });
-
-  testWidgets('a structure with no difficulty shows its skill sprite', (
-    tester,
-  ) async {
-    final session = await pumpExplore(tester);
-
-    // a firepit has no stat to rank it by: it shows what it trains by the
-    // skill's sprite alone, with no label and no level
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey(EntityId.FIREPIT)),
-        matching: find.byWidgetPredicate(
-          (w) => w is IconRenderer<SkillId> && w.id == SkillId.FIREMAKING,
-        ),
-      ),
-      findsOneWidget,
-    );
-    expect(cardText(EntityId.FIREPIT, 'Firemaking'), findsNothing);
-    expect(
-      find.descendant(
-        of: find.byKey(const ValueKey(EntityId.FIREPIT)),
-        matching: find.textContaining('Lv'),
-      ),
-      findsNothing,
-    );
 
     session.dispose();
   });
@@ -496,10 +470,18 @@ void main() {
 
   testWidgets('places are a three-column grid of 120pt tiles', (tester) async {
     final session = await pumpExplore(tester);
-    final places = ZoneId.TUTORIAL_FARM.definition.permanentEntities;
-    expect(places.length, 5, reason: 'Southglen has five places');
+    // the way to light a fire leads; unlit fire slots aren't shown
+    const places = <Object>[
+      'light-fire-tile',
+      EntityId.TRANQUIL_POND,
+      EntityId.ANVIL,
+      EntityId.FARMER,
+      EntityId.GRAINERY_ENTRANCE,
+    ];
 
-    Rect at(EntityId id) => tester.getRect(find.byKey(ValueKey(id)));
+    Rect at(Object id) => tester.getRect(
+      find.byKey(id is EntityId ? ValueKey(id) : ValueKey(id as String)),
+    );
     final rects = [for (final id in places) at(id)];
 
     // three equal columns 10 apart inside the body's 16pt margins
@@ -534,12 +516,10 @@ void main() {
     session.dispose();
   });
 
-  testWidgets('each tile\'s frame is tinted for its kind of place', (
+  testWidgets('a place\'s art sits bare, as a discovery\'s does', (
     tester,
   ) async {
     final session = await pumpExplore(tester);
-    const colors = GameColors.standard;
-    const palette = ZonePalette.meadow;
 
     BoxDecoration frameOf(EntityId id) =>
         tester
@@ -559,20 +539,19 @@ void main() {
                 .decoration!
             as BoxDecoration;
 
-    expect(frameOf(EntityId.TRANQUIL_POND).color, palette.gatherTintFill);
-    expect(frameOf(EntityId.ANVIL).color, colors.craftingTint.fill);
-    expect(frameOf(EntityId.FIREPIT).color, colors.fireTint.fill);
-    expect(frameOf(EntityId.FARMER).color, colors.shopTint.fill);
-
-    // a dungeon sits on its own fill, outlined 2px in its rarity
-    final dungeon = frameOf(EntityId.GRAINERY_ENTRANCE);
-    expect(dungeon.color, colors.dungeonTintFill);
-    final side = (dungeon.border! as Border).top;
-    expect(side.width, 2);
-    expect(
-      side.color,
-      rarityBorderColor(EntityId.GRAINERY_ENTRANCE.definition.rarity),
-    );
+    // no fill and no border, a dungeon's rarity included: the art stands
+    // in a glow of the zone's own colour
+    for (final id in [
+      EntityId.TRANQUIL_POND,
+      EntityId.ANVIL,
+      EntityId.FARMER,
+      EntityId.GRAINERY_ENTRANCE,
+    ]) {
+      final frame = frameOf(id);
+      expect(frame.color, Colors.transparent, reason: '$id');
+      expect((frame.border! as Border).top.color, Colors.transparent);
+      expect(frame.gradient, isA<RadialGradient>(), reason: '$id');
+    }
 
     session.dispose();
   });
@@ -938,12 +917,12 @@ void main() {
       ValueKey('undiscovered-${EntityId.GOBLIN_CAMP.definition.name}'),
     );
     expect(camp, findsOneWidget);
-    final firepit = find.byKey(const ValueKey(EntityId.FIREPIT));
-    final firepitTop = tester.getTopLeft(firepit);
+    final den = find.byKey(const ValueKey(EntityId.WOLF_DEN_ENTRANCE));
+    final denTop = tester.getTopLeft(den);
     final campTop = tester.getTopLeft(camp);
     expect(
-      campTop.dy > firepitTop.dy ||
-          (campTop.dy == firepitTop.dy && campTop.dx > firepitTop.dx),
+      campTop.dy > denTop.dy ||
+          (campTop.dy == denTop.dy && campTop.dx > denTop.dx),
       isTrue,
     );
 

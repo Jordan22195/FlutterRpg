@@ -65,12 +65,15 @@ void main() {
       for (final entry in equipment()) {
         final def = entry.value;
         if (def.statWeights.length != 1) continue;
-        // nothing is lost in the split when there is only one share
+        // nothing is lost in the split when there is only one share. a
+        // weapon prices its stats off its metal alone, its budget rung
         expect(
           def.statsAt(Rarity.COMMON).values.single,
-          Util.fib(def.fibLevel),
+          Util.fib(def.budgetRung),
           reason: '${entry.key.name} at COMMON',
         );
+        // skilling gear wears one fixed rarity that never reaches its stats
+        if (!def.rarityScalesStats) continue;
         for (final rarity in Rarity.ladder) {
           expect(
             def.statsAt(rarity).values.single,
@@ -92,8 +95,13 @@ void main() {
       // be worth exactly what a common one is
       for (final entry in equipment()) {
         final def = entry.value;
-        // damage weapons carry no stats, and dev items state theirs outright
-        if (def.statWeights.isEmpty || def.fixedStats != null) continue;
+        // damage weapons carry no stats, dev items state theirs outright,
+        // and skilling gear's rarity is only its border
+        if (def.statWeights.isEmpty ||
+            def.fixedStats != null ||
+            !def.rarityScalesStats) {
+          continue;
+        }
         var previous = 0;
         for (final rarity in Rarity.ladder) {
           final total = totalAt(def, rarity);
@@ -110,8 +118,13 @@ void main() {
     test('the minimum each tier owes over common is paid on every piece', () {
       for (final entry in equipment()) {
         final def = entry.value;
-        // damage weapons carry no stats, and dev items state theirs outright
-        if (def.statWeights.isEmpty || def.fixedStats != null) continue;
+        // damage weapons carry no stats, dev items state theirs outright,
+        // and skilling gear's rarity is only its border
+        if (def.statWeights.isEmpty ||
+            def.fixedStats != null ||
+            !def.rarityScalesStats) {
+          continue;
+        }
         final common = totalAt(def, Rarity.COMMON);
         for (final rarity in Rarity.ladder) {
           expect(
@@ -191,21 +204,21 @@ void main() {
     });
   });
 
-  test('the copper-to-mithril spine did not move', () {
-    // this change was not supposed to touch the core progression: the
-    // armour/weapon/tool curve was already Fibonacci, so putting it on the
-    // ladder has to reproduce it exactly
+  test('the copper-to-mithril spine is pinned', () {
+    // the armour/weapon/tool curve is Fibonacci; pinned so a retune says by
+    // how much it moved. iron and up sit one rung higher than copper's
+    // spacing alone would put them (iron 2 .. dragon 7)
     const spine = {
       ItemId.COPPER_HELMET: 1,
-      ItemId.IRON_HELMET: 2,
-      ItemId.STEEL_HELMET: 3,
-      ItemId.MITHRIL_HELMET: 5,
+      ItemId.IRON_HELMET: 3,
+      ItemId.STEEL_HELMET: 5,
+      ItemId.MITHRIL_HELMET: 8,
       ItemId.COPPER_SHIELD: 3,
-      ItemId.IRON_SHIELD: 5,
-      ItemId.STEEL_SHIELD: 8,
-      ItemId.MITHRIL_SHIELD: 13,
-      ItemId.MITHRIL_CHESTPLATE: 8,
-      ItemId.MITHRIL_LEGS: 8,
+      ItemId.IRON_SHIELD: 8,
+      ItemId.STEEL_SHIELD: 13,
+      ItemId.MITHRIL_SHIELD: 21,
+      ItemId.MITHRIL_CHESTPLATE: 13,
+      ItemId.MITHRIL_LEGS: 13,
     };
     for (final entry in spine.entries) {
       final piece = entry.key.build() as EquipmentItem;
@@ -220,9 +233,9 @@ void main() {
     // rung it is made from, and in what a swing deals
     const weapons = {
       ItemId.COPPER_DAGGER: 0,
-      ItemId.IRON_DAGGER: 1,
-      ItemId.STEEL_DAGGER: 2,
-      ItemId.MITHRIL_DAGGER: 3,
+      ItemId.IRON_DAGGER: 2,
+      ItemId.STEEL_DAGGER: 3,
+      ItemId.MITHRIL_DAGGER: 4,
     };
     double? previousDamage;
     for (final entry in weapons.entries) {
@@ -238,7 +251,7 @@ void main() {
     expect(
       (ItemId.MITHRIL_SICKLE.build() as EquipmentItem)
           .effectiveSkillBonus[SkillId.HERBALISM],
-      8,
+      13,
     );
   });
 

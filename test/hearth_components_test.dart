@@ -19,7 +19,6 @@ import 'package:rpg/widgets/empty_state.dart';
 import 'package:rpg/widgets/hearth_chip.dart';
 import 'package:rpg/widgets/hearth_nav_bar.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
-import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/list_row.dart';
 import 'package:rpg/widgets/primary_button.dart';
 import 'package:rpg/widgets/segmented_tabs.dart';
@@ -146,10 +145,11 @@ void main() {
     testWidgets('each kind wears its tint, and gathering follows the zone', (
       tester,
     ) async {
+      // an entity's art sits bare, so the tints show on anything else
       Future<BoxDecoration> frame(SpriteKind kind, ZonePalette palette) async {
         await pumpThemed(
           tester,
-          SpriteFrame(id: EntityId.CHICKEN, kind: kind),
+          SpriteFrame(id: SkillId.FISHING, kind: kind),
           palette: palette,
         );
         return decorationOf(
@@ -187,26 +187,22 @@ void main() {
       expect((combat.border! as Border).top.width, 1);
     });
 
-    testWidgets('a rare entity keeps its rarity outline', (tester) async {
-      await pumpThemed(
-        tester,
-        const SpriteFrame(id: EntityId.GOBLIN_QUEEN, kind: SpriteKind.dungeon),
-      );
-      final side =
-          (decorationOf(
-                    tester,
-                    find.descendant(
-                      of: find.byType(SpriteFrame),
-                      matching: find.byType(Container),
-                    ),
-                  ).border!
-                  as Border)
-              .top;
-      expect(side.width, 2);
-      expect(
-        side.color,
-        rarityBorderColor(EntityId.GOBLIN_QUEEN.definition.rarity),
-      );
+    testWidgets('an entity\'s art sits bare, rare or not', (tester) async {
+      for (final id in [EntityId.CHICKEN, EntityId.GOBLIN_QUEEN]) {
+        await pumpThemed(
+          tester,
+          SpriteFrame(id: id, kind: SpriteKind.dungeon),
+        );
+        final frame = decorationOf(
+          tester,
+          find.descendant(
+            of: find.byType(SpriteFrame),
+            matching: find.byType(Container),
+          ),
+        );
+        expect(frame.color, isNull, reason: '$id');
+        expect(frame.border, isNull, reason: '$id');
+      }
     });
   });
 

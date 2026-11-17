@@ -454,15 +454,10 @@ void main() {
       final here = tester.getRect(tokenFor('TUTORIAL_FARM'));
 
       expect(here.center.dx, closeTo(viewport.center.dx, 4));
-      expect(
-        here.center.dy,
-        closeTo(
-          viewport.center.dy +
-              MapNodeToken.slotHeight / 2 -
-              MapNodeToken.tokenCenterY,
-          4,
-        ),
-      );
+      // the meadow sits near the map's top edge, and the map's edge never
+      // pulls in past the viewport's, so vertically it is only kept in view
+      expect(here.top, greaterThanOrEqualTo(viewport.top));
+      expect(here.bottom, lessThanOrEqualTo(viewport.bottom));
     });
 
     testWidgets('reframing pans, and leaves the zoom alone', (tester) async {
@@ -698,7 +693,10 @@ void main() {
       await settle(tester);
 
       // open the tree from a zone away — the encounter screen resolves it
-      // in the zone on screen, not the one the player is standing in
+      // in the zone on screen, not the one the player is standing in. the
+      // zone's art opens as a full square, so scroll the tile into view
+      await tester.ensureVisible(find.text('Tree').first);
+      await settle(tester);
       await tester.tap(find.text('Tree').first);
       await settle(tester);
 

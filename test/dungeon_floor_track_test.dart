@@ -15,10 +15,10 @@ import 'package:rpg/widgets/sprite_frame.dart';
 void main() {
   setUpAll(registerCatalogIconResolvers);
 
-  /// The Spider Den's second floor, built as a run builds it: uncommon
+  /// The Spider Den's third floor, built as a run builds it: uncommon
   /// spiders, zombies, then the Broodmother.
   EntityQueue lair() {
-    final entry = DungeonId.SPIDER_DEN.definition.entries[1];
+    final entry = DungeonId.SPIDER_DEN.definition.entries[2];
     return EntityQueue(
       name: entry.name,
       members: [
@@ -39,7 +39,7 @@ void main() {
               floor: floor,
               fullCounts: DungeonFloorTrack.fullCountsFor(
                 DungeonId.SPIDER_DEN,
-                1,
+                2,
                 floor,
               ),
             ),
@@ -51,7 +51,7 @@ void main() {
   }
 
   test('full counts come from the floor entry, member by member', () {
-    expect(DungeonFloorTrack.fullCountsFor(DungeonId.SPIDER_DEN, 1, lair()), [
+    expect(DungeonFloorTrack.fullCountsFor(DungeonId.SPIDER_DEN, 2, lair()), [
       15,
       6,
       1,

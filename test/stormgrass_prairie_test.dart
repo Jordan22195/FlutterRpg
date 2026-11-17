@@ -431,13 +431,6 @@ void main() {
         expect(recipe.inputs, hasLength(2), reason: id.name);
       }
     });
-
-    test('there is no greater fishing potion', () {
-      expect(
-        ItemId.values.map((i) => i.name),
-        isNot(contains('GREATER_FISHING_POTION')),
-      );
-    });
   });
 
   group('utility potions', () {

@@ -74,7 +74,14 @@ void main() {
       };
       final spiderSlots = pairs.keys.map((id) => eq(id).armorSlot).toSet();
       for (final MapEntry(key: spider, value: swamp) in pairs.entries) {
-        expect(eq(swamp).fibLevel, eq(spider).fibLevel, reason: swamp.name);
+        // the Spider Den's bosses came down a rung in a rebalance and its
+        // webbed cloak with them, so the fen's piece may sit above its twin,
+        // never below
+        expect(
+          eq(swamp).fibLevel,
+          inInclusiveRange(eq(spider).fibLevel, eq(spider).fibLevel + 1),
+          reason: swamp.name,
+        );
         expect(weight(swamp), weight(spider), reason: swamp.name);
         expect(spiderSlots, isNot(contains(eq(swamp).armorSlot)));
       }

@@ -59,7 +59,7 @@ void main() {
 
   test('each tier pays its step on the ladder in bars', () {
     expect(
-      [for (final tier in Rarity.values) CraftingSystem.bonusOutputFor(tier)],
+      [for (final tier in Rarity.ladder) CraftingSystem.bonusOutputFor(tier)],
       [1, 2, 3, 4, 5],
     );
   });
@@ -67,8 +67,13 @@ void main() {
   test('every bar recipe rolls for bonus bars, and no forge does', () {
     for (final recipe in RecipeCatalog().recipes) {
       if (recipe.skill != SkillId.BLACKSMITHING) continue;
-      final makesBar = recipe.id.startsWith('smelt_');
-      expect(recipe.rollsBonusOutput, makesBar, reason: recipe.id);
+      // the gold ring and necklace are jewellery bases with no rarity of
+      // their own, so like a bar a good craft pays extra bases
+      final paysExtra =
+          recipe.id.startsWith('smelt_') ||
+          recipe.id == 'forge_gold_ring' ||
+          recipe.id == 'forge_gold_necklace';
+      expect(recipe.rollsBonusOutput, paysExtra, reason: recipe.id);
     }
   });
 
@@ -126,7 +131,7 @@ void main() {
         '5x Copper Bar',
       ],
     );
-    expect([for (final o in details.outcomes) o.quality], Rarity.values);
+    expect([for (final o in details.outcomes) o.quality], Rarity.ladder);
     expect(
       details.outcomes.fold(0.0, (sum, o) => sum + o.chance),
       closeTo(1, 1e-9),

@@ -132,7 +132,15 @@ void main() {
     );
     final explores =
         const Duration(minutes: 5).inMicroseconds ~/ interval.inMicroseconds;
-    expect(find.text('$explores'), findsOneWidget);
+    // the clock keeps running while the app loads, so the settle can see a
+    // little more than five minutes: one explore over, at most
+    expect(
+      find.byWidgetPredicate(
+        (w) =>
+            w is Text && (w.data == '$explores' || w.data == '${explores + 1}'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Exploration'), findsOneWidget);
     // what the walk turned up: the meadow's entities, counted
     expect(find.text('DISCOVERED'), findsOneWidget);

@@ -6,12 +6,14 @@ import 'package:provider/provider.dart';
 import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
+import 'package:rpg/controllers/crafting_controller.dart';
 import 'package:rpg/controllers/encounter_controller.dart';
 import 'package:rpg/controllers/inventory_controller.dart';
 import 'package:rpg/controllers/player_data_controller.dart';
 import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
+import 'package:rpg/systems/exploration_system.dart';
 import 'package:rpg/screens/explore_screen.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
@@ -70,6 +72,9 @@ void main() {
           ChangeNotifierProvider<BuffController>.value(
             value: session.buffController,
           ),
+          ChangeNotifierProvider<CraftingController>.value(
+            value: session.craftingController,
+          ),
           ChangeNotifierProvider<InventoryController>.value(
             value: session.inventoryController,
           ),
@@ -120,10 +125,11 @@ void main() {
     final session = await pumpExplore(tester);
 
     expect(session.worldController.viewedZoneId, ZoneId.TUTORIAL_FARM);
+    // the art is the screen's backdrop, behind the list, not in it
     final image = tester.widget<Image>(
       find
           .descendant(
-            of: find.byType(CustomScrollView),
+            of: find.byKey(const ValueKey('zone-backdrop')),
             matching: find.byType(Image),
           )
           .first,
@@ -132,7 +138,21 @@ void main() {
       (image.image as AssetImage).assetName,
       'assets/images/zones/farm.png',
     );
-    expect(headerSize(tester), const Size(414, ArtHeader.expandedHeight));
+    expect(
+      find.descendant(
+        of: find.byType(CustomScrollView),
+        matching: find.byWidgetPredicate(
+          (w) =>
+              w is Image &&
+              w.image is AssetImage &&
+              (w.image as AssetImage).assetName ==
+                  'assets/images/zones/farm.png',
+        ),
+      ),
+      findsNothing,
+    );
+    // open, the header is the art's whole square, the screen's width
+    expect(headerSize(tester), const Size(414, 414));
     // the status row rides over the top of the art
     expect(
       find.descendant(
@@ -166,6 +186,9 @@ void main() {
   });
 
   testWidgets('the tabs stay pinned under the header', (tester) async {
+    // the loot tab is off by default
+    ExplorationSystem.itemFindsEnabled = true;
+    addTearDown(() => ExplorationSystem.itemFindsEnabled = false);
     final session = await pumpExplore(tester);
 
     await scrollToBottom(tester);

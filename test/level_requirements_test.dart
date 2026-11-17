@@ -39,22 +39,14 @@ void main() {
             ),
           );
 
-    /// The Exploration level of the next zone up, or five past the last.
-    int nextLevel(ZoneId zone) {
-      final level = zone.definition.explorationLevel;
-      for (final z in ladder) {
-        if (z.definition.explorationLevel > level) {
-          return z.definition.explorationLevel;
-        }
-      }
-      return level + 5;
-    }
-
     test('the ladder has the zones it should', () {
       expect(ladder, contains(ZoneId.TUTORIAL_FARM));
       expect(ladder, contains(ZoneId.FOOTHILLS));
     });
 
+    // the world branches (the west coast runs beside the forest road), so
+    // a zone's finds are held to its own door rather than to whichever zone
+    // happens to open next by level
     for (final zone in [
       ZoneId.TUTORIAL_FARM,
       ZoneId.SOUTHWOOD_FOREST,
@@ -65,19 +57,22 @@ void main() {
       ZoneId.FOOTHILLS,
     ]) {
       test(
-        '${zone.name} opens at its own level and stops short of the next',
+        '${zone.name} has finds the moment it opens, none gated below it',
         () {
           final def = zone.definition;
+          // 0 is ungated: there from the start
           final unlocks = def.discoverableEntities
               .map((e) => e.unlockLevel)
               .toList();
 
-          // the first find is there the moment you can enter
-          expect(unlocks.reduce((a, b) => a < b ? a : b), def.explorationLevel);
-          // and the last opens up before the next zone does
+          expect(
+            unlocks.any((level) => level <= def.explorationLevel),
+            isTrue,
+            reason: 'nothing to find on entering ${zone.name}',
+          );
           for (final level in unlocks) {
+            if (level <= 1) continue;
             expect(level, greaterThanOrEqualTo(def.explorationLevel));
-            expect(level, lessThan(nextLevel(zone)));
           }
         },
       );

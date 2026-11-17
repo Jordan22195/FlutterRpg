@@ -95,10 +95,10 @@ void main() {
     }
   });
 
-  test('a hide sits on the rung of the plate it is gated like', () {
-    // a hide splits its rung exactly, so it adds up to the plate of the same
-    // rung and is gated like it — the two ladders stay level at every tier
-    // they share
+  test('a hide is gated like its plate, a rung under it from iron up', () {
+    // a hide is gated like the plate beside it. the metals moved up a rung
+    // from iron (iron 2 .. dragon 7) and the hides stayed where they were,
+    // so from iron up a hide sits one rung under its plate
     const plateBelow = {
       'LIGHT_LEATHER': EquipmentMaterialId.COPPER,
       'MEDIUM_LEATHER': EquipmentMaterialId.IRON,
@@ -110,10 +110,11 @@ void main() {
     };
     for (final entry in plateBelow.entries) {
       final hide = EquipmentMaterialId.values.byName(entry.key);
+      final under = entry.value == EquipmentMaterialId.COPPER ? 0 : 1;
       expect(
         hide.parameters.fibLevel,
-        entry.value.parameters.fibLevel,
-        reason: '${entry.key} is not on the rung of ${entry.value.name}',
+        entry.value.parameters.fibLevel - under,
+        reason: '${entry.key} is off the rung under ${entry.value.name}',
       );
       expect(
         hide.parameters.skillLevelRequirement,

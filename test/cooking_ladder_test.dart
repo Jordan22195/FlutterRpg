@@ -54,7 +54,10 @@ void main() {
   test('the creek opens at 7 on the crayfish', () {
     final creek = EntityId.CREEK.definition as FishingEntityDefinition;
     expect(creek.requiredLevel, 7);
-    expect(creek.itemDrops.map((d) => (d.id, d.unlockLevel, d.weight)), [
+    // the junk that can come up in place of a catch is a nested table,
+    // with no id of its own
+    final catches = creek.itemDrops.where((d) => d.id != ItemId.NULL);
+    expect(catches.map((d) => (d.id, d.unlockLevel, d.weight)), [
       (ItemId.CRAYFISH, 7, 1.0),
       (ItemId.BLUEGILL, 10, 0.5),
       (ItemId.TROUT, 15, 0.25),

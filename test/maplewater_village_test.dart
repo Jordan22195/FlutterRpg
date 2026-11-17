@@ -87,16 +87,15 @@ void main() {
       expect(pool.containsKey(ItemId.BASS), isFalse);
     });
 
-    test('sells the novice fishing set and rods up to mithril', () {
+    test('sells rods up to mithril, and no fisher\'s set', () {
+      // the fisher's sets come only out of sunken caches
+      expect(
+        pool.keys.where((id) => id.name.contains('FISHERS_')),
+        isEmpty,
+      );
       expect(
         pool.keys,
         containsAll([
-          ItemId.NOVICE_FISHERS_HAT,
-          ItemId.NOVICE_FISHERS_TUNIC,
-          ItemId.NOVICE_FISHERS_PANTS,
-          ItemId.NOVICE_FISHERS_GLOVES,
-          ItemId.NOVICE_FISHERS_BOOTS,
-          ItemId.NOVICE_FISHERS_CLOAK,
           ItemId.SIMPLE_FISHING_ROD,
           ItemId.COPPER_FISHING_ROD,
           ItemId.IRON_FISHING_ROD,

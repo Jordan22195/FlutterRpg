@@ -102,12 +102,14 @@ void main() {
   });
 
   test('a tier is worth exactly one rung over the tier below', () {
+    // iron jumps two rungs off copper (iron 2 .. dragon 7); every tier above
+    // it is one rung over the last
     final ladder = tiers.keys.toList();
     for (final piece in pieces.keys) {
       for (var tier = 1; tier < ladder.length; tier++) {
         expect(
           defFor(ladder[tier], piece).fibLevel,
-          defFor(ladder[tier - 1], piece).fibLevel + 1,
+          defFor(ladder[tier - 1], piece).fibLevel + (tier == 1 ? 2 : 1),
           reason: '${ladder[tier]}_$piece is off the ladder',
         );
       }
@@ -131,42 +133,41 @@ void main() {
     }
   });
 
-  test('moving the ladder onto materials changed nobody\'s gear', () {
-    // every defence total the hand-written ladder paid out, at every
-    // rarity, frozen from the catalog as it shipped: a save that holds a
-    // plate piece loads reading exactly what it read before
-    const before = <ItemId, List<int>>{
+  test('every plate piece\'s defence is pinned at every rarity', () {
+    // every defence total the ladder pays out, at every rarity, frozen from
+    // the catalog: a retune has to say so here
+    const pinned = <ItemId, List<int>>{
       // COMMON, UNCOMMON, RARE, EPIC, LEGENDARY
       ItemId.COPPER_HELMET: [1, 2, 3, 4, 5],
-      ItemId.IRON_HELMET: [2, 3, 4, 5, 6],
-      ItemId.STEEL_HELMET: [3, 4, 5, 6, 7],
-      ItemId.MITHRIL_HELMET: [5, 6, 7, 8, 9],
+      ItemId.IRON_HELMET: [3, 4, 5, 6, 7],
+      ItemId.STEEL_HELMET: [5, 6, 7, 8, 9],
+      ItemId.MITHRIL_HELMET: [8, 10, 11, 13, 14],
       ItemId.COPPER_CHESTPLATE: [2, 3, 4, 5, 6],
-      ItemId.IRON_CHESTPLATE: [3, 4, 5, 6, 7],
-      ItemId.STEEL_CHESTPLATE: [5, 6, 7, 8, 9],
-      ItemId.MITHRIL_CHESTPLATE: [8, 10, 11, 13, 14],
+      ItemId.IRON_CHESTPLATE: [5, 6, 7, 8, 9],
+      ItemId.STEEL_CHESTPLATE: [8, 10, 11, 13, 14],
+      ItemId.MITHRIL_CHESTPLATE: [13, 16, 18, 21, 23],
       ItemId.COPPER_LEGS: [2, 3, 4, 5, 6],
-      ItemId.IRON_LEGS: [3, 4, 5, 6, 7],
-      ItemId.STEEL_LEGS: [5, 6, 7, 8, 9],
-      ItemId.MITHRIL_LEGS: [8, 10, 11, 13, 14],
+      ItemId.IRON_LEGS: [5, 6, 7, 8, 9],
+      ItemId.STEEL_LEGS: [8, 10, 11, 13, 14],
+      ItemId.MITHRIL_LEGS: [13, 16, 18, 21, 23],
       ItemId.COPPER_BOOTS: [1, 2, 3, 4, 5],
-      ItemId.IRON_BOOTS: [2, 3, 4, 5, 6],
-      ItemId.STEEL_BOOTS: [3, 4, 5, 6, 7],
-      ItemId.MITHRIL_BOOTS: [5, 6, 7, 8, 9],
+      ItemId.IRON_BOOTS: [3, 4, 5, 6, 7],
+      ItemId.STEEL_BOOTS: [5, 6, 7, 8, 9],
+      ItemId.MITHRIL_BOOTS: [8, 10, 11, 13, 14],
       ItemId.COPPER_GLOVES: [1, 2, 3, 4, 5],
-      ItemId.IRON_GLOVES: [2, 3, 4, 5, 6],
-      ItemId.STEEL_GLOVES: [3, 4, 5, 6, 7],
-      ItemId.MITHRIL_GLOVES: [5, 6, 7, 8, 9],
+      ItemId.IRON_GLOVES: [3, 4, 5, 6, 7],
+      ItemId.STEEL_GLOVES: [5, 6, 7, 8, 9],
+      ItemId.MITHRIL_GLOVES: [8, 10, 11, 13, 14],
       ItemId.COPPER_SHIELD: [3, 4, 5, 6, 7],
-      ItemId.IRON_SHIELD: [5, 6, 7, 8, 9],
-      ItemId.STEEL_SHIELD: [8, 10, 11, 13, 14],
-      ItemId.MITHRIL_SHIELD: [13, 16, 18, 21, 23],
+      ItemId.IRON_SHIELD: [8, 10, 11, 13, 14],
+      ItemId.STEEL_SHIELD: [13, 16, 18, 21, 23],
+      ItemId.MITHRIL_SHIELD: [21, 25, 29, 34, 38],
     };
 
-    for (final entry in before.entries) {
+    for (final entry in pinned.entries) {
       final def = entry.key.definition as EquipmentItemDefinition;
       expect(
-        [for (final r in Rarity.values) def.statsAt(r)[SkillId.DEFENCE]],
+        [for (final r in Rarity.ladder) def.statsAt(r)[SkillId.DEFENCE]],
         entry.value,
         reason: '${entry.key.name} is not the piece it used to be',
       );

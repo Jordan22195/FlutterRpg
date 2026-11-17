@@ -406,7 +406,7 @@ void main() {
       equipFood(session, count: 5000);
       // a wall of hitpoints against a level 1 attack: many actions a kill,
       // and the kills are the actions divided down, never rounded up
-      fightWith(session, EntityId.SLIME, count: 5000);
+      fightWith(session, EntityId.GROTTO_SLIME, count: 5000);
 
       final result = settleFight(
         session,

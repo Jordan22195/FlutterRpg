@@ -243,22 +243,36 @@ void main() {
       expect(dungeons.chestsWaiting(den), 2);
 
       final inventory = session.saveGameData.inventoryData;
-      final coinsBefore = session.inventoryService.getItemCount(
-        inventory,
-        ItemId.COINS,
-      );
+      final before = {...inventory.itemMap};
 
       final loot = dungeons.claimChests(den);
 
       expect(dungeons.chestsWaiting(den), 0);
-      // the stand-in table pays a guaranteed purse per chest
-      final floors = den.definition.mainFloors.length;
-      final coins = loot.firstWhere((s) => s.id == ItemId.COINS).count;
-      expect(coins, greaterThanOrEqualTo(2 * 50 * floors));
-      expect(
-        session.inventoryService.getItemCount(inventory, ItemId.COINS),
-        coinsBefore + coins,
+      // every guaranteed roll pays out once per chest
+      final guaranteed = den.definition.chestRolls
+          .where((roll) => roll.chance >= 1)
+          .length;
+      expect(guaranteed, greaterThan(0));
+      final stacked = loot.where(
+        (s) => s.id.definition is! EquipmentItemDefinition,
       );
+      // (stacks of one item come back merged, so count items, not rows)
+      expect(
+        stacked.fold(0, (sum, s) => sum + s.count),
+        greaterThanOrEqualTo(2 * guaranteed),
+      );
+      // and all of it lands in the bag
+      final paid = <ItemId, int>{};
+      for (final s in stacked) {
+        paid[s.id] = (paid[s.id] ?? 0) + s.count;
+      }
+      for (final entry in paid.entries) {
+        expect(
+          session.inventoryService.getItemCount(inventory, entry.key),
+          (before[entry.key] ?? 0) + entry.value,
+          reason: entry.key.name,
+        );
+      }
       // nothing left to claim
       expect(dungeons.claimChests(den), isEmpty);
       session.dispose();

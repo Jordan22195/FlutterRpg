@@ -47,7 +47,13 @@ void main() {
     await settle(tester);
     await tester.tap(find.text('Enter'));
     await settle(tester);
-    await tester.tap(find.text(station.definition.name));
+    // a cold fire slot has no tile of its own: the way in is the tile that
+    // offers to light one
+    await tester.tap(
+      find.text(
+        station == EntityId.FIREPIT ? 'Light a fire' : station.definition.name,
+      ),
+    );
     await settle(tester);
   }
 

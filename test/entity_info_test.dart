@@ -604,15 +604,15 @@ void main() {
         return box.decoration as BoxDecoration;
       }
 
-      testWidgets('a common drop falls back to the theme outline', (
+      testWidgets('a common drop wears common\'s own outline', (
         tester,
       ) async {
         await pumpInfo(tester, EntityId.GOBLIN);
 
-        // the goblin's fish are not equipment, so they carry no quality
+        // the goblin's fish are not equipment, so they sit at common, and
+        // items frame every tier, common included
         final border = frameFor(tester, 'Cooked Carp').border as Border;
-        expect(border.top.color, isNot(rarityBorderColor(Rarity.UNCOMMON)));
-        expect(border.top.width, 1);
+        expect(border.top.color, kCommonBorderColor);
       });
 
       testWidgets('a rolled drop is framed in its own colour', (tester) async {
@@ -705,8 +705,9 @@ void main() {
         await pumpInfo(tester, EntityId.BIG_RED);
 
         final charm = ItemId.CHICKEN_CHARM.definition;
+        // Big Red drops its charm at common and, more rarely, uncommon
         final rareStats = (charm as EquipmentItemDefinition).statsAt(
-          Rarity.RARE,
+          Rarity.UNCOMMON,
         );
         expect(
           rareStats.values.first,
@@ -718,7 +719,7 @@ void main() {
           (w) =>
               w is ItemStackTile<ItemId> &&
               w.id == ItemId.CHICKEN_CHARM &&
-              w.quality == Rarity.RARE,
+              w.quality == Rarity.UNCOMMON,
         );
         await tester.ensureVisible(tile);
         await tester.pumpAndSettle();
@@ -732,7 +733,7 @@ void main() {
               matching: find.text('${stat.value}'),
             ),
             findsWidgets,
-            reason: '${stat.key.name} should read ${stat.value} at RARE',
+            reason: '${stat.key.name} should read ${stat.value} at UNCOMMON',
           );
         }
       });

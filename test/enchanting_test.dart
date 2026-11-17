@@ -68,16 +68,16 @@ void main() {
     final save = factory.newGame(factory.catalog1());
     final system = buildSystem();
 
-    // mithril shield: rung 5, so 13 defence common and 13 * 1.8 = 23
+    // mithril shield: rung 6, so 21 defence common and 21 * 1.8 = 38
     // legendary
     final legendary = ItemId.MITHRIL_SHIELD.build() as EquipmentItem;
     legendary.quality = Rarity.LEGENDARY;
-    expect(legendary.effectiveSkillBonus[SkillId.DEFENCE], 23);
+    expect(legendary.effectiveSkillBonus[SkillId.DEFENCE], 38);
     save.inventoryData.equipment.add(legendary);
 
     final preview = system.previewDisenchant(legendary, save.playerData);
     expect(preview.id, ItemId.SOUL_SHARD);
-    expect(preview.count, EnchantingService().disenchantYield(23, 1));
+    expect(preview.count, EnchantingService().disenchantYield(38, 1));
 
     final result = system.disenchant(
       legendary.instanceId,
@@ -85,7 +85,7 @@ void main() {
       save.inventoryData,
     );
     // xp is twice the stat total
-    expect(result.xp[SkillId.ENCHANTING], 23 * 2.0);
+    expect(result.xp[SkillId.ENCHANTING], 38 * 2.0);
   });
 
   test('disenchant yield grows with stat total and level', () {
