@@ -90,6 +90,8 @@ class DiscoveryTile extends StatelessWidget {
               ),
             ),
       kind: e is CombatEntity ? SpriteKind.combat : SpriteKind.gathering,
+      // undrawn art shows the skill it is fought or gathered with
+      fallbackSprite: e is CombatEntity ? SkillId.ATTACK : e.entityType,
       locked: locked,
       // a shut tile's line is taken by what it waits on, so how many are
       // standing rides the sprite's corner instead

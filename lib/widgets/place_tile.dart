@@ -29,6 +29,7 @@ class PlaceTile extends StatelessWidget {
     this.subtitleIcon,
     this.onLongPress,
     this.fallbackIcon = Icons.help_outline,
+    this.fallbackSprite,
     this.locked = false,
     this.dimmed = false,
     this.corner,
@@ -59,6 +60,11 @@ class PlaceTile extends StatelessWidget {
 
   /// Drawn in place of a sprite the art for which hasn't been made yet.
   final IconData fallbackIcon;
+
+  /// Drawn, faded, in place of [fallbackIcon] — e.g. the skill a creature
+  /// is fought with, so a creature without art yet still says what it is
+  /// rather than showing a question mark.
+  final Enum? fallbackSprite;
 
   /// Gated above the player's level: the tile dims and its subtitle wears a
   /// lock in place of its icon.
@@ -133,7 +139,13 @@ class PlaceTile extends StatelessWidget {
         : null;
 
     final image = EnumImageProviderLookup.resolveDynamic(id);
-    final fallback = Icon(fallbackIcon, size: 28, color: palette.textMuted);
+    final sprite = fallbackSprite;
+    final fallback = sprite == null
+        ? Icon(fallbackIcon, size: 28, color: palette.textMuted)
+        : Opacity(
+            opacity: 0.5,
+            child: Center(child: IconRenderer(id: sprite, size: 30)),
+          );
 
     // an entity's art sits bare, as on the encounter stage: no fill, no
     // border
@@ -144,6 +156,18 @@ class PlaceTile extends StatelessWidget {
       height: _frameHeight,
       decoration: BoxDecoration(
         color: bare ? Colors.transparent : tint.fill,
+        // a creature stands in a glow of its zone's own colour, a stage for
+        // it rather than a box
+        gradient: bare
+            ? RadialGradient(
+                center: const Alignment(0, 0.3),
+                radius: 0.8,
+                colors: [
+                  palette.scene.withValues(alpha: 0.6),
+                  palette.scene.withValues(alpha: 0),
+                ],
+              )
+            : null,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: bare ? Colors.transparent : (rarity ?? tint.border),

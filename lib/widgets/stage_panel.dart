@@ -27,7 +27,13 @@ class StagePanel extends StatelessWidget {
     this.banner,
     this.bannerHeight = 0,
     this.side,
+    this.spotlight,
   });
+
+  /// Lights the subject in a pool of this colour on a clear panel, with a
+  /// shadow at its feet, in place of the tinted fill — for a stage standing
+  /// over the zone's art, where a solid box would hide the place.
+  final Color? spotlight;
 
   /// Pinned down the right edge from the top, between any [banner] and a
   /// [footer] with a [footerHeight], e.g. a fire's burn levels.
@@ -77,6 +83,8 @@ class StagePanel extends StatelessWidget {
 
   static const double _bossBorder = 2;
 
+  Color get _lit => Color.lerp(spotlight, Colors.white, 0.3)!;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -85,10 +93,27 @@ class StagePanel extends StatelessWidget {
       child: Container(
         height: height,
         decoration: BoxDecoration(
-          color: tint.fill,
+          color: spotlight == null ? tint.fill : null,
+          // the pool is lifted toward white, so it reads as light even over
+          // a backdrop of the same colour
+          gradient: spotlight == null
+              ? null
+              : RadialGradient(
+                  center: const Alignment(0, 0.1),
+                  radius: 0.75,
+                  colors: [
+                    _lit.withValues(alpha: 0.7),
+                    _lit.withValues(alpha: 0.22),
+                    _lit.withValues(alpha: 0),
+                  ],
+                  stops: const [0, 0.55, 1],
+                ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isBoss ? GameColors.bossFrame : outline ?? tint.border,
+            color: isBoss
+                ? GameColors.bossFrame
+                : outline ??
+                      (spotlight == null ? tint.border : Colors.transparent),
             width: isBoss || outline != null ? _bossBorder : 1,
           ),
         ),
@@ -103,6 +128,26 @@ class StagePanel extends StatelessWidget {
             : null,
         child: Stack(
           children: [
+            // under a spotlight the subject stands on the ground: a soft
+            // shadow at its feet
+            if (spotlight != null)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 40,
+                child: Center(
+                  child: Container(
+                    width: 104,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.all(
+                        Radius.elliptical(52, 8),
+                      ),
+                      color: Colors.black.withValues(alpha: 0.35),
+                    ),
+                  ),
+                ),
+              ),
             // with a banner the sprite is centred in the room left under it
             Positioned.fill(
               top: banner == null ? 0 : 10 + bannerHeight,

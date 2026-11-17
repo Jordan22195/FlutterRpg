@@ -28,7 +28,8 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     required this.titleShadow,
     required this.gatherTintFill,
     required this.gatherTintBorder,
-  });
+    Color? scene,
+  }) : _scene = scene;
 
   /// Screen and dock background.
   final Color bg;
@@ -84,6 +85,44 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
   final Color gatherTintFill;
   final Color gatherTintBorder;
 
+  final Color? _scene;
+
+  /// The art's own dominant mid-tone — the reeds and river in Reedwater,
+  /// the grass in the meadow. Never drawn flat: it is washed into the
+  /// surfaces below the art ([washed]) and glows behind creature sprites, so
+  /// the list under a zone's picture still looks like that place. Falls back
+  /// to [borderOverArt] for a palette that names none.
+  Color get scene => _scene ?? borderOverArt;
+
+  /// This palette with [scene] washed through its backgrounds, borders and
+  /// tracks — lightly into the page, more into the cards and selected tabs,
+  /// most into the borders, so cards read apart from the page they sit on.
+  /// Text, accent and the tints that mean something stay as they are.
+  /// The palette for panels laid over the zone's art: cards, tabs and
+  /// tracks let the art through, enough to see the place, not enough to
+  /// lose a name.
+  ZonePalette glass() => copyWith(
+    surface: surface.withValues(alpha: 0.86),
+    surfaceSunken: surfaceSunken.withValues(alpha: 0.8),
+    raised: raised.withValues(alpha: 0.9),
+    track: track.withValues(alpha: 0.8),
+  );
+
+  ZonePalette washed() {
+    Color mix(Color c, double t) =>
+        Color.alphaBlend(scene.withValues(alpha: t), c);
+    return copyWith(
+      bg: mix(bg, 0.10),
+      surface: mix(surface, 0.22),
+      surfaceSunken: mix(surfaceSunken, 0.14),
+      raised: mix(raised, 0.32),
+      track: mix(track, 0.2),
+      border: mix(border, 0.4),
+      borderStrong: mix(borderStrong, 0.4),
+      divider: mix(divider, 0.25),
+    );
+  }
+
   /// Southglen Meadow: accent is the grass green in the meadow art.
   static const meadow = ZonePalette(
     bg: Color(0xFF15130F),
@@ -106,6 +145,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF0B0A08),
     gatherTintFill: Color(0xFF1A241D),
     gatherTintBorder: Color(0xFF2E4233),
+    scene: Color(0xFF5C8A3A),
   );
 
   /// Southwood Forest: the art's deep blue-greens in the shade, the
@@ -132,6 +172,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF050A07),
     gatherTintFill: Color(0xFF12261C),
     gatherTintBorder: Color(0xFF284637),
+    scene: Color(0xFF2F6B4A),
   );
 
   /// Blackmire Swamp: the misty teal-greens of the water and moss, the
@@ -158,6 +199,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF050B0A),
     gatherTintFill: Color(0xFF11282A),
     gatherTintBorder: Color(0xFF2A4D4C),
+    scene: Color(0xFF2E6B62),
   );
 
   /// Darkwood Forest: the art's midnight blues and cold teals, the moon
@@ -184,6 +226,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF020609),
     gatherTintFill: Color(0xFF0C2229),
     gatherTintBorder: Color(0xFF1F4A52),
+    scene: Color(0xFF2A4F6E),
   );
 
   /// South Haven: the slate and plum of the stone cottages in shade, the
@@ -209,6 +252,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF070609),
     gatherTintFill: Color(0xFF161E22),
     gatherTintBorder: Color(0xFF2F3A3F),
+    scene: Color(0xFF5A4E6E),
   );
 
   /// Maplewater Lake: the deep blue of the lake, the maple reds on the
@@ -234,6 +278,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF05080A),
     gatherTintFill: Color(0xFF122126),
     gatherTintBorder: Color(0xFF283F46),
+    scene: Color(0xFF2E5C7A),
   );
 
   /// Forest Mine: the tunnel's indigo dark, a lantern's amber as the
@@ -259,6 +304,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF06050A),
     gatherTintFill: Color(0xFF131F25),
     gatherTintBorder: Color(0xFF293C45),
+    scene: Color(0xFF3E3A66),
   );
 
   /// Stormgrass Prairie: the storm front's blue-teal, the golden tallgrass
@@ -284,6 +330,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF05080A),
     gatherTintFill: Color(0xFF122226),
     gatherTintBorder: Color(0xFF294045),
+    scene: Color(0xFF3E6672),
   );
 
   /// Mistgrave Hollow: fog lying grey-green over dark slate headstones, and
@@ -310,6 +357,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF040606),
     gatherTintFill: Color(0xFF132320),
     gatherTintBorder: Color(0xFF2A4540),
+    scene: Color(0xFF4A6660),
   );
 
   /// Reedwater Vale: the green-teal of slow river water under reeds, a
@@ -335,6 +383,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF040A07),
     gatherTintFill: Color(0xFF10261F),
     gatherTintBorder: Color(0xFF28483E),
+    scene: Color(0xFF2F7A5E),
   );
 
   /// Mudmouth Delta: silt-brown channels spreading through olive reed beds,
@@ -360,6 +409,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF080705),
     gatherTintFill: Color(0xFF1B2218),
     gatherTintBorder: Color(0xFF353F2B),
+    scene: Color(0xFF6B6038),
   );
 
   /// Saltwind Coast: open-sea blue under a bright sky, coral and sea foam as
@@ -385,6 +435,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF03070B),
     gatherTintFill: Color(0xFF0E2433),
     gatherTintBorder: Color(0xFF254A60),
+    scene: Color(0xFF2A6A9A),
   );
 
   /// Iron Gate City: the night-purple shadows behind the brick, the gold
@@ -410,6 +461,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF09050A),
     gatherTintFill: Color(0xFF141424),
     gatherTintBorder: Color(0xFF2A2A44),
+    scene: Color(0xFF5E3E66),
   );
 
   /// Ironroot Hills: the maroon of the rock walls in shade, rust-red iron
@@ -435,6 +487,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF0A0506),
     gatherTintFill: Color(0xFF131C25),
     gatherTintBorder: Color(0xFF293745),
+    scene: Color(0xFF6E3440),
   );
 
   /// Copperdust Flats: burnt-umber desert shadow, the setting sun's
@@ -460,6 +513,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF0A0705),
     gatherTintFill: Color(0xFF132225),
     gatherTintBorder: Color(0xFF294045),
+    scene: Color(0xFF7A4A2E),
   );
 
   /// Redwall Bluffs: the wine-red of the canyon walls, the river's teal
@@ -485,6 +539,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF0A0507),
     gatherTintFill: Color(0xFF122526),
     gatherTintBorder: Color(0xFF294545),
+    scene: Color(0xFF7A3046),
   );
 
   /// Greyspine Mountain: the slate blue of granite in shade, the high sky over
@@ -510,6 +565,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF05060A),
     gatherTintFill: Color(0xFF131E26),
     gatherTintBorder: Color(0xFF293945),
+    scene: Color(0xFF485670),
   );
 
   /// Ashridge Mountains: ash-dark charcoal, the ember glowing in the fissures
@@ -535,6 +591,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF05070A),
     gatherTintFill: Color(0xFF131F26),
     gatherTintBorder: Color(0xFF293C45),
+    scene: Color(0xFF4A5560),
   );
 
   /// Saddlegate: the cold slate of the pass, the brick of its chimneys as the
@@ -560,6 +617,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF05060A),
     gatherTintFill: Color(0xFF131F26),
     gatherTintBorder: Color(0xFF293C45),
+    scene: Color(0xFF4A5068),
   );
 
   /// Frostcrown Peaks: deep glacier navy, ice cyan as the accent.
@@ -584,6 +642,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF05070A),
     gatherTintFill: Color(0xFF132126),
     gatherTintBorder: Color(0xFF293E45),
+    scene: Color(0xFF3A5A80),
   );
 
   /// Stormcrown Peaks: storm-cloud blue-grey, the pale violet of the lightning
@@ -609,6 +668,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF05060A),
     gatherTintFill: Color(0xFF131E26),
     gatherTintBorder: Color(0xFF293945),
+    scene: Color(0xFF4E4E80),
   );
 
   /// Moltenspire Peaks: scorched crimson-black, molten gold as the accent.
@@ -633,6 +693,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     titleShadow: Color(0xFF0A0505),
     gatherTintFill: Color(0xFF132226),
     gatherTintBorder: Color(0xFF294145),
+    scene: Color(0xFF7A2E2A),
   );
 
   @override
@@ -657,6 +718,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
     Color? titleShadow,
     Color? gatherTintFill,
     Color? gatherTintBorder,
+    Color? scene,
   }) {
     return ZonePalette(
       bg: bg ?? this.bg,
@@ -679,6 +741,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
       titleShadow: titleShadow ?? this.titleShadow,
       gatherTintFill: gatherTintFill ?? this.gatherTintFill,
       gatherTintBorder: gatherTintBorder ?? this.gatherTintBorder,
+      scene: scene ?? _scene,
     );
   }
 
@@ -708,6 +771,7 @@ class ZonePalette extends ThemeExtension<ZonePalette> {
       titleShadow: l(titleShadow, other.titleShadow),
       gatherTintFill: l(gatherTintFill, other.gatherTintFill),
       gatherTintBorder: l(gatherTintBorder, other.gatherTintBorder),
+      scene: l(scene, other.scene),
     );
   }
 }

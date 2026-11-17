@@ -27,9 +27,13 @@ class ZoneHeader extends StatefulWidget {
     this.subtitle,
     this.expandedHeight = ArtHeader.expandedHeight,
     this.backLabel = 'Back',
+    this.transparent = false,
   });
 
   final String name;
+
+  /// See [ArtHeader.transparent].
+  final bool transparent;
   final String iconAsset;
 
   /// The zone's Exploration difficulty; 0 shows no badge.
@@ -121,6 +125,7 @@ class _ZoneHeaderState extends State<ZoneHeader> {
         zoneLevel: widget.zoneLevel,
         subtitle: widget.subtitle,
         backLabel: widget.backLabel,
+        transparent: widget.transparent,
         minHeight: ArtHeader.collapsedHeight(topPadding),
         maxHeight: hasArt
             ? math.max(
@@ -140,6 +145,7 @@ class _ZoneHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.zoneLevel,
     required this.subtitle,
     required this.backLabel,
+    required this.transparent,
     required this.minHeight,
     required this.maxHeight,
   });
@@ -149,6 +155,7 @@ class _ZoneHeaderDelegate extends SliverPersistentHeaderDelegate {
   final int zoneLevel;
   final String? subtitle;
   final String backLabel;
+  final bool transparent;
   final double minHeight;
   final double maxHeight;
 
@@ -173,6 +180,7 @@ class _ZoneHeaderDelegate extends SliverPersistentHeaderDelegate {
       artAsset: iconAsset,
       subtitle: subtitle,
       backLabel: backLabel,
+      transparent: transparent,
       trailing: zoneLevel > 0
           ? ArtHeaderChip(
               icon: Icon(
@@ -194,6 +202,7 @@ class _ZoneHeaderDelegate extends SliverPersistentHeaderDelegate {
       old.zoneLevel != zoneLevel ||
       old.subtitle != subtitle ||
       old.backLabel != backLabel ||
+      old.transparent != transparent ||
       old.minHeight != minHeight ||
       old.maxHeight != maxHeight;
 }

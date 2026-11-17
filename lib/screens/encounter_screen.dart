@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/widgets/action_timer.dart';
@@ -8,6 +10,7 @@ import 'package:rpg/widgets/equipment_picker.dart';
 import 'package:provider/provider.dart';
 import '../catalogs/dungeons/dungeons.dart';
 import '../catalogs/entities/entities.dart';
+import '../catalogs/zones/zones.dart';
 import '../controllers/action_timing_controller.dart';
 import '../controllers/dungeon_controller.dart';
 import '../controllers/encounter_controller.dart';
@@ -789,6 +792,8 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       // a creature rarer than common is outlined in its rarity, as its tile
       // was on the zone that led here
       outline: entityBorderColor(entity.id.definition.rarity),
+      // it stands in a pool of the zone's own colour over the place's art
+      spotlight: context.palette.scene,
       onTap: portraitTap(context, entity),
       corner: StageCountPill(count: entity.count, borderColor: tint.border),
       leading: view.queueRemaining.isEmpty
@@ -1154,8 +1159,65 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         entity is CombatEntity &&
         DungeonFloorTrack.isBoss(entity);
 
-    // the top is left open: the art strip runs up behind the status bar, as
-    // on the screen this one opens from
+    // the place being fought in: the dungeon's own art, else the zone's
+    final art = dungeonDef != null && dungeonDef.iconAsset.isNotEmpty
+        ? dungeonDef.iconAsset
+        : zone.iconAsset;
+
+    // the place stands behind the whole screen, blurred and dark, and every
+    // panel lies over it on glass; the top is left open, so the art runs up
+    // behind the status bar as on the screen this one opens from
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _SceneBackdrop(asset: art),
+        Theme(
+          data: hearthTheme(context.palette.glass()),
+          child: Builder(
+            builder: (context) => _layout(
+              context,
+              view: view,
+              entity: entity,
+              entityId: entityId,
+              skillType: skillType,
+              trainedSkills: trainedSkills,
+              stances: stances,
+              aboveFight: aboveFight,
+              isCombatEntity: isCombatEntity,
+              zone: zone,
+              topPadding: topPadding,
+              level: level,
+              dungeon: dungeon,
+              dungeonDef: dungeonDef,
+              cleared: cleared,
+              hitOnStage: hitOnStage,
+              bossFight: bossFight,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _layout(
+    BuildContext context, {
+    required CombatViewState view,
+    required EncounterEntity entity,
+    required Enum entityId,
+    required SkillId skillType,
+    required List<SkillId> trainedSkills,
+    required List<Stance> stances,
+    required Widget? aboveFight,
+    required bool isCombatEntity,
+    required ZoneDefinition zone,
+    required double topPadding,
+    required int level,
+    required DungeonFloorView? dungeon,
+    required DungeonDefinition? dungeonDef,
+    required FloorClearSummary? cleared,
+    required bool hitOnStage,
+    required bool bossFight,
+  }) {
     return SafeArea(
       top: false,
       child: Column(
@@ -1171,6 +1233,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                         '${dungeonDef.name} · Floor ${dungeon.index + 1} '
                         'of ${dungeonDef.entries.length}',
                     collapse: 1,
+                    transparent: true,
                     artAsset: dungeonDef.iconAsset.isNotEmpty
                         ? dungeonDef.iconAsset
                         : zone.iconAsset.isEmpty
@@ -1183,6 +1246,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                     title: view.title,
                     subtitle: zone.name,
                     collapse: 1,
+                    transparent: true,
                     artAsset: zone.iconAsset.isEmpty ? null : zone.iconAsset,
                     backLabel: 'Back to ${zone.name}',
                     trailing: entityId == EntityId.NULL
@@ -1205,7 +1269,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
                 if (cleared != null)
                   ..._floorClearContent(context, dungeon!, cleared)
                 else if (bossFight)
-                  ..._bossFightContent(context, view, dungeon, trainedSkills)
+                  ..._bossFightContent(context, view, dungeon!, trainedSkills)
                 else ...[
                   if (dungeon != null) ...[
                     DungeonFloorTrack(
@@ -1451,6 +1515,42 @@ class _EncounterScreenState extends CombatScreenState<EncounterScreen> {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// The place a fight or gathering happens in, behind the whole screen:
+/// its art, cropped to fill, blurred past detail and sunk into the page, so
+/// the place is felt rather than read and the spotlit subject on the stage
+/// stays the thing to look at. Undrawn art leaves the plain page.
+class _SceneBackdrop extends StatelessWidget {
+  const _SceneBackdrop({required this.asset});
+
+  final String asset;
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = context.palette.bg;
+    return IgnorePointer(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ColoredBox(color: bg),
+          if (asset.isNotEmpty)
+            ImageFiltered(
+              key: const ValueKey('scene-backdrop'),
+              imageFilter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+              child: Image.asset(
+                asset,
+                fit: BoxFit.cover,
+                // zone art is pixel art; smoothing it blurs the pixels
+                filterQuality: FilterQuality.none,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+          ColoredBox(color: bg.withValues(alpha: 0.68)),
+        ],
+      ),
     );
   }
 }

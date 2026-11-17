@@ -1,4 +1,4 @@
-import 'dart:ui' show lerpDouble;
+import 'dart:ui' show ImageFilter, lerpDouble;
 
 import 'package:flutter/material.dart';
 
@@ -22,9 +22,15 @@ class ArtHeader extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.backLabel = 'Back',
+    this.transparent = false,
   });
 
   final String title;
+
+  /// The screen draws the art itself, as a backdrop the list scrolls over:
+  /// the header paints no background, no art and no fade into the page,
+  /// only the scrims the status row and title need to read.
+  final bool transparent;
 
   /// 0 open, 1 collapsed.
   final double collapse;
@@ -73,12 +79,12 @@ class ArtHeader extends StatelessWidget {
           stops: stops,
         );
 
-    return ColoredBox(
-      color: bg,
+    final header = ColoredBox(
+      color: transparent ? Colors.transparent : bg,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (artAsset != null)
+          if (artAsset != null && !transparent)
             Image.asset(
               artAsset!,
               fit: BoxFit.cover,
@@ -115,24 +121,25 @@ class ArtHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    height: _scrimHeight,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: vertical(
-                          [
-                            bg.withValues(alpha: 0),
-                            bg.withValues(alpha: 0.75),
-                            bg,
-                          ],
-                          const [0, 0.55, 1],
+                  if (!transparent)
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      height: _scrimHeight,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: vertical(
+                            [
+                              bg.withValues(alpha: 0),
+                              bg.withValues(alpha: 0.75),
+                              bg,
+                            ],
+                            const [0, 0.55, 1],
+                          ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -187,6 +194,16 @@ class ArtHeader extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+
+    // over a backdrop, the list scrolls up beneath the closing header: it
+    // frosts as it closes, so passing tiles blur rather than show through
+    if (!transparent || t == 0) return header;
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14 * t, sigmaY: 14 * t),
+        child: header,
       ),
     );
   }

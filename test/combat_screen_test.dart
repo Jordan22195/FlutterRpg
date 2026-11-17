@@ -196,7 +196,8 @@ void main() {
       findsNothing,
     );
 
-    // both hp bars are the hp colour, on the track
+    // both hp bars are the hp colour, on the track — the glass one, since
+    // the screen's panels lie over the zone's art
     final hpBars = tester
         .widgetList<FillBar>(find.byType(FillBar))
         .where((bar) => bar.height == 22)
@@ -204,7 +205,7 @@ void main() {
     expect(hpBars, hasLength(2));
     for (final bar in hpBars) {
       expect(bar.foregroundColor, GameColors.standard.hp);
-      expect(bar.backgroundColor, ZonePalette.meadow.track);
+      expect(bar.backgroundColor, ZonePalette.meadow.glass().track);
     }
     expect(find.text('Enemy'), findsOneWidget);
     expect(find.text('Player'), findsOneWidget);
