@@ -8,8 +8,9 @@ import 'package:rpg/widgets/art_header.dart';
 import 'package:rpg/widgets/progress_bars.dart';
 import 'package:rpg/widgets/status_row.dart';
 
-// The zone screen draws the status row over its own art, so the shell's app
-// bar steps aside while it is on top and comes back everywhere else.
+// The map and the zone screen draw the status row over their own art, so
+// the shell's app bar steps aside while either is on top and comes back
+// everywhere else.
 Future<void> settle(WidgetTester tester) async {
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 500));
@@ -26,10 +27,10 @@ void main() {
     );
     await settle(tester);
 
-    // on the map, the shell's app bar carries the row
-    expect(find.byType(AppBar), findsOneWidget);
+    // on the map, the row is drawn over the terrain, not on an app bar
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.byType(StatusRow), findsOneWidget);
     expect(find.byType(ProgressBars), findsOneWidget);
-    expect(find.byType(StatusRow), findsNothing);
 
     const zoneId = ZoneId.TUTORIAL_FARM;
     await tester.tap(find.byKey(ValueKey('map-node-${zoneId.name}')));
@@ -49,10 +50,22 @@ void main() {
     );
     expect(find.byType(ProgressBars), findsOneWidget);
 
-    // and back on the map, the app bar returns
+    // and back on the map, still one row over the art and no app bar
     await tester.tap(find.byTooltip('Back'));
     await settle(tester);
-    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.byType(StatusRow), findsOneWidget);
+  });
+
+  testWidgets('another tab still wears the app bar', (tester) async {
+    await tester.pumpWidget(
+      MyApp(rawSave: const {}, fileManagerService: FileManagerService()),
+    );
+    await settle(tester);
+
+    await tester.tap(find.text('Skills'));
+    await settle(tester);
+    expect(find.byType(AppBar), findsWidgets);
     expect(find.byType(StatusRow), findsNothing);
   });
 }

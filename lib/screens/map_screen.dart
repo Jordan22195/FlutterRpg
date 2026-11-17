@@ -12,6 +12,8 @@ import '../widgets/map_detail_pane.dart';
 import '../widgets/map_edge_painter.dart';
 import '../widgets/map_node_token.dart';
 import '../widgets/pixel_sprites.dart';
+import '../widgets/status_row.dart';
+import '../theme/hearth_theme.dart';
 import '../theme/hearth_text.dart';
 import '../utilities/shell_page_route.dart';
 
@@ -276,8 +278,14 @@ class _MapScreenState extends State<MapScreen> {
     );
 
     final scheme = Theme.of(context).colorScheme;
+    // the terrain runs up behind the status bar, and the status row is drawn
+    // over it, as the zone screens draw it over their art
+    final topPadding = MediaQuery.paddingOf(context).top;
+    final statusBottom = topPadding + StatusRow.height;
+    final bg = context.palette.bg;
 
     return SafeArea(
+      top: false,
       child: Column(
         children: [
           Expanded(
@@ -357,10 +365,41 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                 ),
 
+                // a scrim under the status row, so it reads over the
+                // terrain, melting into the map below it
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  height: statusBottom + 48,
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            bg.withValues(alpha: 0.92),
+                            bg.withValues(alpha: 0.7),
+                            bg.withValues(alpha: 0),
+                          ],
+                          stops: const [0, 0.55, 1],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  top: topPadding,
+                  child: const StatusRow(),
+                ),
+
                 // what kinds of place to show: one toggle per node type
                 Positioned(
                   left: 12,
-                  top: 12,
+                  top: statusBottom + 12,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [

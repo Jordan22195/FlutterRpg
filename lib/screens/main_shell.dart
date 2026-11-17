@@ -63,8 +63,12 @@ class _MainShellState extends State<MainShell> {
     EntityScreenRouterService.firepitRouteName,
   };
 
+  // the map itself draws the row over its terrain too, so the bar is
+  // stepped aside whenever nothing named is pushed over it
   bool get _artScreenInView =>
-      index == 0 && _artHeaderRoutes.contains(_mapTabObserver.topRouteName);
+      index == 0 &&
+      (_mapTabObserver.namedRouteSettings.isEmpty ||
+          _artHeaderRoutes.contains(_mapTabObserver.topRouteName));
 
   // the map tab stack to rebuild after the first frame, copied from the
   // save in initState before route changes start overwriting the ui state
