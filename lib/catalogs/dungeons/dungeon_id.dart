@@ -376,6 +376,105 @@ enum DungeonId {
       ],
     ),
   ),
+  // Reedwater Vale's dungeon: the vale's L13-34 monsters through its reed
+  // channels, and a level-34 boss at the end of each of its two cards,
+  // twenty-five fights a card. Its gear sits at the Wolf Den's tier, on the
+  // neck, offhand and shoulders the den leaves bare.
+  REEDMAZE(
+    DungeonDefinition(
+      name: "The Reedmaze",
+      iconAsset: "assets/images/dungeons/reedmaze.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.TOAD_LEGS, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.TURTLE_MEAT, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.STRIDER_LEG, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.LILY_PAD, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.TOAD_WART, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.COOKED_PIKE, lowCount: 20, highCount: 80),
+            ItemDropType(
+              id: ItemId.COOKED_SALMON,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.IRON_BAR, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.STEEL_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        // the vale's river reagents and the turtle's shell, kept to a
+        // handful
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.FRESHWATER_MUSSEL,
+              lowCount: 5,
+              highCount: 13,
+            ),
+            ItemDropType(
+              id: ItemId.RIVER_DRIFTWOOD,
+              lowCount: 5,
+              highCount: 13,
+            ),
+            ItemDropType(id: ItemId.TURTLE_SHELL, lowCount: 5, highCount: 13),
+          ],
+        ),
+        // the chest's exclusive at the band's two rarities, and some of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.5,
+          entries: [
+            ItemDropType(id: ItemId.RIVERCANE_MANTLE, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.15,
+          entries: [
+            ItemDropType(id: ItemId.RIVERCANE_MANTLE, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.3,
+          entries: [
+            ItemDropType(id: ItemId.CROAKERS_CHARM, rarity: Rarity.RARE),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Reedbeds",
+          entities: [
+            DungeonEntityRef(EntityId.RIVER_TOAD, count: 14),
+            DungeonEntityRef(EntityId.WATER_STRIDER, count: 10),
+            DungeonEntityRef(EntityId.OLD_CROAKER, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "Snapper's Pool",
+          entities: [
+            DungeonEntityRef(EntityId.MUDLURC_FISHER, count: 12),
+            DungeonEntityRef(EntityId.SNAPPING_TURTLE, count: 12),
+            DungeonEntityRef(EntityId.OLD_SNAPJAW, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
   // Blackmire Swamp's dungeon: its mobs run L34-55 and its bosses
   // 55 / 55 / 89, twenty-five fights a card. Its
   // gear is the Spider Den's three pieces at the same strength, on the
@@ -476,6 +575,122 @@ enum DungeonId {
             // shares the common's art
             DungeonEntityRef(EntityId.MUDLURC_WARRIOR, count: 6),
             DungeonEntityRef(EntityId.MURKJAW_MATRIARCH, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // Mudmouth Delta's dungeon: the delta's L21-55 monsters in its burrowed
+  // banks, and bosses at 55, 55 and 89, twenty-five fights a card. The
+  // third dungeon at the Spider Den's and Drowned Fen's tier: two trims off
+  // the first two bosses and the tier's first unique weapon off the last,
+  // on the hands, feet and sword hand the other two leave empty.
+  SILT_WARRENS(
+    DungeonDefinition(
+      name: "The Silt Warrens",
+      iconAsset: "assets/images/dungeons/silt_warrens.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.CRAB_MEAT, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.HIPPO_RUMP, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.HIPPO_HIDE, lowCount: 20, highCount: 80),
+            ItemDropType(
+              id: ItemId.CROCODILE_HIDE,
+              lowCount: 20,
+              highCount: 80,
+            ),
+            ItemDropType(id: ItemId.SCALE, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.COOKED_BOG_EEL,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.STEEL_BAR, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.COAL, lowCount: 20, highCount: 80),
+          ],
+        ),
+        // the delta's marsh reagents, and its teeth and tusks, kept to a
+        // handful
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.LEECH, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.MARSH_FROG, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.PEAT_CLOD, lowCount: 5, highCount: 13),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.CRAB_CLAW, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.HIPPO_TUSK, lowCount: 5, highCount: 13),
+            ItemDropType(
+              id: ItemId.CROCODILE_TOOTH,
+              lowCount: 5,
+              highCount: 13,
+            ),
+          ],
+        ),
+        // the chest's exclusive at the band's two rarities, and some of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.5,
+          entries: [
+            ItemDropType(id: ItemId.SILTSCALE_COIF, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.15,
+          entries: [
+            ItemDropType(id: ItemId.SILTSCALE_COIF, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.3,
+          entries: [
+            ItemDropType(id: ItemId.MUDCLAW_GRIPS, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.WALLOWHIDE_TREADS, rarity: Rarity.RARE),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Mudflats",
+          entities: [
+            DungeonEntityRef(EntityId.MUD_CRAB, count: 16),
+            DungeonEntityRef(EntityId.MIRE_HIPPO, count: 8),
+            DungeonEntityRef(EntityId.OLD_MUDCLAW, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Wallows",
+          entities: [
+            DungeonEntityRef(EntityId.MIRE_HIPPO, count: 14),
+            DungeonEntityRef(EntityId.MUD_CRAB, count: 10),
+            DungeonEntityRef(EntityId.WALLOW_BULL, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "Deathroll Channel",
+          entities: [
+            DungeonEntityRef(EntityId.CROCODILE, count: 12),
+            DungeonEntityRef(EntityId.MIRE_HIPPO, count: 12),
+            DungeonEntityRef(EntityId.MUDMAW, count: 1),
           ],
         ),
       ],
@@ -670,6 +885,119 @@ enum DungeonId {
             DungeonEntityRef(EntityId.MIST_WRAITH, count: 7),
             DungeonEntityRef(EntityId.WAILING_BANSHEE, count: 7),
             DungeonEntityRef(EntityId.THE_UNDYING_ABBOT, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // Saltwind Coast's dungeon: the coast's L34-89 monsters from the
+  // tidepools down to the deep, and a level-144 boss at the end of each
+  // card, twenty-five fights a card. Tempest Reach's sibling, piece for
+  // piece: a weapon and a trim off each of the first two bosses, a weapon
+  // and a major off the last.
+  BRINEDEEP_CAVES(
+    DungeonDefinition(
+      name: "Brinedeep Caves",
+      iconAsset: "assets/images/dungeons/brinedeep_caves.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.MITHRIL_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.MITHRIL_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.COOKED_TUNA, lowCount: 20, highCount: 80),
+            ItemDropType(
+              id: ItemId.COOKED_SWORDFISH,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.SERPENT_SCALE,
+              lowCount: 20,
+              highCount: 80,
+            ),
+            ItemDropType(id: ItemId.SCALE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.CRAB_CLAW, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.ENCHANTING_ESSENCE,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        // the sea's reagents and the serpent's fang, kept to a handful
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.SEA_KELP, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.AMBERGRIS, lowCount: 5, highCount: 13),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.SERPENT_FANG, lowCount: 5, highCount: 13),
+          ],
+        ),
+        // the chest's exclusive at the band's two rarities, and some of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.25,
+          entries: [
+            ItemDropType(id: ItemId.PEARLSCALE_CUIRASS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.06,
+          entries: [
+            ItemDropType(id: ItemId.PEARLSCALE_CUIRASS, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.BRINECLAW_BRACERS, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.SALTSCALE_SANDALS, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.LEVIATHAN_GIRDLE, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Tidepools",
+          entities: [
+            DungeonEntityRef(EntityId.SHORE_CRAB, count: 16),
+            DungeonEntityRef(EntityId.NAGA, count: 8),
+            DungeonEntityRef(EntityId.BRINECRUSHER, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Drowned Shrine",
+          entities: [
+            DungeonEntityRef(EntityId.NAGA, count: 14),
+            DungeonEntityRef(EntityId.TIDAL_ELEMENTAL, count: 10),
+            DungeonEntityRef(EntityId.NAGA_TIDECALLER, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Leviathan's Deep",
+          entities: [
+            DungeonEntityRef(EntityId.TIDAL_ELEMENTAL, count: 10),
+            DungeonEntityRef(EntityId.SEA_SERPENT, count: 14),
+            DungeonEntityRef(EntityId.LEVIATHAN, count: 1),
           ],
         ),
       ],

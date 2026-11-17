@@ -37,8 +37,8 @@ So a rung-5 legs piece is tier 4.
 | Band | Item tiers | Rarity pair | Dungeons today |
 |---|---|---|---|
 | Early | 0–1 | Common / Uncommon | Grainery (t0), Goblin Camp (t1) |
-| Mid | 2–3 | Uncommon / Rare | Wolf Den (t2), Spider Den (t3), Drowned Fen (t3) |
-| Late | 4–5 | Rare / Epic | Tempest Reach (t4), Goblin Queen's Lair (t5) |
+| Mid | 2–3 | Uncommon / Rare | Wolf Den (t2), The Reedmaze (t2), Spider Den (t3), Drowned Fen (t3), The Silt Warrens (t3) |
+| Late | 4–5 | Rare / Epic | Tempest Reach (t4), Brinedeep Caves (t4), Goblin Queen's Lair (t5) |
 | Endgame | 6–7 | Rare / Epic | Spinehold Caverns, Ashen Vaults (t6); Hoarfrost Hollow, Thunderhall, The Caldera (t7). Gear not designed yet. |
 
 ## 3. The shape of a dungeon's loot
@@ -64,7 +64,7 @@ A typical dungeon carries 5–8 uniques across 13 slots. Smithed metal and craft
 2. **Pure Defence is the smith's.** Only metal armour is Defence-only, which keeps blacksmithing relevant. Every unique has at least two stats.
 3. **Coverage.** Attack, Defence, Strength and Speed each appear within any 2–3 adjacent tiers. A stat counts whether it's on an item as the lead or the second weight. Not every tier needs every stat.
 4. **Stamina and Recovery are minor.** They are never a piece's lead next to a combat stat. Sprinkle them in as the second weight on Speed or Strength pieces.
-5. **Mirror same-tier siblings.** Two or three dungeons at one tier match piece for piece: the same rungs and the same stat-weight totals, but different slots and focuses. Spider Den and Drowned Fen pair this way, enforced by `test/drowned_fen_test.dart`. Neither replaces the other.
+5. **Mirror same-tier siblings.** Two or three dungeons at one tier match piece for piece: the same rungs and the same stat-weight totals, but different slots and focuses. Spider Den and Drowned Fen pair this way, enforced by `test/drowned_fen_test.dart`; Brinedeep Caves mirrors Tempest Reach and the Silt Warrens' trims mirror the Fen's, enforced by `test/west_coast_dungeons_test.dart`. Neither replaces the other.
 
 Weights are a ratio, not amounts: only each weight's share of the total matters. A hide splits its budget exactly, so heavy-leather uniques like the Wolf Den set are worth precisely their heavy-leather counterpart and only split it differently.
 
@@ -118,6 +118,7 @@ Current early and mid rates:
 | Goblin Camp | 8% / 3% | 5% / 1.5% | 3% |
 | Wolf Den | 33% / 11% | 50% / 15% | 30% |
 | Spider Den, Drowned Fen | 30% / 10% | 50% / 15% | 30% |
+| The Reedmaze, The Silt Warrens (unmeasured: sibling rates) | 30% / 10% | 50% / 15% | 30% |
 
 ## 7. Adding a dungeon at tier N
 
@@ -168,6 +169,17 @@ The weights column gives the lead stat first. "→ chest" marks boss pieces the 
 | | Sabertooth Alpha | Alpha's Fang (dagger) · Alpha's Mantle (Atk 2 · Spd 1) → chest |
 | | Tempest | Stormcaller's Scepter (scepter, Atk 12 · Def 4) · Galewrap Gauntlets (Def 8 · Atk 4) → chest |
 | | *chest* | Stormhide Legs (Str 2 · Sta 1) |
+| The Reedmaze (t2, U/R) | Old Croaker | Croaker's Charm (Spd 2 · Sta 1) → chest |
+| | Old Snapjaw | Snapjaw Shell (Def 2 · Str 1) |
+| | *chest* | Rivercane Mantle (Str 2 · Spd 1) |
+| The Silt Warrens (t3, U/R) | Old Mudclaw | Mudclaw Grips (Atk 2 · Spd 1) → chest |
+| | Wallow Bull | Wallowhide Treads (Str 2 · Rec 1) → chest |
+| | Mudmaw | Mudmaw Jawblade (sword) |
+| | *chest* | Siltscale Coif (Def 2 · Spd 1) |
+| Brinedeep Caves (t4, R/E) | Brinecrusher | Brinecrusher's Claw (greatsword) · Brineclaw Bracers (Atk 2 · Str 1) → chest |
+| | Naga Tidecaller | Tidecaller's Scepter (scepter) · Saltscale Sandals (Spd 2 · Sta 1) → chest |
+| | Leviathan | Leviathan's Fang (dagger, t5) · Leviathan Girdle (Str 8 · Rec 4, t5) → chest |
+| | *chest* | Pearlscale Cuirass (Def 2 · Spd 1) |
 | Goblin Queen's Lair (t5, R/E) | Goblin Queen | Goblin Crown (Def 12 · Atk 4) → chest · Goblin Scepter (scepter) |
 | | *chest* | Queen's Train (Spd 2 · Rec 1) |
 
@@ -177,13 +189,13 @@ The weights column gives the lead stat first. "→ chest" marks boss pieces the 
 |---|---|---|---|---|
 | 0 | ● | ● | ● | ○ |
 | 1 | ● | ● | ○ | weapon (dagger) |
-| 2 | ● | ● | ● | ○ |
-| 3 | ● | ● | ● | ● |
-| 4 | ● | ● | ● | ○ |
-| 5 | ○ | ● | — | ● |
+| 2 | ● | ● | ● | ● |
+| 3 | ● | ● | ● | ● (+ first weapon) |
+| 4 | ● | ● | ● | ● |
+| 5 | ○ | ● | ● | ● |
 | 6–7 | not designed yet | | | |
 
-Under the combat-leads rule, Speed leads only on pure-core pieces: Broodsilk Leggings and Queen's Train. Pure-core Speed pieces are the lever if Speed coverage needs to grow.
+Under the combat-leads rule, Speed leads only on pure-core pieces: Broodsilk Leggings, Queen's Train, Croaker's Charm and Saltscale Sandals. Pure-core Speed pieces are the lever if Speed coverage needs to grow.
 
 The new dungeons' proposed focuses, as a brief for whoever builds them:
 

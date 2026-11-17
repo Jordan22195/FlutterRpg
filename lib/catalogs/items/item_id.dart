@@ -8396,6 +8396,133 @@ enum ItemId {
       iconAsset: "assets/icons/items/galewrap_gauntlets.png",
     ),
   ),
+  // The Reedmaze (Reedwater Vale), tier 2: a speed charm and a strength
+  // shield on the neck and offhand, the slots the Wolf Den leaves bare.
+  CROAKERS_CHARM(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Croaker's Charm",
+      value: 100,
+      fibLevel: 3,
+      statWeights: {SkillId.SPEED: 2, SkillId.STAMINA: 1},
+      description: "A polished toad stone on a reed cord. It hums in rain.",
+      iconAsset: "assets/icons/items/croakers_charm.png",
+    ),
+  ),
+  SNAPJAW_SHELL(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.OFFHAND,
+      name: "Snapjaw Shell",
+      value: 110,
+      fibLevel: 4,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.STRENGTH: 1},
+      description: "Old Snapjaw's shell, strapped for the arm. Still mossy.",
+      iconAsset: "assets/icons/items/snapjaw_shell.png",
+    ),
+  ),
+  // The Silt Warrens (Mudmouth Delta), tier 3: the Spider Den's and the
+  // Drowned Fen's sibling. Two trims at fib 3 off the first two bosses and
+  // the tier's first unique weapon off the last, on the hands, feet and
+  // sword hand those two leave empty.
+  MUDCLAW_GRIPS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Mudclaw Grips",
+      value: 100,
+      fibLevel: 3,
+      statWeights: {SkillId.ATTACK: 2, SkillId.SPEED: 1},
+      description: "Crab-shell plates over the knuckles, quick to close.",
+      iconAsset: "assets/icons/items/mudclaw_grips.png",
+    ),
+  ),
+  WALLOWHIDE_TREADS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Wallowhide Treads",
+      value: 100,
+      fibLevel: 3,
+      statWeights: {SkillId.STRENGTH: 2, SkillId.RECOVERY: 1},
+      description: "Hippo hide an inch thick. Nothing sinks in them.",
+      iconAsset: "assets/icons/items/wallowhide_treads.png",
+    ),
+  ),
+  MUDMAW_JAWBLADE(
+    WeaponItemDefinition(
+      name: "Mudmaw Jawblade",
+      value: 140,
+      weaponType: WeaponTypeId.SWORD,
+      fibLevel: 4,
+      description: "A blade set with Mudmaw's teeth. It grows another.",
+      iconAsset: "assets/icons/items/mudmaw_jawblade.png",
+    ),
+  ),
+  // Brinedeep Caves (Saltwind Coast), Tempest Reach's sibling: the first
+  // two bosses each drop a fib 4 trim and a tier-4 weapon, the Leviathan a
+  // tier-5 major and weapon. Speed leads at tier 4 and strength at tier 5,
+  // the two the ladder was missing there.
+  BRINECRUSHER_CLAW(
+    WeaponItemDefinition(
+      name: "Brinecrusher's Claw",
+      value: 150,
+      weaponType: WeaponTypeId.GREATSWORD,
+      fibLevel: 6,
+      description: "A crusher claw the size of a door, hafted on driftwood.",
+      iconAsset: "assets/icons/items/brinecrushers_claw.png",
+    ),
+  ),
+  BRINECLAW_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Brineclaw Bracers",
+      value: 130,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 2, SkillId.STRENGTH: 1},
+      description: "Barnacled shell cuffs. They bite back.",
+      iconAsset: "assets/icons/items/brineclaw_bracers.png",
+    ),
+  ),
+  TIDECALLERS_SCEPTER(
+    WeaponItemDefinition(
+      name: "Tidecaller's Scepter",
+      value: 150,
+      weaponType: WeaponTypeId.SCEPTER,
+      fibLevel: 5,
+      description: "Coral grown around a pearl. The tide leans toward it.",
+      iconAsset: "assets/icons/items/tidecallers_scepter.png",
+    ),
+  ),
+  SALTSCALE_SANDALS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Saltscale Sandals",
+      value: 130,
+      fibLevel: 4,
+      statWeights: {SkillId.SPEED: 2, SkillId.STAMINA: 1},
+      description: "Naga scale over cork. They never slip on wet stone.",
+      iconAsset: "assets/icons/items/saltscale_sandals.png",
+    ),
+  ),
+  LEVIATHANS_FANG(
+    WeaponItemDefinition(
+      name: "Leviathan's Fang",
+      value: 200,
+      weaponType: WeaponTypeId.DAGGER,
+      fibLevel: 5,
+      description: "Salt-white and as long as a forearm.",
+      iconAsset: "assets/icons/items/leviathans_fang.png",
+    ),
+  ),
+  LEVIATHAN_GIRDLE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Leviathan Girdle",
+      value: 180,
+      fibLevel: 5,
+      statWeights: {SkillId.STRENGTH: 8, SkillId.RECOVERY: 4},
+      description: "A band of serpent scale that tightens when you brace.",
+      iconAsset: "assets/icons/items/leviathan_girdle.png",
+    ),
+  ),
   // ── dungeon chest and camp uniques ──────────────────────────────
   // See design/DUNGEON_LOOT_GUIDE.md: one boss owns each, and a chest's
   // exclusive takes a slot its bosses leave open.
@@ -8485,6 +8612,39 @@ enum ItemId {
       statWeights: {SkillId.SPEED: 2, SkillId.RECOVERY: 1},
       description: "The Goblin Queen's trailing cloak, lighter than it looks.",
       iconAsset: "assets/icons/items/queens_train.png",
+    ),
+  ),
+  RIVERCANE_MANTLE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Rivercane Mantle",
+      value: 120,
+      fibLevel: 3,
+      statWeights: {SkillId.STRENGTH: 2, SkillId.SPEED: 1},
+      description: "Split cane lashed in layers. Light, and it holds a blow.",
+      iconAsset: "assets/icons/items/rivercane_mantle.png",
+    ),
+  ),
+  SILTSCALE_COIF(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Siltscale Coif",
+      value: 160,
+      fibLevel: 3,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.SPEED: 1},
+      description: "Crocodile scutes sewn on oiled leather, set with silt.",
+      iconAsset: "assets/icons/items/siltscale_coif.png",
+    ),
+  ),
+  PEARLSCALE_CUIRASS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Pearlscale Cuirass",
+      value: 220,
+      fibLevel: 5,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.SPEED: 1},
+      description: "Serpent scale backed with nacre. It shines underwater.",
+      iconAsset: "assets/icons/items/pearlscale_cuirass.png",
     ),
   ),
 

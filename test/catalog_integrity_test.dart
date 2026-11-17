@@ -58,6 +58,27 @@ const knownMissingArt = <String>{
   'assets/icons/items/crab_meat.png',
   'assets/icons/items/turtle_meat.png',
   'assets/icons/items/hippo_rump.png',
+  // the west-coast dungeons: entrances, banners, and their uniques
+  'assets/images/entities/reedmaze.png',
+  'assets/images/entities/silt_warrens.png',
+  'assets/images/entities/brinedeep_caves.png',
+  'assets/images/dungeons/reedmaze.png',
+  'assets/images/dungeons/silt_warrens.png',
+  'assets/images/dungeons/brinedeep_caves.png',
+  'assets/icons/items/croakers_charm.png',
+  'assets/icons/items/snapjaw_shell.png',
+  'assets/icons/items/rivercane_mantle.png',
+  'assets/icons/items/mudclaw_grips.png',
+  'assets/icons/items/wallowhide_treads.png',
+  'assets/icons/items/mudmaw_jawblade.png',
+  'assets/icons/items/siltscale_coif.png',
+  'assets/icons/items/brinecrushers_claw.png',
+  'assets/icons/items/brineclaw_bracers.png',
+  'assets/icons/items/tidecallers_scepter.png',
+  'assets/icons/items/saltscale_sandals.png',
+  'assets/icons/items/leviathans_fang.png',
+  'assets/icons/items/leviathan_girdle.png',
+  'assets/icons/items/pearlscale_cuirass.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
@@ -1432,6 +1453,9 @@ const frozenEntityIds = <String>{
   'THE_WEEPING_ABBESS',
   'THE_UNDYING_ABBOT',
   'HAUNTED_RUINS_ENTRANCE',
+  'REEDMAZE_ENTRANCE',
+  'SILT_WARRENS_ENTRANCE',
+  'BRINEDEEP_CAVES_ENTRANCE',
 };
 
 const frozenZoneIds = <String>{
@@ -1475,4 +1499,7 @@ const frozenDungeonIds = <String>{
   'GOBLIN_CAMP',
   'DEV_TRANSIENT_DUNGEON',
   'HAUNTED_RUINS',
+  'REEDMAZE',
+  'SILT_WARRENS',
+  'BRINEDEEP_CAVES',
 };

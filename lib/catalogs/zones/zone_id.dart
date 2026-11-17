@@ -148,7 +148,8 @@ enum ZoneId {
   ),
   // The three west-coast zones off Southwood Forest, each a band of the
   // monster ladder: Reedwater Vale 13–34, Mudmouth Delta 21–55, Saltwind
-  // Coast 34–89. Monsters only so far: no gathering or stations yet.
+  // Coast 34–89. Monsters and a dungeon each so far: no gathering or
+  // stations yet.
   REEDWATER_VALE(
     ZoneDefinition(
       name: "Reedwater Vale",
@@ -156,7 +157,7 @@ enum ZoneId {
       palette: ZonePalette.reedwater,
       explorationLevel: 10,
       xpPerExplore: 5,
-      permanentEntities: [],
+      permanentEntities: [EntityId.REEDMAZE_ENTRANCE],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(
           id: EntityId.RIVER_TOAD,
@@ -188,7 +189,7 @@ enum ZoneId {
       palette: ZonePalette.mudmouth,
       explorationLevel: 15,
       xpPerExplore: 7,
-      permanentEntities: [],
+      permanentEntities: [EntityId.SILT_WARRENS_ENTRANCE],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MUD_CRAB,
@@ -215,7 +216,7 @@ enum ZoneId {
       palette: ZonePalette.saltwind,
       explorationLevel: 20,
       xpPerExplore: 9,
-      permanentEntities: [],
+      permanentEntities: [EntityId.BRINEDEEP_CAVES_ENTRANCE],
       discoverableEntities: [
         WeightedDropTableEntry<EntityId>(
           id: EntityId.SHORE_CRAB,

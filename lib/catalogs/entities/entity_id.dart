@@ -2074,6 +2074,326 @@ enum EntityId {
     CombatEntityDefinition(seaSerpent, fibLevel: 9, name: "Sea Serpent"),
   ),
 
+  // ── COMBAT · WEST-COAST DUNGEON BOSSES ─────────────────────────
+  // One at the end of each card of the coast's three dungeons, each on its
+  // zone monster's archetype, so it shares that monster's art. A boss's main
+  // table is its material haul; its uniques ride the bonus rolls at its
+  // band's two rarities (design/DUNGEON_LOOT_GUIDE.md).
+  //
+  // The Reedmaze · Reedwater Vale · level 34, tier 2 (uncommon / rare)
+  OLD_CROAKER(
+    CombatEntityDefinition(
+      riverToad,
+      fibLevel: 7,
+      name: "Old Croaker",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(id: ItemId.TOAD_LEGS, lowCount: 20, highCount: 40),
+        ItemDropType(id: ItemId.TOAD_WART, lowCount: 5, highCount: 13),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.3,
+          entries: [
+            ItemDropType(id: ItemId.CROAKERS_CHARM, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.CROAKERS_CHARM, rarity: Rarity.RARE),
+          ],
+        ),
+      ],
+    ),
+  ),
+  OLD_SNAPJAW(
+    CombatEntityDefinition(
+      snappingTurtle,
+      fibLevel: 7,
+      name: "Old Snapjaw",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(id: ItemId.TURTLE_MEAT, lowCount: 20, highCount: 40),
+        ItemDropType(id: ItemId.TURTLE_SHELL, lowCount: 5, highCount: 13),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.3,
+          entries: [
+            ItemDropType(id: ItemId.SNAPJAW_SHELL, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.SNAPJAW_SHELL, rarity: Rarity.RARE),
+          ],
+        ),
+      ],
+    ),
+  ),
+  //
+  // The Silt Warrens · Mudmouth Delta · 55, 55, 89, tier 3 (uncommon / rare)
+  OLD_MUDCLAW(
+    CombatEntityDefinition(
+      crab,
+      fibLevel: 8,
+      name: "Old Mudclaw",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(id: ItemId.CRAB_MEAT, lowCount: 20, highCount: 40),
+        ItemDropType(id: ItemId.CRAB_CLAW, lowCount: 5, highCount: 13),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.3,
+          entries: [
+            ItemDropType(id: ItemId.MUDCLAW_GRIPS, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.MUDCLAW_GRIPS, rarity: Rarity.RARE),
+          ],
+        ),
+      ],
+    ),
+  ),
+  WALLOW_BULL(
+    CombatEntityDefinition(
+      mireHippo,
+      fibLevel: 8,
+      name: "Wallow Bull",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(id: ItemId.HIPPO_HIDE, lowCount: 5, highCount: 13),
+        ItemDropType(id: ItemId.HIPPO_TUSK, lowCount: 3, highCount: 8),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.3,
+          entries: [
+            ItemDropType(id: ItemId.WALLOWHIDE_TREADS, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.WALLOWHIDE_TREADS, rarity: Rarity.RARE),
+          ],
+        ),
+      ],
+    ),
+  ),
+  MUDMAW(
+    CombatEntityDefinition(
+      crocodile,
+      fibLevel: 9,
+      name: "Mudmaw",
+      isDungeonBoss: true,
+      rarity: Rarity.RARE,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.CROCODILE_HIDE,
+          lowCount: 3,
+          highCount: 8,
+          weight: 0.5,
+        ),
+        ItemDropType(
+          id: ItemId.CROCODILE_TOOTH,
+          lowCount: 2,
+          highCount: 5,
+          weight: 0.5,
+        ),
+      ],
+      // replaces the crocodile's heavy-leather roll, which would count as
+      // eight more uniques: a bundle of steel bars on a tenth of kills
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.STEEL_BAR, lowCount: 5, highCount: 13),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.3,
+          entries: [
+            ItemDropType(id: ItemId.MUDMAW_JAWBLADE, rarity: Rarity.UNCOMMON),
+          ],
+        ),
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.MUDMAW_JAWBLADE, rarity: Rarity.RARE),
+          ],
+        ),
+      ],
+    ),
+  ),
+  //
+  // Brinedeep Caves · Saltwind Coast · level 144, tier 4-5 (rare / epic)
+  BRINECRUSHER(
+    CombatEntityDefinition(
+      crab,
+      fibLevel: 10,
+      name: "Brinecrusher",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.CRAB_CLAW,
+          lowCount: 3,
+          highCount: 5,
+          weight: 0.5,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.MITHRIL_BAR, lowCount: 5, highCount: 13),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.BRINECRUSHER_CLAW, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.BRINECRUSHER_CLAW, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.BRINECLAW_BRACERS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.BRINECLAW_BRACERS, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+  NAGA_TIDECALLER(
+    CombatEntityDefinition(
+      naga,
+      fibLevel: 10,
+      name: "Naga Tidecaller",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.ENCHANTING_ESSENCE,
+          lowCount: 3,
+          highCount: 5,
+          weight: 0.5,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.AMBERGRIS, lowCount: 3, highCount: 8),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.TIDECALLERS_SCEPTER, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.TIDECALLERS_SCEPTER, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.SALTSCALE_SANDALS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.SALTSCALE_SANDALS, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+  LEVIATHAN(
+    CombatEntityDefinition(
+      seaSerpent,
+      fibLevel: 10,
+      name: "Leviathan",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.SERPENT_SCALE,
+          lowCount: 3,
+          highCount: 5,
+          weight: 0.5,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.SERPENT_FANG, lowCount: 3, highCount: 8),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.LEVIATHANS_FANG, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.LEVIATHANS_FANG, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.LEVIATHAN_GIRDLE, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.LEVIATHAN_GIRDLE, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+
   // ── COMBAT · NAMED CHARACTERS ──────────────────────────────────
   // One-offs that sit outside the roster, each its own archetype.
   FIELD_RAT(CombatEntityDefinition(fieldRat, fibLevel: 0, name: "Field Rat")),
@@ -2983,6 +3303,30 @@ enum EntityId {
       iconAsset: "assets/images/entities/haunted_ruins.png",
       rarity: Rarity.RARE,
       dungeonId: DungeonId.HAUNTED_RUINS,
+    ),
+  ),
+  REEDMAZE_ENTRANCE(
+    DungeonEntityDefinition(
+      name: "The Reedmaze",
+      iconAsset: "assets/images/entities/reedmaze.png",
+      rarity: Rarity.RARE,
+      dungeonId: DungeonId.REEDMAZE,
+    ),
+  ),
+  SILT_WARRENS_ENTRANCE(
+    DungeonEntityDefinition(
+      name: "The Silt Warrens",
+      iconAsset: "assets/images/entities/silt_warrens.png",
+      rarity: Rarity.RARE,
+      dungeonId: DungeonId.SILT_WARRENS,
+    ),
+  ),
+  BRINEDEEP_CAVES_ENTRANCE(
+    DungeonEntityDefinition(
+      name: "Brinedeep Caves",
+      iconAsset: "assets/images/entities/brinedeep_caves.png",
+      rarity: Rarity.RARE,
+      dungeonId: DungeonId.BRINEDEEP_CAVES,
     ),
   ),
   SPINEHOLD_CAVERNS_ENTRANCE(
