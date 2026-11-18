@@ -145,6 +145,8 @@ void main() {
 
       await tester.tap(find.byType(InkWell).first);
       await settle(tester);
+      await tester.tap(find.text('Dev tools'));
+      await settle(tester);
 
       expect(find.text('Dev: rarity'), findsOneWidget);
       expect(find.text('Chicken Charm'), findsOneWidget);

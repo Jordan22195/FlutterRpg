@@ -191,7 +191,7 @@ void main() {
     session.dispose();
   });
 
-  test('skilling gear tiers are rarities that leave the stats alone', () {
+  test('skilling gear tiers are rarities that scale like any gear', () {
     const expected = {
       SkillingGearTier.BASIC: Rarity.COMMON,
       SkillingGearTier.NOVICE: Rarity.UNCOMMON,
@@ -209,9 +209,18 @@ void main() {
       // even rolled at a different rarity, the piece keeps its tier's
       piece.quality = Rarity.COMMON;
       expect(piece.quality, expected[def.tier], reason: id.name);
+      // and the tier's rarity pays out as any gear's does: the skill stat
+      // at its multiplier, and its secondary rolls on top
       expect(
-        def.statsAt(Rarity.LEGENDARY),
-        def.statsAt(Rarity.COMMON),
+        piece.effectiveSkillBonus[def.skill],
+        def.budgetAt(def.tier.rarity),
+        reason: id.name,
+      );
+      expect(piece.needsSecondaryRolls, def.tier.rarity.secondaryRolls > 0);
+      piece.rollSecondaries();
+      expect(
+        piece.secondaryRolls,
+        hasLength(def.tier.rarity.secondaryRolls),
         reason: id.name,
       );
     }

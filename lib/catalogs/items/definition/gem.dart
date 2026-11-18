@@ -186,9 +186,9 @@ enum JewellerySetting {
 /// combination is its own [ItemId], so icons, stacking, drops and saves all
 /// work off the id with nothing extra on the instance.
 ///
-/// Rarity scales it exactly as it scales blacksmithed gear — through
-/// [budgetAt] — onyx included, whose budget is read as [xpPercentAt]
-/// instead of being split into a stat.
+/// Rarity scales it through [budgetAt] on jewellery's own ladder — one
+/// multiplier on the whole budget, no secondary rolls — onyx included,
+/// whose budget is read as [xpPercentAt] instead of being split into a stat.
 class JewelleryDefinition extends EquipmentItemDefinition {
   const JewelleryDefinition({
     required this.gem,
@@ -222,6 +222,11 @@ class JewelleryDefinition extends EquipmentItemDefinition {
   /// worn — so it never takes the rung-derived level a unique does.
   @override
   int get skillLevelRequirement => 0;
+
+  /// Crafted jewellery is the one kind of gear left on the
+  /// single-multiplier ladder: no secondaries, rolled or set.
+  @override
+  bool get rollsSecondaries => false;
 
   @override
   Map<SkillId, int> get statWeights {

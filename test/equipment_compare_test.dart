@@ -12,7 +12,7 @@ import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/widgets/equipment_info_dialog.dart';
-import 'package:rpg/widgets/stat_chip.dart';
+import 'package:rpg/widgets/equipment_picker.dart';
 
 // An equipment piece's details are set against the piece wearing it would
 // take off: its own slot for armour, the weapon in hand for a weapon, the
@@ -137,19 +137,18 @@ void main() {
       await tester.pump();
     }
 
-    Iterable<StatChip> chips(WidgetTester tester) =>
-        tester.widgetList<StatChip>(find.byType(StatChip));
+    Iterable<EquipmentStatLine> rows(WidgetTester tester) => tester
+        .widgetList<EquipmentStatRow>(find.byType(EquipmentStatRow))
+        .map((row) => row.line);
 
     testWidgets('a better piece shows its gain on each stat', (tester) async {
       wear(ItemId.COPPER_HELMET);
       await open(tester, piece(ItemId.MITHRIL_HELMET));
 
       expect(
-        chips(tester).any(
-          (chip) =>
-              chip.deltaText != null &&
-              chip.deltaText!.startsWith('+') &&
-              chip.deltaColor == statGainColor,
+        rows(tester).any(
+          (line) =>
+              line.delta != null && line.delta!.startsWith('+') && line.gain,
         ),
         isTrue,
       );
@@ -164,14 +163,49 @@ void main() {
       await open(tester, piece(ItemId.COPPER_HELMET));
 
       expect(
-        chips(tester).any(
-          (chip) =>
-              chip.deltaText != null &&
-              chip.deltaText!.startsWith('−') &&
-              chip.deltaColor == statLossColor,
+        rows(tester).any(
+          (line) =>
+              line.delta != null && line.delta!.startsWith('−') && !line.gain,
         ),
         isTrue,
       );
+    });
+
+    testWidgets('a stat it takes away shows the loss, not a zero', (
+      tester,
+    ) async {
+      final worn = wear(ItemId.COPPER_HELMET);
+      final taken = worn.effectiveSkillBonus.entries.firstWhere(
+        (e) => e.value > 0,
+      );
+      // any piece measured against the worn helmet that lacks one of its
+      // stats
+      final other = ItemId.values
+          .map((id) => id.build())
+          .whereType<EquipmentItem>()
+          .where(
+            (p) =>
+                session.equipmentService.counterpartFor(p, gear()) == worn &&
+                (p.effectiveSkillBonus[taken.key] ?? 0) == 0,
+          )
+          .firstOrNull;
+      expect(
+        other,
+        isNotNull,
+        reason: "no piece drops a stat the worn one has",
+      );
+      await open(tester, other!);
+
+      final row = find.byKey(ValueKey('stat-${taken.key.name}'));
+      expect(row, findsOneWidget);
+      final line = tester.widget<EquipmentStatRow>(row).line;
+      expect(line.lost, isTrue);
+      // the loss sits where the value would, and no bare 0 is drawn
+      expect(
+        find.descendant(of: row, matching: find.text('−${taken.value}')),
+        findsOneWidget,
+      );
+      expect(find.descendant(of: row, matching: find.text('0')), findsNothing);
     });
 
     testWidgets('onyx shows its xp bonus, set against the onyx worn', (
@@ -180,12 +214,12 @@ void main() {
       wear(ItemId.ONYX_NECKLACE); // round necklace: +3%
       await open(tester, piece(ItemId.ONYX_RADIANT_NECKLACE)); // +34%
 
-      final xp = tester.widget<StatChip>(
-        find.byKey(const ValueKey('stat-chip-xp')),
-      );
+      final xp = tester
+          .widget<EquipmentStatRow>(find.byKey(const ValueKey('stat-chip-xp')))
+          .line;
       expect(xp.value, '+34% xp');
-      expect(xp.deltaText, '+31%');
-      expect(xp.deltaColor, statGainColor);
+      expect(xp.delta, '+31%');
+      expect(xp.gain, isTrue);
     });
 
     testWidgets('a stat gem shows no xp line', (tester) async {
@@ -197,7 +231,7 @@ void main() {
       final worn = wear(ItemId.COPPER_HELMET);
       await open(tester, worn);
 
-      expect(chips(tester).every((chip) => chip.deltaText == null), isTrue);
+      expect(rows(tester).every((line) => line.delta == null), isTrue);
       expect(find.text('Equipped'), findsNothing);
     });
 
@@ -205,45 +239,98 @@ void main() {
       tester,
     ) async {
       await open(tester, piece(ItemId.COPPER_HELMET));
-      expect(chips(tester).every((chip) => chip.deltaText == null), isTrue);
+      expect(rows(tester).every((line) => line.delta == null), isTrue);
       expect(find.text('Nothing equipped here'), findsNothing);
     });
 
-    testWidgets('the coin value is the same size as the stats', (tester) async {
-      final helmet = piece(ItemId.COPPER_HELMET);
-      await open(tester, helmet);
+    testWidgets('a weapon lists its swing figures above its stats', (
+      tester,
+    ) async {
+      wear(ItemId.COPPER_GREATSWORD);
+      await open(tester, piece(ItemId.COPPER_DAGGER));
 
-      final value = tester.widget<StatChip>(
-        find.byKey(const ValueKey('equipment-value')),
+      final all = rows(tester).toList();
+      final firstStat = all.indexWhere((line) => !line.weapon);
+      final lastWeapon = all.lastIndexWhere((line) => line.weapon);
+      expect(lastWeapon, greaterThanOrEqualTo(0));
+      if (firstStat >= 0) expect(lastWeapon, lessThan(firstStat));
+      expect(find.byKey(const ValueKey('stat-chip-dps')), findsOneWidget);
+    });
+
+    test('lines run damage, dps, swing, then atk def str spd stam rec', () {
+      final sword = WeaponItem(
+        id: ItemId.COPPER_GREATSWORD,
+        enchantBonus: {
+          SkillId.RECOVERY: 1,
+          SkillId.STAMINA: 1,
+          SkillId.SPEED: 1,
+          SkillId.STRENGTH: 1,
+          SkillId.DEFENCE: 1,
+          SkillId.ATTACK: 1,
+        },
       );
-      expect(value.value, '${helmet.value}');
-      expect(value.fontSize, 20);
-      final stat = chips(tester).firstWhere((c) => !identical(c, value));
       expect(
-        tester.getSize(find.byKey(const ValueKey('equipment-value'))).height,
-        tester.getSize(find.byWidget(stat)).height,
+        [
+          for (final line in equipmentStatLines(sword, null))
+            (line.key as ValueKey<String>).value,
+        ],
+        [
+          'stat-chip-damage',
+          'stat-chip-dps',
+          'stat-chip-speed',
+          'stat-ATTACK',
+          'stat-DEFENCE',
+          'stat-STRENGTH',
+          'stat-SPEED',
+          'stat-STAMINA',
+          'stat-RECOVERY',
+        ],
       );
     });
 
-    testWidgets('the stats run one to a line, at full size', (tester) async {
-      wear(ItemId.COPPER_HELMET);
-      await open(tester, piece(ItemId.MITHRIL_HELMET));
+    testWidgets('the header names the slot, one hand, two or off-hand', (
+      tester,
+    ) async {
+      for (final (id, label) in [
+        (ItemId.COPPER_SWORD, 'One-handed weapon'),
+        (ItemId.COPPER_GREATSWORD, 'Two-handed weapon'),
+        (ItemId.COPPER_SHIELD, 'Off-hand'),
+        (ItemId.COPPER_HELMET, 'Head'),
+      ]) {
+        await open(tester, piece(id));
+        expect(
+          tester
+              .widget<Text>(find.byKey(const ValueKey('equipment-slot')))
+              .data,
+          label,
+        );
+        await tester.tap(find.text('Close'));
+        await tester.pumpAndSettle();
+      }
+    });
 
-      final chips = find.byType(StatChip);
-      expect(chips, findsWidgets);
-      final rects = [
-        for (var i = 0; i < chips.evaluate().length; i++)
-          tester.getRect(chips.at(i)),
-      ];
-      for (var i = 1; i < rects.length; i++) {
-        // stacked: each below the last, starting at the same left edge
-        expect(rects[i].top, greaterThanOrEqualTo(rects[i - 1].bottom));
-        expect(rects[i].left, rects[0].left);
-      }
-      // much bigger than the picker's 12pt chips
-      for (final chip in tester.widgetList<StatChip>(chips)) {
-        expect(chip.fontSize, 20);
-      }
+    testWidgets('the coin value sits under the stats', (tester) async {
+      final helmet = piece(ItemId.COPPER_HELMET);
+      await open(tester, helmet);
+
+      final value = find.byKey(const ValueKey('equipment-value'));
+      expect(
+        find.descendant(of: value, matching: find.text('${helmet.value}')),
+        findsOneWidget,
+      );
+      final lastRow = find.byType(EquipmentStatRow).last;
+      expect(
+        tester.getRect(value).top,
+        greaterThanOrEqualTo(tester.getRect(lastRow).bottom),
+      );
+    });
+
+    testWidgets('the dev tools start folded away', (tester) async {
+      await open(tester, piece(ItemId.COPPER_HELMET));
+      expect(find.text('Dev: rarity'), findsNothing);
+      await tester.tap(find.text('Dev tools'));
+      await tester.pumpAndSettle();
+      expect(find.text('Dev: rarity'), findsOneWidget);
     });
   });
 }

@@ -28,17 +28,17 @@ void main() {
     );
   }
 
-  test('a rare pitchfork is 1.4x the ordinary one', () {
+  test('a rare pitchfork is 1.2x the ordinary one', () {
     final def = ItemId.PITCHFORK.definition as WeaponItemDefinition;
     final rare = ItemId.PITCHFORK.build() as EquipmentItem;
     rare.quality = Rarity.RARE;
 
     // a pitchfork is a damage weapon: the rarity scales what a swing deals
-    // and there are no stats for it to scale
+    // by its primary multiplier, and there are no stats for it to scale
     expect(def.statWeights, isEmpty);
     expect(
       def.damageAt(Rarity.RARE) / def.damageAt(Rarity.COMMON),
-      closeTo(1.4, 1e-9),
+      closeTo(1.2, 1e-9),
     );
     // the tier is the border's colour, not part of the name
     expect(rare.displayName, 'Pitchfork');

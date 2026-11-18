@@ -60,17 +60,31 @@ A typical dungeon carries 5–8 uniques across 13 slots. Smithed metal and craft
 
 **Combat stats:** Attack, Defence. **Core stats:** Speed, Strength, Stamina, Recovery.
 
-1. **The combat stat keeps the highest weight.** When a piece carries both a combat stat and a core stat, the combat stat is the heavier one: `{ATTACK: 2, SPEED: 1}`, never `{SPEED: 2, ATTACK: 1}`. A piece made only of core stats leads with Speed or Strength, and Stamina and Recovery ride second: `{STRENGTH: 2, RECOVERY: 1}`, `{SPEED: 2, STAMINA: 1}`.
-2. **Pure Defence is the smith's.** Only metal armour is Defence-only, which keeps blacksmithing relevant. Every unique has at least two stats.
-3. **Coverage.** Attack, Defence, Strength and Speed each appear within any 2–3 adjacent tiers. A stat counts whether it's on an item as the lead or the second weight. Not every tier needs every stat.
-4. **Stamina and Recovery are minor.** They are never a piece's lead next to a combat stat. Sprinkle them in as the second weight on Speed or Strength pieces.
-5. **Mirror same-tier siblings.** Two or three dungeons at one tier match piece for piece: the same rungs and the same stat-weight totals, but different slots and focuses. Spider Den and Drowned Fen pair this way, enforced by `test/drowned_fen_test.dart` (since the 2026-11-16 monster rebalance lowered the Spider Den's bosses, its Webbed Cloak sits a rung under the Fen's Ooze-Slick Belt; the test allows the Fen up to one rung above its twin); Brinedeep Caves mirrors Tempest Reach and the Silt Warrens' trims mirror the Fen's, enforced by `test/west_coast_dungeons_test.dart`. Neither replaces the other.
+A unique is built the way crafted gear is: a **primary** budget plus **secondaries** by rarity.
 
-Weights are a ratio, not amounts: only each weight's share of the total matters. A hide splits its budget exactly, so heavy-leather uniques like the Wolf Den set are worth precisely their heavy-leather counterpart and only split it differently.
+| Rarity | Primary (× material budget) | Secondaries (each 0.2 × budget) |
+|---|---|---|
+| Common | 1.0 | 0 |
+| Uncommon | 1.0 | 1 |
+| Rare | 1.2 | 2 |
+| Epic | 1.4 | 3 |
+| Legendary | 1.6 | 4 |
+
+Crafted gear rolls each secondary at random from the four core stats. A unique sets them in the catalog instead (`catalogSecondaries`):
+
+1. **The primary is combat stats only.** `statWeights` names Attack, Defence, or both, as a ratio: `{ATTACK: 1}`, `{DEFENCE: 2, ATTACK: 1}`, `{ATTACK: 3, DEFENCE: 1}`. Pick it to fit the item and its source (a shell defends, a fang attacks), and vary the split so a tier's pieces aren't all alike.
+2. **Every unique lists four secondaries**, in the order the tiers unlock them: an uncommon carries the first, a rare the first two, a legendary all four. The first is the piece's lean. A stat can repeat, so `[SPEED, SPEED, STAMINA, SPEED]` is a speed piece with a touch of stamina. Damage weapons carry them too (`catalog_integrity_test` checks).
+   A piece never carries both Strength and Speed: it leans one or the other (`catalog_integrity_test` checks).
+3. **Pure Defence is the smith's.** Only metal armour is Defence and nothing else. A unique with a Defence primary still carries its secondaries.
+4. **Coverage.** Strength and Speed each lead a unique within any 2–3 adjacent tiers. Not every tier needs every stat.
+5. **Stamina and Recovery are minor.** They lead a piece only where it fits the theme (a cow's ring, a banner, an ooze), and otherwise ride later in the list.
+6. **Mirror same-tier siblings.** Two or three dungeons at one tier match piece for piece: the same rungs and four secondaries each, but different slots and leans. Spider Den and Drowned Fen pair this way, enforced by `test/drowned_fen_test.dart` (since the 2026-11-16 monster rebalance lowered the Spider Den's bosses, its Webbed Cloak sits a rung under the Fen's Ooze-Slick Belt; the test allows the Fen up to one rung above its twin); Brinedeep Caves mirrors Tempest Reach and the Silt Warrens' trims mirror the Fen's, enforced by `test/west_coast_dungeons_test.dart`. Neither replaces the other.
+
+Weights are a ratio, not amounts: only each weight's share of the total matters. A hide splits its budget exactly, so heavy-leather uniques like the Wolf Den set are worth precisely their heavy-leather counterpart's primary and only split it differently.
 
 ## 5. Weapons
 
-- Damage is derived: `weaponDamageForRung(materialRung) × swing seconds × damageScale × rarity`. So **a dagger, a sword and a greatsword deal the same damage per second at a tier**. A faster swing hits for less.
+- Damage is derived: `weaponDamageForRung(materialRung) × swing seconds × damageScale × primary multiplier`. So **a dagger, a sword and a greatsword deal the same damage per second at a tier**. A faster swing hits for less.
 - Pick the tier with `fibLevel`, and the feel with the shape. Never override a weapon's `actionInterval` (`loot curve` checks).
 - A shape that both hits and carries stats takes a reduced hit. The scepter's `damageScale` is 0.5 because its stat budget is the other half; any new hybrid shape follows the same rule (`loot curve` checks).
 - Tools (axe, pickaxe, rod) hit at 0.5 scale; the sickle doesn't hit.

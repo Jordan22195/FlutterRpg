@@ -135,6 +135,7 @@ class EquipmentItemDefinition extends ItemDefinition {
     this.fixedStats,
     this.bonusStats,
     this.ungated = false,
+    this.catalogSecondaries,
   }) : _armorSlot = armorSlot,
        _fibLevel = fibLevel,
        _statWeights = statWeights;
@@ -148,18 +149,21 @@ class EquipmentItemDefinition extends ItemDefinition {
   int get totalWeight =>
       statWeights.values.fold(0, (sum, weight) => sum + weight);
 
-  /// The stat budget a piece of this definition carries at [rarity]: the
-  /// rung's budget scaled by [Rarity.statMultiplier], then raised until
-  /// the split actually pays out [Rarity.minStatBonus] more points than
-  /// common does.
+  /// The primary stat budget a piece of this definition carries at
+  /// [rarity]: the rung's budget scaled by [Rarity.primaryMultiplier], then
+  /// raised until the split actually pays out [Rarity.minPrimaryBonus] more
+  /// points than common does. The secondary half of the budget is not in
+  /// here — it is rolled onto each piece (see [secondaryRollValue]).
+  ///
+  /// Jewellery keeps the older single-multiplier ladder
+  /// ([Rarity.statMultiplier]) and rolls no secondaries; see
+  /// [rollsSecondaries].
   ///
   /// The floor is enforced on the stats rather than on the budget because
   /// the budget is not what the player sees: a 1.2x on a low rung can
-  /// round straight back onto the common's numbers, and an uncommon that
+  /// round straight back onto the common's numbers, and a rare that
   /// reads identically to a common is not a tier. The tier below is a
-  /// floor too, because rounding a split across several stats can overshoot
-  /// — an uncommon that landed on +2 would otherwise be matched exactly by
-  /// the rare that only owes +2.
+  /// floor too, because rounding a split across several stats can overshoot.
   ///
   /// Walking the budget up a point at a time is safe —
   /// [Util.weightedShare] never decreases as the budget grows — and on the
@@ -174,39 +178,113 @@ class EquipmentItemDefinition extends ItemDefinition {
     // of what it is — has nothing for the floor below to measure, and the
     // walk up to it would never arrive
     if (statWeights.isEmpty) return base;
-    return scaledBudget(base, rarity, _statTotalFor);
+    return rollsSecondaries
+        ? scaledBudget(
+            base,
+            rarity,
+            _statTotalFor,
+            multiplier: (r) => r.primaryMultiplier,
+            minBonus: (r) => r.minPrimaryBonus,
+          )
+        : scaledBudget(base, rarity, _statTotalFor);
   }
 
   /// [base] scaled to [rarity], with the floor measured by [statTotal]: what
-  /// a budget pays out once it is split. Shared with jewellery, whose onyx
-  /// reads its budget as an xp percent rather than splitting it into stats.
+  /// a budget pays out once it is split. [multiplier] and [minBonus] pick
+  /// the ladder; left off they are jewellery's ([Rarity.statMultiplier],
+  /// [Rarity.minStatBonus]), whose onyx reads its budget as an xp percent
+  /// rather than splitting it into stats.
+  ///
+  /// A tier that does not multiply past the one below it (gear's uncommon,
+  /// which pays its step as a secondary roll) is worth exactly that tier.
   static int scaledBudget(
     int base,
     Rarity rarity,
-    int Function(int budget) statTotal,
-  ) {
+    int Function(int budget) statTotal, {
+    double Function(Rarity rarity)? multiplier,
+    int Function(Rarity rarity)? minBonus,
+  }) {
+    final mult = multiplier ?? (r) => r.statMultiplier;
+    final bonus = minBonus ?? (r) => r.minStatBonus;
     if (rarity.rung <= 0) return base;
     final below = Rarity.values[rarity.index - 1];
-    final floor = max(
-      statTotal(base) + rarity.minStatBonus,
-      statTotal(scaledBudget(base, below, statTotal)) + 1,
+    final belowBudget = scaledBudget(
+      base,
+      below,
+      statTotal,
+      multiplier: mult,
+      minBonus: bonus,
     );
-    var budget = max(base, (base * rarity.statMultiplier).round());
+    if (mult(rarity) <= mult(below)) return belowBudget;
+    final floor = max(
+      statTotal(base) + bonus(rarity),
+      statTotal(belowBudget) + 1,
+    );
+    var budget = max(base, (base * mult(rarity)).round());
     while (statTotal(budget) < floor) {
       budget++;
     }
     return budget;
   }
 
+  /// Whether pieces of this definition carry core-stat secondaries at
+  /// uncommon and above, and scale their primary stats on gear's ladder.
+  /// Everything worn does except crafted jewellery, which keeps the
+  /// single-multiplier ladder, and the dev pieces whose stats are written
+  /// out ([fixedStats]). Rolled at random unless [catalogSecondaries] sets
+  /// them.
+  bool get rollsSecondaries => fixedStats == null;
+
+  /// The secondaries a unique carries, set here rather than rolled: one
+  /// core stat per roll, in the order the tiers unlock them — an uncommon
+  /// takes the first, a rare the first two, up to all four on a legendary.
+  /// Each is worth [secondaryRollValue], the same as a crafted piece's
+  /// random roll, so a unique is a crafted piece of its rung with its
+  /// secondaries chosen for it. Null for anything that rolls at random.
+  final List<SkillId>? catalogSecondaries;
+
+  /// The secondaries a piece of this definition carries at [rarity] when
+  /// they are set in the catalog, or null when they are rolled per piece.
+  List<SkillId>? catalogSecondariesAt(Rarity rarity) {
+    final set = catalogSecondaries;
+    if (set == null || !rollsSecondaries) return null;
+    return set.take(rarity.secondaryRolls).toList(growable: false);
+  }
+
+  /// The stats one secondary roll can land on: the four core stats.
+  static const List<SkillId> secondaryStatPool = [
+    SkillId.STAMINA,
+    SkillId.SPEED,
+    SkillId.STRENGTH,
+    SkillId.RECOVERY,
+  ];
+
+  /// What one secondary roll is worth: [Rarity.secondaryRollShare] of the
+  /// rung's common budget, and never less than a point.
+  int get secondaryRollValue =>
+      max(1, (Util.fib(budgetRung) * Rarity.secondaryRollShare).round());
+
+  /// [rolls] — one core stat per roll — as the stats they add.
+  Map<SkillId, int> secondaryStatsFor(List<SkillId> rolls) {
+    final value = secondaryRollValue;
+    final stats = <SkillId, int>{};
+    for (final stat in rolls) {
+      stats[stat] = (stats[stat] ?? 0) + value;
+    }
+    return stats;
+  }
+
   /// A rarity this piece always wears, whatever it was rolled at, or null
   /// for the usual: the rolled quality (or the definition's) stands.
   Rarity? get fixedRarity => null;
 
-  /// Whether [Rarity.statMultiplier] reaches this piece's stats. Off, its
+  /// Whether rarity reaches this piece's primary stats. Off, its
   /// rarity is the colour of its border and nothing else.
   bool get rarityScalesStats => true;
 
-  /// The stats a piece of this definition at [rarity] actually has.
+  /// The primary stats a piece of this definition at [rarity] has — the
+  /// split budget plus [bonusStats]. A piece's secondary rolls go on top
+  /// (see `EquipmentItem.effectiveSkillBonus`).
   Map<SkillId, int> statsAt(Rarity rarity) {
     if (fixedStats != null) return {...fixedStats!};
     final stats = _statsFor(
@@ -297,6 +375,7 @@ class EquipmentItemDefinition extends ItemDefinition {
       fixedStats: fixedStats,
       bonusStats: bonusStats,
       ungated: ungated,
+      catalogSecondaries: catalogSecondaries,
     );
   }
 

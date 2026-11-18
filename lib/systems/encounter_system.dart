@@ -617,11 +617,17 @@ class EncounterSystem {
         continue;
       }
       // every inventory gets its own instance: sharing one object between
-      // two of them would double-count when stacks merge
-      for (final target in [playerInventory, encounterDrops]) {
-        _inventoryService.addEquipment(target, _dropAsEquipment(drop));
+      // two of them would double-count when stacks merge. the secondaries
+      // are rolled first, so each copy shows the pieces the bag received
+      for (final piece in _dropAsEquipment(drop).rollEach()) {
+        for (final target in [playerInventory, encounterDrops]) {
+          _inventoryService.addEquipment(
+            target,
+            piece.copy()..count = piece.count,
+          );
+        }
+        result.equipment.add(piece);
       }
-      result.equipment.add(_dropAsEquipment(drop));
     }
     _payOutItems(stacks, playerInventory, encounterDrops, result);
     return stacks;

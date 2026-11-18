@@ -101,6 +101,28 @@ void main() {
     expect(inPicker(iron.displayName), findsOneWidget);
   });
 
+  testWidgets('each card names its slot, one hand or two', (tester) async {
+    wear(ItemId.COPPER_SWORD);
+    bag(ItemId.COPPER_GREATSWORD);
+    await pumpGear(tester);
+
+    await tester.tap(
+      find.byKey(ValueKey('gear-slot-${ArmorSlots.WEAPON_1H.name}')),
+    );
+    await tester.pumpAndSettle();
+
+    final slots = [
+      for (final w in tester.widgetList<Text>(
+        find.descendant(
+          of: sheet,
+          matching: find.byKey(const ValueKey('equipment-card-slot')),
+        ),
+      ))
+        w.data,
+    ];
+    expect(slots, containsAll(['One-handed weapon', 'Two-handed weapon']));
+  });
+
   testWidgets('tapping an empty slot opens its picker', (tester) async {
     bag(ItemId.IRON_HELMET);
     await pumpGear(tester);
@@ -159,6 +181,36 @@ void main() {
       await tester.tap(find.byKey(ValueKey('equipment-sort-${key.id}')));
       await tester.pumpAndSettle();
     }
+  });
+
+  test('sort chips run in the stat lines\' order', () {
+    final sword = WeaponItem(
+      id: ItemId.COPPER_GREATSWORD,
+      enchantBonus: {
+        SkillId.RECOVERY: 1,
+        SkillId.STAMINA: 1,
+        SkillId.SPEED: 1,
+        SkillId.STRENGTH: 1,
+        SkillId.DEFENCE: 1,
+        SkillId.ATTACK: 1,
+      },
+    );
+    expect(
+      [
+        for (final k in EquipmentSortKey.forItems([sword])) k.id,
+      ],
+      [
+        'damage',
+        'dps',
+        'speed',
+        'ATTACK',
+        'DEFENCE',
+        'STRENGTH',
+        'SPEED',
+        'STAMINA',
+        'RECOVERY',
+      ],
+    );
   });
 
   test('weapons sort fastest first by speed', () {

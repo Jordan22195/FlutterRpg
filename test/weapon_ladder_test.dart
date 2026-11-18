@@ -215,11 +215,15 @@ void main() {
         final seconds = def.actionInterval.inMicroseconds / 1e6;
         perSecond.add(def.damageAt(Rarity.COMMON) / seconds);
 
-        // a better roll scales it the way it scales any piece's stats
+        // a better roll scales it the way it scales any piece's primary
+        // stats
         for (final rarity in Rarity.values) {
           expect(
             def.damageAt(rarity),
-            closeTo(def.damageAt(Rarity.COMMON) * rarity.statMultiplier, 1e-9),
+            closeTo(
+              def.damageAt(Rarity.COMMON) * rarity.primaryMultiplier,
+              1e-9,
+            ),
           );
         }
       }

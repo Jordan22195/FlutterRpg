@@ -704,14 +704,14 @@ void main() {
         // showed the common one's numbers
         await pumpInfo(tester, EntityId.BIG_RED);
 
-        final charm = ItemId.CHICKEN_CHARM.definition;
-        // Big Red drops its charm at common and, more rarely, uncommon
-        final rareStats = (charm as EquipmentItemDefinition).statsAt(
-          Rarity.UNCOMMON,
-        );
+        // Big Red drops its charm at common and, more rarely, uncommon. the
+        // uncommon carries the first of its catalog secondaries on top
+        EquipmentItem charmAt(Rarity r) =>
+            (ItemId.CHICKEN_CHARM.build() as EquipmentItem)..quality = r;
+        final rareStats = charmAt(Rarity.UNCOMMON).effectiveSkillBonus;
         expect(
-          rareStats.values.first,
-          greaterThan(charm.statsAt(Rarity.COMMON).values.first),
+          rareStats,
+          isNot(charmAt(Rarity.COMMON).effectiveSkillBonus),
           reason: 'the fixture needs a charm whose tiers actually differ',
         );
 

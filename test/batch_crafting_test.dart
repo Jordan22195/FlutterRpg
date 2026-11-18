@@ -153,17 +153,25 @@ void main() {
 
       final result = craft(session, 'forge_copper_dagger', craftCount: 100);
 
-      // 100 daggers, stacked by quality in the player's inventory, the
-      // session grid and the result alike
+      // 100 daggers, stacked by quality and secondary rolls in the player's
+      // inventory, the session grid and the result alike
       int total(Iterable<EquipmentItem> stacks) =>
           stacks.fold<int>(0, (sum, stack) => sum + stack.count);
 
       expect(total(save.inventoryData.equipment), 100);
       expect(total(save.craftingState.craftedItems.equipment), 100);
       expect(total(result.equipment), 100);
+      // one stack per identity, and the session grid shows exactly the
+      // pieces the bag received, rolls and all
+      Map<String, int> byKey(Iterable<EquipmentItem> stacks) => {
+        for (final stack in stacks) stack.stackKey: stack.count,
+      };
+      final bag = byKey(save.inventoryData.equipment);
+      expect(bag.length, save.inventoryData.equipment.length);
+      expect(byKey(save.craftingState.craftedItems.equipment), bag);
       expect(
-        save.inventoryData.equipment.length,
-        lessThanOrEqualTo(Rarity.values.length),
+        save.inventoryData.equipment.map((e) => e.needsSecondaryRolls),
+        everyElement(isFalse),
       );
       // ~30% of pieces are above common at this level, so a batch of 100
       // virtually guarantees a spread rather than one flat stack

@@ -17,8 +17,8 @@ void main() {
   EquipmentItemDefinition eq(ItemId id) =>
       id.definition as EquipmentItemDefinition;
   int tierOf(ItemId id) => eq(id).fibLevel - eq(id).fibOffset;
-  int weight(ItemId id) =>
-      eq(id).statWeights.values.fold(0, (sum, w) => sum + w);
+  // what a unique leans toward: the first of its catalog secondaries
+  SkillId lead(ItemId id) => eq(id).catalogSecondaries!.first;
 
   // every boss's uniques, read off its bonus rolls, with their rarities
   Map<ItemId, Set<Rarity>> uniquesOf(EntityId boss) {
@@ -144,7 +144,8 @@ void main() {
   }
 
   test('the Brinedeep Caves match Tempest Reach piece for piece', () {
-    // same tiers and weight totals, on slots and stats Tempest leaves open
+    // same tiers and four catalog secondaries each, on slots and stats
+    // Tempest leaves open
     const pairs = {
       ItemId.WARLORDS_CLEAVER: ItemId.BRINECRUSHER_CLAW,
       ItemId.WARLORDS_WARHELM: ItemId.BRINECLAW_BRACERS,
@@ -160,21 +161,15 @@ void main() {
     };
     for (final MapEntry(key: tempest, value: coast) in pairs.entries) {
       expect(tierOf(coast), tierOf(tempest), reason: coast.name);
+      expect(eq(coast).catalogSecondaries, hasLength(4), reason: coast.name);
       if (coast.definition is WeaponItemDefinition) continue;
-      expect(weight(coast), weight(tempest), reason: coast.name);
       expect(tempestSlots, isNot(contains(eq(coast).armorSlot)));
     }
 
     // speed leads at tier 4 and strength at tier 5, where the ladder had
     // neither
-    expect(
-      eq(ItemId.SALTSCALE_SANDALS).statWeights.keys.first,
-      SkillId.SPEED,
-    );
-    expect(
-      eq(ItemId.LEVIATHAN_GIRDLE).statWeights.keys.first,
-      SkillId.STRENGTH,
-    );
+    expect(lead(ItemId.SALTSCALE_SANDALS), SkillId.SPEED);
+    expect(lead(ItemId.LEVIATHAN_GIRDLE), SkillId.STRENGTH);
   });
 
   test('the Silt Warrens\' trims match the Drowned Fen\'s', () {
@@ -184,7 +179,7 @@ void main() {
     };
     for (final MapEntry(key: fen, value: delta) in pairs.entries) {
       expect(eq(delta).fibLevel, eq(fen).fibLevel, reason: delta.name);
-      expect(weight(delta), weight(fen), reason: delta.name);
+      expect(lead(delta), lead(fen), reason: delta.name);
     }
   });
 }

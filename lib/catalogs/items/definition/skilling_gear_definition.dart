@@ -7,8 +7,8 @@ import 'package:rpg/data/skill_data.dart';
 // ignore_for_file: constant_identifier_names
 
 /// The five rungs of skilling gear. Each one is a rung of the stat ladder —
-/// +2, +3, +5, +8 and +13 to its skill a common piece — and the level in
-/// that skill it takes to wear.
+/// a budget of 2, 3, 5, 8 and 13 before the tier's rarity scales it and
+/// adds its secondary rolls — and the level in that skill it takes to wear.
 enum SkillingGearTier {
   BASIC(fibLevel: 1, skillLevelRequirement: 1, rarity: Rarity.COMMON),
   NOVICE(fibLevel: 2, skillLevelRequirement: 20, rarity: Rarity.UNCOMMON),
@@ -19,8 +19,8 @@ enum SkillingGearTier {
   final int fibLevel;
   final int skillLevelRequirement;
 
-  /// The tier's colour: it frames the piece and does nothing to its stats,
-  /// which the rung alone sets.
+  /// The tier's rarity: it frames the piece, scales its skill stat and
+  /// sets how many core-stat secondaries it rolls, as for any gear.
   final Rarity rarity;
 
   const SkillingGearTier({
@@ -53,11 +53,10 @@ class SkillingGearDefinition extends EquipmentItemDefinition {
   @override
   int get fibLevel => tier.fibLevel;
 
+  /// The tier's rarity is the piece's, and it pays out like any other
+  /// gear's: it scales the skill stat and rolls the core-stat secondaries.
   @override
   Rarity? get fixedRarity => tier.rarity;
-
-  @override
-  bool get rarityScalesStats => false;
 
   @override
   Map<SkillId, int> get statWeights => {skill: 1};

@@ -46,7 +46,7 @@ void main() {
     return out;
   }
 
-  test('each piece is worth its heavy counterpart, split toward speed', () {
+  test('each piece is worth its heavy counterpart, leaning on speed', () {
     for (final id in set) {
       final def = gear(id);
       final base = gear(heavy[def.armorSlot]!);
@@ -59,20 +59,17 @@ void main() {
           reason: '${id.name} at ${rarity.name}',
         );
       }
-      expect(def.statWeights.keys, contains(SkillId.SPEED), reason: id.name);
-    }
-    // every piece leads with its combat stat and keeps speed second
-    for (final id in set) {
-      final w = gear(id).statWeights;
+      // a wolf's piece: combat primaries, and speed the first secondary
       expect(
-        w[SkillId.SPEED],
-        lessThan(w.values.reduce((a, b) => a > b ? a : b)),
+        def.statWeights.keys.toSet(),
+        everyElement(isIn({SkillId.ATTACK, SkillId.DEFENCE})),
         reason: id.name,
       );
+      expect(def.catalogSecondaries!.first, SkillId.SPEED, reason: id.name);
     }
     expect(gear(ItemId.WOLF_DEN_CHESTGUARD).statWeights, {
       SkillId.DEFENCE: 2,
-      SkillId.SPEED: 1,
+      SkillId.ATTACK: 1,
     });
   });
 
@@ -183,7 +180,13 @@ void main() {
     final ring = gear(ItemId.REDCAP_RING);
     // a rung under the boss's loot ceiling (rung 6 - 5)
     expect(ring.fibLevel, 1);
-    // recovery rides on a strength piece rather than standing alone
-    expect(ring.statWeights, {SkillId.STRENGTH: 2, SkillId.RECOVERY: 1});
+    // an attack ring whose secondaries lean strength, recovery riding along
+    expect(ring.statWeights, {SkillId.ATTACK: 1});
+    expect(ring.catalogSecondaries, [
+      SkillId.STRENGTH,
+      SkillId.RECOVERY,
+      SkillId.STRENGTH,
+      SkillId.STRENGTH,
+    ]);
   });
 }

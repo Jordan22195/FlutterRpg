@@ -202,38 +202,18 @@ class EquipmentSortKey {
   /// The piece's value for this stat; higher sorts first.
   final double Function(EquipmentItem item) valueOf;
 
-  /// The keys worth offering for [items]: every skill stat any of them
-  /// carries, in skill order, then xp, damage, dps and speed where any
-  /// piece has them.
+  /// The keys worth offering for [items], in the order the stat lines run:
+  /// damage, dps and swing speed where any piece has them, then every
+  /// skill stat any of them carries in [statDisplayOrder], then xp.
   static List<EquipmentSortKey> forItems(Iterable<EquipmentItem> items) {
     final list = items.toList();
     final skills = <SkillId>{
       for (final item in list)
         for (final e in item.effectiveSkillBonus.entries)
           if (e.value != 0) e.key,
-    }.toList()..sort((a, b) => a.index.compareTo(b.index));
+    }.toList()..sort(compareStatOrder);
 
-    final keys = <EquipmentSortKey>[
-      for (final skill in skills)
-        EquipmentSortKey(
-          id: skill.name,
-          label: _titleCase(skill.name),
-          icon: IconRenderer(size: 14, id: skill),
-          valueOf: (item) => (item.effectiveSkillBonus[skill] ?? 0).toDouble(),
-        ),
-    ];
-
-    if (list.any((item) => _xpPercentOf(item) != 0)) {
-      keys.add(
-        EquipmentSortKey(
-          id: 'xp',
-          label: 'XP',
-          icon: const Icon(Icons.auto_graph, size: 14, color: Colors.grey),
-          valueOf: (item) => _xpPercentOf(item).toDouble(),
-        ),
-      );
-    }
-
+    final keys = <EquipmentSortKey>[];
     bool swings(EquipmentItem item) =>
         item is WeaponItem && item.definition.usesDamage;
     if (list.any(swings)) {
@@ -266,6 +246,27 @@ class EquipmentSortKey {
           valueOf: (item) => item is WeaponItem
               ? -item.actionInterval.inMilliseconds.toDouble()
               : double.negativeInfinity,
+        ),
+      );
+    }
+
+    keys.addAll([
+      for (final skill in skills)
+        EquipmentSortKey(
+          id: skill.name,
+          label: _titleCase(skill.name),
+          icon: IconRenderer(size: 14, id: skill),
+          valueOf: (item) => (item.effectiveSkillBonus[skill] ?? 0).toDouble(),
+        ),
+    ]);
+
+    if (list.any((item) => _xpPercentOf(item) != 0)) {
+      keys.add(
+        EquipmentSortKey(
+          id: 'xp',
+          label: 'XP',
+          icon: const Icon(Icons.auto_graph, size: 14, color: Colors.grey),
+          valueOf: (item) => _xpPercentOf(item).toDouble(),
         ),
       );
     }
@@ -596,6 +597,18 @@ class _PickerCard extends StatelessWidget {
                           color: rarityTextColor(item.quality),
                         ),
                       ),
+                      // where it goes: one hand, two or the off-hand, so a
+                      // greatsword's trade against sword and shield is plain
+                      Text(
+                        equipmentSlotLabel(item),
+                        key: const ValueKey('equipment-card-slot'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
                       if (locked != null) ...[
                         const SizedBox(height: 4),
                         Row(
@@ -681,43 +694,161 @@ class _PickerCard extends StatelessWidget {
       equipmentComparisonChips(item, baseline);
 }
 
-/// One chip per stat in the union of [item]'s and [baseline]'s stats, each
+/// One stat of a piece as the comparisons draw it: its icon, its value and
+/// its change against what wearing it would take off. The picker draws
+/// these as chips; the details popup as plain rows.
+class EquipmentStatLine {
+  const EquipmentStatLine({
+    this.key,
+    required this.icon,
+    required this.value,
+    this.delta,
+    this.gain = false,
+    this.lost = false,
+    this.weapon = false,
+  });
+
+  final Key? key;
+
+  /// The stat's icon at the given size.
+  final Widget Function(double size) icon;
+  final String value;
+
+  /// The change against the baseline ("+2", "−1.0s"); null when there is
+  /// none or nothing to measure against.
+  final String? delta;
+
+  /// Whether [delta] is for the better.
+  final bool gain;
+
+  /// A stat the baseline has and this piece lacks entirely: wearing it
+  /// takes the stat away. Its [value] is "0".
+  final bool lost;
+
+  /// One of a weapon's swing figures (dps, damage, speed) rather than a stat.
+  final bool weapon;
+}
+
+/// The order gear lists its stats in: the combat stats first, then the
+/// stance and stamina stats, then every other skill in enum order.
+const List<SkillId> statDisplayOrder = [
+  SkillId.ATTACK,
+  SkillId.DEFENCE,
+  SkillId.STRENGTH,
+  SkillId.SPEED,
+  SkillId.STAMINA,
+  SkillId.RECOVERY,
+];
+
+/// Sorts skills by [statDisplayOrder], the rest after in enum order.
+int compareStatOrder(SkillId a, SkillId b) {
+  int rank(SkillId s) {
+    final i = statDisplayOrder.indexOf(s);
+    return i < 0 ? statDisplayOrder.length + s.index : i;
+  }
+
+  return rank(a).compareTo(rank(b));
+}
+
+/// One line per stat in the union of [item]'s and [baseline]'s stats, each
 /// with its change against [baseline] — so a stat [item] lacks still shows
-/// as a red loss — then the weapon speed, where faster is the gain. With no
-/// [baseline] every stat reads as a plain gain over an empty slot.
+/// as a loss. A weapon's swing figures lead (damage, dps, swing speed —
+/// where faster is the gain), then the stats in [statDisplayOrder].
+/// With no [baseline] every stat reads as a plain gain over an empty slot.
 ///
-/// [showDeltas] off draws the values alone, for a piece with nothing to be
-/// measured against (the one being worn, say). [large] draws them at the
-/// details popup's size rather than the picker's.
-List<Widget> equipmentComparisonChips(
+/// [showDeltas] off leaves the changes out, for a piece with nothing to be
+/// measured against (the one being worn, say).
+List<EquipmentStatLine> equipmentStatLines(
   EquipmentItem item,
   EquipmentItem? baseline, {
   bool showDeltas = true,
-  bool large = false,
 }) {
-  // the details popup lists them big, one to a line; the picker keeps them
-  // compact
-  final iconSize = large ? 28.0 : 14.0;
-  final fontSize = large ? 20.0 : 12.0;
+  final lines = <EquipmentStatLine>[];
+
+  final baselineItem = baseline;
+  final swinging = item;
+  if (swinging is WeaponItem) {
+    final theirsDamages =
+        baselineItem is WeaponItem && baselineItem.definition.usesDamage;
+    String? signed(double? diff) =>
+        (!showDeltas || diff == null || diff.abs() < 0.05)
+        ? null
+        : (diff > 0 ? '+${formatDamage(diff)}' : '−${formatDamage(-diff)}');
+
+    if (swinging.definition.usesDamage) {
+      // what one swing deals before the attack multiplier; more is the gain
+      final damage = swinging.damage;
+      final damageDiff = theirsDamages ? damage - baselineItem.damage : null;
+      lines.add(
+        EquipmentStatLine(
+          key: const ValueKey('stat-chip-damage'),
+          icon: (size) => Icon(Icons.gavel, size: size, color: Colors.grey),
+          value: formatDamage(damage),
+          delta: signed(damageDiff),
+          gain: (damageDiff ?? 0) > 0,
+          weapon: true,
+        ),
+      );
+
+      // damage per second at the swing's own pace: what the damage and the
+      // speed below add up to, so a slow heavy weapon and a quick light one
+      // can be read against each other. more is the gain
+      final dps = swinging.damagePerSecond;
+      final dpsDiff = theirsDamages ? dps - baselineItem.damagePerSecond : null;
+      lines.add(
+        EquipmentStatLine(
+          key: const ValueKey('stat-chip-dps'),
+          icon: (size) => Icon(Icons.bolt, size: size, color: Colors.grey),
+          value: '${formatDamage(dps)} dps',
+          delta: signed(dpsDiff),
+          gain: (dpsDiff ?? 0) > 0,
+          weapon: true,
+        ),
+      );
+    }
+
+    // weapon speed; lower interval is better, so faster = green
+    final mySpeed = swinging.actionInterval.inMilliseconds / 1000.0;
+    final baseSpeed = baselineItem is WeaponItem
+        ? baselineItem.actionInterval.inMilliseconds / 1000.0
+        : null;
+    final diff = baseSpeed == null ? null : mySpeed - baseSpeed;
+    lines.add(
+      EquipmentStatLine(
+        key: const ValueKey('stat-chip-speed'),
+        icon: (size) => Icon(Icons.timer, size: size, color: Colors.grey),
+        value: '${mySpeed.toStringAsFixed(1)}s',
+        delta: (!showDeltas || diff == null || diff == 0)
+            ? null
+            : (diff > 0
+                  ? '+${diff.toStringAsFixed(1)}s'
+                  : '−${(-diff).toStringAsFixed(1)}s'),
+        gain: diff != null && diff < 0,
+        weapon: true,
+      ),
+    );
+  }
+
   final mine = item.effectiveSkillBonus;
   final base = baseline?.effectiveSkillBonus ?? const <SkillId, int>{};
-  final keys = {...mine.keys, ...base.keys}.toList()
-    ..sort((a, b) => a.index.compareTo(b.index));
+  final keys = {...mine.keys, ...base.keys}.toList()..sort(compareStatOrder);
 
-  final chips = <Widget>[];
   for (final key in keys) {
     final value = mine[key] ?? 0;
     final delta = value - (base[key] ?? 0);
     if (value == 0 && delta == 0) continue;
-    chips.add(
-      StatChip(
-        icon: IconRenderer(size: iconSize, id: key),
+    // a stat only the baseline has: off the board unless deltas are shown
+    if (value == 0 && !showDeltas) continue;
+    lines.add(
+      EquipmentStatLine(
+        key: ValueKey('stat-${key.name}'),
+        icon: (size) => IconRenderer(size: size, id: key),
         value: '$value',
-        fontSize: fontSize,
-        deltaText: !showDeltas || delta == 0
+        delta: !showDeltas || delta == 0
             ? null
             : (delta > 0 ? '+$delta' : '−${-delta}'),
-        deltaColor: delta > 0 ? statGainColor : statLossColor,
+        gain: delta > 0,
+        lost: value == 0 && delta < 0,
       ),
     );
   }
@@ -726,95 +857,38 @@ List<Widget> equipmentComparisonChips(
   // never show it; more is the gain
   final xpMine = _xpPercentOf(item);
   final xpDelta = xpMine - _xpPercentOf(baseline);
-  if (xpMine != 0 || xpDelta != 0) {
-    chips.add(
-      StatChip(
+  if (xpMine != 0 || (showDeltas && xpDelta != 0)) {
+    lines.add(
+      EquipmentStatLine(
         key: const ValueKey('stat-chip-xp'),
-        icon: Icon(Icons.auto_graph, size: iconSize, color: Colors.grey),
+        icon: (size) => Icon(Icons.auto_graph, size: size, color: Colors.grey),
         value: '+$xpMine% xp',
-        fontSize: fontSize,
-        deltaText: !showDeltas || xpDelta == 0
+        delta: !showDeltas || xpDelta == 0
             ? null
             : (xpDelta > 0 ? '+$xpDelta%' : '−${-xpDelta}%'),
-        deltaColor: xpDelta > 0 ? statGainColor : statLossColor,
+        gain: xpDelta > 0,
+        lost: xpMine == 0 && xpDelta < 0,
       ),
     );
   }
-
-  // what one swing deals before the attack multiplier; more is the gain
-  final swinging = item;
-  if (swinging is WeaponItem && swinging.definition.usesDamage) {
-    final mine = swinging.damage;
-    final baselineItem = baseline;
-    final theirs =
-        baselineItem is WeaponItem && baselineItem.definition.usesDamage
-        ? baselineItem.damage
-        : null;
-    final diff = theirs == null ? null : mine - theirs;
-    chips.add(
-      StatChip(
-        key: const ValueKey('stat-chip-damage'),
-        icon: Icon(Icons.gavel, size: iconSize, color: Colors.grey),
-        value: formatDamage(mine),
-        fontSize: fontSize,
-        deltaText: (!showDeltas || diff == null || diff.abs() < 0.05)
-            ? null
-            : (diff > 0 ? '+${formatDamage(diff)}' : '−${formatDamage(-diff)}'),
-        deltaColor: (diff ?? 0) > 0 ? statGainColor : statLossColor,
-      ),
-    );
-  }
-
-  // damage per second at the swing's own pace: what the damage and the
-  // speed above add up to, so a slow heavy weapon and a quick light one can
-  // be read against each other. more is the gain
-  if (swinging is WeaponItem && swinging.definition.usesDamage) {
-    final mine = swinging.damagePerSecond;
-    final baselineItem = baseline;
-    final theirs =
-        baselineItem is WeaponItem && baselineItem.definition.usesDamage
-        ? baselineItem.damagePerSecond
-        : null;
-    final diff = theirs == null ? null : mine - theirs;
-    chips.add(
-      StatChip(
-        key: const ValueKey('stat-chip-dps'),
-        icon: Icon(Icons.bolt, size: iconSize, color: Colors.grey),
-        value: '${formatDamage(mine)} dps',
-        fontSize: fontSize,
-        deltaText: (!showDeltas || diff == null || diff.abs() < 0.05)
-            ? null
-            : (diff > 0 ? '+${formatDamage(diff)}' : '−${formatDamage(-diff)}'),
-        deltaColor: (diff ?? 0) > 0 ? statGainColor : statLossColor,
-      ),
-    );
-  }
-
-  // weapon speed; lower interval is better, so faster = green
-  final currentItem = item;
-  if (currentItem is WeaponItem) {
-    final mySpeed = currentItem.actionInterval.inMilliseconds / 1000.0;
-    final baselineItem = baseline;
-    final baseSpeed = baselineItem is WeaponItem
-        ? baselineItem.actionInterval.inMilliseconds / 1000.0
-        : null;
-    final diff = baseSpeed == null ? null : mySpeed - baseSpeed;
-    chips.add(
-      StatChip(
-        icon: Icon(Icons.timer, size: iconSize, color: Colors.grey),
-        value: '${mySpeed.toStringAsFixed(1)}s',
-        fontSize: fontSize,
-        deltaText: (!showDeltas || diff == null || diff == 0)
-            ? null
-            : (diff > 0
-                  ? '+${diff.toStringAsFixed(1)}s'
-                  : '−${(-diff).toStringAsFixed(1)}s'),
-        deltaColor: (diff != null && diff < 0) ? statGainColor : statLossColor,
-      ),
-    );
-  }
-  return chips;
+  return lines;
 }
+
+/// [equipmentStatLines] as the picker's compact chips.
+List<Widget> equipmentComparisonChips(
+  EquipmentItem item,
+  EquipmentItem? baseline, {
+  bool showDeltas = true,
+}) => [
+  for (final line in equipmentStatLines(item, baseline, showDeltas: showDeltas))
+    StatChip(
+      key: line.key,
+      icon: line.icon(14),
+      value: line.value,
+      deltaText: line.delta,
+      deltaColor: line.gain ? statGainColor : statLossColor,
+    ),
+];
 
 /// A swing's damage as the chips print it: whole when it is, one place when
 /// a rarity roll has scaled it ("3", "3.6").

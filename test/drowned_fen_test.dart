@@ -64,8 +64,8 @@ void main() {
     test('its gear matches the Spider Den piece for piece', () {
       EquipmentItemDefinition eq(ItemId id) =>
           id.definition as EquipmentItemDefinition;
-      int weight(ItemId id) =>
-          eq(id).statWeights.values.fold(0, (sum, w) => sum + w);
+      // what a unique leans toward: the first of its catalog secondaries
+      SkillId lead(ItemId id) => eq(id).catalogSecondaries!.first;
 
       const pairs = {
         ItemId.WEBBED_CLOAK: ItemId.OOZE_SLICK_BELT,
@@ -82,17 +82,20 @@ void main() {
           inInclusiveRange(eq(spider).fibLevel, eq(spider).fibLevel + 1),
           reason: swamp.name,
         );
-        expect(weight(swamp), weight(spider), reason: swamp.name);
+        // both are a rung's budget with four secondaries set in the catalog
+        expect(eq(swamp).catalogSecondaries, hasLength(4), reason: swamp.name);
+        expect(
+          eq(spider).catalogSecondaries,
+          hasLength(4),
+          reason: spider.name,
+        );
         expect(spiderSlots, isNot(contains(eq(swamp).armorSlot)));
       }
 
       // the trims split the fen's two focuses: the crow's bracers are
       // speed, the ooze's belt strength
-      expect(eq(ItemId.CROWQUILL_BRACERS).statWeights, contains(SkillId.SPEED));
-      expect(
-        eq(ItemId.OOZE_SLICK_BELT).statWeights,
-        contains(SkillId.STRENGTH),
-      );
+      expect(lead(ItemId.CROWQUILL_BRACERS), SkillId.SPEED);
+      expect(lead(ItemId.OOZE_SLICK_BELT), SkillId.STRENGTH);
     });
   });
 

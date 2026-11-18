@@ -83,6 +83,14 @@ class InventoryService {
   /// Adds equipment to the inventory, merging onto an existing stack when
   /// the items are identical (same base, quality, and enchant).
   void addEquipment(InventoryData inventoryState, EquipmentItem item) {
+    // a piece owed secondary rolls takes them here, one roll per piece, so
+    // every source of gear — drop, craft, shop, chest — rolls the same way
+    if (item.needsSecondaryRolls) {
+      for (final piece in item.rollEach()) {
+        addEquipment(inventoryState, piece);
+      }
+      return;
+    }
     for (final stack in inventoryState.equipment) {
       if (stack.canStackWith(item)) {
         stack.count += item.count;
@@ -159,6 +167,9 @@ class InventoryService {
 
       inventoryState.equipment.remove(stack);
       stack.quality = quality;
+      // the whole stack moves together, so it rolls its secondaries once
+      // rather than splitting into pieces the caller cannot follow
+      if (stack.needsSecondaryRolls) stack.rollSecondaries();
       addEquipment(inventoryState, stack);
 
       // addEquipment may have merged it away, so hand back whatever stack

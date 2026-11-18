@@ -1091,6 +1091,45 @@ void main() {
       expect(wrong, isEmpty);
     });
 
+    test('every boss or chest unique sets its secondaries in the catalog', () {
+      final missing = <String>{};
+      for (final id in dungeons.where(hasGear)) {
+        final items = <ItemId>{
+          for (final boss in bossesOf(id)) ...uniquesOf(boss).keys,
+          for (final roll in id.definition.chestRolls)
+            for (final line in roll.entries.flattened)
+              if (line.id.definition is EquipmentItemDefinition) line.id,
+        };
+        for (final item in items) {
+          final def = item.definition as EquipmentItemDefinition;
+          final set = def.catalogSecondaries;
+          if (set == null ||
+              set.length != Rarity.LEGENDARY.secondaryRolls ||
+              set.any(
+                (s) => !EquipmentItemDefinition.secondaryStatPool.contains(s),
+              )) {
+            missing.add(item.name);
+          }
+        }
+      }
+      expect(missing, isEmpty);
+    });
+
+    test('no unique carries both strength and speed secondaries', () {
+      final both = <String>{};
+      for (final id in ItemId.values) {
+        final def = id.definition;
+        if (def is! EquipmentItemDefinition) continue;
+        final set = def.catalogSecondaries;
+        if (set != null &&
+            set.contains(SkillId.STRENGTH) &&
+            set.contains(SkillId.SPEED)) {
+          both.add(id.name);
+        }
+      }
+      expect(both, isEmpty);
+    });
+
     test('no boss or chest unique is pure defence: that is the smith\'s', () {
       final pure = <String>{};
       for (final id in dungeons.where(hasGear)) {
@@ -1101,10 +1140,10 @@ void main() {
               if (line.id.definition is EquipmentItemDefinition) line.id,
         };
         for (final item in items) {
-          final weights = (item.definition as EquipmentItemDefinition)
-              .statWeights
-              .keys
-              .toSet();
+          // a unique's secondaries count: a defence primary with core
+          // stats set alongside it is not the smith's plain plate
+          final def = item.definition as EquipmentItemDefinition;
+          final weights = {...def.statWeights.keys, ...?def.catalogSecondaries};
           if (weights.length == 1 && weights.single == SkillId.DEFENCE) {
             pure.add(item.name);
           }

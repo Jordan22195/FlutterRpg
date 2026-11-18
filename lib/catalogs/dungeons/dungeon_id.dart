@@ -402,11 +402,7 @@ enum DungeonId {
         DropRoll(
           entries: [
             ItemDropType(id: ItemId.COOKED_PIKE, lowCount: 20, highCount: 80),
-            ItemDropType(
-              id: ItemId.COOKED_SALMON,
-              lowCount: 20,
-              highCount: 80,
-            ),
+            ItemDropType(id: ItemId.COOKED_SALMON, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
@@ -919,11 +915,7 @@ enum DungeonId {
         ),
         DropRoll(
           entries: [
-            ItemDropType(
-              id: ItemId.SERPENT_SCALE,
-              lowCount: 20,
-              highCount: 80,
-            ),
+            ItemDropType(id: ItemId.SERPENT_SCALE, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.SCALE, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.CRAB_CLAW, lowCount: 20, highCount: 80),
           ],

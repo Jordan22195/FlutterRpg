@@ -77,15 +77,15 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
   /// What one swing deals before the attack multiplier, at [rarity]: the
   /// rung's damage per second times how long the swing takes, so a slower
   /// shape hits harder by exactly what it gives up in speed. A tool carries
-  /// its type's share of it; a better roll scales it the way it scales any
-  /// piece's stats.
+  /// its type's share of it; a better roll scales it by
+  /// [Rarity.primaryMultiplier], the way it scales any piece's primary stats.
   double damageAt(Rarity rarity) {
     if (!usesDamage) return 0;
     final seconds = actionInterval.inMicroseconds / 1e6;
     return weaponDamageForRung(materialRung) *
         seconds *
         weaponType.parameters.damageScale *
-        rarity.statMultiplier;
+        rarity.primaryMultiplier;
   }
 
   /// See [WeaponEquipmentParameters.speedAffinity].
@@ -106,6 +106,7 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
     super.description,
     super.iconAsset,
     super.quality,
+    super.catalogSecondaries,
   }) : _actionInterval = actionInterval;
 
   @override
@@ -135,6 +136,7 @@ class WeaponItemDefinition extends EquipmentItemDefinition {
       fibLevel: fibLevel ?? this.fibLevel,
       statWeights: statWeights ?? this.statWeights,
       actionInterval: actionInterval ?? _actionInterval,
+      catalogSecondaries: catalogSecondaries,
     );
   }
 

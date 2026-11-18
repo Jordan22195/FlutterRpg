@@ -142,14 +142,15 @@ void main() {
           SkillId.ATTACK: 1,
           SkillId.DEFENCE: 1,
         }, reason: '${tiers[tier]}_$piece is not a hybrid');
-        // the split is exact, so the budget is the total and a rarity roll
-        // always pays out its floor, even on the bottom rung
+        // the split is exact, so the budget is the total and a rarity that
+        // scales the primary half always pays out its floor, even on the
+        // bottom rung
         int total(Rarity r) =>
             def.statsAt(r).values.fold(0, (sum, stat) => sum + stat);
         expect(
-          total(Rarity.UNCOMMON),
+          total(Rarity.RARE),
           greaterThanOrEqualTo(
-            total(Rarity.COMMON) + Rarity.UNCOMMON.minStatBonus,
+            total(Rarity.COMMON) + Rarity.RARE.minPrimaryBonus,
           ),
           reason: '${tiers[tier]}_$piece would not gain from a rarity roll',
         );

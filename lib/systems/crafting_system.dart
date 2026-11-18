@@ -487,18 +487,21 @@ class CraftingSystem {
 
     for (final tier in qualityRollResult) {
       if (tier.count <= 0) continue;
-      // every inventory gets its own instance: sharing one object between
-      // two of them would double-count when stacks merge
-      for (final target in [inventoryState, craftingState.craftedItems]) {
-        final piece = itemId.build() as EquipmentItem;
-        piece.quality = tier.id;
-        piece.count = tier.count;
-        _inventoryService.addEquipment(target, piece);
+      final crafted = itemId.build() as EquipmentItem
+        ..quality = tier.id
+        ..count = tier.count;
+      // each piece rolls its own secondaries first; then every inventory
+      // gets its own instance of it, since sharing one object between two
+      // of them would double-count when stacks merge
+      for (final piece in crafted.rollEach()) {
+        for (final target in [inventoryState, craftingState.craftedItems]) {
+          _inventoryService.addEquipment(
+            target,
+            piece.copy()..count = piece.count,
+          );
+        }
+        result.equipment.add(piece);
       }
-      final reported = itemId.build() as EquipmentItem;
-      reported.quality = tier.id;
-      reported.count = tier.count;
-      result.equipment.add(reported);
     }
   }
 

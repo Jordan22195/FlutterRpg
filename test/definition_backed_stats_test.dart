@@ -98,10 +98,11 @@ void main() {
       );
     });
 
-    test('equipment keeps its instance id, quality and enchant', () {
+    test('equipment keeps its instance id, quality, rolls and enchant', () {
       final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
       helmet.count = 3;
       helmet.quality = Rarity.EPIC;
+      helmet.rollSecondaries();
       helmet.enchantName = 'Boar';
       helmet.enchantBonus = {SkillId.STRENGTH: 4};
 
@@ -114,6 +115,8 @@ void main() {
       expect(restored.quality, Rarity.EPIC);
       expect(restored.enchantName, 'Boar');
       expect(restored.enchantBonus, {SkillId.STRENGTH: 4});
+      expect(restored.secondaryRolls, helmet.secondaryRolls);
+      expect(restored.effectiveSkillBonus, helmet.effectiveSkillBonus);
       expect(restored.displayName, helmet.displayName);
       expect(restored.stackKey, helmet.stackKey);
       expect(
@@ -123,10 +126,27 @@ void main() {
           'count',
           'instanceId',
           'quality',
+          'secondaryRolls',
           'enchantName',
           'enchantBonus',
         ]),
       );
+    });
+
+    test('a piece saved before secondaries existed rolls them on load', () {
+      final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
+      helmet.quality = Rarity.LEGENDARY;
+      final json = helmet.toJson();
+      expect(json.containsKey('secondaryRolls'), isFalse);
+
+      final restored = roundTrip(json, Item.fromJson) as EquipmentItem;
+
+      expect(restored.secondaryRolls, hasLength(4));
+      expect(restored.needsSecondaryRolls, isFalse);
+      // and it keeps them: the next save writes the rolls it got
+      final again =
+          roundTrip(restored.toJson(), Item.fromJson) as EquipmentItem;
+      expect(again.secondaryRolls, restored.secondaryRolls);
     });
   });
 
@@ -269,6 +289,7 @@ void main() {
       final equipment = EquipmentData();
       final helmet = ItemId.COPPER_HELMET.build() as EquipmentItem;
       helmet.quality = Rarity.UNCOMMON;
+      helmet.rollSecondaries();
       equipment.armorEquipment[ArmorSlots.HEAD] = helmet;
 
       final restored = EquipmentData.fromJson(

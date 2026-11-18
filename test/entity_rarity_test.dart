@@ -57,7 +57,12 @@ void main() {
       final def = ItemId.COPPER_HELMET.definition as EquipmentItemDefinition;
       expect(def.budgetAt(Rarity.COMMON), Util.fib(def.fibLevel));
 
-      final budgets = Rarity.ladder.map(def.budgetAt).toList();
+      // what each tier is worth all told: its primary budget plus the
+      // secondary rolls it carries, whichever stats they land on
+      final budgets = [
+        for (final r in Rarity.ladder)
+          def.budgetAt(r) + r.secondaryRolls * def.secondaryRollValue,
+      ];
       for (var i = 1; i < budgets.length; i++) {
         expect(
           budgets[i],

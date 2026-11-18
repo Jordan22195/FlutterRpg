@@ -56,7 +56,7 @@ void main() {
     expect(combat(EntityId.SKELETON).bonusDrops, isEmpty);
   });
 
-  test('tattered cloth is pure attack on the second rung', () {
+  test('tattered cloth sits on the second rung, one focus a piece', () {
     for (final id in [
       ItemId.TATTERED_HOOD,
       ItemId.TATTERED_CLOAK,
@@ -65,8 +65,18 @@ void main() {
     ]) {
       final def = id.definition as EquipmentItemDefinition;
       expect(def.fibLevel, 2, reason: id.name);
-      expect(def.statWeights.keys, [SkillId.ATTACK], reason: id.name);
+      expect(def.catalogSecondaries, hasLength(4), reason: id.name);
     }
+    // the four rags lean four different ways
+    expect({
+      for (final id in [
+        ItemId.TATTERED_HOOD,
+        ItemId.TATTERED_CLOAK,
+        ItemId.TATTERED_WRAPS,
+        ItemId.TATTERED_SHOES,
+      ])
+        (id.definition as EquipmentItemDefinition).catalogSecondaries!.first,
+    }, hasLength(4));
   });
 
   test('the wraith haunts the darkwood and sheds grave moss and rags', () {

@@ -34,22 +34,27 @@ void main() {
     });
   });
 
-  test('the bracers sit on the wrist and split toward their stat', () {
+  test('the bracers sit on the wrist and lean toward their stat', () {
+    SkillId lead(ItemId id) => gear(id).catalogSecondaries!.first;
     expect(gear(ItemId.BEAR_HIDE_BRACERS).armorSlot, ArmorSlots.WRIST);
+    // the bear's are a defender's, leaning strength
     expect(gear(ItemId.BEAR_HIDE_BRACERS).statWeights, {
-      SkillId.STRENGTH: 2,
-      SkillId.RECOVERY: 1,
+      SkillId.DEFENCE: 2,
+      SkillId.ATTACK: 1,
     });
+    expect(lead(ItemId.BEAR_HIDE_BRACERS), SkillId.STRENGTH);
     expect(gear(ItemId.WOLF_HIDE_BRACERS).armorSlot, ArmorSlots.WRIST);
     expect(gear(ItemId.WOLF_HIDE_BRACERS).statWeights, {
-      SkillId.ATTACK: 2,
-      SkillId.SPEED: 1,
+      SkillId.ATTACK: 3,
+      SkillId.DEFENCE: 1,
     });
+    expect(lead(ItemId.WOLF_HIDE_BRACERS), SkillId.SPEED);
     expect(gear(ItemId.WOLF_HIDE_BELT).armorSlot, ArmorSlots.WAIST);
     expect(gear(ItemId.WOLF_HIDE_BELT).statWeights, {
-      SkillId.ATTACK: 2,
-      SkillId.SPEED: 1,
+      SkillId.ATTACK: 1,
+      SkillId.DEFENCE: 1,
     });
+    expect(lead(ItemId.WOLF_HIDE_BELT), SkillId.SPEED);
   });
 
   test('the spider den bosses drop a speed bracer and a speed shoulder', () {
@@ -62,15 +67,20 @@ void main() {
       contains(ItemId.BROODMOTHERS_MANTLE),
     );
     expect(gear(ItemId.WEBBED_BRACERS).armorSlot, ArmorSlots.WRIST);
-    // the combat stat leads on both; speed rides second
-    expect(gear(ItemId.WEBBED_BRACERS).statWeights, {
-      SkillId.DEFENCE: 2,
-      SkillId.SPEED: 1,
-    });
+    // defence is the primary on both; speed is the first secondary
+    expect(gear(ItemId.WEBBED_BRACERS).statWeights, {SkillId.DEFENCE: 1});
+    expect(
+      gear(ItemId.WEBBED_BRACERS).catalogSecondaries!.first,
+      SkillId.SPEED,
+    );
     expect(gear(ItemId.BROODMOTHERS_MANTLE).armorSlot, ArmorSlots.SHOULDER);
     expect(gear(ItemId.BROODMOTHERS_MANTLE).statWeights, {
-      SkillId.DEFENCE: 2,
-      SkillId.SPEED: 1,
+      SkillId.DEFENCE: 3,
+      SkillId.ATTACK: 1,
     });
+    expect(
+      gear(ItemId.BROODMOTHERS_MANTLE).catalogSecondaries!.first,
+      SkillId.SPEED,
+    );
   });
 }

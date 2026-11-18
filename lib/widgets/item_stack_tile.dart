@@ -302,6 +302,13 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
                     Text("${stat.value}"),
                   ],
                 ),
+            if (itemDef is EquipmentItemDefinition &&
+                itemDef.rollsSecondaries &&
+                _effectiveQuality.secondaryRolls > 0)
+              Text(
+                "+${_effectiveQuality.secondaryRolls} random core stat rolls, "
+                "+${itemDef.secondaryRollValue} each",
+              ),
 
             if (itemDef is BuffItemDefinition)
               for (var stat in itemDef.skillBonus.entries)
