@@ -17,6 +17,7 @@ import '../data/bound_action.dart';
 import '../controllers/encounter_controller.dart';
 import '../controllers/action_timing_controller.dart';
 import '../data/level_standing.dart';
+import '../controllers/inventory_controller.dart';
 import '../controllers/player_data_controller.dart';
 import '../data/zone_details.dart';
 import '../systems/exploration_system.dart';
@@ -34,6 +35,7 @@ import '../widgets/sprite_frame.dart';
 import '../widgets/travel_row.dart';
 import '../widgets/entity_info_dialog.dart';
 import '../widgets/discovery_tile.dart';
+import '../widgets/dungeon_banner.dart';
 import '../widgets/find_flash.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/skill_ring_row.dart';
@@ -273,32 +275,27 @@ class _ExploreScreenState extends State<ExploreScreen> {
         onTap: open,
       );
     }
-    if (e is DungeonEntity) {
-      // zone dungeons carry a rarity but no key: the rarity is the frame's
-      // outline, and the line is its combat level, read like a fight's
-      final level = worldController.dungeonLevel(e);
-      return PlaceTile(
-        key: ValueKey(e.id),
-        active: active,
-        id: e.id,
-        name: e.name,
-        subtitle: level == null ? 'Dungeon' : 'Combat · Lv $level',
-        subtitleRow: level == null
-            ? const SizedBox.shrink()
-            : PlaceLine(
-                skills: const [SkillId.ATTACK],
-                level: level,
-                standing: LevelStanding.of(
-                  level,
-                  context.watch<PlayerDataController>().getCombatLevel(),
-                ),
-              ),
-        kind: SpriteKind.dungeon,
-        fallbackIcon: Icons.fort,
-        onTap: open,
-      );
-    }
     return const SizedBox.shrink();
+  }
+
+  /// A found dungeon, drawn as a banner over the grid rather than a tile in
+  /// it. Its tap is the tile's: into the dungeon.
+  Widget _dungeonBanner(WorldController worldController, DungeonEntity e) {
+    final level = worldController.dungeonLevel(e);
+    final inventory = context.watch<InventoryController>();
+    return DungeonBanner(
+      key: ValueKey(e.id),
+      dungeonId: e.dungeonId,
+      name: e.name,
+      level: level,
+      levelMet:
+          level == null ||
+          context.watch<PlayerDataController>().getCombatLevel() >= level,
+      uniques: e.dungeonId.definition.uniques,
+      obtainedRarities: inventory.obtainedRarities,
+      active: _isActive(worldController, e),
+      onTap: () => worldController.navigateToEntity(e.id, context),
+    );
   }
 
   @override
@@ -416,20 +413,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ? _emptyBody(context, 'Nothing here yet')
             : Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: PlaceGrid(
-                  tiles: [
-                    // fires come first: one tile per fire burning, then the
-                    // way to light another while the zone has room
-                    ..._fireTiles(worldController, structures),
-                    for (final e in structures)
-                      if (e is! FirePitEntity)
-                        _buildPlaceTile(worldController, e),
-                    for (final d in unfoundPlaces)
-                      _UndiscoveredCard(
-                        key: ValueKey('undiscovered-${d.name}'),
-                        discovery: d,
-                      ),
-                    for (final entry in discoveries) entry.build(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // found dungeons stand over the grid, one banner each,
+                    // so a dungeon reads as a place to go into. one still
+                    // to find keeps its slot in the grid below
+                    for (final e in structures.whereType<DungeonEntity>()) ...[
+                      _dungeonBanner(worldController, e),
+                      const SizedBox(height: 10),
+                    ],
+                    PlaceGrid(
+                      tiles: [
+                        // fires come first: one tile per fire burning, then
+                        // the way to light another while the zone has room
+                        ..._fireTiles(worldController, structures),
+                        for (final e in structures)
+                          if (e is! FirePitEntity && e is! DungeonEntity)
+                            _buildPlaceTile(worldController, e),
+                        for (final d in unfoundPlaces)
+                          _UndiscoveredCard(
+                            key: ValueKey('undiscovered-${d.name}'),
+                            discovery: d,
+                          ),
+                        for (final entry in discoveries) entry.build(),
+                      ],
+                    ),
                   ],
                 ),
               ),

@@ -1109,6 +1109,45 @@ void main() {
       return '${Rarity.values[i[0]].name}/${Rarity.values[i[1]].name}';
     }
 
+    // the banner's list is kept by hand: it has to hold every piece a boss
+    // or the chest gives, and nothing the dungeon doesn't drop
+    test('each dungeon lists every unique it drops, and only those', () {
+      Iterable<ItemId> gearIn(Iterable<DropRoll> rolls) => [
+        for (final roll in rolls)
+          for (final line in roll.entries.flattened)
+            if (line.id.definition is EquipmentItemDefinition) line.id,
+      ];
+      final wrong = <String>[];
+      for (final id in DungeonId.values) {
+        if (id == DungeonId.NULL) continue;
+        final def = id.definition;
+        final listed = def.uniques;
+        if (listed.toSet().length != listed.length) {
+          wrong.add('${id.name} lists a piece twice');
+        }
+        final owed = {
+          for (final boss in bossesOf(id))
+            ...gearIn((boss.definition as CombatEntityDefinition).bonusDrops),
+          ...gearIn(def.chestRolls),
+        };
+        final dropped = {
+          ...owed,
+          for (final entry in def.entries)
+            for (final ref in entry.entities)
+              if (ref.entityId.definition case final CombatEntityDefinition e)
+                ...gearIn(e.bonusDrops),
+        };
+        if (id.name.startsWith('DEV')) continue;
+        for (final item in owed.difference(listed.toSet())) {
+          wrong.add('${id.name} drops ${item.name} but does not list it');
+        }
+        for (final item in listed.toSet().difference(dropped)) {
+          wrong.add('${id.name} lists ${item.name} but never drops it');
+        }
+      }
+      expect(wrong, isEmpty);
+    });
+
     test('every boss owns one or two uniques, at its band\'s two rarities', () {
       final owners = <ItemId, Set<EntityId>>{};
       final wrong = <String>[];

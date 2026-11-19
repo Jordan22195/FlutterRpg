@@ -8,8 +8,27 @@ class InventoryData {
   /// quality and enchantment, so they never stack.
   List<EquipmentItem> equipment = [];
 
-  InventoryData({required this.itemMap, List<EquipmentItem>? equipment})
-    : equipment = equipment ?? [];
+  /// Every item the player has ever had come into the bag, kept after the
+  /// item itself is sold, eaten or salvaged, with each rarity a piece of
+  /// gear has come in at. Stackables carry no rarity, so theirs is empty.
+  /// It is what a dungeon's unique loot reads as collected. Saves from
+  /// before it was kept are seeded on load from what they hold
+  /// (GameSessionFactory.create).
+  Map<ItemId, Set<Rarity>> obtained;
+
+  InventoryData({
+    required this.itemMap,
+    List<EquipmentItem>? equipment,
+    Map<ItemId, Set<Rarity>>? obtained,
+  }) : equipment = equipment ?? [],
+       obtained = obtained ?? {};
+
+  /// Logs [id] as obtained, at [rarity] when it is gear.
+  void recordObtained(ItemId id, [Rarity? rarity]) {
+    if (id == ItemId.NULL) return;
+    final rarities = obtained[id] ??= {};
+    if (rarity != null) rarities.add(rarity);
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -20,6 +39,10 @@ class InventoryData {
         ),
       ),
       'equipment': equipment.map((e) => e.toJson()).toList(),
+      'obtained': {
+        for (final MapEntry(key: id, value: rarities) in obtained.entries)
+          id.name: [for (final r in rarities) r.name],
+      },
     };
   }
 
@@ -54,6 +77,32 @@ class InventoryData {
       }
     }
 
-    return InventoryData(itemMap: itemMap, equipment: equipment);
+    // tolerated when missing: older saves never kept it. a bare list of
+    // names is the first form it took, before rarities were kept: those
+    // items stay obtained, at no rarity known
+    final obtained = <ItemId, Set<Rarity>>{};
+    final rawObtained = json['obtained'];
+    if (rawObtained is List) {
+      for (final name in rawObtained) {
+        final id = name is String ? ItemId.byName(name) : null;
+        if (id != null) obtained[id] = {};
+      }
+    } else if (rawObtained is Map<String, dynamic>) {
+      for (final MapEntry(key: name, value: raw) in rawObtained.entries) {
+        final id = ItemId.byName(name);
+        if (id == null) continue;
+        obtained[id] = {
+          if (raw is List)
+            for (final r in raw)
+              if (r is String) ?Rarity.values.asNameMap()[r],
+        };
+      }
+    }
+
+    return InventoryData(
+      itemMap: itemMap,
+      equipment: equipment,
+      obtained: obtained,
+    );
   }
 }

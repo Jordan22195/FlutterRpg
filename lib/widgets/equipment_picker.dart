@@ -358,7 +358,7 @@ class _EquipmentPickerSheetState extends State<_EquipmentPickerSheet> {
           const _SectionLabel('Currently equipped'),
           const SizedBox(height: 6),
           if (equipped != null)
-            _PickerCard(
+            EquipmentPickerCard(
               item: equipped,
               baseline: equipped,
               isEquipped: true,
@@ -397,7 +397,7 @@ class _EquipmentPickerSheetState extends State<_EquipmentPickerSheet> {
                 itemBuilder: (_, i) {
                   final candidate = available[i];
                   final locked = widget.lockedReason?.call(candidate);
-                  return _PickerCard(
+                  return EquipmentPickerCard(
                     key: ObjectKey(candidate),
                     item: candidate,
                     baseline: equipped,
@@ -524,9 +524,11 @@ class _EmptySlotCard extends StatelessWidget {
 
 /// One item row in the picker. When [isEquipped], the card is tinted
 /// and shows plain stats plus an optional Unequip action; otherwise it
-/// shows stats with deltas against [baseline] and equips on tap.
-class _PickerCard extends StatelessWidget {
-  const _PickerCard({
+/// shows stats with deltas against [baseline] and equips on tap. Other
+/// lists of gear (a dungeon's uniques) wear it too, with their own
+/// [trailing] on the right.
+class EquipmentPickerCard extends StatelessWidget {
+  const EquipmentPickerCard({
     super.key,
     required this.item,
     required this.baseline,
@@ -534,6 +536,7 @@ class _PickerCard extends StatelessWidget {
     this.lockedReason,
     this.onTap,
     this.onUnequip,
+    this.trailing,
   });
 
   final EquipmentItem item;
@@ -546,6 +549,9 @@ class _PickerCard extends StatelessWidget {
   final String? lockedReason;
   final VoidCallback? onTap;
   final VoidCallback? onUnequip;
+
+  /// Drawn at the card's right edge, after the stats.
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -681,6 +687,10 @@ class _PickerCard extends StatelessWidget {
                         ),
                     ],
                   ),
+                ],
+                if (trailing != null) ...[
+                  const SizedBox(width: 8),
+                  trailing!,
                 ],
               ],
             ),

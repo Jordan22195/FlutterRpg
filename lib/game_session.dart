@@ -398,6 +398,21 @@ class GameSessionFactory {
       }
     }
 
+    // the obtained log: whatever the save holds was obtained, at the
+    // rarity it holds it at, so a save from before the log was kept starts
+    // with its bag and its worn gear already collected. a union, so later
+    // loads add nothing new
+    final inventory = save.inventoryData;
+    final equipped = save.playerData.equipmentData;
+    inventory.itemMap.keys.forEach(inventory.recordObtained);
+    for (final piece in [
+      ...inventory.equipment,
+      ...equipped.armorEquipment.values.nonNulls,
+      ...equipped.equipedTools.values.nonNulls,
+    ]) {
+      inventory.recordObtained(piece.id, piece.quality);
+    }
+
     // a save written during the 200ms respawn window restores the flag
     // with no respawn pending; clear it so the ui isn't stuck spinning
     save.encounterData.respawning = false;

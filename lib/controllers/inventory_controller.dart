@@ -63,6 +63,15 @@ class InventoryController extends ChangeNotifier {
     return _inventoryService.getObjectStackList(_inventoryData);
   }
 
+  /// Whether [id] has ever come into the bag, whether or not it's still
+  /// there.
+  bool hasObtained(ItemId id) => _inventoryData.obtained.containsKey(id);
+
+  /// The rarities [id] has come into the bag at, or null when it never
+  /// has. Empty for one with no rarity of its own, or had before rarities
+  /// were kept.
+  Set<Rarity>? obtainedRarities(ItemId id) => _inventoryData.obtained[id];
+
   int getItemCount(ItemId id) {
     return _inventoryService.getItemCount(_inventoryData, id);
   }

@@ -6,12 +6,14 @@ import '../data/inventory_data.dart';
 
 class InventoryService {
   void addItem(InventoryData inventoryState, ItemId id) {
+    inventoryState.recordObtained(id);
     inventoryState.itemMap.update(id, (count) => count + 1, ifAbsent: () => 1);
   }
 
   void addItems(InventoryData inventoryState, List<ObjectStack> items) {
     for (final item in items) {
       if (item.count <= 0 || item.id == ItemId.NULL) continue;
+      inventoryState.recordObtained(item.id);
       inventoryState.itemMap.update(
         item.id,
         (count) => count + item.count,
@@ -46,6 +48,7 @@ class InventoryService {
     if (count <= 0) {
       inventoryState.itemMap.remove(id);
     } else {
+      inventoryState.recordObtained(id);
       inventoryState.itemMap[id] = count;
     }
   }
@@ -91,6 +94,7 @@ class InventoryService {
       }
       return;
     }
+    inventoryState.recordObtained(item.id, item.quality);
     for (final stack in inventoryState.equipment) {
       if (stack.canStackWith(item)) {
         stack.count += item.count;
@@ -129,6 +133,7 @@ class InventoryService {
     EquipmentItem item,
     int count,
   ) {
+    if (count > 0) inventoryState.recordObtained(item.id, item.quality);
     for (final stack in inventoryState.equipment) {
       if (stack.canStackWith(item)) {
         if (count <= 0) {

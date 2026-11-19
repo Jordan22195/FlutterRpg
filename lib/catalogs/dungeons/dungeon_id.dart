@@ -37,6 +37,11 @@ enum DungeonId {
     DungeonDefinition(
       name: "Goblin Queen's Lair",
       iconAsset: "assets/images/dungeons/goblin_queen_lair.png",
+      uniques: [
+        ItemId.GOBLIN_CROWN,
+        ItemId.GOBLIN_SCEPTER,
+        ItemId.QUEENS_TRAIN,
+      ],
       type: DungeonType.LANDMARK,
       mapNodeType: MapNodeType.BOSS_LAIR,
       keyItemId: ItemId.GOBLIN_QUEEN_KEY,
@@ -95,6 +100,14 @@ enum DungeonId {
     DungeonDefinition(
       name: "Spider Den",
       iconAsset: "assets/images/dungeons/spider_den.png",
+      uniques: [
+        ItemId.WEBBED_CLOAK,
+        ItemId.WEBBED_BRACERS,
+        ItemId.VENOMFANG_RING,
+        ItemId.SPIDER_SILK_NECKLACE,
+        ItemId.BROODMOTHERS_MANTLE,
+        ItemId.BROODSILK_LEGGINGS,
+      ],
       type: DungeonType.ZONE,
       // a bulk haul of everything the darkwood gives, a roll apiece, and the
       // Broodsilk Leggings, which only the chest gives
@@ -189,6 +202,13 @@ enum DungeonId {
     DungeonDefinition(
       name: "Grainery",
       iconAsset: "assets/images/dungeons/grainery.png",
+      uniques: [
+        ItemId.CHICKEN_CHARM,
+        ItemId.MOOD_RING,
+        ItemId.PITCHFORK,
+        ItemId.WOOD_SHIELD,
+        ItemId.FARMHAND_GLOVES,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -264,6 +284,20 @@ enum DungeonId {
     DungeonDefinition(
       name: "Wolf Den",
       iconAsset: "assets/images/dungeons/wolf_den.png",
+      // what the den is farmed for: each boss's two pieces, floor by
+      // floor, the two its trash carry, then the chest's own
+      uniques: [
+        ItemId.BEAR_HIDE_BRACERS,
+        ItemId.WOLF_DEN_HELM,
+        ItemId.WOLF_HIDE_BRACERS,
+        ItemId.WOLF_DEN_BOOTS,
+        ItemId.REDCAP_RING,
+        ItemId.WOLF_DEN_GLOVES,
+        ItemId.WOLF_DEN_CLOAK,
+        ItemId.WOLF_HIDE_BELT,
+        ItemId.WOLF_DEN_CHESTGUARD,
+        ItemId.WOLF_DEN_LEGGUARDS,
+      ],
       type: DungeonType.ZONE,
       // a bulk haul of everything the forest gives, a roll apiece, and the
       // set's chest and legs, which only the chest gives
@@ -382,6 +416,11 @@ enum DungeonId {
     DungeonDefinition(
       name: "The Reedmaze",
       iconAsset: "assets/images/dungeons/reedmaze.png",
+      uniques: [
+        ItemId.CROAKERS_CHARM,
+        ItemId.SNAPJAW_SHELL,
+        ItemId.RIVERCANE_MANTLE,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -476,6 +515,12 @@ enum DungeonId {
     DungeonDefinition(
       name: "Drowned Fen",
       iconAsset: "assets/images/dungeons/drowned_fen.png",
+      uniques: [
+        ItemId.CROWQUILL_BRACERS,
+        ItemId.OOZE_SLICK_BELT,
+        ItemId.MURKJAW_PAULDRONS,
+        ItemId.MURKHIDE_CUIRASS,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -579,6 +624,12 @@ enum DungeonId {
     DungeonDefinition(
       name: "The Silt Warrens",
       iconAsset: "assets/images/dungeons/silt_warrens.png",
+      uniques: [
+        ItemId.MUDCLAW_GRIPS,
+        ItemId.WALLOWHIDE_TREADS,
+        ItemId.MUDMAW_JAWBLADE,
+        ItemId.SILTSCALE_COIF,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -689,6 +740,15 @@ enum DungeonId {
     DungeonDefinition(
       name: "Tempest Reach",
       iconAsset: "assets/images/dungeons/tempest_reach.png",
+      uniques: [
+        ItemId.WARLORDS_CLEAVER,
+        ItemId.WARLORDS_WARHELM,
+        ItemId.ALPHAS_FANG,
+        ItemId.ALPHAS_MANTLE,
+        ItemId.STORMCALLERS_SCEPTER,
+        ItemId.GALEWRAP_GAUNTLETS,
+        ItemId.STORMHIDE_LEGS,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -796,6 +856,15 @@ enum DungeonId {
     DungeonDefinition(
       name: "Haunted Ruins",
       iconAsset: "assets/images/dungeons/haunted_ruins.png",
+      uniques: [
+        ItemId.GRAVEKEEPERS_GREATCOAT,
+        ItemId.GRAVEKEEPERS_KEYRING,
+        ItemId.SHROUDREAVER,
+        ItemId.WEEPING_ROSARY,
+        ItemId.ABBOTS_GRIMOIRE,
+        ItemId.OSSUARY_PAULDRONS,
+        ItemId.RELIQUARY_GAUNTLETS,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -904,6 +973,16 @@ enum DungeonId {
     DungeonDefinition(
       name: "Old Sorrow Mine",
       iconAsset: "assets/images/dungeons/old_sorrow_mine.png",
+      uniques: [
+        ItemId.PACKRATS_TRINKET,
+        ItemId.DUSKWING_CUFFS,
+        ItemId.BORERS_MANDIBLE,
+        ItemId.BORERS_SHELL_PAULDRONS,
+        ItemId.LODESTONE_MAUL,
+        ItemId.HEART_OF_THE_LODE,
+        ItemId.PROSPECTORS_DUSTER,
+        ItemId.MOTHER_LODE_NUGGET,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -1014,6 +1093,16 @@ enum DungeonId {
     DungeonDefinition(
       name: "The Redwall Eyrie",
       iconAsset: "assets/images/dungeons/redwall_eyrie.png",
+      uniques: [
+        ItemId.BASILISK_FANG,
+        ItemId.GAZEGLASS_RING,
+        ItemId.LEDGEWALKER_GREAVES,
+        ItemId.CHIMERAS_HORN,
+        ItemId.REDWINGS_TALON,
+        ItemId.REDWINGS_CREST,
+        ItemId.EYRIE_WINDCLOAK,
+        ItemId.REDWALL_CUIRASS,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -1122,6 +1211,15 @@ enum DungeonId {
     DungeonDefinition(
       name: "Brinedeep Caves",
       iconAsset: "assets/images/dungeons/brinedeep_caves.png",
+      uniques: [
+        ItemId.BRINECRUSHER_CLAW,
+        ItemId.BRINECLAW_BRACERS,
+        ItemId.TIDECALLERS_SCEPTER,
+        ItemId.SALTSCALE_SANDALS,
+        ItemId.LEVIATHANS_FANG,
+        ItemId.LEVIATHAN_GIRDLE,
+        ItemId.PEARLSCALE_CUIRASS,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -1228,6 +1326,15 @@ enum DungeonId {
     DungeonDefinition(
       name: "Spinehold Caverns",
       iconAsset: "assets/images/dungeons/spinehold_caverns.png",
+      uniques: [
+        ItemId.TROLLHIDE_TREADS,
+        ItemId.TOLLKEEPERS_BELT,
+        ItemId.SENTINELS_BULWARK,
+        ItemId.SENTINELS_GORGET,
+        ItemId.DRAKEFANG_GREATSWORD,
+        ItemId.WYRMCREST_RING,
+        ItemId.ARCHWARDENS_HELM,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -1314,6 +1421,15 @@ enum DungeonId {
     DungeonDefinition(
       name: "The Ashen Vaults",
       iconAsset: "assets/images/dungeons/ashen_vaults.png",
+      uniques: [
+        ItemId.CINDERFANG,
+        ItemId.WYVERNWING_CLOAK,
+        ItemId.SLAGPLATE_BRACERS,
+        ItemId.SLAGPLATE_PAULDRONS,
+        ItemId.RIDGEHEART_GAUNTLETS,
+        ItemId.ASHWEAVE_HAUBERK,
+        ItemId.EMBERGLASS_PENDANT,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -1404,6 +1520,15 @@ enum DungeonId {
     DungeonDefinition(
       name: "Gaunt Tor",
       iconAsset: "assets/images/dungeons/gaunt_tor.png",
+      uniques: [
+        ItemId.THUNDERHORN_HELM,
+        ItemId.CAIRNSTONE_GREAVES,
+        ItemId.CAIRNWARDENS_SIGNET,
+        ItemId.HILL_KINGS_CUDGEL,
+        ItemId.GIANTBONE_GIRDLE,
+        ItemId.IRONROOT_CUIRASS,
+        ItemId.RAMHIDE_MANTLE,
+      ],
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -1661,6 +1786,11 @@ enum DungeonId {
     DungeonDefinition(
       name: "Goblin Camp",
       iconAsset: "assets/images/dungeons/goblin_camp.png",
+      uniques: [
+        ItemId.SERGEANTS_SHIV,
+        ItemId.WARBAND_BELT,
+        ItemId.CAMP_BANNER_CLOAK,
+      ],
       type: DungeonType.TRANSIENT,
       chestRolls: [
         DropRoll(

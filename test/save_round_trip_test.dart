@@ -71,6 +71,83 @@ void main() {
       expect(restored.skillBoost, SkillId.SPEED);
     });
 
+    test('a unique stays collected after it leaves the bag', () {
+      final factory = GameSessionFactory();
+      final catalogs = factory.catalog1();
+      final session = factory.create(
+        save: factory.newGame(catalogs),
+        catalogs: catalogs,
+        vsync: const TestVSync(),
+      );
+      final unique = DungeonId.GRAINERY.definition.uniques.first;
+      final piece = (unique.build() as EquipmentItem)..quality = Rarity.RARE;
+      session.inventoryController.devSetEquipmentCount(piece, 1);
+      session.inventoryController.devSetEquipmentCount(piece, 0);
+      expect(session.inventoryController.hasObtained(unique), isTrue);
+
+      final restored = reload(session.saveGameData, catalogs);
+      expect(restored.inventoryController.hasObtained(unique), isTrue);
+      // and at the rarity it came in at
+      expect(restored.inventoryController.obtainedRarities(unique), {
+        Rarity.RARE,
+      });
+      expect(restored.inventoryController.getEquipmentCount(piece), 0);
+      session.dispose();
+      restored.dispose();
+    });
+
+    test('a save from before the log counts what it holds as collected', () {
+      final factory = GameSessionFactory();
+      final catalogs = factory.catalog1();
+      final save = factory.newGame(catalogs);
+      final uniques = DungeonId.GRAINERY.definition.uniques;
+      expect(uniques.length, greaterThanOrEqualTo(2));
+      final carried = (uniques[0].build() as EquipmentItem)
+        ..quality = Rarity.UNCOMMON;
+      final worn = (uniques[1].build() as EquipmentItem)..quality = Rarity.RARE;
+      save.inventoryData.equipment.add(carried);
+      final slot = save.playerData.equipmentData.armorEquipment.keys.first;
+      save.playerData.equipmentData.armorEquipment[slot] = worn;
+
+      final restored = reload(
+        save,
+        catalogs,
+        tamper: (json) {
+          (json['inventoryData'] as Map<String, dynamic>).remove('obtained');
+          return json;
+        },
+      );
+      final inventory = restored.inventoryController;
+      expect(inventory.obtainedRarities(uniques[0]), {Rarity.UNCOMMON});
+      expect(inventory.obtainedRarities(uniques[1]), {Rarity.RARE});
+      for (final other in uniques.skip(2)) {
+        expect(inventory.hasObtained(other), isFalse, reason: other.name);
+      }
+      restored.dispose();
+    });
+
+    test('a log saved before rarities were kept loads with none known', () {
+      final factory = GameSessionFactory();
+      final catalogs = factory.catalog1();
+      final save = factory.newGame(catalogs);
+      final unique = DungeonId.GRAINERY.definition.uniques.first;
+
+      final restored = reload(
+        save,
+        catalogs,
+        tamper: (json) {
+          (json['inventoryData'] as Map<String, dynamic>)['obtained'] = [
+            unique.name,
+          ];
+          return json;
+        },
+      );
+      final inventory = restored.inventoryController;
+      expect(inventory.hasObtained(unique), isTrue);
+      expect(inventory.obtainedRarities(unique), isEmpty);
+      restored.dispose();
+    });
+
     test('SaveGameData survives a JSON round trip', () {
       final factory = GameSessionFactory();
       final catalogs = factory.catalog1();

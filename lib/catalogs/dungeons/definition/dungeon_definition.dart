@@ -1,4 +1,6 @@
+import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/catalogs/dungeons/dungeon_type.dart';
 import 'package:rpg/catalogs/zones/map_node_type.dart';
@@ -30,6 +32,13 @@ class DungeonDefinition {
   /// lets DungeonSystem build a stand-in from the floors' bosses.
   final List<DropRoll> chestRolls;
 
+  /// The gear this dungeon is farmed for, in the order its banner shows
+  /// them: each boss's pieces floor by floor, any its trash carry, then the
+  /// chest's own. Kept by hand beside the drop tables
+  /// (design/DUNGEON_LOOT_GUIDE.md); catalog_integrity_test checks the two
+  /// agree.
+  final List<ItemId> uniques;
+
   const DungeonDefinition({
     required this.name,
     required this.iconAsset,
@@ -40,6 +49,7 @@ class DungeonDefinition {
     this.requiredSkill = SkillId.NULL,
     this.requiredLevel = 0,
     this.chestRolls = const [],
+    this.uniques = const [],
   });
 
   /// Whether the first floor requires (and consumes) a key. Charged once,
@@ -76,6 +86,41 @@ class DungeonDefinition {
     return null;
   }
 
+  /// The rarities [id] drops at anywhere in this dungeon — off any of its
+  /// monsters or out of its chest — lowest first. What a unique can be
+  /// collected at, read from the drop tables so the two never disagree.
+  List<Rarity> dropRaritiesOf(ItemId id) =>
+      (_dropRarities[this] ??= _readDropRarities())[id] ?? const [];
+
+  static final _dropRarities = Expando<Map<ItemId, List<Rarity>>>();
+
+  Map<ItemId, List<Rarity>> _readDropRarities() {
+    final found = <ItemId, Set<Rarity>>{};
+    void take(Iterable<ItemDropType> lines) {
+      for (final line in lines) {
+        (found[line.id] ??= {}).add(line.rarity);
+      }
+    }
+
+    for (final entry in entries) {
+      for (final ref in entry.entities) {
+        final def = ref.entityId.definition;
+        if (def is! EncounterEntityDefinition) continue;
+        take(def.itemDrops.flattened);
+        for (final roll in def.bonusDrops) {
+          take(roll.entries.flattened);
+        }
+      }
+    }
+    for (final roll in chestRolls) {
+      take(roll.entries.flattened);
+    }
+    return {
+      for (final MapEntry(key: id, value: rarities) in found.entries)
+        id: rarities.toList()..sort((a, b) => a.index.compareTo(b.index)),
+    };
+  }
+
   /// A variant of this definition. Definitions are `const` and shared, so a
   /// caller needing a tweaked dungeon builds a new value here.
   DungeonDefinition copyWith({
@@ -88,6 +133,7 @@ class DungeonDefinition {
     SkillId? requiredSkill,
     int? requiredLevel,
     List<DropRoll>? chestRolls,
+    List<ItemId>? uniques,
   }) {
     return DungeonDefinition(
       name: name ?? this.name,
@@ -99,6 +145,7 @@ class DungeonDefinition {
       requiredSkill: requiredSkill ?? this.requiredSkill,
       requiredLevel: requiredLevel ?? this.requiredLevel,
       chestRolls: chestRolls ?? this.chestRolls,
+      uniques: uniques ?? this.uniques,
     );
   }
 }

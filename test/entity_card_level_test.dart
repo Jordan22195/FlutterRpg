@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
+import 'package:rpg/catalogs/dungeons/dungeons.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/controllers/action_queue_controller.dart';
 import 'package:rpg/controllers/action_timing_controller.dart';
 import 'package:rpg/controllers/buff_controller.dart';
@@ -16,12 +18,15 @@ import 'package:rpg/controllers/world_controller.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/screens/explore_screen.dart';
+import 'package:rpg/services/entity_screen_router_service.dart';
 import 'package:rpg/utilities/image_resolver.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/level_standing.dart';
 import 'package:rpg/theme/game_colors.dart';
 import 'package:rpg/widgets/segmented_tabs.dart';
 import 'package:rpg/widgets/fill_bar.dart';
+import 'package:rpg/widgets/place_tile.dart';
+import 'package:rpg/widgets/dungeon_banner.dart';
 import 'package:rpg/widgets/icon_renderer.dart';
 import 'package:rpg/widgets/progress_bars.dart';
 import 'support/gathering_tools.dart';
@@ -74,6 +79,7 @@ void main() {
     bool tools = true,
     // stands the player in another zone; the starting one by default
     ZoneId? zoneId,
+    NavigatorObserver? observer,
   }) async {
     final factory = GameSessionFactory();
     final catalogs = factory.catalog1();
@@ -135,7 +141,10 @@ void main() {
             value: session.encounterController,
           ),
         ],
-        child: const MaterialApp(home: Scaffold(body: ExploreScreen())),
+        child: MaterialApp(
+          navigatorObservers: [?observer],
+          home: const Scaffold(body: ExploreScreen()),
+        ),
       ),
     );
     await settle(tester);
@@ -444,13 +453,23 @@ void main() {
       expect(rect.width, closeTo(width, 0.01), reason: '${e.id}');
       expect(rect.height, 120, reason: '${e.id}');
     }
-    // and three to a row: the second tile sits beside the first
+    // and three to a row, places and discoveries running on together:
+    // the first discovery's row is full
     final first = tester.getRect(find.byKey(const ValueKey(EntityId.CHICKEN)));
-    final firstRow = zone.discoverableEntities
-        .map((e) => tester.getRect(find.byKey(ValueKey(e.id))))
-        .where((r) => r.top == first.top)
-        .length;
-    expect(firstRow, 3);
+    final firstRow =
+        [
+              for (final e in zone.discoverableEntities) ValueKey(e.id),
+              for (final id in [
+                EntityId.TRANQUIL_POND,
+                EntityId.ANVIL,
+                EntityId.FARMER,
+              ])
+                ValueKey(id),
+              const ValueKey('light-fire-tile'),
+            ]
+            .map((k) => tester.getRect(find.byKey(k)))
+            .where((r) => r.top == first.top);
+    expect(firstRow.length, 3);
 
     session.dispose();
   });
@@ -468,6 +487,187 @@ void main() {
 
   // ---------------------------------------------------------- places grid
 
+  testWidgets('a found dungeon stands over the grid as a banner, not a tile', (
+    tester,
+  ) async {
+    final pushed = _RouteLog();
+    final session = await pumpExplore(tester, observer: pushed);
+    final banner = find.byKey(const ValueKey(EntityId.GRAINERY_ENTRANCE));
+
+    expect(banner, findsOneWidget);
+    expect(tester.widget(banner), isA<DungeonBanner>());
+    expect(
+      find.descendant(of: find.byType(PlaceGrid), matching: banner),
+      findsNothing,
+    );
+
+    // full width inside the body's margins, 10 above the grid
+    final card = tester.getRect(banner);
+    final grid = tester.getRect(find.byType(PlaceGrid));
+    expect(card.left, 16);
+    expect(card.width, 1000 - 2 * 16);
+    expect(grid.top - card.bottom, 10);
+
+    // into the dungeon, as the tile went
+    await tester.tap(banner);
+    await tester.pump();
+    while (tester.takeException() != null) {}
+    expect(pushed.names, contains(EntityScreenRouterService.dungeonRouteName));
+    expect(
+      session.saveGameData.playerData.currentEntityViewId,
+      EntityId.GRAINERY_ENTRANCE,
+    );
+
+    session.dispose();
+  });
+
+  testWidgets('a tap on a banner piece opens its details, not the dungeon', (
+    tester,
+  ) async {
+    final pushed = _RouteLog();
+    final session = await pumpExplore(tester, observer: pushed);
+    final uniques = DungeonId.GRAINERY.definition.uniques;
+    session.inventoryController.devSetEquipmentCount(
+      uniques.first.build() as EquipmentItem,
+      1,
+    );
+    await settle(tester);
+    pushed.names.clear();
+
+    // collected or not, either opens
+    for (final id in uniques.take(2)) {
+      await tester.tap(find.byKey(ValueKey('dungeon-loot-${id.name}')));
+      await tester.pumpAndSettle();
+      final dialog = find.byType(Dialog);
+      expect(dialog, findsOneWidget, reason: id.name);
+      expect(
+        find.descendant(of: dialog, matching: find.text(id.definition.name)),
+        findsWidgets,
+        reason: id.name,
+      );
+      Navigator.of(tester.element(dialog)).pop();
+      await tester.pumpAndSettle();
+    }
+    expect(
+      pushed.names,
+      isNot(contains(EntityScreenRouterService.dungeonRouteName)),
+    );
+
+    session.dispose();
+  });
+
+  testWidgets('a card in the full uniques list opens that piece', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester);
+    final wolfDen = DungeonId.WOLF_DEN.definition.uniques;
+    final last = wolfDen.last;
+
+    showDungeonUniquesSheet(
+      tester.element(find.byType(DungeonBanner)),
+      name: 'Wolf Den',
+      dungeonId: DungeonId.WOLF_DEN,
+      uniques: wolfDen,
+      obtainedRarities: session.inventoryController.obtainedRarities,
+    );
+    await tester.pumpAndSettle();
+    final row = find.byKey(ValueKey('dungeon-unique-${last.name}-RARE'));
+    await tester.scrollUntilVisible(
+      row,
+      40,
+      scrollable: find.descendant(
+        of: find.byType(DungeonUniquesList),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    // the card's middle, not its icon, which opens the same
+    await tester.tap(find.descendant(of: row, matching: find.text('Not yet')));
+    await tester.pumpAndSettle();
+
+    final dialog = find.byType(Dialog);
+    expect(dialog, findsOneWidget);
+    expect(
+      find.descendant(of: dialog, matching: find.text(last.definition.name)),
+      findsWidgets,
+    );
+
+    session.dispose();
+  });
+
+  testWidgets('a running floor marks the banner active, as a tile is', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester);
+    final bar = find.descendant(
+      of: find.byKey(const ValueKey(EntityId.GRAINERY_ENTRANCE)),
+      matching: find.byKey(const ValueKey('dungeon-banner-progress')),
+    );
+    expect(bar, findsNothing);
+
+    expect(session.dungeonController.startSlot(DungeonId.GRAINERY, 0), isTrue);
+    await settle(tester);
+    expect(bar, findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      tester
+          .widget<FillBar>(
+            find.descendant(of: bar, matching: find.byType(FillBar)),
+          )
+          .value,
+      closeTo(session.actionTimingController.actionProgress, 1e-9),
+    );
+
+    session.actionTimingController.stop();
+    await settle(tester);
+    expect(bar, findsNothing);
+
+    session.dispose();
+  });
+
+  testWidgets('a unique lights on the banner the moment it is collected', (
+    tester,
+  ) async {
+    final session = await pumpExplore(tester);
+    final uniques = DungeonId.GRAINERY.definition.uniques;
+    final got = uniques.first;
+    Finder checkOn(ItemId id) => find.descendant(
+      of: find.byKey(ValueKey('dungeon-loot-${id.name}')),
+      matching: find.byKey(const ValueKey('dungeon-loot-check')),
+    );
+
+    expect(checkOn(got), findsNothing);
+    expect(find.text('0/${uniques.length}'), findsOneWidget);
+
+    final [low, best] = DungeonId.GRAINERY.definition.dropRaritiesOf(got);
+    EquipmentItem pieceAt(Rarity r) =>
+        (got.build() as EquipmentItem)..quality = r;
+    Finder greyOn(ItemId id) => find.descendant(
+      of: find.byKey(ValueKey('dungeon-loot-${id.name}')),
+      matching: find.byKey(const ValueKey('dungeon-loot-unobtained')),
+    );
+
+    // below its best: lit, but not checked
+    session.inventoryController.devSetEquipmentCount(pieceAt(low), 1);
+    await settle(tester);
+    expect(greyOn(got), findsNothing);
+    expect(checkOn(got), findsNothing);
+    expect(find.text('0/${uniques.length}'), findsOneWidget);
+
+    // at its best: checked
+    session.inventoryController.devSetEquipmentCount(pieceAt(best), 1);
+    await settle(tester);
+    expect(checkOn(got), findsOneWidget);
+    expect(find.text('1/${uniques.length}'), findsOneWidget);
+
+    // gone from the bag, still collected
+    session.inventoryController.devSetEquipmentCount(pieceAt(best), 0);
+    session.inventoryController.devSetEquipmentCount(pieceAt(low), 0);
+    await settle(tester);
+    expect(checkOn(got), findsOneWidget);
+
+    session.dispose();
+  });
+
   testWidgets('places are a three-column grid of 120pt tiles', (tester) async {
     final session = await pumpExplore(tester);
     // the way to light a fire leads; unlit fire slots aren't shown
@@ -476,7 +676,6 @@ void main() {
       EntityId.TRANQUIL_POND,
       EntityId.ANVIL,
       EntityId.FARMER,
-      EntityId.GRAINERY_ENTRANCE,
     ];
 
     Rect at(Object id) => tester.getRect(
@@ -499,8 +698,7 @@ void main() {
     // the short last row stays left-aligned, unstretched
     expect(rects[3].top, rects[0].bottom + 10);
     expect(rects[3].left, 16);
-    expect(rects[4].left, rects[1].left);
-    expect(rects[4].width, closeTo(width, 0.01));
+    expect(rects[3].width, closeTo(width, 0.01));
 
     // no chevrons on tiles
     for (final id in places) {
@@ -539,13 +737,12 @@ void main() {
                 .decoration!
             as BoxDecoration;
 
-    // no fill and no border, a dungeon's rarity included: the art stands
-    // in a glow of the zone's own colour
+    // no fill and no border: the art stands in a glow of the zone's own
+    // colour
     for (final id in [
       EntityId.TRANQUIL_POND,
       EntityId.ANVIL,
       EntityId.FARMER,
-      EntityId.GRAINERY_ENTRANCE,
     ]) {
       final frame = frameOf(id);
       expect(frame.color, Colors.transparent, reason: '$id');
@@ -579,7 +776,7 @@ void main() {
       findsOneWidget,
     );
 
-    // a dungeon reads its combat level the way a fight does
+    // a dungeon's banner reads its combat level the way a fight does
     final dungeonLevel = session.worldController.dungeonLevel(
       EntityId.GRAINERY_ENTRANCE.build() as DungeonEntity,
     );
@@ -610,7 +807,7 @@ void main() {
       find.byKey(const ValueKey(EntityId.TRANQUIL_POND)),
     );
     final lastTile = tester.getRect(
-      find.byKey(const ValueKey(EntityId.GRAINERY_ENTRANCE)),
+      find.byKey(const ValueKey(EntityId.FARMER)),
     );
     // the first discovery follows the last place, 10 below it or beside it
     final firstCard = ZoneId.TUTORIAL_FARM.definition.discoverableEntities
@@ -936,4 +1133,13 @@ void main() {
 
     session.dispose();
   });
+}
+
+/// The names of the routes pushed, in order.
+class _RouteLog extends NavigatorObserver {
+  final names = <String?>[];
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      names.add(route.settings.name);
 }
