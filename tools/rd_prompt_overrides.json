@@ -1015,5 +1015,21 @@
   "assets/images/entities/silt_warrens.png": "a dark burrow opening in a high bank of grey-brown delta silt, roots hanging over it and muddy water lapping at its lip",
   "assets/images/dungeons/silt_warrens.png": "a dim network of burrows dug through wet grey-brown silt, shallow muddy pools, crab shells littering the floor and a huge crocodile lurking in the deepest pool",
   "assets/images/entities/brinedeep_caves.png": "a sea cave mouth in a dark seaside cliff, waves washing in, barnacles and green kelp around the opening",
-  "assets/images/dungeons/brinedeep_caves.png": "a vast flooded sea cave lit by glowing blue-green water, coral and barnacled rocks, a giant crab on a ledge and a teal-green sea serpent rising from the deep pool"
+  "assets/images/dungeons/brinedeep_caves.png": "a vast flooded sea cave lit by glowing blue-green water, coral and barnacled rocks, a giant crab on a ledge and a teal-green sea serpent rising from the deep pool",
+
+  "__comment_old_sorrow_mine": "Old Sorrow Mine under Copperdust Flats: a played-out gold mine in red desert rock. Its packrats, bats, stone golems, Packrat King and Duskwing Matriarch reuse the rat, bat and golem art; these are the shapes nothing else has. The uniques are made from their source creature or the mine's gold.",
+  "assets/images/entities/rock_crawler.png": "a giant cave centipede with a segmented body plated in rough red-brown rock",
+  "assets/images/entities/gem_crawler.png": "a giant cave centipede whose rocky back plates are crusted with glittering raw gemstones",
+  "assets/images/entities/the_borer.png": "a huge burrowing desert worm rearing up, ringed armoured hide, a round mouth of hooked mandibles",
+  "assets/images/entities/lode_golem.png": "a hulking golem of red rock threaded with veins and nuggets of raw gold, glowing gold eyes",
+  "assets/images/entities/old_sorrow_mine.png": "an abandoned desert mine entrance in a red mesa cliff, a timber headframe and an ore cart on rails",
+  "assets/images/dungeons/old_sorrow_mine.png": "the dark mouth of an abandoned gold mine in a red desert mesa, a rickety wooden headframe, mine cart tracks leading inside",
+  "assets/icons/items/packrats_trinket.png": "a scuffed gold ring gnawed smooth on one side",
+  "assets/icons/items/duskwing_cuffs.png": "a pair of wrist cuffs of dark leathery bat-wing membrane stretched over thin wire",
+  "assets/icons/items/borers_mandible.png": "a curved dagger whose blade is one hooked, ridged, amber-brown insect mandible, jagged inner edge, bone-pale tip, wrapped in leather at the grip",
+  "assets/icons/items/borers_shell_pauldrons.png": "a single rounded shoulder pauldron armour piece made of three overlapping curved segmented plates of ribbed brown worm shell, seen from the front",
+  "assets/icons/items/lodestone_maul.png": "a huge two-handed maul with a rough lumpy head of red-brown rock with bright yellow gold veins and gold nuggets embedded in it, on a long dark iron haft",
+  "assets/icons/items/heart_of_the_lode.png": "a large glowing gold nugget shaped like a heart, held as an offhand",
+  "assets/icons/items/prospectors_duster.png": "a long dusty red-brown canvas duster coat",
+  "assets/icons/items/mother_lode_nugget.png": "a raw gold nugget pendant on a rawhide thong"
 }

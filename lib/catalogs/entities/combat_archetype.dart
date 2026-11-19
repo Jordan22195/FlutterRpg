@@ -843,3 +843,40 @@ const tempest = CombatArchetype(
   combatType: CombatType.CLOTH_DPS,
   attackInterval: 1.0,
 );
+
+// ── Old Sorrow Mine · Copperdust Flats ──
+// The mine's own kinds. Its packrats, bats and stone golems stand on the
+// existing rat, bat and golem archetypes, and so do its first two bosses;
+// these are the shapes nothing else in the game has.
+
+// The drifts' crawler: a cave centipede plated in the rock it bores
+// through, level 89.
+const rockCrawler = CombatArchetype(
+  iconAsset: 'assets/images/entities/rock_crawler.png',
+  lootFibLevel: 9,
+  combatType: CombatType.LEATHER_TANK,
+  attackInterval: 2.0,
+);
+// The Mother Lode's crawler, grown a crust of raw gems, level 89.
+const gemCrawler = CombatArchetype(
+  iconAsset: 'assets/images/entities/gem_crawler.png',
+  lootFibLevel: 9,
+  combatType: CombatType.SHELL,
+  attackInterval: 2.5,
+);
+// The Stamp Mill's boss, level 89: the burrowing worm that dug the deep
+// tunnels, a brawler rather than a wall.
+const theBorer = CombatArchetype(
+  iconAsset: 'assets/images/entities/the_borer.png',
+  lootFibLevel: 9,
+  combatType: CombatType.PLATE_DPS,
+  attackInterval: 2.5,
+);
+// The mine's last boss, level 144: the gold vein itself, awake. A wall to
+// wear down, slow and heavy.
+const lodeGolem = CombatArchetype(
+  iconAsset: 'assets/images/entities/lode_golem.png',
+  lootFibLevel: 10,
+  combatType: CombatType.PLATE_TANK,
+  attackInterval: 3.0,
+);

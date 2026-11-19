@@ -65,9 +65,9 @@ void main() {
         EntityId.NAGA_TIDECALLER,
         EntityId.LEVIATHAN,
       ],
-      bossLevels: [144, 144, 144],
+      bossLevels: [89, 89, 89],
       mobs: (34, 89),
-      tiers: {4, 5},
+      tiers: {4},
       rarities: {Rarity.RARE, Rarity.EPIC},
     ),
   ];
@@ -145,7 +145,9 @@ void main() {
 
   test('the Brinedeep Caves match Tempest Reach piece for piece', () {
     // same tiers and four catalog secondaries each, on slots and stats
-    // Tempest leaves open
+    // Tempest leaves open. The Leviathan's pair sits a rung under the
+    // Tempest's: the coast's bosses stop at level 89, which caps their gear
+    // at tier 4.
     const pairs = {
       ItemId.WARLORDS_CLEAVER: ItemId.BRINECRUSHER_CLAW,
       ItemId.WARLORDS_WARHELM: ItemId.BRINECLAW_BRACERS,
@@ -160,14 +162,18 @@ void main() {
         if (id.definition is! WeaponItemDefinition) eq(id).armorSlot,
     };
     for (final MapEntry(key: tempest, value: coast) in pairs.entries) {
-      expect(tierOf(coast), tierOf(tempest), reason: coast.name);
+      expect(
+        tierOf(coast),
+        inInclusiveRange(tierOf(tempest) - 1, tierOf(tempest)),
+        reason: coast.name,
+      );
+      expect(tierOf(coast), 4, reason: coast.name);
       expect(eq(coast).catalogSecondaries, hasLength(4), reason: coast.name);
       if (coast.definition is WeaponItemDefinition) continue;
       expect(tempestSlots, isNot(contains(eq(coast).armorSlot)));
     }
 
-    // speed leads at tier 4 and strength at tier 5, where the ladder had
-    // neither
+    // speed and strength lead at tier 4, where the ladder had neither
     expect(lead(ItemId.SALTSCALE_SANDALS), SkillId.SPEED);
     expect(lead(ItemId.LEVIATHAN_GIRDLE), SkillId.STRENGTH);
   });

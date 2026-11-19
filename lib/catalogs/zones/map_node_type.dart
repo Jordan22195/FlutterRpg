@@ -92,14 +92,11 @@ enum MapNodeType {
   /// The darker band just inside the rim.
   final Color shade;
 
-  /// Which of the map's three kinds of place this counts as, for the filter
-  /// rail and the token art. Dungeons and lairs count as wilderness.
+  /// Which of the map's three kinds of place this counts as, for the token
+  /// art. Dungeons and lairs count as wilderness.
   MapNodeType get group => switch (this) {
     MapNodeType.TOWN => MapNodeType.TOWN,
     MapNodeType.SKILLING => MapNodeType.SKILLING,
     _ => MapNodeType.WILDERNESS,
   };
-
-  /// The three kinds the map draws, in the order the filter rail lists them.
-  static const List<MapNodeType> mapGroups = [WILDERNESS, TOWN, SKILLING];
 }

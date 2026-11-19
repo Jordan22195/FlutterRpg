@@ -8680,8 +8680,9 @@ enum ItemId {
   ),
   // Brinedeep Caves (Saltwind Coast), Tempest Reach's sibling: the first
   // two bosses each drop a fib 4 trim and a tier-4 weapon, the Leviathan a
-  // tier-5 major and weapon. Speed leads at tier 4 and strength at tier 5,
-  // the two the ladder was missing there.
+  // tier-4 major and weapon, a rung under the Tempest's pair since the
+  // coast's bosses stop at level 89. Speed and strength lead here, the two
+  // the ladder was missing at tier 4.
   BRINECRUSHER_CLAW(
     WeaponItemDefinition(
       name: "Brinecrusher's Claw",
@@ -8753,7 +8754,7 @@ enum ItemId {
       name: "Leviathan's Fang",
       value: 200,
       weaponType: WeaponTypeId.DAGGER,
-      fibLevel: 5,
+      fibLevel: 4,
       catalogSecondaries: [
         SkillId.SPEED,
         SkillId.STAMINA,
@@ -8769,7 +8770,7 @@ enum ItemId {
       armorSlot: ArmorSlots.WAIST,
       name: "Leviathan Girdle",
       value: 180,
-      fibLevel: 5,
+      fibLevel: 4,
       statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
       catalogSecondaries: [
         SkillId.STRENGTH,
@@ -8779,6 +8780,225 @@ enum ItemId {
       ],
       description: "A band of serpent scale that tightens when you brace.",
       iconAsset: "assets/icons/items/leviathan_girdle.png",
+    ),
+  ),
+  // Haunted Ruins (Mistgrave Hollow), the third dungeon at Tempest Reach's
+  // tier: tier-4 pieces off the Gravekeeper (a chest piece and a ring) and
+  // the Shrouded Wraith (a greatsword and a rosary), tier-5 off the Abbot
+  // (an Attack-led offhand and pauldrons, the Attack leads tier 5 lacked).
+  GRAVEKEEPERS_GREATCOAT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Gravekeeper's Greatcoat",
+      value: 150,
+      fibLevel: 5,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "Oilcloth gone green with grave-damp. It has kept off a century of rain.",
+      iconAsset: "assets/icons/items/gravekeepers_greatcoat.png",
+    ),
+  ),
+  GRAVEKEEPERS_KEYRING(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Gravekeeper's Keyring",
+      value: 130,
+      fibLevel: 4,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+      ],
+      description: "Iron keys to every crypt in the hollow, worn on one ring.",
+      iconAsset: "assets/icons/items/gravekeepers_keyring.png",
+    ),
+  ),
+  SHROUDREAVER(
+    WeaponItemDefinition(
+      name: "Shroudreaver",
+      value: 150,
+      weaponType: WeaponTypeId.GREATSWORD,
+      fibLevel: 6,
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+        SkillId.SPEED,
+        SkillId.STAMINA,
+      ],
+      description:
+          "A long grey blade. It weighs less than the cloth wound round it.",
+      iconAsset: "assets/icons/items/shroudreaver.png",
+    ),
+  ),
+  WEEPING_ROSARY(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Weeping Rosary",
+      value: 130,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 3, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.RECOVERY,
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+        SkillId.STAMINA,
+      ],
+      description: "Bone beads, always damp. Counting them steadies the hand.",
+      iconAsset: "assets/icons/items/weeping_rosary.png",
+    ),
+  ),
+  ABBOTS_GRIMOIRE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.OFFHAND,
+      name: "Abbot's Grimoire",
+      value: 200,
+      fibLevel: 7,
+      statWeights: {SkillId.ATTACK: 3, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+      ],
+      description:
+          "The Abbot's own book of hours, rewritten in a hand that never tires.",
+      iconAsset: "assets/icons/items/abbots_grimoire.png",
+    ),
+  ),
+  OSSUARY_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Ossuary Pauldrons",
+      value: 180,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 2, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+        SkillId.SPEED,
+      ],
+      description: "Skulls of the brothers, lacquered black and laced on.",
+      iconAsset: "assets/icons/items/ossuary_pauldrons.png",
+    ),
+  ),
+  // Old Sorrow Mine (Copperdust Flats), the fourth dungeon at Tempest
+  // Reach's tier, a boss on every floor: tier-4 trims off the Packrat King
+  // (a Speed ring) and the Duskwing Matriarch (Recovery cuffs), a Strength
+  // dagger and the tier's only shoulder piece off the Borer, and tier 5 off
+  // the Lode Golem (the tier's only greatsword, and a Stamina offhand).
+  PACKRATS_TRINKET(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Packrat's Trinket",
+      value: 130,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 2, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.STAMINA,
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "A gold band off some long-dead miner's finger, gnawed smooth on one side.",
+      iconAsset: "assets/icons/items/packrats_trinket.png",
+    ),
+  ),
+  DUSKWING_CUFFS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Duskwing Cuffs",
+      value: 130,
+      fibLevel: 4,
+      statWeights: {SkillId.ATTACK: 2, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.RECOVERY,
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+        SkillId.STAMINA,
+      ],
+      description:
+          "Leathery wing-membrane stretched over wire. They drink a little from every cut.",
+      iconAsset: "assets/icons/items/duskwing_cuffs.png",
+    ),
+  ),
+  BORERS_MANDIBLE(
+    WeaponItemDefinition(
+      name: "Borer's Mandible",
+      value: 150,
+      weaponType: WeaponTypeId.DAGGER,
+      fibLevel: 4,
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "One hooked jaw of the thing that dug the deep tunnels. It still bites through stone.",
+      iconAsset: "assets/icons/items/borers_mandible.png",
+    ),
+  ),
+  BORERS_SHELL_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Borer's Shell Pauldrons",
+      value: 180,
+      fibLevel: 5,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+      ],
+      description:
+          "Two ringed plates of the Borer's hide, scored by a lifetime of rock.",
+      iconAsset: "assets/icons/items/borers_shell_pauldrons.png",
+    ),
+  ),
+  LODESTONE_MAUL(
+    WeaponItemDefinition(
+      name: "Lodestone Maul",
+      value: 200,
+      weaponType: WeaponTypeId.GREATSWORD,
+      fibLevel: 7,
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "A fist of the Lode Golem on an iron haft. Loose nails leap to it.",
+      iconAsset: "assets/icons/items/lodestone_maul.png",
+    ),
+  ),
+  HEART_OF_THE_LODE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.OFFHAND,
+      name: "Heart of the Lode",
+      value: 200,
+      fibLevel: 7,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "A gold nugget the size of a skull. It is warm, and it beats, slowly.",
+      iconAsset: "assets/icons/items/heart_of_the_lode.png",
     ),
   ),
   // ── dungeon chest and camp uniques ──────────────────────────────
@@ -8969,6 +9189,65 @@ enum ItemId {
       ],
       description: "Serpent scale backed with nacre. It shines underwater.",
       iconAsset: "assets/icons/items/pearlscale_cuirass.png",
+    ),
+  ),
+  // the Haunted Ruins' chest exclusive, on the hands: the one slot no
+  // tier-4 dungeon fills (the Galewrap Gauntlets are a tier up)
+  RELIQUARY_GAUNTLETS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Reliquary Gauntlets",
+      value: 160,
+      fibLevel: 4,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.STAMINA,
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "Silver-capped knuckles, each set with a saint's finger bone.",
+      iconAsset: "assets/icons/items/reliquary_gauntlets.png",
+    ),
+  ),
+  // Old Sorrow Mine's chest exclusives: a duster on the back (the tier's
+  // back piece, the Alpha's Mantle, leads Speed; this one Stamina) and a
+  // Strength-led nugget on the neck (the Weeping Rosary leads Recovery)
+  PROSPECTORS_DUSTER(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Prospector's Duster",
+      value: 160,
+      fibLevel: 4,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STAMINA,
+        SkillId.SPEED,
+        SkillId.STAMINA,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "A long canvas coat, red with the flats' dust. It kept one man alive a long time out there.",
+      iconAsset: "assets/icons/items/prospectors_duster.png",
+    ),
+  ),
+  MOTHER_LODE_NUGGET(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Mother Lode Nugget",
+      value: 160,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 3, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "The first nugget out of the Mother Lode, on a rawhide thong. Old Sorrow was named the week after.",
+      iconAsset: "assets/icons/items/mother_lode_nugget.png",
     ),
   ),
 

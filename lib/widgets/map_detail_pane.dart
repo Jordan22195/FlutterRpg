@@ -6,7 +6,9 @@ import '../catalogs/entities/entities.dart';
 import '../catalogs/zones/map_node_type.dart';
 import '../catalogs/zones/world_map_layout.dart';
 import '../catalogs/zones/zone_id.dart';
+import '../controllers/player_data_controller.dart';
 import '../controllers/world_controller.dart';
+import '../data/level_standing.dart';
 import '../data/skill_category.dart';
 import '../data/skill_data.dart';
 import '../theme/hearth_text.dart';
@@ -149,10 +151,25 @@ class MapDetailPane extends StatelessWidget {
   /// zones too — how tough a place is matters most before you can go.
   List<Widget> _combatRange(BuildContext context, ({int min, int max})? range) {
     if (range == null) return const [];
-    final palette = context.palette;
+    final colors = context.gameColors;
+    final player = context.watch<PlayerDataController>().getCombatLevel();
     final label = range.min == range.max
         ? '${range.min}'
         : '${range.min}–${range.max}';
+    TextSpan span(String text, int level, {bool dash = false}) => TextSpan(
+      text: text,
+      style: HearthText.rowMeta.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: dash
+            ? context.palette.textSubtitle
+            : switch (LevelStanding.of(level, player)) {
+                LevelStanding.hard => colors.levelHard,
+                LevelStanding.even => colors.levelEven,
+                LevelStanding.easy => colors.levelEasy,
+              },
+      ),
+    );
     return [
       const SizedBox(width: 10),
       Tooltip(
@@ -163,11 +180,17 @@ class MapDetailPane extends StatelessWidget {
           spacing: 3,
           children: [
             const IconRenderer<SkillId>(size: 15, id: SkillId.ATTACK),
-            Text(
-              label,
-              style: HearthText.rowMeta.copyWith(
-                fontSize: 12,
-                color: palette.textSubtitle,
+            // each end is coloured against your combat level, so a zone
+            // you've outgrown reads green and one ahead of you red
+            Text.rich(
+              TextSpan(
+                children: [
+                  span('${range.min}', range.min),
+                  if (range.min != range.max) ...[
+                    span('–', range.min, dash: true),
+                    span('${range.max}', range.max),
+                  ],
+                ],
               ),
             ),
           ],

@@ -34,7 +34,6 @@ class MapNodeToken extends StatelessWidget {
     this.lockSkill = SkillId.NULL,
     this.lockLevel = 0,
     this.showLabel = true,
-    this.dimmed = false,
     this.onTap,
   });
 
@@ -74,10 +73,6 @@ class MapNodeToken extends StatelessWidget {
   /// out far enough that every label at once would be soup.
   final bool showLabel;
 
-  /// Faded back because the filter rail has this kind of place switched
-  /// off. It stays on the map (and tappable) so the roads still make sense.
-  final bool dimmed;
-
   final VoidCallback? onTap;
 
   @override
@@ -88,43 +83,37 @@ class MapNodeToken extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Opacity(
-          opacity: dimmed ? 0.3 : 1,
-          child: Stack(
-            // the YOU flag hangs above the slot
-            clipBehavior: Clip.none,
-            children: [
+        child: Stack(
+          // the YOU flag hangs above the slot
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              left: 0,
+              right: 0,
+              top: tokenCenterY - tokenSize / 2,
+              height: tokenSize,
+              child: Center(child: _token()),
+            ),
+            if (showLabel)
               Positioned(
                 left: 0,
                 right: 0,
-                top: tokenCenterY - tokenSize / 2,
-                height: tokenSize,
-                child: Center(child: _token()),
+                top: tokenCenterY + tokenSize / 2 + 2,
+                bottom: 0,
+                child: Align(alignment: Alignment.topCenter, child: _label()),
               ),
-              if (showLabel && !dimmed)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: tokenCenterY + tokenSize / 2 + 2,
-                  bottom: 0,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: _label(),
-                  ),
+            if (isCurrent)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: tokenCenterY - _badgeHalfHeight() - _flagHeight,
+                height: _flagHeight,
+                child: const Align(
+                  alignment: Alignment.bottomCenter,
+                  child: _YouFlag(),
                 ),
-              if (isCurrent)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: tokenCenterY - _badgeHalfHeight() - _flagHeight,
-                  height: _flagHeight,
-                  child: const Align(
-                    alignment: Alignment.bottomCenter,
-                    child: _YouFlag(),
-                  ),
-                ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );

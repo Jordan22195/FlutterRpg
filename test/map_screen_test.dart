@@ -928,20 +928,6 @@ void main() {
       expect(MapNodeType.SKILLING.frame, MapNodeFrame.ROUND);
     });
 
-    testWidgets('the filter rail fades a kind of place without removing it', (
-      tester,
-    ) async {
-      await pumpMap(tester);
-      expect(tokenWidget(tester, 'SOUTH_HAVEN').dimmed, isFalse);
-
-      await tester.tap(find.bySemanticsLabel('Town places'));
-      await settle(tester);
-
-      expect(tokenWidget(tester, 'SOUTH_HAVEN').dimmed, isTrue);
-      expect(tokenWidget(tester, 'SOUTHWOOD_FOREST').dimmed, isFalse);
-      expect(find.byType(MapNodeToken), findsNWidgets(kWorldMapNodes.length));
-    });
-
     testWidgets('picking a zone draws the way there in gold', (tester) async {
       await pumpMap(tester);
       expect(edgePainter(tester).edges.where((e) => e.onRoute), isEmpty);

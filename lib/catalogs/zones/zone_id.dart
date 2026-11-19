@@ -297,13 +297,6 @@ enum ZoneId {
           weight: 1,
           unlockLevel: 24,
         ),
-        // the dead forest's deepest haunt; gated well past the skeleton and
-        // zombie it lurks behind
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.WRAITH,
-          weight: 0.5,
-          unlockLevel: 30,
-        ),
       ],
       discoverableItems: [
         WeightedDropTableEntry(
@@ -714,7 +707,7 @@ enum ZoneId {
       explorationLevel: 35,
       xpPerExplore: 15,
 
-      permanentEntities: [EntityId.FIREPIT],
+      permanentEntities: [EntityId.FIREPIT, EntityId.OLD_SORROW_MINE_ENTRANCE],
       discoverableEntities: [
         // level 55: the prairie's snake, at home in the heat
         WeightedDropTableEntry<EntityId>(

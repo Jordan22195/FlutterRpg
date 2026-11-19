@@ -45,10 +45,6 @@ class _MapScreenState extends State<MapScreen> {
   MapNode? _selected;
   double _scale = 1;
 
-  /// Kinds of place the filter rail has switched off. Their tokens fade
-  /// back rather than vanish, so the roads through them still make sense.
-  final Set<MapNodeType> _hidden = {};
-
   /// The zone the view is currently framed on, so opening the map and
   /// coming back from a trip both start you looking at where you are
   /// rather than at the map's top-left corner.
@@ -247,7 +243,6 @@ class _MapScreenState extends State<MapScreen> {
       lockSkill: gateSkill,
       lockLevel: gateLevel,
       showLabel: _showLabel(node),
-      dimmed: _hidden.contains(node.type.group),
       onTap: () => _select(node),
     );
   }
@@ -396,27 +391,6 @@ class _MapScreenState extends State<MapScreen> {
                   child: const StatusRow(),
                 ),
 
-                // what kinds of place to show: one toggle per node type
-                Positioned(
-                  left: 12,
-                  top: statusBottom + 12,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (final type in MapNodeType.mapGroups) ...[
-                        _FilterButton(
-                          type: type,
-                          on: !_hidden.contains(type),
-                          onTap: () => setState(() {
-                            if (!_hidden.remove(type)) _hidden.add(type);
-                          }),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                    ],
-                  ),
-                ),
-
                 // with nothing picked, the foot of the map says where you
                 // are and lets you step straight back in
                 if (_selected == null)
@@ -442,62 +416,6 @@ class _MapScreenState extends State<MapScreen> {
               onEnterLandmark: _enterLandmark,
             ),
         ],
-      ),
-    );
-  }
-}
-
-/// One switch on the map's filter rail: the type's pixel glyph on a dark
-/// square, with a bar in the type's colour along its foot while it's on.
-class _FilterButton extends StatelessWidget {
-  const _FilterButton({
-    required this.type,
-    required this.on,
-    required this.onTap,
-  });
-
-  static const double size = 44;
-
-  final MapNodeType type;
-  final bool on;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = type.label[0] + type.label.substring(1).toLowerCase();
-    return Semantics(
-      button: true,
-      toggled: on,
-      label: '$name places',
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: const Color(0xF21B1511),
-            border: Border.all(color: PixelSprites.outline, width: 2),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Opacity(
-                opacity: on ? 1 : 0.35,
-                child: PixelArt(PixelSprites.glyph(type), unit: 1.5),
-              ),
-              if (on)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: 3,
-                  child: ColoredBox(color: type.color),
-                ),
-            ],
-          ),
-        ),
       ),
     );
   }

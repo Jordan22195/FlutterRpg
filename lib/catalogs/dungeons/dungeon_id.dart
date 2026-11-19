@@ -854,6 +854,29 @@ enum DungeonId {
           ],
         ),
         DropRoll(chance: 0.03, entries: [ItemDropType(id: ItemId.SOUL_SHARD)]),
+        // the chest's exclusive at the band's two rarities, and the bosses'
+        // trims at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.25,
+          entries: [
+            ItemDropType(id: ItemId.RELIQUARY_GAUNTLETS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.06,
+          entries: [
+            ItemDropType(id: ItemId.RELIQUARY_GAUNTLETS, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.GRAVEKEEPERS_KEYRING, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.WEEPING_ROSARY, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.OSSUARY_PAULDRONS, rarity: Rarity.EPIC),
+          ],
+        ),
       ],
       entries: [
         DungeonEntry(
@@ -870,7 +893,7 @@ enum DungeonId {
           entities: [
             DungeonEntityRef(EntityId.WAILING_BANSHEE, count: 10),
             DungeonEntityRef(EntityId.GRAVE_GHOUL, count: 14),
-            DungeonEntityRef(EntityId.THE_WEEPING_ABBESS, count: 1),
+            DungeonEntityRef(EntityId.THE_SHROUDED_WRAITH, count: 1),
           ],
         ),
 
@@ -886,11 +909,123 @@ enum DungeonId {
       ],
     ),
   ),
+  // The played-out mine under Copperdust Flats' mesas, at Tempest Reach's
+  // tier: the flats' level-55 snakes and the mine's packrats and bats at
+  // the top, level-89 crawlers and stone golems in the deep works, a
+  // level-89 boss at the end of each of the first three floors and the
+  // level-144 Lode Golem at the bottom. No men in it; the miners are long
+  // gone. Twenty-five fights a card.
+  OLD_SORROW_MINE(
+    DungeonDefinition(
+      name: "Old Sorrow Mine",
+      iconAsset: "assets/images/dungeons/old_sorrow_mine.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.GOLD_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.GOLD_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.MITHRIL_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.MITHRIL_BAR, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.BAT_WING, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.BAT_FANG, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.SNAKESKIN, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.VENOM_GLAND, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.COAL, lowCount: 20, highCount: 80),
+          ],
+        ),
+        // the flats' gem reagent, kept to a handful
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.CRYSTAL_GEODE, lowCount: 5, highCount: 13),
+          ],
+        ),
+        // the chest's two exclusives at the band's two rarities, and three
+        // of the bosses' trims at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.25,
+          entries: [
+            ItemDropType(id: ItemId.PROSPECTORS_DUSTER, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.MOTHER_LODE_NUGGET, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.06,
+          entries: [
+            ItemDropType(id: ItemId.PROSPECTORS_DUSTER, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.MOTHER_LODE_NUGGET, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.PACKRATS_TRINKET, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.DUSKWING_CUFFS, rarity: Rarity.EPIC),
+            ItemDropType(
+              id: ItemId.BORERS_SHELL_PAULDRONS,
+              rarity: Rarity.EPIC,
+            ),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Headframe",
+          entities: [
+            DungeonEntityRef(EntityId.RATTLESNAKE, count: 8),
+            DungeonEntityRef(EntityId.GIANT_PACKRAT, count: 16),
+            DungeonEntityRef(EntityId.PACKRAT_KING, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Collapsed Drift",
+          entities: [
+            DungeonEntityRef(EntityId.TUNNEL_BAT, count: 14),
+            DungeonEntityRef(EntityId.ROCK_CRAWLER, count: 10),
+            DungeonEntityRef(EntityId.DUSKWING_MATRIARCH, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Stamp Mill",
+          entities: [
+            DungeonEntityRef(EntityId.MINE_GOLEM, count: 12),
+            DungeonEntityRef(EntityId.ROCK_CRAWLER, count: 8),
+            DungeonEntityRef(EntityId.DUST_DEVIL, count: 4),
+            DungeonEntityRef(EntityId.THE_BORER, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Mother Lode",
+          entities: [
+            DungeonEntityRef(EntityId.GEM_CRAWLER, count: 12),
+            DungeonEntityRef(EntityId.MINE_GOLEM, count: 12),
+            DungeonEntityRef(EntityId.LODE_GOLEM, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
   // Saltwind Coast's dungeon: the coast's L34-89 monsters from the
-  // tidepools down to the deep, and a level-144 boss at the end of each
-  // card, twenty-five fights a card. Tempest Reach's sibling, piece for
-  // piece: a weapon and a trim off each of the first two bosses, a weapon
-  // and a major off the last.
+  // tidepools down to the deep, and a level-89 boss at the end of each
+  // card, so the dungeon tops out where the coast does. Twenty-five fights
+  // a card. Tempest Reach's sibling, piece for piece: a weapon and a trim
+  // off each of the first two bosses, a weapon and a major off the last.
   BRINEDEEP_CAVES(
     DungeonDefinition(
       name: "Brinedeep Caves",

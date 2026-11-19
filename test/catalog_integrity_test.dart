@@ -25,7 +25,16 @@ import 'package:rpg/data/equipment_data.dart';
 /// Art that is referenced but not drawn yet. This is the backlog, and it
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
-const knownMissingArt = <String>{};
+const knownMissingArt = <String>{
+  // the Haunted Ruins' uniques
+  'assets/icons/items/gravekeepers_greatcoat.png',
+  'assets/icons/items/gravekeepers_keyring.png',
+  'assets/icons/items/shroudreaver.png',
+  'assets/icons/items/weeping_rosary.png',
+  'assets/icons/items/abbots_grimoire.png',
+  'assets/icons/items/ossuary_pauldrons.png',
+  'assets/icons/items/reliquary_gauntlets.png',
+};
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
 /// so nothing in them ships even once the art exists. Declaring a directory
@@ -554,6 +563,9 @@ void main() {
     // Rarity variants are excluded: they are placed explicitly the way the
     // common one is, and most of the catalog's are spares.
     const knownUnplaced = <EntityId>{
+      // the Silent Nave's first boss, retired for the Shrouded Wraith; kept
+      // because the id is the save format
+      EntityId.THE_WEEPING_ABBESS,
       // tier 1-2 spares, written before the zones were re-cut around them
       EntityId.GIANT_RAT,
       EntityId.KOBOLD,
@@ -1380,6 +1392,14 @@ const frozenItemIds = <String>{
   'LIGHT_DEMONHIDE_GLOVES',
   'MEDIUM_DEMONHIDE_GLOVES',
   'HEAVY_DEMONHIDE_GLOVES',
+  'PACKRATS_TRINKET',
+  'DUSKWING_CUFFS',
+  'BORERS_MANDIBLE',
+  'BORERS_SHELL_PAULDRONS',
+  'LODESTONE_MAUL',
+  'HEART_OF_THE_LODE',
+  'PROSPECTORS_DUSTER',
+  'MOTHER_LODE_NUGGET',
 };
 
 const frozenEntityIds = <String>{
@@ -1436,11 +1456,22 @@ const frozenEntityIds = <String>{
   'FALLEN_MONK',
   'THE_GRAVEKEEPER',
   'THE_WEEPING_ABBESS',
+  'THE_SHROUDED_WRAITH',
   'THE_UNDYING_ABBOT',
   'HAUNTED_RUINS_ENTRANCE',
   'REEDMAZE_ENTRANCE',
   'SILT_WARRENS_ENTRANCE',
   'BRINEDEEP_CAVES_ENTRANCE',
+  'GIANT_PACKRAT',
+  'TUNNEL_BAT',
+  'ROCK_CRAWLER',
+  'MINE_GOLEM',
+  'GEM_CRAWLER',
+  'PACKRAT_KING',
+  'DUSKWING_MATRIARCH',
+  'THE_BORER',
+  'LODE_GOLEM',
+  'OLD_SORROW_MINE_ENTRANCE',
 };
 
 const frozenZoneIds = <String>{
@@ -1487,4 +1518,5 @@ const frozenDungeonIds = <String>{
   'REEDMAZE',
   'SILT_WARRENS',
   'BRINEDEEP_CAVES',
+  'OLD_SORROW_MINE',
 };

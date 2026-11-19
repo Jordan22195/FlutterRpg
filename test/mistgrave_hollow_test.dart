@@ -121,7 +121,7 @@ void main() {
       ]);
       expect(ruins.entries.map((c) => c.entities.last.entityId), [
         EntityId.THE_GRAVEKEEPER,
-        EntityId.THE_WEEPING_ABBESS,
+        EntityId.THE_SHROUDED_WRAITH,
         EntityId.THE_UNDYING_ABBOT,
       ]);
       for (final card in ruins.entries) {

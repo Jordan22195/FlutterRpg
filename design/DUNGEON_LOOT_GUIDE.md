@@ -38,7 +38,7 @@ So a rung-5 legs piece is tier 4.
 |---|---|---|---|
 | Early | 0–1 | Common / Uncommon | Grainery (t0), Goblin Camp (t1) |
 | Mid | 2–3 | Uncommon / Rare | Wolf Den (t2), The Reedmaze (t2), Spider Den (t3), Drowned Fen (t3), The Silt Warrens (t3) |
-| Late | 4–5 | Rare / Epic | Tempest Reach (t4), Brinedeep Caves (t4), Goblin Queen's Lair (t5) |
+| Late | 4–5 | Rare / Epic | Tempest Reach (t4), Brinedeep Caves (t4), Haunted Ruins (t4), Old Sorrow Mine (t4), Goblin Queen's Lair (t5) |
 | Endgame | 6–7 | Rare / Epic | Spinehold Caverns, Ashen Vaults (t6); Hoarfrost Hollow, Thunderhall, The Caldera (t7). Gear not designed yet. |
 
 ## 3. The shape of a dungeon's loot
@@ -78,7 +78,7 @@ Crafted gear rolls each secondary at random from the four core stats. A unique s
 3. **Pure Defence is the smith's.** Only metal armour is Defence and nothing else. A unique with a Defence primary still carries its secondaries.
 4. **Coverage.** Strength and Speed each lead a unique within any 2–3 adjacent tiers. Not every tier needs every stat.
 5. **Stamina and Recovery are minor.** They lead a piece only where it fits the theme (a cow's ring, a banner, an ooze), and otherwise ride later in the list.
-6. **Mirror same-tier siblings.** Two or three dungeons at one tier match piece for piece: the same rungs and four secondaries each, but different slots and leans. Spider Den and Drowned Fen pair this way, enforced by `test/drowned_fen_test.dart` (since the 2026-11-16 monster rebalance lowered the Spider Den's bosses, its Webbed Cloak sits a rung under the Fen's Ooze-Slick Belt; the test allows the Fen up to one rung above its twin); Brinedeep Caves mirrors Tempest Reach and the Silt Warrens' trims mirror the Fen's, enforced by `test/west_coast_dungeons_test.dart`. Neither replaces the other.
+6. **Mirror same-tier siblings.** Two or three dungeons at one tier match piece for piece: the same rungs and four secondaries each, but different slots and leans. Spider Den and Drowned Fen pair this way, enforced by `test/drowned_fen_test.dart` (since the 2026-11-16 monster rebalance lowered the Spider Den's bosses, its Webbed Cloak sits a rung under the Fen's Ooze-Slick Belt; the test allows the Fen up to one rung above its twin); Brinedeep Caves mirrors Tempest Reach (its bosses stop at L89, so the Leviathan's pair sits a rung under the Tempest's) and the Silt Warrens' trims mirror the Fen's, enforced by `test/west_coast_dungeons_test.dart`; the Haunted Ruins are the tier's third dungeon but not a strict mirror: one weapon instead of three, the Gravekeeper's chest piece shares its slot with the Pearlscale Cuirass (on a different lead), and the chest's Reliquary Gauntlets take the hands, the one slot no tier-4 dungeon filled, checked by `test/haunted_ruins_loot_test.dart`; Old Sorrow Mine is the fourth, also not a strict mirror: four bosses, the first two with one trim each, and every piece on a slot and lead no other unique at its tier holds (the tier's only shoulder piece and tier-5 greatsword, a Stamina duster on the back beside the Speed-led Alpha's Mantle), checked by `test/old_sorrow_mine_test.dart`. Neither replaces the other.
 
 Weights are a ratio, not amounts: only each weight's share of the total matters. A hide splits its budget exactly, so heavy-leather uniques like the Wolf Den set are worth precisely their heavy-leather counterpart's primary and only split it differently.
 
@@ -192,8 +192,17 @@ The weights column gives the lead stat first. "→ chest" marks boss pieces the 
 | | *chest* | Siltscale Coif (Def 2 · Spd 1) |
 | Brinedeep Caves (t4, R/E) | Brinecrusher | Brinecrusher's Claw (greatsword) · Brineclaw Bracers (Atk 2 · Str 1) → chest |
 | | Naga Tidecaller | Tidecaller's Scepter (scepter) · Saltscale Sandals (Spd 2 · Sta 1) → chest |
-| | Leviathan | Leviathan's Fang (dagger, t5) · Leviathan Girdle (Str 8 · Rec 4, t5) → chest |
+| | Leviathan | Leviathan's Fang (dagger) · Leviathan Girdle (Str 8 · Rec 4) → chest |
 | | *chest* | Pearlscale Cuirass (Def 2 · Spd 1) |
+| Haunted Ruins (t4, R/E) | The Gravekeeper | Gravekeeper's Greatcoat (chest, Def 2 · Sta 1) · Gravekeeper's Keyring (Def 2 · Str 1) → chest |
+| | The Shrouded Wraith | Shroudreaver (greatsword) · Weeping Rosary (Atk 3 · Rec 1) → chest |
+| | The Undying Abbot | Abbot's Grimoire (offhand, Atk 3 · Str 1, t5) · Ossuary Pauldrons (Atk 2 · Spd 1, t5) → chest |
+| | *chest* | Reliquary Gauntlets (hands, Def 2 · Spd 1) |
+| Old Sorrow Mine (t4, R/E) | The Packrat King | Packrat's Trinket (finger, Atk 2 · Spd 1) → chest |
+| | Duskwing Matriarch | Duskwing Cuffs (wrist, Atk 2 · Rec 1) → chest |
+| | The Borer | Borer's Mandible (dagger, Str) · Borer's Shell Pauldrons (Def 2 · Str 1) → chest |
+| | The Lode Golem | Lodestone Maul (greatsword, Str, t5) · Heart of the Lode (offhand, Def 2 · Sta 1, t5) |
+| | *chest* | Prospector's Duster (back, Def 2 · Sta 1) · Mother Lode Nugget (neck, Atk 3 · Str 1) |
 | Goblin Queen's Lair (t5, R/E) | Goblin Queen | Goblin Crown (Def 12 · Atk 4) → chest · Goblin Scepter (scepter) |
 | | *chest* | Queen's Train (Spd 2 · Rec 1) |
 
@@ -206,7 +215,7 @@ The weights column gives the lead stat first. "→ chest" marks boss pieces the 
 | 2 | ● | ● | ● | ● |
 | 3 | ● | ● | ● | ● (+ first weapon) |
 | 4 | ● | ● | ● | ● |
-| 5 | ○ | ● | ● | ● |
+| 5 | ● | ● | ○ | ● |
 | 6–7 | not designed yet | | | |
 
 Under the combat-leads rule, Speed leads only on pure-core pieces: Broodsilk Leggings, Queen's Train, Croaker's Charm and Saltscale Sandals. Pure-core Speed pieces are the lever if Speed coverage needs to grow.

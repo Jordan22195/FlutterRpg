@@ -2194,7 +2194,7 @@ enum EntityId {
   MUDMAW(
     CombatEntityDefinition(
       crocodile,
-      fibLevel: 9,
+      fibLevel: 8,
       name: "Mudmaw",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
@@ -2239,11 +2239,11 @@ enum EntityId {
     ),
   ),
   //
-  // Brinedeep Caves · Saltwind Coast · level 144, tier 4-5 (rare / epic)
+  // Brinedeep Caves · Saltwind Coast · level 89, tier 4 (rare / epic)
   BRINECRUSHER(
     CombatEntityDefinition(
       crab,
-      fibLevel: 10,
+      fibLevel: 9,
       name: "Brinecrusher",
       isDungeonBoss: true,
       rarity: Rarity.UNCOMMON,
@@ -2294,7 +2294,7 @@ enum EntityId {
   NAGA_TIDECALLER(
     CombatEntityDefinition(
       naga,
-      fibLevel: 10,
+      fibLevel: 9,
       name: "Naga Tidecaller",
       isDungeonBoss: true,
       rarity: Rarity.UNCOMMON,
@@ -2345,7 +2345,7 @@ enum EntityId {
   LEVIATHAN(
     CombatEntityDefinition(
       seaSerpent,
-      fibLevel: 10,
+      fibLevel: 9,
       name: "Leviathan",
       isDungeonBoss: true,
       rarity: Rarity.UNCOMMON,
@@ -2971,6 +2971,38 @@ enum EntityId {
           ],
         ),
       ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(
+              id: ItemId.GRAVEKEEPERS_GREATCOAT,
+              rarity: Rarity.RARE,
+            ),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(
+              id: ItemId.GRAVEKEEPERS_GREATCOAT,
+              rarity: Rarity.EPIC,
+            ),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.GRAVEKEEPERS_KEYRING, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.GRAVEKEEPERS_KEYRING, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
     ),
   ),
   // The Silent Nave's boss, level 144
@@ -3003,6 +3035,59 @@ enum EntityId {
       ],
     ),
   ),
+  // The Silent Nave's boss since the Weeping Abbess was retired, level 144:
+  // the nave's own dead, risen in a shroud
+  THE_SHROUDED_WRAITH(
+    CombatEntityDefinition(
+      wraith,
+      fibLevel: 10,
+      name: "The Shrouded Wraith",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.ENCHANTING_RUNE,
+          lowCount: 3,
+          highCount: 5,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.GRAVE_MOSS,
+          lowCount: 5,
+          highCount: 13,
+          weight: 1,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [ItemDropType(id: ItemId.ENCHANTING_PRISM)],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [ItemDropType(id: ItemId.SHROUDREAVER, rarity: Rarity.RARE)],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [ItemDropType(id: ItemId.SHROUDREAVER, rarity: Rarity.EPIC)],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.WEEPING_ROSARY, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.WEEPING_ROSARY, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
   // The Ossuary's boss and the ruins' last, level 144
   THE_UNDYING_ABBOT(
     CombatEntityDefinition(
@@ -3027,6 +3112,297 @@ enum EntityId {
       ],
       bonusDrops: [
         DropRoll(chance: 0.05, entries: [ItemDropType(id: ItemId.SOUL_SHARD)]),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.ABBOTS_GRIMOIRE, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.ABBOTS_GRIMOIRE, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.OSSUARY_PAULDRONS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.OSSUARY_PAULDRONS, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+
+  // ── OLD SORROW MINE · copperdust flats ──
+  // The played-out mine under the flats' mesas, Tempest Reach's tier: L55
+  // packrats and bats at the headframe, L89 crawlers and stone golems in
+  // the deep works, a boss at the end of every floor and the L144 Lode
+  // Golem at the bottom. Nothing in it is a man: the miners are long gone.
+  //
+  // level 55, the headframe's thieves: they carry off anything that
+  // glints, so they drop the gold the mine never shipped
+  GIANT_PACKRAT(
+    CombatEntityDefinition(
+      giantRat,
+      fibLevel: 8,
+      name: "Giant Packrat",
+      itemDrops: [
+        ItemDropType(id: ItemId.GOLD_ORE, lowCount: 1, highCount: 2, weight: 1),
+        ItemDropType(id: ItemId.GOLD_RING, weight: 0.3),
+      ],
+    ),
+  ),
+  // level 55, the drift's colony, on the bat's own table a rung up
+  TUNNEL_BAT(CombatEntityDefinition(giantBat, fibLevel: 8, name: "Tunnel Bat")),
+  // level 89, plated in the rock it bores through. A fiftieth of kills
+  // carry a piece of mithril armour off a long-dead miner
+  ROCK_CRAWLER(
+    CombatEntityDefinition(
+      rockCrawler,
+      fibLevel: 9,
+      name: "Rock Crawler",
+      itemDrops: [
+        ItemDropType(id: ItemId.GOLD_ORE, lowCount: 1, highCount: 3, weight: 1),
+        ItemDropType(id: ItemId.COAL, lowCount: 1, highCount: 3, weight: 1),
+      ],
+      bonusDrops: [DropRoll(entries: mithrilArmorDropTable, chance: 0.02)],
+    ),
+  ),
+  // level 89, the mill's stone come alive. Below the golem archetype's loot
+  // rung, so it writes its own table; a fiftieth of kills carry off a
+  // mithril tool or blade
+  MINE_GOLEM(
+    CombatEntityDefinition(
+      stoneGolem,
+      fibLevel: 9,
+      name: "Stone Golem",
+      itemDrops: [
+        ItemDropType(id: ItemId.GOLD_ORE, lowCount: 2, highCount: 5, weight: 1),
+      ],
+      bonusDrops: [DropRoll(entries: mithrilWeaponsDropTable, chance: 0.02)],
+    ),
+  ),
+  // level 89, the Mother Lode's crawler, crusted in raw gems
+  GEM_CRAWLER(
+    CombatEntityDefinition(
+      gemCrawler,
+      fibLevel: 9,
+      name: "Gem-Crusted Crawler",
+      itemDrops: [
+        ItemDropType(id: ItemId.GOLD_ORE, lowCount: 1, highCount: 3, weight: 1),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.05,
+          entries: [ItemDropType(id: ItemId.CRYSTAL_GEODE)],
+        ),
+      ],
+    ),
+  ),
+  // The Headframe's boss, level 89: the packrats' king on his midden of
+  // stolen gold. A Speed ring (design/DUNGEON_LOOT_GUIDE.md)
+  PACKRAT_KING(
+    CombatEntityDefinition(
+      giantRat,
+      fibLevel: 9,
+      name: "The Packrat King",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(id: ItemId.GOLD_ORE, lowCount: 3, highCount: 5, weight: 1),
+        ItemDropType(
+          id: ItemId.GOLD_RING,
+          lowCount: 1,
+          highCount: 3,
+          weight: 1,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.GOLD_BAR, lowCount: 5, highCount: 13),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.PACKRATS_TRINKET, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.PACKRATS_TRINKET, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // The Collapsed Drift's boss, level 89: the colony's blood-drinking
+  // mother. Recovery-led cuffs, for the lifesteal
+  DUSKWING_MATRIARCH(
+    CombatEntityDefinition(
+      giantBat,
+      fibLevel: 9,
+      name: "Duskwing Matriarch",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.BAT_WING,
+          lowCount: 5,
+          highCount: 13,
+          weight: 1,
+        ),
+        ItemDropType(id: ItemId.BAT_FANG, lowCount: 3, highCount: 5, weight: 1),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.GOLD_BAR, lowCount: 5, highCount: 13),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.DUSKWING_CUFFS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.DUSKWING_CUFFS, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // The Stamp Mill's boss, level 89: the worm that dug the deep tunnels,
+  // burst up through the mill floor. Strength, a mandible and its shell
+  THE_BORER(
+    CombatEntityDefinition(
+      theBorer,
+      fibLevel: 9,
+      name: "The Borer",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.GOLD_ORE,
+          lowCount: 5,
+          highCount: 13,
+          weight: 1,
+        ),
+        ItemDropType(id: ItemId.COAL, lowCount: 5, highCount: 13, weight: 1),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.MITHRIL_BAR, lowCount: 5, highCount: 13),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.BORERS_MANDIBLE, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.BORERS_MANDIBLE, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(
+              id: ItemId.BORERS_SHELL_PAULDRONS,
+              rarity: Rarity.RARE,
+            ),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(
+              id: ItemId.BORERS_SHELL_PAULDRONS,
+              rarity: Rarity.EPIC,
+            ),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // The Mother Lode's boss and the mine's last, level 144: the vein
+  // itself, awake. Tier-5 pieces, a maul and the heart it beats with
+  LODE_GOLEM(
+    CombatEntityDefinition(
+      lodeGolem,
+      fibLevel: 10,
+      name: "The Lode Golem",
+      isDungeonBoss: true,
+      rarity: Rarity.UNCOMMON,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.GOLD_ORE,
+          lowCount: 5,
+          highCount: 13,
+          weight: 1,
+        ),
+        ItemDropType(id: ItemId.GOLD_BAR, lowCount: 3, highCount: 5, weight: 1),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.CRYSTAL_GEODE, lowCount: 1, highCount: 3),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.LODESTONE_MAUL, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.LODESTONE_MAUL, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.HEART_OF_THE_LODE, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.HEART_OF_THE_LODE, rarity: Rarity.EPIC),
+          ],
+        ),
       ],
     ),
   ),
@@ -3327,6 +3703,14 @@ enum EntityId {
       iconAsset: "assets/images/entities/brinedeep_caves.png",
       rarity: Rarity.RARE,
       dungeonId: DungeonId.BRINEDEEP_CAVES,
+    ),
+  ),
+  OLD_SORROW_MINE_ENTRANCE(
+    DungeonEntityDefinition(
+      name: "Old Sorrow Mine",
+      iconAsset: "assets/images/entities/old_sorrow_mine.png",
+      rarity: Rarity.RARE,
+      dungeonId: DungeonId.OLD_SORROW_MINE,
     ),
   ),
   SPINEHOLD_CAVERNS_ENTRANCE(
