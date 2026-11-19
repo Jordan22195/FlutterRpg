@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'dart:ui' show ImageFilter, lerpDouble;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +22,7 @@ import '../controllers/player_data_controller.dart';
 import '../data/zone_details.dart';
 import '../systems/exploration_system.dart';
 import '../theme/hearth_text.dart';
+import '../theme/game_colors.dart';
 import '../theme/hearth_theme.dart';
 import '../widgets/action_dock.dart';
 import '../widgets/art_header.dart';
@@ -39,6 +40,7 @@ import '../widgets/dungeon_banner.dart';
 import '../widgets/find_flash.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/skill_ring_row.dart';
+import '../widgets/zone_backdrop.dart';
 import '../widgets/zone_header.dart';
 import '../widgets/zone_info_body.dart';
 
@@ -492,7 +494,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                _ZoneBackdrop(
+                ZoneBackdrop(
                   asset: zoneDef.iconAsset,
                   scroll: _scroll,
                   // the header closes over the art's full square, so the
@@ -608,118 +610,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 }
 
-/// A discovery tile's second line: the skill's icon with the level beside
-/// it, then how many are standing, in a chip.
-/// The zone's art behind the whole list. On arrival it is the full square,
-/// uncropped, across the top of the screen, with a dark blur of itself
-/// filling the room below. As the list scrolls up over it, the square grows
-/// from its foot until it covers the screen, blurring and darkening as it
-/// goes, so by the time the header has closed the list floats inside the
-/// place rather than under a picture of it. Undrawn art leaves the page.
-class _ZoneBackdrop extends StatelessWidget {
-  const _ZoneBackdrop({
-    required this.asset,
-    required this.scroll,
-    required this.growDistance,
-  });
-
-  final String asset;
-  final ScrollController scroll;
-
-  /// How far the list scrolls before the art has finished growing.
-  final double growDistance;
-
-  /// How far the grown art is blurred, and how far it sinks into the page.
-  static const double _blur = 8;
-  static const double _sink = 0.5;
-
-  Widget _art() => Image.asset(
-    asset,
-    fit: BoxFit.cover,
-    // zone art is pixel art; smoothing it blurs the pixels
-    filterQuality: FilterQuality.none,
-    errorBuilder: (_, _, _) => const SizedBox.shrink(),
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    if (asset.isEmpty) return const SizedBox.shrink();
-    final bg = context.palette.bg;
-
-    return IgnorePointer(
-      child: LayoutBuilder(
-        builder: (context, box) {
-          final w = box.maxWidth;
-          final h = box.maxHeight;
-          // grown, the square is as tall as the screen, centred across it
-          final grown = math.max(w, h);
-
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              // below the square at rest: the same scene, blurred and dark
-              ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: _art(),
-              ),
-              ColoredBox(color: bg.withValues(alpha: 0.6)),
-
-              ListenableBuilder(
-                listenable: scroll,
-                builder: (context, _) {
-                  final offset = scroll.hasClients ? scroll.offset : 0.0;
-                  final t = growDistance <= 0
-                      ? 1.0
-                      : (offset / growDistance).clamp(0.0, 1.0);
-                  final size = lerpDouble(w, grown, t)!;
-                  Widget art = _art();
-                  if (t > 0) {
-                    art = ImageFiltered(
-                      imageFilter: ImageFilter.blur(
-                        sigmaX: _blur * t,
-                        sigmaY: _blur * t,
-                      ),
-                      child: art,
-                    );
-                  }
-                  return Stack(
-                    children: [
-                      Positioned(
-                        key: const ValueKey('zone-backdrop'),
-                        left: (w - size) / 2,
-                        top: 0,
-                        width: size,
-                        height: size,
-                        // the square's foot melts into the blur beneath it,
-                        // so the picture has no hard bottom edge
-                        child: ShaderMask(
-                          blendMode: BlendMode.dstIn,
-                          shaderCallback: (rect) => const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Colors.white, Colors.transparent],
-                            stops: [0.8, 1],
-                          ).createShader(rect),
-                          child: art,
-                        ),
-                      ),
-                      Positioned.fill(
-                        child: ColoredBox(
-                          color: bg.withValues(alpha: _sink * t),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
 /// One row of the discoveries list: the kind it clusters under, its place
 /// in the zone's table, and how to draw it — found or not.
 class _ListSlot {
@@ -767,6 +657,8 @@ class _UndiscoveredCard extends StatelessWidget {
         _ => SpriteKind.gathering,
       },
       onTap: null,
+      // undiscovered tiles keep the full card fill
+      fillColor: context.palette.surface,
       // a creature's art has a margin of its own; sit closer
       spriteScale: 1.25,
     );
@@ -969,7 +861,7 @@ class _BurnTime extends StatelessWidget {
       decoration: BoxDecoration(
         color: palette.bg.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: context.gameColors.fireTint.border),
+        border: Border.all(color: context.palette.fireTint.border),
       ),
       alignment: Alignment.center,
       child: CountdownTimer(expirationTime: expirationTime, size: 11),

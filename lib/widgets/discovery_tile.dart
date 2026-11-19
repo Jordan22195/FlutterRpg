@@ -175,7 +175,7 @@ class BossRow extends StatelessWidget {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: radius,
-          side: const BorderSide(color: GameColors.bossTileBorder),
+          side: BorderSide(color: context.palette.bossTileBorder),
         ),
         child: InkWell(
           onTap: onTap,

@@ -71,21 +71,17 @@ class SpriteFrame extends StatelessWidget {
 
   /// The frame fill and border for [kind] in the current theme.
   static SpriteTint tintFor(BuildContext context, SpriteKind kind) {
-    final colors = context.gameColors;
     final palette = context.palette;
     return switch (kind) {
-      SpriteKind.combat => colors.combatTint,
+      SpriteKind.combat => palette.combatTint,
       SpriteKind.gathering => SpriteTint(
         fill: palette.gatherTintFill,
         border: palette.gatherTintBorder,
       ),
-      SpriteKind.crafting => colors.craftingTint,
-      SpriteKind.fire => colors.fireTint,
-      SpriteKind.shop => colors.shopTint,
-      SpriteKind.dungeon => SpriteTint(
-        fill: colors.dungeonTintFill,
-        border: palette.borderStrong,
-      ),
+      SpriteKind.crafting => palette.craftingTint,
+      SpriteKind.fire => palette.fireTint,
+      SpriteKind.shop => palette.shopTint,
+      SpriteKind.dungeon => palette.dungeonTint,
     };
   }
 
@@ -137,7 +133,7 @@ class SpriteFrame extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(radius - _bossBorder),
                 border: Border.all(
-                  color: GameColors.bossFrameInner,
+                  color: context.palette.bossFrameInner,
                   width: _bossBorder,
                 ),
               ),

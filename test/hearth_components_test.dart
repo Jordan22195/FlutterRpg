@@ -142,7 +142,7 @@ void main() {
   });
 
   group('SpriteFrame', () {
-    testWidgets('each kind wears its tint, and gathering follows the zone', (
+    testWidgets('each kind wears its tint, and every tint follows the zone', (
       tester,
     ) async {
       // an entity's art sits bare, so the tints show on anything else
@@ -161,19 +161,24 @@ void main() {
         );
       }
 
-      const colors = GameColors.standard;
+      const meadow = ZonePalette.meadow;
+      const ice = ZonePalette.hoarfrostHollow;
       expect(
-        (await frame(SpriteKind.combat, ZonePalette.meadow)).color,
-        colors.combatTint.fill,
+        (await frame(SpriteKind.combat, meadow)).color,
+        meadow.combatTint.fill,
       );
       expect(
-        (await frame(SpriteKind.fire, ZonePalette.meadow)).color,
-        colors.fireTint.fill,
+        (await frame(SpriteKind.fire, meadow)).color,
+        meadow.fireTint.fill,
       );
       expect(
-        (await frame(SpriteKind.crafting, ZonePalette.meadow)).color,
-        colors.craftingTint.fill,
+        (await frame(SpriteKind.crafting, meadow)).color,
+        meadow.craftingTint.fill,
       );
+      // a fight's frame in an ice cave is ice, not the meadow's brown
+      final iceCombat = (await frame(SpriteKind.combat, ice)).color!;
+      expect(iceCombat, ice.combatTint.fill);
+      expect(iceCombat.b, greaterThan(iceCombat.r));
       expect(
         (await frame(SpriteKind.gathering, ZonePalette.meadow)).color,
         ZonePalette.meadow.gatherTintFill,

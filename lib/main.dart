@@ -26,7 +26,7 @@ import 'data/skill_data.dart';
 import 'utilities/image_resolver.dart';
 import 'screens/main_shell.dart';
 import 'theme/hearth_theme.dart';
-import 'catalogs/zones/zone_id.dart';
+import 'theme/zone_palette.dart';
 import 'controllers/potion_controller.dart';
 
 Future<void> main() async {
@@ -273,15 +273,13 @@ class _GameBootstrapState extends State<GameBootstrap>
       // the whole app wears the palette of the zone being shown, so the
       // shell and every screen inside a zone (combat, crafting) share it —
       // or, while the world map is on screen, of the zone picked on it.
-      // selecting just the zone id keeps world ticks from rebuilding the app,
+      // selecting just the palette keeps world ticks from rebuilding the app,
       // and MaterialApp crossfades the theme when it changes
-      child: Selector<WorldController, ZoneId>(
-        selector: (_, world) => world.themeZoneId,
-        builder: (_, zoneId, home) => MaterialApp(
-          title: 'RPG',
-          theme: hearthTheme(zoneId.definition.palette),
-          home: home,
-        ),
+      // a dungeon on screen, or a floor of it, wears its own instead
+      child: Selector<WorldController, ZonePalette>(
+        selector: (_, world) => world.themePalette,
+        builder: (_, palette, home) =>
+            MaterialApp(title: 'RPG', theme: hearthTheme(palette), home: home),
         child: MainShell(onUiStateChanged: _onUiStateChanged),
       ),
     );

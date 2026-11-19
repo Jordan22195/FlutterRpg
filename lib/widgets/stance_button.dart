@@ -30,9 +30,10 @@ class StanceButton extends StatelessWidget {
     final controller = context.watch<PlayerDataController>();
     final selected = controller.getStance();
 
-    // the same segmented control as the tabs, at the style switch's 44pt
+    // the same segmented control as the tabs, in its quieter compact size
     return SegmentedTabs<Stance>(
-      height: 44,
+      height: 38,
+      compact: true,
       segments: [
         for (final stance in stances)
           TabSegment(

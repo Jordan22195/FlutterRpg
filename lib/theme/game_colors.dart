@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'zone_palette.dart';
+
 /// Fill and 1px border of the rounded frame a sprite sits in.
 @immutable
 class SpriteTint {
@@ -50,11 +52,6 @@ class GameColors extends ThemeExtension<GameColors> {
     required this.secondaryBar,
     required this.timerFill,
     required this.travel,
-    required this.combatTint,
-    required this.craftingTint,
-    required this.fireTint,
-    required this.shopTint,
-    required this.dungeonTintFill,
   });
 
   final Color exploration;
@@ -116,18 +113,14 @@ class GameColors extends ThemeExtension<GameColors> {
   static const Color bossColor = Color(0xFFB3261E);
   static const Color onBossColor = Color(0xFFFFFFFF);
 
-  /// A boss's gold sprite frame: the 2px border, the 2px dark line just
-  /// inside it and the 1px edge just outside it.
+  /// A boss's gold sprite frame: the 2px border and the 1px edge just
+  /// outside it. The dark line just inside it follows the palette — see
+  /// [DungeonSurfaces.bossFrameInner].
   static const Color bossFrame = Color(0xFFD9A441);
-  static const Color bossFrameInner = Color(0xFF1A120C);
   static const Color bossFrameOuter = Color(0xFF5A3A14);
 
   /// The "BOSS" label over a boss's name.
   static const Color bossLabel = Color(0xFFE3B341);
-
-  /// A boss tile's 1px border: the plain tile's weight with a hint of
-  /// warmth.
-  static const Color bossTileBorder = Color(0xFF6A3328);
 
   /// The hit you deal, by how it rolled: [hitMiss] for nothing, [hitLow]
   /// below the average hit, [hitHigh] at or above it, and [hitMax], drawn
@@ -138,45 +131,21 @@ class GameColors extends ThemeExtension<GameColors> {
   static const Color hitMax = Color(0xFFA3171B);
 
   /// A boss fight's arena, and the floor summary that takes its place: the
-  /// warm dark ground, the crimson glow the boss stands in, and the
-  /// tiles laid on it. [bossBarBorder] edges the arena's hp bar and the
-  /// tile a record was beaten on; [bossBarTrack] is the bar's empty run;
-  /// [bossMuted] is the ground's quiet text.
-  static const Color bossArenaFill = Color(0xFF1C130E);
+  /// crimson glow the boss stands in, the dark gold edging the arena's hp
+  /// bar and the tile a record was beaten on, and the boss's name. Its
+  /// ground and quiet text follow the palette — see [DungeonSurfaces].
   static const Color bossGlow = Color(0xFFC4473A);
-  static const Color bossTileFill = Color(0xFF22180F);
-  static const Color bossTileEdge = Color(0xFF3A2E22);
   static const Color bossBarBorder = Color(0xFF7A5A22);
-  static const Color bossBarTrack = Color(0xFF2A1712);
   static const Color bossName = Color(0xFFF6E3B4);
-  static const Color bossMuted = Color(0xFFC9BDA6);
-  static const Color bossFaint = Color(0xFFA8907A);
 
   /// A dungeon floor cleared at least once: its rail node, its rail, its
-  /// "Cleared" pill and its segment of the progress bar. [clearedFill] is
-  /// the node's wash.
+  /// "Cleared" pill and its segment of the progress bar.
   static const Color clearedColor = Color(0xFF7FC08A);
-  static const Color clearedFill = Color(0xFF1F3A27);
 
-  /// A dungeon's full-clear chest: its glyph and count ([chestColor]), its
-  /// card ([chestFill], [chestBorder]) and the box the glyph sits in
-  /// ([chestBoxFill], [chestBoxBorder]).
+  /// A dungeon's full-clear chest: its glyph and count. Its card and the
+  /// box the glyph sits in follow the palette — see [DungeonSurfaces].
   static const Color chestColor = Color(0xFFE8C766);
-  static const Color chestFill = Color(0xFF1E1C12);
-  static const Color chestBorder = Color(0xFF4A3F24);
-  static const Color chestBoxFill = Color(0xFF2A2416);
-  static const Color chestBoxBorder = Color(0xFF6B5A2E);
 
-  final SpriteTint combatTint;
-
-  /// Crafting stations (anvil) and crafting inputs.
-  final SpriteTint craftingTint;
-  final SpriteTint fireTint;
-  final SpriteTint shopTint;
-
-  /// Dungeon frames keep their rarity-coloured outline; only the fill is
-  /// fixed here.
-  final Color dungeonTintFill;
 
   static const standard = GameColors(
     exploration: Color(0xFFE0A93E),
@@ -202,14 +171,6 @@ class GameColors extends ThemeExtension<GameColors> {
     secondaryBar: Color(0xFFCDBF9F),
     timerFill: Color(0xFF8F836E),
     travel: travelColor,
-    combatTint: SpriteTint(fill: Color(0xFF2A1F18), border: Color(0xFF46332A)),
-    craftingTint: SpriteTint(
-      fill: Color(0xFF262019),
-      border: Color(0xFF43382A),
-    ),
-    fireTint: SpriteTint(fill: Color(0xFF2A1E16), border: Color(0xFF4A3324)),
-    shopTint: SpriteTint(fill: Color(0xFF2A2416), border: Color(0xFF4A3F2A)),
-    dungeonTintFill: Color(0xFF1B1D1F),
   );
 
   @override
@@ -237,11 +198,6 @@ class GameColors extends ThemeExtension<GameColors> {
     Color? secondaryBar,
     Color? timerFill,
     Color? travel,
-    SpriteTint? combatTint,
-    SpriteTint? craftingTint,
-    SpriteTint? fireTint,
-    SpriteTint? shopTint,
-    Color? dungeonTintFill,
   }) {
     return GameColors(
       exploration: exploration ?? this.exploration,
@@ -267,11 +223,6 @@ class GameColors extends ThemeExtension<GameColors> {
       secondaryBar: secondaryBar ?? this.secondaryBar,
       timerFill: timerFill ?? this.timerFill,
       travel: travel ?? this.travel,
-      combatTint: combatTint ?? this.combatTint,
-      craftingTint: craftingTint ?? this.craftingTint,
-      fireTint: fireTint ?? this.fireTint,
-      shopTint: shopTint ?? this.shopTint,
-      dungeonTintFill: dungeonTintFill ?? this.dungeonTintFill,
     );
   }
 
@@ -303,11 +254,84 @@ class GameColors extends ThemeExtension<GameColors> {
       secondaryBar: l(secondaryBar, other.secondaryBar),
       timerFill: l(timerFill, other.timerFill),
       travel: l(travel, other.travel),
-      combatTint: SpriteTint.lerp(combatTint, other.combatTint, t),
-      craftingTint: SpriteTint.lerp(craftingTint, other.craftingTint, t),
-      fireTint: SpriteTint.lerp(fireTint, other.fireTint, t),
-      shopTint: SpriteTint.lerp(shopTint, other.shopTint, t),
-      dungeonTintFill: l(dungeonTintFill, other.dungeonTintFill),
     );
   }
+}
+
+/// The grounds the dungeon's marked things sit on — the chest card, a
+/// boss's tile and arena, a cleared floor's wash. The colours that mean
+/// something (boss crimson, the gold frame, chest gold, cleared green) are
+/// fixed in [GameColors]; these lay a touch of them into the palette in
+/// view, so a chest in an ice cave sits on ice, not on the meadow's brown.
+extension DungeonSurfaces on ZonePalette {
+  static Color _wash(Color tint, double amount, Color base) =>
+      Color.alphaBlend(tint.withValues(alpha: amount), base);
+
+  /// The chest card and its border.
+  Color get chestFill => _wash(GameColors.chestColor, 0.05, bg);
+  Color get chestBorder => _wash(GameColors.chestColor, 0.10, borderStrong);
+
+  /// The box the chest glyph sits in, and its border.
+  Color get chestBoxFill => _wash(GameColors.chestColor, 0.07, surface);
+  Color get chestBoxBorder => _wash(GameColors.chestColor, 0.30, borderStrong);
+
+  /// A boss tile's 1px border: the plain tile's weight, warmed toward the
+  /// boss crimson.
+  Color get bossTileBorder => _wash(GameColors.bossColor, 0.35, borderStrong);
+
+  /// A boss fight's ground, and the floor summary's.
+  Color get bossArenaFill => _wash(GameColors.bossGlow, 0.04, bg);
+
+  /// The summary's tiles laid on that ground, and their edge.
+  Color get bossTileFill => _wash(GameColors.bossColor, 0.04, surface);
+  Color get bossTileEdge => _wash(GameColors.bossColor, 0.04, borderStrong);
+
+  /// The arena hp bar's empty run.
+  Color get bossBarTrack => _wash(GameColors.bossColor, 0.12, surfaceSunken);
+
+  /// The arena's quiet text, and its quieter text.
+  Color get bossMuted => textSubtitle;
+  Color get bossFaint => textMuted;
+
+  /// A cleared floor's rail-node wash.
+  Color get clearedFill => _wash(GameColors.clearedColor, 0.25, bg);
+
+  /// The 2px dark line just inside a boss's gold frame.
+  Color get bossFrameInner => _wash(GameColors.bossFrame, 0.06, titleShadow);
+}
+
+/// The frames sprites sit in, by what the sprite is: the palette's own
+/// card, with a breath of the colour the kind is known by, so a fight's
+/// frame in an ice cave is ice with a warm edge rather than the meadow's
+/// brown. Gathering spots take the palette's own [ZonePalette
+/// .gatherTintFill]; a dungeon's entrance its sunken card.
+extension SpriteTints on ZonePalette {
+  static SpriteTint _tint(
+    Color colour,
+    double fill,
+    double border,
+    ZonePalette p,
+  ) => SpriteTint(
+    fill: Color.alphaBlend(colour.withValues(alpha: fill), p.surface),
+    border: Color.alphaBlend(colour.withValues(alpha: border), p.borderStrong),
+  );
+
+  /// Creatures: a hint of the hp red.
+  SpriteTint get combatTint => _tint(GameColors.standard.hp, 0.06, 0.09, this);
+
+  /// Crafting stations (anvil) and crafting inputs: the palette's own
+  /// card, lifted a touch toward its text.
+  SpriteTint get craftingTint => _tint(text, 0.025, 0.04, this);
+
+  /// Fires and firepits: a hint of the firemaking orange.
+  SpriteTint get fireTint =>
+      _tint(GameColors.standard.firemaking, 0.045, 0.09, this);
+
+  /// Shops: a hint of the chest gold.
+  SpriteTint get shopTint => _tint(GameColors.chestColor, 0.05, 0.1, this);
+
+  /// Dungeon entrances keep their rarity-coloured outline; this is the
+  /// frame under it.
+  SpriteTint get dungeonTint =>
+      SpriteTint(fill: surfaceSunken, border: borderStrong);
 }

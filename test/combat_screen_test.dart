@@ -176,7 +176,12 @@ void main() {
     // the creature stands on a combat-tinted stage, with how many are left
     // as a bare number in the corner
     final stage = tester.widget<StagePanel>(find.byType(StagePanel));
-    expect(stage.tint, GameColors.standard.combatTint);
+    // the tint is the palette's own card, in whatever palette the stage
+    // is drawn in
+    final stagePalette = Theme.of(
+      tester.element(find.byType(StagePanel)),
+    ).extension<ZonePalette>()!;
+    expect(stage.tint, stagePalette.combatTint);
     expect(find.byType(StageCountPill), findsOneWidget);
     // a common creature keeps the tint's own 1px border
     expect(stage.outline, isNull);

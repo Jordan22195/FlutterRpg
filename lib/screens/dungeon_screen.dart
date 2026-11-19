@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -31,6 +33,8 @@ import '../widgets/primary_button.dart';
 import '../widgets/segmented_tabs.dart';
 import '../widgets/stance_button.dart';
 import '../widgets/travel_row.dart';
+import '../widgets/art_header.dart';
+import '../widgets/zone_backdrop.dart';
 import '../widgets/zone_header.dart';
 import 'encounter_screen.dart';
 
@@ -57,10 +61,6 @@ class DungeonScreen extends StatefulWidget {
 
   final DungeonId dungeonId;
 
-  /// The open header's height: a touch shorter than a zone's, so the floor
-  /// in hand starts in view.
-  static const double headerHeight = 300;
-
   /// Whether [entity] is the boss its floor builds to.
   @visibleForTesting
   static bool isDungeonBoss(EncounterEntity entity) =>
@@ -77,6 +77,15 @@ class _DungeonScreenState extends State<DungeonScreen> {
   /// The floor the player tapped to run next, or null to follow the
   /// dungeon's own floor in hand — the running one, else the next to clear.
   int? _selected;
+
+  /// The list's scroll, which the backdrop grows with.
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   static const double _floorGap = 16;
   static const double _railWidth = 28;
@@ -124,25 +133,64 @@ class _DungeonScreenState extends State<DungeonScreen> {
 
     // IMPORTANT: no Scaffold here — MainShell owns the Scaffold + BottomNav.
     // the top is left open: the art runs up behind the status bar, and the
-    // header keeps its own rows clear of the inset
-    return SafeArea(
-      top: false,
-      child: Column(
-        children: [
-          Expanded(
-            child: _list(
-              context,
-              controller,
-              slots,
-              def,
-              zoneName,
-              selected: selected,
-              activeFloor: activeFloor,
-            ),
+    // header keeps its own rows clear of the inset. like a zone, the whole
+    // screen wears the palette washed in its art's colour, and the list
+    // scrolls on glass over the art standing still behind it
+    final washed = hearthTheme(context.palette.washed());
+    // the art is square, drawn the screen's full width
+    final artSize = MediaQuery.sizeOf(context).width;
+    final collapsed = ArtHeader.collapsedHeight(
+      MediaQuery.paddingOf(context).top,
+    );
+    return Theme(
+      data: washed,
+      child: ColoredBox(
+        color: washed.scaffoldBackgroundColor,
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ZoneBackdrop(
+                      asset: def.iconAsset,
+                      scroll: _scroll,
+                      // the header closes over the art's full square, so
+                      // the art grows across the same stretch of scroll
+                      growDistance: artSize - collapsed,
+                    ),
+                    LayoutBuilder(
+                      builder: (context, viewport) => Theme(
+                        data: hearthTheme(context.palette.glass()),
+                        child: _list(
+                          context,
+                          controller,
+                          slots,
+                          def,
+                          zoneName,
+                          selected: selected,
+                          activeFloor: activeFloor,
+                          artSize: artSize,
+                          // tall enough for the header to close all the
+                          // way, so a short dungeon still scrolls the art
+                          // fully into its backdrop
+                          minBodyHeight: math.max(
+                            0,
+                            viewport.maxHeight - collapsed - 36,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (selected >= 0 && selected < slots.length)
+                _dock(context, controller, slots[selected], selected),
+            ],
           ),
-          if (selected >= 0 && selected < slots.length)
-            _dock(context, controller, slots[selected], selected),
-        ],
+        ),
       ),
     );
   }
@@ -157,15 +205,21 @@ class _DungeonScreenState extends State<DungeonScreen> {
     String? zoneName, {
     required int selected,
     required int activeFloor,
+    required double artSize,
+    required double minBodyHeight,
   }) {
     return CustomScrollView(
+      controller: _scroll,
       slivers: [
         ZoneHeader(
           name: def.name,
           iconAsset: def.iconAsset,
           zoneLevel: 0,
           subtitle: [?zoneName, 'Dungeon'].join(' · '),
-          expandedHeight: DungeonScreen.headerHeight,
+          transparent: true,
+          // open, the header is the art's whole square: the picture is
+          // seen uncropped on arrival
+          expandedHeight: artSize,
           // nothing is left behind by walking out, so this is an ordinary
           // pop: the floor keeps running while the player looks around
           backLabel: zoneName == null ? 'Back' : 'Back to $zoneName',
@@ -173,52 +227,55 @@ class _DungeonScreenState extends State<DungeonScreen> {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
           sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (slots.isNotEmpty) ...[
-                  _progress(
-                    context,
-                    controller,
-                    slots,
-                    controller.currentFloor(dungeonId),
-                  ),
-                  const SizedBox(height: 12),
-                  _runControls(context, controller),
-                  const SizedBox(height: 16),
-                ],
-                for (int i = 0; i < slots.length; i++) ...[
-                  if (i > 0) const SizedBox(height: _floorGap),
-                  _floor(
-                    context,
-                    controller,
-                    slots,
-                    i,
-                    current: selected,
-                    activeFloor: activeFloor,
-                  ),
-                ],
-                if (slots.isNotEmpty) ...[
-                  const SizedBox(height: _floorGap),
-                  _railed(
-                    node: const ChestRailNode(),
-                    nodeTop: _chestNodeTop,
-                    child: DungeonChestCard(
-                      title: '${def.name} Chest',
-                      floorsCleared: controller.mainFloorsCleared(dungeonId),
-                      floorCount: controller.mainFloorCount(dungeonId),
-                      waiting: controller.chestsWaiting(dungeonId),
-                      earned: controller.chestEarned(dungeonId),
-                      onClaim: () => _claimChests(context, controller),
-                      onInfo: () => showChestInfoDialog(
-                        context,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: minBodyHeight),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (slots.isNotEmpty) ...[
+                    _progress(
+                      context,
+                      controller,
+                      slots,
+                      controller.currentFloor(dungeonId),
+                    ),
+                    const SizedBox(height: 12),
+                    _runControls(context, controller),
+                    const SizedBox(height: 16),
+                  ],
+                  for (int i = 0; i < slots.length; i++) ...[
+                    if (i > 0) const SizedBox(height: _floorGap),
+                    _floor(
+                      context,
+                      controller,
+                      slots,
+                      i,
+                      current: selected,
+                      activeFloor: activeFloor,
+                    ),
+                  ],
+                  if (slots.isNotEmpty) ...[
+                    const SizedBox(height: _floorGap),
+                    _railed(
+                      node: const ChestRailNode(),
+                      nodeTop: _chestNodeTop,
+                      child: DungeonChestCard(
                         title: '${def.name} Chest',
-                        rolls: controller.chestRolls(dungeonId),
+                        floorsCleared: controller.mainFloorsCleared(dungeonId),
+                        floorCount: controller.mainFloorCount(dungeonId),
+                        waiting: controller.chestsWaiting(dungeonId),
+                        earned: controller.chestEarned(dungeonId),
+                        onClaim: () => _claimChests(context, controller),
+                        onInfo: () => showChestInfoDialog(
+                          context,
+                          title: '${def.name} Chest',
+                          rolls: controller.chestRolls(dungeonId),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

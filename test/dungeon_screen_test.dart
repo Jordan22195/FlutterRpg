@@ -26,11 +26,13 @@ import 'package:rpg/widgets/dungeon_floor_card.dart';
 import 'package:rpg/widgets/dungeon_floor_track.dart';
 import 'package:rpg/widgets/eat_food_button.dart';
 import 'package:rpg/widgets/stance_button.dart';
+import 'package:rpg/widgets/stage_panel.dart';
 import 'package:rpg/data/player_data.dart';
 import 'package:rpg/widgets/fill_bar.dart';
 import 'package:rpg/widgets/item_stack_tile.dart';
 import 'package:rpg/widgets/sprite_frame.dart';
 import 'package:rpg/theme/game_colors.dart';
+import 'package:rpg/theme/zone_palette.dart';
 
 // Fixed pumps (the app has periodic timers that never settle).
 Future<void> settle(WidgetTester tester) async {
@@ -81,6 +83,13 @@ Future<void> tapFloorButton(WidgetTester tester, String label) async {
   await settle(tester);
 }
 
+// as tall as the default surface is wide, plus its old height
+void tallSurface(WidgetTester tester) {
+  tester.view.physicalSize = const Size(800, 800 + 600);
+  tester.view.devicePixelRatio = 1;
+  addTearDown(tester.view.reset);
+}
+
 // boots the app straight onto a dungeon's floor list, which is the only
 // cheap way to reach the zone dungeons — their entrances are found by
 // exploring
@@ -90,6 +99,9 @@ Future<void> openDungeonFromSave(WidgetTester tester, DungeonId id) async {
   save.uiState.tabIndex = 0;
   save.uiState.mapRouteStack = ['dungeon'];
   save.uiState.dungeonId = id;
+  // the open header is the art's square, as tall as the screen is wide:
+  // a tall surface leaves the floors as much room as a phone does
+  tallSurface(tester);
 
   await tester.pumpWidget(
     MyApp(
@@ -102,6 +114,7 @@ Future<void> openDungeonFromSave(WidgetTester tester, DungeonId id) async {
 
 // tapping a map node selects it; the detail pane's button is what enters
 Future<void> openLair(WidgetTester tester) async {
+  tallSurface(tester);
   await tester.tap(find.byKey(const ValueKey('map-node-GOBLIN_QUEEN_LAIR')));
   await settle(tester);
   await tester.tap(find.text('Enter'));
@@ -123,7 +136,13 @@ void main() {
 
     final header = find.byType(ArtHeader);
     expect(tester.widget<ArtHeader>(header).artAsset, art);
-    expect(tester.getSize(header).height, DungeonScreen.headerHeight);
+    // open, the header is the art's whole square, the screen's full width
+    expect(
+      tester.getSize(header).height,
+      tester.getSize(find.byType(DungeonScreen)).width,
+    );
+    // the art stands behind the list as the zone screen's backdrop
+    expect(find.byKey(const ValueKey('zone-backdrop')), findsOneWidget);
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
@@ -596,6 +615,104 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
+  });
+
+  testWidgets('a dungeon and its floors wear its own palette; leaving hands '
+      'the zone\'s back', (tester) async {
+    Color accentAt(Finder f) =>
+        Theme.of(tester.element(f)).extension<ZonePalette>()!.accent;
+
+    await openDungeonFromSave(tester, DungeonId.SPIDER_DEN);
+    final session = sessionOf(tester, at: find.byType(DungeonScreen));
+    final own = DungeonId.SPIDER_DEN.definition.palette!;
+    final zone = session.worldController.viewedZoneId.definition.palette;
+    expect(own.accent, isNot(zone.accent));
+
+    expect(accentAt(find.byType(DungeonScreen)), own.accent);
+
+    // a floor pushed over the list is still inside the dungeon
+    await tapFloorButton(tester, 'Enter Floor 1');
+    expect(find.byType(EncounterScreen), findsOneWidget);
+    expect(accentAt(find.byType(EncounterScreen)), own.accent);
+    // the floor's stage sits in the dungeon's own colours, not the
+    // meadow's fixed brown
+    final stage = tester.widget<StagePanel>(find.byType(StagePanel));
+    final stagePalette = Theme.of(
+      tester.element(find.byType(StagePanel)),
+    ).extension<ZonePalette>()!;
+    expect(stage.tint, stagePalette.combatTint);
+    expect(stage.tint.fill.b, greaterThan(stage.tint.fill.r));
+
+    // all the way back out, the app is the zone's again
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.arrow_back).last);
+    await settle(tester);
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.arrow_back).last);
+    await settle(tester);
+    expect(find.byType(DungeonScreen), findsNothing);
+    expect(
+      session.worldController.themePalette.accent,
+      session.worldController.themeZoneId.definition.palette.accent,
+    );
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('the chest card sits on the dungeon\'s own ground', (
+    tester,
+  ) async {
+    await openDungeonFromSave(tester, DungeonId.HOARFROST_HOLLOW);
+    await tester.ensureVisible(find.byType(DungeonChestCard));
+    await settle(tester);
+
+    final palette = Theme.of(
+      tester.element(find.byType(DungeonChestCard)),
+    ).extension<ZonePalette>()!;
+    final fills = tester
+        .widgetList<Container>(
+          find.descendant(
+            of: find.byType(DungeonChestCard),
+            matching: find.byType(Container),
+          ),
+        )
+        .map((c) => (c.decoration as BoxDecoration?)?.color)
+        .toSet();
+    expect(fills, contains(palette.chestFill));
+    // an ice cave's chest sits on blue, not the meadow's brown
+    expect(palette.chestFill.b, greaterThan(palette.chestFill.r));
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  test('the dungeon grounds follow the palette, the marks stay fixed', () {
+    const ice = ZonePalette.hoarfrostHollow;
+    const meadow = ZonePalette.meadow;
+    for (final (name, of) in <(String, Color Function(ZonePalette))>[
+      ('chestFill', (p) => p.chestFill),
+      ('chestBoxFill', (p) => p.chestBoxFill),
+      ('bossArenaFill', (p) => p.bossArenaFill),
+      ('bossTileFill', (p) => p.bossTileFill),
+      ('bossBarTrack', (p) => p.bossBarTrack),
+      ('clearedFill', (p) => p.clearedFill),
+    ]) {
+      // in the ice cave each ground leans blue next to the meadow's
+      expect(
+        of(ice).b - of(ice).r,
+        greaterThan(of(meadow).b - of(meadow).r),
+        reason: name,
+      );
+    }
+  });
+
+  test('every dungeon with its own art has a palette drawn from it', () {
+    for (final id in DungeonId.values) {
+      final art = id.definition.iconAsset;
+      if (!art.startsWith('assets/images/dungeons/')) continue;
+      // art not yet drawn keeps the zone's palette until it is
+      if (id == DungeonId.REDWALL_EYRIE || id == DungeonId.GAUNT_TOR) continue;
+      expect(id.definition.palette, isNotNull, reason: id.name);
+    }
   });
 
   testWidgets('backing out of a dungeon asks nothing and keeps the floor '

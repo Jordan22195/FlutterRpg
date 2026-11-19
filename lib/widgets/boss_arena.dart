@@ -65,7 +65,7 @@ class BossArena extends StatelessWidget {
         child: Container(
           height: height,
           decoration: BoxDecoration(
-            color: GameColors.bossArenaFill,
+            color: context.palette.bossArenaFill,
             borderRadius: BorderRadius.circular(_radius),
             border: Border.all(color: GameColors.bossFrame, width: _border),
             boxShadow: const [
@@ -75,7 +75,7 @@ class BossArena extends StatelessWidget {
           foregroundDecoration: BoxDecoration(
             borderRadius: BorderRadius.circular(_radius - _border),
             border: Border.all(
-              color: GameColors.bossFrameInner,
+              color: context.palette.bossFrameInner,
               width: _border,
             ),
           ),
@@ -111,7 +111,9 @@ class BossArena extends StatelessWidget {
                       width: 190,
                       height: 22,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF060403).withValues(alpha: 0.55),
+                        color: context.palette.titleShadow.withValues(
+                          alpha: 0.55,
+                        ),
                         borderRadius: const BorderRadius.all(
                           Radius.elliptical(95, 11),
                         ),
@@ -271,7 +273,7 @@ class BossArena extends StatelessWidget {
       child: Container(
         height: _barHeight,
         decoration: BoxDecoration(
-          color: GameColors.bossBarTrack,
+          color: context.palette.bossBarTrack,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: GameColors.bossBarBorder, width: 2),
         ),
@@ -326,7 +328,9 @@ class BossArena extends StatelessWidget {
                       bottom: 0,
                       width: 2,
                       child: ColoredBox(
-                        color: const Color(0xFF0F0A08).withValues(alpha: 0.7),
+                        color: context.palette.titleShadow.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                   Positioned.fill(

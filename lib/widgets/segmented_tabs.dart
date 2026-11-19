@@ -24,6 +24,7 @@ class SegmentedTabs<T> extends StatelessWidget {
     required this.selected,
     required this.onChanged,
     this.height = 48,
+    this.compact = false,
   });
 
   final List<TabSegment<T>> segments;
@@ -35,29 +36,33 @@ class SegmentedTabs<T> extends StatelessWidget {
   /// 48 for tab bars, 44 for the combat style switch.
   final double height;
 
+  /// A quieter bar for a secondary set of tabs: smaller type and corners.
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     // four segments share the same width as three, so their labels step down
-    final fontSize = segments.length > 3 ? 14.0 : 15.0;
+    final fontSize = compact ? 13.0 : (segments.length > 3 ? 14.0 : 15.0);
 
     return Container(
       height: height,
-      padding: const EdgeInsets.all(4),
+      padding: EdgeInsets.all(compact ? 3 : 4),
       decoration: BoxDecoration(
         color: palette.surfaceSunken,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(compact ? 11 : 14),
         border: Border.all(color: palette.border),
       ),
       child: Row(
         children: [
           for (var i = 0; i < segments.length; i++) ...[
-            if (i > 0) const SizedBox(width: 4),
+            if (i > 0) SizedBox(width: compact ? 3 : 4),
             Expanded(
               child: _Segment<T>(
                 segment: segments[i],
                 selected: segments[i].value == selected,
                 fontSize: fontSize,
+                radius: compact ? 8 : 10,
                 onTap: () => onChanged(segments[i].value),
               ),
             ),
@@ -73,12 +78,14 @@ class _Segment<T> extends StatelessWidget {
     required this.segment,
     required this.selected,
     required this.fontSize,
+    required this.radius,
     required this.onTap,
   });
 
   final TabSegment<T> segment;
   final bool selected;
   final double fontSize;
+  final double radius;
   final VoidCallback onTap;
 
   @override
@@ -99,7 +106,7 @@ class _Segment<T> extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           decoration: BoxDecoration(
             color: selected ? palette.raised : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(radius),
           ),
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 6),

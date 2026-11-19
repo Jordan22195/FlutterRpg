@@ -418,7 +418,7 @@ class CollectedCheck extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: GameColors.clearedFill,
+        color: context.palette.clearedFill,
         shape: BoxShape.circle,
         border: Border.all(color: GameColors.clearedColor, width: 1.5),
       ),

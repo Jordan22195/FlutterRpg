@@ -55,10 +55,11 @@ class MapDetailPane extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // a zone wears its own colours; a landmark stands outside any zone and
-    // keeps the default palette
+    // wears its dungeon's, or the default palette when it has none
     final palette = switch (node) {
       final ZoneNode zone => zone.id.definition.palette,
-      LandmarkNode() => ZonePalette.meadow,
+      final LandmarkNode landmark =>
+        landmark.id.definition.palette ?? ZonePalette.meadow,
     };
 
     return Theme(

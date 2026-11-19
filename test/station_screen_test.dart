@@ -12,6 +12,7 @@ import 'package:rpg/screens/crafting_screen.dart';
 import 'package:rpg/screens/firepit_screen.dart';
 import 'package:rpg/services/file_manager_service.dart';
 import 'package:rpg/theme/game_colors.dart';
+import 'package:rpg/theme/zone_palette.dart';
 import 'package:rpg/widgets/action_dock.dart';
 import 'package:rpg/widgets/art_header.dart';
 import 'package:rpg/widgets/empty_state.dart';
@@ -86,7 +87,7 @@ void main() {
     );
 
     final stage = tester.widget<StagePanel>(find.byType(StagePanel));
-    expect(stage.tint, GameColors.standard.fireTint);
+    expect(stage.tint, ZonePalette.meadow.fireTint);
 
     // the action is named on the button's face, and nowhere above the dock
     expect(
@@ -145,7 +146,7 @@ void main() {
     );
 
     final stage = tester.widget<StagePanel>(find.byType(StagePanel));
-    expect(stage.tint, GameColors.standard.craftingTint);
+    expect(stage.tint, ZonePalette.meadow.craftingTint);
     expect(
       find.descendant(
         of: find.byType(MomentumPrimaryButton),

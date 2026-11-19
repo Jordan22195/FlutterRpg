@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/game_colors.dart';
 import 'package:rpg/theme/hearth_theme.dart';
 import 'package:rpg/widgets/action_timer.dart';
 import 'package:provider/provider.dart';
@@ -397,7 +398,7 @@ class _FireHero extends StatelessWidget {
   Widget build(BuildContext context) {
     final f = fire;
     return StagePanel(
-      tint: context.gameColors.fireTint,
+      tint: context.palette.fireTint,
       height: 168,
       sprite: SpriteFrame.sprite(f?.id ?? EntityId.FIREPIT, size: 92),
       corner: f == null ? null : _FireTimerChip(fire: f),

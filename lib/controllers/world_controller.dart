@@ -14,6 +14,7 @@ import '../data/offline_progress_data.dart';
 import '../services/offline_progress_service.dart';
 import '../catalogs/dungeons/dungeon_id.dart';
 import '../catalogs/zones/zones.dart';
+import '../theme/zone_palette.dart';
 import '../services/player_data_service.dart';
 import '../services/exploration_service.dart';
 import '../catalogs/entities/entities.dart';
@@ -274,6 +275,22 @@ class WorldController extends ChangeNotifier {
     if (_mapPreviewZone == zone) return;
     _mapPreviewZone = zone;
     if (_mapInView) notifyListeners();
+  }
+
+  /// The dungeon on screen — its own list, or a floor of it being fought —
+  /// whose colours the app wears in place of the zone's. Kept by the shell.
+  DungeonId _dungeonInView = DungeonId.NULL;
+
+  /// The palette the app is drawn in: a dungeon in view's own, when it has
+  /// one, otherwise [themeZoneId]'s.
+  ZonePalette get themePalette =>
+      _dungeonInView.definition.palette ?? themeZoneId.definition.palette;
+
+  /// See [_dungeonInView]; [DungeonId.NULL] for none.
+  void setDungeonInView(DungeonId dungeon) {
+    if (_dungeonInView == dungeon) return;
+    _dungeonInView = dungeon;
+    notifyListeners();
   }
 
   /// See [_mapInView].

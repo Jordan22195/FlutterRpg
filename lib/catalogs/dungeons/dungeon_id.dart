@@ -9,6 +9,7 @@ import 'package:rpg/catalogs/dungeons/definition/dungeon_entry.dart';
 import 'package:rpg/catalogs/dungeons/definition/dungeon_definition.dart';
 import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
+import 'package:rpg/theme/zone_palette.dart';
 
 // ignore_for_file: constant_identifier_names
 
@@ -37,6 +38,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Goblin Queen's Lair",
       iconAsset: "assets/images/dungeons/goblin_queen_lair.png",
+      palette: ZonePalette.goblinQueenLair,
       uniques: [
         ItemId.GOBLIN_CROWN,
         ItemId.GOBLIN_SCEPTER,
@@ -100,6 +102,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Spider Den",
       iconAsset: "assets/images/dungeons/spider_den.png",
+      palette: ZonePalette.spiderDen,
       uniques: [
         ItemId.WEBBED_CLOAK,
         ItemId.WEBBED_BRACERS,
@@ -202,6 +205,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Grainery",
       iconAsset: "assets/images/dungeons/grainery.png",
+      palette: ZonePalette.grainery,
       uniques: [
         ItemId.CHICKEN_CHARM,
         ItemId.MOOD_RING,
@@ -284,6 +288,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Wolf Den",
       iconAsset: "assets/images/dungeons/wolf_den.png",
+      palette: ZonePalette.wolfDen,
       // what the den is farmed for: each boss's two pieces, floor by
       // floor, the two its trash carry, then the chest's own
       uniques: [
@@ -416,6 +421,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "The Reedmaze",
       iconAsset: "assets/images/dungeons/reedmaze.png",
+      palette: ZonePalette.reedmaze,
       uniques: [
         ItemId.CROAKERS_CHARM,
         ItemId.SNAPJAW_SHELL,
@@ -515,6 +521,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Drowned Fen",
       iconAsset: "assets/images/dungeons/drowned_fen.png",
+      palette: ZonePalette.drownedFen,
       uniques: [
         ItemId.CROWQUILL_BRACERS,
         ItemId.OOZE_SLICK_BELT,
@@ -624,6 +631,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "The Silt Warrens",
       iconAsset: "assets/images/dungeons/silt_warrens.png",
+      palette: ZonePalette.siltWarrens,
       uniques: [
         ItemId.MUDCLAW_GRIPS,
         ItemId.WALLOWHIDE_TREADS,
@@ -740,6 +748,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Tempest Reach",
       iconAsset: "assets/images/dungeons/tempest_reach.png",
+      palette: ZonePalette.tempestReach,
       uniques: [
         ItemId.WARLORDS_CLEAVER,
         ItemId.WARLORDS_WARHELM,
@@ -856,6 +865,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Haunted Ruins",
       iconAsset: "assets/images/dungeons/haunted_ruins.png",
+      palette: ZonePalette.hauntedRuins,
       uniques: [
         ItemId.GRAVEKEEPERS_GREATCOAT,
         ItemId.GRAVEKEEPERS_KEYRING,
@@ -973,6 +983,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Old Sorrow Mine",
       iconAsset: "assets/images/dungeons/old_sorrow_mine.png",
+      palette: ZonePalette.oldSorrowMine,
       uniques: [
         ItemId.PACKRATS_TRINKET,
         ItemId.DUSKWING_CUFFS,
@@ -1211,6 +1222,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Brinedeep Caves",
       iconAsset: "assets/images/dungeons/brinedeep_caves.png",
+      palette: ZonePalette.brinedeepCaves,
       uniques: [
         ItemId.BRINECRUSHER_CLAW,
         ItemId.BRINECLAW_BRACERS,
@@ -1326,6 +1338,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Spinehold Caverns",
       iconAsset: "assets/images/dungeons/spinehold_caverns.png",
+      palette: ZonePalette.spineholdCaverns,
       uniques: [
         ItemId.TROLLHIDE_TREADS,
         ItemId.TOLLKEEPERS_BELT,
@@ -1421,6 +1434,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "The Ashen Vaults",
       iconAsset: "assets/images/dungeons/ashen_vaults.png",
+      palette: ZonePalette.ashenVaults,
       uniques: [
         ItemId.CINDERFANG,
         ItemId.WYVERNWING_CLOAK,
@@ -1619,6 +1633,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Hoarfrost Hollow",
       iconAsset: "assets/images/dungeons/hoarfrost_hollow.png",
+      palette: ZonePalette.hoarfrostHollow,
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -1675,6 +1690,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Thunderhall",
       iconAsset: "assets/images/dungeons/thunderhall.png",
+      palette: ZonePalette.thunderhall,
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -1731,6 +1747,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "The Caldera",
       iconAsset: "assets/images/dungeons/the_caldera.png",
+      palette: ZonePalette.caldera,
       type: DungeonType.ZONE,
       chestRolls: [
         DropRoll(
@@ -1786,6 +1803,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Goblin Camp",
       iconAsset: "assets/images/dungeons/goblin_camp.png",
+      palette: ZonePalette.goblinCamp,
       uniques: [
         ItemId.SERGEANTS_SHIV,
         ItemId.WARBAND_BELT,
@@ -1839,6 +1857,7 @@ enum DungeonId {
     DungeonDefinition(
       name: "Dev Transient Dungeon",
       iconAsset: "assets/images/entities/spider_den.png",
+      palette: ZonePalette.spiderDen,
       type: DungeonType.TRANSIENT,
       entries: [
         DungeonEntry(

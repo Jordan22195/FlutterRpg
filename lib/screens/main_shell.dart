@@ -106,9 +106,28 @@ class _MainShellState extends State<MainShell> {
   // over its root (a dialog is unnamed and leaves the map on screen). while
   // it is, the app wears the colours of the zone picked on it
   void _syncMapInView() {
-    context.read<WorldController>().setMapInView(
+    final world = context.read<WorldController>();
+    world.setMapInView(
       index == 0 && _mapTabObserver.namedRouteSettings.isEmpty,
     );
+    world.setDungeonInView(index == 0 ? _dungeonOnTop() : DungeonId.NULL);
+  }
+
+  // the dungeon whose screen is on top of the map tab: its own list, or a
+  // floor of it pushed over that list. anything else on top is not in it
+  DungeonId _dungeonOnTop() {
+    for (final settings in _mapTabObserver.namedRouteSettings.reversed) {
+      if (settings.name == EntityScreenRouterService.encounterRouteName &&
+          settings.arguments is int) {
+        continue; // a dungeon's floor: look at the dungeon under it
+      }
+      if (settings.name == EntityScreenRouterService.dungeonRouteName &&
+          settings.arguments is DungeonId) {
+        return settings.arguments as DungeonId;
+      }
+      return DungeonId.NULL;
+    }
+    return DungeonId.NULL;
   }
 
   @override

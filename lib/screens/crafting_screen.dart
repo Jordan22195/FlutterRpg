@@ -11,6 +11,7 @@ import 'package:rpg/widgets/skill_ring_row.dart';
 
 import '../controllers/world_controller.dart';
 import '../data/skill_category.dart';
+import '../theme/game_colors.dart';
 import '../theme/hearth_theme.dart';
 import '../widgets/action_dock.dart';
 import '../widgets/art_header.dart';
@@ -97,7 +98,7 @@ class _CraftingScreenState extends State<CraftingScreen>
               children: [
                 // the station itself, on a crafting-tinted stage
                 StagePanel(
-                  tint: context.gameColors.craftingTint,
+                  tint: context.palette.craftingTint,
                   height: 148,
                   sprite: SpriteFrame.sprite(station, size: 116),
                   buffs: StageBuffIcons.ifAny(context),

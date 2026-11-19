@@ -6,11 +6,16 @@ import 'package:rpg/catalogs/dungeons/dungeon_type.dart';
 import 'package:rpg/catalogs/zones/map_node_type.dart';
 import 'package:rpg/catalogs/dungeons/definition/dungeon_entry.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
+import 'package:rpg/theme/zone_palette.dart';
 
 class DungeonDefinition {
   final String name;
   final String iconAsset;
   final DungeonType type;
+
+  /// The colours the app wears while this dungeon (or a floor of it) is on
+  /// screen, drawn from its art. Null keeps the zone's own palette.
+  final ZonePalette? palette;
 
   /// What this dungeon looks like on the world map, for the landmarks that
   /// get their own token there. Orthogonal to [type]: [DungeonType] is how
@@ -44,6 +49,7 @@ class DungeonDefinition {
     required this.iconAsset,
     required this.type,
     required this.entries,
+    this.palette,
     this.mapNodeType = MapNodeType.DUNGEON,
     this.keyItemId = ItemId.NULL,
     this.requiredSkill = SkillId.NULL,
@@ -127,6 +133,7 @@ class DungeonDefinition {
     String? name,
     String? iconAsset,
     DungeonType? type,
+    ZonePalette? palette,
     MapNodeType? mapNodeType,
     List<DungeonEntry>? entries,
     ItemId? keyItemId,
@@ -139,6 +146,7 @@ class DungeonDefinition {
       name: name ?? this.name,
       iconAsset: iconAsset ?? this.iconAsset,
       type: type ?? this.type,
+      palette: palette ?? this.palette,
       mapNodeType: mapNodeType ?? this.mapNodeType,
       entries: entries ?? this.entries,
       keyItemId: keyItemId ?? this.keyItemId,

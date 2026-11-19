@@ -80,6 +80,8 @@ class _EncounterInfoPanelState extends State<EncounterInfoPanel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SegmentedTabs<_PanelTab>(
+          height: 34,
+          compact: true,
           segments: [
             for (final tab in tabs) TabSegment(value: tab, label: _label(tab)),
           ],

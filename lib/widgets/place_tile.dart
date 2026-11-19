@@ -206,7 +206,8 @@ class PlaceTile extends StatelessWidget {
 
     final muted = palette.textMuted;
     final tile = Material(
-      color: fillColor ?? palette.surface,
+      // discovered tiles let the zone's art show through
+      color: fillColor ?? palette.surface.withValues(alpha: 0.6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: active

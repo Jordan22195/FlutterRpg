@@ -39,7 +39,7 @@ class FloorClearPanel extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 16, 14, 18),
         decoration: BoxDecoration(
-          color: GameColors.bossArenaFill,
+          color: context.palette.bossArenaFill,
           borderRadius: BorderRadius.circular(_radius),
           border: Border.all(color: GameColors.bossFrame, width: _border),
           boxShadow: const [
@@ -51,9 +51,9 @@ class FloorClearPanel extends StatelessWidget {
             colors: [
               Color.alphaBlend(
                 GameColors.bossFrame.withValues(alpha: 0.18),
-                GameColors.bossArenaFill,
+                context.palette.bossArenaFill,
               ),
-              GameColors.bossArenaFill,
+              context.palette.bossArenaFill,
             ],
             stops: const [0, 0.6],
           ),
@@ -94,11 +94,14 @@ class FloorClearPanel extends StatelessWidget {
               child: Container(
                 width: 18,
                 height: 18,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: GameColors.clearedColor,
                   shape: BoxShape.circle,
                   boxShadow: [
-                    BoxShadow(color: GameColors.bossArenaFill, spreadRadius: 2),
+                    BoxShadow(
+                      color: context.palette.bossArenaFill,
+                      spreadRadius: 2,
+                    ),
                   ],
                 ),
                 alignment: Alignment.center,
@@ -147,7 +150,7 @@ class FloorClearPanel extends StatelessWidget {
                 style: HearthText.rowMeta.copyWith(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: GameColors.bossMuted,
+                  color: context.palette.bossMuted,
                   height: 1,
                 ),
               ),
@@ -230,7 +233,7 @@ class FloorClearPanel extends StatelessWidget {
         _lootRow(
           context,
           label: 'FLOOR LOOT',
-          labelColor: GameColors.bossMuted,
+          labelColor: context.palette.bossMuted,
           loot: summary.loot,
           empty: 'Nothing else dropped this lap',
         ),
@@ -281,7 +284,7 @@ class FloorClearPanel extends StatelessWidget {
                 style: HearthText.rowMeta.copyWith(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: GameColors.bossFaint,
+                  color: context.palette.bossFaint,
                 ),
               ),
             ],
@@ -290,7 +293,9 @@ class FloorClearPanel extends StatelessWidget {
           if (loot.isEmpty)
             Text(
               empty,
-              style: HearthText.rowMeta.copyWith(color: GameColors.bossFaint),
+              style: HearthText.rowMeta.copyWith(
+                color: context.palette.bossFaint,
+              ),
             )
           else
             LayoutBuilder(
@@ -345,10 +350,12 @@ class _StatTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: GameColors.bossTileFill,
+        color: context.palette.bossTileFill,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: newBest ? GameColors.bossBarBorder : GameColors.bossTileEdge,
+          color: newBest
+              ? GameColors.bossBarBorder
+              : context.palette.bossTileEdge,
         ),
       ),
       child: Column(
@@ -362,7 +369,7 @@ class _StatTile extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.9,
-              color: GameColors.bossMuted,
+              color: context.palette.bossMuted,
             ),
           ),
           const SizedBox(height: 4),
@@ -383,7 +390,7 @@ class _StatTile extends StatelessWidget {
             style: HearthText.rowMeta.copyWith(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: GameColors.bossFaint,
+              color: context.palette.bossFaint,
             ),
           ),
           const SizedBox(height: 4),
@@ -404,7 +411,7 @@ class _StatTile extends StatelessWidget {
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.7,
                         height: 1,
-                        color: GameColors.bossFrameInner,
+                        color: context.palette.bossFrameInner,
                       ),
                     ),
                   )

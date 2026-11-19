@@ -389,7 +389,7 @@ class FloorRailNode extends StatelessWidget {
     final (Color ring, Color fill, Widget? mark) = switch (standing) {
       FloorStanding.cleared => (
         GameColors.clearedColor,
-        GameColors.clearedFill,
+        context.palette.clearedFill,
         const Icon(Icons.check, size: 14, color: GameColors.clearedColor),
       ),
       FloorStanding.current => (
@@ -587,9 +587,9 @@ class DungeonChestCard extends StatelessWidget {
       label: 'Full-clear chest',
       child: Container(
         decoration: BoxDecoration(
-          color: GameColors.chestFill,
+          color: context.palette.chestFill,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: GameColors.chestBorder),
+          border: Border.all(color: context.palette.chestBorder),
         ),
         padding: const EdgeInsets.fromLTRB(12, 0, 14, 0),
         child: Column(
@@ -607,9 +607,11 @@ class DungeonChestCard extends StatelessWidget {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: GameColors.chestBoxFill,
+                        color: context.palette.chestBoxFill,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: GameColors.chestBoxBorder),
+                        border: Border.all(
+                          color: context.palette.chestBoxBorder,
+                        ),
                       ),
                       alignment: Alignment.center,
                       child: const CustomPaint(
@@ -667,12 +669,12 @@ class DungeonChestCard extends StatelessWidget {
                           label: '$floorCount / $floorCount',
                           icon: Icons.check,
                           color: GameColors.chestColor,
-                          border: GameColors.chestBorder,
+                          border: context.palette.chestBorder,
                         )
                       : FloorPill(
                           label: '$floorsCleared / $floorCount',
                           color: GameColors.chestColor,
-                          border: GameColors.chestBorder,
+                          border: context.palette.chestBorder,
                         ),
                 ],
               ),
@@ -704,7 +706,7 @@ class ChestRailNode extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.palette.surfaceSunken,
         shape: BoxShape.circle,
-        border: Border.all(color: GameColors.chestBoxBorder, width: 2),
+        border: Border.all(color: context.palette.chestBoxBorder, width: 2),
       ),
       child: const Icon(
         Icons.star_border_rounded,
