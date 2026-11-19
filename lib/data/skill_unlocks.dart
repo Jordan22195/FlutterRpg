@@ -35,9 +35,6 @@ List<SkillUnlock> unlocksForSkill(SkillId skill, GameCatalogBundle catalogs) {
   final unlocks = <SkillUnlock>[];
 
   for (final recipe in catalogs.recipeCatalog.recipesForSkill(skill)) {
-    // the firepit's reagent mix is a way to run the reagent recipes, not a
-    // recipe of its own to unlock
-    if (recipe.isReagentMix) continue;
     unlocks.add(
       SkillUnlock(
         name: recipe.name,

@@ -196,7 +196,10 @@ class EncounterSystem {
         result,
       );
       _payOutDrops(
-        _dropTableService.rollBonusMulitpleTimes(enemiesToKill, def.bonusDrops),
+        _dropTableService.rollBonusMulitpleTimes(
+          enemiesToKill,
+          def.rolledBonusDrops,
+        ),
         playerInventory,
         encounter.itemDrops,
         result,
@@ -308,7 +311,7 @@ class EncounterSystem {
           );
         }
         _payOutDrops(
-          _dropTableService.rollBonus(def.bonusDrops, rng: rng),
+          _dropTableService.rollBonus(def.rolledBonusDrops, rng: rng),
           playerInventory,
           encounter.itemDrops,
           result,
@@ -834,7 +837,7 @@ class EncounterSystem {
             bonus: false,
             lockedUntil: e.unlockLevel,
           ),
-        for (final roll in def.bonusDrops)
+        for (final roll in def.rolledBonusDrops)
           ...dropRows(
             roll.entries.flattened,
             rollChance: roll.chance,
@@ -845,7 +848,7 @@ class EncounterSystem {
 
     return [
       ...dropRows(main, rollChance: 1.0, bonus: false),
-      for (final roll in def.bonusDrops)
+      for (final roll in def.rolledBonusDrops)
         ...dropRows(
           roll.entries.flattened,
           rollChance: roll.chance,
@@ -1126,7 +1129,10 @@ class EncounterSystem {
     // each catch may come up with the water's reagents or its sunken cache
     // as well: paid beside the fish, and worth no fishing xp of their own
     _payOutDrops(
-      _dropTableService.rollBonusMulitpleTimes(result.catches, def.bonusDrops),
+      _dropTableService.rollBonusMulitpleTimes(
+        result.catches,
+        def.rolledBonusDrops,
+      ),
       playerInventory,
       encounter.itemDrops,
       result,
@@ -1216,7 +1222,7 @@ class EncounterSystem {
     // the water's reagents and cache ride along with the catches, as a
     // single cast pays them, and add no xp
     _payOutDrops(
-      _dropTableService.rollBonusMulitpleTimes(catches, def.bonusDrops),
+      _dropTableService.rollBonusMulitpleTimes(catches, def.rolledBonusDrops),
       playerInventory,
       encounter.itemDrops,
       result,

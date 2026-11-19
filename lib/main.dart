@@ -28,7 +28,6 @@ import 'screens/main_shell.dart';
 import 'theme/hearth_theme.dart';
 import 'catalogs/zones/zone_id.dart';
 import 'controllers/potion_controller.dart';
-import 'controllers/fire_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -251,9 +250,6 @@ class _GameBootstrapState extends State<GameBootstrap>
         ),
         ChangeNotifierProvider<PotionController>.value(
           value: session.potionController,
-        ),
-        ChangeNotifierProvider<FireController>.value(
-          value: session.fireController,
         ),
         ChangeNotifierProvider<EquipmentController>.value(
           value: session.equipmentController,

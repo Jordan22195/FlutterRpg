@@ -2,19 +2,20 @@ import 'package:rpg/catalogs/items/definition/item_definition.dart';
 import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/data/skill_data.dart';
 
-/// Something thrown on a lit campfire or bonfire to buff [stat].
+/// Something laid into a bonfire to pick the stat it buffs.
 ///
-/// The reagent picks the stat and the fire sets the size: one reagent gives
-/// the fire's power to [stat] for the fire's reagent burn time (see
-/// FireItemDefinition). All seven come off the first two trees as
-/// woodcutting side-drops, so every stat can be tended early, the way
-/// every stat has a minor potion; better wood is what makes them bigger.
+/// The reagent picks the stat and the wood sets the size: every wood has a
+/// bonfire per reagent (see FireItemDefinition and firemaking_recipes). The
+/// first seven come off the first two trees as woodcutting side-drops, so
+/// every combat stat can be buffed early, the way every stat has a minor
+/// potion; better wood is what makes them bigger.
 class FireReagentDefinition extends ItemDefinition {
-  /// The stat a fire tended with this one buffs.
+  /// The stat a bonfire laid with this one buffs.
   final SkillId stat;
 
-  /// The Firemaking level needed to throw it on. Also the xp a hand-thrown
-  /// one pays, so both climb the same Fibonacci rungs (5 / 8 / 13).
+  /// The lowest Firemaking level a bonfire laid with it asks for. Also the
+  /// xp it adds to that bonfire's, so both climb the same Fibonacci rungs
+  /// (5 / 8 / 13).
   final int levelRequirement;
 
   const FireReagentDefinition({

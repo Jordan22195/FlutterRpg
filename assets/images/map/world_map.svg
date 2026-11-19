@@ -1,252 +1,759 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 760" width="1320" height="760">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2420 1560" width="2420" height="1560">
   <!-- Terrain only: roads, node tokens and labels are drawn by the map screen on top.
-       Coordinates match kWorldMapNodes in world_map_layout.dart (1320x760). -->
-  <defs>
-    <radialGradient id="sea" cx="45%" cy="50%" r="80%">
-      <stop offset="0" stop-color="#4a6e7a"/>
-      <stop offset="1" stop-color="#1f3842"/>
-    </radialGradient>
-    <radialGradient id="land" cx="40%" cy="50%" r="75%">
-      <stop offset="0" stop-color="#d3c699"/>
-      <stop offset="1" stop-color="#a39465"/>
-    </radialGradient>
-    <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="7" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="26"/>
-    </filter>
-    <filter id="blob" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="11" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="30" result="d"/>
-      <feGaussianBlur in="d" stdDeviation="4"/>
-    </filter>
-    <filter id="lift" x="-20%" y="-20%" width="140%" height="150%">
-      <feDropShadow dx="0" dy="2" stdDeviation="1.6" flood-color="#2a2010" flood-opacity="0.45"/>
-    </filter>
-    <filter id="shadow"><feGaussianBlur stdDeviation="9"/></filter>
-    <filter id="paper">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3"/>
-      <feColorMatrix values="0 0 0 0 0.25  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.16 0"/>
-    </filter>
+       Canvas is the padded map: kWorldMapSize (1620x760) plus kWorldMapPadding (400)
+       on every side, so a node at (x, y) in world_map_layout.dart sits at (x+400, y+400).
+       Generated; regenerate rather than hand-editing the scattered props. -->
+<defs>
+  <radialGradient id="sea" cx="50%" cy="50%" r="70%">
+    <stop offset="0" stop-color="#2f6c8c"/><stop offset="0.55" stop-color="#1f4f6e"/><stop offset="1" stop-color="#11304a"/>
+  </radialGradient>
+  <radialGradient id="land" cx="45%" cy="45%" r="70%">
+    <stop offset="0" stop-color="#9dbb63"/><stop offset="1" stop-color="#7a9a4c"/>
+  </radialGradient>
+  <radialGradient id="lakewater" cx="45%" cy="40%" r="70%">
+    <stop offset="0" stop-color="#5fb4d6"/><stop offset="1" stop-color="#2d7aa2"/>
+  </radialGradient>
+  <radialGradient id="lava" cx="50%" cy="50%" r="50%">
+    <stop offset="0" stop-color="#ffd25a"/><stop offset="0.5" stop-color="#ff7a1f"/><stop offset="1" stop-color="#b8321a" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="mist" cx="50%" cy="50%" r="50%">
+    <stop offset="0" stop-color="#e4ecef" stop-opacity="0.75"/><stop offset="1" stop-color="#e4ecef" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+    <stop offset="0" stop-color="#e3b4ff" stop-opacity="0.55"/><stop offset="1" stop-color="#e3b4ff" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="vignette" cx="50%" cy="50%" r="72%">
+    <stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#050d16" stop-opacity="0.55"/>
+  </radialGradient>
+  <filter id="blob" x="-20%" y="-20%" width="140%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.014" numOctaves="3" seed="11" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="46" result="d"/>
+    <feGaussianBlur in="d" stdDeviation="5"/>
+  </filter>
+  <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="24"/>
+  </filter>
+  <filter id="soft"><feGaussianBlur stdDeviation="10"/></filter>
+  <filter id="paper" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="3"/>
+    <feColorMatrix values="0 0 0 0 0.2  0 0 0 0 0.16  0 0 0 0 0.1  0 0 0 0.13 0"/>
+  </filter>
 
-    <path id="coast" d="M60 120 C90 50 200 30 300 50 C380 65 430 30 520 40 C600 50 640 20 720 50 C790 75 830 110 900 100 C980 90 1020 40 1110 60 C1190 80 1260 120 1275 200 C1290 270 1250 320 1270 400 C1290 480 1270 540 1260 610 C1250 690 1180 735 1100 725 C1030 718 990 745 900 735 C820 728 770 750 690 735 C610 722 560 750 470 738 C390 728 330 752 250 742 C170 732 100 700 70 640 C40 580 60 520 45 450 C30 380 55 330 45 260 C38 200 45 160 60 120 Z"/>
-    <clipPath id="landclip"><use href="#coast"/></clipPath>
+  <clipPath id="landclip"><path d="M470 640 C470 560 540 500 620 520 C700 540 740 470 820 440 C900 410 980 440 1060 420 C1140 400 1200 425 1280 400 C1360 378 1420 430 1500 420 C1580 410 1640 470 1720 478 C1800 486 1850 520 1925 540 C2005 562 2035 640 2015 720 C1998 790 2045 850 2022 930 C2000 1010 2014 1082 1982 1140 C1950 1200 1862 1212 1780 1182 C1700 1156 1640 1202 1560 1172 C1480 1142 1420 1184 1340 1162 C1260 1140 1220 1192 1140 1182 C1060 1172 1020 1204 940 1192 C860 1182 800 1152 740 1122 C680 1092 640 1064 580 1064 C500 1064 438 1024 438 962 C438 902 482 872 462 822 C442 762 470 722 470 640 Z"/></clipPath>
 
-    <pattern id="tree" width="22" height="22" patternUnits="userSpaceOnUse">
-      <path d="M11 3 L16 13 H6 Z M11 9 L18 20 H4 Z" fill="#3f6b3a" opacity="0.55"/>
-    </pattern>
-    <pattern id="darktree" width="20" height="20" patternUnits="userSpaceOnUse">
-      <path d="M10 2 L15 12 H5 Z M10 8 L17 19 H3 Z" fill="#14281d" opacity="0.8"/>
-    </pattern>
-    <pattern id="reeds" width="16" height="14" patternUnits="userSpaceOnUse">
-      <path d="M3 12 V5 M6 12 V3 M9 12 V6 M12 12 V4" stroke="#4d6b3a" stroke-width="1.2" opacity="0.7"/>
-    </pattern>
-    <pattern id="grass" width="26" height="20" patternUnits="userSpaceOnUse">
-      <path d="M4 14 l2 -6 l2 6 M16 8 l2 -5 l2 5" stroke="#7f9a4c" stroke-width="1.2" fill="none" opacity="0.6"/>
-    </pattern>
-    <pattern id="wheat" width="24" height="18" patternUnits="userSpaceOnUse">
-      <path d="M4 14 l1 -7 M10 12 l1 -7 M17 14 l1 -7" stroke="#a5873a" stroke-width="1.3" opacity="0.55"/>
-    </pattern>
-    <pattern id="dunes" width="40" height="16" patternUnits="userSpaceOnUse">
-      <path d="M0 10 q10 -8 20 0 t20 0" stroke="#b58f4f" stroke-width="1.4" fill="none" opacity="0.55"/>
-    </pattern>
-    <pattern id="snow" width="26" height="26" patternUnits="userSpaceOnUse">
-      <path d="M5 6 h3 M16 14 h3 M8 21 h3" stroke="#ffffff" stroke-width="1.6" opacity="0.6"/>
-    </pattern>
-    <pattern id="ember" width="30" height="30" patternUnits="userSpaceOnUse">
-      <path d="M4 10 l6 4 l-3 5 M20 6 l5 6 M16 24 l6 -3" stroke="#ff9a3c" stroke-width="1.4" fill="none" opacity="0.6"/>
-    </pattern>
-    <pattern id="rock" width="28" height="24" patternUnits="userSpaceOnUse">
-      <path d="M3 18 l5 -8 l6 8 z M16 12 l4 -6 l5 6 z" fill="#4d4636" opacity="0.28"/>
-    </pattern>
+  <pattern id="grass" width="30" height="24" patternUnits="userSpaceOnUse">
+    <path d="M5 17 l2 -6 l2 6 M19 9 l2 -5 l2 5" stroke="#5f7f36" stroke-width="1.3" fill="none" opacity="0.5"/>
+  </pattern>
+  <pattern id="wheat" width="22" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)">
+    <path d="M0 6 H22" stroke="#b08a32" stroke-width="2" opacity="0.45"/>
+  </pattern>
+  <pattern id="dunes" width="54" height="22" patternUnits="userSpaceOnUse">
+    <path d="M0 14 q13 -10 27 0 t27 0" stroke="#b47f3e" stroke-width="1.6" fill="none" opacity="0.55"/>
+  </pattern>
+  <pattern id="cracks" width="40" height="34" patternUnits="userSpaceOnUse">
+    <path d="M4 8 l8 6 l-2 8 M24 4 l6 8 l8 2 M18 26 l8 -3 l6 6" stroke="#3a1a12" stroke-width="1.4" fill="none" opacity="0.6"/>
+  </pattern>
+  <pattern id="mud" width="34" height="26" patternUnits="userSpaceOnUse">
+    <path d="M3 9 q6 -4 12 0 M18 20 q6 -4 12 0" stroke="#5a4a2e" stroke-width="1.4" fill="none" opacity="0.5"/>
+  </pattern>
+  <pattern id="stone" width="32" height="28" patternUnits="userSpaceOnUse">
+    <path d="M4 20 l5 -7 l6 7 z M18 12 l4 -5 l5 5 z" fill="#3e3a33" opacity="0.25"/>
+  </pattern>
+  <pattern id="waves" width="120" height="70" patternUnits="userSpaceOnUse">
+    <path d="M10 20 q10 -7 20 0 t20 0 M70 55 q10 -7 20 0 t20 0" stroke="#7fb4cc" stroke-width="1.6" fill="none" opacity="0.22"/>
+  </pattern>
 
-    <g id="pine"><path d="M0 -9 L5 1 H-5 Z M0 -4 L6 6 H-6 Z" fill="#2f5a34" stroke="#173320" stroke-width="1"/></g>
-    <g id="hill"><path d="M-14 6 Q-8 -10 0 -10 Q8 -10 14 6 Z" fill="#a99b6b" stroke="#6e6140" stroke-width="1"/></g>
-    <g id="peak"><path d="M-20 12 L0 -22 L20 12 Z" fill="#8b8068" stroke="#4d4636" stroke-width="1.4" stroke-linejoin="round"/><path d="M0 -22 L-7 -8 L0 -12 L6 -6 Z" fill="#e8e5d8"/><path d="M0 -22 L20 12 H4 Z" fill="#4d4636" opacity="0.3"/></g>
-  </defs>
-
-  <!-- sea -->
-  <rect width="1320" height="760" fill="url(#sea)"/>
-  <g fill="none" stroke="#7fa3ae" stroke-width="1" opacity="0.18">
-    <path d="M10 60 q20 -8 40 0 t40 0 M1180 20 q20 -8 40 0 t40 0 M1240 730 q20 -8 40 0 t40 0 M20 700 q20 -8 40 0 t40 0 M700 12 q20 -8 40 0 t40 0 M760 752 q20 -8 40 0 t40 0"/>
-  </g>
-
-  <!-- coast: shadow, shallows, beach, land -->
-  <use href="#coast" fill="#0f2229" opacity="0.55" filter="url(#shadow)" transform="translate(4 8)"/>
-  <use href="#coast" fill="none" stroke="#7fb0b8" stroke-width="22" opacity="0.28" stroke-linejoin="round"/>
-  <use href="#coast" fill="none" stroke="#a9c7c4" stroke-width="10" opacity="0.4" stroke-linejoin="round"/>
-  <use href="#coast" fill="#cdbd8a" stroke="#6e6140" stroke-width="2.5"/>
-  <use href="#coast" fill="url(#land)"/>
-
-  <g clip-path="url(#landclip)">
-    <!-- biomes -->
-    <!-- plains base: open ground between the named regions -->
-    <g filter="url(#blob)">
-      <ellipse cx="330" cy="380" rx="170" ry="70" fill="#a9b469" opacity="0.55"/>
-      <ellipse cx="330" cy="380" rx="170" ry="70" fill="url(#grass)" opacity="0.8"/>
-      <ellipse cx="700" cy="360" rx="150" ry="70" fill="#b2b56f" opacity="0.6"/>
-      <ellipse cx="700" cy="360" rx="150" ry="70" fill="url(#grass)" opacity="0.7"/>
-      <ellipse cx="320" cy="500" rx="110" ry="50" fill="#b6b270" opacity="0.55"/>
-      <ellipse cx="330" cy="650" rx="60" ry="40" fill="#6f7f55" opacity="0.55"/>
-      <!-- north-centre: dev forest, dev dungeon, and the rolling land around them -->
-      <ellipse cx="740" cy="170" rx="260" ry="130" fill="#9aae5c" opacity="0.6"/>
-      <ellipse cx="740" cy="170" rx="260" ry="130" fill="url(#grass)"/>
-      <ellipse cx="830" cy="135" rx="95" ry="65" fill="#4f7a40" opacity="0.9"/>
-      <ellipse cx="830" cy="135" rx="95" ry="65" fill="url(#tree)"/>
-      <ellipse cx="830" cy="255" rx="85" ry="55" fill="#7d7260" opacity="0.88"/>
-      <ellipse cx="830" cy="255" rx="85" ry="55" fill="url(#rock)"/>
-      <ellipse cx="960" cy="150" rx="110" ry="70" fill="#7f9a52" opacity="0.7"/>
-      <ellipse cx="960" cy="150" rx="110" ry="70" fill="url(#tree)" opacity="0.8"/>
-      <ellipse cx="1070" cy="210" rx="70" ry="45" fill="#8f9a68" opacity="0.7"/>
-      <ellipse cx="930" cy="250" rx="60" ry="40" fill="#a9b469" opacity="0.6"/>
-      <!-- east shoulder between hills and peaks -->
-      <ellipse cx="1120" cy="380" rx="80" ry="55" fill="#8a8a70" opacity="0.65"/>
-      <ellipse cx="1120" cy="380" rx="80" ry="55" fill="url(#rock)" opacity="0.8"/>
-      <ellipse cx="1110" cy="570" rx="70" ry="45" fill="#7d6f58" opacity="0.7"/>
-      <ellipse cx="1110" cy="570" rx="70" ry="45" fill="url(#rock)"/>
-      <ellipse cx="880" cy="365" rx="60" ry="35" fill="#8a8e62" opacity="0.7"/>
-      <!-- south shore: scrub between the flats, bluffs, depths and haven -->
-      <ellipse cx="520" cy="715" rx="60" ry="30" fill="#b8a56a" opacity="0.7"/>
-      <ellipse cx="540" cy="560" rx="60" ry="35" fill="#b6ad62" opacity="0.7"/>
-      <ellipse cx="325" cy="700" rx="40" ry="30" fill="#4d6a4a" opacity="0.7"/>
-      <ellipse cx="880" cy="720" rx="45" ry="25" fill="#9a5a40" opacity="0.7"/>
-    </g>
-    <g filter="url(#blob)">
-      <!-- tutorial farm meadow -->
-      <ellipse cx="200" cy="140" rx="150" ry="100" fill="#a6b963" opacity="0.9"/>
-      <ellipse cx="200" cy="140" rx="150" ry="100" fill="url(#grass)"/>
-      <!-- southwood -->
-      <ellipse cx="150" cy="305" rx="120" ry="85" fill="#6f8f4a" opacity="0.85"/>
-      <ellipse cx="150" cy="305" rx="120" ry="85" fill="url(#tree)"/>
-      <!-- goblin warren rocks -->
-      <ellipse cx="330" cy="250" rx="75" ry="55" fill="#7a6a52" opacity="0.85"/>
-      <ellipse cx="330" cy="250" rx="75" ry="55" fill="url(#rock)"/>
-      <!-- south haven clearing -->
-      <ellipse cx="235" cy="462" rx="90" ry="65" fill="#c8b784" opacity="0.9"/>
-      <!-- darkwood + mistgrave -->
-      <ellipse cx="150" cy="620" rx="125" ry="80" fill="#2f4f3a" opacity="0.92"/>
-      <ellipse cx="150" cy="620" rx="125" ry="80" fill="url(#darktree)"/>
-      <ellipse cx="245" cy="705" rx="110" ry="55" fill="#3d5a52" opacity="0.9"/>
-      <ellipse cx="245" cy="705" rx="110" ry="55" fill="url(#darktree)" opacity="0.7"/>
-      <!-- forest mine + depths -->
-      <ellipse cx="395" cy="575" rx="95" ry="65" fill="#6f7f55" opacity="0.8"/>
-      <ellipse cx="395" cy="575" rx="95" ry="65" fill="url(#tree)" opacity="0.8"/>
-      <ellipse cx="425" cy="690" rx="85" ry="50" fill="#6a6252" opacity="0.9"/>
-      <ellipse cx="425" cy="690" rx="85" ry="50" fill="url(#rock)"/>
-      <!-- swamp -->
-      <ellipse cx="435" cy="405" rx="115" ry="75" fill="#6d7d4c" opacity="0.92"/>
-      <ellipse cx="435" cy="405" rx="115" ry="75" fill="url(#reeds)"/>
-      <!-- yew + magic groves -->
-      <ellipse cx="485" cy="190" rx="80" ry="55" fill="#5f8445" opacity="0.85"/>
-      <ellipse cx="485" cy="190" rx="80" ry="55" fill="url(#tree)"/>
-      <ellipse cx="565" cy="95" rx="85" ry="55" fill="#6b6aa3" opacity="0.65"/>
-      <ellipse cx="565" cy="95" rx="85" ry="55" fill="url(#tree)" opacity="0.7"/>
-      <!-- maplewater village shore -->
-      <ellipse cx="625" cy="255" rx="70" ry="48" fill="#b9bd78" opacity="0.85"/>
-      <!-- stormgrass prairie -->
-      <ellipse cx="630" cy="480" rx="120" ry="80" fill="#c4b25a" opacity="0.9"/>
-      <ellipse cx="630" cy="480" rx="120" ry="80" fill="url(#wheat)"/>
-      <!-- iron gate city plain -->
-      <ellipse cx="745" cy="500" rx="70" ry="50" fill="#b3a982" opacity="0.9"/>
-      <!-- ironroot hills + mine -->
-      <ellipse cx="865" cy="445" rx="90" ry="65" fill="#8a8e62" opacity="0.9"/>
-      <ellipse cx="900" cy="575" rx="80" ry="55" fill="#7a7560" opacity="0.9"/>
-      <ellipse cx="900" cy="575" rx="80" ry="55" fill="url(#rock)"/>
-      <!-- copperdust flats -->
-      <ellipse cx="620" cy="645" rx="115" ry="75" fill="#d2a867" opacity="0.92"/>
-      <ellipse cx="620" cy="645" rx="115" ry="75" fill="url(#dunes)"/>
-      <!-- redwall bluffs -->
-      <ellipse cx="785" cy="670" rx="85" ry="60" fill="#b4623f" opacity="0.88"/>
-      <ellipse cx="785" cy="670" rx="85" ry="60" fill="url(#rock)"/>
-      <!-- mountain ranges -->
-      <ellipse cx="1005" cy="335" rx="95" ry="85" fill="#8b8068" opacity="0.9"/>
-      <ellipse cx="1040" cy="500" rx="80" ry="60" fill="#988e74" opacity="0.9"/>
-      <ellipse cx="985" cy="680" rx="95" ry="60" fill="#6f5a4d" opacity="0.92"/>
-      <!-- three peaks -->
-      <ellipse cx="1180" cy="250" rx="100" ry="85" fill="#dfe8ec" opacity="0.95"/>
-      <ellipse cx="1180" cy="250" rx="100" ry="85" fill="url(#snow)"/>
-      <ellipse cx="1220" cy="460" rx="90" ry="75" fill="#5b6577" opacity="0.92"/>
-      <ellipse cx="1180" cy="680" rx="100" ry="65" fill="#5a2f26" opacity="0.95"/>
-      <ellipse cx="1180" cy="680" rx="100" ry="65" fill="url(#ember)"/>
-    </g>
-
-    <!-- grass and scrub specks across the open ground -->
-    <g stroke="#7f8f4a" stroke-width="1.2" fill="none" opacity="0.55">
-      <path d="M720 60 l2 -5 l2 5 M760 80 l2 -5 l2 5 M900 70 l2 -5 l2 5 M1010 100 l2 -5 l2 5 M1060 140 l2 -5 l2 5 M1000 230 l2 -5 l2 5 M690 280 l2 -5 l2 5 M740 290 l2 -5 l2 5 M900 300 l2 -5 l2 5 M1060 280 l2 -5 l2 5 M700 430 l2 -5 l2 5 M360 330 l2 -5 l2 5 M300 440 l2 -5 l2 5 M360 520 l2 -5 l2 5 M480 470 l2 -5 l2 5 M470 610 l2 -5 l2 5 M560 440 l2 -5 l2 5 M1100 450 l2 -5 l2 5 M1130 520 l2 -5 l2 5 M840 580 l2 -5 l2 5 M690 560 l2 -5 l2 5 M740 410 l2 -5 l2 5 M350 560 l2 -5 l2 5 M570 600 l2 -5 l2 5"/>
-    </g>
-    <!-- faint contour rings -->
-    <g fill="none" stroke="#a89867" stroke-width="1" opacity="0.28" filter="url(#rough)">
-      <ellipse cx="760" cy="250" rx="120" ry="80"/><ellipse cx="760" cy="250" rx="80" ry="50"/>
-      <ellipse cx="330" cy="400" rx="60" ry="30"/>
-    </g>
-
-    <!-- Maplewater Lake -->
-    <g filter="url(#lift)">
-      <path d="M455 330 C470 292 530 280 575 296 C612 310 610 360 570 378 C525 395 465 375 455 330 Z" fill="#6f9ca8" stroke="#3f6b7a" stroke-width="2.5"/>
-      <path d="M485 330 C500 308 540 304 565 318" fill="none" stroke="#a9ccd3" stroke-width="2" opacity="0.7"/>
-    </g>
-    <!-- river from the lake south to the swamp, and north to the sea -->
-    <g fill="none" stroke-linecap="round">
-      <path d="M520 380 C500 395 470 392 445 400" stroke="#3f6b7a" stroke-width="8"/>
-      <path d="M520 380 C500 395 470 392 445 400" stroke="#6f9ca8" stroke-width="4"/>
-      <path d="M520 290 C505 250 530 220 515 160 C505 110 520 70 515 30" stroke="#3f6b7a" stroke-width="9"/>
-      <path d="M520 290 C505 250 530 220 515 160 C505 110 520 70 515 30" stroke="#6f9ca8" stroke-width="5"/>
-    </g>
-    <!-- swamp pools -->
-    <g fill="#52707a" opacity="0.85">
-      <ellipse cx="400" cy="378" rx="26" ry="9"/><ellipse cx="470" cy="432" rx="30" ry="10"/><ellipse cx="415" cy="438" rx="18" ry="7"/>
-    </g>
-    <!-- farm pond -->
-    <ellipse cx="110" cy="190" rx="22" ry="12" fill="#5b8794" stroke="#3f5f6b" stroke-width="1.5"/>
-    <!-- lava pools -->
-    <g fill="#ff7a2a" stroke="#a02e10" stroke-width="1.5" opacity="0.9">
-      <ellipse cx="1140" cy="710" rx="20" ry="8"/><ellipse cx="1215" cy="660" rx="14" ry="6"/>
-    </g>
-
-    <!-- scattered scenery, kept off the node tokens' centres -->
-    <g filter="url(#lift)">
-      <use href="#pine" x="70" y="260"/><use href="#pine" x="88" y="350"/><use href="#pine" x="222" y="360"/><use href="#pine" x="238" y="250"/>
-      <use href="#pine" x="70" y="590"/><use href="#pine" x="215" y="590"/><use href="#pine" x="92" y="670"/>
-      <use href="#pine" x="500" y="140"/><use href="#pine" x="530" y="215"/><use href="#pine" x="610" y="50"/>
-      <use href="#hill" x="300" y="150"/><use href="#hill" x="330" y="165"/>
-      <use href="#hill" x="800" y="400"/><use href="#hill" x="920" y="400"/><use href="#hill" x="830" y="480"/>
-      <use href="#hill" x="340" y="470"/><use href="#hill" x="540" y="560"/><use href="#hill" x="700" y="580"/>
-      <use href="#pine" x="680" y="120"/><use href="#pine" x="700" y="135"/><use href="#pine" x="690" y="155"/>
-      <use href="#pine" x="790" y="105"/><use href="#pine" x="815" y="95"/><use href="#pine" x="850" y="160"/><use href="#pine" x="875" y="115"/>
-      <use href="#pine" x="925" y="130"/><use href="#pine" x="960" y="115"/><use href="#pine" x="985" y="160"/><use href="#pine" x="940" y="175"/>
-      <use href="#pine" x="1070" y="190"/><use href="#pine" x="1090" y="215"/>
-      <use href="#pine" x="380" y="360"/><use href="#pine" x="290" y="420"/><use href="#pine" x="520" y="520"/>
-      <use href="#pine" x="330" y="640"/><use href="#pine" x="320" y="665"/>
-      <use href="#hill" x="700" y="320"/><use href="#hill" x="730" y="335"/><use href="#hill" x="690" y="400"/><use href="#hill" x="890" y="360"/>
-      <use href="#hill" x="760" y="210"/><use href="#hill" x="920" y="260"/><use href="#hill" x="945" y="245"/>
-      <use href="#hill" x="1110" y="360"/><use href="#hill" x="1130" y="395"/><use href="#hill" x="1100" y="575"/><use href="#hill" x="1125" y="560"/>
-      <use href="#hill" x="510" y="715"/><use href="#hill" x="535" y="725"/><use href="#hill" x="870" y="715"/>
-      <use href="#peak" x="800" y="250"/><use href="#peak" x="850" y="265"/>
-      <use href="#peak" x="960" y="300"/><use href="#peak" x="1040" y="290"/><use href="#peak" x="1000" y="370"/>
-      <use href="#peak" x="1005" y="480"/><use href="#peak" x="1075" y="540"/>
-      <use href="#peak" x="950" y="650"/><use href="#peak" x="1030" y="715"/>
-      <use href="#peak" x="1135" y="225"/><use href="#peak" x="1225" y="285"/>
-      <use href="#peak" x="1180" y="440"/><use href="#peak" x="1255" y="500"/>
-      <use href="#peak" x="1130" y="650"/><use href="#peak" x="1235" y="710"/>
-    </g>
-  </g>
-
-  <!-- ships -->
-  <g transform="translate(40 40)" stroke="#2a2118" stroke-width="1">
-    <path d="M-12 0 H12 L8 7 H-8 Z" fill="#7a4a2b"/><path d="M0 0 V-18"/><path d="M0 -17 L10 -4 H0 Z" fill="#efe6c8"/><path d="M0 -15 L-8 -4 H0 Z" fill="#e1d6b2"/>
-  </g>
-
-  <!-- compass rose in the open sea, south-east of the land -->
-  <g transform="translate(1262 60)" stroke="#2c241a" stroke-width="1.2">
-    <circle r="32" fill="#e2d4a2" opacity="0.85"/>
-    <circle r="26" fill="none" stroke-dasharray="2 3"/>
-    <path d="M0 -36 L7 0 L0 36 L-7 0 Z" fill="#7a2f2a"/>
-    <path d="M-36 0 L0 -7 L36 0 L0 7 Z" fill="#3b3126"/>
-    <path d="M0 -36 L7 0 L-7 0 Z" fill="#a43d34"/>
-    <text y="-42" text-anchor="middle" font-family="serif" font-size="14" font-weight="bold" fill="#efe4b8" stroke="#1d2e35" stroke-width="2.5" paint-order="stroke">N</text>
-  </g>
-
-  <!-- paper grain and framing -->
-  <rect width="1320" height="760" filter="url(#paper)" opacity="0.5"/>
-  <rect x="5" y="5" width="1310" height="750" fill="none" stroke="#14232a" stroke-width="10" opacity="0.55"/>
-  <rect x="14" y="14" width="1292" height="732" fill="none" stroke="#d8c99a" stroke-width="1.2" opacity="0.45"/>
+  <!-- props: origin at the base of each -->
+  <g id="oak"><ellipse cx="0" cy="1" rx="9" ry="3" fill="#1d2f14" opacity="0.35"/><rect x="-1.6" y="-6" width="3.2" height="7" fill="#5a3c22"/>
+    <circle cx="0" cy="-12" r="9" fill="#3f7a35"/><circle cx="-3" cy="-15" r="5" fill="#5a9a44"/><circle cx="0" cy="-12" r="9" fill="none" stroke="#1f4220" stroke-width="1.2"/></g>
+  <g id="pine"><ellipse cx="0" cy="1" rx="7" ry="2.5" fill="#132414" opacity="0.4"/><rect x="-1.4" y="-4" width="2.8" height="5" fill="#4a3220"/>
+    <path d="M0 -24 L7 -12 H3 L9 -3 H-9 L-3 -12 H-7 Z" fill="#2c5a34" stroke="#122a18" stroke-width="1.1" stroke-linejoin="round"/>
+    <path d="M0 -24 L-7 -12 H-3 L-9 -3 H0 Z" fill="#3d7344"/></g>
+  <g id="darkpine"><ellipse cx="0" cy="1" rx="7" ry="2.5" fill="#000" opacity="0.4"/>
+    <path d="M0 -28 L7 -15 H3 L10 -2 H-10 L-3 -15 H-7 Z" fill="#163a2c" stroke="#06140e" stroke-width="1.1" stroke-linejoin="round"/>
+    <path d="M0 -28 L-7 -15 H-3 L-10 -2 H0 Z" fill="#21503d"/></g>
+  <g id="yew"><ellipse cx="0" cy="1" rx="11" ry="3.5" fill="#132414" opacity="0.4"/><rect x="-2" y="-7" width="4" height="8" fill="#4e3420"/>
+    <ellipse cx="0" cy="-16" rx="11" ry="13" fill="#24502e" stroke="#0f2a16" stroke-width="1.2"/><ellipse cx="-3" cy="-20" rx="5" ry="6" fill="#33683b"/></g>
+  <g id="witchtree"><ellipse cx="0" cy="1" rx="9" ry="3" fill="#1b0f26" opacity="0.4"/><path d="M-1.5 1 V-7 L-5 -11 M1.5 1 V-7 L5 -10" stroke="#3b2a40" stroke-width="2.4" fill="none"/>
+    <circle cx="0" cy="-14" r="9" fill="#8a4fc4" stroke="#3e1f63" stroke-width="1.2"/><circle cx="-3" cy="-17" r="4.5" fill="#b884ea"/><circle cx="4" cy="-10" r="1.5" fill="#f4e2ff"/></g>
+  <g id="deadtree"><path d="M0 1 V-14 M0 -8 L-6 -14 M0 -11 L5 -17 M-6 -14 L-8 -18" stroke="#3b3324" stroke-width="2" fill="none" stroke-linecap="round"/></g>
+  <g id="reed"><path d="M-4 1 Q-5 -6 -6 -11 M0 1 V-14 M4 1 Q5 -6 7 -10" stroke="#4f6d2e" stroke-width="1.6" fill="none" stroke-linecap="round"/><ellipse cx="0" cy="-14" rx="1.6" ry="3" fill="#6b4a2a"/></g>
+  <g id="bush"><ellipse cx="0" cy="-3" rx="7" ry="5" fill="#557f37" stroke="#2c4a1c" stroke-width="1"/></g>
+  <g id="cactus"><path d="M0 1 V-14 M0 -7 H-4 V-11 M0 -9 H4 V-13" stroke="#4d7a3a" stroke-width="3" fill="none" stroke-linecap="round"/></g>
+  <g id="rock"><path d="M-9 1 L-6 -6 L0 -9 L7 -5 L9 1 Z" fill="#8a8170" stroke="#3e392f" stroke-width="1.1" stroke-linejoin="round"/><path d="M0 -9 L7 -5 L9 1 H2 Z" fill="#000" opacity="0.18"/></g>
+  <g id="hill"><path d="M-22 1 Q-12 -18 0 -18 Q12 -18 22 1 Z" fill="#7f9d4a" stroke="#41562a" stroke-width="1.2"/><path d="M0 -18 Q12 -18 22 1 H6 Z" fill="#000" opacity="0.14"/></g>
+  <g id="brownhill"><path d="M-22 1 Q-12 -20 0 -20 Q12 -20 22 1 Z" fill="#8e6e4a" stroke="#4a3622" stroke-width="1.2"/><path d="M0 -20 Q12 -20 22 1 H6 Z" fill="#000" opacity="0.18"/></g>
+  <g id="peak"><path d="M-30 1 L-4 -44 L4 -38 L30 1 Z" fill="#8c8a86" stroke="#3a3936" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M-4 -44 L4 -38 L30 1 H6 Z" fill="#000" opacity="0.25"/><path d="M-4 -44 L-13 -28 L-6 -31 L0 -26 L4 -38 Z" fill="#eef0f2"/></g>
+  <g id="snowpeak"><path d="M-32 1 L0 -50 L32 1 Z" fill="#cfd8e2" stroke="#5d6a7a" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M0 -50 L32 1 H6 Z" fill="#7d8ea3" opacity="0.55"/><path d="M0 -50 L-10 -34 L-3 -37 L3 -31 L9 -36 Z" fill="#fff"/></g>
+  <g id="stormpeak"><path d="M-30 1 L0 -48 L30 1 Z" fill="#56627a" stroke="#1f2533" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M0 -48 L30 1 H5 Z" fill="#000" opacity="0.3"/><path d="M0 -48 L-8 -35 L-2 -37 L3 -32 L7 -37 Z" fill="#c9d3e6"/></g>
+  <g id="ashpeak"><path d="M-30 1 L-2 -42 L30 1 Z" fill="#4a4240" stroke="#1c1817" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M-2 -42 L30 1 H6 Z" fill="#000" opacity="0.3"/><path d="M-2 -42 L-9 -31 L-2 -33 L4 -29 Z" fill="#9a908a"/></g>
+  <g id="volcano"><path d="M-36 1 L-9 -46 H9 L36 1 Z" fill="#3a2a26" stroke="#120a08" stroke-width="1.8" stroke-linejoin="round"/>
+    <path d="M9 -46 L36 1 H8 Z" fill="#000" opacity="0.3"/><path d="M-9 -46 Q0 -40 9 -46 L5 -36 L1 -22 L-2 -33 L-6 -38 Z" fill="#ff6a1f"/><ellipse cx="0" cy="-47" rx="9" ry="3" fill="#ffd25a"/></g>
+  <g id="mesa"><path d="M-28 1 L-20 -24 H20 L28 1 Z" fill="#b8573a" stroke="#5a2414" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M-22 -16 H22 M-25 -8 H25" stroke="#7a3320" stroke-width="1.4" opacity="0.6"/><path d="M-20 -24 H20 L17 -20 H-17 Z" fill="#d88a5a"/><path d="M20 -24 L28 1 H12 Z" fill="#000" opacity="0.18"/></g>
+  <g id="house"><rect x="-7" y="-9" width="14" height="10" fill="#e8d9b8" stroke="#4a3622" stroke-width="1"/><path d="M-9 -8 L0 -17 L9 -8 Z" fill="#a8452e" stroke="#4a2014" stroke-width="1"/></g>
+  <g id="tower"><rect x="-6" y="-24" width="12" height="25" fill="#9c958a" stroke="#3a3630" stroke-width="1.2"/><path d="M-7 -24 H7 V-28 H4 V-25 H1 V-28 H-1 V-25 H-4 V-28 H-7 Z" fill="#9c958a" stroke="#3a3630" stroke-width="1"/><rect x="-2" y="-8" width="4" height="9" fill="#3a2a1c"/></g>
+  <g id="tent"><path d="M-10 1 L0 -14 L10 1 Z" fill="#8a6a3c" stroke="#3a2a14" stroke-width="1.2"/><path d="M0 -14 L-2 1 H2 Z" fill="#2a1a0c"/><path d="M0 -14 L2 -20" stroke="#3a2a14" stroke-width="1.2"/></g>
+  <g id="grave"><path d="M-4 1 V-7 Q0 -11 4 -7 V1 Z" fill="#a8aaa6" stroke="#3a3c3a" stroke-width="1"/></g>
+  <g id="minehead"><path d="M-12 1 Q-12 -14 0 -14 Q12 -14 12 1 Z" fill="#2a1e14" stroke="#7a5a32" stroke-width="3"/></g>
+  <g id="pool"><ellipse rx="1" ry="1" fill="#3f5e4a"/></g>
+</defs>
+<rect width="2420" height="1560" fill="url(#sea)"/>
+<rect width="2420" height="1560" fill="url(#waves)"/>
+<ellipse cx="560" cy="1230" rx="48" ry="28" fill="#6fb0c0" opacity="0.3"/>
+<ellipse cx="560" cy="1230" rx="34" ry="18" fill="#e2cf96" stroke="#7a6a40" stroke-width="1.5"/>
+<ellipse cx="560" cy="1228" rx="20" ry="10" fill="#7da24a"/>
+<use href="#pine" transform="translate(556 1230)"/>
+<ellipse cx="2120" cy="520" rx="40" ry="24" fill="#6fb0c0" opacity="0.3"/>
+<ellipse cx="2120" cy="520" rx="26" ry="14" fill="#e2cf96" stroke="#7a6a40" stroke-width="1.5"/>
+<ellipse cx="2120" cy="518" rx="16" ry="8" fill="#7da24a"/>
+<use href="#pine" transform="translate(2116 520)"/>
+<ellipse cx="1320" cy="1280" rx="36" ry="22" fill="#6fb0c0" opacity="0.3"/>
+<ellipse cx="1320" cy="1280" rx="22" ry="12" fill="#e2cf96" stroke="#7a6a40" stroke-width="1.5"/>
+<ellipse cx="1320" cy="1278" rx="13" ry="7" fill="#7da24a"/>
+<use href="#pine" transform="translate(1316 1280)"/>
+<ellipse cx="720" cy="380" rx="32" ry="20" fill="#6fb0c0" opacity="0.3"/>
+<ellipse cx="720" cy="380" rx="18" ry="10" fill="#e2cf96" stroke="#7a6a40" stroke-width="1.5"/>
+<ellipse cx="720" cy="378" rx="11" ry="6" fill="#7da24a"/>
+<use href="#pine" transform="translate(716 380)"/>
+<ellipse cx="2080" cy="1230" rx="44" ry="26" fill="#6fb0c0" opacity="0.3"/>
+<ellipse cx="2080" cy="1230" rx="30" ry="16" fill="#e2cf96" stroke="#7a6a40" stroke-width="1.5"/>
+<ellipse cx="2080" cy="1228" rx="18" ry="9" fill="#7da24a"/>
+<use href="#pine" transform="translate(2076 1230)"/>
+<path d="M470 640 C470 560 540 500 620 520 C700 540 740 470 820 440 C900 410 980 440 1060 420 C1140 400 1200 425 1280 400 C1360 378 1420 430 1500 420 C1580 410 1640 470 1720 478 C1800 486 1850 520 1925 540 C2005 562 2035 640 2015 720 C1998 790 2045 850 2022 930 C2000 1010 2014 1082 1982 1140 C1950 1200 1862 1212 1780 1182 C1700 1156 1640 1202 1560 1172 C1480 1142 1420 1184 1340 1162 C1260 1140 1220 1192 1140 1182 C1060 1172 1020 1204 940 1192 C860 1182 800 1152 740 1122 C680 1092 640 1064 580 1064 C500 1064 438 1024 438 962 C438 902 482 872 462 822 C442 762 470 722 470 640 Z" fill="#071a28" opacity="0.6" filter="url(#soft)" transform="translate(6 12)"/>
+<path d="M470 640 C470 560 540 500 620 520 C700 540 740 470 820 440 C900 410 980 440 1060 420 C1140 400 1200 425 1280 400 C1360 378 1420 430 1500 420 C1580 410 1640 470 1720 478 C1800 486 1850 520 1925 540 C2005 562 2035 640 2015 720 C1998 790 2045 850 2022 930 C2000 1010 2014 1082 1982 1140 C1950 1200 1862 1212 1780 1182 C1700 1156 1640 1202 1560 1172 C1480 1142 1420 1184 1340 1162 C1260 1140 1220 1192 1140 1182 C1060 1172 1020 1204 940 1192 C860 1182 800 1152 740 1122 C680 1092 640 1064 580 1064 C500 1064 438 1024 438 962 C438 902 482 872 462 822 C442 762 470 722 470 640 Z" fill="none" stroke="#6fb3c4" stroke-width="56" opacity="0.18" stroke-linejoin="round"/>
+<path d="M470 640 C470 560 540 500 620 520 C700 540 740 470 820 440 C900 410 980 440 1060 420 C1140 400 1200 425 1280 400 C1360 378 1420 430 1500 420 C1580 410 1640 470 1720 478 C1800 486 1850 520 1925 540 C2005 562 2035 640 2015 720 C1998 790 2045 850 2022 930 C2000 1010 2014 1082 1982 1140 C1950 1200 1862 1212 1780 1182 C1700 1156 1640 1202 1560 1172 C1480 1142 1420 1184 1340 1162 C1260 1140 1220 1192 1140 1182 C1060 1172 1020 1204 940 1192 C860 1182 800 1152 740 1122 C680 1092 640 1064 580 1064 C500 1064 438 1024 438 962 C438 902 482 872 462 822 C442 762 470 722 470 640 Z" fill="none" stroke="#8cc8cf" stroke-width="30" opacity="0.32" stroke-linejoin="round"/>
+<path d="M470 640 C470 560 540 500 620 520 C700 540 740 470 820 440 C900 410 980 440 1060 420 C1140 400 1200 425 1280 400 C1360 378 1420 430 1500 420 C1580 410 1640 470 1720 478 C1800 486 1850 520 1925 540 C2005 562 2035 640 2015 720 C1998 790 2045 850 2022 930 C2000 1010 2014 1082 1982 1140 C1950 1200 1862 1212 1780 1182 C1700 1156 1640 1202 1560 1172 C1480 1142 1420 1184 1340 1162 C1260 1140 1220 1192 1140 1182 C1060 1172 1020 1204 940 1192 C860 1182 800 1152 740 1122 C680 1092 640 1064 580 1064 C500 1064 438 1024 438 962 C438 902 482 872 462 822 C442 762 470 722 470 640 Z" fill="none" stroke="#e6f3ee" stroke-width="12" opacity="0.5" stroke-linejoin="round" stroke-dasharray="18 14"/>
+<path d="M470 640 C470 560 540 500 620 520 C700 540 740 470 820 440 C900 410 980 440 1060 420 C1140 400 1200 425 1280 400 C1360 378 1420 430 1500 420 C1580 410 1640 470 1720 478 C1800 486 1850 520 1925 540 C2005 562 2035 640 2015 720 C1998 790 2045 850 2022 930 C2000 1010 2014 1082 1982 1140 C1950 1200 1862 1212 1780 1182 C1700 1156 1640 1202 1560 1172 C1480 1142 1420 1184 1340 1162 C1260 1140 1220 1192 1140 1182 C1060 1172 1020 1204 940 1192 C860 1182 800 1152 740 1122 C680 1092 640 1064 580 1064 C500 1064 438 1024 438 962 C438 902 482 872 462 822 C442 762 470 722 470 640 Z" fill="#e2cf96" stroke="#6e5c34" stroke-width="3"/>
+<path d="M470 640 C470 560 540 500 620 520 C700 540 740 470 820 440 C900 410 980 440 1060 420 C1140 400 1200 425 1280 400 C1360 378 1420 430 1500 420 C1580 410 1640 470 1720 478 C1800 486 1850 520 1925 540 C2005 562 2035 640 2015 720 C1998 790 2045 850 2022 930 C2000 1010 2014 1082 1982 1140 C1950 1200 1862 1212 1780 1182 C1700 1156 1640 1202 1560 1172 C1480 1142 1420 1184 1340 1162 C1260 1140 1220 1192 1140 1182 C1060 1172 1020 1204 940 1192 C860 1182 800 1152 740 1122 C680 1092 640 1064 580 1064 C500 1064 438 1024 438 962 C438 902 482 872 462 822 C442 762 470 722 470 640 Z" fill="url(#land)" transform="translate(1210 800) scale(0.985) translate(-1210 -800)"/>
+<g clip-path="url(#landclip)">
+<g filter="url(#blob)">
+<ellipse cx="900" cy="540" rx="175" ry="95" fill="#b2c86a" opacity="0.95"/>
+<ellipse cx="920" cy="550" rx="90" ry="45" fill="#d8bb62" opacity="0.75"/>
+<ellipse cx="920" cy="550" rx="90" ry="45" fill="url(#wheat)" opacity="1.0"/>
+<ellipse cx="850" cy="710" rx="150" ry="90" fill="#4f7f36" opacity="0.9"/>
+<ellipse cx="1020" cy="650" rx="75" ry="55" fill="#8a7a5a" opacity="0.85"/>
+<ellipse cx="1020" cy="650" rx="75" ry="55" fill="url(#stone)" opacity="1.0"/>
+<ellipse cx="700" cy="820" rx="110" ry="70" fill="#8fae58" opacity="0.9"/>
+<ellipse cx="700" cy="830" rx="80" ry="40" fill="#6d9a4a" opacity="0.7"/>
+<ellipse cx="540" cy="820" rx="110" ry="85" fill="#8b7d52" opacity="0.9"/>
+<ellipse cx="540" cy="820" rx="110" ry="85" fill="url(#mud)" opacity="1.0"/>
+<ellipse cx="530" cy="980" rx="120" ry="85" fill="#e4d29a" opacity="0.95"/>
+<ellipse cx="530" cy="980" rx="120" ry="85" fill="url(#dunes)" opacity="0.6"/>
+<ellipse cx="930" cy="860" rx="120" ry="70" fill="#a6c06a" opacity="0.9"/>
+<ellipse cx="930" cy="860" rx="120" ry="70" fill="url(#grass)" opacity="1.0"/>
+<ellipse cx="850" cy="1020" rx="150" ry="95" fill="#1f4430" opacity="0.95"/>
+<ellipse cx="940" cy="1110" rx="115" ry="70" fill="#5e6e60" opacity="0.95"/>
+<ellipse cx="940" cy="1110" rx="115" ry="70" fill="url(#mud)" opacity="0.5"/>
+<ellipse cx="1090" cy="970" rx="100" ry="70" fill="#8a6c4a" opacity="0.9"/>
+<ellipse cx="1090" cy="970" rx="100" ry="70" fill="url(#stone)" opacity="1.0"/>
+<ellipse cx="1120" cy="1100" rx="85" ry="60" fill="#4a3c30" opacity="0.95"/>
+<ellipse cx="1120" cy="1100" rx="85" ry="60" fill="url(#stone)" opacity="1.0"/>
+<ellipse cx="1130" cy="800" rx="135" ry="85" fill="#4d6a3e" opacity="0.95"/>
+<ellipse cx="1130" cy="800" rx="135" ry="85" fill="url(#mud)" opacity="0.6"/>
+<ellipse cx="1180" cy="590" rx="110" ry="70" fill="#3e6e38" opacity="0.9"/>
+<ellipse cx="1260" cy="500" rx="140" ry="75" fill="#5a5a7a" opacity="0.85"/>
+<ellipse cx="1260" cy="500" rx="100" ry="55" fill="#7a5a9a" opacity="0.6"/>
+<ellipse cx="1320" cy="650" rx="100" ry="65" fill="#a8c470" opacity="0.9"/>
+<ellipse cx="1320" cy="650" rx="100" ry="65" fill="url(#grass)" opacity="1.0"/>
+<ellipse cx="1320" cy="880" rx="150" ry="85" fill="#d4b456" opacity="0.95"/>
+<ellipse cx="1320" cy="880" rx="150" ry="85" fill="url(#wheat)" opacity="0.8"/>
+<ellipse cx="1440" cy="900" rx="95" ry="60" fill="#b0b874" opacity="0.85"/>
+<ellipse cx="1560" cy="840" rx="110" ry="75" fill="#7d9850" opacity="0.9"/>
+<ellipse cx="1560" cy="840" rx="110" ry="75" fill="url(#grass)" opacity="1.0"/>
+<ellipse cx="1600" cy="970" rx="85" ry="60" fill="#6e6252" opacity="0.9"/>
+<ellipse cx="1600" cy="970" rx="85" ry="60" fill="url(#stone)" opacity="1.0"/>
+<ellipse cx="1320" cy="1040" rx="150" ry="85" fill="#e0b672" opacity="0.95"/>
+<ellipse cx="1320" cy="1040" rx="150" ry="85" fill="url(#dunes)" opacity="1.0"/>
+<ellipse cx="1480" cy="1070" rx="120" ry="75" fill="#c77a4a" opacity="0.95"/>
+<ellipse cx="1700" cy="730" rx="130" ry="95" fill="#8a8a80" opacity="0.95"/>
+<ellipse cx="1700" cy="730" rx="130" ry="95" fill="url(#stone)" opacity="1.0"/>
+<ellipse cx="1740" cy="900" rx="80" ry="55" fill="#9aa070" opacity="0.9"/>
+<ellipse cx="1680" cy="1080" rx="130" ry="85" fill="#5a4e48" opacity="0.95"/>
+<ellipse cx="1680" cy="1080" rx="130" ry="85" fill="url(#stone)" opacity="1.0"/>
+<ellipse cx="1880" cy="660" rx="150" ry="110" fill="#e8eef4" opacity="0.97"/>
+<ellipse cx="1920" cy="860" rx="125" ry="100" fill="#6c7a8e" opacity="0.95"/>
+<ellipse cx="1880" cy="1090" rx="145" ry="100" fill="#2e2220" opacity="0.97"/>
+<ellipse cx="1880" cy="1090" rx="145" ry="100" fill="url(#cracks)" opacity="1.0"/>
+<ellipse cx="1520" cy="540" rx="110" ry="70" fill="#4f7f36" opacity="0.85"/>
+<ellipse cx="1520" cy="650" rx="80" ry="50" fill="#7d7260" opacity="0.85"/>
+<ellipse cx="1520" cy="650" rx="80" ry="50" fill="url(#stone)" opacity="1.0"/>
+</g>
+<circle cx="1840" cy="1100" r="70" fill="url(#lava)" opacity="0.7"/>
+<circle cx="1930" cy="1070" r="55" fill="url(#lava)" opacity="0.7"/>
+<circle cx="1880" cy="1140" r="50" fill="url(#lava)" opacity="0.7"/>
+<path d="M1790 1120 q30 -20 55 5 t50 -10 t45 15" stroke="#ff7a1f" stroke-width="5" fill="none" opacity="0.85" filter="url(#rough)"/>
+<path d="M1850 1030 q20 30 5 60 t30 55" stroke="#ffb03a" stroke-width="4" fill="none" opacity="0.8" filter="url(#rough)"/>
+<ellipse cx="1260" cy="500" rx="120" ry="70" fill="url(#glow)"/>
+<ellipse cx="1920" cy="820" rx="140" ry="60" fill="#2a3448" opacity="0.35" filter="url(#soft)"/>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round">
+<path d="M860 590 C840 650 800 690 770 740 C740 790 720 820 680 832 C640 844 600 826 560 830" stroke="#2b6a86" stroke-width="20" opacity="0.6"/>
+<path d="M860 590 C840 650 800 690 770 740 C740 790 720 820 680 832 C640 844 600 826 560 830" stroke="#5aaed2" stroke-width="15"/>
+<path d="M560 830 C520 832 490 800 450 790" stroke="#2b6a86" stroke-width="14" opacity="0.6"/>
+<path d="M560 830 C520 832 490 800 450 790" stroke="#5aaed2" stroke-width="9"/>
+<path d="M560 830 C520 840 490 850 450 856" stroke="#2b6a86" stroke-width="14" opacity="0.6"/>
+<path d="M560 830 C520 840 490 850 450 856" stroke="#5aaed2" stroke-width="9"/>
+<path d="M560 830 C530 860 510 900 470 930" stroke="#2b6a86" stroke-width="14" opacity="0.6"/>
+<path d="M560 830 C530 860 510 900 470 930" stroke="#5aaed2" stroke-width="9"/>
+<path d="M600 828 C580 790 540 770 470 740" stroke="#2b6a86" stroke-width="14" opacity="0.6"/>
+<path d="M600 828 C580 790 540 770 470 740" stroke="#5aaed2" stroke-width="9"/>
+<path d="M1250 560 C1240 610 1260 640 1240 680" stroke="#2b6a86" stroke-width="15" opacity="0.6"/>
+<path d="M1250 560 C1240 610 1260 640 1240 680" stroke="#5aaed2" stroke-width="10"/>
+<path d="M1150 760 C1120 780 1150 800 1120 830" stroke="#2b6a86" stroke-width="14" opacity="0.6"/>
+<path d="M1150 760 C1120 780 1150 800 1120 830" stroke="#5aaed2" stroke-width="9"/>
+</g>
+<g filter="url(#rough)"><ellipse cx="1222" cy="728" rx="108" ry="66" fill="#d8c78e"/><ellipse cx="1222" cy="728" rx="98" ry="58" fill="url(#lakewater)" stroke="#215b7a" stroke-width="3"/></g>
+<path d="M1172 718 q10 -5 20 0 M1242 748 q10 -5 20 0 M1212 758 q10 -5 20 0" stroke="#d6f0fa" stroke-width="2" fill="none" opacity="0.7"/>
+<ellipse cx="1211.6" cy="765.6" rx="23" ry="12" fill="#2f4a3a" stroke="#1c2c22" stroke-width="1.5" filter="url(#rough)"/>
+<ellipse cx="1208.6" cy="763.6" rx="12" ry="5" fill="#4f7a5a" opacity="0.6"/>
+<ellipse cx="1117.1" cy="811.6" rx="23" ry="10" fill="#2f4a3a" stroke="#1c2c22" stroke-width="1.5" filter="url(#rough)"/>
+<ellipse cx="1114.1" cy="809.6" rx="12" ry="4" fill="#4f7a5a" opacity="0.6"/>
+<ellipse cx="1197.5" cy="804.6" rx="24" ry="12" fill="#2f4a3a" stroke="#1c2c22" stroke-width="1.5" filter="url(#rough)"/>
+<ellipse cx="1194.5" cy="802.6" rx="12" ry="5" fill="#4f7a5a" opacity="0.6"/>
+<ellipse cx="1058.5" cy="801.4" rx="16" ry="10" fill="#2f4a3a" stroke="#1c2c22" stroke-width="1.5" filter="url(#rough)"/>
+<ellipse cx="1055.5" cy="799.4" rx="8" ry="4" fill="#4f7a5a" opacity="0.6"/>
+<ellipse cx="1176.0" cy="846.1" rx="25" ry="9" fill="#2f4a3a" stroke="#1c2c22" stroke-width="1.5" filter="url(#rough)"/>
+<ellipse cx="1173.0" cy="844.1" rx="12" ry="4" fill="#4f7a5a" opacity="0.6"/>
+<ellipse cx="1239.5" cy="801.4" rx="24" ry="12" fill="#2f4a3a" stroke="#1c2c22" stroke-width="1.5" filter="url(#rough)"/>
+<ellipse cx="1236.5" cy="799.4" rx="12" ry="5" fill="#4f7a5a" opacity="0.6"/>
+<ellipse cx="1114.9" cy="855.3" rx="19" ry="12" fill="#2f4a3a" stroke="#1c2c22" stroke-width="1.5" filter="url(#rough)"/>
+<ellipse cx="1111.9" cy="853.3" rx="10" ry="5" fill="#4f7a5a" opacity="0.6"/>
+<ellipse cx="1165.1" cy="756.0" rx="26" ry="7" fill="#2f4a3a" stroke="#1c2c22" stroke-width="1.5" filter="url(#rough)"/>
+<ellipse cx="1162.1" cy="754.0" rx="13" ry="3" fill="#4f7a5a" opacity="0.6"/>
+<ellipse cx="1118.7" cy="765.3" rx="25" ry="8" fill="#2f4a3a" stroke="#1c2c22" stroke-width="1.5" filter="url(#rough)"/>
+<ellipse cx="1115.7" cy="763.3" rx="12" ry="3" fill="#4f7a5a" opacity="0.6"/>
+<ellipse cx="556.4" cy="785.5" rx="19" ry="7" fill="#4d8aa0" opacity="0.65"/>
+<ellipse cx="598.9" cy="805.4" rx="20" ry="8" fill="#4d8aa0" opacity="0.65"/>
+<ellipse cx="590.1" cy="874.5" rx="18" ry="6" fill="#4d8aa0" opacity="0.65"/>
+<ellipse cx="497.1" cy="792.8" rx="13" ry="8" fill="#4d8aa0" opacity="0.65"/>
+<ellipse cx="456.4" cy="815.3" rx="14" ry="5" fill="#4d8aa0" opacity="0.65"/>
+<ellipse cx="489.4" cy="877.8" rx="20" ry="5" fill="#4d8aa0" opacity="0.65"/>
+<ellipse cx="1904.5" cy="1094.4" rx="17" ry="6" fill="#ff8a2a" stroke="#ffd25a" stroke-width="1.5"/>
+<ellipse cx="1817.3" cy="1094.1" rx="15" ry="6" fill="#ff8a2a" stroke="#ffd25a" stroke-width="1.5"/>
+<ellipse cx="1850.9" cy="1045.0" rx="13" ry="6" fill="#ff8a2a" stroke="#ffd25a" stroke-width="1.5"/>
+<ellipse cx="1917.8" cy="1153.0" rx="12" ry="8" fill="#ff8a2a" stroke="#ffd25a" stroke-width="1.5"/>
+<ellipse cx="1950.1" cy="1048.3" rx="14" ry="8" fill="#ff8a2a" stroke="#ffd25a" stroke-width="1.5"/>
+<rect x="820" y="570" width="44" height="26" fill="#d8bb62" stroke="#7a6a3a" stroke-width="1" transform="rotate(-8 820 570)" opacity="0.9"/>
+<path d="M824 578 h36 M824 584 h36 M824 590 h36" stroke="#6e5a2a" stroke-width="1" opacity="0.4" transform="rotate(-8 820 570)"/>
+<rect x="860" y="595" width="44" height="26" fill="#9ab84a" stroke="#7a6a3a" stroke-width="1" transform="rotate(-8 860 595)" opacity="0.9"/>
+<path d="M864 603 h36 M864 609 h36 M864 615 h36" stroke="#6e5a2a" stroke-width="1" opacity="0.4" transform="rotate(-8 860 595)"/>
+<rect x="960" y="585" width="44" height="26" fill="#c9a14e" stroke="#7a6a3a" stroke-width="1" transform="rotate(-8 960 585)" opacity="0.9"/>
+<path d="M964 593 h36 M964 599 h36 M964 605 h36" stroke="#6e5a2a" stroke-width="1" opacity="0.4" transform="rotate(-8 960 585)"/>
+<rect x="995" y="555" width="44" height="26" fill="#a7c25a" stroke="#7a6a3a" stroke-width="1" transform="rotate(-8 995 555)" opacity="0.9"/>
+<path d="M999 563 h36 M999 569 h36 M999 575 h36" stroke="#6e5a2a" stroke-width="1" opacity="0.4" transform="rotate(-8 995 555)"/>
+<rect x="840" y="890" width="40" height="24" fill="#c9b25a" stroke="#7a6a3a" stroke-width="1" transform="rotate(6 840 890)" opacity="0.9"/>
+<rect x="990" y="895" width="40" height="24" fill="#a7c25a" stroke="#7a6a3a" stroke-width="1" transform="rotate(6 990 895)" opacity="0.9"/>
+<ellipse cx="1440" cy="904" rx="58" ry="40" fill="#8a8476" opacity="0.5" filter="url(#rough)"/>
+<use href="#witchtree" transform="translate(1290.5 427.9) scale(-1.08 1.08)"/>
+<use href="#witchtree" transform="translate(1196.1 435.9) scale(-0.90 0.90)"/>
+<use href="#witchtree" transform="translate(1307.9 444.4) scale(-0.92 0.92)"/>
+<use href="#witchtree" transform="translate(1169.7 452.1) scale(1.02 1.02)"/>
+<use href="#witchtree" transform="translate(1326.6 453.1) scale(0.95 0.95)"/>
+<use href="#oak" transform="translate(902.9 456.2) scale(-1.02 1.02)"/>
+<use href="#witchtree" transform="translate(1349.7 457.8) scale(-0.88 0.88)"/>
+<use href="#witchtree" transform="translate(1253.5 459.4) scale(-1.01 1.01)"/>
+<use href="#witchtree" transform="translate(1294.1 460.2) scale(1.08 1.08)"/>
+<use href="#oak" transform="translate(850.7 463.8) scale(1.00 1.00)"/>
+<use href="#witchtree" transform="translate(1222.2 469.9) scale(1.11 1.11)"/>
+<use href="#witchtree" transform="translate(1191.9 473.6) scale(-1.15 1.15)"/>
+<use href="#oak" transform="translate(951.4 477.4) scale(1.07 1.07)"/>
+<use href="#witchtree" transform="translate(1307.9 481.3) scale(0.98 0.98)"/>
+<use href="#pine" transform="translate(1503.3 483.2) scale(0.90 0.90)"/>
+<use href="#witchtree" transform="translate(1357.2 492.1) scale(1.02 1.02)"/>
+<use href="#bush" transform="translate(895.6 493.9) scale(1.04 1.04)"/>
+<use href="#witchtree" transform="translate(1160.5 499.3) scale(1.08 1.08)"/>
+<use href="#bush" transform="translate(816.0 502.7) scale(-0.98 0.98)"/>
+<use href="#witchtree" transform="translate(1193.9 503.0) scale(0.98 0.98)"/>
+<use href="#pine" transform="translate(1472.2 503.4) scale(-0.92 0.92)"/>
+<use href="#pine" transform="translate(1573.8 503.6) scale(-1.11 1.11)"/>
+<use href="#witchtree" transform="translate(1333.9 507.8) scale(0.85 0.85)"/>
+<use href="#oak" transform="translate(1070.2 508.1) scale(0.99 0.99)"/>
+<use href="#witchtree" transform="translate(1303.0 510.1) scale(-0.96 0.96)"/>
+<use href="#witchtree" transform="translate(1279.3 510.9) scale(-1.10 1.10)"/>
+<use href="#house" transform="translate(940 514)"/>
+<use href="#witchtree" transform="translate(1174.1 515.6) scale(-1.02 1.02)"/>
+<use href="#pine" transform="translate(1609.4 517.6) scale(0.93 0.93)"/>
+<use href="#pine" transform="translate(1435.7 517.7) scale(1.10 1.10)"/>
+<use href="#house" transform="translate(860 518)"/>
+<use href="#witchtree" transform="translate(1213.3 519.3) scale(0.89 0.89)"/>
+<use href="#pine" transform="translate(1504.6 520.1) scale(-1.12 1.12)"/>
+<use href="#oak" transform="translate(840.2 526.0) scale(1.15 1.15)"/>
+<use href="#witchtree" transform="translate(1288.9 530.8) scale(-1.11 1.11)"/>
+<use href="#witchtree" transform="translate(1254.7 531.9) scale(0.87 0.87)"/>
+<use href="#bush" transform="translate(933.6 532.3) scale(-1.13 1.13)"/>
+<use href="#pine" transform="translate(1587.4 533.2) scale(-1.07 1.07)"/>
+<use href="#oak" transform="translate(1049.1 533.2) scale(0.86 0.86)"/>
+<use href="#yew" transform="translate(1222.2 536.0) scale(-1.02 1.02)"/>
+<use href="#witchtree" transform="translate(1223.0 537.1) scale(-1.10 1.10)"/>
+<use href="#oak" transform="translate(1079.2 537.2) scale(-0.91 0.91)"/>
+<use href="#oak" transform="translate(1022.1 538.3) scale(1.12 1.12)"/>
+<use href="#pine" transform="translate(1563.2 540.1) scale(-0.94 0.94)"/>
+<use href="#oak" transform="translate(1060.9 540.4) scale(-1.00 1.00)"/>
+<use href="#pine" transform="translate(1435.0 542.5) scale(-0.87 0.87)"/>
+<use href="#pine" transform="translate(1465.3 543.3) scale(-0.87 0.87)"/>
+<use href="#bush" transform="translate(1017.0 546.3) scale(0.96 0.96)"/>
+<use href="#pine" transform="translate(1606.3 552.5) scale(-1.12 1.12)"/>
+<use href="#pine" transform="translate(1495.1 554.0) scale(0.95 0.95)"/>
+<use href="#bush" transform="translate(868.5 554.4) scale(1.14 1.14)"/>
+<use href="#yew" transform="translate(1110.7 556.0) scale(-0.93 0.93)"/>
+<use href="#bush" transform="translate(970.3 557.1) scale(0.89 0.89)"/>
+<use href="#yew" transform="translate(1196.0 558.2) scale(0.89 0.89)"/>
+<use href="#pine" transform="translate(1517.1 563.0) scale(1.08 1.08)"/>
+<use href="#oak" transform="translate(781.4 563.1) scale(-0.95 0.95)"/>
+<use href="#bush" transform="translate(925.5 564.4) scale(-0.85 0.85)"/>
+<use href="#snowpeak" transform="translate(1952.7 566.3) scale(1.12 1.12)"/>
+<use href="#pine" transform="translate(1541.0 567.7) scale(-1.13 1.13)"/>
+<use href="#pine" transform="translate(1468.8 568.8) scale(-1.11 1.11)"/>
+<use href="#yew" transform="translate(1162.5 569.4) scale(-1.11 1.11)"/>
+<use href="#snowpeak" transform="translate(1894.0 576.7) scale(0.89 0.89)"/>
+<use href="#yew" transform="translate(1136.8 579.6) scale(0.89 0.89)"/>
+<use href="#yew" transform="translate(1218.4 579.8) scale(0.91 0.91)"/>
+<use href="#oak" transform="translate(908.0 580.2) scale(-0.95 0.95)"/>
+<use href="#pine" transform="translate(1583.9 580.2) scale(0.86 0.86)"/>
+<use href="#snowpeak" transform="translate(1831.3 581.3) scale(-1.02 1.02)"/>
+<use href="#bush" transform="translate(806.1 585.2) scale(1.12 1.12)"/>
+<use href="#yew" transform="translate(1113.0 586.0) scale(1.10 1.10)"/>
+<use href="#pine" transform="translate(1502.5 589.8) scale(-0.96 0.96)"/>
+<use href="#yew" transform="translate(1278.8 590.1) scale(1.03 1.03)"/>
+<use href="#yew" transform="translate(1252.4 591.2) scale(-0.87 0.87)"/>
+<use href="#yew" transform="translate(1082.8 591.9) scale(-0.98 0.98)"/>
+<use href="#pine" transform="translate(1533.4 594.4) scale(-1.05 1.05)"/>
+<use href="#snowpeak" transform="translate(1976.5 596.9) scale(-0.96 0.96)"/>
+<use href="#oak" transform="translate(803.6 599.3) scale(0.92 0.92)"/>
+<use href="#snowpeak" transform="translate(1794.0 606.1) scale(1.11 1.11)"/>
+<use href="#oak" transform="translate(1349.5 608.3) scale(1.10 1.10)"/>
+<use href="#oak" transform="translate(952.2 610.3) scale(-0.94 0.94)"/>
+<use href="#yew" transform="translate(1223.9 612.0) scale(0.95 0.95)"/>
+<use href="#oak" transform="translate(1385.0 612.2) scale(1.00 1.00)"/>
+<use href="#oak" transform="translate(882.7 612.4) scale(-0.94 0.94)"/>
+<use href="#oak" transform="translate(602.5 613.8) scale(-0.95 0.95)"/>
+<use href="#yew" transform="translate(1154.5 615.1) scale(0.86 0.86)"/>
+<use href="#oak" transform="translate(1452.8 616.3) scale(0.91 0.91)"/>
+<use href="#snowpeak" transform="translate(1912.7 616.4) scale(-0.98 0.98)"/>
+<use href="#rock" transform="translate(1039.7 616.9) scale(0.86 0.86)"/>
+<use href="#rock" transform="translate(1018.8 622.0) scale(0.88 0.88)"/>
+<use href="#oak" transform="translate(1318.1 622.7) scale(-0.97 0.97)"/>
+<use href="#rock" transform="translate(1070.5 623.5) scale(-1.01 1.01)"/>
+<use href="#snowpeak" transform="translate(1745.6 623.5) scale(-0.97 0.97)"/>
+<use href="#rock" transform="translate(1567.2 623.6) scale(-0.96 0.96)"/>
+<use href="#yew" transform="translate(1203.5 624.0) scale(-1.08 1.08)"/>
+<use href="#oak" transform="translate(814.2 625.5) scale(-0.93 0.93)"/>
+<use href="#rock" transform="translate(987.2 626.0) scale(1.03 1.03)"/>
+<use href="#yew" transform="translate(1106.6 626.9) scale(-1.15 1.15)"/>
+<use href="#oak" transform="translate(855.9 628.8) scale(-1.01 1.01)"/>
+<use href="#oak" transform="translate(1259.6 628.9) scale(1.05 1.05)"/>
+<use href="#house" transform="translate(1356 630)"/>
+<use href="#yew" transform="translate(1252.6 631.2) scale(-1.08 1.08)"/>
+<use href="#house" transform="translate(1286 632)"/>
+<use href="#oak" transform="translate(633.4 633.1) scale(0.95 0.95)"/>
+<use href="#oak" transform="translate(912.0 634.3) scale(-0.89 0.89)"/>
+<use href="#snowpeak" transform="translate(1821.1 634.8) scale(-1.08 1.08)"/>
+<use href="#oak" transform="translate(1431.2 634.8) scale(-0.87 0.87)"/>
+<use href="#tent" transform="translate(1040.4 636.7) scale(0.93 0.93)"/>
+<use href="#oak" transform="translate(934.7 636.8) scale(0.94 0.94)"/>
+<use href="#yew" transform="translate(1160.6 636.9) scale(1.15 1.15)"/>
+<use href="#pine" transform="translate(771.6 638.7) scale(-1.15 1.15)"/>
+<use href="#oak" transform="translate(798.1 639.9) scale(1.06 1.06)"/>
+<use href="#rock" transform="translate(1551.6 640.0) scale(0.95 0.95)"/>
+<use href="#yew" transform="translate(1137.2 640.5) scale(-1.10 1.10)"/>
+<use href="#tent" transform="translate(986.2 641.0) scale(0.95 0.95)"/>
+<use href="#oak" transform="translate(1356.9 643.3) scale(0.87 0.87)"/>
+<use href="#oak" transform="translate(753.4 643.6) scale(-1.03 1.03)"/>
+<use href="#pine" transform="translate(855.3 643.7) scale(1.15 1.15)"/>
+<use href="#oak" transform="translate(1283.2 644.6) scale(1.13 1.13)"/>
+<use href="#yew" transform="translate(1200.6 649.0) scale(-1.15 1.15)"/>
+<use href="#oak" transform="translate(607.3 650.0) scale(-1.03 1.03)"/>
+<use href="#oak" transform="translate(889.8 650.2) scale(-0.93 0.93)"/>
+<use href="#oak" transform="translate(676.2 650.6) scale(1.00 1.00)"/>
+<use href="#snowpeak" transform="translate(1946.8 652.8) scale(-0.90 0.90)"/>
+<use href="#pine" transform="translate(750.4 653.3) scale(0.90 0.90)"/>
+<use href="#rock" transform="translate(1071.6 653.8) scale(-1.00 1.00)"/>
+<use href="#rock" transform="translate(1467.1 654.6) scale(0.96 0.96)"/>
+<use href="#snowpeak" transform="translate(1787.6 655.3) scale(-1.13 1.13)"/>
+<use href="#oak" transform="translate(940.9 656.1) scale(1.00 1.00)"/>
+<use href="#pine" transform="translate(834.2 657.6) scale(0.95 0.95)"/>
+<use href="#peak" transform="translate(1749.3 658.4) scale(-0.92 0.92)"/>
+<use href="#oak" transform="translate(1396.6 660.4) scale(1.14 1.14)"/>
+<use href="#oak" transform="translate(1467.2 661.1) scale(-1.01 1.01)"/>
+<use href="#rock" transform="translate(968.4 661.2) scale(-0.89 0.89)"/>
+<use href="#oak" transform="translate(825.4 661.3) scale(1.05 1.05)"/>
+<use href="#peak" transform="translate(1699.4 661.9) scale(1.10 1.10)"/>
+<use href="#snowpeak" transform="translate(1988.7 662.0) scale(-1.11 1.11)"/>
+<use href="#oak" transform="translate(771.7 662.5) scale(-1.04 1.04)"/>
+<use href="#rock" transform="translate(1554.4 662.9) scale(-0.87 0.87)"/>
+<use href="#oak" transform="translate(1429.6 664.1) scale(1.06 1.06)"/>
+<use href="#pine" transform="translate(773.1 665.0) scale(0.86 0.86)"/>
+<use href="#oak" transform="translate(1244.9 669.3) scale(1.11 1.11)"/>
+<use href="#pine" transform="translate(878.7 669.4) scale(-1.05 1.05)"/>
+<use href="#oak" transform="translate(896.4 669.5) scale(1.13 1.13)"/>
+<use href="#rock" transform="translate(1485.7 669.6) scale(-0.97 0.97)"/>
+<use href="#oak" transform="translate(746.2 670.6) scale(-1.03 1.03)"/>
+<use href="#pine" transform="translate(806.8 672.3) scale(-1.09 1.09)"/>
+<use href="#rock" transform="translate(1014.3 672.8) scale(-0.97 0.97)"/>
+<use href="#oak" transform="translate(624.6 673.0) scale(1.02 1.02)"/>
+<use href="#oak" transform="translate(980.3 673.5) scale(-1.12 1.12)"/>
+<use href="#snowpeak" transform="translate(1821.1 673.6) scale(0.95 0.95)"/>
+<use href="#tent" transform="translate(1004.9 674.3) scale(1.07 1.07)"/>
+<use href="#rock" transform="translate(1068.4 674.5) scale(-1.05 1.05)"/>
+<use href="#oak" transform="translate(1597.2 675.5) scale(-0.93 0.93)"/>
+<use href="#oak" transform="translate(1365.9 676.2) scale(-1.15 1.15)"/>
+<use href="#oak" transform="translate(922.6 676.5) scale(-1.06 1.06)"/>
+<use href="#rock" transform="translate(980.9 676.7) scale(1.06 1.06)"/>
+<use href="#rock" transform="translate(1511.4 677.9) scale(-1.04 1.04)"/>
+<use href="#house" transform="translate(1354 678)"/>
+<use href="#house" transform="translate(1290 680)"/>
+<use href="#oak" transform="translate(1633.1 680.7) scale(0.93 0.93)"/>
+<use href="#oak" transform="translate(1326.2 681.1) scale(1.02 1.02)"/>
+<use href="#rock" transform="translate(1044.8 683.0) scale(-1.12 1.12)"/>
+<use href="#oak" transform="translate(727.9 683.1) scale(1.09 1.09)"/>
+<use href="#pine" transform="translate(915.7 683.8) scale(0.90 0.90)"/>
+<use href="#oak" transform="translate(953.2 684.0) scale(0.92 0.92)"/>
+<use href="#peak" transform="translate(1653.1 684.1) scale(-1.09 1.09)"/>
+<use href="#peak" transform="translate(1773.6 687.4) scale(0.86 0.86)"/>
+<use href="#oak" transform="translate(761.3 688.1) scale(0.86 0.86)"/>
+<use href="#peak" transform="translate(1596.2 692.6) scale(-0.87 0.87)"/>
+<use href="#snowpeak" transform="translate(1904.9 698.4) scale(1.05 1.05)"/>
+<use href="#oak" transform="translate(882.8 701.4) scale(-1.14 1.14)"/>
+<use href="#pine" transform="translate(731.1 701.9) scale(-0.92 0.92)"/>
+<use href="#oak" transform="translate(814.4 702.1) scale(0.96 0.96)"/>
+<use href="#oak" transform="translate(1573.5 703.6) scale(-0.91 0.91)"/>
+<use href="#peak" transform="translate(1719.9 704.4) scale(0.91 0.91)"/>
+<use href="#pine" transform="translate(779.6 705.9) scale(-0.98 0.98)"/>
+<use href="#oak" transform="translate(980.1 706.4) scale(-0.88 0.88)"/>
+<use href="#oak" transform="translate(793.6 707.8) scale(0.86 0.86)"/>
+<use href="#oak" transform="translate(959.0 708.7) scale(0.85 0.85)"/>
+<use href="#oak" transform="translate(908.2 709.4) scale(-0.90 0.90)"/>
+<use href="#oak" transform="translate(721.5 712.3) scale(0.95 0.95)"/>
+<use href="#oak" transform="translate(1646.1 715.0) scale(-1.09 1.09)"/>
+<use href="#snowpeak" transform="translate(1851.1 715.9) scale(-1.11 1.11)"/>
+<use href="#oak" transform="translate(870.4 722.6) scale(-0.97 0.97)"/>
+<use href="#peak" transform="translate(1618.0 726.6) scale(-0.98 0.98)"/>
+<use href="#oak" transform="translate(785.9 726.9) scale(1.15 1.15)"/>
+<use href="#oak" transform="translate(1610.8 727.0) scale(0.99 0.99)"/>
+<use href="#oak" transform="translate(841.1 729.0) scale(0.97 0.97)"/>
+<use href="#oak" transform="translate(951.5 731.1) scale(0.89 0.89)"/>
+<use href="#snowpeak" transform="translate(1914.4 733.5) scale(1.09 1.09)"/>
+<use href="#pine" transform="translate(817.8 734.2) scale(-1.05 1.05)"/>
+<use href="#reed" transform="translate(1096.6 736.1) scale(1.14 1.14)"/>
+<use href="#peak" transform="translate(1751.5 737.0) scale(-1.01 1.01)"/>
+<use href="#peak" transform="translate(1658.3 738.6) scale(1.10 1.10)"/>
+<use href="#oak" transform="translate(744.3 741.6) scale(0.90 0.90)"/>
+<use href="#oak" transform="translate(915.5 742.4) scale(-1.05 1.05)"/>
+<use href="#pine" transform="translate(909.8 744.1) scale(0.95 0.95)"/>
+<use href="#pine" transform="translate(940.8 744.1) scale(-0.96 0.96)"/>
+<use href="#pine" transform="translate(771.4 744.9) scale(-1.11 1.11)"/>
+<use href="#reed" transform="translate(553.9 747.0) scale(-0.90 0.90)"/>
+<use href="#oak" transform="translate(852.3 755.5) scale(1.12 1.12)"/>
+<use href="#oak" transform="translate(776.4 755.9) scale(-1.04 1.04)"/>
+<use href="#oak" transform="translate(815.9 756.6) scale(1.03 1.03)"/>
+<use href="#peak" transform="translate(1688.6 757.5) scale(0.98 0.98)"/>
+<use href="#oak" transform="translate(896.5 758.0) scale(-1.07 1.07)"/>
+<use href="#peak" transform="translate(1797.2 759.6) scale(0.88 0.88)"/>
+<use href="#reed" transform="translate(1061.2 762.9) scale(-1.02 1.02)"/>
+<use href="#oak" transform="translate(712.0 764.0) scale(-0.87 0.87)"/>
+<use href="#reed" transform="translate(1094.8 764.0) scale(-1.13 1.13)"/>
+<use href="#oak" transform="translate(924.3 764.7) scale(-0.90 0.90)"/>
+<use href="#reed" transform="translate(555.4 770.2) scale(-0.94 0.94)"/>
+<use href="#oak" transform="translate(1001.6 770.7) scale(1.15 1.15)"/>
+<use href="#oak" transform="translate(956.2 771.6) scale(1.05 1.05)"/>
+<use href="#oak" transform="translate(827.0 773.5) scale(-0.95 0.95)"/>
+<use href="#reed" transform="translate(655.3 774.7) scale(1.07 1.07)"/>
+<use href="#reed" transform="translate(1025.5 778.1) scale(0.94 0.94)"/>
+<use href="#reed" transform="translate(579.9 780.0) scale(0.98 0.98)"/>
+<use href="#reed" transform="translate(736.4 780.8) scale(-1.00 1.00)"/>
+<use href="#stormpeak" transform="translate(1925.7 781.2) scale(-1.12 1.12)"/>
+<use href="#oak" transform="translate(878.8 781.3) scale(-1.14 1.14)"/>
+<use href="#peak" transform="translate(1639.5 781.6) scale(0.95 0.95)"/>
+<use href="#peak" transform="translate(1730.5 781.7) scale(0.91 0.91)"/>
+<use href="#oak" transform="translate(851.7 782.4) scale(1.06 1.06)"/>
+<use href="#reed" transform="translate(624.6 782.4) scale(-1.02 1.02)"/>
+<use href="#reed" transform="translate(674.2 782.4) scale(-1.04 1.04)"/>
+<use href="#deadtree" transform="translate(1014.8 784.7) scale(-1.05 1.05)"/>
+<use href="#deadtree" transform="translate(1160.4 785.4) scale(0.87 0.87)"/>
+<use href="#reed" transform="translate(710.4 785.6) scale(0.96 0.96)"/>
+<use href="#reed" transform="translate(1235.2 785.8) scale(1.06 1.06)"/>
+<use href="#reed" transform="translate(462.1 786.2) scale(-0.95 0.95)"/>
+<use href="#hill" transform="translate(1547.9 787.9) scale(-1.03 1.03)"/>
+<use href="#oak" transform="translate(1054.9 790.6) scale(1.07 1.07)"/>
+<use href="#stormpeak" transform="translate(1857.7 790.7) scale(-1.12 1.12)"/>
+<use href="#hill" transform="translate(1587.6 792.7) scale(1.06 1.06)"/>
+<use href="#peak" transform="translate(1688.8 793.7) scale(1.13 1.13)"/>
+<use href="#reed" transform="translate(1056.8 794.0) scale(0.94 0.94)"/>
+<use href="#stormpeak" transform="translate(1972.4 795.5) scale(-0.99 0.99)"/>
+<use href="#hill" transform="translate(1626.9 795.8) scale(-0.98 0.98)"/>
+<use href="#oak" transform="translate(1494.8 796.6) scale(-0.90 0.90)"/>
+<use href="#reed" transform="translate(1081.2 797.2) scale(-1.04 1.04)"/>
+<use href="#reed" transform="translate(667.5 799.5) scale(0.95 0.95)"/>
+<use href="#reed" transform="translate(694.3 799.6) scale(1.13 1.13)"/>
+<use href="#reed" transform="translate(638.3 799.6) scale(-0.97 0.97)"/>
+<use href="#reed" transform="translate(588.6 803.3) scale(-0.87 0.87)"/>
+<use href="#reed" transform="translate(564.5 804.7) scale(1.14 1.14)"/>
+<use href="#oak" transform="translate(657.2 806.1) scale(1.11 1.11)"/>
+<use href="#hill" transform="translate(1484.8 806.2) scale(1.13 1.13)"/>
+<use href="#reed" transform="translate(1230.8 806.8) scale(1.12 1.12)"/>
+<use href="#deadtree" transform="translate(1051.6 807.1) scale(-1.13 1.13)"/>
+<use href="#oak" transform="translate(962.8 807.2) scale(0.88 0.88)"/>
+<use href="#oak" transform="translate(1560.7 808.0) scale(-1.02 1.02)"/>
+<use href="#oak" transform="translate(788.9 808.8) scale(1.09 1.09)"/>
+<use href="#oak" transform="translate(991.6 810.6) scale(1.05 1.05)"/>
+<use href="#reed" transform="translate(621.8 811.1) scale(-1.02 1.02)"/>
+<use href="#reed" transform="translate(734.9 814.1) scale(1.03 1.03)"/>
+<use href="#reed" transform="translate(622.3 814.7) scale(0.96 0.96)"/>
+<use href="#reed" transform="translate(1178.2 816.8) scale(0.98 0.98)"/>
+<use href="#stormpeak" transform="translate(1933.3 817.8) scale(-0.99 0.99)"/>
+<use href="#deadtree" transform="translate(1106.0 818.0) scale(1.04 1.04)"/>
+<use href="#stormpeak" transform="translate(1831.0 818.1) scale(1.06 1.06)"/>
+<use href="#oak" transform="translate(958.6 818.8) scale(-0.96 0.96)"/>
+<use href="#deadtree" transform="translate(1192.3 819.4) scale(-1.02 1.02)"/>
+<use href="#reed" transform="translate(506.6 822.7) scale(1.14 1.14)"/>
+<use href="#reed" transform="translate(1206.2 824.0) scale(0.94 0.94)"/>
+<use href="#oak" transform="translate(919.2 826.2) scale(-0.92 0.92)"/>
+<use href="#reed" transform="translate(788.6 829.3) scale(-0.93 0.93)"/>
+<use href="#bush" transform="translate(1325.8 829.6) scale(-1.04 1.04)"/>
+<use href="#reed" transform="translate(634.1 830.8) scale(-0.91 0.91)"/>
+<use href="#stormpeak" transform="translate(2020.0 831.4) scale(-1.04 1.04)"/>
+<use href="#reed" transform="translate(1039.3 831.5) scale(1.14 1.14)"/>
+<use href="#reed" transform="translate(626.3 832.5) scale(1.03 1.03)"/>
+<use href="#deadtree" transform="translate(1227.8 832.5) scale(1.06 1.06)"/>
+<use href="#oak" transform="translate(1017.5 832.6) scale(1.01 1.01)"/>
+<use href="#reed" transform="translate(481.7 834.4) scale(-1.08 1.08)"/>
+<use href="#stormpeak" transform="translate(1877.5 834.9) scale(-1.09 1.09)"/>
+<use href="#house" transform="translate(964 836)"/>
+<use href="#reed" transform="translate(1151.7 837.3) scale(-0.89 0.89)"/>
+<use href="#hill" transform="translate(1607.1 838.6) scale(0.99 0.99)"/>
+<use href="#stormpeak" transform="translate(1976.2 838.6) scale(1.06 1.06)"/>
+<use href="#reed" transform="translate(669.8 839.3) scale(1.10 1.10)"/>
+<use href="#house" transform="translate(894 840)"/>
+<use href="#deadtree" transform="translate(1052.1 841.5) scale(-0.97 0.97)"/>
+<use href="#oak" transform="translate(992.3 842.9) scale(-1.10 1.10)"/>
+<use href="#oak" transform="translate(995.0 846.2) scale(0.92 0.92)"/>
+<use href="#reed" transform="translate(619.8 847.5) scale(-0.96 0.96)"/>
+<use href="#oak" transform="translate(644.5 847.7) scale(-1.06 1.06)"/>
+<use href="#oak" transform="translate(828.6 848.0) scale(-0.94 0.94)"/>
+<use href="#hill" transform="translate(1463.5 848.5) scale(0.95 0.95)"/>
+<use href="#reed" transform="translate(583.4 849.1) scale(-1.02 1.02)"/>
+<use href="#oak" transform="translate(1428.4 852.0) scale(0.86 0.86)"/>
+<use href="#deadtree" transform="translate(1192.2 852.9) scale(-0.95 0.95)"/>
+<use href="#reed" transform="translate(736.9 853.4) scale(1.14 1.14)"/>
+<use href="#reed" transform="translate(1068.2 858.5) scale(-1.02 1.02)"/>
+<use href="#house" transform="translate(990 860)"/>
+<use href="#hill" transform="translate(1505.9 861.9) scale(-1.00 1.00)"/>
+<use href="#reed" transform="translate(1121.4 862.8) scale(1.04 1.04)"/>
+<use href="#oak" transform="translate(1474.1 863.4) scale(0.92 0.92)"/>
+<use href="#house" transform="translate(870 864)"/>
+<use href="#hill" transform="translate(1541.1 864.2) scale(-0.88 0.88)"/>
+<use href="#stormpeak" transform="translate(1829.7 865.7) scale(1.02 1.02)"/>
+<use href="#pine" transform="translate(1724.2 865.8) scale(-1.11 1.11)"/>
+<use href="#reed" transform="translate(544.1 866.1) scale(-0.89 0.89)"/>
+<use href="#bush" transform="translate(1375.8 868.5) scale(0.99 0.99)"/>
+<use href="#oak" transform="translate(664.9 870.7) scale(1.05 1.05)"/>
+<use href="#oak" transform="translate(720.8 871.1) scale(-0.93 0.93)"/>
+<use href="#oak" transform="translate(1029.5 871.5) scale(0.96 0.96)"/>
+<use href="#oak" transform="translate(1536.1 873.1) scale(-1.09 1.09)"/>
+<use href="#reed" transform="translate(583.3 875.5) scale(-0.98 0.98)"/>
+<use href="#oak" transform="translate(879.3 875.9) scale(1.07 1.07)"/>
+<use href="#tower" transform="translate(1394 876)"/>
+<use href="#tower" transform="translate(1486 876)"/>
+<use href="#reed" transform="translate(675.3 877.3) scale(-1.05 1.05)"/>
+<use href="#pine" transform="translate(1697.9 879.1) scale(-0.86 0.86)"/>
+<use href="#stormpeak" transform="translate(1956.6 879.6) scale(-1.04 1.04)"/>
+<use href="#reed" transform="translate(497.8 879.9) scale(1.06 1.06)"/>
+<use href="#rock" transform="translate(1776.3 880.7) scale(-1.06 1.06)"/>
+<use href="#bush" transform="translate(1456.4 882.2) scale(0.95 0.95)"/>
+<use href="#oak" transform="translate(1630.4 882.4) scale(0.93 0.93)"/>
+<use href="#hill" transform="translate(1617.3 883.0) scale(-1.04 1.04)"/>
+<use href="#house" transform="translate(970 886)"/>
+<use href="#house" transform="translate(900 890)"/>
+<use href="#oak" transform="translate(1556.0 891.6) scale(0.94 0.94)"/>
+<use href="#stormpeak" transform="translate(1921.2 891.9) scale(1.06 1.06)"/>
+<use href="#pine" transform="translate(1775.6 897.4) scale(1.04 1.04)"/>
+<use href="#bush" transform="translate(1341.8 901.3) scale(1.05 1.05)"/>
+<use href="#hill" transform="translate(1571.6 902.4) scale(0.86 0.86)"/>
+<use href="#rock" transform="translate(1694.9 902.8) scale(0.97 0.97)"/>
+<use href="#pine" transform="translate(1708.4 907.5) scale(-0.98 0.98)"/>
+<use href="#oak" transform="translate(901.4 908.3) scale(1.02 1.02)"/>
+<use href="#bush" transform="translate(1286.8 909.1) scale(-0.86 0.86)"/>
+<use href="#rock" transform="translate(1791.0 912.5) scale(-1.01 1.01)"/>
+<use href="#stormpeak" transform="translate(1854.0 915.0) scale(-0.94 0.94)"/>
+<use href="#rock" transform="translate(559.0 918.2) scale(0.93 0.93)"/>
+<use href="#rock" transform="translate(1769.0 922.9) scale(-0.96 0.96)"/>
+<use href="#oak" transform="translate(1472.2 923.0) scale(1.05 1.05)"/>
+<use href="#pine" transform="translate(1725.0 923.6) scale(-0.86 0.86)"/>
+<use href="#stormpeak" transform="translate(1891.2 924.2) scale(-1.14 1.14)"/>
+<use href="#tower" transform="translate(1390 928)"/>
+<use href="#tower" transform="translate(1490 928)"/>
+<use href="#brownhill" transform="translate(1106.1 928.8) scale(0.92 0.92)"/>
+<use href="#rock" transform="translate(1637.2 929.1) scale(-1.10 1.10)"/>
+<use href="#rock" transform="translate(1580.0 929.2) scale(-1.02 1.02)"/>
+<use href="#bush" transform="translate(596.4 931.4) scale(-0.99 0.99)"/>
+<use href="#brownhill" transform="translate(1041.5 932.1) scale(1.11 1.11)"/>
+<use href="#brownhill" transform="translate(1639.7 935.1) scale(1.13 1.13)"/>
+<use href="#darkpine" transform="translate(861.1 936.2) scale(-1.10 1.10)"/>
+<use href="#darkpine" transform="translate(887.4 937.0) scale(-0.93 0.93)"/>
+<use href="#rock" transform="translate(1724.9 937.1) scale(1.03 1.03)"/>
+<use href="#stormpeak" transform="translate(1975.1 937.6) scale(0.96 0.96)"/>
+<use href="#darkpine" transform="translate(814.9 939.1) scale(-1.09 1.09)"/>
+<use href="#bush" transform="translate(1377.0 940.2) scale(-1.15 1.15)"/>
+<use href="#pine" transform="translate(1762.2 940.8) scale(0.97 0.97)"/>
+<use href="#oak" transform="translate(1392.5 941.1) scale(0.97 0.97)"/>
+<use href="#rock" transform="translate(617.7 941.2) scale(-1.01 1.01)"/>
+<use href="#brownhill" transform="translate(1608.2 941.4) scale(1.02 1.02)"/>
+<use href="#bush" transform="translate(626.7 941.7) scale(0.97 0.97)"/>
+<use href="#minehead" transform="translate(1560 944)"/>
+<use href="#bush" transform="translate(511.5 944.6) scale(-1.14 1.14)"/>
+<use href="#darkpine" transform="translate(788.1 944.7) scale(-1.05 1.05)"/>
+<use href="#oak" transform="translate(1446.7 945.0) scale(1.02 1.02)"/>
+<use href="#brownhill" transform="translate(1574.3 947.0) scale(1.02 1.02)"/>
+<use href="#brownhill" transform="translate(1143.5 948.7) scale(-0.99 0.99)"/>
+<use href="#rock" transform="translate(465.2 958.7) scale(0.90 0.90)"/>
+<use href="#darkpine" transform="translate(872.5 959.6) scale(-0.92 0.92)"/>
+<use href="#darkpine" transform="translate(803.6 959.6) scale(0.87 0.87)"/>
+<use href="#rock" transform="translate(1574.6 960.7) scale(-1.04 1.04)"/>
+<use href="#darkpine" transform="translate(938.9 961.0) scale(-0.96 0.96)"/>
+<use href="#darkpine" transform="translate(741.8 966.2) scale(-1.02 1.02)"/>
+<use href="#darkpine" transform="translate(776.9 967.9) scale(1.14 1.14)"/>
+<use href="#darkpine" transform="translate(896.9 968.6) scale(-1.03 1.03)"/>
+<use href="#darkpine" transform="translate(917.2 970.1) scale(-0.85 0.85)"/>
+<use href="#rock" transform="translate(1673.0 970.3) scale(1.13 1.13)"/>
+<use href="#rock" transform="translate(1294.2 972.5) scale(-0.93 0.93)"/>
+<use href="#brownhill" transform="translate(1044.7 973.7) scale(0.86 0.86)"/>
+<use href="#rock" transform="translate(1177.0 977.3) scale(1.10 1.10)"/>
+<use href="#rock" transform="translate(1118.9 979.6) scale(-1.02 1.02)"/>
+<use href="#rock" transform="translate(1003.2 979.9) scale(-1.15 1.15)"/>
+<use href="#cactus" transform="translate(1382.7 980.2) scale(1.10 1.10)"/>
+<use href="#darkpine" transform="translate(806.4 982.4) scale(1.06 1.06)"/>
+<use href="#rock" transform="translate(1643.7 982.6) scale(1.13 1.13)"/>
+<use href="#darkpine" transform="translate(867.2 984.3) scale(1.14 1.14)"/>
+<use href="#darkpine" transform="translate(764.5 984.9) scale(-1.03 1.03)"/>
+<use href="#bush" transform="translate(628.4 985.7) scale(-1.14 1.14)"/>
+<use href="#darkpine" transform="translate(978.9 986.5) scale(0.90 0.90)"/>
+<use href="#brownhill" transform="translate(1008.9 987.5) scale(-0.98 0.98)"/>
+<use href="#rock" transform="translate(1345.0 990.0) scale(-1.04 1.04)"/>
+<use href="#brownhill" transform="translate(1147.7 990.9) scale(-0.87 0.87)"/>
+<use href="#darkpine" transform="translate(937.9 991.0) scale(0.85 0.85)"/>
+<use href="#darkpine" transform="translate(742.0 991.3) scale(-1.06 1.06)"/>
+<use href="#rock" transform="translate(1074.9 992.8) scale(0.94 0.94)"/>
+<use href="#ashpeak" transform="translate(1874.8 993.6) scale(1.05 1.05)"/>
+<use href="#darkpine" transform="translate(908.0 995.6) scale(-0.89 0.89)"/>
+<use href="#brownhill" transform="translate(1635.1 995.7) scale(0.90 0.90)"/>
+<use href="#darkpine" transform="translate(846.9 995.9) scale(-0.95 0.95)"/>
+<use href="#rock" transform="translate(1620.7 996.3) scale(-0.90 0.90)"/>
+<use href="#darkpine" transform="translate(783.9 998.3) scale(-0.94 0.94)"/>
+<use href="#brownhill" transform="translate(1074.4 998.9) scale(0.99 0.99)"/>
+<use href="#rock" transform="translate(1103.3 999.6) scale(-0.86 0.86)"/>
+<use href="#brownhill" transform="translate(1588.7 999.6) scale(-1.13 1.13)"/>
+<use href="#minehead" transform="translate(1130 1000)"/>
+<use href="#rock" transform="translate(573.5 1000.6) scale(0.92 0.92)"/>
+<use href="#volcano" transform="translate(1895.2 1001.8) scale(1.07 1.07)"/>
+<use href="#darkpine" transform="translate(868.3 1002.7) scale(-1.12 1.12)"/>
+<use href="#darkpine" transform="translate(885.7 1005.2) scale(-1.15 1.15)"/>
+<use href="#darkpine" transform="translate(817.7 1006.7) scale(1.13 1.13)"/>
+<use href="#rock" transform="translate(1147.8 1006.7) scale(-0.86 0.86)"/>
+<use href="#bush" transform="translate(499.8 1010.0) scale(0.94 0.94)"/>
+<use href="#rock" transform="translate(523.7 1010.2) scale(1.10 1.10)"/>
+<use href="#ashpeak" transform="translate(1937.0 1010.5) scale(-1.09 1.09)"/>
+<use href="#darkpine" transform="translate(916.0 1015.2) scale(1.03 1.03)"/>
+<use href="#darkpine" transform="translate(761.9 1017.7) scale(-1.12 1.12)"/>
+<use href="#darkpine" transform="translate(713.2 1017.8) scale(0.88 0.88)"/>
+<use href="#darkpine" transform="translate(796.7 1018.5) scale(-0.88 0.88)"/>
+<use href="#mesa" transform="translate(1537.3 1018.5) scale(0.91 0.91)"/>
+<use href="#mesa" transform="translate(1477.1 1019.9) scale(1.04 1.04)"/>
+<use href="#darkpine" transform="translate(739.3 1020.4) scale(0.94 0.94)"/>
+<use href="#cactus" transform="translate(1200.4 1022.5) scale(1.06 1.06)"/>
+<use href="#ashpeak" transform="translate(1695.6 1023.5) scale(1.00 1.00)"/>
+<use href="#ashpeak" transform="translate(1755.9 1024.3) scale(1.13 1.13)"/>
+<use href="#ashpeak" transform="translate(1613.4 1025.9) scale(-1.07 1.07)"/>
+<use href="#ashpeak" transform="translate(1814.3 1026.4) scale(1.07 1.07)"/>
+<use href="#bush" transform="translate(540.8 1027.7) scale(0.94 0.94)"/>
+<use href="#cactus" transform="translate(1342.3 1027.9) scale(1.00 1.00)"/>
+<use href="#darkpine" transform="translate(950.0 1029.1) scale(0.92 0.92)"/>
+<use href="#darkpine" transform="translate(882.6 1030.6) scale(-1.08 1.08)"/>
+<use href="#darkpine" transform="translate(902.9 1034.8) scale(0.95 0.95)"/>
+<use href="#darkpine" transform="translate(805.9 1039.3) scale(0.93 0.93)"/>
+<use href="#darkpine" transform="translate(733.1 1042.5) scale(0.93 0.93)"/>
+<use href="#darkpine" transform="translate(973.2 1043.4) scale(0.86 0.86)"/>
+<use href="#cactus" transform="translate(1254.6 1044.1) scale(1.09 1.09)"/>
+<use href="#rock" transform="translate(1367.7 1044.8) scale(0.85 0.85)"/>
+<use href="#cactus" transform="translate(1386.4 1051.8) scale(0.96 0.96)"/>
+<use href="#darkpine" transform="translate(905.5 1054.3) scale(1.09 1.09)"/>
+<use href="#ashpeak" transform="translate(1592.0 1054.4) scale(-1.08 1.08)"/>
+<use href="#ashpeak" transform="translate(1734.3 1054.5) scale(0.91 0.91)"/>
+<use href="#darkpine" transform="translate(944.2 1056.2) scale(-0.88 0.88)"/>
+<use href="#darkpine" transform="translate(768.7 1056.5) scale(1.11 1.11)"/>
+<use href="#darkpine" transform="translate(741.9 1057.8) scale(1.05 1.05)"/>
+<use href="#ashpeak" transform="translate(1770.7 1058.4) scale(-0.89 0.89)"/>
+<use href="#darkpine" transform="translate(798.9 1061.3) scale(-1.12 1.12)"/>
+<use href="#darkpine" transform="translate(825.4 1061.3) scale(-1.00 1.00)"/>
+<use href="#rock" transform="translate(1091.8 1062.0) scale(0.94 0.94)"/>
+<use href="#darkpine" transform="translate(888.3 1062.7) scale(-0.98 0.98)"/>
+<use href="#cactus" transform="translate(1199.6 1062.8) scale(1.07 1.07)"/>
+<use href="#deadtree" transform="translate(905.7 1065.2) scale(-0.96 0.96)"/>
+<use href="#darkpine" transform="translate(868.9 1065.5) scale(-0.97 0.97)"/>
+<use href="#rock" transform="translate(1324.3 1067.4) scale(-0.99 0.99)"/>
+<use href="#rock" transform="translate(1063.3 1069.9) scale(-0.96 0.96)"/>
+<use href="#mesa" transform="translate(1401.9 1070.7) scale(1.04 1.04)"/>
+<use href="#mesa" transform="translate(1589.4 1072.7) scale(1.13 1.13)"/>
+<use href="#grave" transform="translate(961.9 1076.0) scale(0.91 0.91)"/>
+<use href="#deadtree" transform="translate(958.6 1077.0) scale(0.87 0.87)"/>
+<use href="#rock" transform="translate(1187.0 1078.7) scale(-1.03 1.03)"/>
+<use href="#grave" transform="translate(899.6 1080.1) scale(1.05 1.05)"/>
+<use href="#rock" transform="translate(1360.2 1080.5) scale(-0.89 0.89)"/>
+<use href="#darkpine" transform="translate(750.3 1081.5) scale(-1.04 1.04)"/>
+<use href="#darkpine" transform="translate(838.0 1081.6) scale(-1.10 1.10)"/>
+<use href="#cactus" transform="translate(1429.2 1081.8) scale(1.09 1.09)"/>
+<use href="#cactus" transform="translate(1341.8 1082.2) scale(0.96 0.96)"/>
+<use href="#ashpeak" transform="translate(1627.1 1082.5) scale(-1.04 1.04)"/>
+<use href="#darkpine" transform="translate(927.4 1084.1) scale(1.03 1.03)"/>
+<use href="#rock" transform="translate(1167.6 1084.4) scale(-1.01 1.01)"/>
+<use href="#volcano" transform="translate(1946.9 1089.0) scale(0.93 0.93)"/>
+<use href="#deadtree" transform="translate(932.2 1089.2) scale(1.12 1.12)"/>
+<use href="#darkpine" transform="translate(857.0 1089.4) scale(-1.09 1.09)"/>
+<use href="#ashpeak" transform="translate(1573.4 1090.4) scale(-1.08 1.08)"/>
+<use href="#darkpine" transform="translate(902.1 1092.3) scale(1.05 1.05)"/>
+<use href="#darkpine" transform="translate(785.0 1093.0) scale(-1.04 1.04)"/>
+<use href="#rock" transform="translate(1089.0 1093.1) scale(-1.08 1.08)"/>
+<use href="#ashpeak" transform="translate(1707.9 1096.4) scale(1.03 1.03)"/>
+<use href="#deadtree" transform="translate(856.6 1097.5) scale(-1.12 1.12)"/>
+<use href="#mesa" transform="translate(1538.1 1097.5) scale(-0.91 0.91)"/>
+<use href="#grave" transform="translate(990.8 1100.3) scale(1.12 1.12)"/>
+<use href="#deadtree" transform="translate(881.4 1102.5) scale(-0.87 0.87)"/>
+<use href="#deadtree" transform="translate(968.0 1102.7) scale(1.13 1.13)"/>
+<use href="#ashpeak" transform="translate(1901.6 1103.0) scale(-0.87 0.87)"/>
+<use href="#grave" transform="translate(898.3 1105.1) scale(0.91 0.91)"/>
+<use href="#rock" transform="translate(1050.2 1105.3) scale(-0.88 0.88)"/>
+<use href="#ashpeak" transform="translate(1967.6 1106.1) scale(-1.12 1.12)"/>
+<use href="#ashpeak" transform="translate(1787.7 1109.6) scale(-0.87 0.87)"/>
+<use href="#mesa" transform="translate(1495.7 1111.0) scale(0.85 0.85)"/>
+<use href="#deadtree" transform="translate(903.5 1116.7) scale(-0.96 0.96)"/>
+<use href="#grave" transform="translate(1001.8 1117.2) scale(0.94 0.94)"/>
+<use href="#ashpeak" transform="translate(1753.6 1117.3) scale(0.91 0.91)"/>
+<use href="#rock" transform="translate(1155.5 1120.1) scale(-0.93 0.93)"/>
+<use href="#mesa" transform="translate(1438.5 1120.8) scale(-0.98 0.98)"/>
+<use href="#rock" transform="translate(1074.0 1121.8) scale(1.04 1.04)"/>
+<use href="#ashpeak" transform="translate(1822.1 1121.9) scale(-1.05 1.05)"/>
+<use href="#grave" transform="translate(877.6 1123.3) scale(1.03 1.03)"/>
+<use href="#ashpeak" transform="translate(1678.8 1123.5) scale(0.97 0.97)"/>
+<use href="#volcano" transform="translate(1840.7 1124.6) scale(0.87 0.87)"/>
+<use href="#rock" transform="translate(1101.1 1128.4) scale(-0.99 0.99)"/>
+<use href="#ashpeak" transform="translate(1632.5 1129.8) scale(0.98 0.98)"/>
+<use href="#grave" transform="translate(925.1 1131.0) scale(0.93 0.93)"/>
+<use href="#deadtree" transform="translate(884.0 1133.6) scale(-0.86 0.86)"/>
+<use href="#grave" transform="translate(982.1 1137.8) scale(0.89 0.89)"/>
+<use href="#deadtree" transform="translate(919.2 1144.1) scale(-0.99 0.99)"/>
+<use href="#grave" transform="translate(904.0 1147.4) scale(0.90 0.90)"/>
+<use href="#deadtree" transform="translate(957.1 1151.8) scale(-1.12 1.12)"/>
+<ellipse cx="900" cy="1100" rx="90" ry="30" fill="url(#mist)"/>
+<ellipse cx="980" cy="1135" rx="80" ry="26" fill="url(#mist)"/>
+<ellipse cx="940" cy="1160" rx="70" ry="22" fill="url(#mist)"/>
+</g>
+<path d="M470 640 C470 560 540 500 620 520 C700 540 740 470 820 440 C900 410 980 440 1060 420 C1140 400 1200 425 1280 400 C1360 378 1420 430 1500 420 C1580 410 1640 470 1720 478 C1800 486 1850 520 1925 540 C2005 562 2035 640 2015 720 C1998 790 2045 850 2022 930 C2000 1010 2014 1082 1982 1140 C1950 1200 1862 1212 1780 1182 C1700 1156 1640 1202 1560 1172 C1480 1142 1420 1184 1340 1162 C1260 1140 1220 1192 1140 1182 C1060 1172 1020 1204 940 1192 C860 1182 800 1152 740 1122 C680 1092 640 1064 580 1064 C500 1064 438 1024 438 962 C438 902 482 872 462 822 C442 762 470 722 470 640 Z" fill="none" stroke="#5a4a28" stroke-width="2" opacity="0.6"/>
+<rect width="2420" height="1560" filter="url(#paper)"/>
+<rect width="2420" height="1560" fill="url(#vignette)"/>
+<g transform="translate(2180 300)" opacity="0.85"><circle r="58" fill="none" stroke="#d8c48a" stroke-width="2"/><circle r="50" fill="none" stroke="#d8c48a" stroke-width="1" stroke-dasharray="3 5"/><path d="M0 -76 L10 -10 L0 0 Z M0 76 L-10 10 L0 0 Z M76 0 L10 10 L0 0 Z M-76 0 L-10 -10 L0 0 Z" fill="#e8d7a0"/><path d="M0 -76 L-10 -10 L0 0 Z M0 76 L10 10 L0 0 Z M76 0 L10 -10 L0 0 Z M-76 0 L-10 10 L0 0 Z" fill="#9a8450"/><path d="M0 -40 L6 -6 L0 0 Z M0 40 L-6 6 Z M40 0 L6 6 Z M-40 0 L-6 -6 Z" fill="#c9b070" transform="rotate(45)"/><circle r="5" fill="#5a4a28"/><path d="M-7 -88 V-100 L7 -88 V-100" stroke="#e8d7a0" stroke-width="2.4" fill="none"/></g>
+<g transform="translate(640 330)"><path d="M-26 14 q26 8 52 0" stroke="#cfe6ee" stroke-width="2" fill="none" opacity="0.5"/><path d="M-24 0 H24 L16 12 H-16 Z" fill="#6a4426" stroke="#2a1a0c" stroke-width="1.4"/><path d="M0 0 V-38" stroke="#2a1a0c" stroke-width="2"/><path d="M2 -36 Q18 -24 2 -8 Z" fill="#efe6cc" stroke="#6a5a3a" stroke-width="1"/><path d="M-2 -32 Q-16 -22 -2 -10 Z" fill="#e2d6b4" stroke="#6a5a3a" stroke-width="1"/><path d="M0 -38 L10 -35 L0 -32" fill="#a8452e"/></g>
 </svg>

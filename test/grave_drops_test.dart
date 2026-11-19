@@ -20,10 +20,14 @@ EncounterEntityDefinition combat(EntityId id) =>
     id.definition as EncounterEntityDefinition;
 
 void main() {
-  test('skeleton and zombie both leave rotten flesh and grave moss', () {
+  test('skeleton and zombie both leave rotten flesh and an ichor part', () {
     for (final id in [EntityId.SKELETON, EntityId.ZOMBIE]) {
       final ids = idsIn(combat(id).itemDrops);
-      expect(ids, containsAll([ItemId.ROTTEN_FLESH, ItemId.GRAVE_MOSS]));
+      expect(ids, contains(ItemId.ROTTEN_FLESH));
+      expect(
+        (combat(id) as CombatEntityDefinition).archetype.reagentFamily,
+        ReagentFamily.ICHOR,
+      );
     }
   });
 
@@ -79,10 +83,12 @@ void main() {
     }, hasLength(4));
   });
 
-  test('the wraith haunts the darkwood and sheds grave moss and rags', () {
+  test('the wraith haunts the darkwood and sheds ichor and rags', () {
     expect(
-      idsIn(combat(EntityId.WRAITH).itemDrops),
-      contains(ItemId.GRAVE_MOSS),
+      (combat(EntityId.WRAITH) as CombatEntityDefinition)
+          .archetype
+          .reagentFamily,
+      ReagentFamily.ICHOR,
     );
     expect(
       combat(EntityId.WRAITH).bonusDrops.single.chance,
@@ -229,10 +235,9 @@ void main() {
           ItemId.COAL,
           ItemId.PIKE,
           ItemId.SALMON,
-          ItemId.HARRALANDER,
-          ItemId.SILK,
-          ItemId.VENOM,
-          ItemId.BAT_WING,
+          ItemId.DUSKTHORN,
+          ItemId.THICK_VENOM,
+          ItemId.THICK_FEATHER,
           ItemId.ROTTEN_FLESH,
         ]),
       );

@@ -271,13 +271,7 @@ class ItemStackTile<T extends Enum> extends StatelessWidget {
               Row(
                 children: [
                   Icon(Icons.timer),
-                  // a bonfire has no fixed burn: it lasts as long as it is
-                  // stoked and then cools
-                  Text(
-                    itemDef is FireItemDefinition && itemDef.stokes
-                        ? "Burns on heat"
-                        : "${itemDef.duration.inSeconds}s",
-                  ),
+                  Text("${itemDef.duration.inSeconds}s"),
                   // what is actually on the clock, next to what one dose
                   // is worth. drinking extends rather than restarts, so
                   // this is the number that grows as the button is held.
@@ -566,7 +560,6 @@ class StatChips extends StatelessWidget {
   static bool hasAny(Enum? id) =>
       id != null &&
       (HealBadge.amountFor(id) != null ||
-          FirePowerBadge.powerFor(id) != null ||
           (BuffBadge.bonusFor(id)?.isNotEmpty ?? false));
 
   @override
@@ -575,9 +568,6 @@ class StatChips extends StatelessWidget {
     if (currentId == null) return const SizedBox.shrink();
     if (HealBadge.amountFor(currentId) case final heal?) {
       return HealBadge(amount: heal, tileSize: tileSize);
-    }
-    if (FirePowerBadge.powerFor(currentId) case final power?) {
-      return FirePowerBadge(power: power, tileSize: tileSize);
     }
     final bonus = BuffBadge.bonusFor(currentId);
     if (bonus == null || bonus.isEmpty) return const SizedBox.shrink();
@@ -590,43 +580,6 @@ class StatChips extends StatelessWidget {
           BuffBadge(skill: stat.key, amount: stat.value, tileSize: tileSize),
         ],
       ],
-    );
-  }
-}
-
-/// What a tended fire gives per reagent: a flame and the amount. A campfire
-/// or bonfire has no stats of its own - its reagents pick them - so this is
-/// the one number it can wear.
-class FirePowerBadge extends StatelessWidget {
-  const FirePowerBadge({
-    super.key,
-    required this.power,
-    required this.tileSize,
-  });
-
-  /// The bonus each reagent gives on [id]; null for anything that is not a
-  /// fire reagents can be thrown on.
-  static int? powerFor(Enum id) {
-    if (id is! ItemId) return null;
-    final def = id.definition;
-    return def is FireItemDefinition && def.tendable ? def.power : null;
-  }
-
-  final int power;
-  final double tileSize;
-
-  @override
-  Widget build(BuildContext context) {
-    final fontSize = _StatChip.fontSizeFor(tileSize);
-    return _StatChip(
-      label: 'Kindling +$power',
-      amount: power,
-      tileSize: tileSize,
-      icon: Icon(
-        Icons.local_fire_department,
-        size: fontSize,
-        color: context.gameColors.firemaking,
-      ),
     );
   }
 }

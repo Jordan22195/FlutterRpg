@@ -140,7 +140,7 @@ void main() {
 
       expect(save.dungeonProgress.runsFor(id, 1), 1);
       // the boss paid out one roll of its table. which line it rolled is a
-      // coin flip - a nested spider table, a coin stack, or a silk necklace
+      // coin flip - its venom, a coin stack, or a silk necklace
       // that lands in equipment rather than the item map - so the assertion
       // is that something dropped, not what
       final coins = session.inventoryService.getItemCount(
@@ -150,15 +150,11 @@ void main() {
       final necklaces = save.inventoryData.equipment
           .where((e) => e.id == ItemId.SPIDER_SILK_NECKLACE)
           .fold<int>(0, (sum, e) => sum + e.count);
-      final spiderParts =
-          session.inventoryService.getItemCount(
-            save.inventoryData,
-            ItemId.SILK,
-          ) +
-          session.inventoryService.getItemCount(
-            save.inventoryData,
-            ItemId.VENOM,
-          );
+      // any creature part: the floor's spiders drop their venom
+      final spiderParts = [
+        for (final MapEntry(:key, :value) in save.inventoryData.itemMap.entries)
+          if (key.definition is ReagentPartDefinition) value,
+      ].fold<int>(0, (sum, n) => sum + n);
       expect(
         coins > 0 || necklaces > 0 || spiderParts > 0,
         isTrue,

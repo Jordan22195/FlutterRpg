@@ -54,6 +54,7 @@ void main() {
     final firemaking = save.playerData.skillData[SkillId.FIREMAKING]!;
     firemaking.xp = firemaking.xpTable[firemakingLevel];
     save.inventoryData.itemMap[ItemId.LOGS] = 200;
+    save.inventoryData.itemMap[ItemId.DRY_TWIGS] = 50;
 
     if (lightRecipeId != null) {
       save.craftingState.craftingEntityId = EntityId.FIREPIT;
@@ -156,7 +157,7 @@ void main() {
   testWidgets('a lit fire leaves room for another under the cap', (
     tester,
   ) async {
-    final session = await pumpExplore(tester, lightRecipeId: 'basic_campfire');
+    final session = await pumpExplore(tester, lightRecipeId: 'bonfire_stamina');
 
     expect(find.byKey(const ValueKey(EntityId.FIREPIT)), findsOneWidget);
     expect(find.byKey(const ValueKey('light-fire-tile')), findsOneWidget);
@@ -195,10 +196,10 @@ void main() {
     session.dispose();
   });
 
-  testWidgets('a campfire burns without advertising cooking', (tester) async {
-    final session = await pumpExplore(tester, lightRecipeId: 'basic_campfire');
+  testWidgets('a bonfire burns without advertising cooking', (tester) async {
+    final session = await pumpExplore(tester, lightRecipeId: 'bonfire_stamina');
 
-    expect(find.text('Campfire'), findsOneWidget);
+    expect(find.text('Stamina Bonfire'), findsOneWidget);
     expect(skillSprites(tester), [SkillId.FIREMAKING]);
     expect(find.byType(CountdownTimer), findsOneWidget);
 
@@ -240,22 +241,16 @@ void main() {
       session.dispose();
     });
 
-    testWidgets('a campfire: what each reagent thrown on gives', (
-      tester,
-    ) async {
+    testWidgets('a bonfire: the stat its reagent gives', (tester) async {
       final session = await pumpExplore(
         tester,
-        lightRecipeId: 'basic_campfire',
+        lightRecipeId: 'bonfire_stamina',
       );
-      // a campfire has no stats of its own; its reagents pick them
+      // a bonfire wears the stat its reagent picked, at its wood's power
       final power = find.descendant(
         of: stats,
         matching: find.byWidgetPredicate(
-          (w) =>
-              w is FirePowerBadge &&
-              w.power ==
-                  (ItemId.BASIC_CAMPFIRE.definition as FireItemDefinition)
-                      .power,
+          (w) => w is BuffBadge && w.skill == SkillId.STAMINA && w.amount == 5,
         ),
       );
       expect(power, findsOneWidget);

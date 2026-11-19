@@ -57,7 +57,8 @@ void main() {
 
     test('each holds its chosen monster roster', () {
       List<EntityId> roster(ZoneId zone) => [
-        for (final e in zone.definition.discoverableEntities) e.id,
+        for (final e in zone.definition.discoverableEntities)
+          if (e.id.definition is CombatEntityDefinition) e.id,
       ];
       expect(roster(ZoneId.REEDWATER_VALE), [
         EntityId.RIVER_TOAD,
@@ -86,7 +87,8 @@ void main() {
       };
       for (final MapEntry(key: zone, value: (lo, hi)) in bands.entries) {
         for (final e in zone.definition.discoverableEntities) {
-          final def = e.id.definition as CombatEntityDefinition;
+          final def = e.id.definition;
+          if (def is! CombatEntityDefinition) continue;
           expect(
             def.level,
             inInclusiveRange(lo, hi),
@@ -99,8 +101,11 @@ void main() {
     test('every new monster drops something', () {
       for (final zone in chain.skip(1)) {
         for (final e in zone.definition.discoverableEntities) {
+          final def = e.id.definition;
+          if (def is! CombatEntityDefinition) continue;
+          // a reagent part counts: it is most of what these monsters leave
           expect(
-            (e.id.definition as CombatEntityDefinition).itemDrops,
+            [...def.itemDrops, ...def.rolledBonusDrops],
             isNotEmpty,
             reason: '${e.id.name} has no loot',
           );

@@ -7,6 +7,7 @@ import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
 import 'action_timer.dart';
 import 'icon_renderer.dart';
+import 'stage_buff_icons.dart';
 
 /// A dungeon boss's stage: the floor's last fight gets the screen to itself.
 /// The boss stands large in a gold-framed arena with its name over it, and
@@ -21,9 +22,15 @@ class BossArena extends StatelessWidget {
     this.damageSlot,
     this.actionProgress,
     this.onTap,
+    this.buffs,
   });
 
   final CombatEntity boss;
+
+  /// The player's buffs ([StageBuffIcons] filling from the left), pinned
+  /// under the boss's name: the right corner holds its level, and the hit
+  /// number floats up on that side.
+  final Widget? buffs;
 
   /// 1-based, for the "BOSS · FLOOR 2" line.
   final int floorNumber;
@@ -118,6 +125,12 @@ class BossArena extends StatelessWidget {
                   top: 64,
                   child: Center(child: IconRenderer(id: boss.id, size: 128)),
                 ),
+                if (buffs != null)
+                  Positioned(
+                    left: 14 - StageBuffIcons.pad,
+                    top: 58 - StageBuffIcons.pad,
+                    child: buffs!,
+                  ),
                 if (damageSlot != null)
                   Positioned(
                     left: 0,

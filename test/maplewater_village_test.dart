@@ -89,10 +89,7 @@ void main() {
 
     test('sells rods up to mithril, and no fisher\'s set', () {
       // the fisher's sets come only out of sunken caches
-      expect(
-        pool.keys.where((id) => id.name.contains('FISHERS_')),
-        isEmpty,
-      );
+      expect(pool.keys.where((id) => id.name.contains('FISHERS_')), isEmpty);
       expect(
         pool.keys,
         containsAll([

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:rpg/data/player_data.dart';
 import '../catalogs/entities/entities.dart';
 import '../catalogs/items/items.dart';
+import '../data/active_buff.dart';
 import '../services/buff_service.dart';
 import '../systems/offline_progress_system.dart';
 import 'action_timing_controller.dart';
@@ -91,6 +92,16 @@ class BuffController extends ChangeNotifier {
   /// on it.
   BuffItem? getGlobalBuff(ItemId itemId) {
     return _buffService.getGlobalBuff(_playerState.buffData, itemId);
+  }
+
+  /// Every buff on the player right now — global ones and the fires of the
+  /// zone they stand in — with what each is lending. What the stage's buff
+  /// icons and the buff sheet draw.
+  List<ActiveBuff> getActiveBuffs() {
+    return _buffService.activeBuffs(
+      _playerState.buffData,
+      _playerState.currentZoneId,
+    );
   }
 
   List<ZoneBuffItem> getCurrentZoneBuffs() {

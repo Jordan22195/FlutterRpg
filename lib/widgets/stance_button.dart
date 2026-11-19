@@ -54,7 +54,8 @@ class StanceButton extends StatelessWidget {
 bool runningActionOffersStances(BoundAction? running) {
   if (running == null) return true;
   return switch (running.kind) {
-    BoundActionKind.ENCOUNTER => stancesForEntityId(running.entityId).length > 1,
+    BoundActionKind.ENCOUNTER =>
+      stancesForEntityId(running.entityId).length > 1,
     BoundActionKind.DUNGEON_SLOT => true,
     // travel walks to the fight the player picked, which keeps its stance
     BoundActionKind.TRAVEL => true,

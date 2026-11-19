@@ -41,30 +41,46 @@ void main() {
     }
   });
 
-  test('every log tier from maple up lays all three fires', () {
+  test('every log tier from maple up lays a cookfire and every bonfire', () {
+    final reagents = [
+      for (final id in ItemId.values)
+        if (id.definition is FireReagentDefinition) id,
+    ];
     for (final (_, logs, _) in ladder) {
       final fires = firemakingRecipes
           .where((r) => r.inputs.containsKey(logs))
           .map((r) => r.output.single.id.definition)
           .whereType<FireItemDefinition>()
           .toList();
-      expect(fires, hasLength(3), reason: logs.name);
       expect(fires.where((f) => f.canCook), hasLength(1), reason: logs.name);
-      expect(fires.where((f) => f.stokes), hasLength(1), reason: logs.name);
+      expect(
+        fires.where((f) => f.isBonfire).map((f) => f.reagent).toSet(),
+        reagents.toSet(),
+        reason: logs.name,
+      );
     }
   });
 
   test('firemaking levels climb with the wood, and stay under 99', () {
-    var last = 0;
-    for (final r in firemakingRecipes.where(
-      (r) => r.inputs.keys.any(
-        (k) =>
-            {ItemId.MAPLE_LOGS, ItemId.YEW_LOGS, ItemId.MAGIC_LOGS}.contains(k),
-      ),
-    )) {
-      expect(r.levelRequirement, greaterThan(last), reason: r.id);
-      expect(r.levelRequirement, lessThan(99), reason: r.id);
-      last = r.levelRequirement;
+    final woods = [ItemId.MAPLE_LOGS, ItemId.YEW_LOGS, ItemId.MAGIC_LOGS];
+    var lastCook = 0;
+    var lastBonfire = 0;
+    for (final logs in woods) {
+      final cook = firemakingRecipes.singleWhere(
+        (r) =>
+            r.inputs.containsKey(logs) &&
+            (r.output.single.id.definition as FireItemDefinition).canCook,
+      );
+      expect(cook.levelRequirement, greaterThan(lastCook), reason: logs.name);
+      lastCook = cook.levelRequirement;
+      final bonfire = bonfireWoods[logs]!.level;
+      expect(bonfire, greaterThan(lastBonfire), reason: logs.name);
+      lastBonfire = bonfire;
+      for (final r in firemakingRecipes.where(
+        (r) => r.inputs.containsKey(logs),
+      )) {
+        expect(r.levelRequirement, lessThan(99), reason: r.id);
+      }
     }
   });
 

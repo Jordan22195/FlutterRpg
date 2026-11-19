@@ -165,8 +165,14 @@ void main() {
       expect(marsh.hitpoints, river.hitpoints);
       expect(
         marsh.itemDrops.flattened.map((d) => d.id),
-        containsAll([ItemId.BOG_EEL, ItemId.LEECH, ItemId.MARSH_FROG]),
+        contains(ItemId.BOG_EEL),
       );
+      // its reagents are a shell and a venom, the marsh's leech and frog
+      // folded into the families
+      expect([
+        for (final roll in marsh.bonusDrops)
+          ...roll.entries.flattened.map((d) => d.id),
+      ], containsAll([ItemId.SMALL_SHELL, ItemId.SMALL_VENOM]));
 
       // and the bog tree is willow's side-grade
       final bog = EntityId.BOG_TREE.definition as EncounterEntityDefinition;
@@ -186,7 +192,7 @@ void main() {
         final def = id.definition as EncounterEntityDefinition;
         final loot = {
           ...def.itemDrops.flattened.map((d) => d.id),
-          for (final roll in def.bonusDrops)
+          for (final roll in def.rolledBonusDrops)
             ...roll.entries.flattened.map((d) => d.id),
         }..remove(ItemId.COINS);
         expect(loot, isNotEmpty, reason: '${id.name} drops only coins');

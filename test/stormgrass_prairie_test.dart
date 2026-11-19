@@ -163,28 +163,33 @@ void main() {
       }
     });
 
-    test('grows both of its grasses', () {
-      expect(entryFor(ZoneId.FOOTHILLS, EntityId.SWEETGRASS), isNotNull);
+    test('grows bluestem, the greater potions\' combat herb', () {
+      // sweetgrass's utility potions moved onto the ladder
+      expect(entryFor(ZoneId.FOOTHILLS, EntityId.SWEETGRASS), isNull);
       expect(entryFor(ZoneId.FOOTHILLS, EntityId.BLUESTEM), isNotNull);
-      expect(dropsOf(EntityId.SWEETGRASS), {ItemId.SWEETGRASS});
       expect(dropsOf(EntityId.BLUESTEM), {ItemId.BLUESTEM});
     });
   });
 
   group('the prairie monsters drop their reagents', () {
-    const reagents = {
-      EntityId.ORC: [ItemId.ORC_TUSK],
-      EntityId.RATTLESNAKE: [ItemId.SNAKESKIN, ItemId.VENOM_GLAND],
-      EntityId.SABERTOOTH: [ItemId.SABERTOOTH_FANG],
-      EntityId.CENTAUR: [ItemId.CENTAUR_HOOF],
-      EntityId.DUST_DEVIL: [ItemId.WIND_MOTE],
+    const families = {
+      EntityId.ORC: ReagentFamily.HORN,
+      EntityId.RATTLESNAKE: ReagentFamily.VENOM,
+      EntityId.SABERTOOTH: ReagentFamily.FANG,
+      EntityId.CENTAUR: ReagentFamily.HORN,
+      EntityId.DUST_DEVIL: ReagentFamily.ICHOR,
     };
 
-    for (final MapEntry(key: monster, value: items) in reagents.entries) {
-      test('${monster.name} drops ${items.map((i) => i.name).join(', ')}', () {
-        expect(dropsOf(monster), containsAll(items));
+    for (final MapEntry(key: monster, value: family) in families.entries) {
+      test('${monster.name} drops a ${family.name} part', () {
+        final part = combat(monster).reagentDrop!.entries.single.id;
+        expect((part.definition as ReagentPartDefinition).family, family);
       });
     }
+
+    test('the rattlesnake keeps its venom gland for the alchemist', () {
+      expect(dropsOf(EntityId.RATTLESNAKE), contains(ItemId.VENOM_GLAND));
+    });
 
     test('an orc can carry steel kit, on a tenth of kills', () {
       final rolls = combat(EntityId.ORC).bonusDrops;
@@ -422,13 +427,23 @@ void main() {
       }
     });
 
-    test('are brewed from bluestem and a prairie reagent', () {
+    test('are brewed from saltwort or bluestem and a heavy part', () {
       for (final id in greaters.keys) {
+        // the attack potion is off the ladder: no recipe brews it now
+        if (id == ItemId.GREATER_ATTACK_POTION) continue;
         final recipe = alchemyRecipes.singleWhere(
           (r) => r.output.any((o) => o.id == id),
         );
-        expect(recipe.inputs.keys, contains(ItemId.BLUESTEM), reason: id.name);
         expect(recipe.inputs, hasLength(2), reason: id.name);
+        final herb = recipe.inputs.keys.firstWhere(
+          (i) => i == ItemId.SALTWORT || i == ItemId.BLUESTEM,
+        );
+        final part = recipe.inputs.keys.singleWhere((i) => i != herb);
+        expect(
+          (part.definition as ReagentPartDefinition).grade,
+          ReagentGrade.HEAVY,
+          reason: id.name,
+        );
       }
     });
   });
@@ -448,14 +463,16 @@ void main() {
       }
     });
 
-    test('are brewed from sweetgrass and one other input', () {
+    test('are brewed from a super-tier herb and one other input', () {
       for (final id in utilities.keys) {
         final recipe = alchemyRecipes.singleWhere(
           (r) => r.output.any((o) => o.id == id),
         );
         expect(
-          recipe.inputs.keys,
-          contains(ItemId.SWEETGRASS),
+          recipe.inputs.keys.any(
+            (i) => i == ItemId.SILT_LILY || i == ItemId.MIRECAP,
+          ),
+          isTrue,
           reason: id.name,
         );
         expect(recipe.inputs, hasLength(2), reason: id.name);

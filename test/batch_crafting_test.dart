@@ -539,16 +539,17 @@ void main() {
       session.dispose();
     });
 
-    test('a campfire is not a cookfire', () {
+    test('a bonfire is not a cookfire', () {
       final session = buildSession();
       final save = session.saveGameData;
       setLevel(session, SkillId.FIREMAKING, 10);
       save.inventoryData.itemMap[ItemId.LOGS] = 200;
       save.inventoryData.itemMap[ItemId.MINNOW] = 200;
+      save.inventoryData.itemMap[ItemId.DRY_TWIGS] = 20;
       // burns just as long, and cooks nothing
       craft(
         session,
-        'basic_campfire',
+        'bonfire_stamina',
         station: EntityId.FIREPIT,
         offline: false,
       );
@@ -566,16 +567,17 @@ void main() {
       session.dispose();
     });
 
-    test('a burning campfire is replaced by the picked cookfire on the '
+    test('a burning bonfire is replaced by the picked cookfire on the '
         'relight tick', () {
       final session = buildSession();
       final save = session.saveGameData;
       setLevel(session, SkillId.FIREMAKING, 10);
       save.inventoryData.itemMap[ItemId.LOGS] = 200;
       save.inventoryData.itemMap[ItemId.MINNOW] = 200;
+      save.inventoryData.itemMap[ItemId.DRY_TWIGS] = 20;
       craft(
         session,
-        'basic_campfire',
+        'bonfire_stamina',
         station: EntityId.FIREPIT,
         offline: false,
       );
@@ -616,7 +618,7 @@ void main() {
       );
 
       expect(start(), isFalse);
-      selectFire(session, 'basic_campfire');
+      selectFire(session, 'bonfire_stamina');
       expect(start(), isFalse);
       selectFire(session, 'cookfire');
       expect(start(), isTrue);

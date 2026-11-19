@@ -2,6 +2,7 @@ import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/utilities/util.dart';
+import '../data/active_buff.dart';
 import '../data/buff_data.dart';
 import '../catalogs/items/items.dart';
 
@@ -73,6 +74,66 @@ class BuffService {
     }
 
     return Util.addMap(total, bestFire);
+  }
+
+  /// Every buff on the player at [at] (defaulting to now), the global ones
+  /// first and then [currentZoneId]'s, each with what it is lending. Reads
+  /// the same rule [getBuffedStatTotal] adds up by: a fire beaten on a stat
+  /// by another fire in the zone has that effect marked uncounted, the
+  /// first of two equal fires being the one that counts. Fires giving
+  /// nothing at all go to the back. Expired but unswept buffs are left out.
+  List<ActiveBuff> activeBuffs(
+    BuffData buffState,
+    ZoneId currentZoneId, {
+    DateTime? at,
+  }) {
+    final now = at ?? DateTime.now();
+    final global = [
+      for (final buff in buffState.globalBuffs.values)
+        if (buff.expirationTime.isAfter(now)) buff,
+    ];
+    final zone = [
+      for (final buff in [...?buffState.zoneBuffs[currentZoneId]?.values])
+        if (buff.expirationTime.isAfter(now)) buff,
+    ];
+
+    // which fire is the one counting on each stat
+    final bestFire = <SkillId, FireItem>{};
+    for (final buff in zone.whereType<FireItem>()) {
+      for (final entry in buff.bonusAt(now).entries) {
+        final best = bestFire[entry.key];
+        if (best == null || entry.value > (best.bonusAt(now)[entry.key] ?? 0)) {
+          bestFire[entry.key] = buff;
+        }
+      }
+    }
+
+    ActiveBuff view(BuffItem buff, {required bool zoneBuff}) {
+      final effects = [
+        for (final entry in buff.bonusAt(now).entries)
+          BuffEffect(
+            stat: entry.key,
+            amount: entry.value,
+            counted: buff is! FireItem || identical(bestFire[entry.key], buff),
+          ),
+      ]..sort((a, b) => b.amount.compareTo(a.amount));
+      return ActiveBuff(
+        id: buff.id,
+        zoneBuff: zoneBuff,
+        endsAt: buff.expirationTime,
+        duration: buff.duration,
+        effects: effects,
+      );
+    }
+
+    final views = [
+      for (final buff in global) view(buff, zoneBuff: false),
+      for (final buff in zone) view(buff, zoneBuff: true),
+    ];
+    return [
+      ...views.where((v) => !v.outranked),
+      ...views.where((v) => v.outranked),
+    ];
   }
 
   /// Set/refresh the buff owned by [ownerEntityId] in [zoneId].

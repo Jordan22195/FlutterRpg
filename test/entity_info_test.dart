@@ -604,9 +604,7 @@ void main() {
         return box.decoration as BoxDecoration;
       }
 
-      testWidgets('a common drop wears common\'s own outline', (
-        tester,
-      ) async {
+      testWidgets('a common drop wears common\'s own outline', (tester) async {
         await pumpInfo(tester, EntityId.GOBLIN);
 
         // the goblin's fish are not equipment, so they sit at common, and

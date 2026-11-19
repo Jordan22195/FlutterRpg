@@ -243,22 +243,22 @@ void main() {
   });
 
   group('the willow fires', () {
-    test('all three burn willow logs, which woodcutting yields', () {
-      for (final fire in [
-        ItemId.WILLOW_COOKFIRE,
-        ItemId.WILLOW_CAMPFIRE,
-        ItemId.WILLOW_BONFIRE,
-      ]) {
+    test('the cookfire and every bonfire burn willow logs', () {
+      final cook = making(ItemId.WILLOW_COOKFIRE);
+      expect(cook, isNotNull);
+      expect(cook!.inputs.keys.single, ItemId.WILLOW_LOGS);
+      for (final stat in [SkillId.STAMINA, SkillId.ATTACK, SkillId.MINING]) {
+        final fire = ItemId.byName('WILLOW_BONFIRE_${stat.name}')!;
         final r = making(fire);
         expect(r, isNotNull, reason: 'nothing lays a ${fire.name}');
-        expect(r!.inputs.keys.single, ItemId.WILLOW_LOGS);
+        expect(r!.inputs.keys, contains(ItemId.WILLOW_LOGS));
         expect(r.skill, SkillId.FIREMAKING);
       }
     });
 
     test('the fire ladder climbs, tier over tier', () {
-      // cooking 3 / 5 / 8 across the three cookfires, and the campfire and
-      // bonfire lines climb the same way. Assert the climb, not the numbers.
+      // cooking 3 / 5 / 8 across the three cookfires, and the bonfires
+      // climb the same way. Assert the climb, not the numbers.
       int cooking(ItemId id) =>
           (id.build() as FireItem).skillBonus[SkillId.COOKING] ?? 0;
       expect(cooking(ItemId.COOKFIRE), lessThan(cooking(ItemId.OAK_COOKFIRE)));
@@ -267,11 +267,15 @@ void main() {
         lessThan(cooking(ItemId.WILLOW_COOKFIRE)),
       );
 
-      Duration burn(ItemId id) => (id.build() as FireItem).duration;
-      expect(burn(ItemId.OAK_BONFIRE), greaterThan(burn(ItemId.BONFIRE)));
+      int stamina(ItemId id) =>
+          (id.build() as FireItem).skillBonus[SkillId.STAMINA] ?? 0;
       expect(
-        burn(ItemId.WILLOW_BONFIRE),
-        greaterThan(burn(ItemId.OAK_BONFIRE)),
+        stamina(ItemId.OAK_BONFIRE_STAMINA),
+        greaterThan(stamina(ItemId.BONFIRE_STAMINA)),
+      );
+      expect(
+        stamina(ItemId.WILLOW_BONFIRE_STAMINA),
+        greaterThan(stamina(ItemId.OAK_BONFIRE_STAMINA)),
       );
     });
 
@@ -283,7 +287,10 @@ void main() {
       ]) {
         expect((id.build() as FireItem).canCook, isTrue, reason: id.name);
       }
-      for (final id in [ItemId.WILLOW_CAMPFIRE, ItemId.WILLOW_BONFIRE]) {
+      for (final id in [
+        ItemId.WILLOW_BONFIRE_STAMINA,
+        ItemId.WILLOW_BONFIRE_ATTACK,
+      ]) {
         expect((id.build() as FireItem).canCook, isFalse, reason: id.name);
       }
     });

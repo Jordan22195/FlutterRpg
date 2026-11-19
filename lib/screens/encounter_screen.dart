@@ -31,6 +31,7 @@ import '../widgets/dungeon_floor_track.dart';
 import '../widgets/explore_card.dart';
 import '../widgets/fill_bar.dart';
 import '../widgets/sprite_frame.dart';
+import '../widgets/stage_buff_icons.dart';
 import '../widgets/stage_panel.dart';
 import '../widgets/travel_row.dart';
 import '../widgets/primary_button.dart';
@@ -756,6 +757,8 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
   /// read before you reach it.
   ///
   /// [hit] is the player's last hit, floated beside the sprite.
+  ///
+  /// The player's buffs sit in the stage's top-right corner, on every stage.
   Widget buildPortrait(
     BuildContext context,
     CombatViewState view, {
@@ -789,6 +792,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       tint: tint,
       sprite: sprite,
       hit: hit,
+      buffs: StageBuffIcons.ifAny(context),
       // a creature rarer than common is outlined in its rarity, as its tile
       // was on the zone that led here
       outline: entityBorderColor(entity.id.definition.rarity),
@@ -857,6 +861,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
       tint: tint,
       sprite: sprite,
       hit: hit,
+      buffs: StageBuffIcons.ifAny(context),
       isBoss: boss,
       outline: entityBorderColor(entity.id.definition.rarity),
       onTap: portraitTap(context, entity),
@@ -1025,6 +1030,7 @@ abstract class CombatScreenState<T extends StatefulWidget> extends State<T> {
         boss: boss,
         floorNumber: dungeon.index + 1,
         onTap: portraitTap(context, boss),
+        buffs: StageBuffIcons.ifAny(context, fromLeft: true),
         damageSlot: view.showActionFeedback
             ? buildHitNumber(context, view)
             : null,

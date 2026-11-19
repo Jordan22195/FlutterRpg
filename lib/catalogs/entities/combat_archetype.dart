@@ -1,6 +1,6 @@
 import 'package:rpg/catalogs/drop_tables.dart';
 import 'package:rpg/catalogs/entities/combat_type.dart';
-import 'package:rpg/catalogs/items/item_id.dart';
+import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/data/item_drop_type.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
@@ -57,6 +57,12 @@ class CombatArchetype {
   /// The common bonus rolls, inherited the way [itemDrops] is.
   final List<DropRoll> bonusDrops;
 
+  /// The kind of creature this is, for alchemy: every monster on it drops
+  /// this family's part at the grade its level reaches
+  /// (`CombatEntityDefinition.reagentDrop`). Null for people, who leave
+  /// nothing a potion wants. See design/ALCHEMY_POTIONS.md.
+  final ReagentFamily? reagentFamily;
+
   const CombatArchetype({
     required this.iconAsset,
     required this.lootFibLevel,
@@ -64,6 +70,7 @@ class CombatArchetype {
     this.attackInterval = 2.0,
     this.itemDrops = const [],
     this.bonusDrops = const [],
+    this.reagentFamily,
   });
 }
 
@@ -78,11 +85,9 @@ const chicken = CombatArchetype(
   iconAsset: 'assets/images/entities/chicken.png',
   lootFibLevel: 2,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.FEATHER,
   attackInterval: 2.0,
-  itemDrops: [
-    ItemDropType(id: ItemId.CHICKEN_MEAT, weight: 1),
-    ItemDropType(id: ItemId.FEATHER, lowCount: 1, highCount: 5, weight: 1),
-  ],
+  itemDrops: [ItemDropType(id: ItemId.CHICKEN_MEAT, weight: 1)],
 );
 
 // ── Tier 4 · level 5 ──
@@ -91,6 +96,7 @@ const cow = CombatArchetype(
   iconAsset: 'assets/images/entities/cow.png',
   lootFibLevel: 3,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 2.0,
   itemDrops: [
     ItemDropType(id: ItemId.COW_MEAT, weight: 1),
@@ -104,6 +110,7 @@ const giantRat = CombatArchetype(
   iconAsset: 'assets/images/entities/giant_rat.png',
   lootFibLevel: 4,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 1.5,
   itemDrops: [ItemDropType(id: ItemId.GOLD_RING, lowCount: 1, weight: 1)],
 );
@@ -114,6 +121,7 @@ const scarecrow = CombatArchetype(
   iconAsset: 'assets/images/entities/rotwood_scarecrow.png',
   lootFibLevel: 4,
   combatType: CombatType.PLATE_TANK,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.5,
   itemDrops: [
     ItemDropType(id: ItemId.LOGS, weight: 1, lowCount: 1, highCount: 4),
@@ -130,10 +138,10 @@ const riverToad = CombatArchetype(
   iconAsset: 'assets/images/entities/river_toad.png',
   lootFibLevel: 5,
   combatType: CombatType.LEATHER_TANK,
+  reagentFamily: ReagentFamily.VENOM,
   attackInterval: 2.0,
   itemDrops: [
     ItemDropType(id: ItemId.TOAD_LEGS, weight: 2),
-    ItemDropType(id: ItemId.TOAD_WART, weight: 1),
     NestedDrop(ironMinorArmorDropTable, weight: 0.3),
   ],
   bonusDrops: [DropRoll(chance: 0.05, entries: riverReagentDropTable)],
@@ -143,11 +151,9 @@ const waterStrider = CombatArchetype(
   iconAsset: 'assets/images/entities/water_strider.png',
   lootFibLevel: 5,
   combatType: CombatType.GLASS_CANNON,
+  reagentFamily: ReagentFamily.VENOM,
   attackInterval: 1.0,
-  itemDrops: [
-    ItemDropType(id: ItemId.STRIDER_LEG, weight: 2),
-    ItemDropType(id: ItemId.LILY_PAD, weight: 1),
-  ],
+  itemDrops: [ItemDropType(id: ItemId.LILY_PAD, weight: 1)],
   bonusDrops: [DropRoll(chance: 0.05, entries: riverReagentDropTable)],
 );
 
@@ -157,41 +163,36 @@ const spider = CombatArchetype(
   iconAsset: 'assets/images/entities/giant_spider.png',
   lootFibLevel: 6,
   combatType: CombatType.BALANCE,
+  reagentFamily: ReagentFamily.VENOM,
   attackInterval: 1.5,
-  itemDrops: [NestedDrop(spiderDropTable)],
 );
 // Forest Wolf · roster tier 2 · forest
 const wolf = CombatArchetype(
   iconAsset: 'assets/images/entities/wolf.png',
   lootFibLevel: 6,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 1.0,
-  itemDrops: [
-    ItemDropType(id: ItemId.WOLF_CLAW, weight: 1),
-    ItemDropType(id: ItemId.WOLF_PELT, weight: 1),
-  ],
+  itemDrops: [ItemDropType(id: ItemId.WOLF_PELT, weight: 1)],
 );
 // Giant Bat · roster tier 2 · mine
 const giantBat = CombatArchetype(
   iconAsset: 'assets/images/entities/giant_bat.png',
   lootFibLevel: 7,
   combatType: CombatType.GLASS_CANNON,
+  reagentFamily: ReagentFamily.FEATHER,
   attackInterval: 1.0,
-  itemDrops: [
-    ItemDropType(id: ItemId.BAT_WING, lowCount: 1, highCount: 2, weight: 1),
-    ItemDropType(id: ItemId.BAT_FANG, weight: 0.6),
-  ],
+  itemDrops: [],
 );
 // Slime · roster tier 2 · mine
 const slime = CombatArchetype(
   iconAsset: 'assets/images/entities/slime.png',
   lootFibLevel: 7,
   combatType: CombatType.ROCK_CRAB,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.5,
   itemDrops: [
-    ItemDropType(id: ItemId.SLIME_OOZE, lowCount: 1, highCount: 3, weight: 1),
     // rare, and for nothing yet
-    ItemDropType(id: ItemId.SLIME_CORE, weight: 0.05),
   ],
 );
 // Carrion Crow · swamp
@@ -199,11 +200,9 @@ const carrionCrow = CombatArchetype(
   iconAsset: 'assets/images/entities/carrion_crow.png',
   lootFibLevel: 7,
   combatType: CombatType.GLASS_CANNON,
+  reagentFamily: ReagentFamily.FEATHER,
   attackInterval: 1.0,
-  itemDrops: [
-    ItemDropType(id: ItemId.FEATHER, lowCount: 1, highCount: 3, weight: 1),
-    ItemDropType(id: ItemId.CROW_QUILL, weight: 0.5),
-  ],
+  itemDrops: [],
 );
 // Crab · mudmouth delta and saltwind coast. One archetype for both: the
 // delta's mud crab sits on the loot rung, the coast's shore crab one above
@@ -212,10 +211,10 @@ const crab = CombatArchetype(
   iconAsset: 'assets/images/entities/crab.png',
   lootFibLevel: 6,
   combatType: CombatType.ROCK_CRAB,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 2.5,
   itemDrops: [
     ItemDropType(id: ItemId.CRAB_MEAT, weight: 2),
-    ItemDropType(id: ItemId.CRAB_CLAW, weight: 1),
     ItemDropType(id: ItemId.PEAT_CLOD, weight: 0.5),
   ],
   bonusDrops: [DropRoll(chance: 0.05, entries: marshReagentDropTable)],
@@ -245,9 +244,9 @@ const bear = CombatArchetype(
   iconAsset: 'assets/images/entities/bear.png',
   lootFibLevel: 6,
   combatType: CombatType.LEATHER_TANK,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 2.5,
   itemDrops: [
-    ItemDropType(id: ItemId.BEAR_CLAW, lowCount: 1, highCount: 3, weight: 1),
     ItemDropType(id: ItemId.BEAR_HIDE, weight: 1),
     ItemDropType(id: ItemId.BEAR_RUMP, weight: 1),
   ],
@@ -257,11 +256,11 @@ const mudlurc = CombatArchetype(
   iconAsset: 'assets/images/entities/mudlurc.png',
   lootFibLevel: 7,
   combatType: CombatType.CLOTH_DPS,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 1.0,
   itemDrops: [
     ItemDropType(id: ItemId.SALMON, weight: 1),
     ItemDropType(id: ItemId.STEEL_BAR, weight: 1),
-    ItemDropType(id: ItemId.SCALE, lowCount: 1, highCount: 3, weight: 3),
     // the uncommon mudlurc's dagger, now that only the Drowned Fen
     // fields that variant
     ItemDropType(id: ItemId.FISHBONE_DAGGER, weight: 0.1),
@@ -276,6 +275,7 @@ const fungalMonster = CombatArchetype(
   iconAsset: 'assets/images/entities/fungal_monster.png',
   lootFibLevel: 8,
   combatType: CombatType.SHELL,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.5,
   itemDrops: [
     ItemDropType(id: ItemId.MIRECAP, weight: 1),
@@ -290,23 +290,18 @@ const ooze = CombatArchetype(
   iconAsset: 'assets/images/entities/ooze.png',
   lootFibLevel: 8,
   combatType: CombatType.ROCK_CRAB,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.5,
-  itemDrops: [
-    ItemDropType(id: ItemId.SLIME_OOZE, lowCount: 2, highCount: 4, weight: 1),
-    ItemDropType(id: ItemId.SLIME_CORE, weight: 0.3),
-  ],
+  itemDrops: [],
 );
 // Murkjaw · swamp. The bog's rare ambusher, a slow and tanky crocodilian.
 const murkjaw = CombatArchetype(
   iconAsset: 'assets/images/entities/murkjaw.png',
   lootFibLevel: 8,
   combatType: CombatType.LEATHER_TANK,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 2.5,
-  itemDrops: [
-    ItemDropType(id: ItemId.MURKJAW_HIDE, weight: 1),
-    ItemDropType(id: ItemId.MURKJAW_FANG, weight: 0.5),
-    ItemDropType(id: ItemId.SCALE, lowCount: 1, highCount: 3, weight: 1),
-  ],
+  itemDrops: [ItemDropType(id: ItemId.MURKJAW_HIDE, weight: 1)],
 );
 // Kobold · roster tier 2 · mine
 const kobold = CombatArchetype(
@@ -324,10 +319,10 @@ const snappingTurtle = CombatArchetype(
   iconAsset: 'assets/images/entities/snapping_turtle.png',
   lootFibLevel: 7,
   combatType: CombatType.SHELL,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 2.5,
   itemDrops: [
     ItemDropType(id: ItemId.TURTLE_MEAT, weight: 2),
-    ItemDropType(id: ItemId.TURTLE_SHELL, weight: 1),
     NestedDrop(steelMinorArmorDropTable, weight: 0.4),
     ItemDropType(id: ItemId.STEEL_SHIELD, weight: 0.1),
   ],
@@ -338,11 +333,11 @@ const mireHippo = CombatArchetype(
   iconAsset: 'assets/images/entities/mire_hippo.png',
   lootFibLevel: 7,
   combatType: CombatType.LEATHER_TANK,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 2.5,
   itemDrops: [
     ItemDropType(id: ItemId.HIPPO_RUMP, weight: 1),
     ItemDropType(id: ItemId.HIPPO_HIDE, weight: 1),
-    ItemDropType(id: ItemId.HIPPO_TUSK, weight: 0.5),
     NestedDrop(mediumLeatherMinorArmorDropTable, weight: 0.4),
   ],
 );
@@ -353,6 +348,7 @@ const skeleton = CombatArchetype(
   iconAsset: 'assets/images/entities/skeleton.png',
   lootFibLevel: 7,
   combatType: CombatType.BALANCE,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.0,
   itemDrops: [
     NestedDrop(graveScrapDropTable, weight: 3),
@@ -367,19 +363,30 @@ const zombie = CombatArchetype(
   iconAsset: 'assets/images/entities/zombie.png',
   lootFibLevel: 8,
   combatType: CombatType.ROCK_CRAB,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.5,
   itemDrops: [NestedDrop(graveScrapDropTable)],
   bonusDrops: [DropRoll(entries: tatteredClothDropTable, chance: 0.04)],
 );
-// Harpy · roster tier 3 · ironroot hills
+// Harpy · roster tier 3 · unplaced (cut from Ironroot Hills; id kept for saves)
 const harpy = CombatArchetype(
   iconAsset: 'assets/images/entities/harpy.png',
   lootFibLevel: 8,
   combatType: CombatType.GLASS_CANNON,
+  reagentFamily: ReagentFamily.FEATHER,
   attackInterval: 1.0,
+  itemDrops: [],
+);
+// Rock Ram · roster tier 3 · ironroot hills. Charges down the switchbacks:
+// slow, heavy hits, a pelt for the leatherworker
+const rockRam = CombatArchetype(
+  iconAsset: 'assets/images/entities/rock_ram.png',
+  lootFibLevel: 8,
+  combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.HORN,
+  attackInterval: 2.0,
   itemDrops: [
-    ItemDropType(id: ItemId.FEATHER, lowCount: 1, highCount: 5, weight: 2),
-    ItemDropType(id: ItemId.CLAW, weight: 1),
+    ItemDropType(id: ItemId.ANIMAL_PELT, lowCount: 2, highCount: 4, weight: 1),
   ],
 );
 // Naga · roster tier 3 · coast
@@ -387,9 +394,9 @@ const naga = CombatArchetype(
   iconAsset: 'assets/images/entities/naga.png',
   lootFibLevel: 8,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 1.5,
   itemDrops: [
-    ItemDropType(id: ItemId.SCALE, lowCount: 2, highCount: 4, weight: 2),
     ItemDropType(
       id: ItemId.ENCHANTING_ESSENCE,
       lowCount: 1,
@@ -405,12 +412,9 @@ const crocodile = CombatArchetype(
   iconAsset: 'assets/images/entities/crocodile.png',
   lootFibLevel: 8,
   combatType: CombatType.LEATHER_TANK,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 2.5,
-  itemDrops: [
-    ItemDropType(id: ItemId.CROCODILE_HIDE, weight: 1),
-    ItemDropType(id: ItemId.SCALE, lowCount: 1, highCount: 3, weight: 1),
-    ItemDropType(id: ItemId.CROCODILE_TOOTH, weight: 0.5),
-  ],
+  itemDrops: [ItemDropType(id: ItemId.CROCODILE_HIDE, weight: 1)],
   bonusDrops: [DropRoll(chance: 0.05, entries: heavyLeatherDropTable)],
 );
 // Orc · roster tier 3 · stormgrass prairie. One archetype for every orc:
@@ -420,11 +424,9 @@ const orc = CombatArchetype(
   iconAsset: 'assets/images/entities/orc.png',
   lootFibLevel: 8,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 2.0,
-  itemDrops: [
-    ItemDropType(id: ItemId.ANIMAL_PELT, weight: 1),
-    ItemDropType(id: ItemId.ORC_TUSK, weight: 0.5),
-  ],
+  itemDrops: [ItemDropType(id: ItemId.ANIMAL_PELT, weight: 1)],
   bonusDrops: [DropRoll(entries: orcSteelDropTable, chance: 0.1)],
 );
 // Rattlesnake · roster tier 3 · stormgrass prairie
@@ -432,11 +434,9 @@ const rattlesnake = CombatArchetype(
   iconAsset: 'assets/images/entities/rattlesnake.png',
   lootFibLevel: 8,
   combatType: CombatType.GLASS_CANNON,
+  reagentFamily: ReagentFamily.VENOM,
   attackInterval: 1.0,
-  itemDrops: [
-    ItemDropType(id: ItemId.SNAKESKIN, weight: 1),
-    ItemDropType(id: ItemId.VENOM_GLAND, weight: 1),
-  ],
+  itemDrops: [ItemDropType(id: ItemId.VENOM_GLAND, weight: 1)],
 );
 
 // ── Tier 10 · level 89 ──
@@ -445,17 +445,16 @@ const giantScorpion = CombatArchetype(
   iconAsset: 'assets/images/entities/giant_scorpion.png',
   lootFibLevel: 9,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.VENOM,
   attackInterval: 1.5,
-  itemDrops: [
-    ItemDropType(id: ItemId.VENOM, weight: 1),
-    ItemDropType(id: ItemId.CLAW, lowCount: 1, highCount: 2, weight: 1),
-  ],
+  itemDrops: [],
 );
 // Imp · roster tier 3 · ironroot hills
 const imp = CombatArchetype(
   iconAsset: 'assets/images/entities/imp.png',
   lootFibLevel: 9,
   combatType: CombatType.GLASS_CANNON,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 1.0,
   itemDrops: [
     ItemDropType(
@@ -471,22 +470,18 @@ const sabertooth = CombatArchetype(
   iconAsset: 'assets/images/entities/sabertooth.png',
   lootFibLevel: 9,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 1.5,
-  itemDrops: [
-    ItemDropType(id: ItemId.SABERTOOTH_PELT, weight: 1),
-    ItemDropType(id: ItemId.SABERTOOTH_FANG, weight: 0.5),
-  ],
+  itemDrops: [ItemDropType(id: ItemId.SABERTOOTH_PELT, weight: 1)],
 );
 // Centaur · roster tier 3 · stormgrass prairie
 const centaur = CombatArchetype(
   iconAsset: 'assets/images/entities/centaur.png',
   lootFibLevel: 9,
   combatType: CombatType.BALANCE,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 1.5,
-  itemDrops: [
-    ItemDropType(id: ItemId.BOWSTRING_SINEW, weight: 1),
-    ItemDropType(id: ItemId.CENTAUR_HOOF, weight: 1),
-  ],
+  itemDrops: [ItemDropType(id: ItemId.BOWSTRING_SINEW, weight: 1)],
 );
 // Dust Devil · roster tier 3 · stormgrass prairie. The first magic thing
 // the player meets, so it fights like the casters do: all attack, little
@@ -495,6 +490,7 @@ const dustDevil = CombatArchetype(
   iconAsset: 'assets/images/entities/dust_devil.png',
   lootFibLevel: 9,
   combatType: CombatType.CLOTH_DPS,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 1.5,
   itemDrops: [
     ItemDropType(
@@ -503,7 +499,6 @@ const dustDevil = CombatArchetype(
       highCount: 3,
       weight: 1,
     ),
-    ItemDropType(id: ItemId.WIND_MOTE, weight: 0.5),
   ],
 );
 // Sea Serpent · saltwind coast. The coast's top end.
@@ -511,11 +506,11 @@ const seaSerpent = CombatArchetype(
   iconAsset: 'assets/images/entities/sea_serpent.png',
   lootFibLevel: 9,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 1.5,
   itemDrops: [
     ItemDropType(id: ItemId.SERPENT_SCALE, weight: 2),
     NestedDrop(oceanCookedFishDropTable, weight: 1),
-    ItemDropType(id: ItemId.SERPENT_FANG, weight: 0.5),
   ],
   // no adamant table exists yet, so mithril stands in
   bonusDrops: [DropRoll(chance: 0.03, entries: mithrilArmorDropTable)],
@@ -527,10 +522,10 @@ const wraith = CombatArchetype(
   iconAsset: 'assets/images/entities/wraith.png',
   lootFibLevel: 10,
   combatType: CombatType.CLOTH_DPS,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 1.5,
   itemDrops: [
     ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1),
-    ItemDropType(id: ItemId.GRAVE_MOSS, lowCount: 1, highCount: 3, weight: 2),
     ItemDropType(id: ItemId.BLACK_GREATSWORD, weight: 0.2),
   ],
   // it wears the same rags a zombie does, better cut and far more often
@@ -541,6 +536,7 @@ const banshee = CombatArchetype(
   iconAsset: 'assets/images/entities/banshee.png',
   lootFibLevel: 10,
   combatType: CombatType.GLASS_CANNON,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 1.5,
   itemDrops: [ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1)],
 );
@@ -549,6 +545,7 @@ const troll = CombatArchetype(
   iconAsset: 'assets/images/entities/troll.png',
   lootFibLevel: 10,
   combatType: CombatType.LEATHER_TANK,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 2.5,
   itemDrops: [
     ItemDropType(id: ItemId.ANIMAL_PELT, lowCount: 2, highCount: 5, weight: 1),
@@ -559,6 +556,7 @@ const minotaur = CombatArchetype(
   iconAsset: 'assets/images/entities/minotaur.png',
   lootFibLevel: 10,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 2.0,
 );
 // Basilisk · roster tier 4 · redwall bluffs
@@ -566,6 +564,7 @@ const basilisk = CombatArchetype(
   iconAsset: 'assets/images/entities/basilisk.png',
   lootFibLevel: 10,
   combatType: CombatType.BALANCE,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 2.0,
 );
 // Dark Wizard · roster tier 4 · crypt
@@ -573,6 +572,7 @@ const darkWizard = CombatArchetype(
   iconAsset: 'assets/images/entities/dark_wizard.png',
   lootFibLevel: 10,
   combatType: CombatType.CLOTH_DPS,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.0,
 );
 // Gargoyle · roster tier 4 · redwall bluffs
@@ -580,6 +580,16 @@ const gargoyle = CombatArchetype(
   iconAsset: 'assets/images/entities/gargoyle.png',
   lootFibLevel: 10,
   combatType: CombatType.SHELL,
+  reagentFamily: ReagentFamily.SHELL,
+  attackInterval: 2.5,
+);
+
+// Cliff Chimera · roster tier 4 · redwall bluffs
+const cliffChimera = CombatArchetype(
+  iconAsset: 'assets/images/entities/cliff_chimera.png',
+  lootFibLevel: 10,
+  combatType: CombatType.SHELL,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 2.5,
 );
 
@@ -589,6 +599,7 @@ const mossGolem = CombatArchetype(
   iconAsset: 'assets/images/entities/moss_golem.png',
   lootFibLevel: 11,
   combatType: CombatType.PLATE_TANK,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 3.0,
   itemDrops: [
     // the mid-tier potions
@@ -614,6 +625,7 @@ const hillGiant = CombatArchetype(
   iconAsset: 'assets/images/entities/hill_giant.png',
   lootFibLevel: 11,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 2.5,
   itemDrops: [
     ItemDropType(id: ItemId.COAL, lowCount: 1, highCount: 3, weight: 1),
@@ -625,6 +637,7 @@ const earthElemental = CombatArchetype(
   iconAsset: 'assets/images/entities/earth_elemental.png',
   lootFibLevel: 11,
   combatType: CombatType.SHELL,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.5,
 );
 // Ogre · roster tier 5 · mountains
@@ -632,6 +645,7 @@ const ogre = CombatArchetype(
   iconAsset: 'assets/images/entities/ogre.png',
   lootFibLevel: 11,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 2.5,
 );
 // Stone Golem · roster tier 5 · mountains
@@ -639,6 +653,7 @@ const stoneGolem = CombatArchetype(
   iconAsset: 'assets/images/entities/stone_golem.png',
   lootFibLevel: 11,
   combatType: CombatType.PLATE_TANK,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 3.0,
 );
 // Griffin · roster tier 5 · redwall bluffs
@@ -646,6 +661,7 @@ const griffin = CombatArchetype(
   iconAsset: 'assets/images/entities/griffin.png',
   lootFibLevel: 11,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.FEATHER,
   attackInterval: 1.5,
 );
 // Fire Elemental · roster tier 5 · volcanic
@@ -653,6 +669,7 @@ const fireElemental = CombatArchetype(
   iconAsset: 'assets/images/entities/fire_elemental.png',
   lootFibLevel: 11,
   combatType: CombatType.GLASS_CANNON,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 1.5,
 );
 // Water Elemental · roster tier 5 · coast
@@ -660,6 +677,7 @@ const waterElemental = CombatArchetype(
   iconAsset: 'assets/images/entities/water_elemental.png',
   lootFibLevel: 11,
   combatType: CombatType.BALANCE,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.0,
 );
 
@@ -669,6 +687,7 @@ const yeti = CombatArchetype(
   iconAsset: 'assets/images/entities/yeti.png',
   lootFibLevel: 12,
   combatType: CombatType.LEATHER_TANK,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 2.5,
 );
 // Iron Golem · roster tier 6 · volcanic
@@ -676,6 +695,7 @@ const ironGolem = CombatArchetype(
   iconAsset: 'assets/images/entities/iron_golem.png',
   lootFibLevel: 12,
   combatType: CombatType.PLATE_TANK,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 3.0,
 );
 // Steel Golem · roster tier 6 · mine
@@ -683,6 +703,7 @@ const steelGolem = CombatArchetype(
   iconAsset: 'assets/images/entities/steel_golem.png',
   lootFibLevel: 12,
   combatType: CombatType.SHELL,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 3.0,
 );
 // Lich · roster tier 6 · crypt
@@ -690,6 +711,7 @@ const lich = CombatArchetype(
   iconAsset: 'assets/images/entities/lich.png',
   lootFibLevel: 12,
   combatType: CombatType.CLOTH_DPS,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.0,
 );
 // Cloud Giant · roster tier 6 · mountains
@@ -697,6 +719,7 @@ const cloudGiant = CombatArchetype(
   iconAsset: 'assets/images/entities/cloud_giant.png',
   lootFibLevel: 12,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 2.5,
 );
 // Roc · roster tier 6 · frozen peaks
@@ -704,6 +727,7 @@ const roc = CombatArchetype(
   iconAsset: 'assets/images/entities/roc.png',
   lootFibLevel: 12,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.FEATHER,
   attackInterval: 1.5,
 );
 // Wyvern · roster tier 6 · volcanic
@@ -711,6 +735,7 @@ const wyvern = CombatArchetype(
   iconAsset: 'assets/images/entities/wyvern.png',
   lootFibLevel: 12,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 1.5,
 );
 // Drake · roster tier 6 · volcanic
@@ -718,6 +743,7 @@ const drake = CombatArchetype(
   iconAsset: 'assets/images/entities/drake.png',
   lootFibLevel: 12,
   combatType: CombatType.BALANCE,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 2.0,
 );
 
@@ -727,6 +753,7 @@ const kraken = CombatArchetype(
   iconAsset: 'assets/images/entities/kraken.png',
   lootFibLevel: 13,
   combatType: CombatType.PLATE_TANK,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 3.0,
 );
 // Dragon · roster tier 7 · dragon's lair
@@ -734,6 +761,7 @@ const dragon = CombatArchetype(
   iconAsset: 'assets/images/entities/dragon.png',
   lootFibLevel: 13,
   combatType: CombatType.BALANCE,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 3.0,
 );
 // Lesser Demon · roster tier 7 · underworld
@@ -741,6 +769,7 @@ const lesserDemon = CombatArchetype(
   iconAsset: 'assets/images/entities/lesser_demon.png',
   lootFibLevel: 13,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.0,
 );
 // Greater Demon · roster tier 7 · underworld
@@ -748,6 +777,7 @@ const greaterDemon = CombatArchetype(
   iconAsset: 'assets/images/entities/greater_demon.png',
   lootFibLevel: 13,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.5,
 );
 // Frost Giant · roster tier 7 · frostcrown peaks
@@ -755,6 +785,7 @@ const frostGiant = CombatArchetype(
   iconAsset: 'assets/images/entities/frost_giant.png',
   lootFibLevel: 13,
   combatType: CombatType.PLATE_TANK,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 3.0,
 );
 // Frost Wyrm · roster tier 7 · frostcrown peaks
@@ -762,6 +793,7 @@ const frostWyrm = CombatArchetype(
   iconAsset: 'assets/images/entities/frost_wyrm.png',
   lootFibLevel: 13,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 2.5,
 );
 // Thunderbird · roster tier 7 · stormcrown peaks
@@ -769,6 +801,7 @@ const thunderbird = CombatArchetype(
   iconAsset: 'assets/images/entities/thunderbird.png',
   lootFibLevel: 13,
   combatType: CombatType.GLASS_CANNON,
+  reagentFamily: ReagentFamily.FEATHER,
   attackInterval: 1.5,
 );
 // Storm Giant · roster tier 7 · stormcrown peaks
@@ -776,6 +809,7 @@ const stormGiant = CombatArchetype(
   iconAsset: 'assets/images/entities/storm_giant.png',
   lootFibLevel: 13,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 2.5,
 );
 
@@ -788,20 +822,19 @@ const fieldRat = CombatArchetype(
   iconAsset: 'assets/images/entities/field_rat.png',
   lootFibLevel: 0,
   combatType: CombatType.BALANCE,
+  reagentFamily: ReagentFamily.FANG,
   attackInterval: 2.0,
   // The weakest thing in the game, so it pays the smallest purse rather
   // than nothing: an empty table is not rollable — roll() returns
   // `ObjectStack(id: 0 as T)` for one, which throws on the cast.
-  itemDrops: [
-    ItemDropType(id: ItemId.COINS, lowCount: 1, highCount: 5),
-    ItemDropType(id: ItemId.RAT_TAIL),
-  ],
+  itemDrops: [ItemDropType(id: ItemId.COINS, lowCount: 1, highCount: 5)],
 );
 // A named chicken, level 8.
 const bigRed = CombatArchetype(
   iconAsset: 'assets/images/entities/big_red.png',
   lootFibLevel: 3,
   combatType: CombatType.LEATHER_DPS,
+  reagentFamily: ReagentFamily.FEATHER,
   attackInterval: 2.0,
 );
 const goblinScout = CombatArchetype(
@@ -820,6 +853,7 @@ const spiderBroodmother = CombatArchetype(
   iconAsset: 'assets/images/entities/spider_broodmother.png',
   lootFibLevel: 6,
   combatType: CombatType.LEATHER_TANK,
+  reagentFamily: ReagentFamily.VENOM,
   attackInterval: 2.5,
 );
 const goblinQueen = CombatArchetype(
@@ -833,6 +867,7 @@ const orcWarlord = CombatArchetype(
   iconAsset: 'assets/images/entities/orc_warlord.png',
   lootFibLevel: 9,
   combatType: CombatType.PLATE_TANK,
+  reagentFamily: ReagentFamily.HORN,
   attackInterval: 2.5,
 );
 // Tempest Reach's last boss: a dust devil grown into a storm, level 144,
@@ -841,6 +876,7 @@ const tempest = CombatArchetype(
   iconAsset: 'assets/images/entities/tempest.png',
   lootFibLevel: 9,
   combatType: CombatType.CLOTH_DPS,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 1.0,
 );
 
@@ -855,6 +891,7 @@ const rockCrawler = CombatArchetype(
   iconAsset: 'assets/images/entities/rock_crawler.png',
   lootFibLevel: 9,
   combatType: CombatType.LEATHER_TANK,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 2.0,
 );
 // The Mother Lode's crawler, grown a crust of raw gems, level 89.
@@ -862,6 +899,7 @@ const gemCrawler = CombatArchetype(
   iconAsset: 'assets/images/entities/gem_crawler.png',
   lootFibLevel: 9,
   combatType: CombatType.SHELL,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 2.5,
 );
 // The Stamp Mill's boss, level 89: the burrowing worm that dug the deep
@@ -870,6 +908,7 @@ const theBorer = CombatArchetype(
   iconAsset: 'assets/images/entities/the_borer.png',
   lootFibLevel: 9,
   combatType: CombatType.PLATE_DPS,
+  reagentFamily: ReagentFamily.ICHOR,
   attackInterval: 2.5,
 );
 // The mine's last boss, level 144: the gold vein itself, awake. A wall to
@@ -878,5 +917,6 @@ const lodeGolem = CombatArchetype(
   iconAsset: 'assets/images/entities/lode_golem.png',
   lootFibLevel: 10,
   combatType: CombatType.PLATE_TANK,
+  reagentFamily: ReagentFamily.SHELL,
   attackInterval: 3.0,
 );

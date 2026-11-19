@@ -151,10 +151,10 @@ void main() {
         mudlurkEntity,
       );
 
-      // enough swings for ~600 kills: a mudlurk is a level 55 fight even
+      // enough swings for ~1200 kills: a mudlurk is a level 55 fight even
       // for a maxed player, so the actions a kill costs are real
       final rng = Random(3);
-      for (var i = 0; i < 10000; i++) {
+      for (var i = 0; i < 20000; i++) {
         session.encounterSystem.executePlayerAction(
           playerState: save.playerData,
           encounter: save.encounterData,
@@ -172,12 +172,12 @@ void main() {
       expect(
         daggers.map((item) => item.quality),
         containsAll([Rarity.COMMON, Rarity.UNCOMMON]),
-        reason: 'both listed qualities should drop over 600 kills',
+        reason: 'both listed qualities should drop over 1200 kills',
       );
       // an instance, never a count on the item map
       expect(save.inventoryData.itemMap[ItemId.FISHBONE_DAGGER], isNull);
       // the fish it drops are plain items, and still stack
-      expect(save.inventoryData.itemMap[ItemId.SCALE], greaterThan(0));
+      expect(save.inventoryData.itemMap[ItemId.SALMON], greaterThan(0));
     });
   });
 }

@@ -575,8 +575,10 @@ enum EntityId {
       requiredLevel: 20,
       itemDrops: [
         ItemDropType(id: ItemId.BOG_EEL, weight: 1, unlockLevel: 20),
-        ItemDropType(id: ItemId.LEECH, weight: 0.6, unlockLevel: 20),
-        ItemDropType(id: ItemId.MARSH_FROG, weight: 0.4, unlockLevel: 25),
+        // the marsh's leech and frog, folded into the families: a catch
+        // that is a reagent rather than a fish
+        ItemDropType(id: ItemId.SMALL_VENOM, weight: 0.6, unlockLevel: 20),
+        ItemDropType(id: ItemId.SMALL_SHELL, weight: 0.4, unlockLevel: 25),
         // junk in place of a catch
         NestedDrop(fishingJunkDropTable, weight: fishingJunkWeight),
       ],
@@ -698,7 +700,7 @@ enum EntityId {
   HARRALANDER(
     HerbEntityDefinition(
       name: "Harralander",
-      iconAsset: "assets/images/entities/harralander.png",
+      iconAsset: "assets/images/entities/reedmint.png",
       requiredLevel: 20,
       defence: 20,
       itemDrops: [ItemDropType(id: ItemId.HARRALANDER, weight: 1)],
@@ -755,7 +757,7 @@ enum EntityId {
   IRIT(
     HerbEntityDefinition(
       name: "Irit Leaf",
-      iconAsset: "assets/images/entities/irit.png",
+      iconAsset: "assets/images/entities/saltwort.png",
       requiredLevel: 40,
       defence: 40,
       itemDrops: [ItemDropType(id: ItemId.IRIT_LEAF, weight: 1)],
@@ -773,7 +775,7 @@ enum EntityId {
   KWUARM(
     HerbEntityDefinition(
       name: "Kwuarm",
-      iconAsset: "assets/images/entities/kwuarm.png",
+      iconAsset: "assets/images/entities/duskthorn.png",
       requiredLevel: 54,
       defence: 54,
       itemDrops: [ItemDropType(id: ItemId.KWUARM, weight: 1)],
@@ -782,7 +784,7 @@ enum EntityId {
   SNAPDRAGON(
     HerbEntityDefinition(
       name: "Snapdragon",
-      iconAsset: "assets/images/entities/snapdragon.png",
+      iconAsset: "assets/images/entities/bramblewort.png",
       requiredLevel: 59,
       defence: 59,
       itemDrops: [ItemDropType(id: ItemId.SNAPDRAGON, weight: 1)],
@@ -822,6 +824,100 @@ enum EntityId {
       requiredLevel: 75,
       defence: 75,
       itemDrops: [ItemDropType(id: ItemId.TORSTOL, weight: 1)],
+    ),
+  ),
+
+  // the zone herbs: each grows in one zone, and each potion tier brews
+  // from two of them (design/ALCHEMY_POTIONS.md). Mirecap and Bluestem
+  // above are two of the twelve; the old ladder grows nowhere now.
+  MEADOWSWEET(
+    HerbEntityDefinition(
+      name: "Meadowsweet",
+      iconAsset: "assets/images/entities/meadowsweet.png",
+      requiredLevel: 1,
+      defence: 1,
+      itemDrops: [ItemDropType(id: ItemId.MEADOWSWEET, weight: 1)],
+    ),
+  ),
+  BRAMBLEWORT(
+    HerbEntityDefinition(
+      name: "Bramblewort",
+      iconAsset: "assets/images/entities/bramblewort.png",
+      requiredLevel: 5,
+      defence: 5,
+      itemDrops: [ItemDropType(id: ItemId.BRAMBLEWORT, weight: 1)],
+    ),
+  ),
+  REEDMINT(
+    HerbEntityDefinition(
+      name: "Reedmint",
+      iconAsset: "assets/images/entities/reedmint.png",
+      requiredLevel: 13,
+      defence: 13,
+      itemDrops: [ItemDropType(id: ItemId.REEDMINT, weight: 1)],
+    ),
+  ),
+  DUSKTHORN(
+    HerbEntityDefinition(
+      name: "Duskthorn",
+      iconAsset: "assets/images/entities/duskthorn.png",
+      requiredLevel: 18,
+      defence: 18,
+      itemDrops: [ItemDropType(id: ItemId.DUSKTHORN, weight: 1)],
+    ),
+  ),
+  SILT_LILY(
+    HerbEntityDefinition(
+      name: "Silt Lily",
+      iconAsset: "assets/images/entities/silt_lily.png",
+      requiredLevel: 21,
+      defence: 21,
+      itemDrops: [ItemDropType(id: ItemId.SILT_LILY, weight: 1)],
+    ),
+  ),
+  SALTWORT(
+    HerbEntityDefinition(
+      name: "Saltwort",
+      iconAsset: "assets/images/entities/saltwort.png",
+      requiredLevel: 30,
+      defence: 30,
+      itemDrops: [ItemDropType(id: ItemId.SALTWORT, weight: 1)],
+    ),
+  ),
+  GLIMMERCAP(
+    HerbEntityDefinition(
+      name: "Glimmercap",
+      iconAsset: "assets/images/entities/glimmercap.png",
+      requiredLevel: 50,
+      defence: 50,
+      itemDrops: [ItemDropType(id: ItemId.GLIMMERCAP, weight: 1)],
+    ),
+  ),
+  BLOODROOT(
+    HerbEntityDefinition(
+      name: "Bloodroot",
+      iconAsset: "assets/images/entities/bloodroot.png",
+      requiredLevel: 55,
+      defence: 55,
+      itemDrops: [ItemDropType(id: ItemId.BLOODROOT, weight: 1)],
+    ),
+  ),
+  FROSTBLOOM(
+    HerbEntityDefinition(
+      name: "Frostbloom",
+      iconAsset: "assets/images/entities/frostbloom.png",
+      requiredLevel: 80,
+      defence: 80,
+      itemDrops: [ItemDropType(id: ItemId.FROSTBLOOM, weight: 1)],
+    ),
+  ),
+  EMBERROOT(
+    HerbEntityDefinition(
+      name: "Emberroot",
+      iconAsset: "assets/images/entities/emberroot.png",
+      requiredLevel: 89,
+      defence: 89,
+      itemDrops: [ItemDropType(id: ItemId.EMBERROOT, weight: 1)],
     ),
   ),
 
@@ -1003,7 +1099,7 @@ enum EntityId {
       name: "Giant Spider",
       // below the archetype's loot rung, so it writes its own tables: the
       // archetype's lines as written, nothing scaled up
-      itemDrops: [NestedDrop(spiderDropTable)],
+      itemDrops: [],
     ),
   ),
   GIANT_SPIDER_UNCOMMON(
@@ -1012,7 +1108,7 @@ enum EntityId {
       fibLevel: 6,
       name: "Giant Spider",
       rarity: Rarity.UNCOMMON,
-      itemDrops: [NestedDrop(spiderDropTable, countMultiplier: 2)],
+      itemDrops: [],
     ),
   ),
   // the Spider Den's Webbed Thicket boss: a rare giant spider, with the
@@ -1024,7 +1120,10 @@ enum EntityId {
       name: "Thicket Weaver",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
-      itemDrops: [NestedDrop(spiderDropTable, countMultiplier: 3)],
+      // the thicket's venom in bulk, the way its silk and venom used to come
+      itemDrops: [
+        ItemDropType(id: ItemId.THICK_VENOM, lowCount: 3, highCount: 6),
+      ],
       // its uniques, at its band's two rarities (design/DUNGEON_LOOT_GUIDE.md)
       extraBonusDrops: [
         DropRoll(
@@ -1060,10 +1159,7 @@ enum EntityId {
       name: "Forest Wolf",
       // below the archetype's loot rung, so it writes its own tables: the
       // archetype's lines as written, nothing scaled up
-      itemDrops: [
-        ItemDropType(id: ItemId.WOLF_CLAW, weight: 1),
-        ItemDropType(id: ItemId.WOLF_PELT, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.WOLF_PELT, weight: 1)],
     ),
   ),
   FOREST_WOLF_UNCOMMON(
@@ -1073,7 +1169,6 @@ enum EntityId {
       name: "Elder Forest Wolf",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(id: ItemId.FANG, lowCount: 2, highCount: 5, weight: 1),
         ItemDropType(
           id: ItemId.WOLF_PELT,
           lowCount: 2,
@@ -1099,8 +1194,6 @@ enum EntityId {
       name: "Alpha Forest Wolf",
       rarity: Rarity.RARE,
       itemDrops: [
-        ItemDropType(id: ItemId.FANG, lowCount: 2, highCount: 5, weight: 1),
-
         ItemDropType(id: ItemId.WOOL_CLOAK, weight: .1),
         ItemDropType(
           id: ItemId.WOOL_CLOAK,
@@ -1120,10 +1213,7 @@ enum EntityId {
       name: "Den Alpha Wolf",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
-      itemDrops: [
-        ItemDropType(id: ItemId.WOLF_CLAW, weight: 1),
-        ItemDropType(id: ItemId.WOLF_PELT, weight: 1),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.WOLF_PELT, weight: 1)],
       // its uniques, at its band's two rarities (design/DUNGEON_LOOT_GUIDE.md)
       extraBonusDrops: [
         DropRoll(
@@ -1161,10 +1251,7 @@ enum EntityId {
       name: "Giant Bat",
       // below the archetype's loot rung, so it writes its own tables: the
       // archetype's lines as written, nothing scaled up
-      itemDrops: [
-        ItemDropType(id: ItemId.BAT_WING, lowCount: 1, highCount: 2, weight: 1),
-        ItemDropType(id: ItemId.BAT_FANG, weight: 0.6),
-      ],
+      itemDrops: [],
     ),
   ),
   GIANT_BAT_UNCOMMON(
@@ -1186,22 +1273,11 @@ enum EntityId {
       giantBat,
       fibLevel: 4,
       name: "Giant Bat",
-      itemDrops: [
-        ItemDropType(id: ItemId.BAT_WING, weight: 1),
-        ItemDropType(id: ItemId.BAT_FANG, weight: 0.6),
-      ],
+      itemDrops: [],
     ),
   ),
   GROTTO_SLIME(
-    CombatEntityDefinition(
-      slime,
-      fibLevel: 5,
-      name: "Slime",
-      itemDrops: [
-        ItemDropType(id: ItemId.SLIME_OOZE, weight: 1),
-        ItemDropType(id: ItemId.SLIME_CORE, weight: 0.05),
-      ],
-    ),
+    CombatEntityDefinition(slime, fibLevel: 5, name: "Slime", itemDrops: []),
   ),
   // Carrion Crow · swamp. Quick and fragile; picks the bog's dead clean.
   CARRION_CROW(
@@ -1217,8 +1293,7 @@ enum EntityId {
       isDungeonBoss: true,
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(id: ItemId.FEATHER, lowCount: 20, highCount: 40),
-        ItemDropType(id: ItemId.CROW_QUILL, lowCount: 5, highCount: 13),
+        ItemDropType(id: ItemId.HEAVY_FEATHER, lowCount: 20, highCount: 40),
       ],
       // its uniques, at its band's two rarities (design/DUNGEON_LOOT_GUIDE.md)
       extraBonusDrops: [
@@ -1351,12 +1426,6 @@ enum EntityId {
       // below the archetype's loot rung, so it writes its own tables: the
       // archetype's lines as written, nothing scaled up
       itemDrops: [
-        ItemDropType(
-          id: ItemId.BEAR_CLAW,
-          lowCount: 1,
-          highCount: 3,
-          weight: 1,
-        ),
         ItemDropType(id: ItemId.BEAR_HIDE, weight: 1),
         ItemDropType(id: ItemId.BEAR_RUMP, weight: 1),
       ],
@@ -1369,12 +1438,6 @@ enum EntityId {
       name: "Bear",
       rarity: Rarity.UNCOMMON,
       itemDrops: [
-        ItemDropType(
-          id: ItemId.BEAR_CLAW,
-          lowCount: 2,
-          highCount: 5,
-          weight: 1,
-        ),
         ItemDropType(
           id: ItemId.BEAR_HIDE,
           lowCount: 2,
@@ -1409,12 +1472,6 @@ enum EntityId {
       isDungeonBoss: true,
       rarity: Rarity.RARE,
       itemDrops: [
-        ItemDropType(
-          id: ItemId.BEAR_CLAW,
-          lowCount: 1,
-          highCount: 3,
-          weight: 1,
-        ),
         ItemDropType(id: ItemId.BEAR_HIDE, weight: 1),
         ItemDropType(id: ItemId.BEAR_RUMP, weight: 1),
       ],
@@ -1459,7 +1516,6 @@ enum EntityId {
         ItemDropType(id: ItemId.SALMON),
         ItemDropType(id: ItemId.PIKE),
         ItemDropType(id: ItemId.TROUT),
-        ItemDropType(id: ItemId.SCALE, highCount: 3, weight: 3),
         ItemDropType(
           id: ItemId.FISHBONE_DAGGER,
           rarity: Rarity.COMMON,
@@ -1516,9 +1572,9 @@ enum EntityId {
       isDungeonBoss: true,
       // a bulk haul: one stack of the grotto's growth per kill
       itemDrops: [
-        ItemDropType(id: ItemId.GUAM_LEAF, lowCount: 50, highCount: 150),
-        ItemDropType(id: ItemId.HARRALANDER, lowCount: 50, highCount: 150),
-        ItemDropType(id: ItemId.RED_CAP_MUSHROOM, lowCount: 50, highCount: 150),
+        ItemDropType(id: ItemId.MEADOWSWEET, lowCount: 50, highCount: 150),
+        ItemDropType(id: ItemId.DUSKTHORN, lowCount: 50, highCount: 150),
+        ItemDropType(id: ItemId.STURDY_ICHOR, lowCount: 50, highCount: 150),
         ItemDropType(id: ItemId.OAK_LOGS, lowCount: 50, highCount: 150),
         ItemDropType(id: ItemId.MAPLE_LOGS, lowCount: 50, highCount: 150),
       ],
@@ -1561,8 +1617,7 @@ enum EntityId {
       name: "Primordial Ooze",
       isDungeonBoss: true,
       itemDrops: [
-        ItemDropType(id: ItemId.SLIME_OOZE, lowCount: 20, highCount: 40),
-        ItemDropType(id: ItemId.SLIME_CORE, lowCount: 3, highCount: 8),
+        ItemDropType(id: ItemId.HEAVY_ICHOR, lowCount: 20, highCount: 40),
       ],
       // its uniques, at its band's two rarities (design/DUNGEON_LOOT_GUIDE.md)
       extraBonusDrops: [
@@ -1601,7 +1656,7 @@ enum EntityId {
           weight: 0.5,
         ),
         ItemDropType(
-          id: ItemId.MURKJAW_FANG,
+          id: ItemId.ANCIENT_FANG,
           lowCount: 2,
           highCount: 5,
           weight: 0.5,
@@ -1726,8 +1781,10 @@ enum EntityId {
       ],
     ),
   ),
-  // Harpy · roster tier 3 · ironroot hills
+  // Harpy · roster tier 3 · unplaced (id kept for saves)
   HARPY(CombatEntityDefinition(harpy, fibLevel: 8, name: "Harpy")),
+  // Rock Ram · roster tier 3 · ironroot hills
+  ROCK_RAM(CombatEntityDefinition(rockRam, fibLevel: 8, name: "Rock Ram")),
   // Naga · roster tier 3 · coast
   NAGA(CombatEntityDefinition(naga, fibLevel: 8, name: "Naga")),
 
@@ -1738,7 +1795,7 @@ enum EntityId {
   GIANT_SCORPION(
     CombatEntityDefinition(giantScorpion, fibLevel: 9, name: "Giant Scorpion"),
   ),
-  // Imp · roster tier 3 · ironroot hills
+  // Imp · roster tier 3 · unplaced (cut from Ironroot Hills; id kept)
   IMP(CombatEntityDefinition(imp, fibLevel: 9, name: "Imp")),
   // ── STORMGRASS PRAIRIE ──
   // Orc · stormgrass prairie. The common is the level 55 raider and the
@@ -1775,7 +1832,7 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
       itemDrops: [
         ItemDropType(
-          id: ItemId.SABERTOOTH_FANG,
+          id: ItemId.PRIMAL_FANG,
           lowCount: 3,
           highCount: 5,
           weight: 0.5,
@@ -1841,12 +1898,6 @@ enum EntityId {
       // archetype's lines as written, nothing scaled up
       itemDrops: [
         ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1),
-        ItemDropType(
-          id: ItemId.GRAVE_MOSS,
-          lowCount: 1,
-          highCount: 3,
-          weight: 2,
-        ),
         ItemDropType(id: ItemId.BLACK_GREATSWORD, weight: 0.2),
       ],
       bonusDrops: [
@@ -1868,6 +1919,10 @@ enum EntityId {
   ),
   // Gargoyle · roster tier 4 · redwall bluffs
   GARGOYLE(CombatEntityDefinition(gargoyle, fibLevel: 10, name: "Gargoyle")),
+  // Cliff Chimera · roster tier 4 · redwall bluffs
+  CLIFF_CHIMERA(
+    CombatEntityDefinition(cliffChimera, fibLevel: 10, name: "Cliff Chimera"),
+  ),
 
   //
   // Tier 12 - Level 233
@@ -1930,6 +1985,16 @@ enum EntityId {
       name: "Earth Elemental",
     ),
   ),
+  // Earth Elemental · ironroot hills, level 144: the same archetype as the
+  // level 233 elemental, its uncommon
+  EARTH_ELEMENTAL_UNCOMMON(
+    CombatEntityDefinition(
+      earthElemental,
+      fibLevel: 10,
+      name: "Earth Elemental",
+      rarity: Rarity.UNCOMMON,
+    ),
+  ),
   // Ogre · roster tier 5 · mountains
   OGRE(CombatEntityDefinition(ogre, fibLevel: 11, name: "Ogre")),
   // Stone Golem · roster tier 5 · mountains
@@ -1938,6 +2003,16 @@ enum EntityId {
   ),
   // Griffin · roster tier 5 · redwall bluffs
   GRIFFIN(CombatEntityDefinition(griffin, fibLevel: 11, name: "Griffin")),
+  // Roc Fledgling · roster tier 5 · redwall bluffs: a young roc on the rim, a
+  // rung below the full-grown one on its archetype
+  ROC_FLEDGLING(
+    CombatEntityDefinition(
+      roc,
+      fibLevel: 11,
+      name: "Roc Fledgling",
+      rarity: Rarity.UNCOMMON,
+    ),
+  ),
   // Fire Elemental · roster tier 5 · volcanic
   FIRE_ELEMENTAL(
     CombatEntityDefinition(fireElemental, fibLevel: 11, name: "Fire Elemental"),
@@ -2012,7 +2087,6 @@ enum EntityId {
       fibLevel: 6,
       name: "Mudlurc Fisher",
       itemDrops: [
-        ItemDropType(id: ItemId.SCALE, lowCount: 1, highCount: 2, weight: 3),
         NestedDrop(riverCookedFishDropTable, weight: 2),
         NestedDrop(ironToolsDropTable, weight: 0.3),
       ],
@@ -2047,7 +2121,7 @@ enum EntityId {
       crab,
       fibLevel: 7,
       name: "Shore Crab",
-      extraItemDrops: [ItemDropType(id: ItemId.SEA_KELP, weight: 0.5)],
+      extraItemDrops: [ItemDropType(id: ItemId.THICK_SHELL, weight: 0.5)],
       bonusDrops: [DropRoll(chance: 0.05, entries: oceanReagentDropTable)],
     ),
   ),
@@ -2090,7 +2164,7 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
       itemDrops: [
         ItemDropType(id: ItemId.TOAD_LEGS, lowCount: 20, highCount: 40),
-        ItemDropType(id: ItemId.TOAD_WART, lowCount: 5, highCount: 13),
+        ItemDropType(id: ItemId.THICK_VENOM, lowCount: 5, highCount: 13),
       ],
       extraBonusDrops: [
         DropRoll(
@@ -2117,7 +2191,7 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
       itemDrops: [
         ItemDropType(id: ItemId.TURTLE_MEAT, lowCount: 20, highCount: 40),
-        ItemDropType(id: ItemId.TURTLE_SHELL, lowCount: 5, highCount: 13),
+        ItemDropType(id: ItemId.THICK_SHELL, lowCount: 5, highCount: 13),
       ],
       extraBonusDrops: [
         DropRoll(
@@ -2146,7 +2220,7 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
       itemDrops: [
         ItemDropType(id: ItemId.CRAB_MEAT, lowCount: 20, highCount: 40),
-        ItemDropType(id: ItemId.CRAB_CLAW, lowCount: 5, highCount: 13),
+        ItemDropType(id: ItemId.HEAVY_SHELL, lowCount: 5, highCount: 13),
       ],
       extraBonusDrops: [
         DropRoll(
@@ -2173,7 +2247,7 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
       itemDrops: [
         ItemDropType(id: ItemId.HIPPO_HIDE, lowCount: 5, highCount: 13),
-        ItemDropType(id: ItemId.HIPPO_TUSK, lowCount: 3, highCount: 8),
+        ItemDropType(id: ItemId.HEAVY_HORN, lowCount: 3, highCount: 8),
       ],
       extraBonusDrops: [
         DropRoll(
@@ -2206,7 +2280,7 @@ enum EntityId {
           weight: 0.5,
         ),
         ItemDropType(
-          id: ItemId.CROCODILE_TOOTH,
+          id: ItemId.HEAVY_FANG,
           lowCount: 2,
           highCount: 5,
           weight: 0.5,
@@ -2249,7 +2323,7 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
       itemDrops: [
         ItemDropType(
-          id: ItemId.CRAB_CLAW,
+          id: ItemId.ANCIENT_SHELL,
           lowCount: 3,
           highCount: 5,
           weight: 0.5,
@@ -2361,7 +2435,7 @@ enum EntityId {
         DropRoll(
           chance: 0.1,
           entries: [
-            ItemDropType(id: ItemId.SERPENT_FANG, lowCount: 3, highCount: 8),
+            ItemDropType(id: ItemId.ANCIENT_FANG, lowCount: 3, highCount: 8),
           ],
         ),
       ],
@@ -2407,7 +2481,7 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.CHICKEN_MEAT, weight: 1),
         ItemDropType(
-          id: ItemId.FEATHER,
+          id: ItemId.SMALL_FEATHER,
           weight: 1,
           lowCount: 25,
           highCount: 50,
@@ -2482,7 +2556,7 @@ enum EntityId {
           weight: .1,
         ),
         ItemDropType(id: ItemId.IRON_DAGGER, rarity: Rarity.RARE, weight: .01),
-        ItemDropType(id: ItemId.GUAM_LEAF, weight: 1),
+        ItemDropType(id: ItemId.MEADOWSWEET, weight: 1),
         ItemDropType(id: ItemId.LIGHT_LEATHER_BOOTS, weight: 1),
         ItemDropType(
           id: ItemId.COOKED_BLUEGILL,
@@ -2535,7 +2609,10 @@ enum EntityId {
       name: "Spider Broodmother",
       isDungeonBoss: true,
       rarity: Rarity.EPIC,
-      itemDrops: [NestedDrop(spiderDropTable, countMultiplier: 6)],
+      // the den's venom in bulk, the way its silk and venom used to come
+      itemDrops: [
+        ItemDropType(id: ItemId.HEAVY_VENOM, lowCount: 6, highCount: 12),
+      ],
       // its uniques, at its band's two rarities (design/DUNGEON_LOOT_GUIDE.md)
       extraBonusDrops: [
         DropRoll(
@@ -2624,7 +2701,7 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
       itemDrops: [
         ItemDropType(
-          id: ItemId.ORC_TUSK,
+          id: ItemId.PRIMAL_HORN,
           lowCount: 3,
           highCount: 5,
           weight: 0.5,
@@ -2679,7 +2756,7 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
       itemDrops: [
         ItemDropType(
-          id: ItemId.WIND_MOTE,
+          id: ItemId.PRIMAL_ICHOR,
           lowCount: 3,
           highCount: 5,
           weight: 0.5,
@@ -2725,13 +2802,51 @@ enum EntityId {
   // archetype, so it shares that monster's art and inherited loot.
   //
   // Spinehold Caverns · Greyspine Mountain · level 377
+  //
+  // the Hollow Arch's first boss, retired for the Bridge Troll; kept because
+  // the id is the save format
   ELDER_ROC(
     CombatEntityDefinition(
       roc,
       fibLevel: 12,
       name: "Elder Roc",
+      rarity: Rarity.RARE,
+    ),
+  ),
+  // the bridge's own troll, grown a rung above the hills' ones
+  BRIDGE_TROLL(
+    CombatEntityDefinition(
+      troll,
+      fibLevel: 12,
+      name: "Bridge Troll",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.TROLLHIDE_TREADS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.TROLLHIDE_TREADS, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.TOLLKEEPERS_BELT, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.TOLLKEEPERS_BELT, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
     ),
   ),
   STEEL_SENTINEL(
@@ -2741,6 +2856,32 @@ enum EntityId {
       name: "Steel Sentinel",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.SENTINELS_BULWARK, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.SENTINELS_BULWARK, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.SENTINELS_GORGET, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.SENTINELS_GORGET, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
     ),
   ),
   GREYSPINE_DRAKE(
@@ -2750,6 +2891,32 @@ enum EntityId {
       name: "Greyspine Drake",
       isDungeonBoss: true,
       rarity: Rarity.EPIC,
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.DRAKEFANG_GREATSWORD, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.DRAKEFANG_GREATSWORD, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.WYRMCREST_RING, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.WYRMCREST_RING, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
     ),
   ),
   // The Ashen Vaults · Ashridge Mountains · level 377
@@ -2760,6 +2927,28 @@ enum EntityId {
       name: "Ash Wyvern",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [ItemDropType(id: ItemId.CINDERFANG, rarity: Rarity.RARE)],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [ItemDropType(id: ItemId.CINDERFANG, rarity: Rarity.EPIC)],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.WYVERNWING_CLOAK, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.WYVERNWING_CLOAK, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
     ),
   ),
   SLAG_WARDEN(
@@ -2769,6 +2958,32 @@ enum EntityId {
       name: "Slag Warden",
       isDungeonBoss: true,
       rarity: Rarity.RARE,
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.SLAGPLATE_BRACERS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.SLAGPLATE_BRACERS, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.SLAGPLATE_PAULDRONS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.SLAGPLATE_PAULDRONS, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
     ),
   ),
   // a fire elemental a rung above the ridge's own, fed by the vaults' slag
@@ -2779,6 +2994,118 @@ enum EntityId {
       name: "Heart of the Ridge",
       isDungeonBoss: true,
       rarity: Rarity.EPIC,
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.RIDGEHEART_GAUNTLETS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.RIDGEHEART_GAUNTLETS, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // Gaunt Tor · Ironroot Hills · level 233. Each boss is its roster
+  // monster grown to the hills' top rung, on that monster's art.
+  // the switchbacks' ram patriarch
+  THUNDERHORN(
+    CombatEntityDefinition(
+      rockRam,
+      fibLevel: 11,
+      name: "Thunderhorn",
+      isDungeonBoss: true,
+      rarity: Rarity.RARE,
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.THUNDERHORN_HELM, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.THUNDERHORN_HELM, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // the cairn hollow's elemental, stacked stone over a living heart
+  THE_CAIRNWARDEN(
+    CombatEntityDefinition(
+      earthElemental,
+      fibLevel: 11,
+      name: "The Cairnwarden",
+      isDungeonBoss: true,
+      rarity: Rarity.RARE,
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.CAIRNSTONE_GREAVES, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.CAIRNSTONE_GREAVES, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.CAIRNWARDENS_SIGNET, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.CAIRNWARDENS_SIGNET, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // the giants' hall's lord
+  THE_HILL_KING(
+    CombatEntityDefinition(
+      hillGiant,
+      fibLevel: 11,
+      name: "The Hill King",
+      isDungeonBoss: true,
+      rarity: Rarity.EPIC,
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.HILL_KINGS_CUDGEL, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.HILL_KINGS_CUDGEL, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.GIANTBONE_GIRDLE, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.GIANTBONE_GIRDLE, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
     ),
   ),
   // Hoarfrost Hollow · Frostcrown Peaks · level 610
@@ -2888,12 +3215,6 @@ enum EntityId {
       itemDrops: [
         ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1),
         ItemDropType(
-          id: ItemId.GRAVE_MOSS,
-          lowCount: 1,
-          highCount: 3,
-          weight: 1,
-        ),
-        ItemDropType(
           id: ItemId.ENCHANTING_ESSENCE,
           lowCount: 1,
           highCount: 2,
@@ -2908,15 +3229,7 @@ enum EntityId {
       wraith,
       fibLevel: 9,
       name: "Mist Wraith",
-      itemDrops: [
-        ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1),
-        ItemDropType(
-          id: ItemId.GRAVE_MOSS,
-          lowCount: 1,
-          highCount: 3,
-          weight: 2,
-        ),
-      ],
+      itemDrops: [ItemDropType(id: ItemId.ENCHANTING_RUNE, weight: 1)],
       bonusDrops: [
         DropRoll(entries: tatteredClothUncommonDropTable, chance: 0.15),
       ],
@@ -2955,7 +3268,7 @@ enum EntityId {
           weight: 1,
         ),
         ItemDropType(
-          id: ItemId.GRAVE_MOSS,
+          id: ItemId.PRIMAL_ICHOR,
           lowCount: 3,
           highCount: 5,
           weight: 1,
@@ -3052,7 +3365,7 @@ enum EntityId {
           weight: 1,
         ),
         ItemDropType(
-          id: ItemId.GRAVE_MOSS,
+          id: ItemId.PRIMAL_ICHOR,
           lowCount: 5,
           highCount: 13,
           weight: 1,
@@ -3104,7 +3417,7 @@ enum EntityId {
           weight: 1,
         ),
         ItemDropType(
-          id: ItemId.GRAVE_MOSS,
+          id: ItemId.PRIMAL_ICHOR,
           lowCount: 5,
           highCount: 13,
           weight: 1,
@@ -3261,12 +3574,17 @@ enum EntityId {
       rarity: Rarity.UNCOMMON,
       itemDrops: [
         ItemDropType(
-          id: ItemId.BAT_WING,
+          id: ItemId.ANCIENT_FEATHER,
           lowCount: 5,
           highCount: 13,
           weight: 1,
         ),
-        ItemDropType(id: ItemId.BAT_FANG, lowCount: 3, highCount: 5, weight: 1),
+        ItemDropType(
+          id: ItemId.ANCIENT_FANG,
+          lowCount: 3,
+          highCount: 5,
+          weight: 1,
+        ),
       ],
       bonusDrops: [
         DropRoll(
@@ -3407,6 +3725,219 @@ enum EntityId {
     ),
   ),
 
+  // The Gorge Floor's boss, level 233: a basilisk grown huge in the cliff
+  // foot's shade. A Speed dagger and a Strength ring
+  OLD_STONEGAZE(
+    CombatEntityDefinition(
+      basilisk,
+      fibLevel: 11,
+      name: "Old Stonegaze",
+      isDungeonBoss: true,
+      rarity: Rarity.RARE,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.PRIMAL_VENOM,
+          lowCount: 5,
+          highCount: 13,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.VENOM_GLAND,
+          lowCount: 3,
+          highCount: 5,
+          weight: 1,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.ADAMANTITE_BAR, lowCount: 5, highCount: 13),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.BASILISK_FANG, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.BASILISK_FANG, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.GAZEGLASS_RING, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.GAZEGLASS_RING, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // The Hanging Ledges' boss, level 233: the stone that has stood on this
+  // wall longest. Stamina greaves
+  LEDGE_WARDEN(
+    CombatEntityDefinition(
+      stoneGolem,
+      fibLevel: 11,
+      name: "The Ledge Warden",
+      isDungeonBoss: true,
+      rarity: Rarity.RARE,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.ADAMANTITE_ORE,
+          lowCount: 5,
+          highCount: 13,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.ADAMANTITE_BAR,
+          lowCount: 3,
+          highCount: 5,
+          weight: 1,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.CRYSTAL_GEODE, lowCount: 1, highCount: 3),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.LEDGEWALKER_GREAVES, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.LEDGEWALKER_GREAVES, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // The Wind-Cut Arches' boss, level 233: the chimera that holds the span.
+  // A Recovery scepter
+  ARCH_CHIMERA(
+    CombatEntityDefinition(
+      cliffChimera,
+      fibLevel: 11,
+      name: "The Arch Chimera",
+      isDungeonBoss: true,
+      rarity: Rarity.RARE,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.VENOM_GLAND,
+          lowCount: 5,
+          highCount: 13,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.ADAMANTITE_ORE,
+          lowCount: 3,
+          highCount: 5,
+          weight: 1,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.ADAMANTITE_BAR, lowCount: 5, highCount: 13),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.CHIMERAS_HORN, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.CHIMERAS_HORN, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // The Eyrie's boss and the dungeon's last, level 233: the matriarch the
+  // fledglings hatch under. Tier-6 pieces, a greatsword and a crest
+  REDWING_MATRIARCH(
+    CombatEntityDefinition(
+      roc,
+      fibLevel: 11,
+      name: "Redwing, the Matriarch",
+      isDungeonBoss: true,
+      rarity: Rarity.RARE,
+      itemDrops: [
+        ItemDropType(
+          id: ItemId.PRIMAL_FEATHER,
+          lowCount: 5,
+          highCount: 13,
+          weight: 1,
+        ),
+        ItemDropType(
+          id: ItemId.ADAMANTITE_BAR,
+          lowCount: 3,
+          highCount: 5,
+          weight: 1,
+        ),
+      ],
+      bonusDrops: [
+        DropRoll(
+          chance: 0.1,
+          entries: [
+            ItemDropType(id: ItemId.CRYSTAL_GEODE, lowCount: 1, highCount: 3),
+          ],
+        ),
+      ],
+      extraBonusDrops: [
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.REDWINGS_TALON, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.REDWINGS_TALON, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.REDWINGS_CREST, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.04,
+          entries: [
+            ItemDropType(id: ItemId.REDWINGS_CREST, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+    ),
+  ),
+
   // ── SHOPS ───────────────────────────────────────────────────────
   // ShopEntityDefinition, by zone then stock tier
   FARMER(
@@ -3430,7 +3961,7 @@ enum EntityId {
         ),
         ShopStockEntry(itemId: ItemId.LOGS, count: 1000),
         ShopStockEntry(itemId: ItemId.CHICKEN_MEAT, count: 1000),
-        ShopStockEntry(itemId: ItemId.FEATHER, count: 20),
+        ShopStockEntry(itemId: ItemId.SMALL_FEATHER, count: 20),
         ShopStockEntry(itemId: ItemId.LIGHT_LEATHER_BOOTS, count: 1),
         ShopStockEntry(itemId: ItemId.LIGHT_LEATHER_GLOVES, count: 1),
         ShopStockEntry(itemId: ItemId.LIGHT_LEATHER_PANTS, count: 1),
@@ -3713,6 +4244,14 @@ enum EntityId {
       dungeonId: DungeonId.OLD_SORROW_MINE,
     ),
   ),
+  REDWALL_EYRIE_ENTRANCE(
+    DungeonEntityDefinition(
+      name: "The Redwall Eyrie",
+      iconAsset: "assets/images/entities/redwall_eyrie.png",
+      rarity: Rarity.RARE,
+      dungeonId: DungeonId.REDWALL_EYRIE,
+    ),
+  ),
   SPINEHOLD_CAVERNS_ENTRANCE(
     DungeonEntityDefinition(
       name: "Spinehold Caverns",
@@ -3727,6 +4266,14 @@ enum EntityId {
       iconAsset: "assets/images/entities/ashen_vaults.png",
       rarity: Rarity.RARE,
       dungeonId: DungeonId.ASHEN_VAULTS,
+    ),
+  ),
+  GAUNT_TOR_ENTRANCE(
+    DungeonEntityDefinition(
+      name: "Gaunt Tor",
+      iconAsset: "assets/images/entities/gaunt_tor.png",
+      rarity: Rarity.RARE,
+      dungeonId: DungeonId.GAUNT_TOR,
     ),
   ),
   HOARFROST_HOLLOW_ENTRANCE(

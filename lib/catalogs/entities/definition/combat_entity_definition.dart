@@ -8,6 +8,7 @@ import 'package:rpg/catalogs/entities/combat_type.dart';
 import 'package:rpg/catalogs/entities/model/combat_entity.dart';
 import 'package:rpg/catalogs/entities/definition/encounter_entity_definition.dart';
 import 'package:rpg/utilities/util.dart';
+import 'package:rpg/catalogs/items/items.dart';
 
 /// A thing that fights back. Its stats are never written by hand: [level]
 /// sets the size of its stat budget and [combatType] splits that budget
@@ -121,6 +122,37 @@ class CombatEntityDefinition extends EncounterEntityDefinition {
         ],
     ...extraBonusDrops,
   ];
+
+  /// The chance a regular monster drops its reagent part on a kill. A
+  /// dungeon boss always does, [bossReagentLow]–[bossReagentHigh] of them.
+  /// design/ALCHEMY_POTIONS.md, "Drop rate".
+  static const double reagentChance = 0.5;
+  static const int bossReagentLow = 2;
+  static const int bossReagentHigh = 4;
+
+  static final Expando<List<DropRoll>> _rolledBonusCache = Expando();
+
+  /// This monster's alchemy reagent: its archetype's family, at the grade
+  /// its rung reaches. Derived, so a new monster on a tagged archetype
+  /// drops the right part without writing one. Null for an untagged one.
+  DropRoll? get reagentDrop {
+    final family = archetype.reagentFamily;
+    if (family == null) return null;
+    return DropRoll(
+      chance: isDungeonBoss ? 1.0 : reagentChance,
+      entries: [
+        ItemDropType(
+          id: reagentPart(family, ReagentGrade.forRung(fibLevel)),
+          lowCount: isDungeonBoss ? bossReagentLow : 1,
+          highCount: isDungeonBoss ? bossReagentHigh : 1,
+        ),
+      ],
+    );
+  }
+
+  @override
+  List<DropRoll> get rolledBonusDrops =>
+      _rolledBonusCache[this] ??= [...bonusDrops, ?reagentDrop];
 
   @override
   String get iconAsset => archetype.iconAsset;

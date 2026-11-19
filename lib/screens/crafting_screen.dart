@@ -19,6 +19,7 @@ import '../widgets/icon_renderer.dart';
 import '../widgets/sprite_frame.dart';
 import '../widgets/stage_panel.dart';
 import '../widgets/travel_row.dart';
+import '../widgets/stage_buff_icons.dart';
 
 class CraftingScreen extends StatefulWidget {
   const CraftingScreen({super.key});
@@ -99,6 +100,7 @@ class _CraftingScreenState extends State<CraftingScreen>
                   tint: context.gameColors.craftingTint,
                   height: 148,
                   sprite: SpriteFrame.sprite(station, size: 116),
+                  buffs: StageBuffIcons.ifAny(context),
                 ),
                 const SizedBox(height: 12),
 

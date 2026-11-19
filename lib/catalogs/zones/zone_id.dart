@@ -35,6 +35,13 @@ enum ZoneId {
         EntityId.GRAINERY_ENTRANCE,
       ],
       discoverableEntities: [
+        // the minor potions' core herb
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MEADOWSWEET,
+          weight: 1,
+          count: 3,
+          unlockLevel: 1,
+        ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.TREE,
           weight: 1,
@@ -102,16 +109,17 @@ enum ZoneId {
           unlockLevel: 13,
         ),
 
-        WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
+        WeightedDropTableEntry<EntityId>(id: EntityId.COPPER, weight: .5),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GOBLIN_CAMP,
           weight: .01,
           unlockLevel: 5,
         ),
-        // herb geography: the low herbs grow here once you can spot them,
-        // which is what makes Herbalism reachable through Exploration
+        // the minor potions' combat herb. Herb geography: each zone grows
+        // its own, which is what makes Herbalism reachable through
+        // Exploration
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.GUAM,
+          id: EntityId.BRAMBLEWORT,
           weight: 1,
           count: 3,
           unlockLevel: 6,
@@ -148,8 +156,8 @@ enum ZoneId {
   ),
   // The three west-coast zones off Southwood Forest, each a band of the
   // monster ladder: Reedwater Vale 13–34, Mudmouth Delta 21–55, Saltwind
-  // Coast 34–89. Monsters and a dungeon each so far: no gathering or
-  // stations yet.
+  // Coast 34–89. Monsters, a dungeon and a potion herb each so far; no
+  // other gathering or stations yet.
   REEDWATER_VALE(
     ZoneDefinition(
       name: "Reedwater Vale",
@@ -159,6 +167,13 @@ enum ZoneId {
       xpPerExplore: 5,
       permanentEntities: [EntityId.REEDMAZE_ENTRANCE],
       discoverableEntities: [
+        // the regular potions' core herb
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.REEDMINT,
+          weight: 0.6,
+          count: 3,
+          unlockLevel: 10,
+        ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.RIVER_TOAD,
           weight: 1.5,
@@ -179,6 +194,7 @@ enum ZoneId {
           weight: .6,
           unlockLevel: 12,
         ),
+        WeightedDropTableEntry<EntityId>(id: EntityId.IRON, weight: .5),
       ],
     ),
   ),
@@ -191,6 +207,13 @@ enum ZoneId {
       xpPerExplore: 7,
       permanentEntities: [EntityId.SILT_WARRENS_ENTRANCE],
       discoverableEntities: [
+        // the super potions' core herb
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SILT_LILY,
+          weight: 0.6,
+          count: 3,
+          unlockLevel: 15,
+        ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MUD_CRAB,
           weight: 1.5,
@@ -218,6 +241,13 @@ enum ZoneId {
       xpPerExplore: 9,
       permanentEntities: [EntityId.BRINEDEEP_CAVES_ENTRANCE],
       discoverableEntities: [
+        // the greater potions' core herb
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SALTWORT,
+          weight: 0.6,
+          count: 3,
+          unlockLevel: 20,
+        ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.SHORE_CRAB,
           weight: 1.5,
@@ -278,12 +308,11 @@ enum ZoneId {
           weight: 1,
           unlockLevel: 20,
         ),
-        // the high herbs grow in the deep woods, the way the low ones grow
-        // in Southwood — the next rung of the same Herbalism ladder
+        // the regular potions' combat herb, in the deep woods' shade
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.HARRALANDER,
+          id: EntityId.DUSKTHORN,
           weight: .6,
-          count: 2,
+          count: 3,
           unlockLevel: 21,
         ),
 
@@ -349,7 +378,7 @@ enum ZoneId {
           weight: 1.5,
           unlockLevel: 25,
         ),
-        // the super potions' herb, the next rung past darkwood's harralander
+        // the super potions' combat herb
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MIRECAP,
           weight: .6,
@@ -381,7 +410,7 @@ enum ZoneId {
     ),
   ),
   // The still water past the swamp's far edge: a small lake ringed by
-  // maples, and the ranarr that grows in their shade.
+  // maples.
   MAPLEWATER_LAKE(
     ZoneDefinition(
       name: "Maplewater Lake",
@@ -412,26 +441,6 @@ enum ZoneId {
         WeightedDropTableEntry<EntityId>(
           id: EntityId.WILLOW_TREE,
           weight: .4,
-          unlockLevel: 30,
-        ),
-        // the low herbs, uncommon this far from the farms
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.GUAM,
-          weight: .8,
-          count: 3,
-          unlockLevel: 30,
-        ),
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.HARRALANDER,
-          weight: .8,
-          count: 3,
-          unlockLevel: 30,
-        ),
-        // the fourth herb tier
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.RANARR,
-          weight: .6,
-          count: 3,
           unlockLevel: 30,
         ),
       ],
@@ -482,6 +491,13 @@ enum ZoneId {
 
       permanentEntities: [EntityId.FIREPIT],
       discoverableEntities: [
+        // the grand potions' core herb
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GLIMMERCAP,
+          weight: 0.6,
+          count: 3,
+          unlockLevel: 55,
+        ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.MAGIC_TREE,
           weight: 1.5,
@@ -654,17 +670,10 @@ enum ZoneId {
           weight: 1.5,
           unlockLevel: 35,
         ),
-        // the utility potions' grass
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.SWEETGRASS,
-          weight: .6,
-          count: 3,
-          unlockLevel: 35,
-        ),
         // tier 4 mining, the rung above the darkwood's coal. A vein opens
         // at the level its ore smelts at, not inside the zone's range
         WeightedDropTableEntry<EntityId>(id: EntityId.MITHRIL_VEIN, weight: 1),
-        // the greater potions' herb, the next rung past the swamp's mirecap
+        // the greater potions' combat herb
         WeightedDropTableEntry<EntityId>(
           id: EntityId.BLUESTEM,
           weight: .6,
@@ -821,17 +830,11 @@ enum ZoneId {
       explorationLevel: 50,
       xpPerExplore: 20,
 
-      permanentEntities: [EntityId.FIREPIT],
+      permanentEntities: [EntityId.FIREPIT, EntityId.GAUNT_TOR_ENTRANCE],
       discoverableEntities: [
-        // level 55, the hills' welcome: the prairie's top end, flying
+        // level 55, the hills' welcome: a horned climber off the scree
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.HARPY,
-          weight: 1.5,
-          unlockLevel: 50,
-        ),
-        // level 89
-        WeightedDropTableEntry<EntityId>(
-          id: EntityId.IMP,
+          id: EntityId.ROCK_RAM,
           weight: 1.5,
           unlockLevel: 50,
         ),
@@ -840,6 +843,12 @@ enum ZoneId {
         // level 144, under the bridges and in the passes
         WeightedDropTableEntry<EntityId>(
           id: EntityId.TROLL,
+          weight: 1,
+          unlockLevel: 52,
+        ),
+        // level 144, the hills' bones walking
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.EARTH_ELEMENTAL_UNCOMMON,
           weight: 1,
           unlockLevel: 52,
         ),
@@ -898,7 +907,7 @@ enum ZoneId {
   // East of the flats the desert breaks into layered red cliffs: sheer walls,
   // ledges, wind-cut arches and a river far below. One tier above the flats
   // — exploration 50, monsters at 144 and a rare 233 — with things that
-  // perch, things that stare, and griffins nesting on the rim.
+  // perch, things that stare, and young rocs nesting on the rim.
   REDWALL_BLUFFS(
     ZoneDefinition(
       name: "Redwall Bluffs",
@@ -907,17 +916,24 @@ enum ZoneId {
       explorationLevel: 50,
       xpPerExplore: 20,
 
-      permanentEntities: [EntityId.FIREPIT],
+      permanentEntities: [EntityId.FIREPIT, EntityId.REDWALL_EYRIE_ENTRANCE],
       discoverableEntities: [
+        // the grand potions' combat herb
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.BLOODROOT,
+          weight: 0.6,
+          count: 3,
+          unlockLevel: 50,
+        ),
         // level 89, up from the flats below
         WeightedDropTableEntry<EntityId>(
           id: EntityId.GIANT_SCORPION,
           weight: 1,
           unlockLevel: 50,
         ),
-        // level 144: stone that perches on the ledges until it doesn't
+        // level 144: a stone-scaled hunter of the ledges
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.GARGOYLE,
+          id: EntityId.CLIFF_CHIMERA,
           weight: 1.5,
           unlockLevel: 50,
         ),
@@ -927,9 +943,9 @@ enum ZoneId {
           weight: 1,
           unlockLevel: 52,
         ),
-        // level 233, rare and nesting on the rim
+        // level 233, rare: a young roc nesting on the rim
         WeightedDropTableEntry<EntityId>(
-          id: EntityId.GRIFFIN,
+          id: EntityId.ROC_FLEDGLING,
           weight: .5,
           unlockLevel: 55,
         ),
@@ -1076,6 +1092,13 @@ enum ZoneId {
 
       permanentEntities: [EntityId.FIREPIT, EntityId.HOARFROST_HOLLOW_ENTRANCE],
       discoverableEntities: [
+        // the supreme potions' core herb
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.FROSTBLOOM,
+          weight: 0.6,
+          count: 3,
+          unlockLevel: 90,
+        ),
         // level 233, the mountain's ogres gone up into the snow
         WeightedDropTableEntry<EntityId>(
           id: EntityId.OGRE,
@@ -1150,6 +1173,13 @@ enum ZoneId {
 
       permanentEntities: [EntityId.FIREPIT, EntityId.THE_CALDERA_ENTRANCE],
       discoverableEntities: [
+        // the supreme potions' combat herb
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.EMBERROOT,
+          weight: 0.6,
+          count: 3,
+          unlockLevel: 90,
+        ),
         // level 233
         WeightedDropTableEntry<EntityId>(
           id: EntityId.FIRE_ELEMENTAL,
@@ -1276,6 +1306,56 @@ enum ZoneId {
         ),
         WeightedDropTableEntry<EntityId>(
           id: EntityId.TORSTOL,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.MEADOWSWEET,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.BRAMBLEWORT,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.REEDMINT,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.DUSKTHORN,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SILT_LILY,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.SALTWORT,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.GLIMMERCAP,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.BLOODROOT,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.FROSTBLOOM,
+          weight: 1,
+          count: 3,
+        ),
+        WeightedDropTableEntry<EntityId>(
+          id: EntityId.EMBERROOT,
           weight: 1,
           count: 3,
         ),

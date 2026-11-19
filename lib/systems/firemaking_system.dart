@@ -90,8 +90,7 @@ class FiremakingSystem {
   ///
   /// [count] is how many lays go on at once, which is how an offline stretch
   /// of firemaking settles: n crafts are n lays however they are applied.
-  /// A campfire's lays each add its burn time, and a bonfire's raise its
-  /// heat (see [FireItem.addLays]). There is no cap.
+  /// Each lay adds its burn time (see [FireItem.addLays]). There is no cap.
   ///
   /// [burnScale] is how much longer it burns for the firemaker's level (see
   /// [FireItem.burnScale]).

@@ -63,13 +63,27 @@ void main() {
 
     test('holds the old foothills roster', () {
       for (final id in [
-        EntityId.HARPY,
-        EntityId.IMP,
+        EntityId.ROCK_RAM,
         EntityId.TROLL,
+        EntityId.EARTH_ELEMENTAL_UNCOMMON,
         EntityId.HILL_GIANT,
       ]) {
         expect(entryFor(id), isNotNull, reason: '${id.name} lives here');
       }
+    });
+
+    test('cut the harpy and imp, and pitches the ram at 55, elemental at 144', () {
+      expect(entryFor(EntityId.HARPY), isNull);
+      expect(entryFor(EntityId.IMP), isNull);
+      expect(
+        (EntityId.ROCK_RAM.definition as CombatEntityDefinition).fibLevel,
+        8,
+      );
+      expect(
+        (EntityId.EARTH_ELEMENTAL_UNCOMMON.definition as CombatEntityDefinition)
+            .fibLevel,
+        10,
+      );
     });
 
     test('has a firepit and rock worth mining', () {

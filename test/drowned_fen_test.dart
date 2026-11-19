@@ -117,13 +117,23 @@ void main() {
       }
     });
 
-    test('are brewed from mirecap and a swamp reagent', () {
+    test('are brewed from silt lily or mirecap and a thick part', () {
       for (final id in supers.keys) {
+        // the attack potion is off the ladder: no recipe brews it now
+        if (id == ItemId.SUPER_ATTACK_POTION) continue;
         final recipe = alchemyRecipes.singleWhere(
           (r) => r.output.any((o) => o.id == id),
         );
-        expect(recipe.inputs.keys, contains(ItemId.MIRECAP), reason: id.name);
         expect(recipe.inputs, hasLength(2), reason: id.name);
+        final herb = recipe.inputs.keys.firstWhere(
+          (i) => i == ItemId.SILT_LILY || i == ItemId.MIRECAP,
+        );
+        final part = recipe.inputs.keys.singleWhere((i) => i != herb);
+        expect(
+          (part.definition as ReagentPartDefinition).grade,
+          ReagentGrade.THICK,
+          reason: id.name,
+        );
       }
     });
   });

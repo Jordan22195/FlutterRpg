@@ -52,8 +52,9 @@ void main() {
     final data = save.playerData.skillData[SkillId.MINING]!;
     data.xp = data.xpTable[level];
     final pick = picks.lastWhere((p) => p.$1 <= level).$2;
-    save.playerData.equipmentData.equipedTools[SkillId.MINING] =
-        EquipmentItem(id: pick);
+    save.playerData.equipmentData.equipedTools[SkillId.MINING] = EquipmentItem(
+      id: pick,
+    );
     final details = session.worldController.entityDetails(
       vein.build() as EncounterEntity,
     );

@@ -38,8 +38,8 @@ So a rung-5 legs piece is tier 4.
 |---|---|---|---|
 | Early | 0–1 | Common / Uncommon | Grainery (t0), Goblin Camp (t1) |
 | Mid | 2–3 | Uncommon / Rare | Wolf Den (t2), The Reedmaze (t2), Spider Den (t3), Drowned Fen (t3), The Silt Warrens (t3) |
-| Late | 4–5 | Rare / Epic | Tempest Reach (t4), Brinedeep Caves (t4), Haunted Ruins (t4), Old Sorrow Mine (t4), Goblin Queen's Lair (t5) |
-| Endgame | 6–7 | Rare / Epic | Spinehold Caverns, Ashen Vaults (t6); Hoarfrost Hollow, Thunderhall, The Caldera (t7). Gear not designed yet. |
+| Late | 4–5 | Rare / Epic | Tempest Reach (t4), Brinedeep Caves (t4), Haunted Ruins (t4), Old Sorrow Mine (t4), The Redwall Eyrie (t5, Redwing t6), Goblin Queen's Lair (t5) |
+| Endgame | 6–7 | Rare / Epic | Spinehold Caverns, Ashen Vaults, Gaunt Tor (t6, built); Hoarfrost Hollow, Thunderhall, The Caldera (t7). Tier-7 gear not designed yet. |
 
 ## 3. The shape of a dungeon's loot
 
@@ -203,6 +203,23 @@ The weights column gives the lead stat first. "→ chest" marks boss pieces the 
 | | The Borer | Borer's Mandible (dagger, Str) · Borer's Shell Pauldrons (Def 2 · Str 1) → chest |
 | | The Lode Golem | Lodestone Maul (greatsword, Str, t5) · Heart of the Lode (offhand, Def 2 · Sta 1, t5) |
 | | *chest* | Prospector's Duster (back, Def 2 · Sta 1) · Mother Lode Nugget (neck, Atk 3 · Str 1) |
+| The Redwall Eyrie (t5, R/E) | Old Stonegaze | Basilisk Fang (dagger, Spd) · Gazeglass Ring (finger, Atk 2 · Def 1, Str) → chest |
+| | The Ledge Warden | Ledgewalker Greaves (legs, Def 2 · Atk 1, Sta) → chest |
+| | The Arch Chimera | Chimera's Horn (scepter, Rec) |
+| | Redwing, the Matriarch | Redwing's Talon (greatsword, Spd, t6) · Redwing's Crest (head, Atk 3 · Def 1, Sta, t6) → chest |
+| | *chest* | Eyrie Windcloak (back, Def 2 · Atk 1, Str) · Redwall Cuirass (chest, Def 2 · Atk 1, Spd) |
+| Spinehold Caverns (t6, R/E) | Bridge Troll | Trollhide Treads (feet, Atk 2 · Def 1, Spd) → chest · Tollkeeper's Belt (waist, Def 2 · Atk 1, Rec) |
+| | Steel Sentinel | Sentinel's Bulwark (offhand, Def 3 · Atk 1, Sta, rung 8) → chest · Sentinel's Gorget (neck, Def 2 · Atk 1, Str) |
+| | Greyspine Drake | Drakefang Greatsword (greatsword, Str, rung 8) · Wyrmcrest Ring (finger, Atk 2 · Def 1, Str) |
+| | *chest* | Archwarden's Helm (head, Atk 3 · Def 1, Str) |
+| Ashen Vaults (t6, R/E) | Ash Wyvern | Cinderfang (dagger, Spd) · Wyvernwing Cloak (back, Atk 2 · Def 1, Spd) → chest |
+| | Slag Warden | Slagplate Bracers (wrist, Def 2 · Atk 1, Str) · Slagplate Pauldrons (shoulder, Def 3 · Atk 1, Sta, rung 7) → chest |
+| | Heart of the Ridge | Ridgeheart Gauntlets (hands, Atk 1 · Def 1, Str) |
+| | *chest* | Ashweave Hauberk (chest, Def 2 · Atk 1, Spd, rung 7) · Emberglass Pendant (neck, Atk 3 · Def 1, Spd, rung 7) |
+| Gaunt Tor (t6, R/E) | Thunderhorn | Thunderhorn Helm (head, Atk 3 · Def 1, Spd) → chest |
+| | The Cairnwarden | Cairnstone Greaves (legs, Def 2 · Atk 1, Str, rung 7) → chest · Cairnwarden's Signet (finger, Atk 2 · Def 1, Spd) |
+| | The Hill King | Hill King's Cudgel (sword, Str, rung 7) · Giantbone Girdle (waist, Def 2 · Atk 1, Str) → chest |
+| | *chest* | Ironroot Cuirass (chest, Def 2 · Atk 1, Str, rung 7) · Ramhide Mantle (back, Def 3 · Atk 1, Rec) |
 | Goblin Queen's Lair (t5, R/E) | Goblin Queen | Goblin Crown (Def 12 · Atk 4) → chest · Goblin Scepter (scepter) |
 | | *chest* | Queen's Train (Spd 2 · Rec 1) |
 
@@ -216,18 +233,19 @@ The weights column gives the lead stat first. "→ chest" marks boss pieces the 
 | 3 | ● | ● | ● | ● (+ first weapon) |
 | 4 | ● | ● | ● | ● |
 | 5 | ● | ● | ○ | ● |
-| 6–7 | not designed yet | | | |
+| 6 | ● | ● | ● | ● |
+| 7 | not designed yet | | | |
 
 Under the combat-leads rule, Speed leads only on pure-core pieces: Broodsilk Leggings, Queen's Train, Croaker's Charm and Saltscale Sandals. Pure-core Speed pieces are the lever if Speed coverage needs to grow.
 
-The new dungeons' proposed focuses, as a brief for whoever builds them:
+Spinehold Caverns and the Ashen Vaults are built (above). The other dungeons' proposed focuses, as a brief for whoever builds them:
 
 | Dungeon | Boss focuses | Chest exclusive |
 |---|---|---|
-| Spinehold Caverns (t6) | Elder Roc → Speed · Steel Sentinel → Defence (shield) · Greyspine Drake → Strength (greatsword) | Attack helm |
-| Ashen Vaults (t6) | Ash Wyvern → Attack · Slag Warden → Defence · Heart of the Ridge → Strength ring | Speed chest piece |
 | Hoarfrost Hollow (t7) | Yeti Patriarch → Strength · Frost Giant → Defence · Frost Wyrm → Attack | Speed boots |
 | Thunderhall (t7) | Roc Broodmother → Speed · Thunderbird → Attack · Storm Giant → Strength (2h) | Defence legs |
 | The Caldera (t7) | Lesser Demon → Attack · Greater Demon → Strength · Dragon → Defence (+ weapon) | Speed cloak |
 
 Hoarfrost Hollow, Thunderhall and The Caldera are three dungeons at one tier, so mirror them (rule 5) before any ships.
+
+The Ashen Vaults' Warden and Heart stand on shoulder and hands rather than a shield and a ring, because Spinehold's Sentinel's Bulwark (offhand, Stamina) and Wyrmcrest Ring (finger, Strength) already hold those slots and leads at tier 6 (`test/ashen_vaults_test.dart` checks for collisions).

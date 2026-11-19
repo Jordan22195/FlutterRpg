@@ -75,10 +75,7 @@ void main() {
     legendary.quality = Rarity.LEGENDARY;
     legendary.rollSecondaries();
     expect(legendary.effectiveSkillBonus[SkillId.DEFENCE], 34);
-    expect(
-      legendary.effectiveSkillBonus.values.fold(0, (a, b) => a + b),
-      50,
-    );
+    expect(legendary.effectiveSkillBonus.values.fold(0, (a, b) => a + b), 50);
     save.inventoryData.equipment.add(legendary);
 
     final preview = system.previewDisenchant(legendary, save.playerData);

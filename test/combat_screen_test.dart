@@ -319,7 +319,9 @@ void main() {
     await settle(tester);
     expect(find.byType(EncounterScreen), findsOneWidget);
 
-    final rarity = entityBorderColor(EntityId.ROTWOOD_SCARECROW_1.definition.rarity);
+    final rarity = entityBorderColor(
+      EntityId.ROTWOOD_SCARECROW_1.definition.rarity,
+    );
     expect(rarity, isNotNull);
     expect(tester.widget<StagePanel>(find.byType(StagePanel)).outline, rarity);
     final side = stageBorder(tester);

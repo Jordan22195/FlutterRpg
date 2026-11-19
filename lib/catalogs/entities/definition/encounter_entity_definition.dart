@@ -43,6 +43,12 @@ class EncounterEntityDefinition extends EntityDefinition {
     this.xpPerDamage = 1,
   });
 
+  /// Every bonus roll a kill or a catch actually rolls: [bonusDrops], plus
+  /// whatever a subclass derives rather than writes (a monster's reagent
+  /// part, see CombatEntityDefinition). What the encounter rolls and the
+  /// info sheet lists.
+  List<DropRoll> get rolledBonusDrops => bonusDrops;
+
   /// [itemDrops] as a table keyed by the drops themselves, so a roll comes
   /// back knowing which quality it landed on rather than just which item.
   /// Built on read: a definition is const, so it cannot hold a table it

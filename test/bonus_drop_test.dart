@@ -156,7 +156,10 @@ void main() {
         closeTo(1.0, 1e-9),
         reason: 'the main table does not add up to one pick',
       );
-      final bonusRow = details.drops.singleWhere((d) => d.bonus);
+      // the other bonus row is the scarecrow's derived reagent part
+      final bonusRow = details.drops.singleWhere(
+        (d) => d.bonus && d.itemId == layeredDrop.id,
+      );
       expect(bonusRow.itemId, layeredDrop.id);
       expect(bonusRow.chance, closeTo(layered.chance, 1e-9));
 
@@ -178,8 +181,11 @@ void main() {
         id.build() as CombatEntity,
       );
 
-      expect(details.drops.where((d) => d.bonus), isEmpty);
-      final main = details.drops.toList();
+      // its only bonus row is the derived reagent part
+      expect(details.drops.where((d) => d.bonus).map((d) => d.itemId), [
+        def.reagentDrop!.entries.single.id,
+      ]);
+      final main = details.drops.where((d) => !d.bonus).toList();
       expect(main.length, def.itemDrops.flattened.length);
       expect(
         main.fold<double>(0, (sum, d) => sum + d.chance),

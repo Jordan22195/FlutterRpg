@@ -175,10 +175,11 @@ abstract final class PixelSprites {
     bool locked = false,
   }) {
     final group = type.group;
-    return _badges.putIfAbsent(
-      (group, selected, locked),
-      () => _buildBadge(group, selected: selected, locked: locked),
-    );
+    return _badges.putIfAbsent((
+      group,
+      selected,
+      locked,
+    ), () => _buildBadge(group, selected: selected, locked: locked));
   }
 
   /// The 12x12 type glyph alone, for the filter rail and small chips.
@@ -225,7 +226,8 @@ abstract final class PixelSprites {
     required bool locked,
   }) {
     final (w, h, inShape) = _shape(type.frame);
-    bool inside(int x, int y) => x >= 0 && y >= 0 && x < w && y < h && inShape(x, y);
+    bool inside(int x, int y) =>
+        x >= 0 && y >= 0 && x < w && y < h && inShape(x, y);
 
     // distance in from the edge: 0 is the outline, 1 the rim, 2 the shade
     // band, the rest is the face
@@ -244,8 +246,14 @@ abstract final class PixelSprites {
       }
     }
     const steps = [
-      (1, 0), (-1, 0), (0, 1), (0, -1),
-      (1, 1), (1, -1), (-1, 1), (-1, -1),
+      (1, 0),
+      (-1, 0),
+      (0, 1),
+      (0, -1),
+      (1, 1),
+      (1, -1),
+      (-1, 1),
+      (-1, -1),
     ];
     while (queue.isNotEmpty) {
       final (x, y) = queue.removeFirst();
@@ -268,7 +276,8 @@ abstract final class PixelSprites {
     // drop shadow first, so the shape paints over all but its lower edge
     for (var y = 0; y < h; y++) {
       for (var x = 0; x < w; x++) {
-        if (inside(x, y)) put(x + pad, y + pad + shadowRows, const Color(0x66000000));
+        if (inside(x, y))
+          put(x + pad, y + pad + shadowRows, const Color(0x66000000));
       }
     }
 
@@ -316,7 +325,8 @@ abstract final class PixelSprites {
     if (!locked) {
       final icon = _icon(type);
       final ox = pad + (w - 12) ~/ 2;
-      final oy = pad + (h - 12) ~/ 2 - (type.frame == MapNodeFrame.SHIELD ? 2 : 0);
+      final oy =
+          pad + (h - 12) ~/ 2 - (type.frame == MapNodeFrame.SHIELD ? 2 : 0);
       for (var y = 0; y < 12; y++) {
         for (var x = 0; x < 12; x++) {
           final c = icon.at(x, y);
@@ -346,12 +356,7 @@ abstract final class PixelSprites {
             '.wwwwbbwwww.',
             '.wwwwbbwwww.',
           ],
-          const {
-            'a': gold,
-            'w': parchment,
-            'k': Color(0xFF3A2C20),
-            'b': wood,
-          },
+          const {'a': gold, 'w': parchment, 'k': Color(0xFF3A2C20), 'b': wood},
         );
       case MapNodeType.SKILLING:
         // a pickaxe: haft from the bottom-left, head across the top-right
@@ -385,7 +390,13 @@ abstract final class PixelSprites {
           for (var i = 0; i < 8; i++) {
             put(f(i + 1), i, parchmentShade);
           }
-          for (final (x, y) in const [(7, 11), (8, 10), (9, 9), (10, 8), (11, 7)]) {
+          for (final (x, y) in const [
+            (7, 11),
+            (8, 10),
+            (9, 9),
+            (10, 8),
+            (11, 7),
+          ]) {
             put(f(x), y, gold);
           }
           put(f(10), 10, wood);

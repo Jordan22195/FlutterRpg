@@ -4,6 +4,7 @@ import '../theme/game_colors.dart';
 import '../theme/hearth_text.dart';
 import '../theme/hearth_theme.dart';
 import '../utilities/util.dart';
+import 'stage_buff_icons.dart';
 
 /// The big tinted panel the subject of a combat or crafting screen stands
 /// in: the same tints as the sprite frames, at radius 20, with the sprite
@@ -28,7 +29,14 @@ class StagePanel extends StatelessWidget {
     this.bannerHeight = 0,
     this.side,
     this.spotlight,
+    this.buffs,
   });
+
+  /// Pinned to the top-right corner, e.g. the player's [StageBuffIcons].
+  /// It shares the corner with [side], so a stage takes one or the other.
+  /// With one, [hit] floats a little lower so the two don't meet. Leave it
+  /// null while nothing would draw there, so [hit] keeps its place.
+  final Widget? buffs;
 
   /// Lights the subject in a pool of this colour on a clear panel, with a
   /// shadow at its feet, in place of the tinted fill — for a stage standing
@@ -39,7 +47,7 @@ class StagePanel extends StatelessWidget {
   /// [footer] with a [footerHeight], e.g. a fire's burn levels.
   final Widget? side;
 
-  /// Pinned across the top edge, e.g. the reagent buffs burning on a fire.
+  /// Pinned across the top edge, e.g. a row of chips over the subject.
   /// The sprite and [leading] stand below its [bannerHeight].
   final Widget? banner;
   final double bannerHeight;
@@ -191,12 +199,19 @@ class StagePanel extends StatelessWidget {
               ),
             if (corner != null)
               Positioned(right: 12, bottom: 12, child: corner!),
+            if (buffs != null)
+              Positioned(
+                right: StageBuffIcons.insetRight,
+                top: StageBuffIcons.insetTop,
+                child: buffs!,
+              ),
             if (hit != null)
               Align(
                 // up and to the right of the sprite, wherever it stands
+                // and dropped below the buff icons when they're up
                 alignment: heading == null
-                    ? const Alignment(0.55, -0.35)
-                    : const Alignment(0.85, -0.3),
+                    ? Alignment(0.55, buffs == null ? -0.35 : 0.05)
+                    : Alignment(0.85, buffs == null ? -0.3 : 0.15),
                 child: IgnorePointer(child: hit!),
               ),
           ],

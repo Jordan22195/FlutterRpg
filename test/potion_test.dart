@@ -144,21 +144,18 @@ void main() {
   });
 
   group('the alchemy recipes', () {
-    // the minor tier is the guam-leaf recipes; the tiers above brew off
-    // a herb of their own
-    // the waters' potions (cooking, woodcutting) brew off guam too, but
-    // with a fishing spot's reagent: they are their own line
-    List<CraftingRecipe> minorRecipes() => RecipeCatalog()
+    // the ladder: every potion is its tier's herb and its family's part at
+    // the tier's grade (design/ALCHEMY_POTIONS.md)
+    List<CraftingRecipe> ladderRecipes() => RecipeCatalog()
         .recipesForSkill(SkillId.ALCHEMY)
-        .where((r) => r.inputs.containsKey(ItemId.GUAM_LEAF))
-        .where((r) => potionStats.containsKey(r.output.single.id))
+        .where((r) => r.output.single.id.definition is PotionDefinition)
         .toList();
 
-    test('the recovery potion is harralander and grave moss', () {
+    test('the recovery potion is reedmint and a sturdy venom', () {
       final recipe = RecipeCatalog()
           .recipesForSkill(SkillId.ALCHEMY)
           .singleWhere((r) => r.output.single.id == ItemId.RECOVERY_POTION);
-      expect(recipe.inputs, {ItemId.HARRALANDER: 1, ItemId.GRAVE_MOSS: 1});
+      expect(recipe.inputs, {ItemId.REEDMINT: 1, ItemId.STURDY_VENOM: 1});
       final potion = ItemId.RECOVERY_POTION.definition as BuffItemDefinition;
       expect(potion.skillBonus.keys, [SkillId.RECOVERY]);
       expect(
@@ -168,20 +165,72 @@ void main() {
       );
     });
 
-    test('seven recipes by level tier, xp climbing with level', () {
-      final recipes = minorRecipes();
-      expect(recipes.length, 7);
-      expect(recipes.map((r) => r.levelRequirement).toList()..sort(), [
-        1,
-        1,
-        1,
-        5,
-        5,
-        10,
-        10,
-      ]);
+    test('ten potions a tier, six tiers, one recipe each', () {
+      final recipes = ladderRecipes();
+      expect(recipes, hasLength(60));
+      for (final tier in PotionTier.values) {
+        final skills = [
+          for (final r in recipes)
+            if ((r.output.single.id.definition as PotionDefinition).tier ==
+                tier)
+              (r.output.single.id.definition as PotionDefinition).skill,
+        ];
+        expect(skills.toSet(), potionSlots.keys.toSet(), reason: tier.name);
+        expect(skills, hasLength(potionSlots.length), reason: tier.name);
+      }
+    });
 
-      // every recipe at a higher tier is worth more than every recipe below
+    test('every ladder recipe is its tier herb and its family part', () {
+      for (final recipe in ladderRecipes()) {
+        final id = recipe.output.single.id;
+        final def = id.definition as PotionDefinition;
+        final slot = potionSlots[def.skill]!;
+        final herb = slot.coreHerb ? def.tier.coreHerb : def.tier.combatHerb;
+        final part = reagentPart(slot.family, def.tier.grade);
+        expect(recipe.id, 'alch_${id.name.toLowerCase()}');
+        expect(recipe.inputs, {herb: 1, part: 1}, reason: recipe.id);
+        expect(recipe.levelRequirement, def.tier.levelAt(slot.order));
+        expect(def.skillBonus, {def.skill: def.tier.bonus});
+        expect(recipe.output.single.count, 1);
+        expect(recipe.output.single.weight, 1);
+      }
+    });
+
+    test(
+      'each family part feeds two potions of its tier, feather and ichor one',
+      () {
+        for (final tier in PotionTier.values) {
+          for (final family in ReagentFamily.values) {
+            final part = reagentPart(family, tier.grade);
+            final uses = ladderRecipes()
+                .where((r) => r.inputs.containsKey(part))
+                .length;
+            expect(
+              uses,
+              family == ReagentFamily.FEATHER || family == ReagentFamily.ICHOR
+                  ? 1
+                  : 2,
+              reason: '${part.name} in the ${tier.name} tier',
+            );
+          }
+        }
+      },
+    );
+
+    test('every tier staggers its ten potions across ten different levels', () {
+      for (final tier in PotionTier.values) {
+        final levels = {
+          for (final r in ladderRecipes())
+            if ((r.output.single.id.definition as PotionDefinition).tier ==
+                tier)
+              r.levelRequirement,
+        };
+        expect(levels, hasLength(10), reason: tier.name);
+      }
+    });
+
+    test('xp climbs with the level a recipe asks for', () {
+      final recipes = ladderRecipes();
       for (final low in recipes) {
         for (final high in recipes) {
           if (high.levelRequirement <= low.levelRequirement) continue;
@@ -194,14 +243,37 @@ void main() {
       }
     });
 
-    test('the fishing potion is guam and a minnow', () {
+    test('the fishing potion is bramblewort and a small shell', () {
       final recipe = RecipeCatalog()
           .recipesForSkill(SkillId.ALCHEMY)
           .singleWhere(
             (r) => r.output.single.id == ItemId.MINOR_FISHING_POTION,
           );
-      expect(recipe.inputs, {ItemId.GUAM_LEAF: 1, ItemId.MINNOW: 1});
+      expect(recipe.inputs, {ItemId.BRAMBLEWORT: 1, ItemId.SMALL_SHELL: 1});
       expect(recipe.levelRequirement, 1);
+    });
+
+    test('no recipe brews from a retired herb or an attack potion', () {
+      const retired = {
+        ItemId.GUAM_LEAF,
+        ItemId.MARRENTILL,
+        ItemId.TARROMIN,
+        ItemId.HARRALANDER,
+        ItemId.RANARR_WEED,
+        ItemId.TOADFLAX,
+        ItemId.SWEETGRASS,
+        ItemId.IRIT_LEAF,
+      };
+      const attackPotions = {
+        ItemId.MINOR_ATTACK_POTION,
+        ItemId.ATTACK_POTION,
+        ItemId.SUPER_ATTACK_POTION,
+        ItemId.GREATER_ATTACK_POTION,
+      };
+      for (final r in RecipeCatalog().recipesForSkill(SkillId.ALCHEMY)) {
+        expect(r.inputs.keys.toSet().intersection(retired), isEmpty);
+        expect(attackPotions, isNot(contains(r.output.single.id)));
+      }
     });
 
     test('drinking the fishing potion lifts fishing by its bonus', () {
@@ -217,26 +289,6 @@ void main() {
 
       expect(fishing(), before + minorBonus);
       session.dispose();
-    });
-
-    test('every minor recipe is one guam leaf plus one reagent', () {
-      final recipes = minorRecipes();
-      for (final recipe in recipes) {
-        expect(recipe.inputs.length, 2, reason: recipe.id);
-        expect(recipe.inputs[ItemId.GUAM_LEAF], 1, reason: recipe.id);
-        expect(recipe.output.length, 1, reason: recipe.id);
-
-        final produced = recipe.output.single.id;
-        expect(potionStats.containsKey(produced), isTrue, reason: recipe.id);
-        expect(recipe.output.single.count, 1);
-        expect(recipe.output.single.weight, 1);
-      }
-
-      // each potion is brewed by exactly one recipe
-      expect(
-        recipes.map((r) => r.output.single.id).toSet(),
-        potionStats.keys.toSet(),
-      );
     });
 
     test('the alchemy station stands in the dev forest and crafts alchemy', () {
@@ -255,17 +307,17 @@ void main() {
     test('brewing spends the inputs, yields the potion, and pays xp', () {
       final session = buildSession();
       final save = session.saveGameData;
-      save.inventoryData.itemMap[ItemId.GUAM_LEAF] = 5;
-      save.inventoryData.itemMap[ItemId.FEATHER] = 5;
+      save.inventoryData.itemMap[ItemId.BRAMBLEWORT] = 5;
+      save.inventoryData.itemMap[ItemId.SMALL_SHELL] = 5;
       final xpBefore = save.playerData.skillData[SkillId.ALCHEMY]!.xp;
 
-      craftAt(session, 'alch_minor_speed_potion', EntityId.ALCHEMY_STATION);
+      craftAt(session, 'alch_minor_fishing_potion', EntityId.ALCHEMY_STATION);
 
       // a potion is an ordinary item: unlike firemaking, crafting one does
       // not put a buff up, it fills a stack
-      expect(save.inventoryData.itemMap[ItemId.MINOR_SPEED_POTION], 1);
-      expect(save.inventoryData.itemMap[ItemId.GUAM_LEAF], 4);
-      expect(save.inventoryData.itemMap[ItemId.FEATHER], 4);
+      expect(save.inventoryData.itemMap[ItemId.MINOR_FISHING_POTION], 1);
+      expect(save.inventoryData.itemMap[ItemId.BRAMBLEWORT], 4);
+      expect(save.inventoryData.itemMap[ItemId.SMALL_SHELL], 4);
       expect(save.playerData.buffData.globalBuffs, isEmpty);
       expect(save.playerData.skillData[SkillId.ALCHEMY]!.xp, xpBefore + 15);
 
@@ -279,7 +331,7 @@ void main() {
 
       expect(
         session.craftingController.meetsRecipeLevelRequirement(
-          'alch_minor_strength_potion',
+          'alch_minor_exploration_potion',
         ),
         isFalse,
       );
@@ -287,7 +339,7 @@ void main() {
       alchemy.xp = alchemy.xpTable[10];
       expect(
         session.craftingController.meetsRecipeLevelRequirement(
-          'alch_minor_strength_potion',
+          'alch_minor_exploration_potion',
         ),
         isTrue,
       );

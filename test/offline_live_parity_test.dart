@@ -340,7 +340,7 @@ void main() {
 
   // every potion lasts three minutes, so a single one runs out a third of the
   // way through a ten-minute window; an armed stack keeps it up throughout.
-  // the campfire burns five minutes, the bonfire exactly the whole window
+  // the plain bonfire burns five minutes, the oak one eight of the ten
   final buffs = <({String name, PlaySetup apply, double slack})>[
     (name: 'no buffs', apply: (_) {}, slack: 0.2),
     (
@@ -377,13 +377,13 @@ void main() {
       slack: 0.2,
     ),
     (
-      name: 'a campfire that burns out',
-      apply: (s) => light(s, ItemId.BASIC_CAMPFIRE),
+      name: 'a recovery bonfire that burns out',
+      apply: (s) => light(s, ItemId.BONFIRE_RECOVERY),
       slack: 0.2,
     ),
     (
-      name: 'a bonfire for the whole window',
-      apply: (s) => light(s, ItemId.BONFIRE),
+      name: 'a speed bonfire for most of the window',
+      apply: (s) => light(s, ItemId.OAK_BONFIRE_SPEED),
       slack: 0.2,
     ),
   ];
@@ -610,14 +610,14 @@ void main() {
       }
     }
 
-    test('a campfire and a recovery potion while idle-recovering', () {
+    test('a recovery bonfire and potion while idle-recovering', () {
       // nothing boosted, the pool starting empty: the window is all about
       // the recovery rate, which both the fire and the potion move
       compare((s) {
         baseline(s);
         activities.first.bind(s);
         drink(s, ItemId.MINOR_RECOVERY_POTION);
-        light(s, ItemId.BASIC_CAMPFIRE);
+        light(s, ItemId.BONFIRE_RECOVERY);
         s.saveGameData.playerData.stamina = 0;
       });
     });
@@ -636,7 +636,7 @@ void main() {
         ]) {
           drink(s, id);
         }
-        light(s, ItemId.BONFIRE);
+        light(s, ItemId.OAK_BONFIRE_SPEED);
         boosts[2].apply(s);
       });
     });

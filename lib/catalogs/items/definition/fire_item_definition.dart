@@ -4,30 +4,23 @@ import 'package:rpg/catalogs/rarity.dart';
 import 'package:rpg/catalogs/items/model/fire_item.dart';
 import 'package:rpg/catalogs/items/definition/zone_buff_item_definition.dart';
 
-/// A fire. Three parts decide what it does:
+/// A fire. Its [skillBonus] is what it gives while it burns, and
+/// [duration] is how long one lay burns.
 ///
-/// - its type is its behaviour: a cookfire cooks, and carries a fixed
-///   [skillBonus]; a campfire or bonfire carries none of its own and is
-///   tended with fire reagents instead.
-/// - its wood is its [power]: the bonus every reagent thrown on it gives,
-///   whatever the stat. Better wood, bigger buffs.
-/// - [reagentBurn] is how long one reagent lasts on it.
-/// - a bonfire [stokes]: it burns on heat rather than a timer, starting from
-///   its [power] and stoked up the bonus ladder to two rungs above it, then
-///   cooling back down (see FireItem). It eats reagents faster.
+/// - a cookfire cooks ([canCook]) and carries a fixed cooking + hitpoints
+///   bonus.
+/// - a bonfire is laid from a [wood] and one fire [reagent]: the reagent
+///   picks the stat and the wood its size. Every wood has one bonfire per
+///   reagent, each its own recipe.
 class FireItemDefinition extends ZoneBuffItemDefinition {
   final bool canCook;
 
-  /// What one reagent's buff is worth on this fire. Zero for a cookfire,
-  /// which cannot be tended.
-  final int power;
+  /// The logs a bonfire is laid from; null for a cookfire.
+  final ItemId? wood;
 
-  /// How long one reagent burns on this fire.
-  final Duration reagentBurn;
-
-  /// Whether this fire burns on heat - stoked up, cooling down - rather
-  /// than a steady timer.
-  final bool stokes;
+  /// The fire reagent a bonfire is laid with, which picks its stat; null
+  /// for a cookfire.
+  final ItemId? reagent;
 
   const FireItemDefinition({
     required super.name,
@@ -35,16 +28,15 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
     required super.skillBonus,
     required super.duration,
     this.canCook = false,
-    this.power = 0,
-    this.reagentBurn = const Duration(minutes: 5),
-    this.stokes = false,
+    this.wood,
+    this.reagent,
     super.description,
     super.iconAsset,
     super.quality,
   });
 
-  /// Whether reagents can be thrown on this fire.
-  bool get tendable => power > 0;
+  /// Whether this is a bonfire: laid with a reagent for its stat.
+  bool get isBonfire => reagent != null;
 
   @override
   FireItemDefinition copyWith({
@@ -57,9 +49,8 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
     Map<SkillId, int>? skillBonus,
     Duration? duration,
     bool? canCook,
-    int? power,
-    Duration? reagentBurn,
-    bool? stokes,
+    ItemId? wood,
+    ItemId? reagent,
   }) {
     return FireItemDefinition(
       name: name ?? this.name,
@@ -70,9 +61,8 @@ class FireItemDefinition extends ZoneBuffItemDefinition {
       skillBonus: skillBonus ?? this.skillBonus,
       duration: duration ?? this.duration,
       canCook: canCook ?? this.canCook,
-      power: power ?? this.power,
-      reagentBurn: reagentBurn ?? this.reagentBurn,
-      stokes: stokes ?? this.stokes,
+      wood: wood ?? this.wood,
+      reagent: reagent ?? this.reagent,
     );
   }
 

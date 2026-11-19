@@ -113,20 +113,19 @@ enum DungeonId {
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.HARRALANDER, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.GRAVE_MOSS, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.DUSKTHORN, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.THICK_ICHOR, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.SILK, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.VENOM, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.THICK_VENOM, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.BAT_WING, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.BAT_FANG, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.THICK_FEATHER, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.THICK_FANG, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.ROTTEN_FLESH, lowCount: 20, highCount: 80),
           ],
         ),
@@ -301,15 +300,14 @@ enum DungeonId {
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.GUAM_LEAF, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.MARRENTILL, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.TARROMIN, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.MEADOWSWEET, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.BRAMBLEWORT, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.REEDMINT, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.BEAR_CLAW, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.WOLF_CLAW, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.STURDY_FANG, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.WOLF_PELT, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.BEAR_HIDE, lowCount: 20, highCount: 80),
           ],
@@ -394,9 +392,8 @@ enum DungeonId {
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.STRIDER_LEG, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.STURDY_VENOM, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.LILY_PAD, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.TOAD_WART, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
@@ -425,7 +422,7 @@ enum DungeonId {
               lowCount: 5,
               highCount: 13,
             ),
-            ItemDropType(id: ItemId.TURTLE_SHELL, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.STURDY_SHELL, lowCount: 5, highCount: 13),
           ],
         ),
         // the chest's exclusive at the band's two rarities, and some of the
@@ -496,28 +493,25 @@ enum DungeonId {
         DropRoll(
           entries: [
             ItemDropType(id: ItemId.MIRECAP, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.LEECH, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.MARSH_FROG, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.THICK_VENOM, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.SLIME_OOZE, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.SLIME_CORE, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.SCALE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.THICK_ICHOR, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.THICK_SHELL, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.CROW_QUILL, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.FEATHER, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.THICK_FEATHER, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.MURKJAW_HIDE, lowCount: 20, highCount: 80),
           ],
         ),
         // the zone's rare reagent, kept to a handful
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.MURKJAW_FANG, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.THICK_FANG, lowCount: 5, highCount: 13),
           ],
         ),
         // the chest's exclusive at the band's two rarities, and some of the
@@ -601,7 +595,7 @@ enum DungeonId {
               lowCount: 20,
               highCount: 80,
             ),
-            ItemDropType(id: ItemId.SCALE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.THICK_SHELL, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
@@ -623,20 +617,15 @@ enum DungeonId {
         // handful
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.LEECH, lowCount: 5, highCount: 13),
-            ItemDropType(id: ItemId.MARSH_FROG, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.THICK_VENOM, lowCount: 5, highCount: 13),
             ItemDropType(id: ItemId.PEAT_CLOD, lowCount: 5, highCount: 13),
           ],
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.CRAB_CLAW, lowCount: 5, highCount: 13),
-            ItemDropType(id: ItemId.HIPPO_TUSK, lowCount: 5, highCount: 13),
-            ItemDropType(
-              id: ItemId.CROCODILE_TOOTH,
-              lowCount: 5,
-              highCount: 13,
-            ),
+            ItemDropType(id: ItemId.THICK_SHELL, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.THICK_HORN, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.THICK_FANG, lowCount: 5, highCount: 13),
           ],
         ),
         // the chest's exclusive at the band's two rarities, and some of the
@@ -710,21 +699,21 @@ enum DungeonId {
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.SWEETGRASS, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.SALTWORT, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.BLUESTEM, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.ORC_TUSK, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.SNAKESKIN, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.HEAVY_HORN, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.HEAVY_VENOM, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.VENOM_GLAND, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.CENTAUR_HOOF, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.WIND_MOTE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.HEAVY_HORN, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.HEAVY_ICHOR, lowCount: 20, highCount: 80),
             ItemDropType(
               id: ItemId.BOWSTRING_SINEW,
               lowCount: 20,
@@ -740,11 +729,7 @@ enum DungeonId {
         // the zone's rare reagent, kept to a handful
         DropRoll(
           entries: [
-            ItemDropType(
-              id: ItemId.SABERTOOTH_FANG,
-              lowCount: 5,
-              highCount: 13,
-            ),
+            ItemDropType(id: ItemId.HEAVY_FANG, lowCount: 5, highCount: 13),
           ],
         ),
         // the chest's exclusive at the band's two rarities, and some of the
@@ -822,7 +807,7 @@ enum DungeonId {
         DropRoll(
           entries: [
             ItemDropType(id: ItemId.ROTTEN_FLESH, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.GRAVE_MOSS, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.HEAVY_ICHOR, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
@@ -935,13 +920,13 @@ enum DungeonId {
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.BAT_WING, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.BAT_FANG, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.HEAVY_FEATHER, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.HEAVY_FANG, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.SNAKESKIN, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.HEAVY_VENOM, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.VENOM_GLAND, lowCount: 20, highCount: 80),
             ItemDropType(id: ItemId.COAL, lowCount: 20, highCount: 80),
           ],
@@ -1021,6 +1006,113 @@ enum DungeonId {
       ],
     ),
   ),
+  // Redwall Bluffs' dungeon: a climb up the cliff face from the gorge floor
+  // to the rim, a level-233 boss on every floor and no human monsters. The
+  // first two floors' trash stands at 144, the last two at 233. Six uniques
+  // off the bosses and two in the chest (design/DUNGEON_LOOT_GUIDE.md)
+  REDWALL_EYRIE(
+    DungeonDefinition(
+      name: "The Redwall Eyrie",
+      iconAsset: "assets/images/dungeons/redwall_eyrie.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.ADAMANTITE_ORE,
+              lowCount: 20,
+              highCount: 80,
+            ),
+            ItemDropType(
+              id: ItemId.ADAMANTITE_BAR,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.ANCIENT_VENOM, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.VENOM_GLAND, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.ANCIENT_FEATHER,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.CRYSTAL_GEODE, lowCount: 5, highCount: 13),
+          ],
+        ),
+        DropRoll(
+          chance: 0.25,
+          entries: [
+            ItemDropType(id: ItemId.EYRIE_WINDCLOAK, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.REDWALL_CUIRASS, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.06,
+          entries: [
+            ItemDropType(id: ItemId.EYRIE_WINDCLOAK, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.REDWALL_CUIRASS, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.GAZEGLASS_RING, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.LEDGEWALKER_GREAVES, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.REDWINGS_CREST, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Gorge Floor",
+          entities: [
+            DungeonEntityRef(EntityId.BASILISK, count: 14),
+            DungeonEntityRef(EntityId.GIANT_SCORPION, count: 8),
+            DungeonEntityRef(EntityId.OLD_STONEGAZE, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Hanging Ledges",
+          entities: [
+            DungeonEntityRef(EntityId.CLIFF_CHIMERA, count: 12),
+            DungeonEntityRef(EntityId.MINOTAUR, count: 10),
+            DungeonEntityRef(EntityId.LEDGE_WARDEN, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Wind-Cut Arches",
+          entities: [
+            DungeonEntityRef(EntityId.CLIFF_CHIMERA, count: 8),
+            DungeonEntityRef(EntityId.EARTH_ELEMENTAL, count: 8),
+            DungeonEntityRef(EntityId.OGRE, count: 6),
+            DungeonEntityRef(EntityId.ARCH_CHIMERA, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Eyrie",
+          entities: [
+            DungeonEntityRef(EntityId.GRIFFIN, count: 12),
+            DungeonEntityRef(EntityId.ROC_FLEDGLING, count: 8),
+            DungeonEntityRef(EntityId.REDWING_MATRIARCH, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
   // Saltwind Coast's dungeon: the coast's L34-89 monsters from the
   // tidepools down to the deep, and a level-89 boss at the end of each
   // card, so the dungeon tops out where the coast does. Twenty-five fights
@@ -1051,8 +1143,7 @@ enum DungeonId {
         DropRoll(
           entries: [
             ItemDropType(id: ItemId.SERPENT_SCALE, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.SCALE, lowCount: 20, highCount: 80),
-            ItemDropType(id: ItemId.CRAB_CLAW, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.HEAVY_SHELL, lowCount: 20, highCount: 80),
           ],
         ),
         DropRoll(
@@ -1067,13 +1158,13 @@ enum DungeonId {
         // the sea's reagents and the serpent's fang, kept to a handful
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.SEA_KELP, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.HEAVY_SHELL, lowCount: 5, highCount: 13),
             ItemDropType(id: ItemId.AMBERGRIS, lowCount: 5, highCount: 13),
           ],
         ),
         DropRoll(
           entries: [
-            ItemDropType(id: ItemId.SERPENT_FANG, lowCount: 5, highCount: 13),
+            ItemDropType(id: ItemId.HEAVY_FANG, lowCount: 5, highCount: 13),
           ],
         ),
         // the chest's exclusive at the band's two rarities, and some of the
@@ -1164,14 +1255,36 @@ enum DungeonId {
             ItemDropType(id: ItemId.COINS, lowCount: 2000, highCount: 8000),
           ],
         ),
+        // the chest's exclusive at the band's two rarities, and two of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.25,
+          entries: [
+            ItemDropType(id: ItemId.ARCHWARDENS_HELM, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.06,
+          entries: [
+            ItemDropType(id: ItemId.ARCHWARDENS_HELM, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.TROLLHIDE_TREADS, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.SENTINELS_BULWARK, rarity: Rarity.EPIC),
+          ],
+        ),
       ],
       entries: [
         DungeonEntry(
-          name: "The Troll Bridge",
+          name: "The Hollow Arch",
           entities: [
             DungeonEntityRef(EntityId.TROLL, count: 16),
             DungeonEntityRef(EntityId.MINOTAUR, count: 8),
-            DungeonEntityRef(EntityId.ELDER_ROC, count: 1),
+            DungeonEntityRef(EntityId.BRIDGE_TROLL, count: 1),
           ],
         ),
 
@@ -1228,6 +1341,30 @@ enum DungeonId {
             ItemDropType(id: ItemId.COINS, lowCount: 2000, highCount: 8000),
           ],
         ),
+        // the chest's exclusives at the band's two rarities, and two of the
+        // bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.25,
+          entries: [
+            ItemDropType(id: ItemId.ASHWEAVE_HAUBERK, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.EMBERGLASS_PENDANT, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.06,
+          entries: [
+            ItemDropType(id: ItemId.ASHWEAVE_HAUBERK, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.EMBERGLASS_PENDANT, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.WYVERNWING_CLOAK, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.SLAGPLATE_PAULDRONS, rarity: Rarity.EPIC),
+          ],
+        ),
       ],
       entries: [
         DungeonEntry(
@@ -1254,6 +1391,98 @@ enum DungeonId {
             DungeonEntityRef(EntityId.EARTH_ELEMENTAL, count: 10),
             DungeonEntityRef(EntityId.FIRE_ELEMENTAL, count: 14),
             DungeonEntityRef(EntityId.HEART_OF_THE_RIDGE, count: 1),
+          ],
+        ),
+      ],
+    ),
+  ),
+  // Ironroot Hills' dungeon: the hills' own beasts, trolls, elementals and
+  // giants, and a level-233 boss at the end of each card. The third tier-6
+  // dungeon, standing on slots and leads Spinehold and the Ashen Vaults leave
+  // open.
+  GAUNT_TOR(
+    DungeonDefinition(
+      name: "Gaunt Tor",
+      iconAsset: "assets/images/dungeons/gaunt_tor.png",
+      type: DungeonType.ZONE,
+      chestRolls: [
+        DropRoll(
+          entries: [
+            ItemDropType(
+              id: ItemId.ADAMANTITE_ORE,
+              lowCount: 20,
+              highCount: 80,
+            ),
+            ItemDropType(
+              id: ItemId.ADAMANTITE_BAR,
+              lowCount: 20,
+              highCount: 80,
+            ),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.COAL, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.GOLD_ORE, lowCount: 20, highCount: 80),
+            ItemDropType(id: ItemId.ANIMAL_PELT, lowCount: 20, highCount: 80),
+          ],
+        ),
+        DropRoll(
+          entries: [
+            ItemDropType(id: ItemId.COINS, lowCount: 2000, highCount: 8000),
+          ],
+        ),
+        // the chest's exclusives at the band's two rarities, and three of
+        // the bosses' pieces at their top rarity, never above
+        // (design/DUNGEON_LOOT_GUIDE.md)
+        DropRoll(
+          chance: 0.25,
+          entries: [
+            ItemDropType(id: ItemId.IRONROOT_CUIRASS, rarity: Rarity.RARE),
+            ItemDropType(id: ItemId.RAMHIDE_MANTLE, rarity: Rarity.RARE),
+          ],
+        ),
+        DropRoll(
+          chance: 0.06,
+          entries: [
+            ItemDropType(id: ItemId.IRONROOT_CUIRASS, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.RAMHIDE_MANTLE, rarity: Rarity.EPIC),
+          ],
+        ),
+        DropRoll(
+          chance: 0.17,
+          entries: [
+            ItemDropType(id: ItemId.THUNDERHORN_HELM, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.CAIRNSTONE_GREAVES, rarity: Rarity.EPIC),
+            ItemDropType(id: ItemId.GIANTBONE_GIRDLE, rarity: Rarity.EPIC),
+          ],
+        ),
+      ],
+      entries: [
+        DungeonEntry(
+          name: "The Switchbacks",
+          entities: [
+            DungeonEntityRef(EntityId.ROCK_RAM, count: 12),
+            DungeonEntityRef(EntityId.TROLL, count: 10),
+            DungeonEntityRef(EntityId.THUNDERHORN, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Cairn Hollow",
+          entities: [
+            DungeonEntityRef(EntityId.TROLL, count: 12),
+            DungeonEntityRef(EntityId.EARTH_ELEMENTAL_UNCOMMON, count: 12),
+            DungeonEntityRef(EntityId.THE_CAIRNWARDEN, count: 1),
+          ],
+        ),
+
+        DungeonEntry(
+          name: "The Giants' Hall",
+          entities: [
+            DungeonEntityRef(EntityId.TROLL, count: 8),
+            DungeonEntityRef(EntityId.HILL_GIANT, count: 12),
+            DungeonEntityRef(EntityId.THE_HILL_KING, count: 1),
           ],
         ),
       ],
@@ -1438,7 +1667,7 @@ enum DungeonId {
           entries: [
             ItemDropType(id: ItemId.IRON_BAR, lowCount: 5, highCount: 15),
             ItemDropType(id: ItemId.OAK_LOGS, lowCount: 10, highCount: 30),
-            ItemDropType(id: ItemId.GUAM_LEAF, lowCount: 5, highCount: 15),
+            ItemDropType(id: ItemId.MEADOWSWEET, lowCount: 5, highCount: 15),
           ],
         ),
         // the chest's exclusive at the band's two rarities, and some of the

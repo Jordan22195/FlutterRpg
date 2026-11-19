@@ -53,8 +53,9 @@ void main() {
     final data = save.playerData.skillData[SkillId.FISHING]!;
     data.xp = data.xpTable[level];
     final rod = rods.lastWhere((r) => r.$1 <= level).$2;
-    save.playerData.equipmentData.equipedTools[SkillId.FISHING] =
-        EquipmentItem(id: rod);
+    save.playerData.equipmentData.equipedTools[SkillId.FISHING] = EquipmentItem(
+      id: rod,
+    );
     return session.worldController
         .entityDetails(spot.build() as EncounterEntity)
         .playerXpPerHour;
@@ -76,9 +77,11 @@ void main() {
   });
 
   test('the marsh trades some xp for its reagents, and beats the creek', () {
-    for (var level = requiredLevel(EntityId.MURKY_MARSH);
-        level < requiredLevel(EntityId.DEEP_POND);
-        level++) {
+    for (
+      var level = requiredLevel(EntityId.MURKY_MARSH);
+      level < requiredLevel(EntityId.DEEP_POND);
+      level++
+    ) {
       final marsh = xpPerHourAt(level, EntityId.MURKY_MARSH);
       expect(marsh, lessThan(xpPerHourAt(level, EntityId.RIVER)));
       expect(marsh, greaterThan(xpPerHourAt(level, EntityId.CREEK)));

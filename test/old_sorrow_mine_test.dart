@@ -49,10 +49,7 @@ void main() {
   const owned = {
     EntityId.PACKRAT_KING: {ItemId.PACKRATS_TRINKET},
     EntityId.DUSKWING_MATRIARCH: {ItemId.DUSKWING_CUFFS},
-    EntityId.THE_BORER: {
-      ItemId.BORERS_MANDIBLE,
-      ItemId.BORERS_SHELL_PAULDRONS,
-    },
+    EntityId.THE_BORER: {ItemId.BORERS_MANDIBLE, ItemId.BORERS_SHELL_PAULDRONS},
     EntityId.LODE_GOLEM: {ItemId.LODESTONE_MAUL, ItemId.HEART_OF_THE_LODE},
   };
   const exclusives = {ItemId.PROSPECTORS_DUSTER, ItemId.MOTHER_LODE_NUGGET};

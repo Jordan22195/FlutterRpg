@@ -32,8 +32,8 @@ void main() {
 
   void stock(GameSession session, int count) {
     final items = session.saveGameData.inventoryData.itemMap;
-    items[ItemId.GUAM_LEAF] = count;
-    items[ItemId.FEATHER] = count;
+    items[ItemId.MEADOWSWEET] = count;
+    items[ItemId.SMALL_FEATHER] = count;
   }
 
   int brew(GameSession session, int crafts, {required bool offline}) {
@@ -84,8 +84,8 @@ void main() {
 
     final items = session.saveGameData.inventoryData.itemMap;
     // the herb and reagent are paid per craft, not per potion
-    expect(items[ItemId.GUAM_LEAF], isNull);
-    expect(items[ItemId.FEATHER], isNull);
+    expect(items[ItemId.MEADOWSWEET], isNull);
+    expect(items[ItemId.SMALL_FEATHER], isNull);
     expect(items[ItemId.MINOR_SPEED_POTION], potions);
     expect(potions, closeTo(1000 * meanPotions(session, 99), 10));
     expect(potions, greaterThan(1000));

@@ -57,7 +57,14 @@ class BuffData {
           );
         }
 
-        final buff = ZoneBuffItem.fromJson(Map<String, dynamic>.from(raw));
+        // a fire retired when bonfires became one per reagent comes back
+        // as its new bonfire, or not at all when it carried no buff
+        final migrated = FireItem.migrateRetiredJson(
+          Map<String, dynamic>.from(raw),
+          DateTime.now(),
+        );
+        if (migrated == null) continue;
+        final buff = ZoneBuffItem.fromJson(migrated);
 
         // migration: these were keyed by ItemId and owned by a campfire
         // entity that no longer exists. the only zone buff that ever shipped

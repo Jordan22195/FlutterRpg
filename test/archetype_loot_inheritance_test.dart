@@ -31,6 +31,20 @@ List<String> describe(List<ItemDropType> drops) => [
     '${d.id.name}/${d.rarity.name}/${d.lowCount}-${d.highCount}/${d.weight}',
 ];
 
+/// A test bird: a fixed line and a range, so scaling shows on both. The
+/// catalog's chicken no longer drops a range since its feathers became the
+/// derived reagent roll.
+const testBird = CombatArchetype(
+  iconAsset: 'assets/images/entities/chicken.png',
+  lootFibLevel: 2,
+  combatType: CombatType.LEATHER_DPS,
+  itemDrops: [
+    ItemDropType(id: ItemId.CHICKEN_MEAT, weight: 1),
+    ItemDropType(id: ItemId.ANIMAL_PELT, lowCount: 1, highCount: 5, weight: 1),
+  ],
+);
+const bird = CombatEntityDefinition(testBird, fibLevel: 2, name: 'Bird');
+
 Iterable<(EntityId, CombatEntityDefinition)> everyMonster() sync* {
   for (final id in EntityId.values) {
     if (id.definition case final CombatEntityDefinition def) yield (id, def);
@@ -110,15 +124,18 @@ void main() {
 
     test('above it, stacks scale by fib(steps)', () {
       for (var steps = 1; steps <= 4; steps++) {
-        final drops = raised(EntityId.CHICKEN, steps).itemDrops;
+        final drops = bird.copyWith(fibLevel: 2 + steps).itemDrops;
         final m = Util.fib(steps);
-        expect(drops.map((d) => d.id), [ItemId.CHICKEN_MEAT, ItemId.FEATHER]);
+        expect(drops.map((d) => d.id), [
+          ItemId.CHICKEN_MEAT,
+          ItemId.ANIMAL_PELT,
+        ]);
         // fixed count: 1 meat -> m meat, still fixed
         final meat = only(drops, ItemId.CHICKEN_MEAT);
         expect(meat.lowCount, m, reason: 'steps $steps');
         expect(meat.highCount, 0, reason: 'steps $steps');
-        // range: 1..5 feathers -> m..5m
-        final feather = only(drops, ItemId.FEATHER);
+        // range: 1..5 pelts -> m..5m
+        final feather = only(drops, ItemId.ANIMAL_PELT);
         expect(feather.lowCount, m, reason: 'steps $steps');
         expect(feather.highCount, 5 * m, reason: 'steps $steps');
       }
@@ -169,19 +186,21 @@ void main() {
     test('replaces the inherited table with itemDrops', () {
       // a hand-written monster keeps exactly what it wrote
       final elder = combat(EntityId.FOREST_WOLF_UNCOMMON).itemDrops;
-      expect(elder.map((d) => d.id), [ItemId.FANG, ItemId.WOLF_PELT]);
-      expect(only(elder, ItemId.FANG).highCount, 5);
+      expect(elder.map((d) => d.id), [ItemId.WOLF_PELT]);
+      expect(only(elder, ItemId.WOLF_PELT).highCount, 5);
     });
 
     test('adds extraItemDrops on top of the inherited table', () {
-      final def = raised(EntityId.CHICKEN, 2).copyWith(
-        extraItemDrops: const [
-          ItemDropType(id: ItemId.WOOL_CLOAK, weight: 0.1),
-        ],
-      );
+      final def = bird
+          .copyWith(fibLevel: 4)
+          .copyWith(
+            extraItemDrops: const [
+              ItemDropType(id: ItemId.WOOL_CLOAK, weight: 0.1),
+            ],
+          );
       expect(def.itemDrops.map((d) => d.id), [
         ItemId.CHICKEN_MEAT,
-        ItemId.FEATHER,
+        ItemId.ANIMAL_PELT,
         ItemId.WOOL_CLOAK,
       ]);
       // the extra line is taken as written, not scaled
@@ -200,15 +219,56 @@ void main() {
     test('adds extraBonusDrops to the inherited rolls', () {
       final def = raised(EntityId.WRAITH, 1).copyWith(
         extraBonusDrops: const [
-          DropRoll(chance: 0.5, entries: [ItemDropType(id: ItemId.FEATHER)]),
+          DropRoll(
+            chance: 0.5,
+            entries: [ItemDropType(id: ItemId.SMALL_FEATHER)],
+          ),
         ],
       );
       expect(def.bonusDrops.map((r) => r.chance), [0.15, 0.5]);
     });
 
     test('a copy on another rung re-scales what it inherits', () {
-      final four = raised(EntityId.CHICKEN, 1).copyWith(fibLevel: 2 + 4);
-      expect(only(four.itemDrops, ItemId.FEATHER).highCount, 5 * 8);
+      final four = bird.copyWith(fibLevel: 3).copyWith(fibLevel: 2 + 4);
+      expect(only(four.itemDrops, ItemId.ANIMAL_PELT).highCount, 5 * 8);
+    });
+  });
+
+  group('the reagent part', () {
+    test(
+      'every monster on a tagged archetype drops its family at its grade',
+      () {
+        for (final (id, def) in everyMonster()) {
+          final family = def.archetype.reagentFamily;
+          final roll = def.reagentDrop;
+          if (family == null) {
+            expect(roll, isNull, reason: id.name);
+            continue;
+          }
+          final part = roll!.entries.single.id;
+          final partDef = part.definition as ReagentPartDefinition;
+          expect(partDef.family, family, reason: id.name);
+          expect(partDef.grade, ReagentGrade.forRung(def.fibLevel));
+          expect(
+            def.rolledBonusDrops.last.entries.single.id,
+            part,
+            reason: id.name,
+          );
+          expect(roll.chance, def.isDungeonBoss ? 1.0 : 0.5, reason: id.name);
+        }
+      },
+    );
+
+    test('the grade climbs a rung at a time from Small at 13 and below', () {
+      expect(ReagentGrade.forRung(0), ReagentGrade.SMALL);
+      expect(ReagentGrade.forRung(5), ReagentGrade.SMALL);
+      expect(ReagentGrade.forRung(6), ReagentGrade.STURDY);
+      expect(ReagentGrade.forRung(8), ReagentGrade.HEAVY);
+      expect(ReagentGrade.forRung(10), ReagentGrade.PRIMAL);
+      expect(ReagentGrade.forRung(13), ReagentGrade.PRIMAL);
+      expect(ReagentGrade.forLevel(20), ReagentGrade.SMALL);
+      expect(ReagentGrade.forLevel(21), ReagentGrade.STURDY);
+      expect(ReagentGrade.forLevel(144), ReagentGrade.PRIMAL);
     });
   });
 

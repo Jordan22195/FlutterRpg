@@ -1,12 +1,14 @@
-import 'dart:math' as math;
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
+import 'package:rpg/catalogs/recipes/data/firemaking_recipes.dart';
+import 'package:rpg/catalogs/recipes/recipe_catalog.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
 import 'package:rpg/data/combat_tuning.dart';
+import 'package:rpg/data/skill_category.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
 import 'package:rpg/services/crafting_service.dart';
@@ -35,6 +37,9 @@ void main() {
     skill.xp = skill.xpTable[level];
     save.inventoryData.itemMap[ItemId.LOGS] = 200;
     save.inventoryData.itemMap[ItemId.OAK_LOGS] = 200;
+    save.inventoryData.itemMap[ItemId.ACORN] = 50;
+    save.inventoryData.itemMap[ItemId.TREE_BARK] = 50;
+    save.inventoryData.itemMap[ItemId.DRY_TWIGS] = 50;
   }
 
   // runs one craft of [recipeId] at [firepit] through the real crafting path
@@ -111,13 +116,13 @@ void main() {
     expect(extended.expirationTime.isAfter(firstExpiry), isTrue);
 
     // a different fire takes the firepit over entirely
-    craftAt(session, 'bonfire', EntityId.FIREPIT);
+    craftAt(session, 'bonfire_stamina', EntityId.FIREPIT);
     final replaced = session.firemakingSystem.activeFire(
       EntityId.FIREPIT,
       save.playerData.currentZoneId,
       save.playerData.buffData,
     )!;
-    expect(replaced.id, ItemId.BONFIRE);
+    expect(replaced.id, ItemId.BONFIRE_STAMINA);
     expect(
       save.playerData.buffData.zoneBuffs[save.playerData.currentZoneId]!.length,
       1,
@@ -236,85 +241,18 @@ void main() {
       )!;
     }
 
-    void lay(GameSession session, ItemId fire, DateTime at) {
-      final save = session.saveGameData;
-      session.firemakingSystem.lightOrExtend(
-        fire,
-        EntityId.FIREPIT,
-        save.playerData.currentZoneId,
-        save.playerData.buffData,
-        at: at,
-      );
-    }
-
-    test('a campfire burns steady: its burn time a lay, no cap', () {
+    test('a bonfire burns steady: its burn time a lay, no cap', () {
       final burn =
-          (ItemId.BASIC_CAMPFIRE.definition as FireItemDefinition).duration;
-      final session = lit(ItemId.BASIC_CAMPFIRE, lays: 40);
+          (ItemId.BONFIRE_STAMINA.definition as FireItemDefinition).duration;
+      final session = lit(ItemId.BONFIRE_STAMINA, lays: 40);
       final fire = fireOf(session);
       expect(fire.expirationTime, t.add(burn * 40));
-      // one stretch at its full bonus all the way
-      expect(fire.stepsAt(t), [(bonus: 5, left: burn * 40)]);
-      expect(fire.powerAt(t), 5);
-      expect(fire.powerAt(fire.expirationTime.subtract(burn)), 5);
-      session.dispose();
-    });
-
-    test('a bonfire heats with each lay, by less as it nears its cap', () {
-      final session = lit(ItemId.BONFIRE);
-      final fire = fireOf(session);
-      expect(fire.ceiling, 13);
-      expect(fire.heatAt(t), closeTo(0.25 * fire.heatCap, 1e-9));
-      expect(fire.powerAt(t), 5);
-
-      var last = fire.heatAt(t);
-      var gain = double.infinity;
-      for (var i = 1; i <= 6; i++) {
-        lay(session, ItemId.BONFIRE, t);
-        final heat = fire.heatAt(t);
-        expect(heat - last, lessThan(gain), reason: 'lay $i');
-        gain = heat - last;
-        last = heat;
-      }
-      // past the ceiling, but its bonus stops there
-      expect(fire.heatAt(t), greaterThan(13));
-      expect(fire.powerAt(t), 13);
-      session.dispose();
-    });
-
-    test('a bonfire cools down the rungs and goes out under 1 heat', () {
-      final session = lit(ItemId.BONFIRE, lays: 12);
-      final fire = fireOf(session);
-      final steps = fire.stepsAt(t);
-      expect([for (final s in steps) s.bonus], [13, 8, 5, 3, 1]);
-      // each rung ends where the next begins, and the last when it is out
-      var at = t;
-      for (final step in steps) {
-        // midway through the stretch, it gives that rung
-        final mid = at.add(step.left ~/ 2);
-        expect(fire.powerAt(mid), step.bonus);
-        at = at.add(step.left);
-      }
-      expect(
-        at.difference(fire.expirationTime).abs(),
-        lessThan(const Duration(milliseconds: 5)),
-      );
-      expect(fire.powerAt(fire.expirationTime), 0);
-      session.dispose();
-    });
-
-    test('heat over the ceiling cools at the slow peak rate', () {
-      final session = lit(ItemId.BONFIRE, lays: 30);
-      final fire = fireOf(session);
-      final heat = fire.heatAt(t);
-      final toCeiling =
-          FireItem.peakHalfLife.inMicroseconds *
-          (math.log(heat / 13) / math.ln2);
-      final peak = fire.stepsAt(t).first;
-      expect(peak.bonus, 13);
-      expect(peak.left.inMicroseconds, closeTo(toCeiling, 1000));
-      // a few minutes held at the top
-      expect(peak.left, greaterThan(const Duration(minutes: 3)));
+      // its stat at its wood's power all the way
+      expect(fire.bonusAt(t), {SkillId.STAMINA: 5});
+      expect(fire.bonusAt(fire.expirationTime.subtract(burn)), {
+        SkillId.STAMINA: 5,
+      });
+      expect(fire.bonusAt(fire.expirationTime), isEmpty);
       session.dispose();
     });
 
@@ -324,70 +262,102 @@ void main() {
       expect(FireItem.burnScaleFor(99, 5), closeTo(1.94, 1e-9));
 
       final burn =
-          (ItemId.BASIC_CAMPFIRE.definition as FireItemDefinition).duration;
-      final steady = lit(ItemId.BASIC_CAMPFIRE, scale: 2);
+          (ItemId.BONFIRE_STAMINA.definition as FireItemDefinition).duration;
+      final steady = lit(ItemId.BONFIRE_STAMINA, scale: 2);
       expect(fireOf(steady).expirationTime, t.add(burn * 2));
       steady.dispose();
-
-      final base = lit(ItemId.BONFIRE, lays: 12);
-      final stretched = lit(ItemId.BONFIRE, lays: 12, scale: 2);
-      expect(
-        fireOf(stretched).expirationTime.difference(t).inMicroseconds,
-        closeTo(
-          fireOf(base).expirationTime.difference(t).inMicroseconds * 2,
-          1000,
-        ),
-      );
-      expect(
-        fireOf(stretched).maxBurn.inMicroseconds,
-        closeTo(fireOf(base).maxBurn.inMicroseconds * 2, 1000),
-      );
-      base.dispose();
-      stretched.dispose();
     });
 
-    test('a bonfire\'s max burn is from a full heat cap down to out', () {
-      final session = lit(ItemId.BONFIRE);
-      final fire = fireOf(session);
-      // 20.8 heat: ~3:23 cooling to the ceiling at the peak rate, then
-      // ~7:24 down to out
-      expect(fire.maxBurn.inSeconds, inInclusiveRange(645, 649));
-      expect(fireOf(lit(ItemId.BASIC_CAMPFIRE)).maxBurn, Duration.zero);
-      session.dispose();
-    });
-
-    test('the rung drops are cuts an offline settle stops on', () {
-      final session = lit(ItemId.BONFIRE, lays: 12);
-      final fire = fireOf(session);
-      var at = t;
-      final drops = <DateTime>[];
-      for (final step in fire.stepsAt(t)) {
-        at = at.add(step.left);
-        drops.add(at);
-      }
-      for (final d in drops) {
-        expect(
-          fire.changeTimes.any(
-            (c) => c.difference(d).abs() < const Duration(milliseconds: 5),
-          ),
-          isTrue,
-          reason: '$d',
-        );
-      }
-      session.dispose();
-    });
-
-    test('heat and burn scale survive a save round trip', () {
-      final session = lit(ItemId.BONFIRE, lays: 5, scale: 1.4);
+    test('burn scale survives a save round trip', () {
+      final session = lit(ItemId.OAK_BONFIRE_ATTACK, lays: 5, scale: 1.4);
       final fire = fireOf(session);
       final json =
           jsonDecode(jsonEncode(fire.toJson())) as Map<String, dynamic>;
       final back = Item.fromJson(json) as FireItem;
-      expect(back.heatAt(t), closeTo(fire.heatAt(t), 1e-9));
+      expect(back.id, ItemId.OAK_BONFIRE_ATTACK);
       expect(back.burnScale, 1.4);
       expect(back.expirationTime, fire.expirationTime);
       session.dispose();
     });
+  });
+
+  group('bonfire recipes', () {
+    test('every wood has a bonfire for every reagent, each its own recipe', () {
+      final recipes = RecipeCatalog().recipesForSkill(SkillId.FIREMAKING);
+      final reagents = [
+        for (final id in ItemId.values)
+          if (id.definition is FireReagentDefinition) id,
+      ];
+      for (final wood in bonfireWoods.keys) {
+        for (final reagent in reagents) {
+          final r = recipes.where(
+            (r) => r.inputs.containsKey(wood) && r.inputs.containsKey(reagent),
+          );
+          expect(r, hasLength(1), reason: '${wood.name} ${reagent.name}');
+          expect(r.single.inputs, {wood: bonfireLogs, reagent: 1});
+          final fire =
+              r.single.output.single.id.definition as FireItemDefinition;
+          final stat = (reagent.definition as FireReagentDefinition).stat;
+          expect(fire.skillBonus.keys, [stat]);
+          expect(fire.wood, wood);
+          expect(fire.reagent, reagent);
+          // its name says the stat it gives
+          expect(fire.name, contains(skillLabel(stat)));
+          expect(r.single.name, fire.name);
+        }
+      }
+    });
+
+    test('a bonfire asks for its wood\'s level or its reagent\'s', () {
+      final recipes = RecipeCatalog();
+      // plain logs at 5, dry twigs at 5
+      expect(recipes.recipeById('bonfire_stamina').levelRequirement, 5);
+      // ambergris asks for 89 whatever the wood
+      expect(recipes.recipeById('bonfire_exploration').levelRequirement, 89);
+      // magic logs ask 88 over dry twigs' 5
+      expect(recipes.recipeById('magic_bonfire_stamina').levelRequirement, 88);
+      // and pays the wood's xp plus the reagent's level
+      expect(recipes.recipeById('oak_bonfire_attack').xp, 110 + 8);
+    });
+
+    test('a bonfire lit from its recipe spends the logs and the reagent', () {
+      final session = buildSession();
+      final save = session.saveGameData;
+      stockForFiremaking(session);
+      craftAt(session, 'oak_bonfire_strength', EntityId.FIREPIT);
+      final fire = session.firemakingSystem.activeFire(
+        EntityId.FIREPIT,
+        save.playerData.currentZoneId,
+        save.playerData.buffData,
+      )!;
+      expect(fire.id, ItemId.OAK_BONFIRE_STRENGTH);
+      expect(fire.skillBonus, {SkillId.STRENGTH: 8});
+      expect(save.inventoryData.itemMap[ItemId.OAK_LOGS], 200 - bonfireLogs);
+      expect(save.inventoryData.itemMap[ItemId.ACORN], 49);
+      session.dispose();
+    });
+
+    test(
+      'the same bonfire extends; another stat on the same wood replaces',
+      () {
+        final session = buildSession();
+        final save = session.saveGameData;
+        stockForFiremaking(session);
+        FireItem fire() => session.firemakingSystem.activeFire(
+          EntityId.FIREPIT,
+          save.playerData.currentZoneId,
+          save.playerData.buffData,
+        )!;
+        craftAt(session, 'bonfire_strength', EntityId.FIREPIT);
+        final first = fire().expirationTime;
+        craftAt(session, 'bonfire_strength', EntityId.FIREPIT);
+        expect(fire().expirationTime.isAfter(first), isTrue);
+        craftAt(session, 'bonfire_defence', EntityId.FIREPIT);
+        expect(fire().id, ItemId.BONFIRE_DEFENCE);
+        expect(fire().skillBonus, {SkillId.DEFENCE: 5});
+        session.dispose();
+      },
+    );
   });
 
   test('two fires in a zone burn independently, and the best one counts', () {
@@ -396,24 +366,19 @@ void main() {
     // level 40 opens three fire slots
     stockForFiremaking(session);
 
-    craftAt(session, 'basic_campfire', EntityId.FIREPIT);
-    craftAt(session, 'basic_campfire', EntityId.FIREPIT_2);
+    craftAt(session, 'bonfire_strength', EntityId.FIREPIT);
+    craftAt(session, 'bonfire_strength', EntityId.FIREPIT_2);
 
     final zoneBuffs =
         save.playerData.buffData.zoneBuffs[save.playerData.currentZoneId]!;
     expect(zoneBuffs.keys, containsAll([EntityId.FIREPIT, EntityId.FIREPIT_2]));
 
-    // a campfire gives nothing until it is tended: an acorn on each
-    final now = DateTime.now();
-    for (final fire in zoneBuffs.values.whereType<FireItem>()) {
-      fire.tend(SkillId.STRENGTH, now);
-    }
     Map<SkillId, int> total() => session.buffService.getBuffedStatTotal(
       save.playerData.buffData,
       save.playerData.currentZoneId,
     );
-    final power =
-        (ItemId.BASIC_CAMPFIRE.definition as FireItemDefinition).power;
+    final power = (ItemId.BONFIRE_STRENGTH.definition as FireItemDefinition)
+        .skillBonus[SkillId.STRENGTH];
     expect(
       total()[SkillId.STRENGTH],
       power,
@@ -421,8 +386,7 @@ void main() {
     );
 
     // a third fire on another stat adds its own
-    craftAt(session, 'basic_campfire', EntityId.FIREPIT_3);
-    (zoneBuffs[EntityId.FIREPIT_3] as FireItem).tend(SkillId.DEFENCE, now);
+    craftAt(session, 'bonfire_defence', EntityId.FIREPIT_3);
     expect(total()[SkillId.STRENGTH], power);
     expect(total()[SkillId.DEFENCE], power);
 
@@ -458,9 +422,9 @@ void main() {
     expect(canCook(), isFalse);
     save.inventoryData.itemMap[ItemId.LOGS] = 200;
 
-    // a campfire is not something you can cook on, so picking one is the
+    // a bonfire is not something you can cook on, so picking one is the
     // same as picking nothing
-    pick('basic_campfire');
+    pick('bonfire_stamina');
     expect(canCook(), isFalse);
 
     // the fire's own level has to be met too
@@ -471,10 +435,10 @@ void main() {
     skill.xp = skill.xpTable[40];
     expect(canCook(), isTrue);
 
-    // a campfire already burning does not get in the way: the relight
+    // a bonfire already burning does not get in the way: the relight
     // replaces it
     pick('cookfire');
-    craftAt(session, 'basic_campfire', EntityId.FIREPIT);
+    craftAt(session, 'bonfire_stamina', EntityId.FIREPIT);
     expect(canCook(), isTrue);
 
     session.dispose();
@@ -498,8 +462,8 @@ void main() {
     // cold firepit
     expect(canCook(), isFalse);
 
-    // a campfire burns but cannot cook
-    craftAt(session, 'basic_campfire', EntityId.FIREPIT);
+    // a bonfire burns but cannot cook
+    craftAt(session, 'bonfire_stamina', EntityId.FIREPIT);
     expect(canCook(), isFalse);
 
     // a cookfire can
@@ -625,8 +589,8 @@ void main() {
         zoneId.name: {
           'BASIC_CAMPFIRE': {
             'runtimeType': 'ZoneBuffItem',
-            'id': 'BASIC_CAMPFIRE',
-            'name': 'Basic Campfire',
+            'id': 'COOKFIRE',
+            'name': 'Cookfire',
             'value': 5,
             'count': 1,
             'skillBonus': {'HITPOINTS': 5},
@@ -642,7 +606,7 @@ void main() {
 
       raw['craftingState']['selectedRecipeByEntity'] = {
         'ANVIL': 'smelt_copper_bar',
-        'FIREPIT': 'basic_campfire',
+        'FIREPIT': 'cookfire',
         // a selection whose recipe no longer exists is dropped, not guessed
         'JEWELCRAFTING_BENCH': 'retired_recipe',
       };
@@ -668,8 +632,50 @@ void main() {
       // and its buff now belongs to the firepit
       final buff =
           restored.playerData.buffData.zoneBuffs[zoneId]![EntityId.FIREPIT]!;
-      expect(buff.id, ItemId.BASIC_CAMPFIRE);
+      expect(buff.id, ItemId.COOKFIRE);
       expect(buff.ownerEntityId, EntityId.FIREPIT);
+    });
+
+    test('a retired campfire loads as the bonfire for its kindling, and an '
+        'untended one goes out', () {
+      final seed = buildSession();
+      final raw =
+          jsonDecode(jsonEncode(seed.saveGameData.toJson()))
+              as Map<String, dynamic>;
+      final zoneId = seed.saveGameData.playerData.currentZoneId;
+      seed.dispose();
+      final now = DateTime.now();
+      final fireEnd = now.add(const Duration(minutes: 8)).toIso8601String();
+      final buffEnd = now.add(const Duration(minutes: 3));
+      Map<String, dynamic> old(String id, Map<String, String> reagents) => {
+        'runtimeType': 'FireItem',
+        'id': id,
+        'count': 1,
+        'fuelUnits': 1,
+        'expirationTime': fireEnd,
+        'zoneId': zoneId.name,
+        'ownerEntityId': 'FIREPIT',
+        'reagents': reagents,
+      };
+      raw['playerData']['buffData']['zoneBuffs'] = {
+        zoneId.name: {
+          'FIREPIT': old('OAK_CAMPFIRE', {
+            'STRENGTH': buffEnd.toIso8601String(),
+          }),
+          'FIREPIT_2': old('BONFIRE', {}),
+        },
+      };
+
+      final restored = SaveGameData.fromJson(raw);
+      final buffs = restored.playerData.buffData.zoneBuffs[zoneId]!;
+      final fire = buffs[EntityId.FIREPIT]! as FireItem;
+      expect(fire.id, ItemId.OAK_BONFIRE_STRENGTH);
+      // it burns only as long as its kindling had left
+      expect(
+        fire.expirationTime.difference(buffEnd).abs(),
+        lessThan(const Duration(seconds: 1)),
+      );
+      expect(buffs.containsKey(EntityId.FIREPIT_2), isFalse);
     });
 
     test('flat recipe selections are filed under their recipe\'s skill', () {
@@ -691,10 +697,7 @@ void main() {
         selections[EntityId.ANVIL]?[SkillId.BLACKSMITHING],
         'smelt_copper_bar',
       );
-      expect(
-        selections[EntityId.FIREPIT]?[SkillId.FIREMAKING],
-        'basic_campfire',
-      );
+      expect(selections[EntityId.FIREPIT]?[SkillId.FIREMAKING], 'cookfire');
       expect(selections[EntityId.JEWELCRAFTING_BENCH], isNull);
       expect(session.saveGameData.craftingState.legacySelections, isEmpty);
 
@@ -828,7 +831,7 @@ void main() {
     cookfire.expirationTime = start.add(const Duration(minutes: 5));
 
     // a second fire in another zone is nothing to do with this one
-    final elsewhere = ItemId.BONFIRE.build() as FireItem;
+    final elsewhere = ItemId.BONFIRE_STAMINA.build() as FireItem;
     elsewhere.expirationTime = start.add(const Duration(minutes: 1));
     session.buffService.setZoneBuff(
       elsewhere,
@@ -930,8 +933,8 @@ void main() {
           reason: id.name,
         );
       }
-      // the other fires are left as they were
-      for (final id in [ItemId.BASIC_CAMPFIRE, ItemId.BONFIRE]) {
+      // a bonfire gives only its reagent's stat
+      for (final id in [ItemId.BONFIRE_STAMINA, ItemId.OAK_BONFIRE_ATTACK]) {
         final def = id.definition as FireItemDefinition;
         expect(def.skillBonus.containsKey(SkillId.HITPOINTS), isFalse);
       }

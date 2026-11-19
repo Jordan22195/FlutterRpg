@@ -30,21 +30,18 @@ const expectedGems = <ItemId>[
 
 /// The herbs, in the order the table is expected to list them.
 const expectedHerbs = <ItemId>[
-  ItemId.GUAM_LEAF,
-  ItemId.MARRENTILL,
-  ItemId.TARROMIN,
-  ItemId.HARRALANDER,
+  ItemId.MEADOWSWEET,
+  ItemId.BRAMBLEWORT,
+  ItemId.REEDMINT,
+  ItemId.DUSKTHORN,
+  ItemId.SILT_LILY,
   ItemId.MIRECAP,
-  ItemId.RANARR_WEED,
-  ItemId.TOADFLAX,
-  ItemId.IRIT_LEAF,
-  ItemId.AVANTOE,
-  ItemId.KWUARM,
-  ItemId.SNAPDRAGON,
-  ItemId.CADANTINE,
-  ItemId.LANTADYME,
-  ItemId.DWARF_WEED,
-  ItemId.TORSTOL,
+  ItemId.SALTWORT,
+  ItemId.BLUESTEM,
+  ItemId.GLIMMERCAP,
+  ItemId.BLOODROOT,
+  ItemId.FROSTBLOOM,
+  ItemId.EMBERROOT,
 ];
 
 /// The tables under test, by the name a failure should name them by.

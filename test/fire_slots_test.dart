@@ -5,14 +5,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rpg/catalogs/entities/entities.dart';
 import 'package:rpg/catalogs/items/items.dart';
 import 'package:rpg/catalogs/zones/zones.dart';
-import 'package:rpg/data/crafting_state.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/game_session.dart';
-import 'package:rpg/systems/fire_tending_system.dart';
 
 // Fire slots. A zone with a firepit holds several fire slots; how many burn
-// at once is the firemaker's level, the same cap in every zone. A fire
-// carries one kindling, and fires on the same stat don't stack.
+// at once is the firemaker's level, the same cap in every zone, and fires
+// on the same stat don't stack.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -189,104 +187,25 @@ void main() {
       setFiremaking(session, 34);
       save.inventoryData.itemMap[ItemId.LOGS] = 50;
       save.inventoryData.itemMap[ItemId.OAK_LOGS] = 50;
-      craftAt(session, 'basic_campfire', EntityId.FIREPIT);
-      craftAt(session, 'oak_campfire', EntityId.FIREPIT_2);
-      craftAt(session, 'basic_campfire', EntityId.FIREPIT_3);
-      final now = DateTime.now();
-      fireIn(session, EntityId.FIREPIT)!.tend(SkillId.STRENGTH, now);
-      final oak = fireIn(session, EntityId.FIREPIT_2)!;
-      oak.tend(SkillId.STRENGTH, now);
-      fireIn(session, EntityId.FIREPIT_3)!.tend(SkillId.DEFENCE, now);
+      save.inventoryData.itemMap[ItemId.ACORN] = 5;
+      save.inventoryData.itemMap[ItemId.TREE_BARK] = 5;
+      craftAt(session, 'bonfire_strength', EntityId.FIREPIT);
+      craftAt(session, 'oak_bonfire_strength', EntityId.FIREPIT_2);
+      craftAt(session, 'bonfire_defence', EntityId.FIREPIT_3);
+      expect(fireIn(session, EntityId.FIREPIT_3)!.id, ItemId.BONFIRE_DEFENCE);
 
       final totals = session.buffService.getBuffedStatTotal(
         save.playerData.buffData,
         save.playerData.currentZoneId,
       );
-      final basic =
-          (ItemId.BASIC_CAMPFIRE.definition as FireItemDefinition).power;
-      expect(oak.power, greaterThan(basic));
-      expect(totals[SkillId.STRENGTH], oak.power);
+      int power(ItemId id) =>
+          (id.definition as FireItemDefinition).skillBonus.values.single;
+      final basic = power(ItemId.BONFIRE_STRENGTH);
+      final oak = power(ItemId.OAK_BONFIRE_STRENGTH);
+      expect(oak, greaterThan(basic));
+      expect(totals[SkillId.STRENGTH], oak);
       expect(totals[SkillId.DEFENCE], basic);
       session.dispose();
-    });
-  });
-
-  group('one kindling per fire', () {
-    test('a fire takes more of its kindling but never a second', () {
-      final session = buildSession();
-      final save = session.saveGameData;
-      setFiremaking(session, 20);
-      save.inventoryData.itemMap[ItemId.LOGS] = 50;
-      save.inventoryData.itemMap[ItemId.ACORN] = 5;
-      save.inventoryData.itemMap[ItemId.TREE_BARK] = 5;
-      final zone = save.playerData.currentZoneId;
-      // a long campfire, with room for several
-      session.firemakingSystem.lightOrExtend(
-        ItemId.BASIC_CAMPFIRE,
-        EntityId.FIREPIT,
-        zone,
-        save.playerData.buffData,
-        count: 5,
-      );
-      TendBlock block(ItemId reagent, {DateTime? at}) =>
-          session.fireTendingSystem.blockFor(
-            reagent,
-            EntityId.FIREPIT,
-            zone,
-            save.playerData,
-            save.inventoryData,
-            at: at,
-          );
-
-      expect(block(ItemId.ACORN), TendBlock.none);
-      expect(block(ItemId.TREE_BARK), TendBlock.none);
-      session.fireTendingSystem.tend(
-        ItemId.ACORN,
-        EntityId.FIREPIT,
-        zone,
-        save.playerData,
-        save.inventoryData,
-      );
-
-      // strength burns on it now: more acorns, but no bark
-      expect(block(ItemId.ACORN), TendBlock.none);
-      expect(block(ItemId.TREE_BARK), TendBlock.otherKindling);
-      expect(
-        session.fireTendingSystem.tend(
-          ItemId.TREE_BARK,
-          EntityId.FIREPIT,
-          zone,
-          save.playerData,
-          save.inventoryData,
-        ),
-        0,
-      );
-      expect(save.inventoryData.itemMap[ItemId.TREE_BARK], 5);
-
-      // once the acorn's buff runs out the fire takes a new kindling
-      final fire = fireIn(session, EntityId.FIREPIT)!;
-      final after = fire.reagentExpirations[SkillId.STRENGTH]!.add(
-        const Duration(seconds: 1),
-      );
-      expect(after.isBefore(fire.expirationTime), isTrue);
-      expect(block(ItemId.TREE_BARK, at: after), TendBlock.none);
-      session.dispose();
-    });
-
-    test('a save that picked several kindlings keeps the first', () {
-      final state = CraftingState.fromJson({
-        'activeRecipeId': '',
-        'craftedItems': CraftingState().craftedItems.toJson(),
-        'craftingEntityId': EntityId.FIREPIT.name,
-        'reagentMixByEntity': {
-          EntityId.FIREPIT.name: [
-            'tend_acorn',
-            'tend_tree_bark',
-            'tend_dry_twigs',
-          ],
-        },
-      });
-      expect(state.reagentMixByEntity[EntityId.FIREPIT], ['tend_acorn']);
     });
   });
 }

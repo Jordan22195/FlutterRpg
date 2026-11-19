@@ -26,6 +26,29 @@ import 'package:rpg/data/equipment_data.dart';
 /// should only ever shrink: `python3 tools/generate_assets_rd.py --list`
 /// prints the same set. Adding to it is a deliberate act.
 const knownMissingArt = <String>{
+  // The Redwall Eyrie, Redwall Bluffs' dungeon
+  'assets/images/dungeons/redwall_eyrie.png',
+  'assets/images/entities/redwall_eyrie.png',
+  'assets/icons/items/basilisk_fang.png',
+  'assets/icons/items/gazeglass_ring.png',
+  'assets/icons/items/ledgewalker_greaves.png',
+  'assets/icons/items/chimeras_horn.png',
+  'assets/icons/items/redwings_talon.png',
+  'assets/icons/items/redwings_crest.png',
+  'assets/icons/items/eyrie_windcloak.png',
+  'assets/icons/items/redwall_cuirass.png',
+  // Gaunt Tor, Ironroot Hills' dungeon
+  'assets/images/dungeons/gaunt_tor.png',
+  'assets/images/entities/gaunt_tor.png',
+  'assets/icons/items/thunderhorn_helm.png',
+  'assets/icons/items/cairnstone_greaves.png',
+  'assets/icons/items/cairnwardens_signet.png',
+  'assets/icons/items/hill_kings_cudgel.png',
+  'assets/icons/items/giantbone_girdle.png',
+  'assets/icons/items/ironroot_cuirass.png',
+  'assets/icons/items/ramhide_mantle.png',
+  // the Rock Ram, Ironroot Hills' level 55 beast
+  'assets/images/entities/rock_ram.png',
   // the Haunted Ruins' uniques
   'assets/icons/items/gravekeepers_greatcoat.png',
   'assets/icons/items/gravekeepers_keyring.png',
@@ -34,6 +57,22 @@ const knownMissingArt = <String>{
   'assets/icons/items/abbots_grimoire.png',
   'assets/icons/items/ossuary_pauldrons.png',
   'assets/icons/items/reliquary_gauntlets.png',
+  // Spinehold Caverns' uniques
+  'assets/icons/items/trollhide_treads.png',
+  'assets/icons/items/tollkeepers_belt.png',
+  'assets/icons/items/sentinels_bulwark.png',
+  'assets/icons/items/sentinels_gorget.png',
+  'assets/icons/items/drakefang_greatsword.png',
+  'assets/icons/items/wyrmcrest_ring.png',
+  'assets/icons/items/archwardens_helm.png',
+  // The Ashen Vaults' uniques
+  'assets/icons/items/cinderfang.png',
+  'assets/icons/items/wyvernwing_cloak.png',
+  'assets/icons/items/slagplate_bracers.png',
+  'assets/icons/items/slagplate_pauldrons.png',
+  'assets/icons/items/ridgeheart_gauntlets.png',
+  'assets/icons/items/ashweave_hauberk.png',
+  'assets/icons/items/emberglass_pendant.png',
 };
 
 /// Asset directories referenced by content but not declared in pubspec.yaml,
@@ -337,9 +376,6 @@ void main() {
 
     test('recipe output tables are rollable', () {
       for (final r in RecipeCatalog().recipes) {
-        // the firepit's kindling mix runs the reagent recipes; it has no
-        // output of its own
-        if (r.isReagentMix) continue;
         checkDropTable(r.output, 'recipe ${r.id}');
       }
     });
@@ -403,8 +439,6 @@ void main() {
 
     test('every recipe consumes and produces something', () {
       for (final r in RecipeCatalog().recipes) {
-        // the kindling mix spends and pays what its picked reagents do
-        if (r.isReagentMix) continue;
         expect(r.inputs, isNotEmpty, reason: '${r.id} has no inputs');
         for (final e in r.inputs.entries) {
           expect(
@@ -566,12 +600,20 @@ void main() {
       // the Silent Nave's first boss, retired for the Shrouded Wraith; kept
       // because the id is the save format
       EntityId.THE_WEEPING_ABBESS,
+      // the Hollow Arch's first boss, retired for the Bridge Troll; kept
+      // because the id is the save format
+      EntityId.ELDER_ROC,
       // tier 1-2 spares, written before the zones were re-cut around them
       EntityId.GIANT_RAT,
       EntityId.KOBOLD,
       // the rare scarecrow. Its name predates the _RARE suffix convention,
       // so it reads as a base entity here rather than as a variant
       EntityId.ROTWOOD_SCARECROW_1,
+
+      // cut from Ironroot Hills for the Rock Ram and the uncommon earth
+      // elemental; kept because the ids are the save format
+      EntityId.HARPY,
+      EntityId.IMP,
 
       // tier 4. The banshee was the darkwood's, and came out of it when its
       // roster was re-cut (the wraith has since come back); the rest have
@@ -835,6 +877,46 @@ void main() {
         ItemId.values.map((e) => e.name).toSet(),
         containsAll(frozenItemIds),
       );
+    });
+    test('every retired fire migrates to a bonfire that exists', () {
+      final now = DateTime.now();
+      final until = now.add(const Duration(minutes: 1)).toIso8601String();
+      for (final old in [
+        'BASIC_CAMPFIRE',
+        'BONFIRE',
+        'OAK_CAMPFIRE',
+        'OAK_BONFIRE',
+        'WILLOW_CAMPFIRE',
+        'WILLOW_BONFIRE',
+        'BOG_CAMPFIRE',
+        'BOG_BONFIRE',
+        'MAPLE_CAMPFIRE',
+        'MAPLE_BONFIRE',
+        'YEW_CAMPFIRE',
+        'YEW_BONFIRE',
+        'MAGIC_CAMPFIRE',
+        'MAGIC_BONFIRE',
+      ]) {
+        expect(ItemId.byName(old), isNull, reason: '$old is retired');
+        for (final id in [
+          for (final id in ItemId.values)
+            if (id.definition case FireReagentDefinition(:final stat)) stat,
+        ]) {
+          final json = FireItem.migrateRetiredJson({
+            'id': old,
+            'expirationTime': until,
+            'reagents': {id.name: until},
+          }, now);
+          expect(json, isNotNull, reason: '$old ${id.name}');
+          final fire = ItemId.byName(json!['id'] as String);
+          expect(fire, isNotNull, reason: '$old ${id.name}');
+          expect(
+            (fire!.definition as FireItemDefinition).skillBonus.keys,
+            [id],
+            reason: '$old ${id.name}',
+          );
+        }
+      }
     });
     test('no EntityId was renamed or removed', () {
       expect(
@@ -1258,11 +1340,10 @@ const frozenItemIds = <String>{
   'ONYX_RING',
   'ONYX_NECKLACE',
   'COOKFIRE',
-  'BASIC_CAMPFIRE',
-  'BONFIRE',
   'OAK_COOKFIRE',
-  'OAK_CAMPFIRE',
-  'OAK_BONFIRE',
+  // the campfires and stoked bonfires were retired (2026-11-18) for one
+  // bonfire per wood per reagent; a saved one migrates through
+  // FireItem.migrateRetiredJson
   'COPPER_HELMET',
   'IRON_HELMET',
   'STEEL_HELMET',
@@ -1400,6 +1481,28 @@ const frozenItemIds = <String>{
   'HEART_OF_THE_LODE',
   'PROSPECTORS_DUSTER',
   'MOTHER_LODE_NUGGET',
+  'BASILISK_FANG',
+  'GAZEGLASS_RING',
+  'LEDGEWALKER_GREAVES',
+  'CHIMERAS_HORN',
+  'REDWINGS_TALON',
+  'REDWINGS_CREST',
+  'EYRIE_WINDCLOAK',
+  'REDWALL_CUIRASS',
+  'TROLLHIDE_TREADS',
+  'TOLLKEEPERS_BELT',
+  'SENTINELS_BULWARK',
+  'SENTINELS_GORGET',
+  'DRAKEFANG_GREATSWORD',
+  'WYRMCREST_RING',
+  'ARCHWARDENS_HELM',
+  'CINDERFANG',
+  'WYVERNWING_CLOAK',
+  'SLAGPLATE_BRACERS',
+  'SLAGPLATE_PAULDRONS',
+  'RIDGEHEART_GAUNTLETS',
+  'ASHWEAVE_HAUBERK',
+  'EMBERGLASS_PENDANT',
 };
 
 const frozenEntityIds = <String>{
@@ -1472,6 +1575,13 @@ const frozenEntityIds = <String>{
   'THE_BORER',
   'LODE_GOLEM',
   'OLD_SORROW_MINE_ENTRANCE',
+  'CLIFF_CHIMERA',
+  'ROC_FLEDGLING',
+  'OLD_STONEGAZE',
+  'LEDGE_WARDEN',
+  'ARCH_CHIMERA',
+  'REDWING_MATRIARCH',
+  'REDWALL_EYRIE_ENTRANCE',
 };
 
 const frozenZoneIds = <String>{
@@ -1519,4 +1629,5 @@ const frozenDungeonIds = <String>{
   'SILT_WARRENS',
   'BRINEDEEP_CAVES',
   'OLD_SORROW_MINE',
+  'REDWALL_EYRIE',
 };

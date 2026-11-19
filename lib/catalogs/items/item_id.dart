@@ -426,7 +426,7 @@ enum ItemId {
     ItemDefinition(
       name: "Harralander",
       value: 5,
-      iconAsset: "assets/icons/items/harralander.png",
+      iconAsset: "assets/icons/items/reedmint.png",
       xpValue: 18,
     ),
   ),
@@ -482,7 +482,7 @@ enum ItemId {
     ItemDefinition(
       name: "Irit Leaf",
       value: 12,
-      iconAsset: "assets/icons/items/irit_leaf.png",
+      iconAsset: "assets/icons/items/saltwort.png",
       xpValue: 40,
     ),
   ),
@@ -498,7 +498,7 @@ enum ItemId {
     ItemDefinition(
       name: "Kwuarm",
       value: 18,
-      iconAsset: "assets/icons/items/kwuarm.png",
+      iconAsset: "assets/icons/items/duskthorn.png",
       xpValue: 55,
     ),
   ),
@@ -506,7 +506,7 @@ enum ItemId {
     ItemDefinition(
       name: "Snapdragon",
       value: 25,
-      iconAsset: "assets/icons/items/snapdragon.png",
+      iconAsset: "assets/icons/items/bramblewort.png",
       xpValue: 62,
     ),
   ),
@@ -543,7 +543,479 @@ enum ItemId {
     ),
   ),
 
+  // The zone herbs: each zone grows its own, and each potion tier
+  // brews from two of them (see design/ALCHEMY_POTIONS.md). Mirecap and
+  // Bluestem above are two of the twelve. The old ladder above them no
+  // longer grows anywhere; it stays so saves load.
+  MEADOWSWEET(
+    ItemDefinition(
+      name: "Meadowsweet",
+      value: 1,
+      description:
+          "Creamy meadow blossom that smells of almonds. Southglen's herb, the minor tier's core.",
+      iconAsset: "assets/icons/items/meadowsweet.png",
+      xpValue: 5,
+    ),
+  ),
+  BRAMBLEWORT(
+    ItemDefinition(
+      name: "Bramblewort",
+      value: 2,
+      description:
+          "A thorny creeper off the Southwood floor. The minor tier's combat herb.",
+      iconAsset: "assets/icons/items/bramblewort.png",
+      xpValue: 8,
+    ),
+  ),
+  REEDMINT(
+    ItemDefinition(
+      name: "Reedmint",
+      value: 4,
+      description: "Mint that grows along the vale's reed beds.",
+      iconAsset: "assets/icons/items/reedmint.png",
+      xpValue: 14,
+    ),
+  ),
+  DUSKTHORN(
+    ItemDefinition(
+      name: "Duskthorn",
+      value: 6,
+      description: "A black-barked thorn from the Darkwood's shade.",
+      iconAsset: "assets/icons/items/duskthorn.png",
+      xpValue: 18,
+    ),
+  ),
+  SILT_LILY(
+    ItemDefinition(
+      name: "Silt Lily",
+      value: 7,
+      description: "A pale lily rooted in the delta's silt.",
+      iconAsset: "assets/icons/items/silt_lily.png",
+      xpValue: 20,
+    ),
+  ),
+  SALTWORT(
+    ItemDefinition(
+      name: "Saltwort",
+      value: 11,
+      description: "A fleshy coastal herb that tastes of the sea.",
+      iconAsset: "assets/icons/items/saltwort.png",
+      xpValue: 28,
+    ),
+  ),
+  GLIMMERCAP(
+    ItemDefinition(
+      name: "Glimmercap",
+      value: 22,
+      description: "A mushroom that glows faintly under the witchlight trees.",
+      iconAsset: "assets/icons/items/glimmercap.png",
+      xpValue: 55,
+    ),
+  ),
+  BLOODROOT(
+    ItemDefinition(
+      name: "Bloodroot",
+      value: 25,
+      description: "A red root dug from the bluffs. It bleeds when cut.",
+      iconAsset: "assets/icons/items/bloodroot.png",
+      xpValue: 60,
+    ),
+  ),
+  FROSTBLOOM(
+    ItemDefinition(
+      name: "Frostbloom",
+      value: 36,
+      description: "A white flower that only opens in the frost.",
+      iconAsset: "assets/icons/items/frostbloom.png",
+      xpValue: 80,
+    ),
+  ),
+  EMBERROOT(
+    ItemDefinition(
+      name: "Emberroot",
+      value: 40,
+      description:
+          "A root that stays warm in the hand, from the molten slopes.",
+      iconAsset: "assets/icons/items/emberroot.png",
+      xpValue: 85,
+    ),
+  ),
+
   // ── ALCHEMY REAGENTS ────────────────────────────────────────────
+  // The creature-family parts: a potion's second half. Family picks the
+  // potion, grade picks the tier, and a monster drops its archetype's
+  // family at the grade its level reaches. ReagentPartDefinition, family
+  // then grade.
+  SMALL_FEATHER(
+    ReagentPartDefinition(
+      name: "Small Feather",
+      value: 2,
+      family: ReagentFamily.FEATHER,
+      grade: ReagentGrade.SMALL,
+      description: "Off anything that flies.",
+      iconAsset: "assets/icons/items/small_feather.png",
+    ),
+  ),
+  STURDY_FEATHER(
+    ReagentPartDefinition(
+      name: "Sturdy Feather",
+      value: 5,
+      family: ReagentFamily.FEATHER,
+      grade: ReagentGrade.STURDY,
+      description: "Off anything that flies.",
+      iconAsset: "assets/icons/items/sturdy_feather.png",
+    ),
+  ),
+  THICK_FEATHER(
+    ReagentPartDefinition(
+      name: "Thick Feather",
+      value: 12,
+      family: ReagentFamily.FEATHER,
+      grade: ReagentGrade.THICK,
+      description: "Off anything that flies.",
+      iconAsset: "assets/icons/items/thick_feather.png",
+    ),
+  ),
+  HEAVY_FEATHER(
+    ReagentPartDefinition(
+      name: "Heavy Feather",
+      value: 25,
+      family: ReagentFamily.FEATHER,
+      grade: ReagentGrade.HEAVY,
+      description: "Off anything that flies.",
+      iconAsset: "assets/icons/items/heavy_feather.png",
+    ),
+  ),
+  ANCIENT_FEATHER(
+    ReagentPartDefinition(
+      name: "Ancient Feather",
+      value: 50,
+      family: ReagentFamily.FEATHER,
+      grade: ReagentGrade.ANCIENT,
+      description: "Off anything that flies.",
+      iconAsset: "assets/icons/items/ancient_feather.png",
+    ),
+  ),
+  PRIMAL_FEATHER(
+    ReagentPartDefinition(
+      name: "Primal Feather",
+      value: 100,
+      family: ReagentFamily.FEATHER,
+      grade: ReagentGrade.PRIMAL,
+      description: "Off anything that flies.",
+      iconAsset: "assets/icons/items/primal_feather.png",
+    ),
+  ),
+  SMALL_FANG(
+    ReagentPartDefinition(
+      name: "Small Fang",
+      value: 2,
+      family: ReagentFamily.FANG,
+      grade: ReagentGrade.SMALL,
+      description: "Off a predator's jaw.",
+      iconAsset: "assets/icons/items/small_fang.png",
+    ),
+  ),
+  STURDY_FANG(
+    ReagentPartDefinition(
+      name: "Sturdy Fang",
+      value: 5,
+      family: ReagentFamily.FANG,
+      grade: ReagentGrade.STURDY,
+      description: "Off a predator's jaw.",
+      iconAsset: "assets/icons/items/sturdy_fang.png",
+    ),
+  ),
+  THICK_FANG(
+    ReagentPartDefinition(
+      name: "Thick Fang",
+      value: 12,
+      family: ReagentFamily.FANG,
+      grade: ReagentGrade.THICK,
+      description: "Off a predator's jaw.",
+      iconAsset: "assets/icons/items/thick_fang.png",
+    ),
+  ),
+  HEAVY_FANG(
+    ReagentPartDefinition(
+      name: "Heavy Fang",
+      value: 25,
+      family: ReagentFamily.FANG,
+      grade: ReagentGrade.HEAVY,
+      description: "Off a predator's jaw.",
+      iconAsset: "assets/icons/items/heavy_fang.png",
+    ),
+  ),
+  ANCIENT_FANG(
+    ReagentPartDefinition(
+      name: "Ancient Fang",
+      value: 50,
+      family: ReagentFamily.FANG,
+      grade: ReagentGrade.ANCIENT,
+      description: "Off a predator's jaw.",
+      iconAsset: "assets/icons/items/ancient_fang.png",
+    ),
+  ),
+  PRIMAL_FANG(
+    ReagentPartDefinition(
+      name: "Primal Fang",
+      value: 100,
+      family: ReagentFamily.FANG,
+      grade: ReagentGrade.PRIMAL,
+      description: "Off a predator's jaw.",
+      iconAsset: "assets/icons/items/primal_fang.png",
+    ),
+  ),
+  SMALL_HORN(
+    ReagentPartDefinition(
+      name: "Small Horn",
+      value: 2,
+      family: ReagentFamily.HORN,
+      grade: ReagentGrade.SMALL,
+      description: "Off a heavy beast.",
+      iconAsset: "assets/icons/items/small_horn.png",
+    ),
+  ),
+  STURDY_HORN(
+    ReagentPartDefinition(
+      name: "Sturdy Horn",
+      value: 5,
+      family: ReagentFamily.HORN,
+      grade: ReagentGrade.STURDY,
+      description: "Off a heavy beast.",
+      iconAsset: "assets/icons/items/sturdy_horn.png",
+    ),
+  ),
+  THICK_HORN(
+    ReagentPartDefinition(
+      name: "Thick Horn",
+      value: 12,
+      family: ReagentFamily.HORN,
+      grade: ReagentGrade.THICK,
+      description: "Off a heavy beast.",
+      iconAsset: "assets/icons/items/thick_horn.png",
+    ),
+  ),
+  HEAVY_HORN(
+    ReagentPartDefinition(
+      name: "Heavy Horn",
+      value: 25,
+      family: ReagentFamily.HORN,
+      grade: ReagentGrade.HEAVY,
+      description: "Off a heavy beast.",
+      iconAsset: "assets/icons/items/heavy_horn.png",
+    ),
+  ),
+  ANCIENT_HORN(
+    ReagentPartDefinition(
+      name: "Ancient Horn",
+      value: 50,
+      family: ReagentFamily.HORN,
+      grade: ReagentGrade.ANCIENT,
+      description: "Off a heavy beast.",
+      iconAsset: "assets/icons/items/ancient_horn.png",
+    ),
+  ),
+  PRIMAL_HORN(
+    ReagentPartDefinition(
+      name: "Primal Horn",
+      value: 100,
+      family: ReagentFamily.HORN,
+      grade: ReagentGrade.PRIMAL,
+      description: "Off a heavy beast.",
+      iconAsset: "assets/icons/items/primal_horn.png",
+    ),
+  ),
+  SMALL_SHELL(
+    ReagentPartDefinition(
+      name: "Small Shell",
+      value: 2,
+      family: ReagentFamily.SHELL,
+      grade: ReagentGrade.SMALL,
+      description: "Off anything that wears its armour, or out of the water.",
+      iconAsset: "assets/icons/items/small_shell.png",
+    ),
+  ),
+  STURDY_SHELL(
+    ReagentPartDefinition(
+      name: "Sturdy Shell",
+      value: 5,
+      family: ReagentFamily.SHELL,
+      grade: ReagentGrade.STURDY,
+      description: "Off anything that wears its armour, or out of the water.",
+      iconAsset: "assets/icons/items/sturdy_shell.png",
+    ),
+  ),
+  THICK_SHELL(
+    ReagentPartDefinition(
+      name: "Thick Shell",
+      value: 12,
+      family: ReagentFamily.SHELL,
+      grade: ReagentGrade.THICK,
+      description: "Off anything that wears its armour, or out of the water.",
+      iconAsset: "assets/icons/items/thick_shell.png",
+    ),
+  ),
+  HEAVY_SHELL(
+    ReagentPartDefinition(
+      name: "Heavy Shell",
+      value: 25,
+      family: ReagentFamily.SHELL,
+      grade: ReagentGrade.HEAVY,
+      description: "Off anything that wears its armour, or out of the water.",
+      iconAsset: "assets/icons/items/heavy_shell.png",
+    ),
+  ),
+  ANCIENT_SHELL(
+    ReagentPartDefinition(
+      name: "Ancient Shell",
+      value: 50,
+      family: ReagentFamily.SHELL,
+      grade: ReagentGrade.ANCIENT,
+      description: "Off anything that wears its armour, or out of the water.",
+      iconAsset: "assets/icons/items/ancient_shell.png",
+    ),
+  ),
+  PRIMAL_SHELL(
+    ReagentPartDefinition(
+      name: "Primal Shell",
+      value: 100,
+      family: ReagentFamily.SHELL,
+      grade: ReagentGrade.PRIMAL,
+      description: "Off anything that wears its armour, or out of the water.",
+      iconAsset: "assets/icons/items/primal_shell.png",
+    ),
+  ),
+  SMALL_VENOM(
+    ReagentPartDefinition(
+      name: "Small Venom",
+      value: 2,
+      family: ReagentFamily.VENOM,
+      grade: ReagentGrade.SMALL,
+      description: "Milked from something that bites.",
+      iconAsset: "assets/icons/items/small_venom.png",
+    ),
+  ),
+  STURDY_VENOM(
+    ReagentPartDefinition(
+      name: "Sturdy Venom",
+      value: 5,
+      family: ReagentFamily.VENOM,
+      grade: ReagentGrade.STURDY,
+      description: "Milked from something that bites.",
+      iconAsset: "assets/icons/items/sturdy_venom.png",
+    ),
+  ),
+  THICK_VENOM(
+    ReagentPartDefinition(
+      name: "Thick Venom",
+      value: 12,
+      family: ReagentFamily.VENOM,
+      grade: ReagentGrade.THICK,
+      description: "Milked from something that bites.",
+      iconAsset: "assets/icons/items/thick_venom.png",
+    ),
+  ),
+  HEAVY_VENOM(
+    ReagentPartDefinition(
+      name: "Heavy Venom",
+      value: 25,
+      family: ReagentFamily.VENOM,
+      grade: ReagentGrade.HEAVY,
+      description: "Milked from something that bites.",
+      iconAsset: "assets/icons/items/heavy_venom.png",
+    ),
+  ),
+  ANCIENT_VENOM(
+    ReagentPartDefinition(
+      name: "Ancient Venom",
+      value: 50,
+      family: ReagentFamily.VENOM,
+      grade: ReagentGrade.ANCIENT,
+      description: "Milked from something that bites.",
+      iconAsset: "assets/icons/items/ancient_venom.png",
+    ),
+  ),
+  PRIMAL_VENOM(
+    ReagentPartDefinition(
+      name: "Primal Venom",
+      value: 100,
+      family: ReagentFamily.VENOM,
+      grade: ReagentGrade.PRIMAL,
+      description: "Milked from something that bites.",
+      iconAsset: "assets/icons/items/primal_venom.png",
+    ),
+  ),
+  SMALL_ICHOR(
+    ReagentPartDefinition(
+      name: "Small Ichor",
+      value: 2,
+      family: ReagentFamily.ICHOR,
+      grade: ReagentGrade.SMALL,
+      description:
+          "What leaks out of the strange ones: slimes, spirits, the dead.",
+      iconAsset: "assets/icons/items/small_ichor.png",
+    ),
+  ),
+  STURDY_ICHOR(
+    ReagentPartDefinition(
+      name: "Sturdy Ichor",
+      value: 5,
+      family: ReagentFamily.ICHOR,
+      grade: ReagentGrade.STURDY,
+      description:
+          "What leaks out of the strange ones: slimes, spirits, the dead.",
+      iconAsset: "assets/icons/items/sturdy_ichor.png",
+    ),
+  ),
+  THICK_ICHOR(
+    ReagentPartDefinition(
+      name: "Thick Ichor",
+      value: 12,
+      family: ReagentFamily.ICHOR,
+      grade: ReagentGrade.THICK,
+      description:
+          "What leaks out of the strange ones: slimes, spirits, the dead.",
+      iconAsset: "assets/icons/items/thick_ichor.png",
+    ),
+  ),
+  HEAVY_ICHOR(
+    ReagentPartDefinition(
+      name: "Heavy Ichor",
+      value: 25,
+      family: ReagentFamily.ICHOR,
+      grade: ReagentGrade.HEAVY,
+      description:
+          "What leaks out of the strange ones: slimes, spirits, the dead.",
+      iconAsset: "assets/icons/items/heavy_ichor.png",
+    ),
+  ),
+  ANCIENT_ICHOR(
+    ReagentPartDefinition(
+      name: "Ancient Ichor",
+      value: 50,
+      family: ReagentFamily.ICHOR,
+      grade: ReagentGrade.ANCIENT,
+      description:
+          "What leaks out of the strange ones: slimes, spirits, the dead.",
+      iconAsset: "assets/icons/items/ancient_ichor.png",
+    ),
+  ),
+  PRIMAL_ICHOR(
+    ReagentPartDefinition(
+      name: "Primal Ichor",
+      value: 100,
+      family: ReagentFamily.ICHOR,
+      grade: ReagentGrade.PRIMAL,
+      description:
+          "What leaks out of the strange ones: slimes, spirits, the dead.",
+      iconAsset: "assets/icons/items/primal_ichor.png",
+    ),
+  ),
+
+  // The old specific reagents, from before the families. Nothing drops
+  // them now and no recipe takes them, save the crafting potions' few;
+  // they stay so saves load.
   // What a herb is brewed *with*, alchemy level ascending. A herb sets
   // what a potion is; the reagent it is paired with sets which stat the
   // potion moves. Iron ore doubles as one and stays in ORES.
@@ -558,7 +1030,7 @@ enum ItemId {
     ItemDefinition(
       name: "Feather",
       value: 1,
-      iconAsset: "assets/icons/items/feather.png",
+      iconAsset: "assets/icons/items/small_feather.png",
     ),
   ),
   SCALE(
@@ -639,7 +1111,7 @@ enum ItemId {
       name: "Bat Fang",
       value: 7,
       description: "A needle-thin fang from a mine bat.",
-      iconAsset: "assets/icons/items/bat_fang.png",
+      iconAsset: "assets/icons/items/small_fang.png",
     ),
   ),
   SLIME_OOZE(
@@ -647,7 +1119,7 @@ enum ItemId {
       name: "Slime Ooze",
       value: 4,
       description: "Thick, cold and faintly sweet. It clings to everything.",
-      iconAsset: "assets/icons/items/slime_ooze.png",
+      iconAsset: "assets/icons/items/sturdy_ichor.png",
     ),
   ),
   SLIME_CORE(
@@ -655,7 +1127,7 @@ enum ItemId {
       name: "Slime Core",
       value: 60,
       description: "The dense heart of a slime. Alchemists prize it.",
-      iconAsset: "assets/icons/items/slime_core.png",
+      iconAsset: "assets/icons/items/small_ichor.png",
     ),
   ),
   RED_CAP_MUSHROOM(
@@ -681,7 +1153,7 @@ enum ItemId {
       name: "Crow Quill",
       value: 10,
       description: "A long black flight feather, stiff as a nib.",
-      iconAsset: "assets/icons/items/crow_quill.png",
+      iconAsset: "assets/icons/items/thick_feather.png",
     ),
   ),
   MARSH_FROG(
@@ -697,7 +1169,7 @@ enum ItemId {
       name: "Murkjaw Fang",
       value: 40,
       description: "A yellowed, hooked tooth from something that waits.",
-      iconAsset: "assets/icons/items/murkjaw_fang.png",
+      iconAsset: "assets/icons/items/thick_fang.png",
     ),
   ),
   // the west-coast monster parts, by zone: Reedwater Vale, Mudmouth Delta,
@@ -723,7 +1195,7 @@ enum ItemId {
       name: "Turtle Shell",
       value: 20,
       description: "Mossy on top, hard as iron underneath.",
-      iconAsset: "assets/icons/items/turtle_shell.png",
+      iconAsset: "assets/icons/items/sturdy_shell.png",
     ),
   ),
   CRAB_CLAW(
@@ -731,7 +1203,7 @@ enum ItemId {
       name: "Crab Claw",
       value: 10,
       description: "It still snaps if you press the joint.",
-      iconAsset: "assets/icons/items/crab_claw.png",
+      iconAsset: "assets/icons/items/heavy_shell.png",
     ),
   ),
   HIPPO_TUSK(
@@ -739,7 +1211,7 @@ enum ItemId {
       name: "Hippo Tusk",
       value: 30,
       description: "A curved ivory blade worn smooth by river mud.",
-      iconAsset: "assets/icons/items/hippo_tusk.png",
+      iconAsset: "assets/icons/items/sturdy_horn.png",
     ),
   ),
   CROCODILE_TOOTH(
@@ -765,7 +1237,7 @@ enum ItemId {
       name: "Orc Tusk",
       value: 20,
       description: "A chipped yellow tusk, filed to a point.",
-      iconAsset: "assets/icons/items/orc_tusk.png",
+      iconAsset: "assets/icons/items/thick_horn.png",
     ),
   ),
   SNAKESKIN(
@@ -773,7 +1245,7 @@ enum ItemId {
       name: "Snakeskin",
       value: 18,
       description: "A shed rattlesnake skin, dry and diamond-patterned.",
-      iconAsset: "assets/icons/items/snakeskin.png",
+      iconAsset: "assets/icons/items/small_shell.png",
     ),
   ),
   VENOM_GLAND(
@@ -805,7 +1277,7 @@ enum ItemId {
       name: "Sabertooth Fang",
       value: 40,
       description: "A curved fang as long as a dagger.",
-      iconAsset: "assets/icons/items/sabertooth_fang.png",
+      iconAsset: "assets/icons/items/heavy_fang.png",
     ),
   ),
   // held for leatherworking and fletching, which have no recipes yet
@@ -881,8 +1353,8 @@ enum ItemId {
   // ── FIRE REAGENTS ───────────────────────────────────────────────
   // FireReagentDefinition, firemaking level ascending. Woodcutting's side
   // drops: three off the tree, four off the oak, and all seven off every
-  // tree above them. Thrown on a lit campfire or bonfire, each buffs its
-  // stat by the fire's power.
+  // tree above them. Laid into a bonfire, each picks the stat it buffs
+  // (see firemaking_recipes).
   DRY_TWIGS(
     FireReagentDefinition(
       name: "Dry Twigs",
@@ -1201,85 +1673,649 @@ enum ItemId {
   ),
 
   // ── POTIONS ─────────────────────────────────────────────────────
-  // BuffItemDefinition, alchemy level ascending. A restore-type potion is
-  // a FoodItemDefinition with restoreSkill set.
-  //
-  // The minor tier is the whole of alchemy so far: one guam leaf and one
-  // reagent for +5 to a single stat for three minutes. Drinking one is
-  // PotionSystem's job — the buff is global, so it travels with the
-  // player rather than sitting in a zone the way a fire does.
+  // The ladder: PotionDefinition, tier then skill. One herb and one
+  // creature-family part for +5/8/13/21/34/55 to one skill for three
+  // minutes; the recipes are derived from these (alchemy_recipes.dart),
+  // and design/ALCHEMY_POTIONS.md is the whole design. Drinking one is
+  // PotionSystem's job. A restore-type potion is a FoodItemDefinition with
+  // restoreSkill set.
+  // Minor tier
   MINOR_SPEED_POTION(
-    BuffItemDefinition(
+    PotionDefinition(
       name: "Minor Speed Potion",
       value: 12,
-      description: "Guam steeped with a feather. Acts a shade faster.",
-      skillBonus: {SkillId.SPEED: 5},
-      duration: Duration(minutes: 3),
+      tier: PotionTier.MINOR,
+      skill: SkillId.SPEED,
+      description: "Meadowsweet and a small feather. Quickens every step.",
       iconAsset: "assets/icons/items/minor_speed_potion.png",
     ),
   ),
-  MINOR_FISHING_POTION(
-    BuffItemDefinition(
-      name: "Minor Fishing Potion",
-      value: 12,
-      description: "Guam soaked with a minnow. Lands a little more.",
-      skillBonus: {SkillId.FISHING: 5},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/minor_fishing_potion.png",
-    ),
-  ),
-  MINOR_DEFENCE_POTION(
-    BuffItemDefinition(
-      name: "Minor Defence Potion",
-      value: 18,
-      description: "Guam ground with iron. Turns a little more aside.",
-      skillBonus: {SkillId.DEFENCE: 5},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/minor_defence_potion.png",
-    ),
-  ),
   MINOR_STAMINA_POTION(
-    BuffItemDefinition(
+    PotionDefinition(
       name: "Minor Stamina Potion",
       value: 25,
-      description: "Guam and a rat tail. Holds a little more wind.",
-      skillBonus: {SkillId.STAMINA: 5},
-      duration: Duration(minutes: 3),
+      tier: PotionTier.MINOR,
+      skill: SkillId.STAMINA,
+      description:
+          "Meadowsweet and a small horn. Keeps the legs under you longer.",
       iconAsset: "assets/icons/items/minor_stamina_potion.png",
     ),
   ),
+  MINOR_STRENGTH_POTION(
+    PotionDefinition(
+      name: "Minor Strength Potion",
+      value: 45,
+      tier: PotionTier.MINOR,
+      skill: SkillId.STRENGTH,
+      description:
+          "Meadowsweet and a small fang. Puts weight behind every blow.",
+      iconAsset: "assets/icons/items/minor_strength_potion.png",
+    ),
+  ),
   MINOR_RECOVERY_POTION(
-    BuffItemDefinition(
+    PotionDefinition(
       name: "Minor Recovery Potion",
       value: 30,
-      description: "Guam strained through silk. Gets the wind back sooner.",
-      skillBonus: {SkillId.RECOVERY: 5},
-      duration: Duration(minutes: 3),
+      tier: PotionTier.MINOR,
+      skill: SkillId.RECOVERY,
+      description:
+          "Meadowsweet and a small venom. The breath comes back sooner.",
       iconAsset: "assets/icons/items/minor_recovery_potion.png",
     ),
   ),
-  RECOVERY_POTION(
-    BuffItemDefinition(
-      name: "Recovery Potion",
-      value: 90,
+  MINOR_EXPLORATION_POTION(
+    PotionDefinition(
+      name: "Minor Exploration Potion",
+      value: 15,
+      tier: PotionTier.MINOR,
+      skill: SkillId.EXPLORATION,
       description:
-          "Harralander steeped in grave moss. Gets the wind back fast.",
-      skillBonus: {SkillId.RECOVERY: 10},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/recovery_potion.png",
+          "Meadowsweet and a small ichor. Sharpens the eye for what is hidden.",
+      iconAsset: "assets/icons/items/minor_exploration_potion.png",
     ),
   ),
+  MINOR_DEFENCE_POTION(
+    PotionDefinition(
+      name: "Minor Defence Potion",
+      value: 18,
+      tier: PotionTier.MINOR,
+      skill: SkillId.DEFENCE,
+      description:
+          "Bramblewort and a small shell. Hardens the skin against a blow.",
+      iconAsset: "assets/icons/items/minor_defence_potion.png",
+    ),
+  ),
+  MINOR_WOODCUTTING_POTION(
+    PotionDefinition(
+      name: "Minor Woodcutting Potion",
+      value: 16,
+      tier: PotionTier.MINOR,
+      skill: SkillId.WOODCUTTING,
+      description: "Bramblewort and a small fang. Steadies the axe.",
+      iconAsset: "assets/icons/items/minor_woodcutting_potion.png",
+    ),
+  ),
+  MINOR_FISHING_POTION(
+    PotionDefinition(
+      name: "Minor Fishing Potion",
+      value: 12,
+      tier: PotionTier.MINOR,
+      skill: SkillId.FISHING,
+      description: "Bramblewort and a small shell. The fish come to the line.",
+      iconAsset: "assets/icons/items/minor_fishing_potion.png",
+    ),
+  ),
+  MINOR_MINING_POTION(
+    PotionDefinition(
+      name: "Minor Mining Potion",
+      value: 15,
+      tier: PotionTier.MINOR,
+      skill: SkillId.MINING,
+      description: "Bramblewort and a small horn. Finds the seam in the rock.",
+      iconAsset: "assets/icons/items/minor_mining_potion.png",
+    ),
+  ),
+  MINOR_HERBALISM_POTION(
+    PotionDefinition(
+      name: "Minor Herbalism Potion",
+      value: 15,
+      tier: PotionTier.MINOR,
+      skill: SkillId.HERBALISM,
+      description:
+          "Bramblewort and a small venom. Draws the eye to what grows.",
+      iconAsset: "assets/icons/items/minor_herbalism_potion.png",
+    ),
+  ),
+  // Regular tier
   SPEED_POTION(
-    BuffItemDefinition(
+    PotionDefinition(
       name: "Speed Potion",
       value: 80,
-      description:
-          "Harralander ground with a bat wing. Acts a good deal faster.",
-      skillBonus: {SkillId.SPEED: 10},
-      duration: Duration(minutes: 3),
+      tier: PotionTier.REGULAR,
+      skill: SkillId.SPEED,
+      description: "Reedmint and a sturdy feather. Quickens every step.",
       iconAsset: "assets/icons/items/speed_potion.png",
     ),
   ),
+  STAMINA_POTION(
+    PotionDefinition(
+      name: "Stamina Potion",
+      value: 95,
+      tier: PotionTier.REGULAR,
+      skill: SkillId.STAMINA,
+      description:
+          "Reedmint and a sturdy horn. Keeps the legs under you longer.",
+      iconAsset: "assets/icons/items/stamina_potion.png",
+    ),
+  ),
+  STRENGTH_POTION(
+    PotionDefinition(
+      name: "Strength Potion",
+      value: 120,
+      tier: PotionTier.REGULAR,
+      skill: SkillId.STRENGTH,
+      description: "Reedmint and a sturdy fang. Puts weight behind every blow.",
+      iconAsset: "assets/icons/items/strength_potion.png",
+    ),
+  ),
+  RECOVERY_POTION(
+    PotionDefinition(
+      name: "Recovery Potion",
+      value: 90,
+      tier: PotionTier.REGULAR,
+      skill: SkillId.RECOVERY,
+      description: "Reedmint and a sturdy venom. The breath comes back sooner.",
+      iconAsset: "assets/icons/items/recovery_potion.png",
+    ),
+  ),
+  EXPLORATION_POTION(
+    PotionDefinition(
+      name: "Exploration Potion",
+      value: 60,
+      tier: PotionTier.REGULAR,
+      skill: SkillId.EXPLORATION,
+      description:
+          "Reedmint and a sturdy ichor. Sharpens the eye for what is hidden.",
+      iconAsset: "assets/icons/items/exploration_potion.png",
+    ),
+  ),
+  DEFENCE_POTION(
+    PotionDefinition(
+      name: "Defence Potion",
+      value: 100,
+      tier: PotionTier.REGULAR,
+      skill: SkillId.DEFENCE,
+      description:
+          "Duskthorn and a sturdy shell. Hardens the skin against a blow.",
+      iconAsset: "assets/icons/items/defence_potion.png",
+    ),
+  ),
+  WOODCUTTING_POTION(
+    PotionDefinition(
+      name: "Woodcutting Potion",
+      value: 60,
+      tier: PotionTier.REGULAR,
+      skill: SkillId.WOODCUTTING,
+      description: "Duskthorn and a sturdy fang. Steadies the axe.",
+      iconAsset: "assets/icons/items/woodcutting_potion.png",
+    ),
+  ),
+  FISHING_POTION(
+    PotionDefinition(
+      name: "Fishing Potion",
+      value: 90,
+      tier: PotionTier.REGULAR,
+      skill: SkillId.FISHING,
+      description: "Duskthorn and a sturdy shell. The fish come to the line.",
+      iconAsset: "assets/icons/items/fishing_potion.png",
+    ),
+  ),
+  MINING_POTION(
+    PotionDefinition(
+      name: "Mining Potion",
+      value: 60,
+      tier: PotionTier.REGULAR,
+      skill: SkillId.MINING,
+      description: "Duskthorn and a sturdy horn. Finds the seam in the rock.",
+      iconAsset: "assets/icons/items/mining_potion.png",
+    ),
+  ),
+  HERBALISM_POTION(
+    PotionDefinition(
+      name: "Herbalism Potion",
+      value: 60,
+      tier: PotionTier.REGULAR,
+      skill: SkillId.HERBALISM,
+      description: "Duskthorn and a sturdy venom. Draws the eye to what grows.",
+      iconAsset: "assets/icons/items/herbalism_potion.png",
+    ),
+  ),
+  // Super tier
+  SUPER_SPEED_POTION(
+    PotionDefinition(
+      name: "Super Speed Potion",
+      value: 150,
+      tier: PotionTier.SUPER,
+      skill: SkillId.SPEED,
+      description: "Silt lily and a thick feather. Quickens every step.",
+      iconAsset: "assets/icons/items/super_speed_potion.png",
+    ),
+  ),
+  SUPER_STAMINA_POTION(
+    PotionDefinition(
+      name: "Super Stamina Potion",
+      value: 160,
+      tier: PotionTier.SUPER,
+      skill: SkillId.STAMINA,
+      description:
+          "Silt lily and a thick horn. Keeps the legs under you longer.",
+      iconAsset: "assets/icons/items/super_stamina_potion.png",
+    ),
+  ),
+  SUPER_STRENGTH_POTION(
+    PotionDefinition(
+      name: "Super Strength Potion",
+      value: 190,
+      tier: PotionTier.SUPER,
+      skill: SkillId.STRENGTH,
+      description: "Silt lily and a thick fang. Puts weight behind every blow.",
+      iconAsset: "assets/icons/items/super_strength_potion.png",
+    ),
+  ),
+  SUPER_RECOVERY_POTION(
+    PotionDefinition(
+      name: "Super Recovery Potion",
+      value: 150,
+      tier: PotionTier.SUPER,
+      skill: SkillId.RECOVERY,
+      description: "Silt lily and a thick venom. The breath comes back sooner.",
+      iconAsset: "assets/icons/items/super_recovery_potion.png",
+    ),
+  ),
+  EXPLORERS_POTION(
+    PotionDefinition(
+      name: "Explorer's Potion",
+      value: 170,
+      tier: PotionTier.SUPER,
+      skill: SkillId.EXPLORATION,
+      description:
+          "Silt lily and a thick ichor. Sharpens the eye for what is hidden.",
+      iconAsset: "assets/icons/items/explorers_potion.png",
+    ),
+  ),
+  SUPER_DEFENCE_POTION(
+    PotionDefinition(
+      name: "Super Defence Potion",
+      value: 160,
+      tier: PotionTier.SUPER,
+      skill: SkillId.DEFENCE,
+      description:
+          "Mirecap and a thick shell. Hardens the skin against a blow.",
+      iconAsset: "assets/icons/items/super_defence_potion.png",
+    ),
+  ),
+  WOODSMANS_POTION(
+    PotionDefinition(
+      name: "Woodsman's Potion",
+      value: 150,
+      tier: PotionTier.SUPER,
+      skill: SkillId.WOODCUTTING,
+      description: "Mirecap and a thick fang. Steadies the axe.",
+      iconAsset: "assets/icons/items/woodsmans_potion.png",
+    ),
+  ),
+  SUPER_FISHING_POTION(
+    PotionDefinition(
+      name: "Super Fishing Potion",
+      value: 150,
+      tier: PotionTier.SUPER,
+      skill: SkillId.FISHING,
+      description: "Mirecap and a thick shell. The fish come to the line.",
+      iconAsset: "assets/icons/items/super_fishing_potion.png",
+    ),
+  ),
+  PROSPECTORS_POTION(
+    PotionDefinition(
+      name: "Prospector's Potion",
+      value: 150,
+      tier: PotionTier.SUPER,
+      skill: SkillId.MINING,
+      description: "Mirecap and a thick horn. Finds the seam in the rock.",
+      iconAsset: "assets/icons/items/prospectors_potion.png",
+    ),
+  ),
+  FORAGERS_POTION(
+    PotionDefinition(
+      name: "Forager's Potion",
+      value: 150,
+      tier: PotionTier.SUPER,
+      skill: SkillId.HERBALISM,
+      description: "Mirecap and a thick venom. Draws the eye to what grows.",
+      iconAsset: "assets/icons/items/foragers_potion.png",
+    ),
+  ),
+  // Greater tier
+  GREATER_SPEED_POTION(
+    PotionDefinition(
+      name: "Greater Speed Potion",
+      value: 240,
+      tier: PotionTier.GREATER,
+      skill: SkillId.SPEED,
+      description: "Saltwort and a heavy feather. Quickens every step.",
+      iconAsset: "assets/icons/items/greater_speed_potion.png",
+    ),
+  ),
+  GREATER_STAMINA_POTION(
+    PotionDefinition(
+      name: "Greater Stamina Potion",
+      value: 250,
+      tier: PotionTier.GREATER,
+      skill: SkillId.STAMINA,
+      description:
+          "Saltwort and a heavy horn. Keeps the legs under you longer.",
+      iconAsset: "assets/icons/items/greater_stamina_potion.png",
+    ),
+  ),
+  GREATER_STRENGTH_POTION(
+    PotionDefinition(
+      name: "Greater Strength Potion",
+      value: 300,
+      tier: PotionTier.GREATER,
+      skill: SkillId.STRENGTH,
+      description: "Saltwort and a heavy fang. Puts weight behind every blow.",
+      iconAsset: "assets/icons/items/greater_strength_potion.png",
+    ),
+  ),
+  GREATER_RECOVERY_POTION(
+    PotionDefinition(
+      name: "Greater Recovery Potion",
+      value: 240,
+      tier: PotionTier.GREATER,
+      skill: SkillId.RECOVERY,
+      description: "Saltwort and a heavy venom. The breath comes back sooner.",
+      iconAsset: "assets/icons/items/greater_recovery_potion.png",
+    ),
+  ),
+  GREATER_EXPLORATION_POTION(
+    PotionDefinition(
+      name: "Greater Exploration Potion",
+      value: 250,
+      tier: PotionTier.GREATER,
+      skill: SkillId.EXPLORATION,
+      description:
+          "Saltwort and a heavy ichor. Sharpens the eye for what is hidden.",
+      iconAsset: "assets/icons/items/greater_exploration_potion.png",
+    ),
+  ),
+  GREATER_DEFENCE_POTION(
+    PotionDefinition(
+      name: "Greater Defence Potion",
+      value: 260,
+      tier: PotionTier.GREATER,
+      skill: SkillId.DEFENCE,
+      description:
+          "Bluestem and a heavy shell. Hardens the skin against a blow.",
+      iconAsset: "assets/icons/items/greater_defence_potion.png",
+    ),
+  ),
+  GREATER_WOODCUTTING_POTION(
+    PotionDefinition(
+      name: "Greater Woodcutting Potion",
+      value: 250,
+      tier: PotionTier.GREATER,
+      skill: SkillId.WOODCUTTING,
+      description: "Bluestem and a heavy fang. Steadies the axe.",
+      iconAsset: "assets/icons/items/greater_woodcutting_potion.png",
+    ),
+  ),
+  GREATER_FISHING_POTION(
+    PotionDefinition(
+      name: "Greater Fishing Potion",
+      value: 260,
+      tier: PotionTier.GREATER,
+      skill: SkillId.FISHING,
+      description: "Bluestem and a heavy shell. The fish come to the line.",
+      iconAsset: "assets/icons/items/greater_fishing_potion.png",
+    ),
+  ),
+  GREATER_MINING_POTION(
+    PotionDefinition(
+      name: "Greater Mining Potion",
+      value: 250,
+      tier: PotionTier.GREATER,
+      skill: SkillId.MINING,
+      description: "Bluestem and a heavy horn. Finds the seam in the rock.",
+      iconAsset: "assets/icons/items/greater_mining_potion.png",
+    ),
+  ),
+  GREATER_HERBALISM_POTION(
+    PotionDefinition(
+      name: "Greater Herbalism Potion",
+      value: 250,
+      tier: PotionTier.GREATER,
+      skill: SkillId.HERBALISM,
+      description: "Bluestem and a heavy venom. Draws the eye to what grows.",
+      iconAsset: "assets/icons/items/greater_herbalism_potion.png",
+    ),
+  ),
+  // Grand tier
+  GRAND_SPEED_POTION(
+    PotionDefinition(
+      name: "Grand Speed Potion",
+      value: 450,
+      tier: PotionTier.GRAND,
+      skill: SkillId.SPEED,
+      description: "Glimmercap and a ancient feather. Quickens every step.",
+      iconAsset: "assets/icons/items/grand_speed_potion.png",
+    ),
+  ),
+  GRAND_STAMINA_POTION(
+    PotionDefinition(
+      name: "Grand Stamina Potion",
+      value: 450,
+      tier: PotionTier.GRAND,
+      skill: SkillId.STAMINA,
+      description:
+          "Glimmercap and a ancient horn. Keeps the legs under you longer.",
+      iconAsset: "assets/icons/items/grand_stamina_potion.png",
+    ),
+  ),
+  GRAND_STRENGTH_POTION(
+    PotionDefinition(
+      name: "Grand Strength Potion",
+      value: 450,
+      tier: PotionTier.GRAND,
+      skill: SkillId.STRENGTH,
+      description:
+          "Glimmercap and a ancient fang. Puts weight behind every blow.",
+      iconAsset: "assets/icons/items/grand_strength_potion.png",
+    ),
+  ),
+  GRAND_RECOVERY_POTION(
+    PotionDefinition(
+      name: "Grand Recovery Potion",
+      value: 450,
+      tier: PotionTier.GRAND,
+      skill: SkillId.RECOVERY,
+      description:
+          "Glimmercap and a ancient venom. The breath comes back sooner.",
+      iconAsset: "assets/icons/items/grand_recovery_potion.png",
+    ),
+  ),
+  GRAND_EXPLORATION_POTION(
+    PotionDefinition(
+      name: "Grand Exploration Potion",
+      value: 450,
+      tier: PotionTier.GRAND,
+      skill: SkillId.EXPLORATION,
+      description:
+          "Glimmercap and a ancient ichor. Sharpens the eye for what is hidden.",
+      iconAsset: "assets/icons/items/grand_exploration_potion.png",
+    ),
+  ),
+  GRAND_DEFENCE_POTION(
+    PotionDefinition(
+      name: "Grand Defence Potion",
+      value: 450,
+      tier: PotionTier.GRAND,
+      skill: SkillId.DEFENCE,
+      description:
+          "Bloodroot and a ancient shell. Hardens the skin against a blow.",
+      iconAsset: "assets/icons/items/grand_defence_potion.png",
+    ),
+  ),
+  GRAND_WOODCUTTING_POTION(
+    PotionDefinition(
+      name: "Grand Woodcutting Potion",
+      value: 450,
+      tier: PotionTier.GRAND,
+      skill: SkillId.WOODCUTTING,
+      description: "Bloodroot and a ancient fang. Steadies the axe.",
+      iconAsset: "assets/icons/items/grand_woodcutting_potion.png",
+    ),
+  ),
+  GRAND_FISHING_POTION(
+    PotionDefinition(
+      name: "Grand Fishing Potion",
+      value: 450,
+      tier: PotionTier.GRAND,
+      skill: SkillId.FISHING,
+      description: "Bloodroot and a ancient shell. The fish come to the line.",
+      iconAsset: "assets/icons/items/grand_fishing_potion.png",
+    ),
+  ),
+  GRAND_MINING_POTION(
+    PotionDefinition(
+      name: "Grand Mining Potion",
+      value: 450,
+      tier: PotionTier.GRAND,
+      skill: SkillId.MINING,
+      description: "Bloodroot and a ancient horn. Finds the seam in the rock.",
+      iconAsset: "assets/icons/items/grand_mining_potion.png",
+    ),
+  ),
+  GRAND_HERBALISM_POTION(
+    PotionDefinition(
+      name: "Grand Herbalism Potion",
+      value: 450,
+      tier: PotionTier.GRAND,
+      skill: SkillId.HERBALISM,
+      description:
+          "Bloodroot and a ancient venom. Draws the eye to what grows.",
+      iconAsset: "assets/icons/items/grand_herbalism_potion.png",
+    ),
+  ),
+  // Supreme tier
+  SUPREME_SPEED_POTION(
+    PotionDefinition(
+      name: "Supreme Speed Potion",
+      value: 800,
+      tier: PotionTier.SUPREME,
+      skill: SkillId.SPEED,
+      description: "Frostbloom and a primal feather. Quickens every step.",
+      iconAsset: "assets/icons/items/supreme_speed_potion.png",
+    ),
+  ),
+  SUPREME_STAMINA_POTION(
+    PotionDefinition(
+      name: "Supreme Stamina Potion",
+      value: 800,
+      tier: PotionTier.SUPREME,
+      skill: SkillId.STAMINA,
+      description:
+          "Frostbloom and a primal horn. Keeps the legs under you longer.",
+      iconAsset: "assets/icons/items/supreme_stamina_potion.png",
+    ),
+  ),
+  SUPREME_STRENGTH_POTION(
+    PotionDefinition(
+      name: "Supreme Strength Potion",
+      value: 800,
+      tier: PotionTier.SUPREME,
+      skill: SkillId.STRENGTH,
+      description:
+          "Frostbloom and a primal fang. Puts weight behind every blow.",
+      iconAsset: "assets/icons/items/supreme_strength_potion.png",
+    ),
+  ),
+  SUPREME_RECOVERY_POTION(
+    PotionDefinition(
+      name: "Supreme Recovery Potion",
+      value: 800,
+      tier: PotionTier.SUPREME,
+      skill: SkillId.RECOVERY,
+      description:
+          "Frostbloom and a primal venom. The breath comes back sooner.",
+      iconAsset: "assets/icons/items/supreme_recovery_potion.png",
+    ),
+  ),
+  SUPREME_EXPLORATION_POTION(
+    PotionDefinition(
+      name: "Supreme Exploration Potion",
+      value: 800,
+      tier: PotionTier.SUPREME,
+      skill: SkillId.EXPLORATION,
+      description:
+          "Frostbloom and a primal ichor. Sharpens the eye for what is hidden.",
+      iconAsset: "assets/icons/items/supreme_exploration_potion.png",
+    ),
+  ),
+  SUPREME_DEFENCE_POTION(
+    PotionDefinition(
+      name: "Supreme Defence Potion",
+      value: 800,
+      tier: PotionTier.SUPREME,
+      skill: SkillId.DEFENCE,
+      description:
+          "Emberroot and a primal shell. Hardens the skin against a blow.",
+      iconAsset: "assets/icons/items/supreme_defence_potion.png",
+    ),
+  ),
+  SUPREME_WOODCUTTING_POTION(
+    PotionDefinition(
+      name: "Supreme Woodcutting Potion",
+      value: 800,
+      tier: PotionTier.SUPREME,
+      skill: SkillId.WOODCUTTING,
+      description: "Emberroot and a primal fang. Steadies the axe.",
+      iconAsset: "assets/icons/items/supreme_woodcutting_potion.png",
+    ),
+  ),
+  SUPREME_FISHING_POTION(
+    PotionDefinition(
+      name: "Supreme Fishing Potion",
+      value: 800,
+      tier: PotionTier.SUPREME,
+      skill: SkillId.FISHING,
+      description: "Emberroot and a primal shell. The fish come to the line.",
+      iconAsset: "assets/icons/items/supreme_fishing_potion.png",
+    ),
+  ),
+  SUPREME_MINING_POTION(
+    PotionDefinition(
+      name: "Supreme Mining Potion",
+      value: 800,
+      tier: PotionTier.SUPREME,
+      skill: SkillId.MINING,
+      description: "Emberroot and a primal horn. Finds the seam in the rock.",
+      iconAsset: "assets/icons/items/supreme_mining_potion.png",
+    ),
+  ),
+  SUPREME_HERBALISM_POTION(
+    PotionDefinition(
+      name: "Supreme Herbalism Potion",
+      value: 800,
+      tier: PotionTier.SUPREME,
+      skill: SkillId.HERBALISM,
+      description: "Emberroot and a primal venom. Draws the eye to what grows.",
+      iconAsset: "assets/icons/items/supreme_herbalism_potion.png",
+    ),
+  ),
+
+  // Off the ladder. The attack potions have no recipe any more (Attack is
+  // not a skill the ladder buffs); ones already brewed still drink. The
+  // crafting potions keep hand-written recipes until crafting potions get
+  // their own reagents (design/ALCHEMY_POTIONS.md, "Held off").
   ATTACK_POTION(
     BuffItemDefinition(
       name: "Attack Potion",
@@ -1288,46 +2324,6 @@ enum ItemId {
       skillBonus: {SkillId.ATTACK: 10},
       duration: Duration(minutes: 3),
       iconAsset: "assets/icons/items/attack_potion.png",
-    ),
-  ),
-  STRENGTH_POTION(
-    BuffItemDefinition(
-      name: "Strength Potion",
-      value: 120,
-      description: "Harralander and a bat fang. Hits much harder.",
-      skillBonus: {SkillId.STRENGTH: 10},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/strength_potion.png",
-    ),
-  ),
-  FISHING_POTION(
-    BuffItemDefinition(
-      name: "Fishing Potion",
-      value: 90,
-      description: "Harralander and crayfish. The water gives up its best.",
-      skillBonus: {SkillId.FISHING: 10},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/fishing_potion.png",
-    ),
-  ),
-  DEFENCE_POTION(
-    BuffItemDefinition(
-      name: "Defence Potion",
-      value: 100,
-      description: "Harralander and iron bar. Blows glance off.",
-      skillBonus: {SkillId.DEFENCE: 10},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/defence_potion.png",
-    ),
-  ),
-  STAMINA_POTION(
-    BuffItemDefinition(
-      name: "Stamina Potion",
-      value: 95,
-      description: "Harralander and slime ooze. Holds out far longer.",
-      skillBonus: {SkillId.STAMINA: 10},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/stamina_potion.png",
     ),
   ),
   MINOR_ATTACK_POTION(
@@ -1340,79 +2336,6 @@ enum ItemId {
       iconAsset: "assets/icons/items/minor_attack_potion.png",
     ),
   ),
-  MINOR_STRENGTH_POTION(
-    BuffItemDefinition(
-      name: "Minor Strength Potion",
-      value: 45,
-      description: "Guam and a powdered claw. Hits a little harder.",
-      skillBonus: {SkillId.STRENGTH: 5},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/minor_strength_potion.png",
-    ),
-  ),
-
-  // The super tier: one mirecap and a swamp reagent for +13, the next rung
-  // of the Fibonacci ladder past the minor (+5) and the standard (+10).
-  SUPER_RECOVERY_POTION(
-    BuffItemDefinition(
-      name: "Super Recovery Potion",
-      value: 150,
-      description: "Mirecap and a leech. The wind comes back at once.",
-      skillBonus: {SkillId.RECOVERY: 13},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/super_recovery_potion.png",
-    ),
-  ),
-  SUPER_FISHING_POTION(
-    BuffItemDefinition(
-      name: "Super Fishing Potion",
-      value: 150,
-      description: "Mirecap and bog eel. Fish all but jump in.",
-      skillBonus: {SkillId.FISHING: 13},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/super_fishing_potion.png",
-    ),
-  ),
-  SUPER_STAMINA_POTION(
-    BuffItemDefinition(
-      name: "Super Stamina Potion",
-      value: 160,
-      description: "Mirecap and a slime core. Hardly tires at all.",
-      skillBonus: {SkillId.STAMINA: 13},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/super_stamina_potion.png",
-    ),
-  ),
-  SUPER_DEFENCE_POTION(
-    BuffItemDefinition(
-      name: "Super Defence Potion",
-      value: 160,
-      description: "Mirecap and ground scale. Skin like a mudlurc's.",
-      skillBonus: {SkillId.DEFENCE: 13},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/super_defence_potion.png",
-    ),
-  ),
-  SUPER_SPEED_POTION(
-    BuffItemDefinition(
-      name: "Super Speed Potion",
-      value: 150,
-      description: "Mirecap and a crow quill. Moves before it thinks.",
-      skillBonus: {SkillId.SPEED: 13},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/super_speed_potion.png",
-    ),
-  ),
-  SUPER_STRENGTH_POTION(
-    BuffItemDefinition(
-      name: "Super Strength Potion",
-      value: 190,
-      description: "Mirecap and a marsh frog. Hits like a falling tree.",
-      skillBonus: {SkillId.STRENGTH: 13},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/super_strength_potion.png",
-    ),
-  ),
   SUPER_ATTACK_POTION(
     BuffItemDefinition(
       name: "Super Attack Potion",
@@ -1421,30 +2344,6 @@ enum ItemId {
       skillBonus: {SkillId.ATTACK: 13},
       duration: Duration(minutes: 3),
       iconAsset: "assets/icons/items/super_attack_potion.png",
-    ),
-  ),
-
-  // The utility tier: one sweetgrass and a reagent for +13 to a gathering
-  // or crafting skill, the super tier's strength on the skills the combat
-  // potions leave alone
-  PROSPECTORS_POTION(
-    BuffItemDefinition(
-      name: "Prospector's Potion",
-      value: 150,
-      description: "Sweetgrass and mithril ore. Finds the seam first time.",
-      skillBonus: {SkillId.MINING: 13},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/prospectors_potion.png",
-    ),
-  ),
-  FORAGERS_POTION(
-    BuffItemDefinition(
-      name: "Forager's Potion",
-      value: 150,
-      description: "Sweetgrass and a wind mote. Spots every leaf.",
-      skillBonus: {SkillId.HERBALISM: 13},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/foragers_potion.png",
     ),
   ),
   SMITHS_POTION(
@@ -1467,20 +2366,6 @@ enum ItemId {
       iconAsset: "assets/icons/items/alchemists_potion.png",
     ),
   ),
-
-  // The greater tier: one bluestem and a prairie reagent for +21, the
-  // Fibonacci rung past the super tier's +13. There is no greater fishing
-  // potion: the prairie has no water to give its reagent
-  GREATER_STRENGTH_POTION(
-    BuffItemDefinition(
-      name: "Greater Strength Potion",
-      value: 300,
-      description: "Bluestem and an orc tusk. Hits like a charging orc.",
-      skillBonus: {SkillId.STRENGTH: 21},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/greater_strength_potion.png",
-    ),
-  ),
   GREATER_ATTACK_POTION(
     BuffItemDefinition(
       name: "Greater Attack Potion",
@@ -1491,50 +2376,6 @@ enum ItemId {
       iconAsset: "assets/icons/items/greater_attack_potion.png",
     ),
   ),
-  GREATER_DEFENCE_POTION(
-    BuffItemDefinition(
-      name: "Greater Defence Potion",
-      value: 260,
-      description: "Bluestem and snakeskin. Blows slide off like scales.",
-      skillBonus: {SkillId.DEFENCE: 21},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/greater_defence_potion.png",
-    ),
-  ),
-  GREATER_RECOVERY_POTION(
-    BuffItemDefinition(
-      name: "Greater Recovery Potion",
-      value: 240,
-      description: "Bluestem and a venom gland. What bites also heals.",
-      skillBonus: {SkillId.RECOVERY: 21},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/greater_recovery_potion.png",
-    ),
-  ),
-  GREATER_STAMINA_POTION(
-    BuffItemDefinition(
-      name: "Greater Stamina Potion",
-      value: 250,
-      description: "Bluestem and a centaur hoof. Runs all day.",
-      skillBonus: {SkillId.STAMINA: 21},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/greater_stamina_potion.png",
-    ),
-  ),
-  GREATER_SPEED_POTION(
-    BuffItemDefinition(
-      name: "Greater Speed Potion",
-      value: 240,
-      description: "Bluestem and a wind mote. Gone before the dust settles.",
-      skillBonus: {SkillId.SPEED: 21},
-      duration: Duration(minutes: 3),
-      iconAsset: "assets/icons/items/greater_speed_potion.png",
-    ),
-  ),
-
-  // The waters' potions: a herb of each tier and a fishing spot's reagent,
-  // at that tier's strength. The lake's sponge makes the greater fishing
-  // potion the prairie had no water for
   MINOR_COOKING_POTION(
     BuffItemDefinition(
       name: "Minor Cooking Potion",
@@ -1545,16 +2386,6 @@ enum ItemId {
       iconAsset: "assets/icons/items/minor_cooking_potion.png",
     ),
   ),
-  MINOR_WOODCUTTING_POTION(
-    BuffItemDefinition(
-      name: "Minor Woodcutting Potion",
-      value: 16,
-      skillBonus: {SkillId.WOODCUTTING: 5},
-      duration: Duration(minutes: 3),
-      description: "Guam and creek moss. Bites a little deeper.",
-      iconAsset: "assets/icons/items/minor_woodcutting_potion.png",
-    ),
-  ),
   COOKING_POTION(
     BuffItemDefinition(
       name: "Cooking Potion",
@@ -1563,36 +2394,6 @@ enum ItemId {
       duration: Duration(minutes: 3),
       description: "Harralander and a mussel. A cook's steady hand.",
       iconAsset: "assets/icons/items/cooking_potion.png",
-    ),
-  ),
-  WOODSMANS_POTION(
-    BuffItemDefinition(
-      name: "Woodsman's Potion",
-      value: 150,
-      skillBonus: {SkillId.WOODCUTTING: 13},
-      duration: Duration(minutes: 3),
-      description: "Sweetgrass and duckweed. Every swing finds the grain.",
-      iconAsset: "assets/icons/items/woodsmans_potion.png",
-    ),
-  ),
-  EXPLORERS_POTION(
-    BuffItemDefinition(
-      name: "Explorer's Potion",
-      value: 170,
-      skillBonus: {SkillId.EXPLORATION: 13},
-      duration: Duration(minutes: 3),
-      description: "Sweetgrass and sea kelp. The horizon looks closer.",
-      iconAsset: "assets/icons/items/explorers_potion.png",
-    ),
-  ),
-  GREATER_FISHING_POTION(
-    BuffItemDefinition(
-      name: "Greater Fishing Potion",
-      value: 260,
-      skillBonus: {SkillId.FISHING: 21},
-      duration: Duration(minutes: 3),
-      description: "Bluestem and a lake sponge. The deep water comes to you.",
-      iconAsset: "assets/icons/items/greater_fishing_potion.png",
     ),
   ),
 
@@ -2600,16 +3401,12 @@ enum ItemId {
   ),
 
   // ── FIRES ───────────────────────────────────────────────────────
-  // log tier, then fire tier. Every number is a Fibonacci rung.
+  // Every number is a Fibonacci rung.
   //
-  // A cookfire cooks and carries its own cooking + hitpoints bonus. A
-  // campfire or bonfire carries nothing of its own: its wood sets its
-  // power, and each fire reagent thrown on it gives that much to the
-  // reagent's stat (see FireReagentDefinition). A campfire is a steady
-  // timer at its wood's power. A bonfire burns on heat instead: stoked from
-  // its power up the bonus ladder to two rungs above it, cooling back down
-  // when the logs stop (see FireItem). A reagent burns 3 minutes on it
-  // rather than 5.
+  // A cookfire cooks and carries its own cooking + hitpoints bonus.
+  // A bonfire is laid from its wood and one fire reagent, and carries the
+  // reagent's stat at its wood's power for as long as it burns: one bonfire
+  // per wood per reagent, each its own recipe (see firemaking_recipes).
   COOKFIRE(
     FireItemDefinition(
       name: "Cookfire",
@@ -2619,33 +3416,6 @@ enum ItemId {
       canCook: true,
       description: "Cooks food. +3 cooking and hitpoints while it burns.",
       iconAsset: "assets/images/entities/cookfire.png",
-    ),
-  ),
-  BASIC_CAMPFIRE(
-    FireItemDefinition(
-      name: "Campfire",
-      value: 5,
-      skillBonus: {},
-      duration: Duration(minutes: 5),
-      power: 5,
-      reagentBurn: Duration(minutes: 5),
-      description: "Kindling thrown on gives +5 to its stat for 5 minutes.",
-      iconAsset: "assets/images/entities/campfire.png",
-    ),
-  ),
-  BONFIRE(
-    FireItemDefinition(
-      name: "Bonfire",
-      value: 18,
-      skillBonus: {},
-      duration: Duration(minutes: 8),
-      power: 5,
-      stokes: true,
-      reagentBurn: Duration(minutes: 3),
-      description:
-          "Stoke it hot: kindling thrown on gives up to +13 to its "
-          "stat for 3 minutes, cooling back down when the logs stop.",
-      iconAsset: "assets/images/entities/bonfire.png",
     ),
   ),
   OAK_COOKFIRE(
@@ -2659,34 +3429,6 @@ enum ItemId {
       iconAsset: "assets/images/entities/oak_cookfire.png",
     ),
   ),
-  OAK_CAMPFIRE(
-    FireItemDefinition(
-      name: "Oak Campfire",
-      value: 12,
-      skillBonus: {},
-      duration: Duration(minutes: 8),
-      power: 8,
-      reagentBurn: Duration(minutes: 5),
-      description: "Kindling thrown on gives +8 to its stat for 5 minutes.",
-      iconAsset: "assets/images/entities/oak_campfire.png",
-    ),
-  ),
-  OAK_BONFIRE(
-    FireItemDefinition(
-      name: "Oak Bonfire",
-      value: 40,
-      skillBonus: {},
-      duration: Duration(minutes: 13),
-      power: 8,
-      stokes: true,
-      reagentBurn: Duration(minutes: 3),
-      description:
-          "Stoke it hot: kindling thrown on gives up to +21 to its "
-          "stat for 3 minutes, cooling back down when the logs stop.",
-      iconAsset: "assets/images/entities/oak_bonfire.png",
-    ),
-  ),
-  // Tier 3, burnt from the willow logs that grow in Darkwood.
   WILLOW_COOKFIRE(
     FireItemDefinition(
       name: "Willow Cookfire",
@@ -2698,35 +3440,6 @@ enum ItemId {
       iconAsset: "assets/images/entities/willow_cookfire.png",
     ),
   ),
-  WILLOW_CAMPFIRE(
-    FireItemDefinition(
-      name: "Willow Campfire",
-      value: 26,
-      skillBonus: {},
-      duration: Duration(minutes: 13),
-      power: 13,
-      reagentBurn: Duration(minutes: 5),
-      description: "Kindling thrown on gives +13 to its stat for 5 minutes.",
-      iconAsset: "assets/images/entities/willow_campfire.png",
-    ),
-  ),
-  WILLOW_BONFIRE(
-    FireItemDefinition(
-      name: "Willow Bonfire",
-      value: 85,
-      skillBonus: {},
-      duration: Duration(minutes: 21),
-      power: 13,
-      stokes: true,
-      reagentBurn: Duration(minutes: 3),
-      description:
-          "Stoke it hot: kindling thrown on gives up to +34 to its "
-          "stat for 3 minutes, cooling back down when the logs stop.",
-      iconAsset: "assets/images/entities/willow_bonfire.png",
-    ),
-  ),
-  // Bog, willow's side-grade from Blackmire Swamp: the same tier, one rung
-  // weaker and one rung longer. Wet wood smoulders.
   BOG_COOKFIRE(
     FireItemDefinition(
       name: "Bog Cookfire",
@@ -2738,35 +3451,6 @@ enum ItemId {
       iconAsset: "assets/images/entities/bog_cookfire.png",
     ),
   ),
-  BOG_CAMPFIRE(
-    FireItemDefinition(
-      name: "Bog Campfire",
-      value: 26,
-      skillBonus: {},
-      duration: Duration(minutes: 21),
-      power: 8,
-      reagentBurn: Duration(minutes: 5),
-      description: "Kindling thrown on gives +8 to its stat for 5 minutes.",
-      iconAsset: "assets/images/entities/bog_campfire.png",
-    ),
-  ),
-  BOG_BONFIRE(
-    FireItemDefinition(
-      name: "Bog Bonfire",
-      value: 85,
-      skillBonus: {},
-      duration: Duration(minutes: 34),
-      power: 8,
-      stokes: true,
-      reagentBurn: Duration(minutes: 3),
-      description:
-          "Stoke it hot: kindling thrown on gives up to +21 to its "
-          "stat for 3 minutes, cooling back down when the logs stop.",
-      iconAsset: "assets/images/entities/bog_bonfire.png",
-    ),
-  ),
-  // Tiers 4 to 6: maple, yew and magic, each one rung up the ladder from
-  // the wood below it.
   MAPLE_COOKFIRE(
     FireItemDefinition(
       name: "Maple Cookfire",
@@ -2776,33 +3460,6 @@ enum ItemId {
       canCook: true,
       description: "Cooks food. +13 cooking and hitpoints while it burns.",
       iconAsset: "assets/images/entities/maple_cookfire.png",
-    ),
-  ),
-  MAPLE_CAMPFIRE(
-    FireItemDefinition(
-      name: "Maple Campfire",
-      value: 55,
-      skillBonus: {},
-      duration: Duration(minutes: 21),
-      power: 21,
-      reagentBurn: Duration(minutes: 5),
-      description: "Kindling thrown on gives +21 to its stat for 5 minutes.",
-      iconAsset: "assets/images/entities/maple_campfire.png",
-    ),
-  ),
-  MAPLE_BONFIRE(
-    FireItemDefinition(
-      name: "Maple Bonfire",
-      value: 180,
-      skillBonus: {},
-      duration: Duration(minutes: 34),
-      power: 21,
-      stokes: true,
-      reagentBurn: Duration(minutes: 3),
-      description:
-          "Stoke it hot: kindling thrown on gives up to +55 to its "
-          "stat for 3 minutes, cooling back down when the logs stop.",
-      iconAsset: "assets/images/entities/maple_bonfire.png",
     ),
   ),
   YEW_COOKFIRE(
@@ -2816,33 +3473,6 @@ enum ItemId {
       iconAsset: "assets/images/entities/yew_cookfire.png",
     ),
   ),
-  YEW_CAMPFIRE(
-    FireItemDefinition(
-      name: "Yew Campfire",
-      value: 115,
-      skillBonus: {},
-      duration: Duration(minutes: 34),
-      power: 34,
-      reagentBurn: Duration(minutes: 5),
-      description: "Kindling thrown on gives +34 to its stat for 5 minutes.",
-      iconAsset: "assets/images/entities/yew_campfire.png",
-    ),
-  ),
-  YEW_BONFIRE(
-    FireItemDefinition(
-      name: "Yew Bonfire",
-      value: 380,
-      skillBonus: {},
-      duration: Duration(minutes: 55),
-      power: 34,
-      stokes: true,
-      reagentBurn: Duration(minutes: 3),
-      description:
-          "Stoke it hot: kindling thrown on gives up to +89 to its "
-          "stat for 3 minutes, cooling back down when the logs stop.",
-      iconAsset: "assets/images/entities/yew_bonfire.png",
-    ),
-  ),
   MAGIC_COOKFIRE(
     FireItemDefinition(
       name: "Magic Cookfire",
@@ -2854,30 +3484,1245 @@ enum ItemId {
       iconAsset: "assets/images/entities/magic_cookfire.png",
     ),
   ),
-  MAGIC_CAMPFIRE(
+
+  // Bonfires: wood ascending, then reagent in catalog order. Bog is
+  // willow's side-grade, one rung weaker and one rung longer.
+  BONFIRE_STAMINA(
     FireItemDefinition(
-      name: "Magic Campfire",
-      value: 240,
-      skillBonus: {},
-      duration: Duration(minutes: 55),
-      power: 55,
-      reagentBurn: Duration(minutes: 5),
-      description: "Kindling thrown on gives +55 to its stat for 5 minutes.",
-      iconAsset: "assets/images/entities/magic_campfire.png",
+      name: "Stamina Bonfire",
+      value: 5,
+      skillBonus: {SkillId.STAMINA: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.DRY_TWIGS,
+      description: "Logs burnt with dry twigs. +5 stamina while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
     ),
   ),
-  MAGIC_BONFIRE(
+  BONFIRE_DEFENCE(
     FireItemDefinition(
-      name: "Magic Bonfire",
-      value: 800,
-      skillBonus: {},
-      duration: Duration(minutes: 89),
-      power: 55,
-      stokes: true,
-      reagentBurn: Duration(minutes: 3),
+      name: "Defence Bonfire",
+      value: 5,
+      skillBonus: {SkillId.DEFENCE: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.TREE_BARK,
+      description: "Logs burnt with tree bark. +5 defence while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_RECOVERY(
+    FireItemDefinition(
+      name: "Recovery Bonfire",
+      value: 5,
+      skillBonus: {SkillId.RECOVERY: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.PINE_RESIN,
+      description: "Logs burnt with pine resin. +5 recovery while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_STRENGTH(
+    FireItemDefinition(
+      name: "Strength Bonfire",
+      value: 5,
+      skillBonus: {SkillId.STRENGTH: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.ACORN,
+      description: "Logs burnt with acorns. +5 strength while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_ATTACK(
+    FireItemDefinition(
+      name: "Attack Bonfire",
+      value: 5,
+      skillBonus: {SkillId.ATTACK: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.OAK_GALL,
+      description: "Logs burnt with oak galls. +5 attack while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_SPEED(
+    FireItemDefinition(
+      name: "Speed Bonfire",
+      value: 5,
+      skillBonus: {SkillId.SPEED: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.DRY_LEAVES,
+      description: "Logs burnt with dry leaves. +5 speed while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_HITPOINTS(
+    FireItemDefinition(
+      name: "Hitpoints Bonfire",
+      value: 5,
+      skillBonus: {SkillId.HITPOINTS: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.OAK_SAP,
+      description: "Logs burnt with oak sap. +5 hitpoints while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_FISHING(
+    FireItemDefinition(
+      name: "Fishing Bonfire",
+      value: 5,
+      skillBonus: {SkillId.FISHING: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.CATTAIL_FLUFF,
+      description: "Logs burnt with cattail fluff. +5 fishing while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_COOKING(
+    FireItemDefinition(
+      name: "Cooking Bonfire",
+      value: 5,
+      skillBonus: {SkillId.COOKING: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.DRIED_REEDS,
+      description: "Logs burnt with dried reeds. +5 cooking while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_WOODCUTTING(
+    FireItemDefinition(
+      name: "Woodcutting Bonfire",
+      value: 5,
+      skillBonus: {SkillId.WOODCUTTING: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.RIVER_DRIFTWOOD,
       description:
-          "Stoke it hot: kindling thrown on gives up to +144 to its "
-          "stat for 3 minutes, cooling back down when the logs stop.",
+          "Logs burnt with river driftwood. +5 woodcutting while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_HERBALISM(
+    FireItemDefinition(
+      name: "Herbalism Bonfire",
+      value: 5,
+      skillBonus: {SkillId.HERBALISM: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.PEAT_CLOD,
+      description: "Logs burnt with a peat clod. +5 herbalism while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_MINING(
+    FireItemDefinition(
+      name: "Mining Bonfire",
+      value: 5,
+      skillBonus: {SkillId.MINING: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.DRIED_RUSHES,
+      description: "Logs burnt with dried rushes. +5 mining while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_ALCHEMY(
+    FireItemDefinition(
+      name: "Alchemy Bonfire",
+      value: 5,
+      skillBonus: {SkillId.ALCHEMY: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.BONE_CORAL,
+      description: "Logs burnt with bone coral. +5 alchemy while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  BONFIRE_EXPLORATION(
+    FireItemDefinition(
+      name: "Exploration Bonfire",
+      value: 5,
+      skillBonus: {SkillId.EXPLORATION: 5},
+      duration: Duration(minutes: 5),
+      wood: ItemId.LOGS,
+      reagent: ItemId.AMBERGRIS,
+      description: "Logs burnt with ambergris. +5 exploration while it burns.",
+      iconAsset: "assets/images/entities/bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_STAMINA(
+    FireItemDefinition(
+      name: "Oak Stamina Bonfire",
+      value: 12,
+      skillBonus: {SkillId.STAMINA: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.DRY_TWIGS,
+      description: "Oak logs burnt with dry twigs. +8 stamina while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_DEFENCE(
+    FireItemDefinition(
+      name: "Oak Defence Bonfire",
+      value: 12,
+      skillBonus: {SkillId.DEFENCE: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.TREE_BARK,
+      description: "Oak logs burnt with tree bark. +8 defence while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_RECOVERY(
+    FireItemDefinition(
+      name: "Oak Recovery Bonfire",
+      value: 12,
+      skillBonus: {SkillId.RECOVERY: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.PINE_RESIN,
+      description:
+          "Oak logs burnt with pine resin. +8 recovery while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_STRENGTH(
+    FireItemDefinition(
+      name: "Oak Strength Bonfire",
+      value: 12,
+      skillBonus: {SkillId.STRENGTH: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.ACORN,
+      description: "Oak logs burnt with acorns. +8 strength while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_ATTACK(
+    FireItemDefinition(
+      name: "Oak Attack Bonfire",
+      value: 12,
+      skillBonus: {SkillId.ATTACK: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.OAK_GALL,
+      description: "Oak logs burnt with oak galls. +8 attack while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_SPEED(
+    FireItemDefinition(
+      name: "Oak Speed Bonfire",
+      value: 12,
+      skillBonus: {SkillId.SPEED: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.DRY_LEAVES,
+      description: "Oak logs burnt with dry leaves. +8 speed while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_HITPOINTS(
+    FireItemDefinition(
+      name: "Oak Hitpoints Bonfire",
+      value: 12,
+      skillBonus: {SkillId.HITPOINTS: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.OAK_SAP,
+      description: "Oak logs burnt with oak sap. +8 hitpoints while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_FISHING(
+    FireItemDefinition(
+      name: "Oak Fishing Bonfire",
+      value: 12,
+      skillBonus: {SkillId.FISHING: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.CATTAIL_FLUFF,
+      description:
+          "Oak logs burnt with cattail fluff. +8 fishing while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_COOKING(
+    FireItemDefinition(
+      name: "Oak Cooking Bonfire",
+      value: 12,
+      skillBonus: {SkillId.COOKING: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.DRIED_REEDS,
+      description:
+          "Oak logs burnt with dried reeds. +8 cooking while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_WOODCUTTING(
+    FireItemDefinition(
+      name: "Oak Woodcutting Bonfire",
+      value: 12,
+      skillBonus: {SkillId.WOODCUTTING: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.RIVER_DRIFTWOOD,
+      description:
+          "Oak logs burnt with river driftwood. +8 woodcutting while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_HERBALISM(
+    FireItemDefinition(
+      name: "Oak Herbalism Bonfire",
+      value: 12,
+      skillBonus: {SkillId.HERBALISM: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.PEAT_CLOD,
+      description:
+          "Oak logs burnt with a peat clod. +8 herbalism while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_MINING(
+    FireItemDefinition(
+      name: "Oak Mining Bonfire",
+      value: 12,
+      skillBonus: {SkillId.MINING: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.DRIED_RUSHES,
+      description:
+          "Oak logs burnt with dried rushes. +8 mining while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_ALCHEMY(
+    FireItemDefinition(
+      name: "Oak Alchemy Bonfire",
+      value: 12,
+      skillBonus: {SkillId.ALCHEMY: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.BONE_CORAL,
+      description: "Oak logs burnt with bone coral. +8 alchemy while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  OAK_BONFIRE_EXPLORATION(
+    FireItemDefinition(
+      name: "Oak Exploration Bonfire",
+      value: 12,
+      skillBonus: {SkillId.EXPLORATION: 8},
+      duration: Duration(minutes: 8),
+      wood: ItemId.OAK_LOGS,
+      reagent: ItemId.AMBERGRIS,
+      description:
+          "Oak logs burnt with ambergris. +8 exploration while it burns.",
+      iconAsset: "assets/images/entities/oak_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_STAMINA(
+    FireItemDefinition(
+      name: "Willow Stamina Bonfire",
+      value: 26,
+      skillBonus: {SkillId.STAMINA: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.DRY_TWIGS,
+      description:
+          "Willow logs burnt with dry twigs. +13 stamina while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_DEFENCE(
+    FireItemDefinition(
+      name: "Willow Defence Bonfire",
+      value: 26,
+      skillBonus: {SkillId.DEFENCE: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.TREE_BARK,
+      description:
+          "Willow logs burnt with tree bark. +13 defence while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_RECOVERY(
+    FireItemDefinition(
+      name: "Willow Recovery Bonfire",
+      value: 26,
+      skillBonus: {SkillId.RECOVERY: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.PINE_RESIN,
+      description:
+          "Willow logs burnt with pine resin. +13 recovery while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_STRENGTH(
+    FireItemDefinition(
+      name: "Willow Strength Bonfire",
+      value: 26,
+      skillBonus: {SkillId.STRENGTH: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.ACORN,
+      description:
+          "Willow logs burnt with acorns. +13 strength while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_ATTACK(
+    FireItemDefinition(
+      name: "Willow Attack Bonfire",
+      value: 26,
+      skillBonus: {SkillId.ATTACK: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.OAK_GALL,
+      description:
+          "Willow logs burnt with oak galls. +13 attack while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_SPEED(
+    FireItemDefinition(
+      name: "Willow Speed Bonfire",
+      value: 26,
+      skillBonus: {SkillId.SPEED: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.DRY_LEAVES,
+      description:
+          "Willow logs burnt with dry leaves. +13 speed while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_HITPOINTS(
+    FireItemDefinition(
+      name: "Willow Hitpoints Bonfire",
+      value: 26,
+      skillBonus: {SkillId.HITPOINTS: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.OAK_SAP,
+      description:
+          "Willow logs burnt with oak sap. +13 hitpoints while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_FISHING(
+    FireItemDefinition(
+      name: "Willow Fishing Bonfire",
+      value: 26,
+      skillBonus: {SkillId.FISHING: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.CATTAIL_FLUFF,
+      description:
+          "Willow logs burnt with cattail fluff. +13 fishing while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_COOKING(
+    FireItemDefinition(
+      name: "Willow Cooking Bonfire",
+      value: 26,
+      skillBonus: {SkillId.COOKING: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.DRIED_REEDS,
+      description:
+          "Willow logs burnt with dried reeds. +13 cooking while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_WOODCUTTING(
+    FireItemDefinition(
+      name: "Willow Woodcutting Bonfire",
+      value: 26,
+      skillBonus: {SkillId.WOODCUTTING: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.RIVER_DRIFTWOOD,
+      description:
+          "Willow logs burnt with river driftwood. +13 woodcutting while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_HERBALISM(
+    FireItemDefinition(
+      name: "Willow Herbalism Bonfire",
+      value: 26,
+      skillBonus: {SkillId.HERBALISM: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.PEAT_CLOD,
+      description:
+          "Willow logs burnt with a peat clod. +13 herbalism while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_MINING(
+    FireItemDefinition(
+      name: "Willow Mining Bonfire",
+      value: 26,
+      skillBonus: {SkillId.MINING: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.DRIED_RUSHES,
+      description:
+          "Willow logs burnt with dried rushes. +13 mining while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_ALCHEMY(
+    FireItemDefinition(
+      name: "Willow Alchemy Bonfire",
+      value: 26,
+      skillBonus: {SkillId.ALCHEMY: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.BONE_CORAL,
+      description:
+          "Willow logs burnt with bone coral. +13 alchemy while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  WILLOW_BONFIRE_EXPLORATION(
+    FireItemDefinition(
+      name: "Willow Exploration Bonfire",
+      value: 26,
+      skillBonus: {SkillId.EXPLORATION: 13},
+      duration: Duration(minutes: 13),
+      wood: ItemId.WILLOW_LOGS,
+      reagent: ItemId.AMBERGRIS,
+      description:
+          "Willow logs burnt with ambergris. +13 exploration while it burns.",
+      iconAsset: "assets/images/entities/willow_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_STAMINA(
+    FireItemDefinition(
+      name: "Bog Stamina Bonfire",
+      value: 26,
+      skillBonus: {SkillId.STAMINA: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.DRY_TWIGS,
+      description: "Bog logs burnt with dry twigs. +8 stamina while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_DEFENCE(
+    FireItemDefinition(
+      name: "Bog Defence Bonfire",
+      value: 26,
+      skillBonus: {SkillId.DEFENCE: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.TREE_BARK,
+      description: "Bog logs burnt with tree bark. +8 defence while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_RECOVERY(
+    FireItemDefinition(
+      name: "Bog Recovery Bonfire",
+      value: 26,
+      skillBonus: {SkillId.RECOVERY: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.PINE_RESIN,
+      description:
+          "Bog logs burnt with pine resin. +8 recovery while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_STRENGTH(
+    FireItemDefinition(
+      name: "Bog Strength Bonfire",
+      value: 26,
+      skillBonus: {SkillId.STRENGTH: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.ACORN,
+      description: "Bog logs burnt with acorns. +8 strength while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_ATTACK(
+    FireItemDefinition(
+      name: "Bog Attack Bonfire",
+      value: 26,
+      skillBonus: {SkillId.ATTACK: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.OAK_GALL,
+      description: "Bog logs burnt with oak galls. +8 attack while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_SPEED(
+    FireItemDefinition(
+      name: "Bog Speed Bonfire",
+      value: 26,
+      skillBonus: {SkillId.SPEED: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.DRY_LEAVES,
+      description: "Bog logs burnt with dry leaves. +8 speed while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_HITPOINTS(
+    FireItemDefinition(
+      name: "Bog Hitpoints Bonfire",
+      value: 26,
+      skillBonus: {SkillId.HITPOINTS: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.OAK_SAP,
+      description: "Bog logs burnt with oak sap. +8 hitpoints while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_FISHING(
+    FireItemDefinition(
+      name: "Bog Fishing Bonfire",
+      value: 26,
+      skillBonus: {SkillId.FISHING: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.CATTAIL_FLUFF,
+      description:
+          "Bog logs burnt with cattail fluff. +8 fishing while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_COOKING(
+    FireItemDefinition(
+      name: "Bog Cooking Bonfire",
+      value: 26,
+      skillBonus: {SkillId.COOKING: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.DRIED_REEDS,
+      description:
+          "Bog logs burnt with dried reeds. +8 cooking while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_WOODCUTTING(
+    FireItemDefinition(
+      name: "Bog Woodcutting Bonfire",
+      value: 26,
+      skillBonus: {SkillId.WOODCUTTING: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.RIVER_DRIFTWOOD,
+      description:
+          "Bog logs burnt with river driftwood. +8 woodcutting while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_HERBALISM(
+    FireItemDefinition(
+      name: "Bog Herbalism Bonfire",
+      value: 26,
+      skillBonus: {SkillId.HERBALISM: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.PEAT_CLOD,
+      description:
+          "Bog logs burnt with a peat clod. +8 herbalism while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_MINING(
+    FireItemDefinition(
+      name: "Bog Mining Bonfire",
+      value: 26,
+      skillBonus: {SkillId.MINING: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.DRIED_RUSHES,
+      description:
+          "Bog logs burnt with dried rushes. +8 mining while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_ALCHEMY(
+    FireItemDefinition(
+      name: "Bog Alchemy Bonfire",
+      value: 26,
+      skillBonus: {SkillId.ALCHEMY: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.BONE_CORAL,
+      description: "Bog logs burnt with bone coral. +8 alchemy while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  BOG_BONFIRE_EXPLORATION(
+    FireItemDefinition(
+      name: "Bog Exploration Bonfire",
+      value: 26,
+      skillBonus: {SkillId.EXPLORATION: 8},
+      duration: Duration(minutes: 21),
+      wood: ItemId.BOG_LOGS,
+      reagent: ItemId.AMBERGRIS,
+      description:
+          "Bog logs burnt with ambergris. +8 exploration while it burns.",
+      iconAsset: "assets/images/entities/bog_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_STAMINA(
+    FireItemDefinition(
+      name: "Maple Stamina Bonfire",
+      value: 55,
+      skillBonus: {SkillId.STAMINA: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.DRY_TWIGS,
+      description:
+          "Maple logs burnt with dry twigs. +21 stamina while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_DEFENCE(
+    FireItemDefinition(
+      name: "Maple Defence Bonfire",
+      value: 55,
+      skillBonus: {SkillId.DEFENCE: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.TREE_BARK,
+      description:
+          "Maple logs burnt with tree bark. +21 defence while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_RECOVERY(
+    FireItemDefinition(
+      name: "Maple Recovery Bonfire",
+      value: 55,
+      skillBonus: {SkillId.RECOVERY: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.PINE_RESIN,
+      description:
+          "Maple logs burnt with pine resin. +21 recovery while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_STRENGTH(
+    FireItemDefinition(
+      name: "Maple Strength Bonfire",
+      value: 55,
+      skillBonus: {SkillId.STRENGTH: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.ACORN,
+      description: "Maple logs burnt with acorns. +21 strength while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_ATTACK(
+    FireItemDefinition(
+      name: "Maple Attack Bonfire",
+      value: 55,
+      skillBonus: {SkillId.ATTACK: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.OAK_GALL,
+      description:
+          "Maple logs burnt with oak galls. +21 attack while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_SPEED(
+    FireItemDefinition(
+      name: "Maple Speed Bonfire",
+      value: 55,
+      skillBonus: {SkillId.SPEED: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.DRY_LEAVES,
+      description:
+          "Maple logs burnt with dry leaves. +21 speed while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_HITPOINTS(
+    FireItemDefinition(
+      name: "Maple Hitpoints Bonfire",
+      value: 55,
+      skillBonus: {SkillId.HITPOINTS: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.OAK_SAP,
+      description:
+          "Maple logs burnt with oak sap. +21 hitpoints while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_FISHING(
+    FireItemDefinition(
+      name: "Maple Fishing Bonfire",
+      value: 55,
+      skillBonus: {SkillId.FISHING: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.CATTAIL_FLUFF,
+      description:
+          "Maple logs burnt with cattail fluff. +21 fishing while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_COOKING(
+    FireItemDefinition(
+      name: "Maple Cooking Bonfire",
+      value: 55,
+      skillBonus: {SkillId.COOKING: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.DRIED_REEDS,
+      description:
+          "Maple logs burnt with dried reeds. +21 cooking while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_WOODCUTTING(
+    FireItemDefinition(
+      name: "Maple Woodcutting Bonfire",
+      value: 55,
+      skillBonus: {SkillId.WOODCUTTING: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.RIVER_DRIFTWOOD,
+      description:
+          "Maple logs burnt with river driftwood. +21 woodcutting while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_HERBALISM(
+    FireItemDefinition(
+      name: "Maple Herbalism Bonfire",
+      value: 55,
+      skillBonus: {SkillId.HERBALISM: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.PEAT_CLOD,
+      description:
+          "Maple logs burnt with a peat clod. +21 herbalism while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_MINING(
+    FireItemDefinition(
+      name: "Maple Mining Bonfire",
+      value: 55,
+      skillBonus: {SkillId.MINING: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.DRIED_RUSHES,
+      description:
+          "Maple logs burnt with dried rushes. +21 mining while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_ALCHEMY(
+    FireItemDefinition(
+      name: "Maple Alchemy Bonfire",
+      value: 55,
+      skillBonus: {SkillId.ALCHEMY: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.BONE_CORAL,
+      description:
+          "Maple logs burnt with bone coral. +21 alchemy while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  MAPLE_BONFIRE_EXPLORATION(
+    FireItemDefinition(
+      name: "Maple Exploration Bonfire",
+      value: 55,
+      skillBonus: {SkillId.EXPLORATION: 21},
+      duration: Duration(minutes: 21),
+      wood: ItemId.MAPLE_LOGS,
+      reagent: ItemId.AMBERGRIS,
+      description:
+          "Maple logs burnt with ambergris. +21 exploration while it burns.",
+      iconAsset: "assets/images/entities/maple_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_STAMINA(
+    FireItemDefinition(
+      name: "Yew Stamina Bonfire",
+      value: 115,
+      skillBonus: {SkillId.STAMINA: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.DRY_TWIGS,
+      description: "Yew logs burnt with dry twigs. +34 stamina while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_DEFENCE(
+    FireItemDefinition(
+      name: "Yew Defence Bonfire",
+      value: 115,
+      skillBonus: {SkillId.DEFENCE: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.TREE_BARK,
+      description: "Yew logs burnt with tree bark. +34 defence while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_RECOVERY(
+    FireItemDefinition(
+      name: "Yew Recovery Bonfire",
+      value: 115,
+      skillBonus: {SkillId.RECOVERY: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.PINE_RESIN,
+      description:
+          "Yew logs burnt with pine resin. +34 recovery while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_STRENGTH(
+    FireItemDefinition(
+      name: "Yew Strength Bonfire",
+      value: 115,
+      skillBonus: {SkillId.STRENGTH: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.ACORN,
+      description: "Yew logs burnt with acorns. +34 strength while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_ATTACK(
+    FireItemDefinition(
+      name: "Yew Attack Bonfire",
+      value: 115,
+      skillBonus: {SkillId.ATTACK: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.OAK_GALL,
+      description: "Yew logs burnt with oak galls. +34 attack while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_SPEED(
+    FireItemDefinition(
+      name: "Yew Speed Bonfire",
+      value: 115,
+      skillBonus: {SkillId.SPEED: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.DRY_LEAVES,
+      description: "Yew logs burnt with dry leaves. +34 speed while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_HITPOINTS(
+    FireItemDefinition(
+      name: "Yew Hitpoints Bonfire",
+      value: 115,
+      skillBonus: {SkillId.HITPOINTS: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.OAK_SAP,
+      description: "Yew logs burnt with oak sap. +34 hitpoints while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_FISHING(
+    FireItemDefinition(
+      name: "Yew Fishing Bonfire",
+      value: 115,
+      skillBonus: {SkillId.FISHING: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.CATTAIL_FLUFF,
+      description:
+          "Yew logs burnt with cattail fluff. +34 fishing while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_COOKING(
+    FireItemDefinition(
+      name: "Yew Cooking Bonfire",
+      value: 115,
+      skillBonus: {SkillId.COOKING: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.DRIED_REEDS,
+      description:
+          "Yew logs burnt with dried reeds. +34 cooking while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_WOODCUTTING(
+    FireItemDefinition(
+      name: "Yew Woodcutting Bonfire",
+      value: 115,
+      skillBonus: {SkillId.WOODCUTTING: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.RIVER_DRIFTWOOD,
+      description:
+          "Yew logs burnt with river driftwood. +34 woodcutting while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_HERBALISM(
+    FireItemDefinition(
+      name: "Yew Herbalism Bonfire",
+      value: 115,
+      skillBonus: {SkillId.HERBALISM: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.PEAT_CLOD,
+      description:
+          "Yew logs burnt with a peat clod. +34 herbalism while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_MINING(
+    FireItemDefinition(
+      name: "Yew Mining Bonfire",
+      value: 115,
+      skillBonus: {SkillId.MINING: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.DRIED_RUSHES,
+      description:
+          "Yew logs burnt with dried rushes. +34 mining while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_ALCHEMY(
+    FireItemDefinition(
+      name: "Yew Alchemy Bonfire",
+      value: 115,
+      skillBonus: {SkillId.ALCHEMY: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.BONE_CORAL,
+      description:
+          "Yew logs burnt with bone coral. +34 alchemy while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  YEW_BONFIRE_EXPLORATION(
+    FireItemDefinition(
+      name: "Yew Exploration Bonfire",
+      value: 115,
+      skillBonus: {SkillId.EXPLORATION: 34},
+      duration: Duration(minutes: 34),
+      wood: ItemId.YEW_LOGS,
+      reagent: ItemId.AMBERGRIS,
+      description:
+          "Yew logs burnt with ambergris. +34 exploration while it burns.",
+      iconAsset: "assets/images/entities/yew_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_STAMINA(
+    FireItemDefinition(
+      name: "Magic Stamina Bonfire",
+      value: 240,
+      skillBonus: {SkillId.STAMINA: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.DRY_TWIGS,
+      description:
+          "Magic logs burnt with dry twigs. +55 stamina while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_DEFENCE(
+    FireItemDefinition(
+      name: "Magic Defence Bonfire",
+      value: 240,
+      skillBonus: {SkillId.DEFENCE: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.TREE_BARK,
+      description:
+          "Magic logs burnt with tree bark. +55 defence while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_RECOVERY(
+    FireItemDefinition(
+      name: "Magic Recovery Bonfire",
+      value: 240,
+      skillBonus: {SkillId.RECOVERY: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.PINE_RESIN,
+      description:
+          "Magic logs burnt with pine resin. +55 recovery while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_STRENGTH(
+    FireItemDefinition(
+      name: "Magic Strength Bonfire",
+      value: 240,
+      skillBonus: {SkillId.STRENGTH: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.ACORN,
+      description: "Magic logs burnt with acorns. +55 strength while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_ATTACK(
+    FireItemDefinition(
+      name: "Magic Attack Bonfire",
+      value: 240,
+      skillBonus: {SkillId.ATTACK: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.OAK_GALL,
+      description:
+          "Magic logs burnt with oak galls. +55 attack while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_SPEED(
+    FireItemDefinition(
+      name: "Magic Speed Bonfire",
+      value: 240,
+      skillBonus: {SkillId.SPEED: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.DRY_LEAVES,
+      description:
+          "Magic logs burnt with dry leaves. +55 speed while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_HITPOINTS(
+    FireItemDefinition(
+      name: "Magic Hitpoints Bonfire",
+      value: 240,
+      skillBonus: {SkillId.HITPOINTS: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.OAK_SAP,
+      description:
+          "Magic logs burnt with oak sap. +55 hitpoints while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_FISHING(
+    FireItemDefinition(
+      name: "Magic Fishing Bonfire",
+      value: 240,
+      skillBonus: {SkillId.FISHING: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.CATTAIL_FLUFF,
+      description:
+          "Magic logs burnt with cattail fluff. +55 fishing while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_COOKING(
+    FireItemDefinition(
+      name: "Magic Cooking Bonfire",
+      value: 240,
+      skillBonus: {SkillId.COOKING: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.DRIED_REEDS,
+      description:
+          "Magic logs burnt with dried reeds. +55 cooking while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_WOODCUTTING(
+    FireItemDefinition(
+      name: "Magic Woodcutting Bonfire",
+      value: 240,
+      skillBonus: {SkillId.WOODCUTTING: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.RIVER_DRIFTWOOD,
+      description:
+          "Magic logs burnt with river driftwood. +55 woodcutting while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_HERBALISM(
+    FireItemDefinition(
+      name: "Magic Herbalism Bonfire",
+      value: 240,
+      skillBonus: {SkillId.HERBALISM: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.PEAT_CLOD,
+      description:
+          "Magic logs burnt with a peat clod. +55 herbalism while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_MINING(
+    FireItemDefinition(
+      name: "Magic Mining Bonfire",
+      value: 240,
+      skillBonus: {SkillId.MINING: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.DRIED_RUSHES,
+      description:
+          "Magic logs burnt with dried rushes. +55 mining while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_ALCHEMY(
+    FireItemDefinition(
+      name: "Magic Alchemy Bonfire",
+      value: 240,
+      skillBonus: {SkillId.ALCHEMY: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.BONE_CORAL,
+      description:
+          "Magic logs burnt with bone coral. +55 alchemy while it burns.",
+      iconAsset: "assets/images/entities/magic_bonfire.png",
+    ),
+  ),
+  MAGIC_BONFIRE_EXPLORATION(
+    FireItemDefinition(
+      name: "Magic Exploration Bonfire",
+      value: 240,
+      skillBonus: {SkillId.EXPLORATION: 55},
+      duration: Duration(minutes: 55),
+      wood: ItemId.MAGIC_LOGS,
+      reagent: ItemId.AMBERGRIS,
+      description:
+          "Magic logs burnt with ambergris. +55 exploration while it burns.",
       iconAsset: "assets/images/entities/magic_bonfire.png",
     ),
   ),
@@ -9251,6 +11096,549 @@ enum ItemId {
     ),
   ),
 
+  // The Redwall Eyrie (Redwall Bluffs), the fifth dungeon at the late band,
+  // four level-233 bosses: tier 5 off Old Stonegaze (a Speed dagger and a
+  // Strength ring), the Ledge Warden (Stamina greaves) and the Arch
+  // Chimera (a Recovery scepter), and tier 6 off Redwing (a Speed greatsword
+  // and a Stamina crest). The chest adds a Strength cloak and a Speed cuirass
+  BASILISK_FANG(
+    WeaponItemDefinition(
+      name: "Basilisk Fang",
+      value: 300,
+      weaponType: WeaponTypeId.DAGGER,
+      fibLevel: 5,
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.STAMINA,
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "A fang as long as a forearm, still wet at the tip. The thing that grew it never blinked.",
+      iconAsset: "assets/icons/items/basilisk_fang.png",
+    ),
+  ),
+  GAZEGLASS_RING(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Gazeglass Ring",
+      value: 300,
+      fibLevel: 5,
+      statWeights: {SkillId.ATTACK: 2, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "A band set with a grey eye of glass. It never looks away from what it is pointed at.",
+      iconAsset: "assets/icons/items/gazeglass_ring.png",
+    ),
+  ),
+  LEDGEWALKER_GREAVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Ledgewalker Greaves",
+      value: 320,
+      fibLevel: 6,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STAMINA,
+        SkillId.RECOVERY,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+      ],
+      description:
+          "Stone-plated greaves, worn smooth where the Warden's feet found every ledge.",
+      iconAsset: "assets/icons/items/ledgewalker_greaves.png",
+    ),
+  ),
+  CHIMERAS_HORN(
+    WeaponItemDefinition(
+      name: "Chimera's Horn",
+      value: 320,
+      weaponType: WeaponTypeId.SCEPTER,
+      fibLevel: 6,
+      catalogSecondaries: [
+        SkillId.RECOVERY,
+        SkillId.STAMINA,
+        SkillId.RECOVERY,
+        SkillId.STRENGTH,
+      ],
+      description:
+          "The goat's horn off the Arch Chimera, still warm at the root. It mends what it touches.",
+      iconAsset: "assets/icons/items/chimeras_horn.png",
+    ),
+  ),
+  REDWINGS_TALON(
+    WeaponItemDefinition(
+      name: "Redwing's Talon",
+      value: 800,
+      weaponType: WeaponTypeId.GREATSWORD,
+      fibLevel: 8,
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.STAMINA,
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "One talon of the Eyrie's matriarch, long as a man. It cuts the wind before the wind arrives.",
+      iconAsset: "assets/icons/items/redwings_talon.png",
+    ),
+  ),
+  REDWINGS_CREST(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Redwing's Crest",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 3, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "Red crest-feathers laced onto a skull of cliff stone. It sits the head very still.",
+      iconAsset: "assets/icons/items/redwings_crest.png",
+    ),
+  ),
+  EYRIE_WINDCLOAK(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Eyrie Windcloak",
+      value: 320,
+      fibLevel: 5,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "Pinions sewn on a hide, and a hem that never quite lies still.",
+      iconAsset: "assets/icons/items/eyrie_windcloak.png",
+    ),
+  ),
+  REDWALL_CUIRASS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Redwall Cuirass",
+      value: 340,
+      fibLevel: 6,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.STAMINA,
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "Plates the colour of the cliffs, cut from the wall itself and lined with feather.",
+      iconAsset: "assets/icons/items/redwall_cuirass.png",
+    ),
+  ),
+
+  // ── Spinehold Caverns (tier 6) ──────────────────────────────────
+  // The Bridge Troll's treads (Speed) and belt (Recovery, for the
+  // regeneration), the Sentinel's shield and gorget (Stamina and Strength),
+  // the Drake's greatsword and ring (Strength), and the chest's helm
+  TROLLHIDE_TREADS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FEET,
+      name: "Troll-Hide Treads",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 2, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.SPEED,
+        SkillId.STAMINA,
+        SkillId.SPEED,
+      ],
+      description:
+          "Boots cut from a troll's heel. They never quite stop moving, even off the foot.",
+      iconAsset: "assets/icons/items/trollhide_treads.png",
+    ),
+  ),
+  TOLLKEEPERS_BELT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Tollkeeper's Belt",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.RECOVERY,
+        SkillId.STAMINA,
+        SkillId.RECOVERY,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "A belt of knotted sinew and toll-coins. Whatever it hangs from knits back together.",
+      iconAsset: "assets/icons/items/tollkeepers_belt.png",
+    ),
+  ),
+  SENTINELS_BULWARK(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.OFFHAND,
+      name: "Sentinel's Bulwark",
+      value: 1000,
+      fibLevel: 8,
+      statWeights: {SkillId.DEFENCE: 3, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STAMINA,
+      ],
+      description:
+          "A tower shield off a steel guardian that never left its post. The dents are the arch's.",
+      iconAsset: "assets/icons/items/sentinels_bulwark.png",
+    ),
+  ),
+  SENTINELS_GORGET(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Sentinel's Gorget",
+      value: 900,
+      fibLevel: 7,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+      ],
+      description:
+          "A steel collar still warm from the guardian's furnace heart.",
+      iconAsset: "assets/icons/items/sentinels_gorget.png",
+    ),
+  ),
+  DRAKEFANG_GREATSWORD(
+    WeaponItemDefinition(
+      name: "Drakefang Greatsword",
+      value: 1000,
+      weaponType: WeaponTypeId.GREATSWORD,
+      fibLevel: 8,
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+      ],
+      description:
+          "A fang as long as a man, hafted in iron. The Greyspine Drake lost it to nothing smaller than a mountain.",
+      iconAsset: "assets/icons/items/drakefang_greatsword.png",
+    ),
+  ),
+  WYRMCREST_RING(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Wyrmcrest Ring",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 2, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+        SkillId.STRENGTH,
+        SkillId.STRENGTH,
+      ],
+      description:
+          "A band cut from the ridge of the drake's crest. It tightens when you swing.",
+      iconAsset: "assets/icons/items/wyrmcrest_ring.png",
+    ),
+  ),
+  // The chest's exclusive: an Attack helm, the slot no boss covers
+  ARCHWARDENS_HELM(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Archwarden's Helm",
+      value: 900,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 3, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+      ],
+      description:
+          "The keystone-grey helm of whoever held the arch before the troll. It still looks down the road.",
+      iconAsset: "assets/icons/items/archwardens_helm.png",
+    ),
+  ),
+
+  // ── The Ashen Vaults (tier 6) ───────────────────────────────────
+  // The Ash Wyvern's Speed dagger and cloak, the Slag Warden's Strength
+  // bracers and Stamina pauldrons, the Heart of the Ridge's Strength
+  // gauntlets, and the chest's Speed hauberk and pendant. The Warden's
+  // pauldrons and the Heart's gauntlets stand where a shield and a ring
+  // would, because Spinehold's Bulwark and Wyrmcrest Ring hold those.
+  CINDERFANG(
+    WeaponItemDefinition(
+      name: "Cinderfang",
+      value: 800,
+      weaponType: WeaponTypeId.DAGGER,
+      fibLevel: 6,
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+        SkillId.SPEED,
+      ],
+      description:
+          "A wyvern's tail-barb, glowing at the tip. It strikes before the hand has finished moving.",
+      iconAsset: "assets/icons/items/cinderfang.png",
+    ),
+  ),
+  WYVERNWING_CLOAK(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Wyvernwing Cloak",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 2, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.STAMINA,
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "Wing membrane, ash-grey and singed at the hem. It catches the wind of every step.",
+      iconAsset: "assets/icons/items/wyvernwing_cloak.png",
+    ),
+  ),
+  SLAGPLATE_BRACERS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WRIST,
+      name: "Slagplate Bracers",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+      ],
+      description:
+          "Cooled slag, hammered flat around a warden's forearms. They still hold the furnace's weight.",
+      iconAsset: "assets/icons/items/slagplate_bracers.png",
+    ),
+  ),
+  SLAGPLATE_PAULDRONS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.SHOULDER,
+      name: "Slagplate Pauldrons",
+      value: 900,
+      fibLevel: 7,
+      statWeights: {SkillId.DEFENCE: 3, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+        SkillId.STAMINA,
+      ],
+      description:
+          "Shoulder-plates run off the vault's own slag. The warden carried the whole hall on them.",
+      iconAsset: "assets/icons/items/slagplate_pauldrons.png",
+    ),
+  ),
+  RIDGEHEART_GAUNTLETS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HANDS,
+      name: "Ridgeheart Gauntlets",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 1, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+        SkillId.STAMINA,
+      ],
+      description:
+          "Gloves of ember-cracked stone off the ridge's heart. They close like a fist around anything.",
+      iconAsset: "assets/icons/items/ridgeheart_gauntlets.png",
+    ),
+  ),
+  // The chest's exclusives: a Speed chest piece and a Speed neck piece
+  ASHWEAVE_HAUBERK(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Ashweave Hauberk",
+      value: 900,
+      fibLevel: 7,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.SPEED,
+        SkillId.STAMINA,
+        SkillId.SPEED,
+      ],
+      description:
+          "Mail woven from vault-ash and wire, light as soot. Nothing in the vaults could keep up with the one who wore it.",
+      iconAsset: "assets/icons/items/ashweave_hauberk.png",
+    ),
+  ),
+  EMBERGLASS_PENDANT(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.NECK,
+      name: "Emberglass Pendant",
+      value: 900,
+      fibLevel: 7,
+      statWeights: {SkillId.ATTACK: 3, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+        SkillId.SPEED,
+        SkillId.STAMINA,
+      ],
+      description:
+          "A drop of glass fused in the furnace, a coal still turning inside it.",
+      iconAsset: "assets/icons/items/emberglass_pendant.png",
+    ),
+  ),
+
+  // ── Gaunt Tor (tier 6) ──────────────────────────────────────────
+  // Thunderhorn's Speed helm, the Cairnwarden's Strength greaves and Speed
+  // signet, the Hill King's Strength cudgel and girdle, and the chest's
+  // Strength cuirass and Recovery mantle. Each stands on a slot and lead no
+  // other tier-6 unique holds.
+  THUNDERHORN_HELM(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.HEAD,
+      name: "Thunderhorn Helm",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 3, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.SPEED,
+        SkillId.STAMINA,
+        SkillId.SPEED,
+      ],
+      description:
+          "A ram patriarch's curled horn, hollowed and hung with iron. It lowers the head before the blow lands.",
+      iconAsset: "assets/icons/items/thunderhorn_helm.png",
+    ),
+  ),
+  CAIRNSTONE_GREAVES(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.LEGS,
+      name: "Cairnstone Greaves",
+      value: 900,
+      fibLevel: 7,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+      ],
+      description:
+          "Leg-plates of cairn rock, stacked and bound. Every stone a climber ever left on the tor sits in them.",
+      iconAsset: "assets/icons/items/cairnstone_greaves.png",
+    ),
+  ),
+  CAIRNWARDENS_SIGNET(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.FINGER,
+      name: "Cairnwarden's Signet",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.ATTACK: 2, SkillId.DEFENCE: 1},
+      catalogSecondaries: [
+        SkillId.SPEED,
+        SkillId.RECOVERY,
+        SkillId.SPEED,
+        SkillId.STAMINA,
+      ],
+      description:
+          "A ring of iron-red stone that was the warden's heart-core. It hums while you move.",
+      iconAsset: "assets/icons/items/cairnwardens_signet.png",
+    ),
+  ),
+  HILL_KINGS_CUDGEL(
+    WeaponItemDefinition(
+      name: "Hill King's Cudgel",
+      value: 900,
+      weaponType: WeaponTypeId.SWORD,
+      fibLevel: 7,
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+      ],
+      description:
+          "A whole stripped ironroot, banded in steel. It was a walking stick to the giant who carried it.",
+      iconAsset: "assets/icons/items/hill_kings_cudgel.png",
+    ),
+  ),
+  GIANTBONE_GIRDLE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.WAIST,
+      name: "Giantbone Girdle",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+        SkillId.RECOVERY,
+      ],
+      description:
+          "A belt of giant's ribs, lashed with troll sinew. It holds a heavier man up.",
+      iconAsset: "assets/icons/items/giantbone_girdle.png",
+    ),
+  ),
+  // The chest's exclusives: a Strength cuirass and a Recovery mantle
+  IRONROOT_CUIRASS(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.CHEST,
+      name: "Ironroot Cuirass",
+      value: 900,
+      fibLevel: 7,
+      statWeights: {SkillId.DEFENCE: 2, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.STRENGTH,
+        SkillId.STRENGTH,
+        SkillId.STAMINA,
+        SkillId.STRENGTH,
+      ],
+      description:
+          "Red-iron plates over ironroot bark. The hills wear it as armour of their own.",
+      iconAsset: "assets/icons/items/ironroot_cuirass.png",
+    ),
+  ),
+  RAMHIDE_MANTLE(
+    EquipmentItemDefinition(
+      armorSlot: ArmorSlots.BACK,
+      name: "Ramhide Mantle",
+      value: 800,
+      fibLevel: 6,
+      statWeights: {SkillId.DEFENCE: 3, SkillId.ATTACK: 1},
+      catalogSecondaries: [
+        SkillId.RECOVERY,
+        SkillId.STAMINA,
+        SkillId.RECOVERY,
+        SkillId.STAMINA,
+      ],
+      description:
+          "A ram's fleece, thick as a rug and smelling of scree. Nothing keeps you down in it for long.",
+      iconAsset: "assets/icons/items/ramhide_mantle.png",
+    ),
+  ),
+
   // ── ARMOUR · TATTERED CLOTH ────────────────────────────────────
   // Grave-rags off the dark forest's zombies: pure attack, and a low rung
   // whatever the slot — a rare drop worth wearing early, not a set to chase.
@@ -9415,6 +11803,15 @@ enum ItemId {
     'FISHERMANS_PANTS': BASIC_FISHERS_PANTS,
     'FISHERMANS_GLOVES': BASIC_FISHERS_GLOVES,
     'FISHERMANS_CLOAK': BASIC_FISHERS_CLOAK,
+    // the magic potions lived a day on the ladder before Magic was dropped
+    // (it is not a skill); a brewed one comes back as its tier's
+    // Exploration potion, the other half of the same Ichor
+    'MINOR_MAGIC_POTION': MINOR_EXPLORATION_POTION,
+    'MAGIC_POTION': EXPLORATION_POTION,
+    'SUPER_MAGIC_POTION': EXPLORERS_POTION,
+    'GREATER_MAGIC_POTION': GREATER_EXPLORATION_POTION,
+    'GRAND_MAGIC_POTION': GRAND_EXPLORATION_POTION,
+    'SUPREME_MAGIC_POTION': SUPREME_EXPLORATION_POTION,
   };
 
   static final Map<String, ItemId> _byName = values.asNameMap();

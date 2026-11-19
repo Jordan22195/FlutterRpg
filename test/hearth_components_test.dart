@@ -189,10 +189,7 @@ void main() {
 
     testWidgets('an entity\'s art sits bare, rare or not', (tester) async {
       for (final id in [EntityId.CHICKEN, EntityId.GOBLIN_QUEEN]) {
-        await pumpThemed(
-          tester,
-          SpriteFrame(id: id, kind: SpriteKind.dungeon),
-        );
+        await pumpThemed(tester, SpriteFrame(id: id, kind: SpriteKind.dungeon));
         final frame = decorationOf(
           tester,
           find.descendant(

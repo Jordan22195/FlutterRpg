@@ -141,9 +141,8 @@ void main() {
         ItemId.OAK_LOGS,
         ItemId.IRON_ORE,
         ItemId.IRON_BAR,
-        ItemId.GUAM_LEAF,
-        ItemId.BEAR_CLAW,
-        ItemId.WOLF_CLAW,
+        ItemId.MEADOWSWEET,
+        ItemId.STURDY_FANG,
       ]),
     );
     for (final e in bulk) {
@@ -167,9 +166,9 @@ void main() {
     final boss =
         EntityId.GROTTO_FUNGAL_MONSTER.definition as CombatEntityDefinition;
     expect(boss.itemDrops.map((e) => e.id), {
-      ItemId.GUAM_LEAF,
-      ItemId.HARRALANDER,
-      ItemId.RED_CAP_MUSHROOM,
+      ItemId.MEADOWSWEET,
+      ItemId.DUSKTHORN,
+      ItemId.STURDY_ICHOR,
       ItemId.OAK_LOGS,
       ItemId.MAPLE_LOGS,
     });

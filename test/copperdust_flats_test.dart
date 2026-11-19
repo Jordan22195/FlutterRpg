@@ -73,9 +73,9 @@ void main() {
 
     test('holds the cliff roster', () {
       for (final id in [
-        EntityId.GARGOYLE,
+        EntityId.CLIFF_CHIMERA,
         EntityId.BASILISK,
-        EntityId.GRIFFIN,
+        EntityId.ROC_FLEDGLING,
       ]) {
         expect(holds(ZoneId.REDWALL_BLUFFS, id), isTrue, reason: id.name);
       }

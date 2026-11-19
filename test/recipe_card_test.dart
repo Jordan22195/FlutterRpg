@@ -98,10 +98,10 @@ void main() {
     save.inventoryData.itemMap[ItemId.LOGS] = 100;
 
     var taps = 0;
-    // bonfire needs firemaking 15
+    // the speed bonfire needs firemaking 13
     await pumpCard(
       tester,
-      recipeId: 'bonfire',
+      recipeId: 'bonfire_speed',
       lockWhenUnderLevel: true,
       onTap: () => taps++,
     );
@@ -122,7 +122,7 @@ void main() {
     var taps = 0;
     await pumpCard(
       tester,
-      recipeId: 'bonfire',
+      recipeId: 'bonfire_speed',
       lockWhenUnderLevel: true,
       onTap: () => taps++,
     );
@@ -141,7 +141,7 @@ void main() {
     var taps = 0;
     await pumpCard(
       tester,
-      recipeId: 'bonfire',
+      recipeId: 'bonfire_speed',
       lockWhenUnderLevel: false,
       onTap: () => taps++,
     );
@@ -187,14 +187,14 @@ void main() {
   testWidgets('under its level, a recipe flags no missing ingredient', (
     tester,
   ) async {
-    // bonfire needs firemaking 15, and there are no logs to burn
+    // the speed bonfire needs firemaking 13, and there are no logs to burn
     setLevel(SkillId.FIREMAKING, 1);
     save.inventoryData.itemMap[ItemId.LOGS] = 0;
 
     // in the picker, where it locks, and as the station's own card, where
     // it does not: the level is what stands in the way, so no input is red
     for (final lock in [true, false]) {
-      await pumpCard(tester, recipeId: 'bonfire', lockWhenUnderLevel: lock);
+      await pumpCard(tester, recipeId: 'bonfire_speed', lockWhenUnderLevel: lock);
       final flagged = tester
           .widgetList<RecipeTile>(find.byType(RecipeTile))
           .where((tile) => tile.borderColor != null);
@@ -490,18 +490,19 @@ void main() {
       }
     });
 
-    testWidgets('a campfire wears what its kindling gives', (tester) async {
+    testWidgets('a bonfire wears the stat its reagent gives', (tester) async {
       await pumpCard(
         tester,
-        recipeId: 'basic_campfire',
+        recipeId: 'bonfire_stamina',
         lockWhenUnderLevel: true,
       );
-      // no stats of its own: its kindling picks them, at its wood's power
+      // the reagent picks the stat, the wood its power
       expect(
-        find.byWidgetPredicate((w) => w is FirePowerBadge && w.power == 5),
+        find.byWidgetPredicate(
+          (w) => w is BuffBadge && w.skill == SkillId.STAMINA && w.amount == 5,
+        ),
         findsOneWidget,
       );
-      expect(find.byWidgetPredicate((w) => w is BuffBadge), findsNothing);
     });
 
     testWidgets('a smithed piece wears none', (tester) async {

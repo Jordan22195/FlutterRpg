@@ -3,510 +3,48 @@ import 'package:rpg/catalogs/recipes/crafting_recipe.dart';
 import 'package:rpg/data/skill_data.dart';
 import 'package:rpg/services/weighted_drop_table_service.dart';
 
-/// Alchemy. A herb and a reagent into a potion: the herb sets the tier,
-/// the reagent picks the stat. A potion has no rarity, so every brew rolls
-/// the crafting quality table and pays a good roll out in extra potions,
-/// the way a smelt pays extra bars.
-const List<CraftingRecipe> alchemyRecipes = [
-  // The minor tier, all off guam leaf. Level 1 is the three whose reagents
-  // already drop (feathers off chickens, minnows off the pond, iron off a
-  // vein), so alchemy is
-  // trainable from a fresh save; the tiers above wait on reagents that
-  // have no source yet.
-  CraftingRecipe(
-    id: 'alch_minor_speed_potion',
-    name: 'Minor Speed Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 1,
-    xp: 15,
-    inputs: {ItemId.GUAM_LEAF: 1, ItemId.FEATHER: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.MINOR_SPEED_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_minor_fishing_potion',
-    name: 'Minor Fishing Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 1,
-    xp: 15,
-    inputs: {ItemId.GUAM_LEAF: 1, ItemId.MINNOW: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.MINOR_FISHING_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_minor_defence_potion',
-    name: 'Minor Defence Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 1,
-    xp: 20,
-    inputs: {ItemId.GUAM_LEAF: 1, ItemId.IRON_ORE: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.MINOR_DEFENCE_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_minor_stamina_potion',
-    name: 'Minor Stamina Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 5,
-    xp: 30,
-    inputs: {ItemId.GUAM_LEAF: 1, ItemId.RAT_TAIL: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.MINOR_STAMINA_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_minor_recovery_potion',
-    name: 'Minor Recovery Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 5,
-    xp: 35,
-    inputs: {ItemId.GUAM_LEAF: 1, ItemId.SILK: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.MINOR_RECOVERY_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_minor_attack_potion',
-    name: 'Minor Attack Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 10,
-    xp: 50,
-    inputs: {ItemId.GUAM_LEAF: 1, ItemId.VENOM: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.MINOR_ATTACK_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_minor_strength_potion',
-    name: 'Minor Strength Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 10,
-    xp: 60,
-    inputs: {ItemId.GUAM_LEAF: 1, ItemId.CLAW: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.MINOR_STRENGTH_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  // The first tier above minor: harralander in place of guam leaf, with the
-  // reagent that has no other use.
-  CraftingRecipe(
-    id: 'alch_recovery_potion',
-    name: 'Recovery Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 15,
-    xp: 80,
-    inputs: {ItemId.HARRALANDER: 1, ItemId.GRAVE_MOSS: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.RECOVERY_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_speed_potion',
-    name: 'Speed Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 15,
-    xp: 70,
-    inputs: {ItemId.HARRALANDER: 1, ItemId.BAT_WING: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.SPEED_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_attack_potion',
-    name: 'Attack Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 20,
-    xp: 100,
-    inputs: {ItemId.HARRALANDER: 1, ItemId.FANG: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.ATTACK_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_strength_potion',
-    name: 'Strength Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 20,
-    xp: 110,
-    inputs: {ItemId.HARRALANDER: 1, ItemId.BAT_FANG: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.STRENGTH_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_fishing_potion',
-    name: 'Fishing Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 15,
-    xp: 75,
-    inputs: {ItemId.HARRALANDER: 1, ItemId.CRAYFISH: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.FISHING_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_defence_potion',
-    name: 'Defence Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 15,
-    xp: 85,
-    inputs: {ItemId.HARRALANDER: 1, ItemId.IRON_BAR: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.DEFENCE_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_stamina_potion',
-    name: 'Stamina Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 15,
-    xp: 90,
-    inputs: {ItemId.HARRALANDER: 1, ItemId.SLIME_OOZE: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.STAMINA_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
-  // the super tier: Blackmire Swamp's mirecap, and a swamp reagent each
-  CraftingRecipe(
-    id: 'alch_super_recovery_potion',
-    name: 'Super Recovery Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 25,
-    xp: 130,
-    inputs: {ItemId.MIRECAP: 1, ItemId.LEECH: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.SUPER_RECOVERY_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_super_fishing_potion',
-    name: 'Super Fishing Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 25,
-    xp: 120,
-    inputs: {ItemId.MIRECAP: 1, ItemId.BOG_EEL: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.SUPER_FISHING_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_super_stamina_potion',
-    name: 'Super Stamina Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 25,
-    xp: 140,
-    inputs: {ItemId.MIRECAP: 1, ItemId.SLIME_CORE: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.SUPER_STAMINA_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_super_defence_potion',
-    name: 'Super Defence Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 25,
-    xp: 135,
-    inputs: {ItemId.MIRECAP: 1, ItemId.SCALE: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.SUPER_DEFENCE_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_super_speed_potion',
-    name: 'Super Speed Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 25,
-    xp: 125,
-    inputs: {ItemId.MIRECAP: 1, ItemId.CROW_QUILL: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.SUPER_SPEED_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_super_strength_potion',
-    name: 'Super Strength Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 30,
-    xp: 160,
-    inputs: {ItemId.MIRECAP: 1, ItemId.MARSH_FROG: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.SUPER_STRENGTH_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_super_attack_potion',
-    name: 'Super Attack Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 30,
-    xp: 170,
-    inputs: {ItemId.MIRECAP: 1, ItemId.MURKJAW_FANG: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.SUPER_ATTACK_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
+/// Alchemy. A herb and a reagent into a potion: the herb sets the tier, the
+/// reagent's family picks the skill. A potion has no rarity, so every brew
+/// rolls the crafting quality table and pays a good roll out in extra
+/// potions, the way a smelt pays extra bars. design/ALCHEMY_POTIONS.md is
+/// the whole design.
+final List<CraftingRecipe> alchemyRecipes = [
+  // the ladder, one recipe per potion, derived from its PotionDefinition
+  for (final id in ItemId.values)
+    if (id.definition case final PotionDefinition def) _brew(id, def),
+  ..._craftingPotionRecipes,
+];
 
-  // The utility tier: Stormgrass Prairie's sweetgrass and a reagent, for
-  // the gathering and crafting skills the combat potions leave alone
-  CraftingRecipe(
-    id: 'alch_prospectors_potion',
-    name: "Prospector's Potion",
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 30,
-    xp: 150,
-    inputs: {ItemId.SWEETGRASS: 1, ItemId.MITHRIL_ORE: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.PROSPECTORS_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_foragers_potion',
-    name: "Forager's Potion",
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 30,
-    xp: 150,
-    inputs: {ItemId.SWEETGRASS: 1, ItemId.WIND_MOTE: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.FORAGERS_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_smiths_potion',
-    name: "Smith's Potion",
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 32,
-    xp: 160,
-    inputs: {ItemId.SWEETGRASS: 1, ItemId.MITHRIL_BAR: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.SMITHS_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_alchemists_potion',
-    name: "Alchemist's Potion",
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 32,
-    xp: 160,
-    inputs: {ItemId.SWEETGRASS: 1, ItemId.VENOM_GLAND: 1},
-    output: [
-      WeightedDropTableEntry(id: ItemId.ALCHEMISTS_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
+/// A ladder potion's recipe id: `alch_` and the item id, which is what every
+/// potion's recipe was called before the ladder, so a saved bound action
+/// keeps pointing at the same brew.
+String alchemyRecipeId(ItemId potion) => 'alch_${potion.name.toLowerCase()}';
 
-  // The greater tier: bluestem and a prairie reagent for +21. There is no
-  // greater fishing potion — the prairie has no water to give its reagent
-  CraftingRecipe(
-    id: 'alch_greater_recovery_potion',
-    name: 'Greater Recovery Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 35,
-    xp: 200,
-    inputs: {ItemId.BLUESTEM: 1, ItemId.VENOM_GLAND: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.GREATER_RECOVERY_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_greater_speed_potion',
-    name: 'Greater Speed Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 35,
-    xp: 200,
-    inputs: {ItemId.BLUESTEM: 1, ItemId.WIND_MOTE: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.GREATER_SPEED_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_greater_stamina_potion',
-    name: 'Greater Stamina Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 35,
-    xp: 210,
-    inputs: {ItemId.BLUESTEM: 1, ItemId.CENTAUR_HOOF: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.GREATER_STAMINA_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_greater_defence_potion',
-    name: 'Greater Defence Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 35,
-    xp: 215,
-    inputs: {ItemId.BLUESTEM: 1, ItemId.SNAKESKIN: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.GREATER_DEFENCE_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_greater_strength_potion',
-    name: 'Greater Strength Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 40,
-    xp: 240,
-    inputs: {ItemId.BLUESTEM: 1, ItemId.ORC_TUSK: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.GREATER_STRENGTH_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_greater_attack_potion',
-    name: 'Greater Attack Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 40,
-    xp: 250,
-    inputs: {ItemId.BLUESTEM: 1, ItemId.SABERTOOTH_FANG: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.GREATER_ATTACK_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
+CraftingRecipe _brew(ItemId id, PotionDefinition def) => CraftingRecipe(
+  id: alchemyRecipeId(id),
+  name: def.name,
+  skill: SkillId.ALCHEMY,
+  levelRequirement: def.levelRequirement,
+  xp: def.brewXp.toDouble(),
+  inputs: {def.herb: 1, def.reagent: 1},
+  output: [WeightedDropTableEntry(id: id, count: 1, weight: 1)],
+  rollsBonusOutput: true,
+);
 
-  // The waters' potions: a herb of each tier and a fishing spot's own
-  // reagent, which only comes up on a line or out of that water's cache
+/// The crafting-skill potions brewed before the ladder. Crafting potions are
+/// held off until each crafting skill has its own reagent; until then these
+/// keep their old reagent and brew from their tier's core herb.
+const List<CraftingRecipe> _craftingPotionRecipes = [
   CraftingRecipe(
     id: 'alch_minor_cooking_potion',
     name: 'Minor Cooking Potion',
     skill: SkillId.ALCHEMY,
     levelRequirement: 5,
     xp: 30,
-    inputs: {ItemId.GUAM_LEAF: 1, ItemId.LILY_PAD: 1},
+    inputs: {ItemId.MEADOWSWEET: 1, ItemId.LILY_PAD: 1},
     output: [
       WeightedDropTableEntry(
         id: ItemId.MINOR_COOKING_POTION,
-        count: 1,
-        weight: 1,
-      ),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_minor_woodcutting_potion',
-    name: 'Minor Woodcutting Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 10,
-    xp: 50,
-    inputs: {ItemId.GUAM_LEAF: 1, ItemId.CREEK_MOSS: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.MINOR_WOODCUTTING_POTION,
         count: 1,
         weight: 1,
       ),
@@ -519,49 +57,33 @@ const List<CraftingRecipe> alchemyRecipes = [
     skill: SkillId.ALCHEMY,
     levelRequirement: 20,
     xp: 110,
-    inputs: {ItemId.HARRALANDER: 1, ItemId.FRESHWATER_MUSSEL: 1},
+    inputs: {ItemId.REEDMINT: 1, ItemId.FRESHWATER_MUSSEL: 1},
     output: [
       WeightedDropTableEntry(id: ItemId.COOKING_POTION, count: 1, weight: 1),
     ],
     rollsBonusOutput: true,
   ),
   CraftingRecipe(
-    id: 'alch_woodsmans_potion',
-    name: "Woodsman's Potion",
+    id: 'alch_smiths_potion',
+    name: "Smith's Potion",
     skill: SkillId.ALCHEMY,
     levelRequirement: 32,
     xp: 160,
-    inputs: {ItemId.SWEETGRASS: 1, ItemId.DUCKWEED: 1},
+    inputs: {ItemId.SILT_LILY: 1, ItemId.MITHRIL_BAR: 1},
     output: [
-      WeightedDropTableEntry(id: ItemId.WOODSMANS_POTION, count: 1, weight: 1),
+      WeightedDropTableEntry(id: ItemId.SMITHS_POTION, count: 1, weight: 1),
     ],
     rollsBonusOutput: true,
   ),
   CraftingRecipe(
-    id: 'alch_explorers_potion',
-    name: "Explorer's Potion",
+    id: 'alch_alchemists_potion',
+    name: "Alchemist's Potion",
     skill: SkillId.ALCHEMY,
-    levelRequirement: 34,
-    xp: 170,
-    inputs: {ItemId.SWEETGRASS: 1, ItemId.SEA_KELP: 1},
+    levelRequirement: 32,
+    xp: 160,
+    inputs: {ItemId.SILT_LILY: 1, ItemId.VENOM_GLAND: 1},
     output: [
-      WeightedDropTableEntry(id: ItemId.EXPLORERS_POTION, count: 1, weight: 1),
-    ],
-    rollsBonusOutput: true,
-  ),
-  CraftingRecipe(
-    id: 'alch_greater_fishing_potion',
-    name: 'Greater Fishing Potion',
-    skill: SkillId.ALCHEMY,
-    levelRequirement: 40,
-    xp: 250,
-    inputs: {ItemId.BLUESTEM: 1, ItemId.LAKE_SPONGE: 1},
-    output: [
-      WeightedDropTableEntry(
-        id: ItemId.GREATER_FISHING_POTION,
-        count: 1,
-        weight: 1,
-      ),
+      WeightedDropTableEntry(id: ItemId.ALCHEMISTS_POTION, count: 1, weight: 1),
     ],
     rollsBonusOutput: true,
   ),

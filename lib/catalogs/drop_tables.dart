@@ -55,26 +55,23 @@ const List<ItemDropType> gemDropTable = [
   ItemDropType(id: ItemId.ONYX, weight: 0.03),
 ];
 
-/// Every herb, in herbalism-level order, weight decaying about a quarter per
-/// step down the ladder. Guam takes roughly a fifth of all rolls and Torstol
-/// well under one percent, so a table roll reads as "a herb, probably a cheap
-/// one" wherever it is used.
+/// Every zone herb, in herbalism-level order, weight decaying about a
+/// quarter per step down the ladder. Meadowsweet takes roughly a fifth of all
+/// rolls and Emberroot well under one percent, so a table roll reads as "a
+/// herb, probably a cheap one" wherever it is used.
 const List<ItemDropType> herbDropTable = [
-  ItemDropType(id: ItemId.GUAM_LEAF, weight: 1),
-  ItemDropType(id: ItemId.MARRENTILL, weight: 0.8),
-  ItemDropType(id: ItemId.TARROMIN, weight: 0.65),
-  ItemDropType(id: ItemId.HARRALANDER, weight: 0.5),
-  ItemDropType(id: ItemId.MIRECAP, weight: 0.44),
-  ItemDropType(id: ItemId.RANARR_WEED, weight: 0.38),
-  ItemDropType(id: ItemId.TOADFLAX, weight: 0.3),
-  ItemDropType(id: ItemId.IRIT_LEAF, weight: 0.22),
-  ItemDropType(id: ItemId.AVANTOE, weight: 0.16),
-  ItemDropType(id: ItemId.KWUARM, weight: 0.12),
-  ItemDropType(id: ItemId.SNAPDRAGON, weight: 0.09),
-  ItemDropType(id: ItemId.CADANTINE, weight: 0.065),
-  ItemDropType(id: ItemId.LANTADYME, weight: 0.05),
-  ItemDropType(id: ItemId.DWARF_WEED, weight: 0.035),
-  ItemDropType(id: ItemId.TORSTOL, weight: 0.025),
+  ItemDropType(id: ItemId.MEADOWSWEET, weight: 1),
+  ItemDropType(id: ItemId.BRAMBLEWORT, weight: 0.8),
+  ItemDropType(id: ItemId.REEDMINT, weight: 0.65),
+  ItemDropType(id: ItemId.DUSKTHORN, weight: 0.5),
+  ItemDropType(id: ItemId.SILT_LILY, weight: 0.44),
+  ItemDropType(id: ItemId.MIRECAP, weight: 0.38),
+  ItemDropType(id: ItemId.SALTWORT, weight: 0.3),
+  ItemDropType(id: ItemId.BLUESTEM, weight: 0.22),
+  ItemDropType(id: ItemId.GLIMMERCAP, weight: 0.12),
+  ItemDropType(id: ItemId.BLOODROOT, weight: 0.09),
+  ItemDropType(id: ItemId.FROSTBLOOM, weight: 0.035),
+  ItemDropType(id: ItemId.EMBERROOT, weight: 0.025),
 ];
 
 /// The three cooked river fish, evenly weighted. A nested reference to this
@@ -119,7 +116,7 @@ const List<ItemDropType> mediumLeatherMinorArmorDropTable = [
 const List<ItemDropType> goblinSupplyDrops = [
   ItemDropType(id: ItemId.IRON_BAR, lowCount: 1, highCount: 2, weight: 1),
   ItemDropType(id: ItemId.OAK_LOGS, lowCount: 1, highCount: 3, weight: 1),
-  ItemDropType(id: ItemId.GUAM_LEAF, lowCount: 1, highCount: 2, weight: 1),
+  ItemDropType(id: ItemId.MEADOWSWEET, lowCount: 1, highCount: 2, weight: 1),
   ItemDropType(id: ItemId.TOPAZ, weight: 0.3),
   ItemDropType(id: ItemId.SAPPHIRE, weight: 0.1),
   ItemDropType(id: ItemId.IRON_DAGGER, rarity: Rarity.COMMON, weight: 0.3),
@@ -192,16 +189,10 @@ const List<ItemDropType> heavyLeatherDropTable = [
   ItemDropType(id: ItemId.HEAVY_LEATHER_SPAULDERS, weight: 1),
 ];
 
-const List<ItemDropType> spiderDropTable = [
-  ItemDropType(id: ItemId.SILK, lowCount: 1, highCount: 2),
-  ItemDropType(id: ItemId.VENOM, lowCount: 1, highCount: 2),
-];
-
 /// The dark forest's dead leave the same two scraps behind, a skeleton as
 /// much as a zombie: rotten flesh most of the time, grave moss now and then.
 const List<ItemDropType> graveScrapDropTable = [
   ItemDropType(id: ItemId.ROTTEN_FLESH, lowCount: 1, highCount: 2, weight: 1),
-  ItemDropType(id: ItemId.GRAVE_MOSS, lowCount: 1, highCount: 2, weight: 0.6),
 ];
 
 /// What a zombie wears: pure-attack rags, one slot each.
@@ -273,7 +264,7 @@ const List<ItemDropType> treeReagentDropTable = [
 ];
 
 /// What an oak sheds: the other four, two at a time, so the two trees
-/// between them hold every stat a fire can be tended for.
+/// between them hold every combat stat a bonfire can be laid for.
 const List<ItemDropType> oakReagentDropTable = [
   ItemDropType(id: ItemId.ACORN, lowCount: 2, highCount: 2, weight: 1),
   ItemDropType(id: ItemId.OAK_GALL, lowCount: 2, highCount: 2, weight: 1),
@@ -639,43 +630,46 @@ const List<ItemDropType> masterFishersGearDropTable = [
   ItemDropType(id: ItemId.MASTER_FISHERS_CLOAK),
 ];
 
-/// Each water's own reagents, evenly: an alchemy reagent and a fire
-/// reagent (the marsh's two alchemy reagents are its leech and frog). What
-/// a catch sometimes comes up with, and what that water's cache is lined
-/// with.
+/// Each water's own reagents, evenly: a Shell at the water's grade (the
+/// grade its Fishing level reaches, ReagentGrade.forLevel), the marsh's
+/// Venom too, and a fire reagent. The pond's lily pad and the river's
+/// mussel stay for the cooking potions. What a catch sometimes comes up
+/// with, and what that water's cache is lined with.
 const List<ItemDropType> pondReagentDropTable = [
+  ItemDropType(id: ItemId.SMALL_SHELL, weight: 1),
   ItemDropType(id: ItemId.LILY_PAD, weight: 1),
   ItemDropType(id: ItemId.CATTAIL_FLUFF, weight: 1),
 ];
 
 const List<ItemDropType> creekReagentDropTable = [
-  ItemDropType(id: ItemId.CREEK_MOSS, weight: 1),
+  ItemDropType(id: ItemId.SMALL_SHELL, weight: 1),
   ItemDropType(id: ItemId.DRIED_REEDS, weight: 1),
 ];
 
 const List<ItemDropType> riverReagentDropTable = [
+  ItemDropType(id: ItemId.SMALL_SHELL, weight: 1),
   ItemDropType(id: ItemId.FRESHWATER_MUSSEL, weight: 1),
   ItemDropType(id: ItemId.RIVER_DRIFTWOOD, weight: 1),
 ];
 
 const List<ItemDropType> marshReagentDropTable = [
-  ItemDropType(id: ItemId.LEECH, weight: 1),
-  ItemDropType(id: ItemId.MARSH_FROG, weight: 1),
+  ItemDropType(id: ItemId.SMALL_SHELL, weight: 1),
+  ItemDropType(id: ItemId.SMALL_VENOM, weight: 1),
   ItemDropType(id: ItemId.PEAT_CLOD, weight: 1),
 ];
 
 const List<ItemDropType> smallLakeReagentDropTable = [
-  ItemDropType(id: ItemId.DUCKWEED, weight: 1),
+  ItemDropType(id: ItemId.THICK_SHELL, weight: 1),
   ItemDropType(id: ItemId.DRIED_RUSHES, weight: 1),
 ];
 
 const List<ItemDropType> lakeReagentDropTable = [
-  ItemDropType(id: ItemId.LAKE_SPONGE, weight: 1),
+  ItemDropType(id: ItemId.HEAVY_SHELL, weight: 1),
   ItemDropType(id: ItemId.BONE_CORAL, weight: 1),
 ];
 
 const List<ItemDropType> oceanReagentDropTable = [
-  ItemDropType(id: ItemId.SEA_KELP, weight: 1),
+  ItemDropType(id: ItemId.HEAVY_SHELL, weight: 1),
   ItemDropType(id: ItemId.AMBERGRIS, weight: 1),
 ];
 
